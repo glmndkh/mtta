@@ -432,19 +432,7 @@ export default function Tournaments() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Нэвтрэх шаардлагатай",
-        description: "Энэ хуудсыг үзэхийн тулд нэвтэрнэ үү...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
+  // Remove authentication requirement for tournaments page
 
   if (isLoading) {
     return (
@@ -457,9 +445,7 @@ export default function Tournaments() {
     );
   }
 
-  if (!isAuthenticated || !user) {
-    return null;
-  }
+  // Allow access to tournaments page without authentication
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -479,7 +465,7 @@ export default function Tournaments() {
               </p>
             </div>
             
-            {user.role === 'admin' && (
+            {user?.role === 'admin' && (
               <Button 
                 className="bg-purple-600 hover:bg-purple-700 text-white"
                 onClick={() => window.location.href = '/admin/generator'}
