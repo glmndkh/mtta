@@ -51,6 +51,17 @@ The application uses a comprehensive schema for table tennis management:
 
 ## Recent Changes (January 2025)
 
+### Tournament Management System Enhancement
+- **Rich Text Editor Integration**: Added TipTap rich text editor with image, video, and file embedding capabilities
+- **Comprehensive Tournament Creation**: Built advanced admin interface for creating tournaments with rich descriptions
+- **Customizable Participation Types**: System supports default types (Singles, Doubles, Mixed Doubles, Team) plus custom types
+- **Enhanced Database Schema**: Added rich_description, participation_types, entry_fee, registration_deadline, and other tournament fields
+- **Admin Interface Streamlining**: Simplified admin home page to focus on core tournament management functions
+- **Preview Mode**: Tournament creation includes preview functionality to see how tournaments will appear
+- **Post-submission Editing**: Tournaments can be edited after creation with full CRUD operations
+
+## Recent Changes (January 2025)
+
 ### Player Dashboard Updates
 - **Dual Ranking System**: Split ranking into "All Ages" and "Own Age" categories
 - **Admin-Assigned Ranks**: Added rank field that can be set by administrators
