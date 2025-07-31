@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Info, Ticket } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ExternalLink, Info, Ticket, ArrowLeft, Users } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface TournamentData {
   name: string;
@@ -32,8 +37,120 @@ const CATEGORY_LABELS: Record<string, string> = {
   "team": "Багийн төрөл"
 };
 
+// Tournament Registration Button Component
+function TournamentRegistrationButton({ tournamentId }: { tournamentId: string }) {
+  const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: userRegistration } = useQuery({
+    queryKey: ['/api/tournaments', tournamentId, 'user-registration'],
+    enabled: isAuthenticated,
+  });
+
+  const registerMutation = useMutation({
+    mutationFn: async (participationType: string) => {
+      if (!isAuthenticated) {
+        window.location.href = "/login";
+        return;
+      }
+      return apiRequest(`/api/tournaments/${tournamentId}/register`, {
+        method: 'POST',
+        body: JSON.stringify({ participationType }),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Амжилттай бүртгүүллээ!",
+        description: "Тэмцээнд амжилттай бүртгүүллээ.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', tournamentId] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Алдаа гарлаа",
+        description: error.message || "Бүртгүүлэхэд алдаа гарлаа",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleRegister = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      toast({
+        title: "Нэвтрэх шаардлагатай",
+        description: "Тэмцээнд бүртгүүлэхийн тулд нэвтэрнэ үү",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 1000);
+      return;
+    }
+    registerMutation.mutate("singles"); // Default to singles
+  };
+
+  if (userRegistration?.registered) {
+    return (
+      <Button
+        disabled
+        className="bg-green-600 text-white cursor-not-allowed"
+        size="lg"
+      >
+        Бүртгүүлсэн
+      </Button>
+    );
+  }
+
+  return (
+    <Button
+      className="bg-blue-600 hover:bg-blue-700 text-white"
+      onClick={handleRegister}
+      disabled={registerMutation.isPending}
+      size="lg"
+    >
+      {registerMutation.isPending ? "Бүртгүүлж байна..." : "Бүртгүүлэх"}
+    </Button>
+  );
+}
+
+// Tournament Registration Stats Component
+function TournamentRegistrationStats({ tournamentId }: { tournamentId: string }) {
+  const { data: stats } = useQuery({
+    queryKey: ['/api/tournaments', tournamentId, 'registration-stats'],
+  });
+
+  if (!stats) return null;
+
+  return (
+    <div className="bg-white/90 backdrop-blur-sm rounded-lg p-4 flex items-center gap-4">
+      <div className="flex items-center gap-2">
+        <Users className="w-5 h-5 text-blue-600" />
+        <span className="text-lg font-medium text-gray-900">
+          Бүртгүүлсэн: {stats.registered}
+          {stats.maxParticipants && ` / ${stats.maxParticipants}`}
+        </span>
+      </div>
+      {stats.registrationRate > 0 && (
+        <div className="flex items-center gap-3">
+          <div className="w-32 h-3 bg-gray-200 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-blue-600 transition-all duration-300"
+              style={{ width: `${Math.min(stats.registrationRate, 100)}%` }}
+            />
+          </div>
+          <span className="text-sm font-medium text-gray-600">{stats.registrationRate}%</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function TournamentPage() {
   const [match, params] = useRoute("/tournament/:id");
+  const [, setLocation] = useLocation();
+  const { isAuthenticated } = useAuth();
   const [tournament, setTournament] = useState<TournamentData | null>(null);
   const [countdown, setCountdown] = useState<CountdownTime>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   
@@ -78,7 +195,15 @@ export default function TournamentPage() {
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-white text-center">
           <h1 className="text-2xl font-bold mb-2">Тэмцээн олдсонгүй</h1>
-          <p className="text-gray-400">Хүссэн тэмцээн байхгүй байна.</p>
+          <p className="text-gray-400 mb-4">Хүссэн тэмцээн байхгүй байна.</p>
+          <Button 
+            onClick={() => setLocation('/tournaments')}
+            variant="outline"
+            className="flex items-center gap-2 text-white border-white hover:bg-white hover:text-gray-900"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Тэмцээний хуудас руу буцах
+          </Button>
         </div>
       </div>
     );
@@ -149,6 +274,18 @@ export default function TournamentPage() {
         <div className="absolute inset-0 bg-black/50" />
       </div>
       
+      {/* Back Button */}
+      <div className="absolute top-6 left-6 z-20">
+        <Button 
+          onClick={() => setLocation('/tournaments')}
+          variant="outline"
+          className="bg-white/10 border-white/30 text-white backdrop-blur-sm hover:bg-white/20 flex items-center gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Буцах
+        </Button>
+      </div>
+      
       {/* Content Overlay */}
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Main Content */}
@@ -178,8 +315,12 @@ export default function TournamentPage() {
                   <p className="text-lg font-medium">{tournament.location}</p>
                 </div>
 
+                {/* Registration Stats */}
+                <TournamentRegistrationStats tournamentId={tournament.id} />
+
                 {/* Action Buttons */}
                 <div className="flex flex-wrap gap-3">
+                  <TournamentRegistrationButton tournamentId={tournament.id} />
                   {tournament.eventInfoUrl && (
                     <Button 
                       variant="outline" 

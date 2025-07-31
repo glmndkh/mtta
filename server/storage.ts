@@ -69,6 +69,11 @@ export interface IStorage {
   getTournamentsByOrganizer(organizerId: string): Promise<Tournament[]>;
   getActiveTournaments(): Promise<Tournament[]>;
   registerPlayerForTournament(tournamentId: string, playerId: string): Promise<void>;
+  
+  // Tournament registration operations
+  registerForTournament(data: { tournamentId: string; playerId: string; participationType: string }): Promise<any>;
+  getTournamentRegistration(tournamentId: string, playerId: string): Promise<any>;
+  getTournamentRegistrationStats(tournamentId: string): Promise<{ registered: number; maxParticipants?: number; registrationRate: number }>;
 
   // Match operations
   getMatch(id: string): Promise<Match | undefined>;
@@ -304,7 +309,53 @@ export class DatabaseStorage implements IStorage {
     await db.insert(tournamentParticipants).values({
       tournamentId,
       playerId,
+      participationType: "singles", // default
     });
+  }
+
+  async registerForTournament(data: { tournamentId: string; playerId: string; participationType: string }) {
+    const [registration] = await db.insert(tournamentParticipants).values({
+      tournamentId: data.tournamentId,
+      playerId: data.playerId,
+      participationType: data.participationType,
+    }).returning();
+    return registration;
+  }
+
+  async getTournamentRegistration(tournamentId: string, playerId: string) {
+    const [registration] = await db
+      .select()
+      .from(tournamentParticipants)
+      .where(and(
+        eq(tournamentParticipants.tournamentId, tournamentId),
+        eq(tournamentParticipants.playerId, playerId)
+      ));
+    return registration;
+  }
+
+  async getTournamentRegistrationStats(tournamentId: string): Promise<{ registered: number; maxParticipants?: number; registrationRate: number }> {
+    // Get tournament details
+    const tournament = await this.getTournament(tournamentId);
+    
+    // Count registrations
+    const registrationCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(tournamentParticipants)
+      .where(eq(tournamentParticipants.tournamentId, tournamentId));
+    
+    const registered = Number(registrationCount[0]?.count || 0);
+    const maxParticipants = tournament?.maxParticipants;
+    
+    let registrationRate = 0;
+    if (maxParticipants && maxParticipants > 0) {
+      registrationRate = Math.round((registered / maxParticipants) * 100);
+    }
+    
+    return {
+      registered,
+      maxParticipants,
+      registrationRate
+    };
   }
 
   // Match operations

@@ -6,8 +6,10 @@ import TournamentTimeDisplay from "@/components/tournament-time-display";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Calendar, MapPin, Clock, ExternalLink, Ticket } from "lucide-react";
+import { Trophy, Calendar, MapPin, Clock, ExternalLink, Ticket, Users } from "lucide-react";
 import { useLocation } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface TournamentData {
   name: string;
@@ -37,6 +39,115 @@ const CATEGORY_LABELS: Record<string, string> = {
   "mixed_doubles": "Холимог хосоор",
   "team": "Багийн төрөл"
 };
+
+// Tournament Registration Button Component
+function TournamentRegistrationButton({ tournamentId }: { tournamentId: string }) {
+  const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: userRegistration } = useQuery({
+    queryKey: ['/api/tournaments', tournamentId, 'user-registration'],
+    enabled: isAuthenticated,
+  });
+
+  const registerMutation = useMutation({
+    mutationFn: async (participationType: string) => {
+      if (!isAuthenticated) {
+        window.location.href = "/login";
+        return;
+      }
+      return apiRequest(`/api/tournaments/${tournamentId}/register`, {
+        method: 'POST',
+        body: JSON.stringify({ participationType }),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Амжилттай бүртгүүллээ!",
+        description: "Тэмцээнд амжилттай бүртгүүллээ.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', tournamentId] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Алдаа гарлаа",
+        description: error.message || "Бүртгүүлэхэд алдаа гарлаа",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleRegister = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      toast({
+        title: "Нэвтрэх шаардлагатай",
+        description: "Тэмцээнд бүртгүүлэхийн тулд нэвтэрнэ үү",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 1000);
+      return;
+    }
+    registerMutation.mutate("singles"); // Default to singles
+  };
+
+  if (userRegistration?.registered) {
+    return (
+      <Button
+        disabled
+        className="bg-green-600 text-white cursor-not-allowed"
+        onClick={(e) => e.stopPropagation()}
+      >
+        Бүртгүүлсэн
+      </Button>
+    );
+  }
+
+  return (
+    <Button
+      className="bg-blue-600 hover:bg-blue-700 text-white"
+      onClick={handleRegister}
+      disabled={registerMutation.isPending}
+    >
+      {registerMutation.isPending ? "Бүртгүүлж байна..." : "Бүртгүүлэх"}
+    </Button>
+  );
+}
+
+// Tournament Registration Stats Component
+function TournamentRegistrationStats({ tournamentId }: { tournamentId: string }) {
+  const { data: stats } = useQuery({
+    queryKey: ['/api/tournaments', tournamentId, 'registration-stats'],
+  });
+
+  if (!stats) return null;
+
+  return (
+    <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3 flex items-center gap-4">
+      <div className="flex items-center gap-2">
+        <Users className="w-4 h-4 text-blue-600" />
+        <span className="text-sm font-medium text-gray-900">
+          Бүртгүүлсэн: {stats.registered}
+          {stats.maxParticipants && ` / ${stats.maxParticipants}`}
+        </span>
+      </div>
+      {stats.registrationRate > 0 && (
+        <div className="flex items-center gap-2">
+          <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-blue-600 transition-all duration-300"
+              style={{ width: `${Math.min(stats.registrationRate, 100)}%` }}
+            />
+          </div>
+          <span className="text-xs text-gray-600">{stats.registrationRate}%</span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function TournamentCard({ tournament }: { tournament: TournamentData }) {
   const [, setLocation] = useLocation();
@@ -164,13 +275,14 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
         {/* Content Overlay */}
         <div className="relative z-10 h-full">
           <div className="h-full flex flex-col p-6 lg:p-8 gap-6">
-            {/* Top Section - Time Display */}
-            <div className="mb-4">
+            {/* Top Section - Time Display and Registration Stats */}
+            <div className="mb-4 space-y-3">
               <TournamentTimeDisplay 
                 startDate={tournament.startDate}
                 endDate={tournament.endDate}
                 className="bg-white/95 backdrop-blur-sm"
               />
+              <TournamentRegistrationStats tournamentId={tournament.id} />
             </div>
 
             {/* Main Content Section */}
@@ -216,6 +328,7 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
 
                 {/* Action Buttons */}
                 <div className="flex flex-wrap gap-3">
+                  <TournamentRegistrationButton tournamentId={tournament.id} />
                   {tournament.eventInfoUrl && (
                     <Button 
                       variant="outline" 
