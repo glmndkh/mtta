@@ -27,39 +27,15 @@ export default function Landing() {
             </div>
 
             <div className="hidden md:flex items-center space-x-6">
-              <a href="/" className="text-gray-700 hover:text-mtta-green font-medium">Нүүр хуудас</a>
-              <Button 
-                variant="ghost" 
-                onClick={() => window.location.href = '/auth'}
-                className="text-gray-700 hover:text-mtta-green font-medium"
-              >
-                Тэмцээн харах
-              </Button>
-              <Button 
-                variant="ghost" 
-                onClick={() => window.location.href = '/auth'}
-                className="text-gray-700 hover:text-mtta-green font-medium"
-              >
-                Клубууд
-              </Button>
-              <Button 
-                variant="ghost" 
-                onClick={() => window.location.href = '/auth'}
-                className="text-gray-700 hover:text-mtta-green font-medium"
-              >
-                Лиг
-              </Button>
-              <Button 
-                variant="ghost" 
-                onClick={() => window.location.href = '/auth'}
-                className="text-gray-700 hover:text-mtta-green font-medium"
-              >
-                Мэдээ
-              </Button>
+              <a href="#" className="text-gray-700 hover:text-mtta-green font-medium">Нүүр хуудас</a>
+              <a href="/tournaments" className="text-gray-700 hover:text-mtta-green font-medium">Тэмцээн</a>
+              <a href="#" className="text-gray-700 hover:text-mtta-green font-medium">Клубууд</a>
+              <a href="#" className="text-gray-700 hover:text-mtta-green font-medium">Лиг</a>
+              <a href="#" className="text-gray-700 hover:text-mtta-green font-medium">Мэдээ</a>
             </div>
 
             <div className="flex items-center space-x-4">
-              <Button onClick={() => window.location.href = '/auth'} className="mtta-green text-white hover:bg-mtta-green-dark">
+              <Button onClick={() => window.location.href = '/login'} className="mtta-green text-white hover:bg-mtta-green-dark">
                 Нэвтрэх
               </Button>
               <Button 
@@ -78,31 +54,11 @@ export default function Landing() {
         {showMobileMenu && (
           <div className="md:hidden bg-white border-t">
             <div className="px-4 py-3 space-y-2">
-              <a href="/" className="block text-gray-700 hover:text-mtta-green py-2">Нүүр хуудас</a>
-              <button 
-                onClick={() => window.location.href = '/auth'}
-                className="block text-gray-700 hover:text-mtta-green py-2 w-full text-left"
-              >
-                Тэмцээн харах
-              </button>
-              <button 
-                onClick={() => window.location.href = '/auth'}
-                className="block text-gray-700 hover:text-mtta-green py-2 w-full text-left"
-              >
-                Клубууд
-              </button>
-              <button 
-                onClick={() => window.location.href = '/auth'}
-                className="block text-gray-700 hover:text-mtta-green py-2 w-full text-left"
-              >
-                Лиг
-              </button>
-              <button 
-                onClick={() => window.location.href = '/auth'}
-                className="block text-gray-700 hover:text-mtta-green py-2 w-full text-left"
-              >
-                Мэдээ
-              </button>
+              <a href="#" className="block text-gray-700 hover:text-mtta-green py-2">Нүүр хуудас</a>
+              <a href="/tournaments" className="block text-gray-700 hover:text-mtta-green py-2">Тэмцээн</a>
+              <a href="#" className="block text-gray-700 hover:text-mtta-green py-2">Клубууд</a>
+              <a href="#" className="block text-gray-700 hover:text-mtta-green py-2">Лиг</a>
+              <a href="#" className="block text-gray-700 hover:text-mtta-green py-2">Мэдээ</a>
             </div>
           </div>
         )}
@@ -123,7 +79,7 @@ export default function Landing() {
             <Button 
               size="lg" 
               className="bg-white text-mtta-green hover:bg-gray-100"
-              onClick={() => window.location.href = '/auth'}
+              onClick={() => window.location.href = '/api/login'}
             >
               <UserPlus className="mr-2 h-5 w-5" />
               Бүртгүүлэх
@@ -201,7 +157,7 @@ export default function Landing() {
                   </div>
                   <Button 
                     className="w-full mtta-green text-white hover:bg-mtta-green-dark"
-                    onClick={() => window.location.href = '/auth'}
+                    onClick={() => window.location.href = '/api/login'}
                   >
                     Нэвтрэх
                   </Button>
@@ -254,7 +210,7 @@ export default function Landing() {
                   </div>
                   <Button 
                     className="w-full mtta-green text-white hover:bg-mtta-green-dark"
-                    onClick={() => window.location.href = '/auth'}
+                    onClick={() => window.location.href = '/api/login'}
                   >
                     Бүртгүүлэх
                   </Button>
