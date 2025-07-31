@@ -26,11 +26,21 @@ function Router() {
       <Route path="/tournament-landing" component={TournamentLanding} />
       <Route path="/tournament/:id" component={TournamentPage} />
       <Route path="/admin/generator" component={AdminTournamentGenerator} />
-      {isLoading || !isAuthenticated ? (
+      {isLoading ? (
+        <Route path="/" component={() => (
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Ачааллаж байна...</p>
+            </div>
+          </div>
+        )} />
+      ) : !isAuthenticated ? (
         <Route path="/" component={AuthLanding} />
       ) : (
         <>
           <Route path="/" component={Home} />
+          <Route path="/home" component={Home} />
           <Route path="/dashboard" component={PlayerDashboard} />
           <Route path="/tournaments" component={Tournaments} />
           <Route path="/clubs" component={Clubs} />
