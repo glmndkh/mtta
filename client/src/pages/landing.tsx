@@ -1,0 +1,382 @@
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Users, Building, Trophy, Medal, UserPlus, Info, Menu } from "lucide-react";
+import mttaLogo from "@assets/logo_1753961933153.jpg";
+
+export default function Landing() {
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Navigation */}
+      <nav className="bg-white shadow-lg border-b-2 border-mtta-green">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-4">
+              <img src={mttaLogo} alt="MTTA Logo" className="h-10 w-auto" />
+              <div className="hidden md:block">
+                <h1 className="text-xl font-bold text-mtta-green">MTTA</h1>
+                <p className="text-xs text-gray-600">Монголын Ширээний Теннисний Холбоо</p>
+              </div>
+            </div>
+
+            <div className="hidden md:flex items-center space-x-6">
+              <a href="#" className="text-gray-700 hover:text-mtta-green font-medium">Нүүр хуудас</a>
+              <a href="#" className="text-gray-700 hover:text-mtta-green font-medium">Тэмцээн</a>
+              <a href="#" className="text-gray-700 hover:text-mtta-green font-medium">Клубууд</a>
+              <a href="#" className="text-gray-700 hover:text-mtta-green font-medium">Лиг</a>
+              <a href="#" className="text-gray-700 hover:text-mtta-green font-medium">Мэдээ</a>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <Button onClick={() => window.location.href = '/api/login'} className="mtta-green text-white hover:bg-mtta-green-dark">
+                Нэвтрэх
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="md:hidden text-gray-600"
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+              >
+                <Menu className="h-6 w-6" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile menu */}
+        {showMobileMenu && (
+          <div className="md:hidden bg-white border-t">
+            <div className="px-4 py-3 space-y-2">
+              <a href="#" className="block text-gray-700 hover:text-mtta-green py-2">Нүүр хуудас</a>
+              <a href="#" className="block text-gray-700 hover:text-mtta-green py-2">Тэмцээн</a>
+              <a href="#" className="block text-gray-700 hover:text-mtta-green py-2">Клубууд</a>
+              <a href="#" className="block text-gray-700 hover:text-mtta-green py-2">Лиг</a>
+              <a href="#" className="block text-gray-700 hover:text-mtta-green py-2">Мэдээ</a>
+            </div>
+          </div>
+        )}
+      </nav>
+
+      {/* Hero Section */}
+      <section className="relative bg-gradient-to-r from-mtta-green to-mtta-green-dark text-white py-20">
+        <div className="absolute inset-0 bg-black opacity-20"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6">Монголын Ширээний Теннисний Холбоо</h1>
+          <p className="text-xl md:text-2xl mb-8 opacity-90">
+            Мэргэжлийн ширээний теннисний спортыг хөгжүүлж, олон улсын түвшинд тэмцэх боломжийг бүрдүүлэх
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Button 
+              size="lg" 
+              className="bg-white text-mtta-green hover:bg-gray-100"
+              onClick={() => window.location.href = '/api/login'}
+            >
+              <UserPlus className="mr-2 h-5 w-5" />
+              Бүртгүүлэх
+            </Button>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="border-2 border-white text-white hover:bg-white hover:text-mtta-green"
+            >
+              <Info className="mr-2 h-5 w-5" />
+              Дэлгэрэнгүй
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Quick Stats */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="mtta-green text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="h-8 w-8" />
+              </div>
+              <h3 className="text-3xl font-bold text-gray-900">1,250+</h3>
+              <p className="text-gray-600">Тоглогчид</p>
+            </div>
+            <div className="text-center">
+              <div className="mtta-green text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Building className="h-8 w-8" />
+              </div>
+              <h3 className="text-3xl font-bold text-gray-900">45+</h3>
+              <p className="text-gray-600">Клубууд</p>
+            </div>
+            <div className="text-center">
+              <div className="mtta-green text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trophy className="h-8 w-8" />
+              </div>
+              <h3 className="text-3xl font-bold text-gray-900">120+</h3>
+              <p className="text-gray-600">Тэмцээнүүд</p>
+            </div>
+            <div className="text-center">
+              <div className="mtta-green text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Medal className="h-8 w-8" />
+              </div>
+              <h3 className="text-3xl font-bold text-gray-900">8</h3>
+              <p className="text-gray-600">Лигүүд</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Login/Signup Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Нэвтрэх эсвэл Бүртгүүлэх</h2>
+            <p className="text-lg text-gray-600">Өөрийн профайл үүсгэж, тэмцээнд оролцох, клуб удирдах боломжтой</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Login Card */}
+            <Card className="shadow-lg">
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl font-bold text-gray-900 mb-2">Нэвтрэх</CardTitle>
+                <p className="text-gray-600">Өөрийн эрхээр нэвтэрнэ үү</p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-email">И-мэйл хаяг</Label>
+                    <Input id="login-email" type="email" placeholder="example@email.com" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="login-password">Нууц үг</Label>
+                    <Input id="login-password" type="password" placeholder="••••••••" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="remember" className="rounded border-gray-300" />
+                      <Label htmlFor="remember" className="text-sm text-gray-600">Сануулах</Label>
+                    </div>
+                    <a href="#" className="text-sm text-mtta-green hover:text-mtta-green-dark">Нууц үг мартсан уу?</a>
+                  </div>
+                  <Button 
+                    className="w-full mtta-green text-white hover:bg-mtta-green-dark"
+                    onClick={() => window.location.href = '/api/login'}
+                  >
+                    Нэвтрэх
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Signup Card */}
+            <Card className="shadow-lg">
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl font-bold text-gray-900 mb-2">Бүртгүүлэх</CardTitle>
+                <p className="text-gray-600">Шинэ эрх үүсгэх</p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-firstname">Нэр</Label>
+                      <Input id="signup-firstname" placeholder="Нэр" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-lastname">Овог</Label>
+                      <Input id="signup-lastname" placeholder="Овог" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email">И-мэйл хаяг</Label>
+                    <Input id="signup-email" type="email" placeholder="example@email.com" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-phone">Утасны дугаар</Label>
+                    <Input id="signup-phone" type="tel" placeholder="+976 xxxxxxxx" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-role">Хэрэглэгчийн төрөл</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Төрөл сонгоно уу" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="player">Тоглогч</SelectItem>
+                        <SelectItem value="club_owner">Клубын эзэн</SelectItem>
+                        <SelectItem value="score_recorder">Оноо бүртгэгч</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">Нууц үг</Label>
+                    <Input id="signup-password" type="password" placeholder="••••••••" />
+                  </div>
+                  <Button 
+                    className="w-full mtta-green text-white hover:bg-mtta-green-dark"
+                    onClick={() => window.location.href = '/api/login'}
+                  >
+                    Бүртгүүлэх
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Membership Info */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Гишүүнчлэлийн Төлбөр</h2>
+            <p className="text-lg text-gray-600">Жилийн гишүүнчлэлийн хөнгөлөлттэй үнэ</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <Card className="shadow-lg border-2 border-mtta-green">
+              <CardHeader className="bg-gradient-to-r from-mtta-green to-mtta-green-dark text-white text-center">
+                <CardTitle className="text-2xl">Насанд хүрэгч</CardTitle>
+                <p className="text-3xl font-bold">₮50,000</p>
+                <p className="opacity-80">жилийн</p>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <ul className="space-y-3">
+                  <li className="flex items-center">
+                    <div className="w-2 h-2 mtta-green rounded-full mr-3"></div>
+                    <span>Бүх тэмцээнд оролцох эрх</span>
+                  </li>
+                  <li className="flex items-center">
+                    <div className="w-2 h-2 mtta-green rounded-full mr-3"></div>
+                    <span>Клубын дасгалжуулагчтай хамтран ажиллах</span>
+                  </li>
+                  <li className="flex items-center">
+                    <div className="w-2 h-2 mtta-green rounded-full mr-3"></div>
+                    <span>Тоног төхөөрөмжийн хөнгөлөлт</span>
+                  </li>
+                  <li className="flex items-center">
+                    <div className="w-2 h-2 mtta-green rounded-full mr-3"></div>
+                    <span>Онлайн статистик хэрэглэх</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-lg border-2 border-blue-500">
+              <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white text-center">
+                <CardTitle className="text-2xl">12 хүртэлх хүүхэд</CardTitle>
+                <p className="text-3xl font-bold">₮24,000</p>
+                <p className="opacity-80">жилийн</p>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <ul className="space-y-3">
+                  <li className="flex items-center">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                    <span>Хүүхдийн тэмцээнд оролцох эрх</span>
+                  </li>
+                  <li className="flex items-center">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                    <span>Мэргэжлийн дасгалжуулагч</span>
+                  </li>
+                  <li className="flex items-center">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                    <span>Хүүхдэд зориулсан тоног төхөөрөмж</span>
+                  </li>
+                  <li className="flex items-center">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                    <span>Эцэг эхчүүдэд зориулсан семинар</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-mtta-dark text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center space-x-3 mb-4">
+                <img src={mttaLogo} alt="MTTA Logo" className="h-10 w-auto brightness-200" />
+                <div>
+                  <h3 className="text-xl font-bold">MTTA</h3>
+                  <p className="text-sm opacity-80">Монголын Ширээний Теннисний Холбоо</p>
+                </div>
+              </div>
+              <p className="text-gray-300 text-sm">
+                Мэргэжлийн ширээний теннисний спортыг хөгжүүлж, олон улсын түвшинд тэмцэх боломжийг бүрдүүлэх зорилгоор үйл ажиллагаа явуулдаг.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-bold text-lg mb-4">Холбоосууд</h4>
+              <ul className="space-y-2 text-gray-300">
+                <li><a href="#" className="hover:text-mtta-green transition-colors">Нүүр хуудас</a></li>
+                <li><a href="#" className="hover:text-mtta-green transition-colors">Тэмцээнүүд</a></li>
+                <li><a href="#" className="hover:text-mtta-green transition-colors">Клубууд</a></li>
+                <li><a href="#" className="hover:text-mtta-green transition-colors">Лигүүд</a></li>
+                <li><a href="#" className="hover:text-mtta-green transition-colors">Мэдээ</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-bold text-lg mb-4">Холбоо барих</h4>
+              <div className="space-y-2 text-gray-300">
+                <p className="flex items-center">
+                  <span className="text-mtta-green mr-2">📍</span>
+                  Улаанбаатар хот, Сүхбаатар дүүрэг
+                </p>
+                <p className="flex items-center">
+                  <span className="text-mtta-green mr-2">📞</span>
+                  +976 11 234567
+                </p>
+                <p className="flex items-center">
+                  <span className="text-mtta-green mr-2">✉️</span>
+                  info@mtta.mn
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-bold text-lg mb-4">Биднийг дагаарай</h4>
+              <div className="flex space-x-4 mb-4">
+                <a href="#" className="w-10 h-10 mtta-green rounded-full flex items-center justify-center hover:bg-mtta-green-dark transition-colors">
+                  <span className="text-white font-bold">f</span>
+                </a>
+                <a href="#" className="w-10 h-10 mtta-green rounded-full flex items-center justify-center hover:bg-mtta-green-dark transition-colors">
+                  <span className="text-white font-bold">📷</span>
+                </a>
+                <a href="#" className="w-10 h-10 mtta-green rounded-full flex items-center justify-center hover:bg-mtta-green-dark transition-colors">
+                  <span className="text-white font-bold">▶️</span>
+                </a>
+              </div>
+              <div>
+                <h5 className="font-medium mb-2">Мэдээллийн товхимол</h5>
+                <div className="flex">
+                  <Input 
+                    type="email" 
+                    placeholder="И-мэйл хаягаа оруулна уу" 
+                    className="flex-1 bg-gray-700 text-white border-gray-600 rounded-r-none"
+                  />
+                  <Button className="mtta-green hover:bg-mtta-green-dark rounded-l-none">
+                    📧
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <Separator className="my-8 bg-gray-600" />
+          <div className="text-center text-gray-400">
+            <p>&copy; 2024 Монголын Ширээний Теннисний Холбоо. Бүх эрх хуулиар хамгаалагдсан.</p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}

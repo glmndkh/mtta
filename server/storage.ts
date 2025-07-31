@@ -1,0 +1,313 @@
+import {
+  users,
+  players,
+  clubs,
+  tournaments,
+  matches,
+  matchSets,
+  newsFeed,
+  memberships,
+  teams,
+  leagues,
+  tournamentParticipants,
+  type User,
+  type UpsertUser,
+  type Player,
+  type InsertPlayer,
+  type Club,
+  type InsertClub,
+  type Tournament,
+  type InsertTournament,
+  type Match,
+  type InsertMatch,
+  type MatchSet,
+  type News,
+  type InsertNews,
+  type Membership,
+  type InsertMembership,
+  type Team,
+  type League,
+} from "@shared/schema";
+import { db } from "./db";
+import { eq, desc, and, sql } from "drizzle-orm";
+
+export interface IStorage {
+  // User operations (required for Replit Auth)
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
+
+  // Player operations
+  getPlayer(id: string): Promise<Player | undefined>;
+  getPlayerByUserId(userId: string): Promise<Player | undefined>;
+  createPlayer(player: InsertPlayer): Promise<Player>;
+  updatePlayerStats(playerId: string, wins: number, losses: number): Promise<void>;
+  getPlayersByClub(clubId: string): Promise<Player[]>;
+
+  // Club operations
+  getClub(id: string): Promise<Club | undefined>;
+  createClub(club: InsertClub): Promise<Club>;
+  getClubsByOwner(ownerId: string): Promise<Club[]>;
+  getAllClubs(): Promise<Club[]>;
+
+  // Tournament operations
+  getTournament(id: string): Promise<Tournament | undefined>;
+  createTournament(tournament: InsertTournament): Promise<Tournament>;
+  getTournamentsByOrganizer(organizerId: string): Promise<Tournament[]>;
+  getActiveTournaments(): Promise<Tournament[]>;
+  registerPlayerForTournament(tournamentId: string, playerId: string): Promise<void>;
+
+  // Match operations
+  getMatch(id: string): Promise<Match | undefined>;
+  createMatch(match: InsertMatch): Promise<Match>;
+  updateMatchResult(matchId: string, winnerId: string, sets: Omit<MatchSet, 'id' | 'createdAt'>[]): Promise<void>;
+  getMatchesByTournament(tournamentId: string): Promise<Match[]>;
+  getPlayerMatches(playerId: string): Promise<Match[]>;
+
+  // News operations
+  getNews(id: string): Promise<News | undefined>;
+  createNews(news: InsertNews): Promise<News>;
+  getPublishedNews(): Promise<News[]>;
+  publishNews(id: string): Promise<void>;
+
+  // Membership operations
+  getMembership(playerId: string): Promise<Membership | undefined>;
+  createMembership(membership: InsertMembership): Promise<Membership>;
+  updateMembershipPayment(id: string): Promise<void>;
+
+  // League operations
+  getAllLeagues(): Promise<League[]>;
+  getTeamsByLeague(leagueId: string): Promise<Team[]>;
+}
+
+export class DatabaseStorage implements IStorage {
+  // User operations
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return user;
+  }
+
+  // Player operations
+  async getPlayer(id: string): Promise<Player | undefined> {
+    const [player] = await db.select().from(players).where(eq(players.id, id));
+    return player;
+  }
+
+  async getPlayerByUserId(userId: string): Promise<Player | undefined> {
+    const [player] = await db.select().from(players).where(eq(players.userId, userId));
+    return player;
+  }
+
+  async createPlayer(playerData: InsertPlayer): Promise<Player> {
+    const memberNumber = `TT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
+    const [player] = await db
+      .insert(players)
+      .values({ ...playerData, memberNumber })
+      .returning();
+    return player;
+  }
+
+  async updatePlayerStats(playerId: string, wins: number, losses: number): Promise<void> {
+    const total = wins + losses;
+    const winPercentage = total > 0 ? Math.round((wins / total) * 10000) : 0; // stored as percentage * 100
+    
+    await db
+      .update(players)
+      .set({ wins, losses, winPercentage })
+      .where(eq(players.id, playerId));
+  }
+
+  async getPlayersByClub(clubId: string): Promise<Player[]> {
+    return await db.select().from(players).where(eq(players.clubId, clubId));
+  }
+
+  // Club operations
+  async getClub(id: string): Promise<Club | undefined> {
+    const [club] = await db.select().from(clubs).where(eq(clubs.id, id));
+    return club;
+  }
+
+  async createClub(clubData: InsertClub): Promise<Club> {
+    const [club] = await db.insert(clubs).values(clubData).returning();
+    return club;
+  }
+
+  async getClubsByOwner(ownerId: string): Promise<Club[]> {
+    return await db.select().from(clubs).where(eq(clubs.ownerId, ownerId));
+  }
+
+  async getAllClubs(): Promise<Club[]> {
+    return await db.select().from(clubs).orderBy(clubs.name);
+  }
+
+  // Tournament operations
+  async getTournament(id: string): Promise<Tournament | undefined> {
+    const [tournament] = await db.select().from(tournaments).where(eq(tournaments.id, id));
+    return tournament;
+  }
+
+  async createTournament(tournamentData: InsertTournament): Promise<Tournament> {
+    const [tournament] = await db.insert(tournaments).values(tournamentData).returning();
+    return tournament;
+  }
+
+  async getTournamentsByOrganizer(organizerId: string): Promise<Tournament[]> {
+    return await db
+      .select()
+      .from(tournaments)
+      .where(eq(tournaments.organizerId, organizerId))
+      .orderBy(desc(tournaments.createdAt));
+  }
+
+  async getActiveTournaments(): Promise<Tournament[]> {
+    return await db
+      .select()
+      .from(tournaments)
+      .where(and(
+        eq(tournaments.status, "ongoing"),
+        sql`${tournaments.endDate} >= NOW()`
+      ))
+      .orderBy(tournaments.startDate);
+  }
+
+  async registerPlayerForTournament(tournamentId: string, playerId: string): Promise<void> {
+    await db.insert(tournamentParticipants).values({
+      tournamentId,
+      playerId,
+    });
+  }
+
+  // Match operations
+  async getMatch(id: string): Promise<Match | undefined> {
+    const [match] = await db.select().from(matches).where(eq(matches.id, id));
+    return match;
+  }
+
+  async createMatch(matchData: InsertMatch): Promise<Match> {
+    const [match] = await db.insert(matches).values(matchData).returning();
+    return match;
+  }
+
+  async updateMatchResult(matchId: string, winnerId: string, sets: Omit<MatchSet, 'id' | 'createdAt'>[]): Promise<void> {
+    await db.transaction(async (tx) => {
+      // Update match with winner and completion time
+      await tx
+        .update(matches)
+        .set({
+          winnerId,
+          status: "completed",
+          completedAt: new Date(),
+        })
+        .where(eq(matches.id, matchId));
+
+      // Insert match sets
+      if (sets.length > 0) {
+        await tx.insert(matchSets).values(sets);
+      }
+    });
+  }
+
+  async getMatchesByTournament(tournamentId: string): Promise<Match[]> {
+    return await db
+      .select()
+      .from(matches)
+      .where(eq(matches.tournamentId, tournamentId))
+      .orderBy(matches.scheduledAt);
+  }
+
+  async getPlayerMatches(playerId: string): Promise<Match[]> {
+    return await db
+      .select()
+      .from(matches)
+      .where(
+        sql`${matches.player1Id} = ${playerId} OR ${matches.player2Id} = ${playerId}`
+      )
+      .orderBy(desc(matches.completedAt), desc(matches.scheduledAt))
+      .limit(10);
+  }
+
+  // News operations
+  async getNews(id: string): Promise<News | undefined> {
+    const [news] = await db.select().from(newsFeed).where(eq(newsFeed.id, id));
+    return news;
+  }
+
+  async createNews(newsData: InsertNews): Promise<News> {
+    const [news] = await db.insert(newsFeed).values(newsData).returning();
+    return news;
+  }
+
+  async getPublishedNews(): Promise<News[]> {
+    return await db
+      .select()
+      .from(newsFeed)
+      .where(eq(newsFeed.published, true))
+      .orderBy(desc(newsFeed.publishedAt))
+      .limit(20);
+  }
+
+  async publishNews(id: string): Promise<void> {
+    await db
+      .update(newsFeed)
+      .set({
+        published: true,
+        publishedAt: new Date(),
+      })
+      .where(eq(newsFeed.id, id));
+  }
+
+  // Membership operations
+  async getMembership(playerId: string): Promise<Membership | undefined> {
+    const [membership] = await db
+      .select()
+      .from(memberships)
+      .where(eq(memberships.playerId, playerId))
+      .orderBy(desc(memberships.createdAt))
+      .limit(1);
+    return membership;
+  }
+
+  async createMembership(membershipData: InsertMembership): Promise<Membership> {
+    const [membership] = await db.insert(memberships).values(membershipData).returning();
+    return membership;
+  }
+
+  async updateMembershipPayment(id: string): Promise<void> {
+    await db
+      .update(memberships)
+      .set({
+        paid: true,
+        paidAt: new Date(),
+      })
+      .where(eq(memberships.id, id));
+  }
+
+  // League operations
+  async getAllLeagues(): Promise<League[]> {
+    return await db.select().from(leagues).orderBy(desc(leagues.startDate));
+  }
+
+  async getTeamsByLeague(leagueId: string): Promise<Team[]> {
+    return await db
+      .select()
+      .from(teams)
+      .where(eq(teams.leagueId, leagueId))
+      .orderBy(desc(teams.points), desc(teams.wins));
+  }
+}
+
+export const storage = new DatabaseStorage();

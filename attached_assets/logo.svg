@@ -1,0 +1,43 @@
+<svg width="200" height="120" viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="200" height="120" fill="#ffffff"/>
+  
+  <!-- Main text "МОНГОЛЫН ШИРЭЭНИЙ" -->
+  <text x="100" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#22C55E">
+    МОНГОЛЫН ШИРЭЭНИЙ
+  </text>
+  
+  <!-- Secondary text "ТЕННИСНИЙ ХОЛБОО" -->
+  <text x="100" y="42" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#22C55E">
+    ТЕННИСНИЙ ХОЛБОО
+  </text>
+  
+  <!-- Table tennis paddle and ball illustration -->
+  <g transform="translate(70, 50)">
+    <!-- Paddle handle -->
+    <rect x="25" y="35" width="8" height="25" fill="#8B4513" rx="2"/>
+    
+    <!-- Paddle face -->
+    <ellipse cx="29" cy="30" rx="18" ry="25" fill="#22C55E" stroke="#16A34A" stroke-width="2"/>
+    
+    <!-- Paddle surface detail -->
+    <ellipse cx="29" cy="30" rx="12" ry="18" fill="#16A34A" opacity="0.3"/>
+    
+    <!-- Table tennis ball -->
+    <circle cx="50" cy="20" r="6" fill="#ffffff" stroke="#e5e5e5" stroke-width="1"/>
+    
+    <!-- Ball curve detail -->
+    <path d="M 44 20 Q 50 16 56 20" stroke="#e5e5e5" stroke-width="1" fill="none"/>
+    <path d="M 44 20 Q 50 24 56 20" stroke="#e5e5e5" stroke-width="1" fill="none"/>
+    
+    <!-- Motion lines -->
+    <path d="M 58 18 L 65 15" stroke="#22C55E" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+    <path d="M 58 20 L 67 18" stroke="#22C55E" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+    <path d="M 58 22 L 65 25" stroke="#22C55E" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+  </g>
+  
+  <!-- MTTA text -->
+  <text x="100" y="105" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#22C55E" letter-spacing="2px">
+    MTTA
+  </text>
+</svg>
