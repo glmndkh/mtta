@@ -10,6 +10,7 @@ import {
   teams,
   leagues,
   tournamentParticipants,
+  achievements,
   type User,
   type UpsertUser,
   type Player,
@@ -27,6 +28,8 @@ import {
   type InsertMembership,
   type Team,
   type League,
+  type Achievement,
+  type InsertAchievement,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
@@ -49,6 +52,8 @@ export interface IStorage {
   updatePlayerRank(playerId: string, rank: string): Promise<boolean>;
   getPlayersByClub(clubId: string): Promise<Player[]>;
   getAllPlayers(): Promise<Player[]>;
+  getPlayerAchievements(playerId: string): Promise<Achievement[]>;
+  createAchievement(achievement: InsertAchievement): Promise<Achievement>;
 
   // Club operations
   getClub(id: string): Promise<Club | undefined>;
@@ -71,6 +76,7 @@ export interface IStorage {
   updateMatchResult(matchId: string, winnerId: string, sets: Omit<MatchSet, 'id' | 'createdAt'>[]): Promise<void>;
   getMatchesByTournament(tournamentId: string): Promise<Match[]>;
   getPlayerMatches(playerId: string): Promise<Match[]>;
+  getTournamentMatches(tournamentId: string): Promise<Match[]>;
 
   // News operations
   getNews(id: string): Promise<News | undefined>;
@@ -190,6 +196,32 @@ export class DatabaseStorage implements IStorage {
       .from(players)
       .leftJoin(users, eq(players.userId, users.id))
       .leftJoin(clubs, eq(players.clubId, clubs.id));
+  }
+
+  async getPlayerAchievements(playerId: string): Promise<Achievement[]> {
+    return await db
+      .select()
+      .from(achievements)
+      .where(eq(achievements.playerId, playerId))
+      .orderBy(desc(achievements.achievedAt));
+  }
+
+  async createAchievement(achievement: InsertAchievement): Promise<Achievement> {
+    const [newAchievement] = await db
+      .insert(achievements)
+      .values(achievement)
+      .returning();
+    return newAchievement;
+  }
+
+  async getTournamentMatches(tournamentId: string): Promise<Match[]> {
+    return await db
+      .select()
+      .from(matches)
+      .leftJoin(players, eq(matches.player1Id, players.id))
+      .leftJoin(users, eq(players.userId, users.id))
+      .where(eq(matches.tournamentId, tournamentId))
+      .orderBy(matches.scheduledAt);
   }
 
   // Club operations

@@ -56,11 +56,25 @@ export const players = pgTable("players", {
   userId: varchar("user_id").references(() => users.id).notNull(),
   memberNumber: varchar("member_number").unique(),
   clubId: varchar("club_id").references(() => clubs.id),
-  ranking: integer("ranking"),
+  rankingAllAges: integer("ranking_all_ages"),
+  rankingOwnAge: integer("ranking_own_age"),
   rank: varchar("rank"), // Admin-assigned rank (e.g., "Beginner", "Intermediate", "Advanced", "Expert")
+  dateOfBirth: timestamp("date_of_birth"),
   wins: integer("wins").default(0),
   losses: integer("losses").default(0),
   winPercentage: integer("win_percentage").default(0), // stored as percentage * 100
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Achievements table
+export const achievements = pgTable("achievements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  playerId: varchar("player_id").references(() => players.id).notNull(),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  achievedAt: timestamp("achieved_at").defaultNow(),
+  category: varchar("category").notNull(), // "tournament", "match", "milestone", etc.
+  iconUrl: varchar("icon_url"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -281,6 +295,11 @@ export const insertMembershipSchema = createInsertSchema(memberships).omit({
   paidAt: true,
 });
 
+export const insertAchievementSchema = createInsertSchema(achievements).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -297,5 +316,7 @@ export type InsertNews = z.infer<typeof insertNewsSchema>;
 export type News = typeof newsFeed.$inferSelect;
 export type InsertMembership = z.infer<typeof insertMembershipSchema>;
 export type Membership = typeof memberships.$inferSelect;
+export type InsertAchievement = z.infer<typeof insertAchievementSchema>;
+export type Achievement = typeof achievements.$inferSelect;
 export type Team = typeof teams.$inferSelect;
 export type League = typeof leagues.$inferSelect;
