@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, CalendarDays } from "@/components/ui/calendar";
+import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Trophy, Plus, Users, Calendar as CalendarIcon, MapPin, Clock, UserPlus, Settings } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -137,7 +137,7 @@ export default function Tournaments() {
   };
 
   // Check if user is admin
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = (user as any)?.role === 'admin';
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -155,7 +155,7 @@ export default function Tournaments() {
   }, [isAuthenticated, isLoading, toast]);
 
   // Fetch tournaments
-  const { data: tournaments = [], isLoading: tournamentsLoading } = useQuery({
+  const { data: tournaments = [], isLoading: tournamentsLoading } = useQuery<any[]>({
     queryKey: ["/api/tournaments"],
     enabled: isAuthenticated,
     retry: false,
@@ -294,7 +294,7 @@ export default function Tournaments() {
             <p className="text-gray-600">Идэвхтэй болон удахгүй болох тэмцээнүүд</p>
           </div>
           
-          {(user.role === 'admin' || user.role === 'club_owner') && (
+          {((user as any)?.role === 'admin' || (user as any)?.role === 'club_owner') && (
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
               <DialogTrigger asChild>
                 <Button className="mtta-green text-white hover:bg-mtta-green-dark">
@@ -463,6 +463,7 @@ export default function Tournaments() {
                         type="submit" 
                         className="mtta-green text-white hover:bg-mtta-green-dark"
                         disabled={createTournamentMutation.isPending}
+                        onClick={() => console.log("Submit button clicked", form.getValues())}
                       >
                         {createTournamentMutation.isPending ? "Үүсгэж байна..." : "Тэмцээн үүсгэх"}
                       </Button>
@@ -661,7 +662,7 @@ export default function Tournaments() {
             <Trophy className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Тэмцээн байхгүй байна</h3>
             <p className="text-gray-600 mb-6">Одоогоор идэвхтэй тэмцээн байхгүй байна</p>
-            {(user.role === 'admin' || user.role === 'club_owner') && (
+            {((user as any)?.role === 'admin' || (user as any)?.role === 'club_owner') && (
               <Button 
                 className="mtta-green text-white hover:bg-mtta-green-dark"
                 onClick={() => setShowCreateDialog(true)}
@@ -732,7 +733,7 @@ export default function Tournaments() {
                         Дэлгэрэнгүй үзэх
                       </Button>
                       
-                      {tournament.status === 'registration' && user.role === 'player' && (
+                      {tournament.status === 'registration' && (user as any)?.role === 'player' && (
                         <Button 
                           variant="outline"
                           onClick={() => registerMutation.mutate(tournament.id)}
@@ -769,7 +770,7 @@ export default function Tournaments() {
                         </>
                       )}
 
-                      {(user.role === 'admin' || user.role === 'score_recorder') && (
+                      {((user as any)?.role === 'admin' || (user as any)?.role === 'score_recorder') && (
                         <Button variant="outline">
                           <Settings className="mr-2 h-4 w-4" />
                           Удирдах
