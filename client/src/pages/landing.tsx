@@ -82,14 +82,7 @@ export default function Landing() {
               <UserPlus className="mr-2 h-5 w-5" />
               Бүртгүүлэх
             </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="border-2 border-white text-white hover:bg-white hover:text-mtta-green"
-            >
-              <Info className="mr-2 h-5 w-5" />
-              Дэлгэрэнгүй
-            </Button>
+            
           </div>
         </div>
       </section>
