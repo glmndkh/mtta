@@ -57,12 +57,23 @@ export default function Navigation() {
           <div className="flex items-center space-x-4">
             {isAuthenticated && user ? (
               <div className="hidden md:flex items-center space-x-4">
-                <Link href="/dashboard">
-                  <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-mtta-green hover:bg-gray-50 cursor-pointer">
+                {user.role === 'player' ? (
+                  <Link href="/dashboard">
+                    <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-mtta-green hover:bg-gray-50 cursor-pointer">
+                      <User className="h-4 w-4" />
+                      <span>{user.firstName}</span>
+                    </div>
+                  </Link>
+                ) : (
+                  <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700">
                     <User className="h-4 w-4" />
-                    <span>{user.firstName}</span>
+                    <span>{user.firstName} ({
+                      user.role === 'admin' ? 'Админ' :
+                      user.role === 'club_owner' ? 'Клубын эзэн' :
+                      user.role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч'
+                    })</span>
                   </div>
-                </Link>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -121,15 +132,17 @@ export default function Navigation() {
             
             {isAuthenticated && user ? (
               <>
-                <Link href="/dashboard">
-                  <div 
-                    className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-mtta-green hover:bg-gray-50 cursor-pointer"
-                    onClick={() => setShowMobileMenu(false)}
-                  >
-                    <User className="h-4 w-4" />
-                    <span>Миний профайл</span>
-                  </div>
-                </Link>
+                {user.role === 'player' && (
+                  <Link href="/dashboard">
+                    <div 
+                      className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-mtta-green hover:bg-gray-50 cursor-pointer"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <User className="h-4 w-4" />
+                      <span>Миний профайл</span>
+                    </div>
+                  </Link>
+                )}
                 
                 {/* Admin-only mobile menu item */}
                 {user?.role === 'admin' && (
