@@ -18,7 +18,7 @@ export default function AuthLanding() {
 
   // Redirect if already logged in
   if (!isLoading && user) {
-    setLocation("/home");
+    setLocation("/");
     return null;
   }
 
@@ -40,7 +40,7 @@ export default function AuthLanding() {
         title: "Амжилттай нэвтэрлээ!",
         description: "Тавтай морил.",
       });
-      setLocation("/home");
+      setLocation("/");
     },
     onError: (error: any) => {
       toast({
@@ -60,7 +60,7 @@ export default function AuthLanding() {
         title: "Амжилттай бүртгэгдлээ!",
         description: "Тавтай морил.",
       });
-      setLocation("/home");
+      setLocation("/");
     },
     onError: (error: any) => {
       toast({
