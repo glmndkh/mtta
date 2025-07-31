@@ -248,7 +248,7 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
                   <div className="grid grid-cols-4 gap-1 text-center">
                     <div className="bg-gray-800/80 rounded-lg py-4 px-2 transition-all duration-300 hover:bg-gray-700/80">
                       <div className={`text-4xl lg:text-5xl font-bold text-white leading-none mb-2 transition-all duration-500 transform ${isFlipping.days ? 'countdown-flip' : ''}`}>
-                        <span className={`inline-block ${countdown.days < 10 ? 'countdown-glow' : ''}`}>
+                        <span className="inline-block">
                           {countdown.days.toString().padStart(2, '0')}
                         </span>
                       </div>
@@ -256,7 +256,7 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
                     </div>
                     <div className="bg-gray-800/80 rounded-lg py-4 px-2 transition-all duration-300 hover:bg-gray-700/80">
                       <div className={`text-4xl lg:text-5xl font-bold text-white leading-none mb-2 transition-all duration-500 transform ${isFlipping.hours ? 'countdown-flip' : ''}`}>
-                        <span className={`inline-block ${countdown.hours < 10 ? 'countdown-glow' : ''}`}>
+                        <span className="inline-block">
                           {countdown.hours.toString().padStart(2, '0')}
                         </span>
                       </div>
@@ -264,7 +264,7 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
                     </div>
                     <div className="bg-gray-800/80 rounded-lg py-4 px-2 transition-all duration-300 hover:bg-gray-700/80">
                       <div className={`text-4xl lg:text-5xl font-bold text-white leading-none mb-2 transition-all duration-500 transform ${isFlipping.minutes ? 'countdown-flip' : ''}`}>
-                        <span className={`inline-block ${countdown.minutes < 10 ? 'countdown-glow' : ''}`}>
+                        <span className="inline-block">
                           {countdown.minutes.toString().padStart(2, '0')}
                         </span>
                       </div>
