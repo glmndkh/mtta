@@ -1,145 +1,286 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/navigation";
-import TournamentBracket from "@/components/tournament-bracket";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Trophy, Plus, Users, Calendar as CalendarIcon, MapPin, Clock, UserPlus, Settings } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { insertTournamentSchema } from "@shared/schema";
-import { z } from "zod";
-import { format } from "date-fns";
-import { mn } from "date-fns/locale";
+import { Trophy, Calendar, MapPin, Clock, ExternalLink, Ticket } from "lucide-react";
+import { useLocation } from "wouter";
 
-const createTournamentSchema = insertTournamentSchema.extend({
-  startDate: z.date(),
-  endDate: z.date(),
-});
+interface TournamentData {
+  name: string;
+  startDate: string;
+  endDate: string;
+  location: string;
+  prizeMoney: string;
+  backgroundImage: string;
+  categories: string[];
+  eventInfoUrl: string;
+  ticketUrl: string;
+  id: string;
+}
 
-type CreateTournamentForm = z.infer<typeof createTournamentSchema>;
+interface CountdownTime {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
+const CATEGORY_LABELS: Record<string, string> = {
+  "men_singles": "Эрэгтэй ганцаарчилсан",
+  "women_singles": "Эмэгтэй ганцаарчилсан", 
+  "men_doubles": "Эрэгтэй хосоор",
+  "women_doubles": "Эмэгтэй хосоор",
+  "mixed_doubles": "Холимог хосоор",
+  "team": "Багийн төрөл"
+};
+
+function TournamentCard({ tournament }: { tournament: TournamentData }) {
+  const [, setLocation] = useLocation();
+  const [countdown, setCountdown] = useState<CountdownTime>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  // Countdown timer logic
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const target = new Date(tournament.startDate).getTime();
+      const difference = target - now;
+
+      if (difference > 0) {
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+        setCountdown({ days, hours, minutes, seconds });
+      } else {
+        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      }
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(interval);
+  }, [tournament.startDate]);
+
+  const formatDateRange = () => {
+    const startDate = new Date(tournament.startDate);
+    const endDate = new Date(tournament.endDate);
+    const startFormatted = startDate.toLocaleDateString('mn-MN', { 
+      month: 'short', 
+      day: 'numeric' 
+    });
+    const endFormatted = endDate.toLocaleDateString('mn-MN', { 
+      month: 'short', 
+      day: 'numeric' 
+    });
+    const year = startDate.getFullYear();
+    
+    return `${startFormatted} – ${endFormatted} ${year}`;
+  };
+
+  return (
+    <Card 
+      className="overflow-hidden cursor-pointer hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+      onClick={() => setLocation(`/tournament/${tournament.id}`)}
+    >
+      <div className="relative h-80">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          {tournament.backgroundImage ? (
+            <div 
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{
+                backgroundImage: `url(${tournament.backgroundImage})`
+              }}
+            />
+          ) : (
+            // Default night city background
+            <div 
+              className="absolute inset-0 bg-gradient-to-b from-slate-900 via-blue-900 to-slate-800"
+              style={{
+                backgroundImage: `
+                  radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
+                  radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.1) 0%, transparent 50%)
+                `
+              }}
+            >
+              {/* Simulated city lights */}
+              <div className="absolute inset-0 opacity-60">
+                <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-yellow-400/20 via-orange-400/10 to-transparent"></div>
+                <div className="absolute bottom-0 left-0 right-0">
+                  {[...Array(10)].map((_, i) => (
+                    <div 
+                      key={i}
+                      className="absolute bottom-0 bg-gradient-to-t from-yellow-300/40 to-transparent"
+                      style={{
+                        left: `${i * 10}%`,
+                        width: `${2 + Math.random() * 3}%`,
+                        height: `${20 + Math.random() * 30}%`,
+                        opacity: 0.6 + Math.random() * 0.4
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Dark overlay for text readability */}
+          <div className="absolute inset-0 bg-black/50" />
+        </div>
+
+        {/* Content Overlay */}
+        <div className="relative z-10 h-full flex flex-col justify-between p-6">
+          {/* Top Section */}
+          <div>
+            {/* Date Badge */}
+            <div className="inline-flex items-center space-x-2 text-white mb-4">
+              <div className="w-6 h-4 bg-red-600 rounded-sm flex items-center justify-center">
+                <span className="text-xs font-bold">🇲🇳</span>
+              </div>
+              <span className="text-sm bg-black/30 px-3 py-1 rounded">
+                {formatDateRange()}
+              </span>
+            </div>
+            
+            {/* Tournament Name */}
+            <h2 className="text-2xl font-bold text-white mb-2 leading-tight">
+              {tournament.name}
+            </h2>
+            
+            {/* Location */}
+            <div className="flex items-center text-white/90 text-sm mb-4">
+              <MapPin className="w-4 h-4 mr-2" />
+              {tournament.location}
+            </div>
+          </div>
+
+          {/* Bottom Section */}  
+          <div>
+            {/* Countdown Timer */}
+            <div className="bg-black/50 backdrop-blur-sm rounded-lg p-3 mb-4">
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div>
+                  <div className="text-lg font-bold text-white">
+                    {countdown.days.toString().padStart(2, '0')}
+                  </div>
+                  <div className="text-xs text-gray-300">Өдөр</div>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-white">
+                    {countdown.hours.toString().padStart(2, '0')}
+                  </div>
+                  <div className="text-xs text-gray-300">Цаг</div>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-white">
+                    {countdown.minutes.toString().padStart(2, '0')}
+                  </div>
+                  <div className="text-xs text-gray-300">Минут</div>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-white">
+                    {countdown.seconds.toString().padStart(2, '0')}
+                  </div>
+                  <div className="text-xs text-gray-300">Секунд</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Prize Money */}
+            {tournament.prizeMoney && (
+              <div className="text-white text-sm font-medium mb-3">
+                Шагналын сан: <span className="font-bold">{tournament.prizeMoney}</span>
+              </div>
+            )}
+
+            {/* Categories */}
+            <div className="flex flex-wrap gap-1 mb-4">
+              {tournament.categories.slice(0, 3).map((category) => (
+                <Badge key={category} variant="secondary" className="bg-black/70 text-white text-xs">
+                  {CATEGORY_LABELS[category] || category}
+                </Badge>
+              ))}
+              {tournament.categories.length > 3 && (
+                <Badge variant="secondary" className="bg-black/70 text-white text-xs">
+                  +{tournament.categories.length - 3}
+                </Badge>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              {tournament.eventInfoUrl && (
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="border-white text-white hover:bg-white hover:text-black flex-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.open(tournament.eventInfoUrl, '_blank');
+                  }}
+                >
+                  Мэдээлэл
+                </Button>
+              )}
+              {tournament.ticketUrl && (
+                <Button 
+                  size="sm"
+                  className="bg-white text-black hover:bg-gray-100 flex-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.open(tournament.ticketUrl, '_blank');
+                  }}
+                >
+                  Тасалбар
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
 
 export default function Tournaments() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
-  const [selectedTournament, setSelectedTournament] = useState<string | null>(null);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [editingTournament, setEditingTournament] = useState<any>(null);
+  const [tournaments, setTournaments] = useState<TournamentData[]>([]);
 
-  // Edit tournament form
-  const editForm = useForm<CreateTournamentForm>({
-    resolver: zodResolver(createTournamentSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      location: "",
-      maxParticipants: 32,
-      startDate: new Date(),
-      endDate: new Date(),
-    },
-  });
-
-  // Update tournament mutation
-  const updateTournamentMutation = useMutation({
-    mutationFn: async (data: { id: string; tournament: CreateTournamentForm }) => {
-      const response = await apiRequest("PUT", `/api/tournaments/${data.id}`, data.tournament);
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Амжилттай",
-        description: "Тэмцээн амжилттай засварлагдлаа",
-      });
-      setShowEditDialog(false);
-      setEditingTournament(null);
-      editForm.reset();
-      queryClient.invalidateQueries({ queryKey: ["/api/tournaments"] });
-    },
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Нэвтрэх шаардлагатай",
-          description: "Та дахин нэвтэрнэ үү...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
+  // Load tournaments from localStorage
+  useEffect(() => {
+    const loadTournaments = () => {
+      const storedTournaments = localStorage.getItem('tournaments');
+      if (storedTournaments) {
+        try {
+          const parsedTournaments = JSON.parse(storedTournaments);
+          setTournaments(parsedTournaments);
+        } catch (error) {
+          console.error('Error loading tournaments:', error);
+          setTournaments([]);
+        }
       }
-      toast({
-        title: "Алдаа",
-        description: "Тэмцээн засварлахад алдаа гарлаа",
-        variant: "destructive",
-      });
-    },
-  });
+    };
 
-  // Delete tournament mutation
-  const deleteTournamentMutation = useMutation({
-    mutationFn: async (tournamentId: string) => {
-      const response = await apiRequest("DELETE", `/api/tournaments/${tournamentId}`);
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Амжилттай",
-        description: "Тэмцээн амжилттай устгагдлаа",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/tournaments"] });
-    },
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Нэвтрэх шаардлагатай",
-          description: "Та дахин нэвтэрнэ үү...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
+    loadTournaments();
+
+    // Listen for storage changes (in case tournaments are added in another tab)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'tournaments') {
+        loadTournaments();
       }
-      toast({
-        title: "Алдаа",
-        description: "Тэмцээн устгахад алдаа гарлаа",
-        variant: "destructive",
-      });
-    },
-  });
+    };
 
-  // Handle edit tournament
-  const handleEditTournament = (tournament: any) => {
-    setEditingTournament(tournament);
-    editForm.reset({
-      name: tournament.name,
-      description: tournament.description,
-      location: tournament.location,
-      maxParticipants: tournament.maxParticipants,
-      startDate: new Date(tournament.startDate),
-      endDate: new Date(tournament.endDate),
-    });
-    setShowEditDialog(true);
-  };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
-  // Check if user is admin
-  const isAdmin = (user as any)?.role === 'admin';
-
-  // Redirect if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
@@ -148,130 +289,17 @@ export default function Tournaments() {
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        window.location.href = "/login";
       }, 500);
       return;
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // Fetch tournaments
-  const { data: tournaments = [], isLoading: tournamentsLoading } = useQuery<any[]>({
-    queryKey: ["/api/tournaments"],
-    enabled: isAuthenticated,
-    retry: false,
-    meta: {
-      onError: (error: Error) => {
-        if (isUnauthorizedError(error)) {
-          toast({
-            title: "Нэвтрэх шаардлагатай",
-            description: "Та дахин нэвтэрнэ үү...",
-            variant: "destructive",
-          });
-          setTimeout(() => {
-            window.location.href = "/api/login";
-          }, 500);
-          return;
-        }
-      },
-    },
-  });
-
-  // Create tournament form
-  const form = useForm<CreateTournamentForm>({
-    resolver: zodResolver(createTournamentSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      location: "",
-      maxParticipants: 32,
-      startDate: new Date(),
-      endDate: new Date(),
-    },
-  });
-
-  // Create tournament mutation
-  const createTournamentMutation = useMutation({
-    mutationFn: async (data: CreateTournamentForm) => {
-      console.log("Sending tournament data to API:", data);
-      const response = await apiRequest("POST", "/api/tournaments", data);
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`${response.status}: ${errorData.message || 'Unknown error'}`);
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Амжилттай",
-        description: "Тэмцээн амжилттай үүсгэгдлээ",
-      });
-      setShowCreateDialog(false);
-      form.reset();
-      queryClient.invalidateQueries({ queryKey: ["/api/tournaments"] });
-    },
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Нэвтрэх шаардлагатай",
-          description: "Та дахин нэвтэрнэ үү...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Алдаа",
-        description: "Тэмцээн үүсгэхэд алдаа гарлаа",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Register for tournament mutation
-  const registerMutation = useMutation({
-    mutationFn: async (tournamentId: string) => {
-      const response = await apiRequest("POST", `/api/tournaments/${tournamentId}/register`);
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Амжилттай",
-        description: "Тэмцээнд амжилттай бүртгэгдлээ",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/tournaments"] });
-    },
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Нэвтрэх шаардлагатай",
-          description: "Та дахин нэвтэрнэ үү...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Алдаа",
-        description: "Тэмцээнд бүртгүүлэхэд алдаа гарлаа",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const onSubmit = (data: CreateTournamentForm) => {
-    console.log("Submitting tournament data:", data);
-    createTournamentMutation.mutate(data);
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mtta-green mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Уншиж байна...</p>
         </div>
       </div>
@@ -288,521 +316,55 @@ export default function Tournaments() {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Тэмцээнүүд</h1>
-            <p className="text-gray-600">Идэвхтэй болон удахгүй болох тэмцээнүүд</p>
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
+                <Trophy className="mr-3 h-8 w-8 text-green-600" />
+                Тэмцээнүүд
+              </h1>
+              <p className="text-gray-600">
+                Бүх идэвхтэй болон удахгүй болох тэмцээнүүд
+              </p>
+            </div>
+            
+            {user.role === 'admin' && (
+              <Button 
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+                onClick={() => window.location.href = '/admin/generator'}
+              >
+                <Trophy className="mr-2 h-5 w-5" />
+                Шинэ тэмцээн үүсгэх
+              </Button>
+            )}
           </div>
-          
-          {((user as any)?.role === 'admin' || (user as any)?.role === 'club_owner') && (
-            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-              <DialogTrigger asChild>
-                <Button className="mtta-green text-white hover:bg-mtta-green-dark">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Тэмцээн үүсгэх
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Шинэ тэмцээн үүсгэх</DialogTitle>
-                </DialogHeader>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Тэмцээний нэр</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Жишээ: Өвлийн Аварга Шалгаруулалт" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Тайлбар</FormLabel>
-                          <FormControl>
-                            <Textarea placeholder="Тэмцээний тухай дэлгэрэнгүй мэдээлэл..." {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="startDate"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-col">
-                            <FormLabel>Эхлэх огноо</FormLabel>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    variant={"outline"}
-                                    className="pl-3 text-left font-normal"
-                                  >
-                                    {field.value ? (
-                                      format(field.value, "PPP", { locale: mn })
-                                    ) : (
-                                      <span>Огноо сонгоно уу</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={field.value}
-                                  onSelect={field.onChange}
-                                  disabled={(date) =>
-                                    date < new Date()
-                                  }
-                                  initialFocus
-                                />
-                              </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="endDate"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-col">
-                            <FormLabel>Дуусах огноо</FormLabel>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    variant={"outline"}
-                                    className="pl-3 text-left font-normal"
-                                  >
-                                    {field.value ? (
-                                      format(field.value, "PPP", { locale: mn })
-                                    ) : (
-                                      <span>Огноо сонгоно уу</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={field.value}
-                                  onSelect={field.onChange}
-                                  disabled={(date) =>
-                                    date < form.getValues().startDate
-                                  }
-                                  initialFocus
-                                />
-                              </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="location"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Байршил</FormLabel>
-                            <FormControl>
-                              <Input placeholder="МУИС, УБ Спорт..." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="maxParticipants"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Дээд оролцогчдын тоо</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="number" 
-                                placeholder="32" 
-                                {...field}
-                                onChange={(e) => field.onChange(parseInt(e.target.value))}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="flex justify-end space-x-2 pt-4">
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={() => setShowCreateDialog(false)}
-                      >
-                        Цуцлах
-                      </Button>
-                      <Button 
-                        type="submit" 
-                        className="mtta-green text-white hover:bg-mtta-green-dark"
-                        disabled={createTournamentMutation.isPending}
-                        onClick={() => console.log("Submit button clicked", form.getValues())}
-                      >
-                        {createTournamentMutation.isPending ? "Үүсгэж байна..." : "Тэмцээн үүсгэх"}
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
-          )}
         </div>
 
-        {/* Edit Tournament Dialog */}
-        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Тэмцээн засварлах</DialogTitle>
-            </DialogHeader>
-            <Form {...editForm}>
-              <form onSubmit={editForm.handleSubmit((data) => {
-                if (editingTournament) {
-                  updateTournamentMutation.mutate({ id: editingTournament.id, tournament: data });
-                }
-              })} className="space-y-4">
-                <FormField
-                  control={editForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Тэмцээний нэр</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Жишээ: Өвлийн Аварга Шалгаруулалт" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={editForm.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Тайлбар</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder="Тэмцээний тухай дэлгэрэнгүй мэдээлэл..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={editForm.control}
-                    name="startDate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Эхлэх огноо</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className="pl-3 text-left font-normal"
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP", { locale: mn })
-                                ) : (
-                                  <span>Огноо сонгоно уу</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) =>
-                                date < new Date()
-                              }
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={editForm.control}
-                    name="endDate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Дуусах огноо</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className="pl-3 text-left font-normal"
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP", { locale: mn })
-                                ) : (
-                                  <span>Огноо сонгоно уу</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) =>
-                                date < editForm.getValues().startDate
-                              }
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={editForm.control}
-                    name="location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Байршил</FormLabel>
-                        <FormControl>
-                          <Input placeholder="МУИС, УБ Спорт..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={editForm.control}
-                    name="maxParticipants"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Дээд оролцогчдын тоо</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            placeholder="32" 
-                            {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value))}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="flex justify-end space-x-2 pt-4">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setShowEditDialog(false)}
-                  >
-                    Цуцлах
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    className="mtta-green text-white hover:bg-mtta-green-dark"
-                    disabled={updateTournamentMutation.isPending}
-                  >
-                    {updateTournamentMutation.isPending ? "Засварлаж байна..." : "Хадгалах"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-
-        {/* Tournament List */}
-        {tournamentsLoading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mtta-green mx-auto mb-4"></div>
-            <p className="text-gray-600">Тэмцээнүүдийг уншиж байна...</p>
-          </div>
-        ) : tournaments.length === 0 ? (
-          <div className="text-center py-12">
-            <Trophy className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Тэмцээн байхгүй байна</h3>
-            <p className="text-gray-600 mb-6">Одоогоор идэвхтэй тэмцээн байхгүй байна</p>
-            {((user as any)?.role === 'admin' || (user as any)?.role === 'club_owner') && (
+        {/* Tournaments Grid */}
+        {tournaments.length === 0 ? (
+          <div className="text-center py-16">
+            <Trophy className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+            <h3 className="text-xl font-medium text-gray-900 mb-2">
+              Тэмцээн байхгүй байна
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Одоогоор ямар нэг тэмцээн зарлагдаагүй байна.
+            </p>
+            {user.role === 'admin' && (
               <Button 
-                className="mtta-green text-white hover:bg-mtta-green-dark"
-                onClick={() => setShowCreateDialog(true)}
+                className="bg-green-600 hover:bg-green-700 text-white"
+                onClick={() => window.location.href = '/admin/generator'}
               >
-                <Plus className="mr-2 h-4 w-4" />
-                Анхны тэмцээн үүсгэх
+                <Trophy className="mr-2 h-5 w-5" />
+                Анхны тэмцээнээ үүсгэх
               </Button>
             )}
           </div>
         ) : (
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Tournament Cards */}
-            <div className="lg:col-span-2 space-y-6">
-              {tournaments.map((tournament: any) => (
-                <Card key={tournament.id} className="shadow-lg hover:shadow-xl transition-shadow">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-xl text-gray-900">{tournament.name}</CardTitle>
-                        <p className="text-gray-600 mt-1">{tournament.description}</p>
-                      </div>
-                      <Badge 
-                        variant={tournament.status === 'ongoing' ? 'default' : tournament.status === 'completed' ? 'secondary' : 'outline'}
-                        className={tournament.status === 'ongoing' ? 'mtta-green text-white' : ''}
-                      >
-                        {tournament.status === 'registration' ? 'Бүртгэл' : 
-                         tournament.status === 'ongoing' ? 'Идэвхтэй' : 'Дууссан'}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <CalendarIcon className="h-4 w-4 mr-2 text-mtta-green" />
-                        <div>
-                          <p className="font-medium">Эхлэх огноо</p>
-                          <p>{new Date(tournament.startDate).toLocaleDateString('mn-MN')}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Clock className="h-4 w-4 mr-2 text-mtta-green" />
-                        <div>
-                          <p className="font-medium">Дуусах огноо</p>
-                          <p>{new Date(tournament.endDate).toLocaleDateString('mn-MN')}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <MapPin className="h-4 w-4 mr-2 text-mtta-green" />
-                        <div>
-                          <p className="font-medium">Байршил</p>
-                          <p>{tournament.location || 'Тодорхойгүй'}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Users className="h-4 w-4 mr-2 text-mtta-green" />
-                        <div>
-                          <p className="font-medium">Оролцогчид</p>
-                          <p>{tournament.maxParticipants} хүртэл</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      <Button 
-                        className="mtta-green text-white hover:bg-mtta-green-dark"
-                        onClick={() => setSelectedTournament(tournament.id)}
-                      >
-                        Дэлгэрэнгүй үзэх
-                      </Button>
-                      
-                      {tournament.status === 'registration' && (user as any)?.role === 'player' && (
-                        <Button 
-                          variant="outline"
-                          onClick={() => registerMutation.mutate(tournament.id)}
-                          disabled={registerMutation.isPending}
-                        >
-                          <UserPlus className="mr-2 h-4 w-4" />
-                          {registerMutation.isPending ? 'Бүртгэж байна...' : 'Бүртгүүлэх'}
-                        </Button>
-                      )}
-
-                      {/* Admin Controls */}
-                      {isAdmin && (
-                        <>
-                          <Button 
-                            variant="outline"
-                            onClick={() => handleEditTournament(tournament)}
-                            className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                          >
-                            <Settings className="mr-2 h-4 w-4" />
-                            Засах
-                          </Button>
-                          <Button 
-                            variant="outline"
-                            onClick={() => {
-                              if (confirm('Энэ тэмцээнийг устгахдаа итгэлтэй байна уу?')) {
-                                deleteTournamentMutation.mutate(tournament.id);
-                              }
-                            }}
-                            disabled={deleteTournamentMutation.isPending}
-                            className="text-red-600 border-red-600 hover:bg-red-50"
-                          >
-                            🗑️ Устгах
-                          </Button>
-                        </>
-                      )}
-
-                      {((user as any)?.role === 'admin' || (user as any)?.role === 'score_recorder') && (
-                        <Button variant="outline">
-                          <Settings className="mr-2 h-4 w-4" />
-                          Удирдах
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Tournament Bracket Sidebar */}
-            <div>
-              {selectedTournament ? (
-                <TournamentBracket tournamentId={selectedTournament} />
-              ) : (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Trophy className="mr-2 h-5 w-5 text-mtta-green" />
-                      Тэмцээний Схем
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8">
-                      <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-600">Тэмцээн сонгож схемийг үзнэ үү</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {tournaments.map((tournament) => (
+              <TournamentCard key={tournament.id} tournament={tournament} />
+            ))}
           </div>
         )}
       </div>

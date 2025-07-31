@@ -103,8 +103,8 @@ export default function AdminTournamentGenerator() {
       description: "Тэмцээн амжилттай үүсгэгдлээ",
     });
 
-    // Redirect to the generated tournament page
-    setLocation(`/tournament/${tournamentId}`);
+    // Redirect to the tournaments page to see the new tournament
+    setLocation(`/tournaments`);
   };
 
   return (

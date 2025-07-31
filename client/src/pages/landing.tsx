@@ -28,7 +28,7 @@ export default function Landing() {
 
             <div className="hidden md:flex items-center space-x-6">
               <a href="#" className="text-gray-700 hover:text-mtta-green font-medium">Нүүр хуудас</a>
-              <a href="#" className="text-gray-700 hover:text-mtta-green font-medium">Тэмцээн</a>
+              <a href="/tournaments" className="text-gray-700 hover:text-mtta-green font-medium">Тэмцээн</a>
               <a href="#" className="text-gray-700 hover:text-mtta-green font-medium">Клубууд</a>
               <a href="#" className="text-gray-700 hover:text-mtta-green font-medium">Лиг</a>
               <a href="#" className="text-gray-700 hover:text-mtta-green font-medium">Мэдээ</a>
@@ -55,7 +55,7 @@ export default function Landing() {
           <div className="md:hidden bg-white border-t">
             <div className="px-4 py-3 space-y-2">
               <a href="#" className="block text-gray-700 hover:text-mtta-green py-2">Нүүр хуудас</a>
-              <a href="#" className="block text-gray-700 hover:text-mtta-green py-2">Тэмцээн</a>
+              <a href="/tournaments" className="block text-gray-700 hover:text-mtta-green py-2">Тэмцээн</a>
               <a href="#" className="block text-gray-700 hover:text-mtta-green py-2">Клубууд</a>
               <a href="#" className="block text-gray-700 hover:text-mtta-green py-2">Лиг</a>
               <a href="#" className="block text-gray-700 hover:text-mtta-green py-2">Мэдээ</a>
