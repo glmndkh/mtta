@@ -63,10 +63,9 @@ export default function Landing() {
           </div>
         )}
       </nav>
-
       {/* Hero Section */}
       <section className="relative bg-gradient-to-r from-mtta-green to-mtta-green-dark text-white py-20">
-        <div className="absolute inset-0 bg-black opacity-20"></div>
+        <div className="absolute inset-0 opacity-20 bg-[#168c16]"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-6">Монголын Ширээний Теннисний Холбоо</h1>
           <p className="text-xl md:text-2xl mb-8 opacity-90">
@@ -86,7 +85,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* Quick Stats */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -122,7 +120,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* Login/Signup Section */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -220,7 +217,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* Membership Info */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -288,7 +284,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* Footer */}
       <footer className="bg-mtta-dark text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
