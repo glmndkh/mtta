@@ -64,11 +64,14 @@ export default function Landing() {
         )}
       </nav>
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-r from-mtta-green to-mtta-green-dark text-white py-20">
-        <div className="absolute inset-0 opacity-20 bg-[#168c16]"></div>
+      <section className="relative text-white py-20" style={{
+        background: 'linear-gradient(135deg, #45A851 0%, #ffffff 100%)',
+        minHeight: '80vh'
+      }}>
+        <div className="absolute inset-0 opacity-10 bg-[#45A851]"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">Монголын Ширээний Теннисний Холбоо</h1>
-          <p className="text-xl md:text-2xl mb-8 opacity-90">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-gray-800">Монголын Ширээний Теннисний Холбоо</h1>
+          <p className="text-xl md:text-2xl mb-8 text-gray-700">
             Мэргэжлийн ширээний теннисний спортыг хөгжүүлж, олон улсын түвшинд тэмцэх боломжийг бүрдүүлэх
           </p>
           
