@@ -1,0 +1,263 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
+
+interface TournamentData {
+  name: string;
+  startDate: string;
+  endDate: string;
+  location: string;
+  prizeMoney: string;
+  backgroundImage: string;
+  categories: string[];
+  eventInfoUrl: string;
+  ticketUrl: string;
+  id: string;
+}
+
+const CATEGORY_OPTIONS = [
+  { id: "men_singles", label: "Эрэгтэй ганцаарчилсан", value: "men_singles" },
+  { id: "women_singles", label: "Эмэгтэй ганцаарчилсан", value: "women_singles" },
+  { id: "men_doubles", label: "Эрэгтэй хосоор", value: "men_doubles" },
+  { id: "women_doubles", label: "Эмэгтэй хосоор", value: "women_doubles" },
+  { id: "mixed_doubles", label: "Холимог хосоор", value: "mixed_doubles" },
+  { id: "team", label: "Багийн төрөл", value: "team" }
+];
+
+export default function AdminTournamentGenerator() {
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [formData, setFormData] = useState({
+    name: "",
+    startDate: "",
+    endDate: "",
+    location: "",
+    prizeMoney: "",
+    backgroundImage: "",
+    categories: [] as string[],
+    eventInfoUrl: "",
+    ticketUrl: ""
+  });
+
+  const handleInputChange = (field: keyof typeof formData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleCategoryChange = (categoryValue: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      categories: checked 
+        ? [...prev.categories, categoryValue]
+        : prev.categories.filter(cat => cat !== categoryValue)
+    }));
+  };
+
+  const generateTournamentId = () => {
+    return Date.now().toString() + Math.random().toString(36).substr(2, 9);
+  };
+
+  const saveTournamentData = (data: TournamentData) => {
+    // Save to localStorage for now (can be replaced with API call later)
+    const tournaments = JSON.parse(localStorage.getItem('tournaments') || '[]');
+    tournaments.push(data);
+    localStorage.setItem('tournaments', JSON.stringify(tournaments));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name || !formData.startDate || !formData.endDate || !formData.location) {
+      toast({
+        title: "Алдаа",
+        description: "Заавал бөглөх талбаруудыг бөглөнө үү",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (formData.categories.length === 0) {
+      toast({
+        title: "Алдаа", 
+        description: "Дор хаяж нэг төрөл сонгоно уу",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const tournamentId = generateTournamentId();
+    const tournamentData: TournamentData = {
+      ...formData,
+      id: tournamentId
+    };
+
+    saveTournamentData(tournamentData);
+
+    toast({
+      title: "Амжилттай",
+      description: "Тэмцээн амжилттай үүсгэгдлээ",
+    });
+
+    // Redirect to the generated tournament page
+    setLocation(`/tournament/${tournamentId}`);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-white py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Тэмцээний хуудас үүсгэх
+          </h1>
+          <p className="text-gray-600">
+            WTT Champions загварын тэмцээний хуудас автоматаар үүсгэх
+          </p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-green-700">Тэмцээний мэдээлэл</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Tournament Name */}
+              <div className="space-y-2">
+                <Label htmlFor="name">Тэмцээний нэр *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  placeholder="жишээ: Улаанбаатар Open 2025"
+                  required
+                />
+              </div>
+
+              {/* Dates */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="startDate">Эхлэх огноо *</Label>
+                  <Input
+                    id="startDate"
+                    type="datetime-local"
+                    value={formData.startDate}
+                    onChange={(e) => handleInputChange('startDate', e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="endDate">Дуусах огноо *</Label>
+                  <Input
+                    id="endDate"
+                    type="datetime-local"
+                    value={formData.endDate}
+                    onChange={(e) => handleInputChange('endDate', e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Location */}
+              <div className="space-y-2">
+                <Label htmlFor="location">Байршил *</Label>
+                <Input
+                  id="location"
+                  value={formData.location}
+                  onChange={(e) => handleInputChange('location', e.target.value)}
+                  placeholder="жишээ: Талын спорт цогцолбор, Улаанбаатар"
+                  required
+                />
+              </div>
+
+              {/* Prize Money */}
+              <div className="space-y-2">
+                <Label htmlFor="prizeMoney">Шагналын сан</Label>
+                <Input
+                  id="prizeMoney"
+                  value={formData.prizeMoney}
+                  onChange={(e) => handleInputChange('prizeMoney', e.target.value)}
+                  placeholder="жишээ: ₮100,000,000"
+                />
+              </div>
+
+              {/* Background Image */}
+              <div className="space-y-2">
+                <Label htmlFor="backgroundImage">Арын зураг (URL)</Label>
+                <Input
+                  id="backgroundImage"
+                  value={formData.backgroundImage}
+                  onChange={(e) => handleInputChange('backgroundImage', e.target.value)}
+                  placeholder="https://example.com/background.jpg"
+                />
+              </div>
+
+              {/* Categories */}
+              <div className="space-y-3">
+                <Label>Тэмцээний төрлүүд *</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {CATEGORY_OPTIONS.map((category) => (
+                    <div key={category.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={category.id}
+                        checked={formData.categories.includes(category.value)}
+                        onCheckedChange={(checked) => 
+                          handleCategoryChange(category.value, checked as boolean)
+                        }
+                      />
+                      <Label 
+                        htmlFor={category.id}
+                        className="text-sm font-normal cursor-pointer"
+                      >
+                        {category.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* External Links */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="eventInfoUrl">Тэмцээний мэдээллийн холбоос</Label>
+                  <Input
+                    id="eventInfoUrl"
+                    value={formData.eventInfoUrl}
+                    onChange={(e) => handleInputChange('eventInfoUrl', e.target.value)}
+                    placeholder="https://example.com/event-info"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="ticketUrl">Тасалбарын холбоос</Label>
+                  <Input
+                    id="ticketUrl"
+                    value={formData.ticketUrl}
+                    onChange={(e) => handleInputChange('ticketUrl', e.target.value)}
+                    placeholder="https://example.com/tickets"
+                  />
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <div className="flex justify-end space-x-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setLocation("/admin/tournament-create")}
+                >
+                  Цуцлах
+                </Button>
+                <Button type="submit" className="bg-green-600 hover:bg-green-700">
+                  Тэмцээний хуудас үүсгэх
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
