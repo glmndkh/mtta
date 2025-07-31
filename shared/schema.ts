@@ -57,6 +57,7 @@ export const players = pgTable("players", {
   memberNumber: varchar("member_number").unique(),
   clubId: varchar("club_id").references(() => clubs.id),
   ranking: integer("ranking"),
+  rank: varchar("rank"), // Admin-assigned rank (e.g., "Beginner", "Intermediate", "Advanced", "Expert")
   wins: integer("wins").default(0),
   losses: integer("losses").default(0),
   winPercentage: integer("win_percentage").default(0), // stored as percentage * 100

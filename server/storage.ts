@@ -46,7 +46,9 @@ export interface IStorage {
   getPlayerByUserId(userId: string): Promise<Player | undefined>;
   createPlayer(player: InsertPlayer): Promise<Player>;
   updatePlayerStats(playerId: string, wins: number, losses: number): Promise<void>;
+  updatePlayerRank(playerId: string, rank: string): Promise<boolean>;
   getPlayersByClub(clubId: string): Promise<Player[]>;
+  getAllPlayers(): Promise<Player[]>;
 
   // Club operations
   getClub(id: string): Promise<Club | undefined>;
@@ -167,6 +169,27 @@ export class DatabaseStorage implements IStorage {
 
   async getPlayersByClub(clubId: string): Promise<Player[]> {
     return await db.select().from(players).where(eq(players.clubId, clubId));
+  }
+
+  async updatePlayerRank(playerId: string, rank: string): Promise<boolean> {
+    try {
+      const result = await db
+        .update(players)
+        .set({ rank })
+        .where(eq(players.id, playerId));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error("Error updating player rank:", error);
+      return false;
+    }
+  }
+
+  async getAllPlayers(): Promise<Player[]> {
+    return await db
+      .select()
+      .from(players)
+      .leftJoin(users, eq(players.userId, users.id))
+      .leftJoin(clubs, eq(players.clubId, clubs.id));
   }
 
   // Club operations
