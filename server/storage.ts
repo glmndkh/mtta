@@ -52,6 +52,8 @@ export interface IStorage {
   // Tournament operations
   getTournament(id: string): Promise<Tournament | undefined>;
   createTournament(tournament: InsertTournament): Promise<Tournament>;
+  updateTournament(id: string, tournament: Partial<InsertTournament>): Promise<Tournament | undefined>;
+  deleteTournament(id: string): Promise<boolean>;
   getTournamentsByOrganizer(organizerId: string): Promise<Tournament[]>;
   getActiveTournaments(): Promise<Tournament[]>;
   registerPlayerForTournament(tournamentId: string, playerId: string): Promise<void>;
@@ -182,6 +184,23 @@ export class DatabaseStorage implements IStorage {
         sql`${tournaments.endDate} >= NOW()`
       ))
       .orderBy(tournaments.startDate);
+  }
+
+  async updateTournament(id: string, tournamentData: Partial<InsertTournament>): Promise<Tournament | undefined> {
+    const [tournament] = await db
+      .update(tournaments)
+      .set({
+        ...tournamentData,
+        updatedAt: new Date(),
+      })
+      .where(eq(tournaments.id, id))
+      .returning();
+    return tournament;
+  }
+
+  async deleteTournament(id: string): Promise<boolean> {
+    const result = await db.delete(tournaments).where(eq(tournaments.id, id));
+    return result.rowCount > 0;
   }
 
   async registerPlayerForTournament(tournamentId: string, playerId: string): Promise<void> {
