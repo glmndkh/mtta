@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import AuthLanding from "@/pages/auth-landing";
+import Landing from "@/pages/landing";
 import Home from "@/pages/home";
 import PlayerDashboard from "@/pages/player-dashboard";
 import Tournaments from "@/pages/tournaments";
@@ -36,7 +37,10 @@ function Router() {
           </div>
         )} />
       ) : !isAuthenticated ? (
-        <Route path="/" component={AuthLanding} />
+        <>
+          <Route path="/" component={Landing} />
+          <Route path="/auth" component={AuthLanding} />
+        </>
       ) : (
         <>
           <Route path="/" component={Home} />

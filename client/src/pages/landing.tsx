@@ -35,7 +35,7 @@ export default function Landing() {
             </div>
 
             <div className="flex items-center space-x-4">
-              <Button onClick={() => window.location.href = '/login'} className="mtta-green text-white hover:bg-mtta-green-dark">
+              <Button onClick={() => window.location.href = '/auth'} className="mtta-green text-white hover:bg-mtta-green-dark">
                 Нэвтрэх
               </Button>
               <Button 
@@ -79,7 +79,7 @@ export default function Landing() {
             <Button 
               size="lg" 
               className="bg-white text-mtta-green hover:bg-gray-100"
-              onClick={() => window.location.href = '/api/login'}
+              onClick={() => window.location.href = '/auth'}
             >
               <UserPlus className="mr-2 h-5 w-5" />
               Бүртгүүлэх
@@ -157,7 +157,7 @@ export default function Landing() {
                   </div>
                   <Button 
                     className="w-full mtta-green text-white hover:bg-mtta-green-dark"
-                    onClick={() => window.location.href = '/api/login'}
+                    onClick={() => window.location.href = '/auth'}
                   >
                     Нэвтрэх
                   </Button>
@@ -210,7 +210,7 @@ export default function Landing() {
                   </div>
                   <Button 
                     className="w-full mtta-green text-white hover:bg-mtta-green-dark"
-                    onClick={() => window.location.href = '/api/login'}
+                    onClick={() => window.location.href = '/auth'}
                   >
                     Бүртгүүлэх
                   </Button>
