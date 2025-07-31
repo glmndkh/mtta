@@ -91,7 +91,6 @@ export default function PlayerDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -104,7 +103,7 @@ export default function PlayerDashboard() {
           <div className="lg:col-span-2 space-y-6">
             {/* Player Profile Card */}
             <Card className="bg-gradient-to-br from-mtta-green to-mtta-green-dark text-white">
-              <CardContent className="p-6">
+              <CardContent className="p-6 text-[#000000]">
                 <div className="flex items-center mb-4">
                   {user.profileImageUrl ? (
                     <img 
