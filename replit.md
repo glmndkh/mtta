@@ -102,6 +102,9 @@ The application uses a comprehensive schema for table tennis management:
 - **Password Security**: Added bcrypt-style password hashing with salt for secure authentication
 - **Role-Based Access**: Enhanced role management (player, club_owner, admin, score_recorder)
 - **Database Schema Update**: Added password field to users table for authentication
+- **Fixed Tournament Registration**: Updated authentication middleware to work with passport authentication
+- **Fixed Logout Flow**: Added proper session cleanup and redirect to authentication page after logout
+- **Session Management**: Implemented PostgreSQL session store with proper table creation and cleanup
 
 ## Data Flow
 
