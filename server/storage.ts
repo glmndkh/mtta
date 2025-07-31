@@ -12,7 +12,7 @@ import {
   tournamentParticipants,
   achievements,
   type User,
-  type InsertUser,
+  type UpsertUser,
   type Player,
   type InsertPlayer,
   type Club,
@@ -35,12 +35,14 @@ import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
 
 export interface IStorage {
-  // User operations
+  // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
-  getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  upsertUser(user: UpsertUser): Promise<User>;
   
-
+  // Simple auth operations
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByPhone(phone: string): Promise<User | undefined>;
+  createSimpleUser(userData: any): Promise<User>;
 
   // Player operations
   getPlayer(id: string): Promise<Player | undefined>;
@@ -104,16 +106,45 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async createUser(userData: InsertUser): Promise<User> {
+  async upsertUser(userData: UpsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
       .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
       .returning();
     return user;
   }
 
+  // Simple auth operations
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async getUserByPhone(phone: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.phone, phone));
+    return user;
+  }
+
+  async createSimpleUser(userData: any): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({
+        id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        email: userData.email,
+        phone: userData.phone,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        role: userData.role,
+        profileImageUrl: null,
+      })
+      .returning();
     return user;
   }
 

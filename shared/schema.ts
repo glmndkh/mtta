@@ -38,11 +38,10 @@ export const tournamentStatusEnum = pgEnum("tournament_status", ["registration",
 // Match status enum
 export const matchStatusEnum = pgEnum("match_status", ["scheduled", "ongoing", "completed"]);
 
-// Users table for email/password authentication
+// Users table (required for Replit Auth)
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique().notNull(),
-  password: varchar("password").notNull(),
+  email: varchar("email").unique(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
@@ -316,7 +315,7 @@ export const insertAchievementSchema = createInsertSchema(achievements).omit({
 });
 
 // Types
-export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertPlayer = z.infer<typeof insertPlayerSchema>;
 export type Player = typeof players.$inferSelect;
