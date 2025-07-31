@@ -122,9 +122,18 @@ export default function PlayerDashboard() {
                     {player?.memberNumber && (
                       <p className="text-sm opacity-70">Гишүүн №: {player.memberNumber}</p>
                     )}
+                    {player?.rank && (
+                      <Badge variant="secondary" className="mt-1 bg-white/20 text-black">
+                        Зэрэг: {player.rank}
+                      </Badge>
+                    )}
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <span className="opacity-80">Зэрэглэл:</span>
+                    <p className="font-bold text-lg">{player?.rank || 'Томилогдоогүй'}</p>
+                  </div>
                   <div>
                     <span className="opacity-80">Рэнкинг:</span>
                     <p className="font-bold text-lg">#{player?.ranking || 'N/A'}</p>
@@ -132,12 +141,6 @@ export default function PlayerDashboard() {
                   <div>
                     <span className="opacity-80">Клуб:</span>
                     <p className="font-bold text-lg">{player?.club?.name || 'Байхгүй'}</p>
-                  </div>
-                  <div>
-                    <span className="opacity-80">Гишүүнчлэл:</span>
-                    <p className="font-bold text-lg text-green-200">
-                      {membership?.paid ? 'Идэвхтэй' : 'Төлөгдөөгүй'}
-                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -197,12 +200,12 @@ export default function PlayerDashboard() {
               </CardContent>
             </Card>
 
-            {/* Recent Matches */}
+            {/* Match History */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Trophy className="mr-2 h-5 w-5 text-mtta-green" />
-                  Сүүлийн Тоглолтууд
+                  Тоглолтын Түүх
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -278,51 +281,6 @@ export default function PlayerDashboard() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Active Tournaments */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Calendar className="mr-2 h-5 w-5 text-mtta-green" />
-                  Идэвхтэй Тэмцээнүүд
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-bold text-gray-900">Өвлийн Аварга Шалгаруулалт</h4>
-                      <Badge className="mtta-green text-white">Идэвхтэй</Badge>
-                    </div>
-                    <p className="text-gray-600 text-sm mb-3">Эрэгтэй дан бие • 16-р шаталт</p>
-                    <div className="text-xs text-gray-500 space-y-1">
-                      <p>Огноо: 2024.01.20-25</p>
-                      <p>Байршил: МУИС</p>
-                      <p>Оролцогчид: 32 тоглогч</p>
-                    </div>
-                    <Button size="sm" className="w-full mt-3 mtta-green text-white hover:bg-mtta-green-dark">
-                      Дэлгэрэнгүй үзэх
-                    </Button>
-                  </div>
-
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-bold text-gray-900">Клубын Лига 2024</h4>
-                      <Badge variant="secondary">Бүлгийн шат</Badge>
-                    </div>
-                    <p className="text-gray-600 text-sm mb-3">Эмэгтэй дан бие • Групп А</p>
-                    <div className="text-xs text-gray-500 space-y-1">
-                      <p>Дараагийн тоглолт: 2024.01.18</p>
-                      <p>Харъяа клуб: УБ Спорт</p>
-                      <p>Оноо: 2/3 тоглолт</p>
-                    </div>
-                    <Button size="sm" className="w-full mt-3 mtta-green text-white hover:bg-mtta-green-dark">
-                      Дэлгэрэнгүй үзэх
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Membership Info */}
             <Card>
               <CardHeader>
@@ -383,9 +341,20 @@ export default function PlayerDashboard() {
                         </div>
                       )}
 
+                      {membership.paid && membership.paidAt && (
+                        <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                          <span className="font-medium text-gray-900">Төлсөн огноо:</span>
+                          <span className="text-green-600 font-medium">
+                            {new Date(membership.paidAt).toLocaleDateString('mn-MN')}
+                          </span>
+                        </div>
+                      )}
+
                       <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <span className="font-medium text-gray-900">Дараагийн төлбөр:</span>
-                        <span className="text-gray-600">2025.01.01</span>
+                        <span className="font-medium text-gray-900">Хугацаа дуусах огноо:</span>
+                        <span className="text-gray-600">
+                          {membership.endDate ? new Date(membership.endDate).toLocaleDateString('mn-MN') : 'N/A'}
+                        </span>
                       </div>
                     </div>
 

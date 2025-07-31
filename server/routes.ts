@@ -182,10 +182,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin routes for player management
+  app.put('/api/admin/players/:id/rank', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Зөвхөн админ хэрэглэгч зэрэг оноож болно" });
+      }
+
+      const { rank } = req.body;
+      if (!rank || typeof rank !== 'string') {
+        return res.status(400).json({ message: "Зэрэг заавал оруулна уу" });
+      }
+
+      const success = await storage.updatePlayerRank(req.params.id, rank);
+      if (!success) {
+        return res.status(404).json({ message: "Тоглогч олдсонгүй" });
+      }
+
+      res.json({ message: "Тоглогчийн зэрэг амжилттай шинэчлэгдлээ", rank });
+    } catch (error) {
+      console.error("Error updating player rank:", error);
+      res.status(500).json({ message: "Зэрэг шинэчлэхэд алдаа гарлаа" });
+    }
+  });
+
+  app.get('/api/admin/players', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Зөвхөн админ хэрэглэгч тоглогчдыг харж болно" });
+      }
+
+      const players = await storage.getAllPlayers();
+      res.json(players);
+    } catch (error) {
+      console.error("Error fetching players:", error);
+      res.status(500).json({ message: "Тоглогчдын мэдээлэл авахад алдаа гарлаа" });
+    }
+  });
+
   // Player routes
   app.post('/api/players', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const playerData = insertPlayerSchema.parse({ ...req.body, userId });
       const player = await storage.createPlayer(playerData);
       res.json(player);
@@ -219,9 +259,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Club routes
-  app.post('/api/clubs', isAuthenticated, async (req: any, res) => {
+  app.post('/api/clubs', requireAuth, async (req: any, res) => {
     try {
-      const ownerId = req.user.claims.sub;
+      const ownerId = req.session.userId;
       const clubData = insertClubSchema.parse({ ...req.body, ownerId });
       const club = await storage.createClub(clubData);
       res.json(club);
@@ -258,7 +298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin check middleware
   const isAdmin = async (req: any, res: any, next: any) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'admin') {
         return res.status(403).json({ message: "Зөвхөн админ хэрэглэгч хандах боломжтой" });
@@ -270,9 +310,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Tournament routes - allow both admin and club owners to create tournaments
-  app.post('/api/tournaments', isAuthenticated, async (req: any, res) => {
+  app.post('/api/tournaments', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const user = await storage.getUser(userId);
       
       // Check if user is admin or club owner
@@ -331,7 +371,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin-only tournament delete route
-  app.delete('/api/tournaments/:id', isAuthenticated, isAdmin, async (req: any, res) => {
+  app.delete('/api/tournaments/:id', requireAuth, isAdmin, async (req: any, res) => {
     try {
       const success = await storage.deleteTournament(req.params.id);
       if (!success) {
@@ -344,9 +384,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/tournaments/:id/register', isAuthenticated, async (req: any, res) => {
+  app.post('/api/tournaments/:id/register', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const player = await storage.getPlayerByUserId(userId);
       if (!player) {
         return res.status(400).json({ message: "Тоглогчийн профайл олдсонгүй" });
@@ -361,7 +401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Match routes
-  app.post('/api/matches', isAuthenticated, async (req: any, res) => {
+  app.post('/api/matches', requireAuth, async (req: any, res) => {
     try {
       const matchData = insertMatchSchema.parse(req.body);
       const match = await storage.createMatch(matchData);
