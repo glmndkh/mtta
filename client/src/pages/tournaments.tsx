@@ -77,9 +77,14 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
       month: 'short', 
       day: 'numeric' 
     });
+    const startTime = startDate.toLocaleTimeString('mn-MN', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false
+    });
     const year = startDate.getFullYear();
     
-    return `${startFormatted} – ${endFormatted} ${year}`;
+    return `${startFormatted} – ${endFormatted} ${year}, ${startTime}`;
   };
 
   return (

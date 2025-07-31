@@ -36,7 +36,9 @@ export default function AdminTournamentGenerator() {
   const [formData, setFormData] = useState({
     name: "",
     startDate: "",
+    startTime: "09:00",
     endDate: "",
+    endTime: "18:00",
     location: "",
     prizeMoney: "",
     backgroundImage: "",
@@ -72,7 +74,7 @@ export default function AdminTournamentGenerator() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.startDate || !formData.endDate || !formData.location) {
+    if (!formData.name || !formData.startDate || !formData.startTime || !formData.endDate || !formData.endTime || !formData.location) {
       toast({
         title: "Алдаа",
         description: "Заавал бөглөх талбаруудыг бөглөнө үү",
@@ -91,8 +93,21 @@ export default function AdminTournamentGenerator() {
     }
 
     const tournamentId = generateTournamentId();
+    
+    // Combine date and time for proper datetime strings
+    const startDateTime = `${formData.startDate}T${formData.startTime}:00`;
+    const endDateTime = `${formData.endDate}T${formData.endTime}:00`;
+    
     const tournamentData: TournamentData = {
-      ...formData,
+      name: formData.name,
+      startDate: startDateTime,
+      endDate: endDateTime,
+      location: formData.location,
+      prizeMoney: formData.prizeMoney,
+      backgroundImage: formData.backgroundImage,
+      categories: formData.categories,
+      eventInfoUrl: formData.eventInfoUrl,
+      ticketUrl: formData.ticketUrl,
       id: tournamentId
     };
 
@@ -137,27 +152,51 @@ export default function AdminTournamentGenerator() {
                 />
               </div>
 
-              {/* Dates */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="startDate">Эхлэх огноо *</Label>
-                  <Input
-                    id="startDate"
-                    type="datetime-local"
-                    value={formData.startDate}
-                    onChange={(e) => handleInputChange('startDate', e.target.value)}
-                    required
-                  />
+              {/* Dates and Times */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="startDate">Эхлэх огноо *</Label>
+                    <Input
+                      id="startDate"
+                      type="date"
+                      value={formData.startDate}
+                      onChange={(e) => handleInputChange('startDate', e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="startTime">Эхлэх цаг *</Label>
+                    <Input
+                      id="startTime"
+                      type="time"
+                      value={formData.startTime}
+                      onChange={(e) => handleInputChange('startTime', e.target.value)}
+                      required
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="endDate">Дуусах огноо *</Label>
-                  <Input
-                    id="endDate"
-                    type="datetime-local"
-                    value={formData.endDate}
-                    onChange={(e) => handleInputChange('endDate', e.target.value)}
-                    required
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="endDate">Дуусах огноо *</Label>
+                    <Input
+                      id="endDate"
+                      type="date"
+                      value={formData.endDate}
+                      onChange={(e) => handleInputChange('endDate', e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="endTime">Дуусах цаг *</Label>
+                    <Input
+                      id="endTime"
+                      type="time"
+                      value={formData.endTime}
+                      onChange={(e) => handleInputChange('endTime', e.target.value)}
+                      required
+                    />
+                  </div>
                 </div>
               </div>
 
