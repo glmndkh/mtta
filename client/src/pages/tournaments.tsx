@@ -211,31 +211,31 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
 
             {/* Right Section - Countdown Timer */}
             <div className="flex-shrink-0">
-              <div className="bg-black/50 backdrop-blur-sm rounded-xl p-6 min-w-[280px]">
-                <div className="grid grid-cols-4 gap-4 text-center">
-                  <div className="space-y-2">
-                    <div className="text-2xl lg:text-3xl font-bold text-white">
+              <div className="bg-gray-900/90 backdrop-blur-sm rounded-2xl p-6 min-w-[320px] border border-gray-700/50">
+                <div className="grid grid-cols-4 gap-1 text-center">
+                  <div className="bg-gray-800/80 rounded-lg py-4 px-2">
+                    <div className="text-4xl lg:text-5xl font-bold text-white leading-none mb-2">
                       {countdown.days.toString().padStart(2, '0')}
                     </div>
-                    <div className="text-xs text-gray-300 uppercase tracking-wide">Өдөр</div>
+                    <div className="text-xs text-gray-300 font-medium uppercase tracking-wider">Days</div>
                   </div>
-                  <div className="space-y-2">
-                    <div className="text-2xl lg:text-3xl font-bold text-white">
+                  <div className="bg-gray-800/80 rounded-lg py-4 px-2">
+                    <div className="text-4xl lg:text-5xl font-bold text-white leading-none mb-2">
                       {countdown.hours.toString().padStart(2, '0')}
                     </div>
-                    <div className="text-xs text-gray-300 uppercase tracking-wide">Цаг</div>
+                    <div className="text-xs text-gray-300 font-medium uppercase tracking-wider">Hours</div>
                   </div>
-                  <div className="space-y-2">
-                    <div className="text-2xl lg:text-3xl font-bold text-white">
+                  <div className="bg-gray-800/80 rounded-lg py-4 px-2">
+                    <div className="text-4xl lg:text-5xl font-bold text-white leading-none mb-2">
                       {countdown.minutes.toString().padStart(2, '0')}
                     </div>
-                    <div className="text-xs text-gray-300 uppercase tracking-wide">Минут</div>
+                    <div className="text-xs text-gray-300 font-medium uppercase tracking-wider">Minutes</div>
                   </div>
-                  <div className="space-y-2">
-                    <div className="text-2xl lg:text-3xl font-bold text-white">
+                  <div className="bg-gray-800/80 rounded-lg py-4 px-2">
+                    <div className="text-4xl lg:text-5xl font-bold text-white leading-none mb-2">
                       {countdown.seconds.toString().padStart(2, '0')}
                     </div>
-                    <div className="text-xs text-gray-300 uppercase tracking-wide">Секунд</div>
+                    <div className="text-xs text-gray-300 font-medium uppercase tracking-wider">Seconds</div>
                   </div>
                 </div>
               </div>
