@@ -41,6 +41,8 @@ const CATEGORY_LABELS: Record<string, string> = {
 function TournamentCard({ tournament }: { tournament: TournamentData }) {
   const [, setLocation] = useLocation();
   const [countdown, setCountdown] = useState<CountdownTime>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [previousCountdown, setPreviousCountdown] = useState<CountdownTime>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [isFlipping, setIsFlipping] = useState({ days: false, hours: false, minutes: false, seconds: false });
 
   // Countdown timer logic
   useEffect(() => {
@@ -55,7 +57,26 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
         const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((difference % (1000 * 60)) / 1000);
 
-        setCountdown({ days, hours, minutes, seconds });
+        const newCountdown = { days, hours, minutes, seconds };
+        
+        // Check if values changed to trigger flip animation
+        if (countdown.days !== days || countdown.hours !== hours || countdown.minutes !== minutes || countdown.seconds !== seconds) {
+          const flips = {
+            days: countdown.days !== days,
+            hours: countdown.hours !== hours,
+            minutes: countdown.minutes !== minutes,
+            seconds: countdown.seconds !== seconds
+          };
+          setIsFlipping(flips);
+          
+          // Reset flip animation after 600ms
+          setTimeout(() => {
+            setIsFlipping({ days: false, hours: false, minutes: false, seconds: false });
+          }, 600);
+        }
+
+        setPreviousCountdown(countdown);
+        setCountdown(newCountdown);
       } else {
         setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
       }
@@ -225,27 +246,35 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
               <div className="flex-shrink-0">
                 <div className="bg-gray-900/90 backdrop-blur-sm rounded-2xl p-6 min-w-[320px] border border-gray-700/50">
                   <div className="grid grid-cols-4 gap-1 text-center">
-                    <div className="bg-gray-800/80 rounded-lg py-4 px-2">
-                      <div className="text-4xl lg:text-5xl font-bold text-white leading-none mb-2">
-                        {countdown.days.toString().padStart(2, '0')}
+                    <div className="bg-gray-800/80 rounded-lg py-4 px-2 transition-all duration-300 hover:bg-gray-700/80">
+                      <div className={`text-4xl lg:text-5xl font-bold text-white leading-none mb-2 transition-all duration-500 transform ${isFlipping.days ? 'countdown-flip' : ''}`}>
+                        <span className={`inline-block ${countdown.days < 10 ? 'countdown-glow' : ''}`}>
+                          {countdown.days.toString().padStart(2, '0')}
+                        </span>
                       </div>
                       <div className="text-xs text-gray-300 font-medium uppercase tracking-wider">Days</div>
                     </div>
-                    <div className="bg-gray-800/80 rounded-lg py-4 px-2">
-                      <div className="text-4xl lg:text-5xl font-bold text-white leading-none mb-2">
-                        {countdown.hours.toString().padStart(2, '0')}
+                    <div className="bg-gray-800/80 rounded-lg py-4 px-2 transition-all duration-300 hover:bg-gray-700/80">
+                      <div className={`text-4xl lg:text-5xl font-bold text-white leading-none mb-2 transition-all duration-500 transform ${isFlipping.hours ? 'countdown-flip' : ''}`}>
+                        <span className={`inline-block ${countdown.hours < 10 ? 'countdown-glow' : ''}`}>
+                          {countdown.hours.toString().padStart(2, '0')}
+                        </span>
                       </div>
                       <div className="text-xs text-gray-300 font-medium uppercase tracking-wider">Hours</div>
                     </div>
-                    <div className="bg-gray-800/80 rounded-lg py-4 px-2">
-                      <div className="text-4xl lg:text-5xl font-bold text-white leading-none mb-2">
-                        {countdown.minutes.toString().padStart(2, '0')}
+                    <div className="bg-gray-800/80 rounded-lg py-4 px-2 transition-all duration-300 hover:bg-gray-700/80">
+                      <div className={`text-4xl lg:text-5xl font-bold text-white leading-none mb-2 transition-all duration-500 transform ${isFlipping.minutes ? 'countdown-flip' : ''}`}>
+                        <span className={`inline-block ${countdown.minutes < 10 ? 'countdown-glow' : ''}`}>
+                          {countdown.minutes.toString().padStart(2, '0')}
+                        </span>
                       </div>
                       <div className="text-xs text-gray-300 font-medium uppercase tracking-wider">Minutes</div>
                     </div>
-                    <div className="bg-gray-800/80 rounded-lg py-4 px-2">
-                      <div className="text-4xl lg:text-5xl font-bold text-white leading-none mb-2">
-                        {countdown.seconds.toString().padStart(2, '0')}
+                    <div className="bg-gray-800/80 rounded-lg py-4 px-2 transition-all duration-300 hover:bg-gray-700/80">
+                      <div className={`text-4xl lg:text-5xl font-bold text-white leading-none mb-2 transition-all duration-500 transform ${isFlipping.seconds ? 'countdown-flip' : 'countdown-tick'}`}>
+                        <span className="inline-block countdown-glow">
+                          {countdown.seconds.toString().padStart(2, '0')}
+                        </span>
                       </div>
                       <div className="text-xs text-gray-300 font-medium uppercase tracking-wider">Seconds</div>
                     </div>

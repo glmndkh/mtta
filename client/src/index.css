@@ -2,6 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom countdown animations */
+@keyframes tick {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); color: #3b82f6; }
+  100% { transform: scale(1); }
+}
+
+@keyframes flipNumber {
+  0% { transform: rotateX(0deg); }
+  50% { transform: rotateX(90deg); }
+  100% { transform: rotateX(0deg); }
+}
+
+.countdown-tick {
+  animation: tick 1s ease-in-out infinite;
+}
+
+.countdown-flip {
+  animation: flipNumber 0.6s ease-in-out;
+}
+
+.countdown-glow {
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);
