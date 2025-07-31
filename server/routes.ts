@@ -9,11 +9,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  // Simple auth routes (replacement for Replit OAuth)
+  app.post('/api/auth/register', async (req, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
+      const { email, phone, firstName, lastName, role } = req.body;
+      
+      // Validate input
+      if (!email && !phone) {
+        return res.status(400).json({ message: "И-мэйл эсвэл утасны дугаар заавал оруулна уу" });
+      }
+      if (!firstName || !lastName) {
+        return res.status(400).json({ message: "Нэр, овог заавал оруулна уу" });
+      }
+      if (!role || !['player', 'club_owner'].includes(role)) {
+        return res.status(400).json({ message: "Зөв төрөл сонгоно уу" });
+      }
+
+      // Check if user already exists
+      const existingUser = email 
+        ? await storage.getUserByEmail(email)
+        : await storage.getUserByPhone(phone);
+      
+      if (existingUser) {
+        return res.status(400).json({ message: "Энэ и-мэйл эсвэл утасны дугаар аль хэдийн бүртгэгдсэн байна" });
+      }
+
+      // Create user
+      const userData = {
+        email: email || null,
+        phone: phone || null, 
+        firstName,
+        lastName,
+        role
+      };
+      
+      const user = await storage.createSimpleUser(userData);
+      res.json({ message: "Амжилттай бүртгэгдлээ", user });
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(500).json({ message: "Бүртгэлд алдаа гарлаа" });
+    }
+  });
+
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const { contact } = req.body;
+      
+      if (!contact) {
+        return res.status(400).json({ message: "И-мэйл эсвэл утасны дугаар оруулна уу" });
+      }
+
+      // Find user by email or phone
+      const user = contact.includes('@') 
+        ? await storage.getUserByEmail(contact)
+        : await storage.getUserByPhone(contact);
+      
+      if (!user) {
+        return res.status(404).json({ message: "Хэрэглэгч олдсонгүй" });
+      }
+
+      // Set user session (simple session management)
+      (req as any).session.userId = user.id;
+      (req as any).session.user = user;
+      
+      res.json({ message: "Амжилттай нэвтэрлээ", user });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Нэвтрэхэд алдаа гарлаа" });
+    }
+  });
+
+  app.post('/api/auth/logout', (req, res) => {
+    (req as any).session.destroy((err: any) => {
+      if (err) {
+        return res.status(500).json({ message: "Гарахад алдаа гарлаа" });
+      }
+      res.json({ message: "Амжилттай гарлаа" });
+    });
+  });
+
+  // Auth routes
+  app.get('/api/auth/user', async (req: any, res) => {
+    try {
+      // Check session-based authentication
+      if (!req.session.userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const user = await storage.getUser(req.session.userId);
       if (!user) {
         return res.status(404).json({ message: "Хэрэглэгч олдсонгүй" });
       }
@@ -21,7 +104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get player profile if user is a player
       let player = null;
       if (user.role === 'player') {
-        player = await storage.getPlayerByUserId(userId);
+        player = await storage.getPlayerByUserId(user.id);
       }
       
       res.json({ ...user, player });
@@ -31,8 +114,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Simple authentication middleware
+  const requireAuth = (req: any, res: any, next: any) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    next();
+  };
+
+  // Tournament routes with simple auth
+  app.post('/api/tournaments', requireAuth, async (req: any, res) => {
+    try {
+      console.log("Creating tournament with data:", req.body);
+      console.log("User session:", req.session.userId);
+      
+      const tournamentData = insertTournamentSchema.parse({
+        ...req.body,
+        organizerId: req.session.userId,
+      });
+      
+      console.log("Parsed tournament data:", tournamentData);
+      
+      const tournament = await storage.createTournament(tournamentData);
+      console.log("Created tournament:", tournament);
+      
+      res.json(tournament);
+    } catch (error) {
+      console.error("Error creating tournament:", error);
+      res.status(400).json({ message: "Тэмцээн үүсгэхэд алдаа гарлаа", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  app.get('/api/tournaments', async (req, res) => {
+    try {
+      const tournaments = await storage.getActiveTournaments();
+      res.json(tournaments);
+    } catch (error) {
+      console.error("Error fetching tournaments:", error);
+      res.status(500).json({ message: "Тэмцээнүүдийн мэдээлэл авахад алдаа гарлаа" });
+    }
+  });
+
+  app.put('/api/tournaments/:id', requireAuth, async (req: any, res) => {
+    try {
+      const tournamentData = insertTournamentSchema.partial().parse(req.body);
+      const tournament = await storage.updateTournament(req.params.id, tournamentData);
+      if (!tournament) {
+        return res.status(404).json({ message: "Тэмцээн олдсонгүй" });
+      }
+      res.json(tournament);
+    } catch (error) {
+      console.error("Error updating tournament:", error);
+      res.status(400).json({ message: "Тэмцээн шинэчлэхэд алдаа гарлаа" });
+    }
+  });
+
+  app.delete('/api/tournaments/:id', requireAuth, async (req: any, res) => {
+    try {
+      const success = await storage.deleteTournament(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Тэмцээн олдсонгүй" });
+      }
+      res.json({ message: "Тэмцээн амжилттай устгагдлаа" });
+    } catch (error) {
+      console.error("Error deleting tournament:", error);
+      res.status(500).json({ message: "Тэмцээн устгахад алдаа гарлаа" });
+    }
+  });
+
   // Player routes
-  app.post('/api/players', isAuthenticated, async (req: any, res) => {
+  app.post('/api/players', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const playerData = insertPlayerSchema.parse({ ...req.body, userId });
