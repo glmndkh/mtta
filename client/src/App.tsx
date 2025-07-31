@@ -14,6 +14,7 @@ import Clubs from "@/pages/clubs";
 import Leagues from "@/pages/leagues";
 import News from "@/pages/news";
 import AdminTournamentResults from "@/pages/admin-tournament-results";
+import AdminTournamentCreate from "@/pages/admin-tournament-create";
 import { useAuth } from "@/hooks/useAuth";
 
 function Router() {
@@ -34,6 +35,7 @@ function Router() {
           <Route path="/leagues" component={Leagues} />
           <Route path="/news" component={News} />
           <Route path="/admin/tournament-results" component={AdminTournamentResults} />
+          <Route path="/admin/tournament-create" component={AdminTournamentCreate} />
         </>
       )}
       <Route component={NotFound} />

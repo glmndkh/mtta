@@ -128,9 +128,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Creating tournament with data:", req.body);
       console.log("User session:", req.session.userId);
       
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Зөвхөн админ хэрэглэгч тэмцээн үүсгэх боломжтой" });
+      }
+
       const tournamentData = insertTournamentSchema.parse({
         ...req.body,
         organizerId: req.session.userId,
+        startDate: new Date(req.body.startDate),
+        endDate: new Date(req.body.endDate),
+        registrationDeadline: req.body.registrationDeadline ? new Date(req.body.registrationDeadline) : null,
+        entryFee: req.body.entryFee || 0,
+        maxParticipants: req.body.maxParticipants || 32,
+        isPublished: req.body.isPublished || false,
       });
       
       console.log("Parsed tournament data:", tournamentData);
@@ -147,7 +158,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/tournaments', async (req, res) => {
     try {
-      const tournaments = await storage.getActiveTournaments();
+      const tournaments = await storage.getTournaments();
       res.json(tournaments);
     } catch (error) {
       console.error("Error fetching tournaments:", error);
