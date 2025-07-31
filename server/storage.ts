@@ -302,7 +302,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTournament(id: string): Promise<boolean> {
     const result = await db.delete(tournaments).where(eq(tournaments.id, id));
-    return (result.rowCount ?? 0) > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   async registerPlayerForTournament(tournamentId: string, playerId: string): Promise<void> {
@@ -344,7 +344,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(tournamentParticipants.tournamentId, tournamentId));
     
     const registered = Number(registrationCount[0]?.count || 0);
-    const maxParticipants = tournament?.maxParticipants;
+    const maxParticipants = tournament?.maxParticipants ?? undefined;
     
     let registrationRate = 0;
     if (maxParticipants && maxParticipants > 0) {
