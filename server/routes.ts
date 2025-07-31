@@ -557,6 +557,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Tournament registration endpoints
+  app.post('/api/tournaments/:tournamentId/register', requireAuth, async (req: any, res) => {
+    try {
+      const { tournamentId } = req.params;
+      const { participationType } = req.body;
+      const userId = req.session.userId;
+
+      // Get player info
+      const player = await storage.getPlayerByUserId(userId);
+      if (!player) {
+        return res.status(400).json({ message: "Тоглогчийн мэдээлэл олдсонгүй" });
+      }
+
+      // Check if already registered
+      const existingRegistration = await storage.getTournamentRegistration(tournamentId, player.id);
+      if (existingRegistration) {
+        return res.status(400).json({ message: "Тэмцээнд аль хэдийн бүртгүүлсэн байна" });
+      }
+
+      const registration = await storage.registerForTournament({
+        tournamentId,
+        playerId: player.id,
+        participationType
+      });
+
+      res.json({ message: "Амжилттай бүртгүүллээ", registration });
+    } catch (error) {
+      console.error("Tournament registration error:", error);
+      res.status(500).json({ message: "Бүртгүүлэхэд алдаа гарлаа" });
+    }
+  });
+
+  app.get('/api/tournaments/:tournamentId/registration-stats', async (req, res) => {
+    try {
+      const { tournamentId } = req.params;
+      const stats = await storage.getTournamentRegistrationStats(tournamentId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching registration stats:", error);
+      res.status(500).json({ message: "Failed to fetch registration stats" });
+    }
+  });
+
+  app.get('/api/tournaments/:tournamentId/user-registration', async (req: any, res) => {
+    if (!req.session?.userId) {
+      return res.json({ registered: false });
+    }
+
+    try {
+      const { tournamentId } = req.params;
+      const userId = req.session.userId;
+      
+      const player = await storage.getPlayerByUserId(userId);
+      if (!player) {
+        return res.json({ registered: false });
+      }
+
+      const registration = await storage.getTournamentRegistration(tournamentId, player.id);
+      res.json({ registered: !!registration, registration });
+    } catch (error) {
+      console.error("Error checking registration:", error);
+      res.status(500).json({ message: "Failed to check registration" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

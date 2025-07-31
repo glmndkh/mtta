@@ -137,7 +137,9 @@ export const tournamentParticipants = pgTable("tournament_participants", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   tournamentId: varchar("tournament_id").references(() => tournaments.id).notNull(),
   playerId: varchar("player_id").references(() => players.id).notNull(),
+  participationType: varchar("participation_type").notNull(), // "singles", "doubles", etc.
   registeredAt: timestamp("registered_at").defaultNow(),
+  status: varchar("status").notNull().default("registered"), // registered, cancelled, confirmed
 });
 
 // Matches table
@@ -332,3 +334,5 @@ export type InsertAchievement = z.infer<typeof insertAchievementSchema>;
 export type Achievement = typeof achievements.$inferSelect;
 export type Team = typeof teams.$inferSelect;
 export type League = typeof leagues.$inferSelect;
+export type TournamentParticipant = typeof tournamentParticipants.$inferSelect;
+export type InsertTournamentParticipant = typeof tournamentParticipants.$inferInsert;
