@@ -51,6 +51,16 @@ The application uses a comprehensive schema for table tennis management:
 
 ## Recent Changes (January 2025)
 
+### Tournament Registration System Implementation
+- **Registration API**: Built comprehensive tournament registration endpoints with authentication requirements
+- **Registration Buttons**: Added "бүртгүүлэх" (Register) buttons to tournament cards and detail pages
+- **User Authentication**: Registration requires login - redirects to login page if user not authenticated
+- **Registration Status**: Shows "Бүртгүүлсэн" (Registered) status for already registered users
+- **Subscription Rate Tracking**: Implemented percentage-based registration tracking with progress bars
+- **Registration Statistics**: Real-time display of registered participants count and percentages
+- **Back Navigation**: Added back button on tournament detail pages to return to tournaments page
+- **Database Schema**: Enhanced schema with tournament_participants table supporting participation types
+
 ### WTT Champions Style Tournament System
 - **Tournament Generator**: Built admin form to create tournaments with WTT Champions styling
 - **Dynamic Tournament Pages**: Created auto-generated tournament landing pages with countdown timers, night city backgrounds
