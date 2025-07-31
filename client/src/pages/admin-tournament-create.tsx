@@ -96,13 +96,10 @@ export default function AdminTournamentCreate() {
   // Mutation for creating tournament
   const createTournamentMutation = useMutation({
     mutationFn: async (data: any) => {
-      await apiRequest("/api/tournaments", {
-        method: "POST",
-        body: JSON.stringify({
-          ...data,
-          richDescription,
-          schedule: data.schedule ? JSON.stringify({ description: data.schedule }) : null,
-        }),
+      await apiRequest("POST", "/api/tournaments", {
+        ...data,
+        richDescription,
+        schedule: data.schedule ? JSON.stringify({ description: data.schedule }) : null,
       });
     },
     onSuccess: () => {
