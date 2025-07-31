@@ -12,7 +12,7 @@ import {
   tournamentParticipants,
   achievements,
   type User,
-  type UpsertUser,
+  type InsertUser,
   type Player,
   type InsertPlayer,
   type Club,

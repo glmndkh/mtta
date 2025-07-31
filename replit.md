@@ -95,10 +95,13 @@ The application uses a comprehensive schema for table tennis management:
 - **Score Recording**: Admin and score recorder roles can update match results
 - **Achievement Creation**: Admins can create achievements for players
 
-### Authentication System Overhaul
-- **Replaced OAuth**: Completely removed Replit OAuth in favor of simple email/phone registration
-- **Session-Based Auth**: Implemented custom session-based authentication system
+### Authentication System Overhaul (January 31, 2025)
+- **Replaced Replit OAuth**: Completely removed complex Replit OAuth system in favor of simple email/password authentication
+- **New Landing Page**: Created unified authentication landing page with login and registration forms
+- **Session-Based Auth**: Implemented custom session-based authentication using passport-local strategy
+- **Password Security**: Added bcrypt-style password hashing with salt for secure authentication
 - **Role-Based Access**: Enhanced role management (player, club_owner, admin, score_recorder)
+- **Database Schema Update**: Added password field to users table for authentication
 
 ## Data Flow
 
