@@ -192,7 +192,12 @@ export default function Tournaments() {
   // Create tournament mutation
   const createTournamentMutation = useMutation({
     mutationFn: async (data: CreateTournamentForm) => {
+      console.log("Sending tournament data to API:", data);
       const response = await apiRequest("POST", "/api/tournaments", data);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`${response.status}: ${errorData.message || 'Unknown error'}`);
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -258,6 +263,7 @@ export default function Tournaments() {
   });
 
   const onSubmit = (data: CreateTournamentForm) => {
+    console.log("Submitting tournament data:", data);
     createTournamentMutation.mutate(data);
   };
 

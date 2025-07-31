@@ -189,10 +189,7 @@ export class DatabaseStorage implements IStorage {
   async updateTournament(id: string, tournamentData: Partial<InsertTournament>): Promise<Tournament | undefined> {
     const [tournament] = await db
       .update(tournaments)
-      .set({
-        ...tournamentData,
-        updatedAt: new Date(),
-      })
+      .set(tournamentData)
       .where(eq(tournaments.id, id))
       .returning();
     return tournament;
@@ -200,7 +197,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTournament(id: string): Promise<boolean> {
     const result = await db.delete(tournaments).where(eq(tournaments.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   async registerPlayerForTournament(tournamentId: string, playerId: string): Promise<void> {
