@@ -8,6 +8,7 @@ import {
   text,
   integer,
   boolean,
+  decimal,
   pgEnum,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
@@ -110,14 +111,25 @@ export const tournaments = pgTable("tournaments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name").notNull(),
   description: text("description"),
+  richDescription: text("rich_description"), // Rich text content with embedded media
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
+  registrationDeadline: timestamp("registration_deadline"),
   location: varchar("location"),
   maxParticipants: integer("max_participants"),
+  entryFee: decimal("entry_fee", { precision: 10, scale: 2 }),
   status: tournamentStatusEnum("status").default("registration"),
+  participationTypes: text("participation_types").array(), // ["singles", "doubles", "mixed_doubles", "team"]
+  rules: text("rules"),
+  prizes: text("prizes"),
+  contactInfo: text("contact_info"),
+  schedule: text("schedule"), // JSON string for detailed schedule
+  requirements: text("requirements"),
+  isPublished: boolean("is_published").default(false),
   organizerId: varchar("organizer_id").references(() => users.id).notNull(),
   clubId: varchar("club_id").references(() => clubs.id),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Tournament participants

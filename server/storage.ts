@@ -250,7 +250,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTournament(tournamentData: InsertTournament): Promise<Tournament> {
-    const [tournament] = await db.insert(tournaments).values(tournamentData).returning();
+    const [tournament] = await db.insert(tournaments).values({
+      ...tournamentData,
+      updatedAt: new Date(),
+    }).returning();
     return tournament;
   }
 
@@ -273,10 +276,20 @@ export class DatabaseStorage implements IStorage {
       .orderBy(tournaments.startDate);
   }
 
+  async getTournaments(): Promise<Tournament[]> {
+    return await db
+      .select()
+      .from(tournaments)
+      .orderBy(desc(tournaments.createdAt));
+  }
+
   async updateTournament(id: string, tournamentData: Partial<InsertTournament>): Promise<Tournament | undefined> {
     const [tournament] = await db
       .update(tournaments)
-      .set(tournamentData)
+      .set({
+        ...tournamentData,
+        updatedAt: new Date(),
+      })
       .where(eq(tournaments.id, id))
       .returning();
     return tournament;
