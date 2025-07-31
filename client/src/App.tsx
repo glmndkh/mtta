@@ -29,6 +29,10 @@ function Router() {
       <Route path="/register" component={Register} />
       <Route path="/tournament-landing" component={TournamentLanding} />
       <Route path="/tournament/:id" component={TournamentPage} />
+      <Route path="/tournaments" component={Tournaments} />
+      <Route path="/clubs" component={Clubs} />
+      <Route path="/leagues" component={Leagues} />
+      <Route path="/news" component={News} />
       <Route path="/admin/generator" component={AdminTournamentGenerator} />
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />
@@ -36,10 +40,6 @@ function Router() {
         <>
           <Route path="/" component={Home} />
           <Route path="/dashboard" component={PlayerDashboard} />
-          <Route path="/tournaments" component={Tournaments} />
-          <Route path="/clubs" component={Clubs} />
-          <Route path="/leagues" component={Leagues} />
-          <Route path="/news" component={News} />
           <Route path="/admin/tournament-results" component={AdminTournamentResults} />
           <Route path="/admin/tournament-create" component={AdminTournamentCreate} />
         </>
