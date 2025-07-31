@@ -15,7 +15,9 @@ import Leagues from "@/pages/leagues";
 import News from "@/pages/news";
 import AdminTournamentResults from "@/pages/admin-tournament-results";
 import AdminTournamentCreate from "@/pages/admin-tournament-create";
+import AdminTournamentGenerator from "@/pages/admin-tournament-generator";
 import TournamentLanding from "@/pages/tournament-landing";
+import TournamentPage from "@/pages/tournament-page";
 import { useAuth } from "@/hooks/useAuth";
 
 function Router() {
@@ -26,6 +28,8 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/tournament-landing" component={TournamentLanding} />
+      <Route path="/tournament/:id" component={TournamentPage} />
+      <Route path="/admin/generator" component={AdminTournamentGenerator} />
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (
