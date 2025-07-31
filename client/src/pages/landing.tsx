@@ -230,7 +230,7 @@ export default function Landing() {
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <Card className="shadow-lg border-2 border-mtta-green">
-              <CardHeader className="bg-gradient-to-r from-mtta-green to-mtta-green-dark text-white text-center">
+              <CardHeader className="flex flex-col space-y-1.5 p-6 from-mtta-green to-mtta-green-dark text-white text-center bg-[#22c35d]">
                 <CardTitle className="text-2xl">Насанд хүрэгч</CardTitle>
                 <p className="text-3xl font-bold">₮50,000</p>
                 <p className="opacity-80">жилийн</p>
