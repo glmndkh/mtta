@@ -185,59 +185,114 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            {/* Quick Actions based on user role */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Award className="mr-2 h-5 w-5 text-mtta-green" />
-                  Хурдан үйлдлүүд
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  {user.role === 'player' && (
-                    <>
-                      <Button className="mtta-green text-white hover:bg-mtta-green-dark" size="lg">
-                        Тэмцээнд бүртгүүлэх
-                      </Button>
-                      <Button variant="outline" size="lg">
-                        Миний статистик
-                      </Button>
-                    </>
-                  )}
-                  {user.role === 'admin' && (
-                    <>
-                      <Button className="mtta-green text-white hover:bg-mtta-green-dark" size="lg">
-                        Тэмцээн үүсгэх
-                      </Button>
-                      <Button variant="outline" size="lg">
-                        Оноо бүртгэх
-                      </Button>
-                    </>
-                  )}
-                  {user.role === 'club_owner' && (
-                    <>
-                      <Button className="mtta-green text-white hover:bg-mtta-green-dark" size="lg">
-                        Клуб удирдах
-                      </Button>
-                      <Button variant="outline" size="lg">
-                        Тоглогч нэмэх
-                      </Button>
-                    </>
-                  )}
-                  {user.role === 'score_recorder' && (
-                    <>
-                      <Button className="mtta-green text-white hover:bg-mtta-green-dark" size="lg">
-                        Оноо бүртгэх
-                      </Button>
-                      <Button variant="outline" size="lg">
-                        Тоглолтын жагсаалт
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            {/* Admin Tournament Management */}
+            {user.role === 'admin' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Trophy className="mr-2 h-5 w-5 text-mtta-green" />
+                    Тэмцээн удирдах
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <Button 
+                      className="w-full mtta-green text-white hover:bg-mtta-green-dark" 
+                      size="lg"
+                      onClick={() => window.location.href = '/admin/tournament-create'}
+                    >
+                      <Trophy className="mr-2 h-4 w-4" />
+                      Тэмцээн үүсгэх
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full" 
+                      size="lg"
+                      onClick={() => window.location.href = '/admin/tournament-results'}
+                    >
+                      <Award className="mr-2 h-4 w-4" />
+                      Тэмцээний үр дүн оруулах
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Player Actions */}
+            {user.role === 'player' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Medal className="mr-2 h-5 w-5 text-mtta-green" />
+                    Тоглогчийн үйлдлүүд
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Button 
+                      className="mtta-green text-white hover:bg-mtta-green-dark" 
+                      size="lg"
+                      onClick={() => window.location.href = '/dashboard'}
+                    >
+                      <Medal className="mr-2 h-4 w-4" />
+                      Миний статистик
+                    </Button>
+                    <Button variant="outline" size="lg">
+                      <Trophy className="mr-2 h-4 w-4" />
+                      Тэмцээнд бүртгүүлэх
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Club Owner Actions */}
+            {user.role === 'club_owner' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Building className="mr-2 h-5 w-5 text-mtta-green" />
+                    Клубын эзний үйлдлүүд
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Button className="mtta-green text-white hover:bg-mtta-green-dark" size="lg">
+                      <Building className="mr-2 h-4 w-4" />
+                      Клуб удирдах
+                    </Button>
+                    <Button variant="outline" size="lg">
+                      <Users className="mr-2 h-4 w-4" />
+                      Тоглогч нэмэх
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Score Recorder Actions */}
+            {user.role === 'score_recorder' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Award className="mr-2 h-5 w-5 text-mtta-green" />
+                    Оноо бүртгэгчийн үйлдлүүд
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Button className="mtta-green text-white hover:bg-mtta-green-dark" size="lg">
+                      <Award className="mr-2 h-4 w-4" />
+                      Оноо бүртгэх
+                    </Button>
+                    <Button variant="outline" size="lg">
+                      <Calendar className="mr-2 h-4 w-4" />
+                      Тоглолтын жагсаалт
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Sidebar */}
