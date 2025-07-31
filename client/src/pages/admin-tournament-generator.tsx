@@ -155,7 +155,7 @@ export default function AdminTournamentGenerator() {
       entryFee: 0,
       participationTypes: ['singles', 'doubles'],
       isPublished: true,
-      status: 'upcoming'
+      status: 'registration'
     };
 
     saveTournament.mutate(tournamentData);
