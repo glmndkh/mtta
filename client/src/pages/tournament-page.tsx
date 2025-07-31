@@ -43,7 +43,7 @@ function TournamentRegistrationButton({ tournamentId }: { tournamentId: string }
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: userRegistration } = useQuery({
+  const { data: userRegistration } = useQuery<{ registered: boolean; registration?: any }>({
     queryKey: ['/api/tournaments', tournamentId, 'user-registration'],
     enabled: isAuthenticated,
   });
@@ -54,10 +54,7 @@ function TournamentRegistrationButton({ tournamentId }: { tournamentId: string }
         window.location.href = "/login";
         return;
       }
-      return apiRequest(`/api/tournaments/${tournamentId}/register`, {
-        method: 'POST',
-        body: JSON.stringify({ participationType }),
-      });
+      return apiRequest('POST', `/api/tournaments/${tournamentId}/register`, { participationType });
     },
     onSuccess: () => {
       toast({
@@ -117,7 +114,7 @@ function TournamentRegistrationButton({ tournamentId }: { tournamentId: string }
 
 // Tournament Registration Stats Component
 function TournamentRegistrationStats({ tournamentId }: { tournamentId: string }) {
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<{ registered: number; maxParticipants?: number; registrationRate: number }>({
     queryKey: ['/api/tournaments', tournamentId, 'registration-stats'],
   });
 
