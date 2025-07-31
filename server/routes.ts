@@ -422,21 +422,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/tournaments/:id/register', requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.session.userId;
-      const player = await storage.getPlayerByUserId(userId);
-      if (!player) {
-        return res.status(400).json({ message: "Тоглогчийн профайл олдсонгүй" });
-      }
-      
-      await storage.registerPlayerForTournament(req.params.id, player.id);
-      res.json({ message: "Амжилттай бүртгэгдлээ" });
-    } catch (error) {
-      console.error("Error registering for tournament:", error);
-      res.status(400).json({ message: "Тэмцээнд бүртгүүлэхэд алдаа гарлаа" });
-    }
-  });
+
 
   // Match routes
   app.post('/api/matches', requireAuth, async (req: any, res) => {
@@ -564,10 +550,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { participationType } = req.body;
       const userId = req.session.userId;
 
-      // Get player info
-      const player = await storage.getPlayerByUserId(userId);
+      // Get or create player profile for the user
+      let player = await storage.getPlayerByUserId(userId);
       if (!player) {
-        return res.status(400).json({ message: "Тоглогчийн мэдээлэл олдсонгүй" });
+        // Auto-create a basic player profile for the user
+        const user = await storage.getUser(userId);
+        if (!user) {
+          return res.status(400).json({ message: "Хэрэглэгч олдсонгүй" });
+        }
+        
+        player = await storage.createPlayer({
+          userId: userId,
+          firstName: user.firstName || "Unknown",
+          lastName: user.lastName || "Player",
+          email: user.email || "",
+          phone: "",
+          dateOfBirth: new Date(), // Default date, user can update later
+          gender: "male", // Default gender, user can update later
+          allAgesRanking: 0,
+          ownAgeRanking: 0,
+          rank: "Шинэ тоглогч"
+        });
       }
 
       // Check if already registered
@@ -579,7 +582,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const registration = await storage.registerForTournament({
         tournamentId,
         playerId: player.id,
-        participationType
+        participationType: participationType || "singles"
       });
 
       res.json({ message: "Амжилттай бүртгүүллээ", registration });
