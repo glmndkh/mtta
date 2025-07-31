@@ -15,6 +15,7 @@ import Leagues from "@/pages/leagues";
 import News from "@/pages/news";
 import AdminTournamentResults from "@/pages/admin-tournament-results";
 import AdminTournamentCreate from "@/pages/admin-tournament-create";
+import TournamentLanding from "@/pages/tournament-landing";
 import { useAuth } from "@/hooks/useAuth";
 
 function Router() {
@@ -24,6 +25,7 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/tournament-landing" component={TournamentLanding} />
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (
