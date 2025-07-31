@@ -118,16 +118,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
-  // Tournament routes
-  app.post('/api/tournaments', isAuthenticated, isAdmin, async (req: any, res) => {
+  // Tournament routes - allow both admin and club owners to create tournaments
+  app.post('/api/tournaments', isAuthenticated, async (req: any, res) => {
     try {
-      const organizerId = req.user.claims.sub;
-      const tournamentData = insertTournamentSchema.parse({ ...req.body, organizerId });
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      // Check if user is admin or club owner
+      if (user?.role !== 'admin' && user?.role !== 'club_owner') {
+        return res.status(403).json({ message: "Зөвхөн админ болон клубын эзэд тэмцээн үүсгэх боломжтой" });
+      }
+      
+      const tournamentData = insertTournamentSchema.parse({ ...req.body, organizerId: userId });
+      console.log("Creating tournament with data:", tournamentData);
       const tournament = await storage.createTournament(tournamentData);
+      console.log("Tournament created successfully:", tournament);
       res.json(tournament);
     } catch (error) {
       console.error("Error creating tournament:", error);
-      res.status(400).json({ message: "Тэмцээн үүсгэхэд алдаа гарлаа" });
+      res.status(400).json({ message: "Тэмцээн үүсгэхэд алдаа гарлаа", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
