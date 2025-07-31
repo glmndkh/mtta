@@ -7,6 +7,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { isUnauthorizedError } from "@/lib/authUtils";
 
 interface TournamentData {
   name: string;
@@ -64,12 +67,56 @@ export default function AdminTournamentGenerator() {
     return Date.now().toString() + Math.random().toString(36).substr(2, 9);
   };
 
-  const saveTournamentData = (data: TournamentData) => {
-    // Save to localStorage for now (can be replaced with API call later)
-    const tournaments = JSON.parse(localStorage.getItem('tournaments') || '[]');
-    tournaments.push(data);
-    localStorage.setItem('tournaments', JSON.stringify(tournaments));
-  };
+  const saveTournament = useMutation({
+    mutationFn: async (tournamentData: any) => {
+      return apiRequest('POST', '/api/tournaments', tournamentData);
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "Амжилттай үүсгэлээ!",
+        description: "Тэмцээн амжилттай үүсгэгдлээ.",
+      });
+      
+      // Also save to localStorage for immediate display
+      const localTournament = {
+        id: data.id,
+        name: formData.name,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        location: formData.location,
+        prizeMoney: formData.prizeMoney || 'TBD',
+        backgroundImage: formData.backgroundImage || '',
+        categories: formData.categories.filter((cat: string) => cat.trim() !== ''),
+        eventInfoUrl: formData.eventInfoUrl || '',
+        ticketUrl: formData.ticketUrl || ''
+      };
+      
+      const existingTournaments = JSON.parse(localStorage.getItem('tournaments') || '[]');
+      existingTournaments.unshift(localTournament);
+      localStorage.setItem('tournaments', JSON.stringify(existingTournaments));
+      
+      // Redirect to the tournaments page to see the new tournament
+      setLocation('/tournaments');
+    },
+    onError: (error: any) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Нэвтрэх шаардлагатай",
+          description: "Та дахин нэвтэрнэ үү",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1000);
+        return;
+      }
+      toast({
+        title: "Алдаа гарлаа",
+        description: error.message || "Тэмцээн үүсгэхэд алдаа гарлаа",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,28 +145,20 @@ export default function AdminTournamentGenerator() {
     const startDateTime = `${formData.startDate}T${formData.startTime}:00`;
     const endDateTime = `${formData.endDate}T${formData.endTime}:00`;
     
-    const tournamentData: TournamentData = {
+    const tournamentData = {
       name: formData.name,
+      description: `${formData.name} тэмцээн`,
       startDate: startDateTime,
       endDate: endDateTime,
       location: formData.location,
-      prizeMoney: formData.prizeMoney,
-      backgroundImage: formData.backgroundImage,
-      categories: formData.categories,
-      eventInfoUrl: formData.eventInfoUrl,
-      ticketUrl: formData.ticketUrl,
-      id: tournamentId
+      maxParticipants: 32,
+      entryFee: 0,
+      participationTypes: ['singles', 'doubles'],
+      isPublished: true,
+      status: 'upcoming'
     };
 
-    saveTournamentData(tournamentData);
-
-    toast({
-      title: "Амжилттай",
-      description: "Тэмцээн амжилттай үүсгэгдлээ",
-    });
-
-    // Redirect to the tournaments page to see the new tournament
-    setLocation(`/tournaments`);
+    saveTournament.mutate(tournamentData);
   };
 
   return (
@@ -289,8 +328,12 @@ export default function AdminTournamentGenerator() {
                 >
                   Цуцлах
                 </Button>
-                <Button type="submit" className="bg-green-600 hover:bg-green-700">
-                  Тэмцээний хуудас үүсгэх
+                <Button 
+                  type="submit" 
+                  className="bg-green-600 hover:bg-green-700"
+                  disabled={saveTournament.isPending}
+                >
+                  {saveTournament.isPending ? "Үүсгэж байна..." : "Тэмцээний хуудас үүсгэх"}
                 </Button>
               </div>
             </form>
