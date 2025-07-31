@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
+import TournamentTimeDisplay from "@/components/tournament-time-display";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -141,18 +142,29 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
 
         {/* Content Overlay */}
         <div className="relative z-10 h-full">
-          <div className="h-full flex flex-col lg:flex-row items-start lg:items-center justify-between p-6 lg:p-8 gap-6">
-            {/* Left Section - Tournament Info */}
-            <div className="flex-1 space-y-4">
-              {/* Date Badge */}
-              <div className="inline-flex items-center space-x-2 text-white">
-                <div className="w-6 h-4 bg-red-600 rounded-sm flex items-center justify-center">
-                  <span className="text-xs font-bold">🇲🇳</span>
+          <div className="h-full flex flex-col p-6 lg:p-8 gap-6">
+            {/* Top Section - Time Display */}
+            <div className="mb-4">
+              <TournamentTimeDisplay 
+                startDate={tournament.startDate}
+                endDate={tournament.endDate}
+                className="bg-white/95 backdrop-blur-sm"
+              />
+            </div>
+
+            {/* Main Content Section */}
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 flex-1">
+              {/* Left Section - Tournament Info */}
+              <div className="flex-1 space-y-4">
+                {/* Date Badge */}
+                <div className="inline-flex items-center space-x-2 text-white">
+                  <div className="w-6 h-4 bg-red-600 rounded-sm flex items-center justify-center">
+                    <span className="text-xs font-bold">🇲🇳</span>
+                  </div>
+                  <span className="text-sm bg-black/30 px-3 py-1 rounded">
+                    {formatDateRange()}
+                  </span>
                 </div>
-                <span className="text-sm bg-black/30 px-3 py-1 rounded">
-                  {formatDateRange()}
-                </span>
-              </div>
               
               {/* Tournament Name */}
               <h2 className="text-3xl lg:text-4xl font-bold text-white leading-tight">
@@ -181,61 +193,62 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
                 ))}
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3">
-                {tournament.eventInfoUrl && (
-                  <Button 
-                    variant="outline" 
-                    className="border-white text-white hover:bg-white hover:text-black"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      window.open(tournament.eventInfoUrl, '_blank');
-                    }}
-                  >
-                    Тэмцээний мэдээлэл
-                  </Button>
-                )}
-                {tournament.ticketUrl && (
-                  <Button 
-                    className="bg-white text-black hover:bg-gray-100"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      window.open(tournament.ticketUrl, '_blank');
-                    }}
-                  >
-                    Тасалбар захиалах
-                  </Button>
-                )}
+                {/* Action Buttons */}
+                <div className="flex flex-wrap gap-3">
+                  {tournament.eventInfoUrl && (
+                    <Button 
+                      variant="outline" 
+                      className="border-white text-white hover:bg-white hover:text-black"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(tournament.eventInfoUrl, '_blank');
+                      }}
+                    >
+                      Тэмцээний мэдээлэл
+                    </Button>
+                  )}
+                  {tournament.ticketUrl && (
+                    <Button 
+                      className="bg-white text-black hover:bg-gray-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(tournament.ticketUrl, '_blank');
+                      }}
+                    >
+                      Тасалбар захиалах
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Right Section - Countdown Timer */}
-            <div className="flex-shrink-0">
-              <div className="bg-gray-900/90 backdrop-blur-sm rounded-2xl p-6 min-w-[320px] border border-gray-700/50">
-                <div className="grid grid-cols-4 gap-1 text-center">
-                  <div className="bg-gray-800/80 rounded-lg py-4 px-2">
-                    <div className="text-4xl lg:text-5xl font-bold text-white leading-none mb-2">
-                      {countdown.days.toString().padStart(2, '0')}
+              {/* Right Section - Countdown Timer */}
+              <div className="flex-shrink-0">
+                <div className="bg-gray-900/90 backdrop-blur-sm rounded-2xl p-6 min-w-[320px] border border-gray-700/50">
+                  <div className="grid grid-cols-4 gap-1 text-center">
+                    <div className="bg-gray-800/80 rounded-lg py-4 px-2">
+                      <div className="text-4xl lg:text-5xl font-bold text-white leading-none mb-2">
+                        {countdown.days.toString().padStart(2, '0')}
+                      </div>
+                      <div className="text-xs text-gray-300 font-medium uppercase tracking-wider">Days</div>
                     </div>
-                    <div className="text-xs text-gray-300 font-medium uppercase tracking-wider">Days</div>
-                  </div>
-                  <div className="bg-gray-800/80 rounded-lg py-4 px-2">
-                    <div className="text-4xl lg:text-5xl font-bold text-white leading-none mb-2">
-                      {countdown.hours.toString().padStart(2, '0')}
+                    <div className="bg-gray-800/80 rounded-lg py-4 px-2">
+                      <div className="text-4xl lg:text-5xl font-bold text-white leading-none mb-2">
+                        {countdown.hours.toString().padStart(2, '0')}
+                      </div>
+                      <div className="text-xs text-gray-300 font-medium uppercase tracking-wider">Hours</div>
                     </div>
-                    <div className="text-xs text-gray-300 font-medium uppercase tracking-wider">Hours</div>
-                  </div>
-                  <div className="bg-gray-800/80 rounded-lg py-4 px-2">
-                    <div className="text-4xl lg:text-5xl font-bold text-white leading-none mb-2">
-                      {countdown.minutes.toString().padStart(2, '0')}
+                    <div className="bg-gray-800/80 rounded-lg py-4 px-2">
+                      <div className="text-4xl lg:text-5xl font-bold text-white leading-none mb-2">
+                        {countdown.minutes.toString().padStart(2, '0')}
+                      </div>
+                      <div className="text-xs text-gray-300 font-medium uppercase tracking-wider">Minutes</div>
                     </div>
-                    <div className="text-xs text-gray-300 font-medium uppercase tracking-wider">Minutes</div>
-                  </div>
-                  <div className="bg-gray-800/80 rounded-lg py-4 px-2">
-                    <div className="text-4xl lg:text-5xl font-bold text-white leading-none mb-2">
-                      {countdown.seconds.toString().padStart(2, '0')}
+                    <div className="bg-gray-800/80 rounded-lg py-4 px-2">
+                      <div className="text-4xl lg:text-5xl font-bold text-white leading-none mb-2">
+                        {countdown.seconds.toString().padStart(2, '0')}
+                      </div>
+                      <div className="text-xs text-gray-300 font-medium uppercase tracking-wider">Seconds</div>
                     </div>
-                    <div className="text-xs text-gray-300 font-medium uppercase tracking-wider">Seconds</div>
                   </div>
                 </div>
               </div>
