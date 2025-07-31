@@ -130,6 +130,19 @@ export default function Navigation() {
                     <span>Миний профайл</span>
                   </div>
                 </Link>
+                
+                {/* Admin-only mobile menu item */}
+                {user?.role === 'admin' && (
+                  <Link href="/admin/tournament-results">
+                    <div 
+                      className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-mtta-green hover:bg-gray-50 cursor-pointer"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <Trophy className="h-4 w-4" />
+                      <span>Тэмцээний Үр Дүн</span>
+                    </div>
+                  </Link>
+                )}
                 <button
                   onClick={() => {
                     setShowMobileMenu(false);

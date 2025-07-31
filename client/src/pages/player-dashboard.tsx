@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { User, Trophy, Calendar, CreditCard, BarChart3, Target, TrendingUp } from "lucide-react";
+import { User, Trophy, Calendar, CreditCard, BarChart3, Target, TrendingUp, Award, Star } from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 
 export default function PlayerDashboard() {
@@ -71,6 +71,13 @@ export default function PlayerDashboard() {
     retry: false,
   });
 
+  // Fetch achievements
+  const { data: achievements = [], isLoading: achievementsLoading } = useQuery({
+    queryKey: ["/api/players", playerData?.player?.id, "achievements"],
+    enabled: !!playerData?.player?.id,
+    retry: false,
+  });
+
   if (isLoading || playerLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -129,17 +136,21 @@ export default function PlayerDashboard() {
                     )}
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-4 gap-3">
                   <div>
-                    <span className="opacity-80">Зэрэглэл:</span>
+                    <span className="opacity-80 text-sm">Зэрэглэл:</span>
                     <p className="font-bold text-lg">{player?.rank || 'Томилогдоогүй'}</p>
                   </div>
                   <div>
-                    <span className="opacity-80">Рэнкинг:</span>
-                    <p className="font-bold text-lg">#{player?.ranking || 'N/A'}</p>
+                    <span className="opacity-80 text-sm">Бүх насны:</span>
+                    <p className="font-bold text-lg">#{player?.rankingAllAges || 'N/A'}</p>
                   </div>
                   <div>
-                    <span className="opacity-80">Клуб:</span>
+                    <span className="opacity-80 text-sm">Өөрийн насны:</span>
+                    <p className="font-bold text-lg">#{player?.rankingOwnAge || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <span className="opacity-80 text-sm">Клуб:</span>
                     <p className="font-bold text-lg">{player?.club?.name || 'Байхгүй'}</p>
                   </div>
                 </div>
@@ -197,6 +208,56 @@ export default function PlayerDashboard() {
                     className="h-2"
                   />
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Achievements */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Award className="mr-2 h-5 w-5 text-mtta-green" />
+                  Амжилтууд
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {achievementsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mtta-green mx-auto mb-2"></div>
+                    <p className="text-gray-600">Амжилтууд уншиж байна...</p>
+                  </div>
+                ) : achievements.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Award className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600">Одоогоор амжилт байхгүй байна</p>
+                    <p className="text-sm text-gray-500 mt-2">Тэмцээнд оролцож амжилт олоорой!</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-3">
+                    {achievements.slice(0, 6).map((achievement: any) => (
+                      <div 
+                        key={achievement.id}
+                        className="flex items-center p-3 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center mr-3">
+                          <Star className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900">{achievement.title}</h4>
+                          <p className="text-sm text-gray-600">{achievement.description}</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {achievement.achievedAt 
+                              ? new Date(achievement.achievedAt).toLocaleDateString('mn-MN')
+                              : 'Огноо тодорхойгүй'
+                            }
+                          </p>
+                        </div>
+                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                          {achievement.category}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 

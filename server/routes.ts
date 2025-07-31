@@ -258,6 +258,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/players/:id/achievements', async (req, res) => {
+    try {
+      const achievements = await storage.getPlayerAchievements(req.params.id);
+      res.json(achievements);
+    } catch (error) {
+      console.error("Error fetching player achievements:", error);
+      res.status(500).json({ message: "Амжилтууд авахад алдаа гарлаа" });
+    }
+  });
+
+  // Admin route to create achievements
+  app.post('/api/admin/achievements', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Зөвхөн админ хэрэглэгч амжилт үүсгэх боломжтой" });
+      }
+
+      const achievementData = req.body;
+      const achievement = await storage.createAchievement(achievementData);
+      res.json(achievement);
+    } catch (error) {
+      console.error("Error creating achievement:", error);
+      res.status(500).json({ message: "Амжилт үүсгэхэд алдаа гарлаа" });
+    }
+  });
+
   // Club routes
   app.post('/api/clubs', requireAuth, async (req: any, res) => {
     try {

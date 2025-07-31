@@ -31,7 +31,7 @@ The application follows a modern full-stack architecture with clear separation b
 ### Backend Architecture
 - **Framework**: Express.js with TypeScript
 - **Database ORM**: Drizzle with PostgreSQL
-- **Authentication**: Custom Replit OAuth implementation with Passport.js
+- **Authentication**: Custom session-based authentication (replaced OAuth)
 - **Session Management**: Express sessions with PostgreSQL store
 - **API Design**: RESTful API with JSON responses
 
@@ -39,14 +39,36 @@ The application follows a modern full-stack architecture with clear separation b
 The application uses a comprehensive schema for table tennis management:
 
 - **Users**: Core user authentication and profile data
-- **Players**: Player profiles with statistics and club affiliations
+- **Players**: Player profiles with dual ranking system (all ages & own age), admin-assigned ranks, achievements
 - **Clubs**: Club management with ownership and membership systems
 - **Tournaments**: Tournament creation and management
 - **Matches**: Match records with set-by-set scoring
 - **Teams**: Team management for league play
 - **Leagues**: League systems with standings
 - **News**: News and announcements system
-- **Memberships**: Player-club relationships with membership types
+- **Memberships**: Player-club relationships with payment tracking
+- **Achievements**: Player achievement system with categories
+
+## Recent Changes (January 2025)
+
+### Player Dashboard Updates
+- **Dual Ranking System**: Split ranking into "All Ages" and "Own Age" categories
+- **Admin-Assigned Ranks**: Added rank field that can be set by administrators
+- **Achievements Section**: New achievement display with categorized accomplishments
+- **Match History**: Changed from "Last Match" to comprehensive "Match History" view
+- **Membership Payment Tracking**: Added display of payment dates in membership information
+- **Removed Active Tournaments**: Streamlined dashboard by removing active tournaments section
+
+### Admin Tournament Management
+- **Tournament Results Entry**: New admin interface for entering match results
+- **Tournament Match Management**: Admins can view and manage tournament matches
+- **Score Recording**: Admin and score recorder roles can update match results
+- **Achievement Creation**: Admins can create achievements for players
+
+### Authentication System Overhaul
+- **Replaced OAuth**: Completely removed Replit OAuth in favor of simple email/phone registration
+- **Session-Based Auth**: Implemented custom session-based authentication system
+- **Role-Based Access**: Enhanced role management (player, club_owner, admin, score_recorder)
 
 ## Data Flow
 
