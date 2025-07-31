@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Home from "@/pages/home";
+import Login from "@/pages/login";
+import Register from "@/pages/register";
 import PlayerDashboard from "@/pages/player-dashboard";
 import Tournaments from "@/pages/tournaments";
 import Clubs from "@/pages/clubs";
@@ -18,6 +20,8 @@ function Router() {
 
   return (
     <Switch>
+      <Route path="/login" component={Login} />
+      <Route path="/register" component={Register} />
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (

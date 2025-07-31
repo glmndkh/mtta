@@ -35,7 +35,7 @@ export default function Landing() {
             </div>
 
             <div className="flex items-center space-x-4">
-              <Button onClick={() => window.location.href = '/api/login'} className="mtta-green text-white hover:bg-mtta-green-dark">
+              <Button onClick={() => window.location.href = '/login'} className="mtta-green text-white hover:bg-mtta-green-dark">
                 Нэвтрэх
               </Button>
               <Button 
