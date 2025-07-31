@@ -83,11 +83,11 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
   };
 
   return (
-    <Card 
-      className="overflow-hidden cursor-pointer hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+    <div 
+      className="relative overflow-hidden cursor-pointer hover:shadow-2xl transition-shadow duration-300 rounded-xl mb-8"
       onClick={() => setLocation(`/tournament/${tournament.id}`)}
     >
-      <div className="relative h-80">
+      <div className="relative h-64 lg:h-80">
         {/* Background Image */}
         <div className="absolute inset-0">
           {tournament.backgroundImage ? (
@@ -135,116 +135,110 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
         </div>
 
         {/* Content Overlay */}
-        <div className="relative z-10 h-full flex flex-col justify-between p-6">
-          {/* Top Section */}
-          <div>
-            {/* Date Badge */}
-            <div className="inline-flex items-center space-x-2 text-white mb-4">
-              <div className="w-6 h-4 bg-red-600 rounded-sm flex items-center justify-center">
-                <span className="text-xs font-bold">🇲🇳</span>
+        <div className="relative z-10 h-full">
+          <div className="h-full flex flex-col lg:flex-row items-start lg:items-center justify-between p-6 lg:p-8 gap-6">
+            {/* Left Section - Tournament Info */}
+            <div className="flex-1 space-y-4">
+              {/* Date Badge */}
+              <div className="inline-flex items-center space-x-2 text-white">
+                <div className="w-6 h-4 bg-red-600 rounded-sm flex items-center justify-center">
+                  <span className="text-xs font-bold">🇲🇳</span>
+                </div>
+                <span className="text-sm bg-black/30 px-3 py-1 rounded">
+                  {formatDateRange()}
+                </span>
               </div>
-              <span className="text-sm bg-black/30 px-3 py-1 rounded">
-                {formatDateRange()}
-              </span>
-            </div>
-            
-            {/* Tournament Name */}
-            <h2 className="text-2xl font-bold text-white mb-2 leading-tight">
-              {tournament.name}
-            </h2>
-            
-            {/* Location */}
-            <div className="flex items-center text-white/90 text-sm mb-4">
-              <MapPin className="w-4 h-4 mr-2" />
-              {tournament.location}
-            </div>
-          </div>
+              
+              {/* Tournament Name */}
+              <h2 className="text-3xl lg:text-4xl font-bold text-white leading-tight">
+                {tournament.name}
+              </h2>
+              
+              {/* Location */}
+              <div className="flex items-center text-white/90 text-lg">
+                <MapPin className="w-5 h-5 mr-2" />
+                {tournament.location}
+              </div>
 
-          {/* Bottom Section */}  
-          <div>
-            {/* Countdown Timer */}
-            <div className="bg-black/50 backdrop-blur-sm rounded-lg p-3 mb-4">
-              <div className="grid grid-cols-4 gap-2 text-center">
-                <div>
-                  <div className="text-lg font-bold text-white">
-                    {countdown.days.toString().padStart(2, '0')}
-                  </div>
-                  <div className="text-xs text-gray-300">Өдөр</div>
+              {/* Prize Money */}
+              {tournament.prizeMoney && (
+                <div className="text-white text-lg font-medium">
+                  Шагналын сан: <span className="font-bold">{tournament.prizeMoney}</span>
                 </div>
-                <div>
-                  <div className="text-lg font-bold text-white">
-                    {countdown.hours.toString().padStart(2, '0')}
-                  </div>
-                  <div className="text-xs text-gray-300">Цаг</div>
-                </div>
-                <div>
-                  <div className="text-lg font-bold text-white">
-                    {countdown.minutes.toString().padStart(2, '0')}
-                  </div>
-                  <div className="text-xs text-gray-300">Минут</div>
-                </div>
-                <div>
-                  <div className="text-lg font-bold text-white">
-                    {countdown.seconds.toString().padStart(2, '0')}
-                  </div>
-                  <div className="text-xs text-gray-300">Секунд</div>
-                </div>
+              )}
+
+              {/* Categories */}
+              <div className="flex flex-wrap gap-2">
+                {tournament.categories.map((category) => (
+                  <Badge key={category} variant="secondary" className="bg-black/70 text-white">
+                    {CATEGORY_LABELS[category] || category}
+                  </Badge>
+                ))}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-3">
+                {tournament.eventInfoUrl && (
+                  <Button 
+                    variant="outline" 
+                    className="border-white text-white hover:bg-white hover:text-black"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(tournament.eventInfoUrl, '_blank');
+                    }}
+                  >
+                    Тэмцээний мэдээлэл
+                  </Button>
+                )}
+                {tournament.ticketUrl && (
+                  <Button 
+                    className="bg-white text-black hover:bg-gray-100"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(tournament.ticketUrl, '_blank');
+                    }}
+                  >
+                    Тасалбар захиалах
+                  </Button>
+                )}
               </div>
             </div>
 
-            {/* Prize Money */}
-            {tournament.prizeMoney && (
-              <div className="text-white text-sm font-medium mb-3">
-                Шагналын сан: <span className="font-bold">{tournament.prizeMoney}</span>
+            {/* Right Section - Countdown Timer */}
+            <div className="flex-shrink-0">
+              <div className="bg-black/50 backdrop-blur-sm rounded-xl p-6 min-w-[280px]">
+                <div className="grid grid-cols-4 gap-4 text-center">
+                  <div className="space-y-2">
+                    <div className="text-2xl lg:text-3xl font-bold text-white">
+                      {countdown.days.toString().padStart(2, '0')}
+                    </div>
+                    <div className="text-xs text-gray-300 uppercase tracking-wide">Өдөр</div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-2xl lg:text-3xl font-bold text-white">
+                      {countdown.hours.toString().padStart(2, '0')}
+                    </div>
+                    <div className="text-xs text-gray-300 uppercase tracking-wide">Цаг</div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-2xl lg:text-3xl font-bold text-white">
+                      {countdown.minutes.toString().padStart(2, '0')}
+                    </div>
+                    <div className="text-xs text-gray-300 uppercase tracking-wide">Минут</div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-2xl lg:text-3xl font-bold text-white">
+                      {countdown.seconds.toString().padStart(2, '0')}
+                    </div>
+                    <div className="text-xs text-gray-300 uppercase tracking-wide">Секунд</div>
+                  </div>
+                </div>
               </div>
-            )}
-
-            {/* Categories */}
-            <div className="flex flex-wrap gap-1 mb-4">
-              {tournament.categories.slice(0, 3).map((category) => (
-                <Badge key={category} variant="secondary" className="bg-black/70 text-white text-xs">
-                  {CATEGORY_LABELS[category] || category}
-                </Badge>
-              ))}
-              {tournament.categories.length > 3 && (
-                <Badge variant="secondary" className="bg-black/70 text-white text-xs">
-                  +{tournament.categories.length - 3}
-                </Badge>
-              )}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-2">
-              {tournament.eventInfoUrl && (
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="border-white text-white hover:bg-white hover:text-black flex-1"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    window.open(tournament.eventInfoUrl, '_blank');
-                  }}
-                >
-                  Мэдээлэл
-                </Button>
-              )}
-              {tournament.ticketUrl && (
-                <Button 
-                  size="sm"
-                  className="bg-white text-black hover:bg-gray-100 flex-1"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    window.open(tournament.ticketUrl, '_blank');
-                  }}
-                >
-                  Тасалбар
-                </Button>
-              )}
             </div>
           </div>
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -340,7 +334,7 @@ export default function Tournaments() {
           </div>
         </div>
 
-        {/* Tournaments Grid */}
+        {/* Tournaments List */}
         {tournaments.length === 0 ? (
           <div className="text-center py-16">
             <Trophy className="mx-auto h-16 w-16 text-gray-400 mb-4" />
@@ -361,10 +355,12 @@ export default function Tournaments() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {tournaments.map((tournament) => (
-              <TournamentCard key={tournament.id} tournament={tournament} />
-            ))}
+          <div className="space-y-6">
+            {tournaments
+              .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
+              .map((tournament) => (
+                <TournamentCard key={tournament.id} tournament={tournament} />
+              ))}
           </div>
         )}
       </div>
