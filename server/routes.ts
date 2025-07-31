@@ -139,7 +139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         startDate: new Date(req.body.startDate),
         endDate: new Date(req.body.endDate),
         registrationDeadline: req.body.registrationDeadline ? new Date(req.body.registrationDeadline) : null,
-        entryFee: req.body.entryFee || 0,
+        entryFee: req.body.entryFee ? req.body.entryFee.toString() : "0",
         maxParticipants: req.body.maxParticipants || 32,
         isPublished: req.body.isPublished || false,
       });
