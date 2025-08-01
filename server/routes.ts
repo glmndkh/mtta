@@ -188,6 +188,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
 
+  // Profile update route
+  app.put('/api/auth/profile', requireAuth, async (req: any, res) => {
+    try {
+      const { 
+        firstName, 
+        lastName, 
+        gender, 
+        dateOfBirth, 
+        phone, 
+        email, 
+        clubAffiliation, 
+        currentPassword 
+      } = req.body;
+      
+      // Get current user
+      const currentUser = await storage.getUser(req.session.userId);
+      if (!currentUser) {
+        return res.status(404).json({ message: "Хэрэглэгч олдсонгүй" });
+      }
+
+      // Verify current password
+      if (!currentPassword) {
+        return res.status(400).json({ message: "Одоогийн нууц үгээ оруулна уу" });
+      }
+
+      if (!currentUser.password) {
+        return res.status(400).json({ message: "Хэрэглэгчийн нууц үг тохируулагдаагүй байна" });
+      }
+
+      const isValidPassword = await bcrypt.compare(currentPassword, currentUser.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ message: "Буруу нууц үг" });
+      }
+
+      // Validate required fields
+      if (!firstName || !lastName) {
+        return res.status(400).json({ message: "Нэр, овог заавал оруулна уу" });
+      }
+      
+      if (!gender || !['male', 'female', 'other'].includes(gender)) {
+        return res.status(400).json({ message: "Хүйс заавал сонгоно уу" });
+      }
+      
+      if (!dateOfBirth) {
+        return res.status(400).json({ message: "Төрсөн огноо заавал оруулна уу" });
+      }
+      
+      if (!phone) {
+        return res.status(400).json({ message: "Утасны дугаар заавал оруулна уу" });
+      }
+      
+      if (!email) {
+        return res.status(400).json({ message: "И-мэйл хаяг заавал оруулна уу" });
+      }
+      
+      if (!clubAffiliation) {
+        return res.status(400).json({ message: "Клуб эсвэл тоглодог газрын мэдээлэл заавал оруулна уу" });
+      }
+
+      // Check for duplicate email and phone numbers (excluding current user)
+      if (email !== currentUser.email) {
+        const existingUserByEmail = await storage.getUserByEmail(email);
+        if (existingUserByEmail && existingUserByEmail.id !== currentUser.id) {
+          return res.status(400).json({ message: "Энэ и-мэйл хаяг аль хэдийн бүртгэгдсэн байна" });
+        }
+      }
+      
+      if (phone !== currentUser.phone) {
+        const existingUserByPhone = await storage.getUserByPhone(phone);
+        if (existingUserByPhone && existingUserByPhone.id !== currentUser.id) {
+          return res.status(400).json({ message: "Энэ утасны дугаар аль хэдийн бүртгэгдсэн байна" });
+        }
+      }
+
+      // Update user profile
+      const updatedUser = await storage.updateUserProfile(req.session.userId, {
+        firstName,
+        lastName,
+        gender,
+        dateOfBirth: new Date(dateOfBirth),
+        phone,
+        email,
+        clubAffiliation,
+      });
+      
+      // Remove password from response
+      const { password: _, ...userResponse } = updatedUser;
+      res.json({ message: "Мэдээлэл амжилттай шинэчлэгдлээ", user: userResponse });
+    } catch (error) {
+      console.error("Profile update error:", error);
+      res.status(500).json({ message: "Мэдээлэл шинэчлэхэд алдаа гарлаа" });
+    }
+  });
+
   // Tournament routes with simple auth
   app.post('/api/tournaments', requireAuth, async (req: any, res) => {
     try {
