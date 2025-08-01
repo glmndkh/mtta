@@ -5,8 +5,6 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertPlayerSchema, insertClubSchema, insertTournamentSchema, insertMatchSchema, insertNewsSchema, insertMembershipSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
-import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
-import { ObjectPermission } from "./objectAcl";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -287,7 +285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Object storage routes
   app.get("/public-objects/:filePath(*)", async (req, res) => {
     const filePath = req.params.filePath;
-    const objectStorageService = new ObjectStorageService();
+    const objectStorageService = new (require("./objectStorage").ObjectStorageService)();
     try {
       const file = await objectStorageService.searchPublicObject(filePath);
       if (!file) {
@@ -302,13 +300,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/objects/:objectPath(*)", requireAuth, async (req: any, res) => {
     const userId = req.session.userId;
-    const objectStorageService = new ObjectStorageService();
+    const objectStorageService = new (require("./objectStorage").ObjectStorageService)();
     try {
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
       const canAccess = await objectStorageService.canAccessObjectEntity({
         objectFile,
         userId: userId,
-        requestedPermission: ObjectPermission.READ,
+        requestedPermission: require("./objectAcl").ObjectPermission.READ,
       });
       if (!canAccess) {
         return res.sendStatus(401);
@@ -316,7 +314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       objectStorageService.downloadObject(objectFile, res);
     } catch (error) {
       console.error("Error checking object access:", error);
-      if (error instanceof ObjectNotFoundError) {
+      if (error instanceof require("./objectStorage").ObjectNotFoundError) {
         return res.sendStatus(404);
       }
       return res.sendStatus(500);
@@ -324,7 +322,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/objects/upload", requireAuth, async (req: any, res) => {
-    const objectStorageService = new ObjectStorageService();
+    const objectStorageService = new (require("./objectStorage").ObjectStorageService)();
     const uploadURL = await objectStorageService.getObjectEntityUploadURL();
     res.json({ uploadURL });
   });
@@ -337,7 +335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const userId = req.session.userId;
 
     try {
-      const objectStorageService = new ObjectStorageService();
+      const objectStorageService = new (require("./objectStorage").ObjectStorageService)();
       const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
         req.body.fileURL,
         {
@@ -794,7 +792,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         player = await storage.createPlayer({
           userId: userId,
-          dateOfBirth: user.dateOfBirth || new Date(), // Default date, user can update later
+          firstName: user.firstName || "Unknown",
+          lastName: user.lastName || "Player",
+          email: user.email || "",
+          phone: "",
+          dateOfBirth: new Date(), // Default date, user can update later
+          gender: "male", // Default gender, user can update later
+          allAgesRanking: 0,
+          ownAgeRanking: 0,
           rank: "Шинэ тоглогч"
         });
       }

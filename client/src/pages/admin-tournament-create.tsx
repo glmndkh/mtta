@@ -686,7 +686,7 @@ export default function AdminTournamentCreate() {
                                     </SelectTrigger>
                                   </FormControl>
                                   <SelectContent>
-                                    <SelectItem value="none">Хязгаарлалт байхгүй</SelectItem>
+                                    <SelectItem value="">Хязгаарлалт байхгүй</SelectItem>
                                     {ratingOptions.map((rating) => (
                                       <SelectItem key={rating} value={rating}>
                                         {rating}
@@ -712,7 +712,7 @@ export default function AdminTournamentCreate() {
                                     </SelectTrigger>
                                   </FormControl>
                                   <SelectContent>
-                                    <SelectItem value="none">Хязгаарлалт байхгүй</SelectItem>
+                                    <SelectItem value="">Хязгаарлалт байхгүй</SelectItem>
                                     {ratingOptions.map((rating) => (
                                       <SelectItem key={rating} value={rating}>
                                         {rating}
@@ -774,9 +774,9 @@ export default function AdminTournamentCreate() {
                                     checked={field.value?.includes(type.id)}
                                     onCheckedChange={(checked) => {
                                       if (checked) {
-                                        field.onChange([...(field.value || []), type.id]);
+                                        field.onChange([...field.value, type.id]);
                                       } else {
-                                        field.onChange(field.value?.filter((val: string) => val !== type.id) || []);
+                                        field.onChange(field.value?.filter((val: string) => val !== type.id));
                                       }
                                     }}
                                   />
