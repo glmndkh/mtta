@@ -12,16 +12,34 @@ import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface TournamentData {
+  id: string;
   name: string;
+  description: string;
+  richDescription?: string | null;
   startDate: string;
   endDate: string;
+  registrationDeadline?: string | null;
   location: string;
-  prizeMoney: string;
-  backgroundImage: string;
-  categories: string[];
-  eventInfoUrl: string;
-  ticketUrl: string;
-  id: string;
+  maxParticipants: number;
+  entryFee: string;
+  status: string;
+  participationTypes: string[];
+  rules?: string | null;
+  prizes?: string | null;
+  contactInfo?: string | null;
+  schedule?: string | null;
+  requirements?: string | null;
+  isPublished: boolean;
+  organizerId: string;
+  clubId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  // For backward compatibility with localStorage format
+  prizeMoney?: string;
+  backgroundImage?: string;
+  categories?: string[];
+  eventInfoUrl?: string;
+  ticketUrl?: string;
 }
 
 interface CountdownTime {
@@ -37,8 +55,17 @@ const CATEGORY_LABELS: Record<string, string> = {
   "men_doubles": "Эрэгтэй хосоор",
   "women_doubles": "Эмэгтэй хосоор",
   "mixed_doubles": "Холимог хосоор",
-  "team": "Багийн төрөл"
+  "team": "Багийн төрөл",
+  "singles": "Ганцаарчилсан",
+  "doubles": "Хосоор"
 };
+
+// Helper function to extract image URL from rich description
+function extractImageFromRichDescription(richDescription?: string | null): string | null {
+  if (!richDescription) return null;
+  const imgMatch = richDescription.match(/<img[^>]+src="([^"]+)"/);
+  return imgMatch ? imgMatch[1] : null;
+}
 
 // Tournament Registration Button Component
 function TournamentRegistrationButton({ tournamentId }: { tournamentId: string }) {
@@ -225,11 +252,11 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
       <div className="relative h-64 lg:h-80">
         {/* Background Image */}
         <div className="absolute inset-0">
-          {tournament.backgroundImage ? (
+          {tournament.backgroundImage || (tournament.richDescription && tournament.richDescription.includes('<img')) ? (
             <div 
               className="absolute inset-0 bg-cover bg-center bg-no-repeat"
               style={{
-                backgroundImage: `url(${tournament.backgroundImage})`
+                backgroundImage: `url(${tournament.backgroundImage || extractImageFromRichDescription(tournament.richDescription)})`
               }}
             />
           ) : (
@@ -308,15 +335,22 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
               </div>
 
               {/* Prize Money */}
-              {tournament.prizeMoney && (
+              {(tournament.prizeMoney || tournament.prizes) && (
                 <div className="text-white text-lg font-medium">
-                  Шагналын сан: <span className="font-bold">{tournament.prizeMoney}</span>
+                  Шагналын сан: <span className="font-bold">{tournament.prizeMoney || tournament.prizes}</span>
+                </div>
+              )}
+
+              {/* Entry Fee */}
+              {tournament.entryFee && parseFloat(tournament.entryFee) > 0 && (
+                <div className="text-white text-lg font-medium">
+                  Бүртгэлийн хураамж: <span className="font-bold">{parseFloat(tournament.entryFee).toLocaleString()}₮</span>
                 </div>
               )}
 
               {/* Categories */}
               <div className="flex flex-wrap gap-2">
-                {tournament.categories.map((category) => (
+                {(tournament.categories || tournament.participationTypes || []).map((category) => (
                   <Badge key={category} variant="secondary" className="bg-black/70 text-white">
                     {CATEGORY_LABELS[category] || category}
                   </Badge>
@@ -402,39 +436,21 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
 export default function Tournaments() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
-  const [tournaments, setTournaments] = useState<TournamentData[]>([]);
-
-  // Load tournaments from localStorage
-  useEffect(() => {
-    const loadTournaments = () => {
-      const storedTournaments = localStorage.getItem('tournaments');
-      if (storedTournaments) {
-        try {
-          const parsedTournaments = JSON.parse(storedTournaments);
-          setTournaments(parsedTournaments);
-        } catch (error) {
-          console.error('Error loading tournaments:', error);
-          setTournaments([]);
-        }
+  // Fetch tournaments from database
+  const { data: tournaments = [], isLoading: tournamentsLoading } = useQuery({
+    queryKey: ['/api/tournaments'],
+    queryFn: async () => {
+      const response = await fetch('/api/tournaments');
+      if (!response.ok) {
+        throw new Error('Failed to fetch tournaments');
       }
-    };
-
-    loadTournaments();
-
-    // Listen for storage changes (in case tournaments are added in another tab)
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'tournaments') {
-        loadTournaments();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+      return response.json();
+    },
+  });
 
   // Remove authentication requirement for tournaments page
 
-  if (isLoading) {
+  if (isLoading || tournamentsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -467,11 +483,11 @@ export default function Tournaments() {
             
             {user && (user as any)?.role === 'admin' ? (
               <Button 
-                className="bg-purple-600 hover:bg-purple-700 text-white"
+                className="mtta-green text-white hover:bg-mtta-green-dark"
                 onClick={() => window.location.href = '/admin/generator'}
               >
                 <Trophy className="mr-2 h-5 w-5" />
-                Шинэ тэмцээн үүсгэх
+                Тэмцээн үүсгэх
               </Button>
             ) : null}
           </div>
@@ -489,11 +505,11 @@ export default function Tournaments() {
             </p>
             {user && (user as any)?.role === 'admin' ? (
               <Button 
-                className="bg-green-600 hover:bg-green-700 text-white"
+                className="mtta-green text-white hover:bg-mtta-green-dark"
                 onClick={() => window.location.href = '/admin/generator'}
               >
                 <Trophy className="mr-2 h-5 w-5" />
-                Анхны тэмцээнээ үүсгэх
+                Тэмцээн үүсгэх
               </Button>
             ) : null}
           </div>

@@ -133,17 +133,10 @@ export default function Home() {
                 <div className="space-y-4">
                   <Button 
                     className="w-full mtta-green text-white hover:bg-mtta-green-dark py-6 text-lg" 
-                    onClick={() => window.location.href = '/admin/tournament-create'}
-                  >
-                    <Trophy className="mr-3 h-5 w-5" />
-                    Тэмцээн үүсгэх
-                  </Button>
-                  <Button 
-                    className="w-full bg-purple-600 text-white hover:bg-purple-700 py-6 text-lg" 
                     onClick={() => window.location.href = '/admin/generator'}
                   >
                     <Trophy className="mr-3 h-5 w-5" />
-                    WTT хуудас үүсгэх
+                    Тэмцээн үүсгэх
                   </Button>
                   <Button 
                     variant="outline" 
