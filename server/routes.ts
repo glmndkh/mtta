@@ -12,6 +12,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
 
+
+
   // Simple auth routes (replacement for Replit OAuth)
   app.post('/api/auth/register', async (req, res) => {
     try {
@@ -287,7 +289,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Object storage routes
   app.get("/public-objects/:filePath(*)", async (req, res) => {
     const filePath = req.params.filePath;
-    const objectStorageService = new (require("./objectStorage").ObjectStorageService)();
+    const objectStorageService = new ObjectStorageService();
     try {
       const file = await objectStorageService.searchPublicObject(filePath);
       if (!file) {
@@ -300,8 +302,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/objects/:objectPath(*)", isAuthenticated, async (req: any, res) => {
-    const userId = req.user?.claims?.sub;
+  app.get("/objects/:objectPath(*)", requireAuth, async (req: any, res) => {
+    const userId = req.session.userId;
     const objectStorageService = new ObjectStorageService();
     try {
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
@@ -323,18 +325,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/objects/upload", isAuthenticated, async (req: any, res) => {
+  app.post("/api/objects/upload", requireAuth, async (req: any, res) => {
     const objectStorageService = new ObjectStorageService();
     const uploadURL = await objectStorageService.getObjectEntityUploadURL();
     res.json({ uploadURL });
   });
 
-  app.put("/api/objects/finalize", isAuthenticated, async (req: any, res) => {
+  app.put("/api/objects/finalize", requireAuth, async (req: any, res) => {
     if (!req.body.fileURL) {
       return res.status(400).json({ error: "fileURL is required" });
     }
 
-    const userId = req.user?.claims?.sub;
+    const userId = req.session.userId;
 
     try {
       const objectStorageService = new ObjectStorageService();
