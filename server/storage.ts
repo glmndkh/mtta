@@ -43,6 +43,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByPhone(phone: string): Promise<User | undefined>;
   createSimpleUser(userData: any): Promise<User>;
+  updateUserProfile(userId: string, userData: any): Promise<User>;
 
   // Player operations
   getPlayer(id: string): Promise<Player | undefined>;
@@ -150,6 +151,24 @@ export class DatabaseStorage implements IStorage {
         createdAt: new Date(),
         updatedAt: new Date(),
       })
+      .returning();
+    return user;
+  }
+
+  async updateUserProfile(userId: string, userData: any): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        gender: userData.gender,
+        dateOfBirth: userData.dateOfBirth,
+        phone: userData.phone,
+        email: userData.email,
+        clubAffiliation: userData.clubAffiliation,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
       .returning();
     return user;
   }
