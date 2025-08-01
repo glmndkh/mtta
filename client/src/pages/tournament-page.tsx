@@ -1,52 +1,71 @@
-import { useEffect, useState } from "react";
+import { useState, useMemo } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Info, Ticket, ArrowLeft, Users } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
+import { ExternalLink, Download, ArrowLeft, Users, Calendar, MapPin, Trophy, FileText, Search, Filter, AlertTriangle, User } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
 
-interface TournamentData {
+interface Tournament {
+  id: string;
   name: string;
+  description: string;
+  richDescription: string;
   startDate: string;
   endDate: string;
+  registrationDeadline: string;
   location: string;
-  prizeMoney: string;
-  backgroundImage: string;
-  categories: string[];
-  eventInfoUrl: string;
-  ticketUrl: string;
+  organizer: string;
+  maxParticipants: number;
+  entryFee: string;
+  status: string;
+  participationTypes: string[];
+  rules: string;
+  prizes: string;
+  contactInfo: string;
+  schedule: string;
+  requirements: string;
+  isPublished: boolean;
+  organizerId: string;
+  backgroundImageUrl?: string;
+  regulationDocumentUrl?: string;
+  minRating?: string;
+  maxRating?: string;
+}
+
+interface TournamentParticipant {
   id: string;
+  firstName: string;
+  lastName: string;
+  clubAffiliation: string;
+  rank?: string;
+  email: string;
+  phone: string;
+  participationType: string;
+  registeredAt: string;
 }
-
-interface CountdownTime {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-}
-
-const CATEGORY_LABELS: Record<string, string> = {
-  "men_singles": "Эрэгтэй ганцаарчилсан",
-  "women_singles": "Эмэгтэй ганцаарчилсан", 
-  "men_doubles": "Эрэгтэй хосоор",
-  "women_doubles": "Эмэгтэй хосоор",
-  "mixed_doubles": "Холимог хосоор",
-  "team": "Багийн төрөл"
-};
 
 // Tournament Registration Button Component
-function TournamentRegistrationButton({ tournamentId }: { tournamentId: string }) {
-  const { isAuthenticated } = useAuth();
+function TournamentRegistrationButton({ 
+  tournament, 
+  userRegistration, 
+  canRegister 
+}: { 
+  tournament: Tournament;
+  userRegistration?: { registered: boolean };
+  canRegister: boolean;
+}) {
+  const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  const { data: userRegistration } = useQuery<{ registered: boolean; registration?: any }>({
-    queryKey: ['/api/tournaments', tournamentId, 'user-registration'],
-    enabled: isAuthenticated,
-  });
 
   const registerMutation = useMutation({
     mutationFn: async (participationType: string) => {
@@ -54,14 +73,15 @@ function TournamentRegistrationButton({ tournamentId }: { tournamentId: string }
         window.location.href = "/login";
         return;
       }
-      return apiRequest('POST', `/api/tournaments/${tournamentId}/register`, { participationType });
+      return apiRequest('POST', `/api/tournaments/${tournament.id}/register`, { participationType });
     },
     onSuccess: () => {
       toast({
         title: "Амжилттай бүртгүүллээ!",
         description: "Тэмцээнд амжилттай бүртгүүллээ.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', tournamentId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', tournament.id] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', tournament.id, 'participants'] });
     },
     onError: (error: any) => {
       toast({
@@ -72,17 +92,14 @@ function TournamentRegistrationButton({ tournamentId }: { tournamentId: string }
     },
   });
 
-  const handleRegister = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleRegister = () => {
     if (!isAuthenticated) {
       toast({
         title: "Нэвтрэх шаардлагатай",
         description: "Тэмцээнд бүртгүүлэхийн тулд нэвтэрнэ үү",
         variant: "destructive",
       });
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 1000);
+      window.location.href = "/login";
       return;
     }
     registerMutation.mutate("singles"); // Default to singles
@@ -92,7 +109,7 @@ function TournamentRegistrationButton({ tournamentId }: { tournamentId: string }
     return (
       <Button
         disabled
-        className="bg-green-600 text-white cursor-not-allowed"
+        className="bg-green-600 text-white cursor-not-allowed w-full sm:w-auto"
         size="lg"
       >
         Бүртгүүлсэн
@@ -100,9 +117,27 @@ function TournamentRegistrationButton({ tournamentId }: { tournamentId: string }
     );
   }
 
+  if (!canRegister) {
+    return (
+      <div className="flex flex-col gap-2">
+        <Button
+          disabled
+          className="bg-red-600 text-white cursor-not-allowed w-full sm:w-auto"
+          size="lg"
+        >
+          Бүртгүүлэх боломжгүй
+        </Button>
+        <div className="flex items-center gap-2 text-red-600 text-sm">
+          <AlertTriangle className="w-4 h-4" />
+          <span>Та энэ тэмцээнд оролцох шаардлага хангахгүй байна</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Button
-      className="bg-blue-600 hover:bg-blue-700 text-white"
+      className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
       onClick={handleRegister}
       disabled={registerMutation.isPending}
       size="lg"
@@ -112,91 +147,196 @@ function TournamentRegistrationButton({ tournamentId }: { tournamentId: string }
   );
 }
 
-// Tournament Registration Stats Component
-function TournamentRegistrationStats({ tournamentId }: { tournamentId: string }) {
-  const { data: stats } = useQuery<{ registered: number; maxParticipants?: number; registrationRate: number }>({
-    queryKey: ['/api/tournaments', tournamentId, 'registration-stats'],
+// Participants table component
+function TournamentParticipants({ tournamentId }: { tournamentId: string }) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [clubFilter, setClubFilter] = useState("all");
+  const [participationTypeFilter, setParticipationTypeFilter] = useState("all");
+
+  const { data: participants = [] } = useQuery<TournamentParticipant[]>({
+    queryKey: ['/api/tournaments', tournamentId, 'participants'],
   });
 
-  if (!stats) return null;
+  // Get unique clubs for filter
+  const uniqueClubs = useMemo(() => {
+    const clubs = participants.map(p => p.clubAffiliation).filter(Boolean);
+    return Array.from(new Set(clubs));
+  }, [participants]);
+
+  // Get unique participation types for filter
+  const uniqueParticipationTypes = useMemo(() => {
+    const types = participants.map(p => p.participationType).filter(Boolean);
+    return Array.from(new Set(types));
+  }, [participants]);
+
+  // Filter participants
+  const filteredParticipants = useMemo(() => {
+    return participants.filter(participant => {
+      const matchesSearch = searchTerm === "" || 
+        `${participant.firstName} ${participant.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        participant.clubAffiliation?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesClub = clubFilter === "all" || participant.clubAffiliation === clubFilter;
+      const matchesType = participationTypeFilter === "all" || participant.participationType === participationTypeFilter;
+      
+      return matchesSearch && matchesClub && matchesType;
+    });
+  }, [participants, searchTerm, clubFilter, participationTypeFilter]);
+
+  const participationTypeLabels: Record<string, string> = {
+    "singles": "Ганцаарчилсан",
+    "doubles": "Хосоор",
+    "mixed_doubles": "Холимог хосоор",
+    "team": "Багийн"
+  };
 
   return (
-    <div className="bg-white/90 backdrop-blur-sm rounded-lg p-4 flex items-center gap-4">
-      <div className="flex items-center gap-2">
-        <Users className="w-5 h-5 text-blue-600" />
-        <span className="text-lg font-medium text-gray-900">
-          Бүртгүүлсэн: {stats.registered}
-          {stats.maxParticipants && ` / ${stats.maxParticipants}`}
-        </span>
-      </div>
-      {stats.registrationRate > 0 && (
-        <div className="flex items-center gap-3">
-          <div className="w-32 h-3 bg-gray-200 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-blue-600 transition-all duration-300"
-              style={{ width: `${Math.min(stats.registrationRate, 100)}%` }}
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="w-5 h-5" />
+          Бүртгүүлсэн тоглогчид ({participants.length})
+        </CardTitle>
+        
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex items-center gap-2 flex-1">
+            <Search className="w-4 h-4 text-gray-500" />
+            <Input
+              placeholder="Нэр эсвэл клубээр хайх..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1"
             />
           </div>
-          <span className="text-sm font-medium text-gray-600">{stats.registrationRate}%</span>
+          
+          <div className="flex gap-2">
+            <Select value={clubFilter} onValueChange={setClubFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Клуб сонгох" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Бүх клуб</SelectItem>
+                {uniqueClubs.map(club => (
+                  <SelectItem key={club} value={club}>{club}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={participationTypeFilter} onValueChange={setParticipationTypeFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Төрөл сонгох" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Бүх төрөл</SelectItem>
+                {uniqueParticipationTypes.map(type => (
+                  <SelectItem key={type} value={type}>
+                    {participationTypeLabels[type] || type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-      )}
-    </div>
+      </CardHeader>
+      
+      <CardContent>
+        {filteredParticipants.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            {participants.length === 0 ? "Бүртгүүлсэн тоглогч байхгүй" : "Хайлтын үр дүн олдсонгүй"}
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Овог нэр</TableHead>
+                <TableHead>Клуб</TableHead>
+                <TableHead>Оролцох төрөл</TableHead>
+                <TableHead>Зэрэг</TableHead>
+                <TableHead>Бүртгүүлсэн огноо</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredParticipants.map((participant) => (
+                <TableRow key={participant.id}>
+                  <TableCell>
+                    <button 
+                      className="flex items-center gap-2 text-left hover:text-blue-600 transition-colors"
+                      onClick={() => {
+                        // TODO: Navigate to player profile page
+                        console.log('Navigate to player profile:', participant.id);
+                      }}
+                    >
+                      <User className="w-4 h-4" />
+                      {participant.firstName} {participant.lastName}
+                    </button>
+                  </TableCell>
+                  <TableCell>{participant.clubAffiliation || "Тодорхойгүй"}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">
+                      {participationTypeLabels[participant.participationType] || participant.participationType}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{participant.rank || "Тодорхойгүй"}</TableCell>
+                  <TableCell>{format(new Date(participant.registeredAt), 'yyyy-MM-dd')}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
 export default function TournamentPage() {
   const [match, params] = useRoute("/tournament/:id");
   const [, setLocation] = useLocation();
-  const { isAuthenticated } = useAuth();
-  const [tournament, setTournament] = useState<TournamentData | null>(null);
-  const [countdown, setCountdown] = useState<CountdownTime>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  
-  useEffect(() => {
-    if (params?.id) {
-      // Load tournament data from localStorage
-      const tournaments = JSON.parse(localStorage.getItem('tournaments') || '[]');
-      const foundTournament = tournaments.find((t: TournamentData) => t.id === params.id);
-      setTournament(foundTournament || null);
-    }
-  }, [params?.id]);
+  const { isAuthenticated, user } = useAuth();
 
-  // Countdown timer logic
-  useEffect(() => {
-    if (!tournament?.startDate) return;
+  // Always call all hooks - don't make them conditional
+  const { data: tournament, isLoading, error } = useQuery<Tournament>({
+    queryKey: ['/api/tournaments', params?.id],
+    enabled: !!params?.id,
+  });
 
-    const updateCountdown = () => {
-      const now = new Date().getTime();
-      const target = new Date(tournament.startDate).getTime();
-      const difference = target - now;
+  const { data: userRegistration } = useQuery<{ registered: boolean }>({
+    queryKey: ['/api/tournaments', params?.id, 'user-registration'],
+    enabled: isAuthenticated && !!params?.id,
+  });
 
-      if (difference > 0) {
-        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+  // Check if user meets rating requirements - always call useMemo
+  const canRegister = useMemo(() => {
+    if (!tournament || !isAuthenticated || !user) return false;
+    
+    // For now, assume all users can register
+    // In the future, this should check user's rating against minRating/maxRating
+    return true;
+  }, [tournament, isAuthenticated, user]);
 
-        setCountdown({ days, hours, minutes, seconds });
-      } else {
-        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-      }
-    };
-
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-
-    return () => clearInterval(interval);
-  }, [tournament]);
-
-  if (!match || !tournament) {
+  // Handle loading state
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white text-center">
-          <h1 className="text-2xl font-bold mb-2">Тэмцээн олдсонгүй</h1>
-          <p className="text-gray-400 mb-4">Хүссэн тэмцээн байхгүй байна.</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Тэмцээний мэдээлэл ачаалж байна...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle error state
+  if (error || !tournament) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2 text-gray-900">Тэмцээн олдсонгүй</h1>
+          <p className="text-gray-600 mb-4">Хүссэн тэмцээн байхгүй байна.</p>
           <Button 
             onClick={() => setLocation('/tournaments')}
             variant="outline"
-            className="flex items-center gap-2 text-white border-white hover:bg-white hover:text-gray-900"
+            className="flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
             Тэмцээний хуудас руу буцах
@@ -207,224 +347,277 @@ export default function TournamentPage() {
   }
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('mn-MN', { 
-      month: 'short', 
-      day: 'numeric' 
-    });
+    return format(new Date(dateString), 'yyyy оны M сарын d өдөр');
   };
 
-  const formatDateRange = () => {
-    const startFormatted = formatDate(tournament.startDate);
-    const endFormatted = formatDate(tournament.endDate);
-    const year = new Date(tournament.startDate).getFullYear();
-    
-    return `${startFormatted} – ${endFormatted} ${year}`;
+  const formatDateTime = (dateString: string) => {
+    return format(new Date(dateString), 'yyyy/MM/dd HH:mm');
+  };
+
+  const participationTypeLabels: Record<string, string> = {
+    "singles": "Ганцаарчилсан",
+    "doubles": "Хосоор", 
+    "mixed_doubles": "Холимог хосоор",
+    "team": "Багийн"
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Background Image */}
-      <div className="absolute inset-0">
-        {/* Custom background or uploaded image */}
-        {tournament.backgroundImage ? (
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section with Background Image */}
+      <div className="relative h-96 overflow-hidden">
+        {/* Background Image */}
+        {tournament.backgroundImageUrl ? (
           <div 
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            className="absolute inset-0 bg-cover bg-center"
             style={{
-              backgroundImage: `url(${tournament.backgroundImage})`
+              backgroundImage: `url(${tournament.backgroundImageUrl})`
             }}
           />
         ) : (
-          // Default night city background
-          <div 
-            className="absolute inset-0 bg-gradient-to-b from-slate-900 via-blue-900 to-slate-800"
-            style={{
-              backgroundImage: `
-                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.1) 0%, transparent 50%)
-              `
-            }}
-          >
-            {/* Simulated city lights */}
-            <div className="absolute inset-0 opacity-60">
-              <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-yellow-400/20 via-orange-400/10 to-transparent"></div>
-              <div className="absolute bottom-0 left-0 right-0">
-                {[...Array(20)].map((_, i) => (
-                  <div 
-                    key={i}
-                    className="absolute bottom-0 bg-gradient-to-t from-yellow-300/40 to-transparent"
-                    style={{
-                      left: `${i * 5}%`,
-                      width: `${2 + Math.random() * 3}%`,
-                      height: `${20 + Math.random() * 30}%`,
-                      opacity: 0.6 + Math.random() * 0.4
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600" />
         )}
         
-        {/* Dark overlay for text readability */}
+        {/* Dark overlay */}
         <div className="absolute inset-0 bg-black/50" />
-      </div>
-      
-      {/* Back Button */}
-      <div className="absolute top-6 left-6 z-20">
-        <Button 
-          onClick={() => setLocation('/tournaments')}
-          variant="outline"
-          className="bg-white/10 border-white/30 text-white backdrop-blur-sm hover:bg-white/20 flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Буцах
-        </Button>
-      </div>
-      
-      {/* Content Overlay */}
-      <div className="relative z-10 min-h-screen flex flex-col">
-        {/* Main Content */}
-        <div className="flex-1 flex items-center">
-          <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid lg:grid-cols-2 gap-8 items-center">
-              
-              {/* Left Content */}
-              <div className="space-y-6">
-                {/* Date Badge */}
-                <div className="inline-flex items-center space-x-2 text-white">
-                  <div className="w-6 h-4 bg-red-600 rounded-sm flex items-center justify-center">
-                    <span className="text-xs font-bold">🇲🇳</span>
-                  </div>
-                  <span className="text-sm bg-black/30 px-3 py-1 rounded">
-                    {formatDateRange()}
-                  </span>
+        
+        {/* Back Button */}
+        <div className="absolute top-6 left-6 z-20">
+          <Button 
+            onClick={() => setLocation('/tournaments')}
+            variant="outline"
+            className="bg-white/10 border-white/30 text-white backdrop-blur-sm hover:bg-white/20 flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Буцах
+          </Button>
+        </div>
+        
+        {/* Hero Content */}
+        <div className="relative z-10 h-full flex items-center">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+            <div className="text-white">
+              <h1 className="text-4xl lg:text-6xl font-bold mb-4">{tournament.name}</h1>
+              <div className="flex flex-wrap items-center gap-6 text-lg">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5" />
+                  <span>{formatDate(tournament.startDate)} - {formatDate(tournament.endDate)}</span>
                 </div>
-                
-                {/* Tournament Name */}
-                <h1 className="text-4xl lg:text-6xl font-bold text-white leading-tight">
-                  {tournament.name}
-                </h1>
-                
-                {/* Location */}
-                <div className="space-y-1 text-white">
-                  <p className="text-lg font-medium">{tournament.location}</p>
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5" />
+                  <span>{tournament.location}</span>
                 </div>
-
-                {/* Registration Stats */}
-                <TournamentRegistrationStats tournamentId={tournament.id} />
-
-                {/* Action Buttons */}
-                <div className="flex flex-wrap gap-3">
-                  <TournamentRegistrationButton tournamentId={tournament.id} />
-                  {tournament.eventInfoUrl && (
-                    <Button 
-                      variant="outline" 
-                      className="border-white text-white hover:bg-white hover:text-black"
-                      onClick={() => window.open(tournament.eventInfoUrl, '_blank')}
-                    >
-                      <Info className="w-4 h-4 mr-2" />
-                      Тэмцээний мэдээлэл
-                    </Button>
-                  )}
-                  {tournament.ticketUrl && (
-                    <Button 
-                      className="bg-white text-black hover:bg-gray-100"
-                      onClick={() => window.open(tournament.ticketUrl, '_blank')}
-                    >
-                      <Ticket className="w-4 h-4 mr-2" />
-                      Тасалбар захиалах
-                    </Button>
-                  )}
-                </div>
-
-                {/* Prize Money */}
-                {tournament.prizeMoney && (
-                  <div className="pt-4">
-                    <p className="text-white text-lg font-medium">
-                      Шагналын сан: <span className="font-bold">{tournament.prizeMoney}</span>
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Right Content - Countdown and Categories */}
-              <div className="space-y-6">
-                {/* Countdown Timer */}
-                <div className="bg-black/50 backdrop-blur-sm rounded-2xl p-6">
-                  <div className="grid grid-cols-4 gap-4 text-center">
-                    <div className="space-y-2">
-                      <div className="text-3xl lg:text-4xl font-bold text-white">
-                        {countdown.days.toString().padStart(2, '0')}
-                      </div>
-                      <div className="text-xs text-gray-300 uppercase tracking-wide">Өдөр</div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="text-3xl lg:text-4xl font-bold text-white">
-                        {countdown.hours.toString().padStart(2, '0')}
-                      </div>
-                      <div className="text-xs text-gray-300 uppercase tracking-wide">Цаг</div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="text-3xl lg:text-4xl font-bold text-white">
-                        {countdown.minutes.toString().padStart(2, '0')}
-                      </div>
-                      <div className="text-xs text-gray-300 uppercase tracking-wide">Минут</div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="text-3xl lg:text-4xl font-bold text-white">
-                        {countdown.seconds.toString().padStart(2, '0')}
-                      </div>
-                      <div className="text-xs text-gray-300 uppercase tracking-wide">Секунд</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Category Buttons */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {tournament.categories.map((category, index) => (
-                    <div
-                      key={category}
-                      className="bg-black/70 backdrop-blur-sm rounded-lg p-4 flex items-center justify-between cursor-pointer transition-all hover:bg-black/80"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gradient-to-r from-green-600 to-emerald-600 rounded-full flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">
-                            {index + 1}
-                          </span>
-                        </div>
-                        <span className="text-white font-medium text-sm">
-                          {CATEGORY_LABELS[category] || category}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                <div className="flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  <span>Зохион байгуулагч: {tournament.organizer}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Bottom Footer */}
-        <div className="bg-black/20 backdrop-blur-sm border-t border-white/10 py-4">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center space-x-4 text-white/80 text-sm">
-                <span>Монголын ширээний теннисний холбоо</span>
-              </div>
-              <div className="flex items-center space-x-4">
-                <Button variant="ghost" size="sm" className="text-white/80 hover:text-white">
-                  Хуваарь
-                </Button>
-                <Button variant="ghost" size="sm" className="text-white/80 hover:text-white">
-                  Үр дүн
-                </Button>
-                <Button variant="ghost" size="sm" className="text-white/80 hover:text-white">
-                  Тамирчид
-                </Button>
-              </div>
-            </div>
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid lg:grid-cols-3 gap-8">
+          
+          {/* Left Content - Tournament Details */}
+          <div className="lg:col-span-2 space-y-6">
+            
+            {/* Tournament Information Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="w-5 h-5" />
+                  Тэмцээний мэдээлэл
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-2">Тайлбар</h3>
+                  {tournament.richDescription ? (
+                    <div 
+                      className="prose max-w-none"
+                      dangerouslySetInnerHTML={{ __html: tournament.richDescription }}
+                    />
+                  ) : (
+                    <p className="text-gray-600">{tournament.description}</p>
+                  )}
+                </div>
+
+                <Separator />
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-semibold mb-1">Эхлэх огноо</h4>
+                    <p className="text-gray-600">{formatDateTime(tournament.startDate)}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Дуусах огноо</h4>
+                    <p className="text-gray-600">{formatDateTime(tournament.endDate)}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Бүртгэлийн эцсийн хугацаа</h4>
+                    <p className="text-gray-600">
+                      {tournament.registrationDeadline ? formatDateTime(tournament.registrationDeadline) : "Тодорхойгүй"}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Оролцогчдын тоо</h4>
+                    <p className="text-gray-600">
+                      {tournament.maxParticipants ? `Дээд тал ${tournament.maxParticipants}` : "Хязгааргүй"}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Оролцооны төлбөр</h4>
+                    <p className="text-gray-600">{tournament.entryFee} ₮</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Оролцох төрлүүд</h4>
+                    <div className="flex flex-wrap gap-1">
+                      {tournament.participationTypes.map(type => (
+                        <Badge key={type} variant="outline">
+                          {participationTypeLabels[type] || type}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {(tournament.minRating || tournament.maxRating) && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h4 className="font-semibold mb-2">Зэрэглэлийн шаардлага</h4>
+                      <div className="flex gap-4">
+                        {tournament.minRating && (
+                          <div>
+                            <span className="text-sm text-gray-600">Доод зэрэг: </span>
+                            <Badge>{tournament.minRating}</Badge>
+                          </div>
+                        )}
+                        {tournament.maxRating && (
+                          <div>
+                            <span className="text-sm text-gray-600">Дээд зэрэг: </span>
+                            <Badge>{tournament.maxRating}</Badge>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {tournament.rules && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h4 className="font-semibold mb-2">Журам</h4>
+                      <p className="text-gray-600 whitespace-pre-wrap">{tournament.rules}</p>
+                    </div>
+                  </>
+                )}
+
+                {tournament.prizes && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h4 className="font-semibold mb-2">Шагнал</h4>
+                      <p className="text-gray-600 whitespace-pre-wrap">{tournament.prizes}</p>
+                    </div>
+                  </>
+                )}
+
+                {tournament.requirements && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h4 className="font-semibold mb-2">Шаардлага</h4>
+                      <p className="text-gray-600 whitespace-pre-wrap">{tournament.requirements}</p>
+                    </div>
+                  </>
+                )}
+
+                {tournament.contactInfo && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h4 className="font-semibold mb-2">Холбоо барих</h4>
+                      <p className="text-gray-600 whitespace-pre-wrap">{tournament.contactInfo}</p>
+                    </div>
+                  </>
+                )}
+
+                {tournament.regulationDocumentUrl && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h4 className="font-semibold mb-2">Журмын баримт</h4>
+                      <Button
+                        variant="outline"
+                        className="flex items-center gap-2"
+                        onClick={() => window.open(tournament.regulationDocumentUrl, '_blank')}
+                      >
+                        <FileText className="w-4 h-4" />
+                        Журмын баримт үзэх
+                        <Download className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Registered Players */}
+            <TournamentParticipants tournamentId={tournament.id} />
+          </div>
+
+          {/* Right Sidebar - Registration */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Бүртгүүлэх</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <TournamentRegistrationButton 
+                  tournament={tournament}
+                  userRegistration={userRegistration}
+                  canRegister={canRegister}
+                />
+                
+                <div className="text-sm text-gray-600 space-y-2">
+                  <p>• Бүртгэлийн дараа буцаах боломжгүй</p>
+                  <p>• Тэмцээнд оролцохоос өмнө төлбөр төлөх шаардлагатай</p>
+                  <p>• Дэлгэрэнгүй мэдээлэл авахыг хүсвэл зохион байгуулагчтай холбогдоно уу</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Tournament Status */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Статус</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Статус:</span>
+                    <Badge className={
+                      tournament.status === 'registration' ? 'bg-green-100 text-green-800' :
+                      tournament.status === 'ongoing' ? 'bg-blue-100 text-blue-800' :
+                      'bg-gray-100 text-gray-800'
+                    }>
+                      {tournament.status === 'registration' ? 'Бүртгэл' : 
+                       tournament.status === 'ongoing' ? 'Болж байна' : 'Дууссан'}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Нийтлэгдсэн:</span>
+                    <Badge variant={tournament.isPublished ? 'default' : 'secondary'}>
+                      {tournament.isPublished ? 'Тийм' : 'Үгүй'}
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

@@ -75,6 +75,7 @@ export interface IStorage {
   registerForTournament(data: { tournamentId: string; playerId: string; participationType: string }): Promise<any>;
   getTournamentRegistration(tournamentId: string, playerId: string): Promise<any>;
   getTournamentRegistrationStats(tournamentId: string): Promise<{ registered: number; maxParticipants?: number; registrationRate: number }>;
+  getTournamentParticipants(tournamentId: string): Promise<any[]>;
 
   // Match operations
   getMatch(id: string): Promise<Match | undefined>;
@@ -381,6 +382,28 @@ export class DatabaseStorage implements IStorage {
       maxParticipants,
       registrationRate
     };
+  }
+
+  async getTournamentParticipants(tournamentId: string): Promise<any[]> {
+    const result = await db
+      .select({
+        id: tournamentParticipants.id,
+        participationType: tournamentParticipants.participationType,
+        registeredAt: tournamentParticipants.registeredAt,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        clubAffiliation: users.clubAffiliation,
+        email: users.email,
+        phone: users.phone,
+        rank: players.rank,
+      })
+      .from(tournamentParticipants)
+      .innerJoin(players, eq(tournamentParticipants.playerId, players.id))
+      .innerJoin(users, eq(players.userId, users.id))
+      .where(eq(tournamentParticipants.tournamentId, tournamentId))
+      .orderBy(desc(tournamentParticipants.registeredAt));
+
+    return result;
   }
 
   // Match operations

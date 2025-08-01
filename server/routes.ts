@@ -936,6 +936,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get tournament participants
+  app.get('/api/tournaments/:tournamentId/participants', async (req, res) => {
+    try {
+      const { tournamentId } = req.params;
+      const participants = await storage.getTournamentParticipants(tournamentId);
+      res.json(participants);
+    } catch (error) {
+      console.error("Error fetching tournament participants:", error);
+      res.status(500).json({ message: "Failed to fetch participants" });
+    }
+  });
+
   // Object storage endpoints for tournament file uploads
   app.post("/api/objects/upload", isAuthenticated, async (req, res) => {
     try {
