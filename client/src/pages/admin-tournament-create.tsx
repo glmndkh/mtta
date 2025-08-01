@@ -53,7 +53,7 @@ const defaultParticipationTypes = [
 ];
 
 export default function AdminTournamentCreate() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth() as any;
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -246,7 +246,7 @@ export default function AdminTournamentCreate() {
     );
   }
 
-  if (!isAuthenticated || !user || user.role !== 'admin') {
+  if (!isAuthenticated || !user || (user as any).role !== 'admin') {
     return null;
   }
 
@@ -774,7 +774,7 @@ export default function AdminTournamentCreate() {
                                     checked={field.value?.includes(type.id)}
                                     onCheckedChange={(checked) => {
                                       if (checked) {
-                                        field.onChange([...field.value, type.id]);
+                                        field.onChange([...(field.value || []), type.id]);
                                       } else {
                                         field.onChange(field.value?.filter((val: string) => val !== type.id));
                                       }
