@@ -1,83 +1,200 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
+import Navigation from "@/components/navigation";
+import RichTextEditor from "@/components/rich-text-editor";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Separator } from "@/components/ui/separator";
+import { Trophy, Calendar, Users, MapPin, DollarSign, Plus, X, Save, Eye, Upload, FileText, Award } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { ObjectUploader } from "@/components/ObjectUploader";
 
-interface TournamentData {
-  name: string;
-  startDate: string;
-  endDate: string;
-  location: string;
-  prizeMoney: string;
-  backgroundImage: string;
-  categories: string[];
-  eventInfoUrl: string;
-  ticketUrl: string;
-  id: string;
-}
+const tournamentSchema = z.object({
+  name: z.string().min(1, "Тэмцээний нэр заавал байх ёстой"),
+  description: z.string().optional(),
+  richDescription: z.string().optional(),
+  startDate: z.string().min(1, "Эхлэх огноо заавал байх ёстой"),
+  endDate: z.string().min(1, "Дуусах огноо заавал байх ёстой"),
+  registrationDeadline: z.string().optional(),
+  location: z.string().min(1, "Байршил заавал байх ёстой"),
+  organizer: z.string().optional(),
+  maxParticipants: z.number().min(1, "Хамгийн багадаа 1 оролцогч байх ёстой"),
+  entryFee: z.number().min(0, "Оролцооны төлбөр 0 болон түүнээс дээш байх ёстой"),
+  participationTypes: z.array(z.string()).min(1, "Хамгийн багадаа 1 төрөл сонгоно уу"),
+  rules: z.string().optional(),
+  prizes: z.string().optional(),
+  contactInfo: z.string().optional(),
+  schedule: z.string().optional(),
+  requirements: z.string().optional(),
+  backgroundImageUrl: z.string().optional(),
+  regulationDocumentUrl: z.string().optional(),
+  minRating: z.string().optional(),
+  maxRating: z.string().optional(),
+  isPublished: z.boolean().default(false),
+});
 
-const CATEGORY_OPTIONS = [
-  { id: "men_singles", label: "Эрэгтэй ганцаарчилсан", value: "men_singles" },
-  { id: "women_singles", label: "Эмэгтэй ганцаарчилсан", value: "women_singles" },
-  { id: "men_doubles", label: "Эрэгтэй хосоор", value: "men_doubles" },
-  { id: "women_doubles", label: "Эмэгтэй хосоор", value: "women_doubles" },
-  { id: "mixed_doubles", label: "Холимог хосоор", value: "mixed_doubles" },
-  { id: "team", label: "Багийн төрөл", value: "team" }
+const defaultParticipationTypes = [
+  { id: "singles", label: "Дан бие" },
+  { id: "doubles", label: "Хос" },
+  { id: "mixed_doubles", label: "Холимог хос" },
+  { id: "team", label: "Баг" },
 ];
 
 export default function AdminTournamentGenerator() {
-  const [, setLocation] = useLocation();
+  const { user, isAuthenticated, isLoading } = useAuth() as any;
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    name: "",
-    startDate: "",
-    startTime: "09:00",
-    endDate: "",
-    endTime: "18:00",
-    location: "",
-    prizeMoney: "",
-    backgroundImage: "",
-    categories: [] as string[],
-    eventInfoUrl: "",
-    ticketUrl: ""
+  const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
+  
+  const [customParticipationTypes, setCustomParticipationTypes] = useState<string[]>([]);
+  const [newParticipationType, setNewParticipationType] = useState("");
+  const [richDescription, setRichDescription] = useState("");
+  const [previewMode, setPreviewMode] = useState(false);
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState("");
+  const [regulationDocumentUrl, setRegulationDocumentUrl] = useState("");
+
+  // Redirect if not admin
+  useEffect(() => {
+    if (!isLoading && (!isAuthenticated || (user && user.role !== 'admin'))) {
+      toast({
+        title: "Хандах эрхгүй",
+        description: "Зөвхөн админ хэрэглэгч тэмцээн үүсгэх боломжтой",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 500);
+      return;
+    }
+  }, [isAuthenticated, isLoading, user, toast]);
+
+  const ratingOptions = [
+    "none",
+    "Beginner",
+    "Intermediate", 
+    "Advanced",
+    "Expert",
+    "Professional"
+  ];
+
+  const form = useForm({
+    resolver: zodResolver(tournamentSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      richDescription: "",
+      startDate: "",
+      endDate: "",
+      registrationDeadline: "",
+      location: "",
+      organizer: "",
+      maxParticipants: 32,
+      entryFee: 0,
+      participationTypes: [],
+      rules: "",
+      prizes: "",
+      contactInfo: "",
+      schedule: "",
+      requirements: "",
+      backgroundImageUrl: "",
+      regulationDocumentUrl: "",
+      minRating: "none",
+      maxRating: "none",
+      isPublished: false,
+    }
   });
 
-  const handleInputChange = (field: keyof typeof formData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  // File upload handlers
+  const handleBackgroundImageUpload = async () => {
+    const response = await fetch("/api/objects/upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    const { uploadURL } = await response.json();
+    return { method: "PUT" as const, url: uploadURL };
   };
 
-  const handleCategoryChange = (categoryValue: string, checked: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      categories: checked 
-        ? [...prev.categories, categoryValue]
-        : prev.categories.filter(cat => cat !== categoryValue)
-    }));
+  const handleBackgroundImageComplete = async (result: any) => {
+    if (result.successful && result.successful[0]) {
+      const uploadURL = result.successful[0].uploadURL;
+      const finalizeResponse = await fetch("/api/objects/finalize", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileURL: uploadURL, isPublic: true }),
+      });
+      const { objectPath } = await finalizeResponse.json();
+      setBackgroundImageUrl(objectPath);
+      form.setValue("backgroundImageUrl", objectPath);
+      toast({
+        title: "Амжилттай",
+        description: "Арын зураг амжилттай хуулагдлаа",
+      });
+    }
   };
 
-  const generateTournamentId = () => {
-    return Date.now().toString() + Math.random().toString(36).substr(2, 9);
+  const handleRegulationDocumentUpload = async () => {
+    const response = await fetch("/api/objects/upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    const { uploadURL } = await response.json();
+    return { method: "PUT" as const, url: uploadURL };
   };
 
-  const saveTournament = useMutation({
-    mutationFn: async (tournamentData: any) => {
-      return apiRequest('POST', '/api/tournaments', tournamentData);
+  const handleRegulationDocumentComplete = async (result: any) => {
+    if (result.successful && result.successful[0]) {
+      const uploadURL = result.successful[0].uploadURL;
+      const finalizeResponse = await fetch("/api/objects/finalize", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileURL: uploadURL, isPublic: false }),
+      });
+      const { objectPath } = await finalizeResponse.json();
+      setRegulationDocumentUrl(objectPath);
+      form.setValue("regulationDocumentUrl", objectPath);
+      toast({
+        title: "Амжилттай",
+        description: "Дүрмийн баримт бичиг амжилттай хуулагдлаа",
+      });
+    }
+  };
+
+  const addCustomParticipationType = () => {
+    if (newParticipationType.trim() && !customParticipationTypes.includes(newParticipationType.trim())) {
+      setCustomParticipationTypes([...customParticipationTypes, newParticipationType.trim()]);
+      setNewParticipationType("");
+    }
+  };
+
+  const removeCustomParticipationType = (typeToRemove: string) => {
+    setCustomParticipationTypes(customParticipationTypes.filter(type => type !== typeToRemove));
+    const currentTypes = form.getValues("participationTypes");
+    form.setValue("participationTypes", currentTypes.filter(type => type !== typeToRemove));
+  };
+
+  const createTournament = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest('POST', '/api/tournaments', data);
     },
-    onSuccess: (data: any) => {
+    onSuccess: () => {
       toast({
         title: "Амжилттай үүсгэлээ!",
-        description: "Тэмцээн амжилттай үүсгэгдлээ.",
+        description: "Тэмцээн амжилттай бүртгэгдлээ",
       });
-      
-      // Redirect to the tournaments page to see the new tournament
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments'] });
       setLocation('/tournaments');
     },
     onError: (error: any) => {
@@ -100,227 +217,553 @@ export default function AdminTournamentGenerator() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.name || !formData.startDate || !formData.startTime || !formData.endDate || !formData.endTime || !formData.location) {
-      toast({
-        title: "Алдаа",
-        description: "Заавал бөглөх талбаруудыг бөглөнө үү",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (formData.categories.length === 0) {
-      toast({
-        title: "Алдаа", 
-        description: "Дор хаяж нэг төрөл сонгоно уу",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const tournamentId = generateTournamentId();
-    
-    // Combine date and time for proper datetime strings
-    const startDateTime = `${formData.startDate}T${formData.startTime}:00`;
-    const endDateTime = `${formData.endDate}T${formData.endTime}:00`;
-    
-    const tournamentData = {
-      name: formData.name,
-      description: `${formData.name} тэмцээн`,
-      startDate: startDateTime,
-      endDate: endDateTime,
-      location: formData.location,
-      maxParticipants: 32,
-      entryFee: 0,
-      participationTypes: ['singles', 'doubles'],
-      isPublished: true,
-      status: 'registration'
+  const onSubmit = (data: any) => {
+    const finalData = {
+      ...data,
+      richDescription: richDescription,
+      backgroundImageUrl: backgroundImageUrl,
+      regulationDocumentUrl: regulationDocumentUrl,
+      participationTypes: [...data.participationTypes, ...customParticipationTypes],
+      minRating: data.minRating === "none" ? null : parseInt(data.minRating) || null,
+      maxRating: data.maxRating === "none" ? null : parseInt(data.maxRating) || null,
     };
-
-    saveTournament.mutate(tournamentData);
+    
+    createTournament.mutate(finalData);
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mtta-green mx-auto mb-4"></div>
+          <p className="text-gray-600">Уншиж байна...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !user) {
+    return null;
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-white py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Тэмцээний хуудас үүсгэх
-          </h1>
-          <p className="text-gray-600">
-            WTT Champions загварын тэмцээний хуудас автоматаар үүсгэх
+          <div className="flex items-center justify-center mb-4">
+            <Trophy className="h-12 w-12 text-mtta-green mr-4" />
+            <h1 className="text-4xl font-bold text-gray-900">
+              Тэмцээн үүсгэх
+            </h1>
+          </div>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Шинэ тэмцээн үүсгэн зохион байгуулж, оролцогчдыг бүртгүүлэх боломжтой
           </p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-green-700">Тэмцээний мэдээлэл</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Tournament Name */}
-              <div className="space-y-2">
-                <Label htmlFor="name">Тэмцээний нэр *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  placeholder="жишээ: Улаанбаатар Open 2025"
-                  required
-                />
-              </div>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            {/* Basic Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Trophy className="h-5 w-5 mr-2 text-mtta-green" />
+                  Үндсэн мэдээлэл
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Тэмцээний нэр *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Улаанбаатар Open 2025" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              {/* Dates and Times */}
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="startDate">Эхлэх огноо *</Label>
-                    <Input
-                      id="startDate"
-                      type="date"
-                      value={formData.startDate}
-                      onChange={(e) => handleInputChange('startDate', e.target.value)}
-                      required
-                    />
+                  <FormField
+                    control={form.control}
+                    name="organizer"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Зохион байгуулагч</FormLabel>
+                        <FormControl>
+                          <Input placeholder="МШТХ" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Товч тайлбар</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Тэмцээний товч тайлбар оруулна уу..." 
+                          className="min-h-[100px]" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Дэлгэрэнгүй тайлбар</Label>
+                  <RichTextEditor
+                    content={richDescription}
+                    onChange={setRichDescription}
+                    placeholder="Тэмцээний дэлгэрэнгүй мэдээллийг энд оруулна уу..."
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Date and Location */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Calendar className="h-5 w-5 mr-2 text-mtta-green" />
+                  Огноо ба байршил
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="startDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Эхлэх огноо *</FormLabel>
+                        <FormControl>
+                          <Input type="datetime-local" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="endDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Дуусах огноо *</FormLabel>
+                        <FormControl>
+                          <Input type="datetime-local" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="registrationDeadline"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Бүртгэлийн хугацаа</FormLabel>
+                        <FormControl>
+                          <Input type="datetime-local" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Байршил *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ширээний теннисний төв" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Media Uploads */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Upload className="h-5 w-5 mr-2 text-mtta-green" />
+                  Файл хуулах
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">Арын зураг</Label>
+                    <ObjectUploader
+                      maxNumberOfFiles={1}
+                      maxFileSize={5242880} // 5MB
+                      onGetUploadParameters={handleBackgroundImageUpload}
+                      onComplete={handleBackgroundImageComplete}
+                      buttonClassName="w-full"
+                    >
+                      <div className="flex items-center justify-center">
+                        <Upload className="h-4 w-4 mr-2" />
+                        Арын зураг хуулах
+                      </div>
+                    </ObjectUploader>
+                    {backgroundImageUrl && (
+                      <p className="text-sm text-green-600 mt-2">✓ Арын зураг хуулагдлаа</p>
+                    )}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="startTime">Эхлэх цаг *</Label>
-                    <Input
-                      id="startTime"
-                      type="time"
-                      value={formData.startTime}
-                      onChange={(e) => handleInputChange('startTime', e.target.value)}
-                      required
+
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">Дүрмийн баримт бичиг</Label>
+                    <ObjectUploader
+                      maxNumberOfFiles={1}
+                      maxFileSize={10485760} // 10MB
+                      onGetUploadParameters={handleRegulationDocumentUpload}
+                      onComplete={handleRegulationDocumentComplete}
+                      buttonClassName="w-full"
+                    >
+                      <div className="flex items-center justify-center">
+                        <FileText className="h-4 w-4 mr-2" />
+                        Дүрмийн баримт хуулах
+                      </div>
+                    </ObjectUploader>
+                    {regulationDocumentUrl && (
+                      <p className="text-sm text-green-600 mt-2">✓ Дүрмийн баримт хуулагдлаа</p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Tournament Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Users className="h-5 w-5 mr-2 text-mtta-green" />
+                  Тэмцээний тохиргоо
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="maxParticipants"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Хамгийн их оролцогчийн тоо</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            {...field} 
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="entryFee"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Оролцооны төлбөр (₮)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            {...field} 
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Rating Restrictions */}
+                <div>
+                  <Label className="text-sm font-medium mb-4 block">Зэрэглэлийн хязгаарлалт</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="minRating"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Хамгийн бага зэрэглэл</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Сонгоно уу" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {ratingOptions.map((rating) => (
+                                <SelectItem key={rating} value={rating}>
+                                  {rating === "none" ? "Хязгаарлалтгүй" : rating}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="maxRating"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Хамгийн их зэрэглэл</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Сонгоно уу" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {ratingOptions.map((rating) => (
+                                <SelectItem key={rating} value={rating}>
+                                  {rating === "none" ? "Хязгаарлалтгүй" : rating}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="endDate">Дуусах огноо *</Label>
-                    <Input
-                      id="endDate"
-                      type="date"
-                      value={formData.endDate}
-                      onChange={(e) => handleInputChange('endDate', e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="endTime">Дуусах цаг *</Label>
-                    <Input
-                      id="endTime"
-                      type="time"
-                      value={formData.endTime}
-                      onChange={(e) => handleInputChange('endTime', e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
 
-              {/* Location */}
-              <div className="space-y-2">
-                <Label htmlFor="location">Байршил *</Label>
-                <Input
-                  id="location"
-                  value={formData.location}
-                  onChange={(e) => handleInputChange('location', e.target.value)}
-                  placeholder="жишээ: Талын спорт цогцолбор, Улаанбаатар"
-                  required
-                />
-              </div>
-
-              {/* Prize Money */}
-              <div className="space-y-2">
-                <Label htmlFor="prizeMoney">Шагналын сан</Label>
-                <Input
-                  id="prizeMoney"
-                  value={formData.prizeMoney}
-                  onChange={(e) => handleInputChange('prizeMoney', e.target.value)}
-                  placeholder="жишээ: ₮100,000,000"
-                />
-              </div>
-
-              {/* Background Image */}
-              <div className="space-y-2">
-                <Label htmlFor="backgroundImage">Арын зураг (URL)</Label>
-                <Input
-                  id="backgroundImage"
-                  value={formData.backgroundImage}
-                  onChange={(e) => handleInputChange('backgroundImage', e.target.value)}
-                  placeholder="https://example.com/background.jpg"
-                />
-              </div>
-
-              {/* Categories */}
-              <div className="space-y-3">
-                <Label>Тэмцээний төрлүүд *</Label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {CATEGORY_OPTIONS.map((category) => (
-                    <div key={category.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={category.id}
-                        checked={formData.categories.includes(category.value)}
-                        onCheckedChange={(checked) => 
-                          handleCategoryChange(category.value, checked as boolean)
-                        }
+                {/* Participation Types */}
+                <div>
+                  <Label className="text-sm font-medium mb-4 block">Оролцооны төрөл *</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    {defaultParticipationTypes.map((type) => (
+                      <FormField
+                        key={type.id}
+                        control={form.control}
+                        name="participationTypes"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value?.includes(type.id)}
+                                onCheckedChange={(checked) => {
+                                  return checked
+                                    ? field.onChange([...field.value, type.id])
+                                    : field.onChange(field.value?.filter((value) => value !== type.id))
+                                }}
+                              />
+                            </FormControl>
+                            <FormLabel className="text-sm font-normal">
+                              {type.label}
+                            </FormLabel>
+                          </FormItem>
+                        )}
                       />
-                      <Label 
-                        htmlFor={category.id}
-                        className="text-sm font-normal cursor-pointer"
-                      >
-                        {category.label}
-                      </Label>
+                    ))}
+                  </div>
+                  
+                  {/* Custom Participation Types */}
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <Input
+                        value={newParticipationType}
+                        onChange={(e) => setNewParticipationType(e.target.value)}
+                        placeholder="Шинэ төрөл нэмэх..."
+                        className="flex-1"
+                      />
+                      <Button type="button" onClick={addCustomParticipationType} size="sm">
+                        <Plus className="h-4 w-4" />
+                      </Button>
                     </div>
-                  ))}
+                    
+                    {customParticipationTypes.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {customParticipationTypes.map((type) => (
+                          <div key={type} className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                            {type}
+                            <button
+                              type="button"
+                              onClick={() => removeCustomParticipationType(type)}
+                              className="ml-2 text-blue-600 hover:text-blue-800"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <FormMessage />
                 </div>
-              </div>
+              </CardContent>
+            </Card>
 
-              {/* External Links */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="eventInfoUrl">Тэмцээний мэдээллийн холбоос</Label>
-                  <Input
-                    id="eventInfoUrl"
-                    value={formData.eventInfoUrl}
-                    onChange={(e) => handleInputChange('eventInfoUrl', e.target.value)}
-                    placeholder="https://example.com/event-info"
+            {/* Additional Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Нэмэлт мэдээлэл</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="rules"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Дүрэм журам</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Тэмцээний дүрэм журам..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="prizes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Шагнал урамшуулал</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Шагнал урамшуулалын мэдээлэл..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="contactInfo"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Холбоо барих мэдээлэл</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Утас, и-мэйл..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="requirements"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Шаардлага</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Оролцоход тавигдах шаардлагууд..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="ticketUrl">Тасалбарын холбоос</Label>
-                  <Input
-                    id="ticketUrl"
-                    value={formData.ticketUrl}
-                    onChange={(e) => handleInputChange('ticketUrl', e.target.value)}
-                    placeholder="https://example.com/tickets"
-                  />
-                </div>
-              </div>
 
-              {/* Submit Button */}
-              <div className="flex justify-end space-x-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setLocation("/admin/tournament-create")}
-                >
-                  Цуцлах
-                </Button>
-                <Button 
-                  type="submit" 
-                  className="bg-green-600 hover:bg-green-700"
-                  disabled={saveTournament.isPending}
-                >
-                  {saveTournament.isPending ? "Үүсгэж байна..." : "Тэмцээний хуудас үүсгэх"}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+                <FormField
+                  control={form.control}
+                  name="schedule"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Хуваарь</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Тэмцээний хуваарь..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Publishing */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Eye className="h-5 w-5 mr-2 text-mtta-green" />
+                  Нийтлэх тохиргоо
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <FormField
+                  control={form.control}
+                  name="isPublished"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Шууд нийтлэх</FormLabel>
+                        <p className="text-sm text-gray-600">
+                          Тэмцээнийг үүсгэх дайтад шууд нийтлэн оролцогчдын бүртгэлийг эхлүүлэх
+                        </p>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Submit Buttons */}
+            <div className="flex gap-4 justify-end">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setLocation('/tournaments')}
+              >
+                Цуцлах
+              </Button>
+              <Button 
+                type="submit" 
+                className="mtta-green text-white hover:bg-mtta-green-dark"
+                disabled={createTournament.isPending}
+              >
+                {createTournament.isPending ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Үүсгэж байна...
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <Save className="h-4 w-4 mr-2" />
+                    Тэмцээн үүсгэх
+                  </div>
+                )}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </div>
     </div>
   );
