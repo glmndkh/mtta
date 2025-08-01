@@ -123,6 +123,7 @@ export const tournaments = pgTable("tournaments", {
   endDate: timestamp("end_date").notNull(),
   registrationDeadline: timestamp("registration_deadline"),
   location: varchar("location"),
+  organizer: varchar("organizer"), // Optional organizer name
   maxParticipants: integer("max_participants"),
   entryFee: decimal("entry_fee", { precision: 10, scale: 2 }),
   status: tournamentStatusEnum("status").default("registration"),
@@ -135,6 +136,11 @@ export const tournaments = pgTable("tournaments", {
   isPublished: boolean("is_published").default(false),
   organizerId: varchar("organizer_id").references(() => users.id).notNull(),
   clubId: varchar("club_id").references(() => clubs.id),
+  // New fields for enhanced tournament features
+  backgroundImageUrl: varchar("background_image_url"), // Background image for tournament
+  regulationDocumentUrl: varchar("regulation_document_url"), // Tournament regulation document
+  minRating: varchar("min_rating"), // Minimum rating/rank requirement (e.g., "Beginner", "Intermediate")
+  maxRating: varchar("max_rating"), // Maximum rating/rank requirement
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
