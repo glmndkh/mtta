@@ -13,22 +13,21 @@ import { apiRequest } from "@/lib/queryClient";
 import logoPath from "@assets/logo.svg";
 
 const registerSchema = z.object({
-  email: z.string().email("И-мэйл хаягаа зөв оруулна уу").optional().or(z.literal("")),
-  phone: z.string().min(8, "Утасны дугаар хамгийн багадаа 8 тэмдэгт байх ёстой").optional().or(z.literal("")),
   firstName: z.string().min(1, "Нэрээ оруулна уу"),
   lastName: z.string().min(1, "Овгоо оруулна уу"),
+  gender: z.enum(["male", "female", "other"], {
+    required_error: "Хүйсээ сонгоно уу",
+  }),
+  dateOfBirth: z.string().min(1, "Төрсөн огноогоо оруулна уу"),
+  phone: z.string().min(8, "Утасны дугаар хамгийн багадаа 8 тэмдэгт байх ёстой"),
+  email: z.string().email("И-мэйл хаягаа зөв оруулна уу"),
+  clubAffiliation: z.string().min(1, "Клубын мэдээлэл эсвэл тоглодог газрын нэрийг оруулна уу"),
   password: z.string().min(6, "Нууц үг дор хаяж 6 тэмдэгт байх ёстой"),
   confirmPassword: z.string().min(1, "Нууц үгээ баталгаажуулна уу"),
   role: z.enum(["player", "club_owner"], {
     required_error: "Төрлөө сонгоно уу",
   }),
 }).refine(
-  (data) => data.email || data.phone,
-  {
-    message: "И-мэйл эсвэл утасны дугаар заавал оруулна уу",
-    path: ["email"],
-  }
-).refine(
   (data) => data.password === data.confirmPassword,
   {
     message: "Нууц үг таарахгүй байна",
@@ -45,10 +44,13 @@ export default function Register() {
   const form = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      email: "",
-      phone: "",
       firstName: "",
       lastName: "",
+      gender: "male",
+      dateOfBirth: "",
+      phone: "",
+      email: "",
+      clubAffiliation: "",
       password: "",
       confirmPassword: "",
       role: "player",
@@ -133,6 +135,43 @@ export default function Register() {
 
               <FormField
                 control={form.control}
+                name="gender"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Хүйс</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Хүйсээ сонгоно уу" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="male">Эр</SelectItem>
+                        <SelectItem value="female">Эм</SelectItem>
+                        <SelectItem value="other">Бусад</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="dateOfBirth"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Төрсөн огноо</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
@@ -153,6 +192,20 @@ export default function Register() {
                     <FormLabel>Утасны дугаар</FormLabel>
                     <FormControl>
                       <Input placeholder="99887766" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="clubAffiliation"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Клуб эсвэл тоглодог газар</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Их сургуулийн спорт заал, Оч клуб г.м" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

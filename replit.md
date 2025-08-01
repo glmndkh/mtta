@@ -13,14 +13,14 @@ A comprehensive web application for the Mongolian Table Tennis Association that 
 
 ## Recent Changes
 
-### Authentication System Enhancement (August 2025)
-- **Added password-based authentication** replacing the previous contact-only system
-- **Updated database schema** to include password field in users table
-- **Implemented bcrypt encryption** for secure password hashing and verification
-- **Enhanced registration form** with password and confirm password fields
-- **Updated login form** to require both contact and password
-- **Added password validation** with minimum 6-character requirement
-- **Backward compatibility** for existing users without passwords
+### Comprehensive Registration System (August 2025)
+- **Enhanced registration data collection** requiring first name, last name, gender, date of birth, phone, email, and club affiliation
+- **Implemented robust duplicate prevention** blocking registration with existing email addresses or phone numbers
+- **Added comprehensive validation** with specific error messages for each field requirement
+- **Updated database schema** to include gender (enum), date_of_birth (timestamp), and club_affiliation (varchar) fields
+- **Password-based authentication** with bcrypt encryption and minimum 6-character requirement
+- **Database migration completed** with unique constraints on email and phone numbers
+- **Full system testing verified** for registration, duplicate prevention, and login functionality
 
 ### Authentication Features
 - **Registration**: Requires email/phone, name, password (min 6 chars), and role

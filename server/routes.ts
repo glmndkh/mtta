@@ -13,15 +13,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Simple auth routes (replacement for Replit OAuth)
   app.post('/api/auth/register', async (req, res) => {
     try {
-      const { email, phone, firstName, lastName, role, password } = req.body;
+      const { 
+        firstName, 
+        lastName, 
+        gender, 
+        dateOfBirth, 
+        phone, 
+        email, 
+        clubAffiliation, 
+        password, 
+        role 
+      } = req.body;
       
-      // Validate input
-      if (!email && !phone) {
-        return res.status(400).json({ message: "И-мэйл эсвэл утасны дугаар заавал оруулна уу" });
-      }
+      // Validate required fields
       if (!firstName || !lastName) {
         return res.status(400).json({ message: "Нэр, овог заавал оруулна уу" });
       }
+      
+      if (!gender || !['male', 'female', 'other'].includes(gender)) {
+        return res.status(400).json({ message: "Хүйс заавал сонгоно уу" });
+      }
+      
+      if (!dateOfBirth) {
+        return res.status(400).json({ message: "Төрсөн огноо заавал оруулна уу" });
+      }
+      
+      if (!phone) {
+        return res.status(400).json({ message: "Утасны дугаар заавал оруулна уу" });
+      }
+      
+      if (!email) {
+        return res.status(400).json({ message: "И-мэйл хаяг заавал оруулна уу" });
+      }
+      
+      if (!clubAffiliation) {
+        return res.status(400).json({ message: "Клуб эсвэл тоглодог газрын мэдээлэл заавал оруулна уу" });
+      }
+      
       if (!password) {
         return res.status(400).json({ message: "Нууц үг заавал оруулна уу" });
       }
@@ -32,27 +60,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Зөв төрөл сонгоно уу" });
       }
 
-      // Check if user already exists
-      const existingUser = email 
-        ? await storage.getUserByEmail(email)
-        : await storage.getUserByPhone(phone);
+      // Check for duplicate email and phone numbers
+      const existingUserByEmail = await storage.getUserByEmail(email);
+      if (existingUserByEmail) {
+        return res.status(400).json({ message: "Энэ и-мэйл хаяг аль хэдийн бүртгэгдсэн байна" });
+      }
       
-      if (existingUser) {
-        return res.status(400).json({ message: "Энэ и-мэйл эсвэл утасны дугаар аль хэдийн бүртгэгдсэн байна" });
+      const existingUserByPhone = await storage.getUserByPhone(phone);
+      if (existingUserByPhone) {
+        return res.status(400).json({ message: "Энэ утасны дугаар аль хэдийн бүртгэгдсэн байна" });
       }
 
       // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Create user
+      // Create user with all required fields
       const userData = {
-        email: email || null,
-        phone: phone || null, 
+        email,
+        phone,
         firstName,
         lastName,
+        gender,
+        dateOfBirth: new Date(dateOfBirth),
+        clubAffiliation,
         role,
         password: hashedPassword
       };
+      
+      console.log("Creating user with data:", userData);
       
       const user = await storage.createSimpleUser(userData);
       
