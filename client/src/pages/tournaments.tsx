@@ -465,7 +465,7 @@ export default function Tournaments() {
               </p>
             </div>
             
-            {user?.role === 'admin' && (
+            {user && (user as any)?.role === 'admin' ? (
               <Button 
                 className="bg-purple-600 hover:bg-purple-700 text-white"
                 onClick={() => window.location.href = '/admin/generator'}
@@ -473,7 +473,7 @@ export default function Tournaments() {
                 <Trophy className="mr-2 h-5 w-5" />
                 Шинэ тэмцээн үүсгэх
               </Button>
-            )}
+            ) : null}
           </div>
         </div>
 
@@ -487,7 +487,7 @@ export default function Tournaments() {
             <p className="text-gray-600 mb-6">
               Одоогоор ямар нэг тэмцээн зарлагдаагүй байна.
             </p>
-            {user.role === 'admin' && (
+            {user && (user as any)?.role === 'admin' ? (
               <Button 
                 className="bg-green-600 hover:bg-green-700 text-white"
                 onClick={() => window.location.href = '/admin/generator'}
@@ -495,7 +495,7 @@ export default function Tournaments() {
                 <Trophy className="mr-2 h-5 w-5" />
                 Анхны тэмцээнээ үүсгэх
               </Button>
-            )}
+            ) : null}
           </div>
         ) : (
           <div className="space-y-6">
