@@ -774,9 +774,9 @@ export default function AdminTournamentCreate() {
                                     checked={field.value?.includes(type.id)}
                                     onCheckedChange={(checked) => {
                                       if (checked) {
-                                        field.onChange([...field.value, type.id]);
+                                        field.onChange([...(field.value || []), type.id]);
                                       } else {
-                                        field.onChange(field.value?.filter((val: string) => val !== type.id));
+                                        field.onChange(field.value?.filter((val: string) => val !== type.id) || []);
                                       }
                                     }}
                                   />
