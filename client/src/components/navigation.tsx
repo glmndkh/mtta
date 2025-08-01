@@ -155,7 +155,7 @@ export default function Navigation() {
                 {/* Admin-only mobile menu items */}
                 {user?.role === 'admin' && (
                   <>
-                    <Link href="/admin/tournament-create">
+                    <Link href="/admin/generator">
                       <div 
                         className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-mtta-green hover:bg-gray-50 cursor-pointer"
                         onClick={() => setShowMobileMenu(false)}
