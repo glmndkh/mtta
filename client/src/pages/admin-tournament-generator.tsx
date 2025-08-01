@@ -77,24 +77,6 @@ export default function AdminTournamentGenerator() {
         description: "Тэмцээн амжилттай үүсгэгдлээ.",
       });
       
-      // Also save to localStorage for immediate display
-      const localTournament = {
-        id: data.id,
-        name: formData.name,
-        startDate: data.startDate,
-        endDate: data.endDate,
-        location: formData.location,
-        prizeMoney: formData.prizeMoney || 'TBD',
-        backgroundImage: formData.backgroundImage || '',
-        categories: formData.categories.filter((cat: string) => cat.trim() !== ''),
-        eventInfoUrl: formData.eventInfoUrl || '',
-        ticketUrl: formData.ticketUrl || ''
-      };
-      
-      const existingTournaments = JSON.parse(localStorage.getItem('tournaments') || '[]');
-      existingTournaments.unshift(localTournament);
-      localStorage.setItem('tournaments', JSON.stringify(existingTournaments));
-      
       // Redirect to the tournaments page to see the new tournament
       setLocation('/tournaments');
     },
