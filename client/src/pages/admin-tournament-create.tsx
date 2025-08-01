@@ -686,7 +686,7 @@ export default function AdminTournamentCreate() {
                                     </SelectTrigger>
                                   </FormControl>
                                   <SelectContent>
-                                    <SelectItem value="">Хязгаарлалт байхгүй</SelectItem>
+                                    <SelectItem value="none">Хязгаарлалт байхгүй</SelectItem>
                                     {ratingOptions.map((rating) => (
                                       <SelectItem key={rating} value={rating}>
                                         {rating}
@@ -712,7 +712,7 @@ export default function AdminTournamentCreate() {
                                     </SelectTrigger>
                                   </FormControl>
                                   <SelectContent>
-                                    <SelectItem value="">Хязгаарлалт байхгүй</SelectItem>
+                                    <SelectItem value="none">Хязгаарлалт байхгүй</SelectItem>
                                     {ratingOptions.map((rating) => (
                                       <SelectItem key={rating} value={rating}>
                                         {rating}
