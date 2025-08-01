@@ -38,16 +38,22 @@ export const tournamentStatusEnum = pgEnum("tournament_status", ["registration",
 // Match status enum
 export const matchStatusEnum = pgEnum("match_status", ["scheduled", "ongoing", "completed"]);
 
+// Gender enum
+export const genderEnum = pgEnum("gender", ["male", "female", "other"]);
+
 // Users table (required for Replit Auth)
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
+  phone: varchar("phone").unique(),
   password: varchar("password"), // Added password field
   firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
+  lastName: varchar("last_name"), 
+  gender: genderEnum("gender"),
+  dateOfBirth: timestamp("date_of_birth"),
+  clubAffiliation: varchar("club_affiliation"), // Club name or location where they usually play
   profileImageUrl: varchar("profile_image_url"),
   role: userRoleEnum("role").default("player").notNull(),
-  phone: varchar("phone"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

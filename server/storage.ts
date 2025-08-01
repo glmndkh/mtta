@@ -141,9 +141,14 @@ export class DatabaseStorage implements IStorage {
         phone: userData.phone,
         firstName: userData.firstName,
         lastName: userData.lastName,
+        gender: userData.gender,
+        dateOfBirth: userData.dateOfBirth,
+        clubAffiliation: userData.clubAffiliation,
         password: userData.password,
         role: userData.role,
         profileImageUrl: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       })
       .returning();
     return user;
