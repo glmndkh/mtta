@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertPlayerSchema, insertClubSchema, insertTournamentSchema, insertMatchSchema, insertNewsSchema, insertMembershipSchema } from "@shared/schema";
 import { z } from "zod";
+import bcrypt from "bcrypt";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -12,7 +13,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Simple auth routes (replacement for Replit OAuth)
   app.post('/api/auth/register', async (req, res) => {
     try {
-      const { email, phone, firstName, lastName, role } = req.body;
+      const { email, phone, firstName, lastName, role, password } = req.body;
       
       // Validate input
       if (!email && !phone) {
@@ -20,6 +21,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       if (!firstName || !lastName) {
         return res.status(400).json({ message: "Нэр, овог заавал оруулна уу" });
+      }
+      if (!password) {
+        return res.status(400).json({ message: "Нууц үг заавал оруулна уу" });
+      }
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Нууц үг дор хаяж 6 тэмдэгт байх ёстой" });
       }
       if (!role || !['player', 'club_owner'].includes(role)) {
         return res.status(400).json({ message: "Зөв төрөл сонгоно уу" });
@@ -34,17 +41,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Энэ и-мэйл эсвэл утасны дугаар аль хэдийн бүртгэгдсэн байна" });
       }
 
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
       // Create user
       const userData = {
         email: email || null,
         phone: phone || null, 
         firstName,
         lastName,
-        role
+        role,
+        password: hashedPassword
       };
       
       const user = await storage.createSimpleUser(userData);
-      res.json({ message: "Амжилттай бүртгэгдлээ", user });
+      
+      // Remove password from response
+      const { password: _, ...userResponse } = user;
+      res.json({ message: "Амжилттай бүртгэгдлээ", user: userResponse });
     } catch (error) {
       console.error("Registration error:", error);
       res.status(500).json({ message: "Бүртгэлд алдаа гарлаа" });
@@ -53,10 +67,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/auth/login', async (req, res) => {
     try {
-      const { contact } = req.body;
+      const { contact, password } = req.body;
       
       if (!contact) {
         return res.status(400).json({ message: "И-мэйл эсвэл утасны дугаар оруулна уу" });
+      }
+      
+      if (!password) {
+        return res.status(400).json({ message: "Нууц үг оруулна уу" });
       }
 
       // Find user by email or phone
@@ -68,11 +86,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Хэрэглэгч олдсонгүй" });
       }
 
+      // Check if user has a password (for backward compatibility)
+      if (!user.password) {
+        return res.status(400).json({ message: "Энэ хэрэглэгч нууц үг тохируулаагүй байна. Нууц үг тохируулна уу." });
+      }
+
+      // Verify password
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ message: "Буруу нууц үг" });
+      }
+
       // Set user session (simple session management)
       (req as any).session.userId = user.id;
       (req as any).session.user = user;
       
-      res.json({ message: "Амжилттай нэвтэрлээ", user });
+      // Remove password from response
+      const { password: _, ...userResponse } = user;
+      res.json({ message: "Амжилттай нэвтэрлээ", user: userResponse });
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ message: "Нэвтрэхэд алдаа гарлаа" });

@@ -13,6 +13,7 @@ import logoPath from "@assets/logo.svg";
 
 const loginSchema = z.object({
   contact: z.string().min(1, "И-мэйл эсвэл утасны дугаараа оруулна уу"),
+  password: z.string().min(1, "Нууц үгээ оруулна уу"),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -24,6 +25,7 @@ export default function Login() {
     resolver: zodResolver(loginSchema),
     defaultValues: {
       contact: "",
+      password: "",
     },
   });
 
@@ -83,6 +85,24 @@ export default function Login() {
                     <FormControl>
                       <Input 
                         placeholder="example@email.com эсвэл 99887766" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Нууц үг</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="password"
+                        placeholder="••••••••" 
                         {...field} 
                       />
                     </FormControl>
