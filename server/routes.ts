@@ -6,6 +6,7 @@ import { insertPlayerSchema, insertClubSchema, insertTournamentSchema, insertMat
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+import { ObjectPermission } from "./objectAcl";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -299,15 +300,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/objects/:objectPath(*)", requireAuth, async (req: any, res) => {
-    const userId = req.session.userId;
-    const objectStorageService = new (require("./objectStorage").ObjectStorageService)();
+  app.get("/objects/:objectPath(*)", isAuthenticated, async (req: any, res) => {
+    const userId = req.user?.claims?.sub;
+    const objectStorageService = new ObjectStorageService();
     try {
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
       const canAccess = await objectStorageService.canAccessObjectEntity({
         objectFile,
         userId: userId,
-        requestedPermission: require("./objectAcl").ObjectPermission.READ,
+        requestedPermission: ObjectPermission.READ,
       });
       if (!canAccess) {
         return res.sendStatus(401);
@@ -315,28 +316,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       objectStorageService.downloadObject(objectFile, res);
     } catch (error) {
       console.error("Error checking object access:", error);
-      if (error instanceof require("./objectStorage").ObjectNotFoundError) {
+      if (error instanceof ObjectNotFoundError) {
         return res.sendStatus(404);
       }
       return res.sendStatus(500);
     }
   });
 
-  app.post("/api/objects/upload", requireAuth, async (req: any, res) => {
-    const objectStorageService = new (require("./objectStorage").ObjectStorageService)();
+  app.post("/api/objects/upload", isAuthenticated, async (req: any, res) => {
+    const objectStorageService = new ObjectStorageService();
     const uploadURL = await objectStorageService.getObjectEntityUploadURL();
     res.json({ uploadURL });
   });
 
-  app.put("/api/objects/finalize", requireAuth, async (req: any, res) => {
+  app.put("/api/objects/finalize", isAuthenticated, async (req: any, res) => {
     if (!req.body.fileURL) {
       return res.status(400).json({ error: "fileURL is required" });
     }
 
-    const userId = req.session.userId;
+    const userId = req.user?.claims?.sub;
 
     try {
-      const objectStorageService = new (require("./objectStorage").ObjectStorageService)();
+      const objectStorageService = new ObjectStorageService();
       const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
         req.body.fileURL,
         {
