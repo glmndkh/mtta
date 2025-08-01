@@ -1,148 +1,62 @@
-# MTTA Table Tennis Management System
+# Mongolian Table Tennis Association Web Application
 
-## Overview
+## Project Overview
+A comprehensive web application for the Mongolian Table Tennis Association that streamlines tournament management and player engagement through digital solutions.
 
-This is a full-stack web application for the Mongolian Table Tennis Association (MTTA) that manages tournaments, clubs, players, and leagues. The system provides a comprehensive platform for table tennis tournament management, player registration, club administration, and news management.
+## Key Technologies
+- React TypeScript frontend with dynamic tournament management
+- Node.js/Express backend with flexible tournament creation
+- PostgreSQL database with Drizzle ORM
+- Tailwind CSS for responsive, mobile-first design
+- Password-based authentication system with bcrypt encryption
+- Full internationalization with comprehensive Mongolian language support
+
+## Recent Changes
+
+### Authentication System Enhancement (August 2025)
+- **Added password-based authentication** replacing the previous contact-only system
+- **Updated database schema** to include password field in users table
+- **Implemented bcrypt encryption** for secure password hashing and verification
+- **Enhanced registration form** with password and confirm password fields
+- **Updated login form** to require both contact and password
+- **Added password validation** with minimum 6-character requirement
+- **Backward compatibility** for existing users without passwords
+
+### Authentication Features
+- **Registration**: Requires email/phone, name, password (min 6 chars), and role
+- **Login**: Requires email/phone and password
+- **Password Security**: Uses bcrypt with salt rounds of 10
+- **Session Management**: Simple session-based authentication
+- **Form Validation**: Client-side validation with Zod schemas
+- **Error Handling**: Comprehensive error messages in Mongolian
 
 ## User Preferences
+- Language: Mongolian language throughout the interface
+- Authentication: Password-required login system
+- UI Framework: shadcn/ui components with Tailwind CSS
+- Form Handling: react-hook-form with Zod validation
 
-Preferred communication style: Simple, everyday language.
+## Project Architecture
 
-## System Architecture
+### Frontend Structure
+- `/client/src/pages/login.tsx` - Password-enabled login form
+- `/client/src/pages/register.tsx` - Registration form with password confirmation
+- `/client/src/pages/landing.tsx` - Landing page with auth options
+- `/client/src/components/navigation.tsx` - Navigation with auth state
 
-The application follows a modern full-stack architecture with clear separation between frontend and backend:
-
-- **Frontend**: React with TypeScript, using Vite as the build tool
-- **Backend**: Express.js with TypeScript
-- **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: Replit-based OAuth integration
-- **Styling**: Tailwind CSS with Radix UI components (shadcn/ui)
-
-## Key Components
-
-### Frontend Architecture
-- **Framework**: React 18 with TypeScript
-- **Routing**: Wouter for client-side routing
-- **State Management**: TanStack Query (React Query) for server state
-- **UI Library**: Radix UI primitives with shadcn/ui components
-- **Styling**: Tailwind CSS with custom MTTA branding
-- **Form Handling**: React Hook Form with Zod validation
-
-### Backend Architecture
-- **Framework**: Express.js with TypeScript
-- **Database ORM**: Drizzle with PostgreSQL
-- **Authentication**: Custom session-based authentication (replaced OAuth)
-- **Session Management**: Express sessions with PostgreSQL store
-- **API Design**: RESTful API with JSON responses
+### Backend Structure
+- `/server/routes.ts` - Authentication routes with password verification
+- `/server/storage.ts` - Database operations with password support
+- `/shared/schema.ts` - Database schema with password field
 
 ### Database Schema
-The application uses a comprehensive schema for table tennis management:
+- **users table**: Added `password` field (nullable for backward compatibility)
+- **Authentication**: Email or phone + password required
+- **Password Storage**: Hashed with bcrypt, never stored in plaintext
 
-- **Users**: Core user authentication and profile data
-- **Players**: Player profiles with dual ranking system (all ages & own age), admin-assigned ranks, achievements
-- **Clubs**: Club management with ownership and membership systems
-- **Tournaments**: Tournament creation and management
-- **Matches**: Match records with set-by-set scoring
-- **Teams**: Team management for league play
-- **Leagues**: League systems with standings
-- **News**: News and announcements system
-- **Memberships**: Player-club relationships with payment tracking
-- **Achievements**: Player achievement system with categories
-
-## Recent Changes (January 2025)
-
-### Tournament Registration System Implementation
-- **Registration API**: Built comprehensive tournament registration endpoints with authentication requirements
-- **Registration Buttons**: Added "бүртгүүлэх" (Register) buttons to tournament cards and detail pages
-- **User Authentication**: Registration requires login - redirects to login page if user not authenticated
-- **Registration Status**: Shows "Бүртгүүлсэн" (Registered) status for already registered users
-- **Subscription Rate Tracking**: Implemented percentage-based registration tracking with progress bars
-- **Registration Statistics**: Real-time display of registered participants count and percentages
-- **Back Navigation**: Added back button on tournament detail pages to return to tournaments page
-- **Database Schema**: Enhanced schema with tournament_participants table supporting participation types
-
-### WTT Champions Style Tournament System
-- **Tournament Generator**: Built admin form to create tournaments with WTT Champions styling
-- **Dynamic Tournament Pages**: Created auto-generated tournament landing pages with countdown timers, night city backgrounds
-- **Tournament Directory**: Built `/tournaments` page displaying all tournaments in WTT Champions card format
-- **Visual Design System**: Implemented responsive cards with background images, countdown timers, category badges
-- **Admin Workflow**: Streamlined process from tournament creation to instant display on tournaments page
-- **LocalStorage Integration**: Tournament data saved locally for immediate display (easily replaceable with backend)
-- **Landing Page Update**: Removed tournament info from landing page, added proper navigation to tournaments page
-
-### Tournament Management System Enhancement  
-- **Rich Text Editor Integration**: Added TipTap rich text editor with image, video, and file embedding capabilities
-- **Comprehensive Tournament Creation**: Built advanced admin interface for creating tournaments with rich descriptions
-- **Customizable Participation Types**: System supports default types (Singles, Doubles, Mixed Doubles, Team) plus custom types
-- **Enhanced Database Schema**: Added rich_description, participation_types, entry_fee, registration_deadline, and other tournament fields
-- **Admin Interface Streamlining**: Simplified admin home page to focus on core tournament management functions
-- **Preview Mode**: Tournament creation includes preview functionality to see how tournaments will appear
-- **Post-submission Editing**: Tournaments can be edited after creation with full CRUD operations
-
-## Recent Changes (January 2025)
-
-### Player Dashboard Updates
-- **Dual Ranking System**: Split ranking into "All Ages" and "Own Age" categories
-- **Admin-Assigned Ranks**: Added rank field that can be set by administrators
-- **Achievements Section**: New achievement display with categorized accomplishments
-- **Match History**: Changed from "Last Match" to comprehensive "Match History" view
-- **Membership Payment Tracking**: Added display of payment dates in membership information
-- **Removed Active Tournaments**: Streamlined dashboard by removing active tournaments section
-
-### Admin Tournament Management
-- **Tournament Results Entry**: New admin interface for entering match results
-- **Tournament Match Management**: Admins can view and manage tournament matches
-- **Score Recording**: Admin and score recorder roles can update match results
-- **Achievement Creation**: Admins can create achievements for players
-
-### Authentication System Overhaul
-- **Replaced OAuth**: Completely removed Replit OAuth in favor of simple email/phone registration
-- **Session-Based Auth**: Implemented custom session-based authentication system
-- **Role-Based Access**: Enhanced role management (player, club_owner, admin, score_recorder)
-
-## Data Flow
-
-1. **Authentication Flow**: Users authenticate via Replit OAuth, with session data stored in PostgreSQL
-2. **API Communication**: Frontend communicates with backend through RESTful APIs using TanStack Query
-3. **Database Operations**: Backend uses Drizzle ORM for type-safe database operations
-4. **Real-time Updates**: Query invalidation ensures UI stays synchronized with server state
-
-## External Dependencies
-
-### Core Dependencies
-- **@neondatabase/serverless**: Serverless PostgreSQL connection for Neon database
-- **drizzle-orm**: Type-safe ORM for database operations
-- **@tanstack/react-query**: Server state management
-- **@radix-ui/react-***: Headless UI primitives
-- **tailwindcss**: Utility-first CSS framework
-- **passport**: Authentication middleware
-- **express-session**: Session management
-
-### Authentication Integration
-- Custom Replit OAuth implementation using OpenID Connect
-- Session persistence in PostgreSQL
-- Role-based access control (player, club_owner, admin, score_recorder)
-
-### UI Component System
-- shadcn/ui component library built on Radix UI
-- Consistent design system with MTTA branding
-- Responsive design with mobile-first approach
-
-## Deployment Strategy
-
-The application is designed for deployment on Replit with the following configuration:
-
-- **Development**: `npm run dev` - Runs both frontend and backend in development mode
-- **Build**: `npm run build` - Builds frontend with Vite and backend with esbuild
-- **Production**: `npm start` - Serves the built application
-- **Database**: Uses environment variable `DATABASE_URL` for PostgreSQL connection
-- **Sessions**: Requires `SESSION_SECRET` for session encryption
-
-### Environment Requirements
-- `DATABASE_URL`: PostgreSQL connection string
-- `SESSION_SECRET`: Secret for session encryption
-- `REPL_ID`: Replit environment identifier
-- `ISSUER_URL`: OAuth issuer URL (defaults to Replit OIDC)
-- `REPLIT_DOMAINS`: Allowed domains for Replit integration
-
-The application includes Replit-specific integrations like the development banner and Cartographer plugin for enhanced development experience within the Replit environment.
+## Development Guidelines
+- Follow fullstack_js guidelines for React/Node.js development
+- Use Drizzle ORM for database operations
+- Implement proper password security practices
+- Maintain Mongolian language support throughout
+- Use session-based authentication for simplicity

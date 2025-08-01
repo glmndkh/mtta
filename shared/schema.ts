@@ -42,6 +42,7 @@ export const matchStatusEnum = pgEnum("match_status", ["scheduled", "ongoing", "
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
+  password: varchar("password"), // Added password field
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),

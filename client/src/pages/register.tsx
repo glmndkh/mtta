@@ -17,6 +17,8 @@ const registerSchema = z.object({
   phone: z.string().min(8, "Утасны дугаар хамгийн багадаа 8 тэмдэгт байх ёстой").optional().or(z.literal("")),
   firstName: z.string().min(1, "Нэрээ оруулна уу"),
   lastName: z.string().min(1, "Овгоо оруулна уу"),
+  password: z.string().min(6, "Нууц үг дор хаяж 6 тэмдэгт байх ёстой"),
+  confirmPassword: z.string().min(1, "Нууц үгээ баталгаажуулна уу"),
   role: z.enum(["player", "club_owner"], {
     required_error: "Төрлөө сонгоно уу",
   }),
@@ -25,6 +27,12 @@ const registerSchema = z.object({
   {
     message: "И-мэйл эсвэл утасны дугаар заавал оруулна уу",
     path: ["email"],
+  }
+).refine(
+  (data) => data.password === data.confirmPassword,
+  {
+    message: "Нууц үг таарахгүй байна",
+    path: ["confirmPassword"],
   }
 );
 
@@ -41,6 +49,8 @@ export default function Register() {
       phone: "",
       firstName: "",
       lastName: "",
+      password: "",
+      confirmPassword: "",
       role: "player",
     },
   });
@@ -143,6 +153,34 @@ export default function Register() {
                     <FormLabel>Утасны дугаар</FormLabel>
                     <FormControl>
                       <Input placeholder="99887766" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Нууц үг</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="••••••••" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Нууц үг баталгаажуулах</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="••••••••" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
