@@ -692,34 +692,74 @@ export class DatabaseStorage implements IStorage {
             for (const group of groupData) {
               if (group.players && group.resultMatrix) {
                 for (let i = 0; i < group.players.length; i++) {
-                  for (let j = 0; j < group.players.length; j++) {
-                    if (i !== j && group.resultMatrix[i] && group.resultMatrix[i][j]) {
-                      const result = group.resultMatrix[i][j];
-                      if (result && result !== '-') {
+                  for (let j = i + 1; j < group.players.length; j++) {
+                    // Process each match only once by only checking upper triangle
+                    const result1 = group.resultMatrix[i] && group.resultMatrix[i][j];
+                    const result2 = group.resultMatrix[j] && group.resultMatrix[j][i];
+                    
+                    if ((result1 && result1 !== '' && result1 !== '-') || (result2 && result2 !== '' && result2 !== '-')) {
                         const player1 = group.players[i];
                         const player2 = group.players[j];
                         
-                        // Find player IDs (could be user ID or player ID)
-                        const player1Record = participants.find(p => p.userId === player1.id || p.playerId === player1.id);
-                        const player2Record = participants.find(p => p.userId === player2.id || p.playerId === player2.id);
+                        // Find player records by matching user ID from tournament data to player's user_id
+                        const player1Record = participants.find(p => {
+                          // First try direct match with player ID
+                          if (p.playerId === player1.id) return true;
+                          // Then try to match user ID - get the player record and check user_id
+                          return false; // We'll handle this differently
+                        });
+                        const player2Record = participants.find(p => {
+                          // First try direct match with player ID  
+                          if (p.playerId === player2.id) return true;
+                          // Then try to match user ID - get the player record and check user_id
+                          return false; // We'll handle this differently
+                        });
                         
-                        if (player1Record && player2Record) {
-                          const player1Id = player1Record.playerId;
-                          const player2Id = player2Record.playerId;
+                        // If direct match failed, try user ID matching
+                        let player1Id = player1Record?.playerId;
+                        let player2Id = player2Record?.playerId;
+                        
+                        if (!player1Id) {
+                          // Find by user ID in players table
+                          const playerByUserId = await db.select().from(players).where(eq(players.userId, player1.id)).limit(1);
+                          if (playerByUserId.length > 0) {
+                            const participantRecord = participants.find(p => p.playerId === playerByUserId[0].id);
+                            if (participantRecord) player1Id = participantRecord.playerId;
+                          }
+                        }
+                        
+                        if (!player2Id) {
+                          // Find by user ID in players table
+                          const playerByUserId = await db.select().from(players).where(eq(players.userId, player2.id)).limit(1);
+                          if (playerByUserId.length > 0) {
+                            const participantRecord = participants.find(p => p.playerId === playerByUserId[0].id);
+                            if (participantRecord) player2Id = participantRecord.playerId;
+                          }
+                        }
+                        
+                        if (player1Id && player2Id) {
                           
-                          // Determine winner based on score
-                          const scores = result.split('-').map((s: string) => parseInt(s.trim()));
-                          if (scores.length === 2 && !isNaN(scores[0]) && !isNaN(scores[1])) {
-                            if (scores[0] > scores[1]) {
+                          // Handle individual scores like "3", "1", etc.
+                          let score1, score2;
+                          
+                          if (result1 && result1 !== '' && result1 !== '-') {
+                            score1 = parseInt(result1.trim());
+                          }
+                          if (result2 && result2 !== '' && result2 !== '-') {
+                            score2 = parseInt(result2.trim());
+                          }
+                          
+                          // We need both scores to determine winner
+                          if (!isNaN(score1) && !isNaN(score2)) {
+                            if (!playerStats[player1Id]) playerStats[player1Id] = { wins: 0, losses: 0 };
+                            if (!playerStats[player2Id]) playerStats[player2Id] = { wins: 0, losses: 0 };
+                            
+                            if (score1 > score2) {
                               // Player 1 wins
-                              if (!playerStats[player1Id]) playerStats[player1Id] = { wins: 0, losses: 0 };
-                              if (!playerStats[player2Id]) playerStats[player2Id] = { wins: 0, losses: 0 };
                               playerStats[player1Id].wins++;
                               playerStats[player2Id].losses++;
-                            } else if (scores[1] > scores[0]) {
+                            } else if (score2 > score1) {
                               // Player 2 wins
-                              if (!playerStats[player1Id]) playerStats[player1Id] = { wins: 0, losses: 0 };
-                              if (!playerStats[player2Id]) playerStats[player2Id] = { wins: 0, losses: 0 };
                               playerStats[player2Id].wins++;
                               playerStats[player1Id].losses++;
                             }
