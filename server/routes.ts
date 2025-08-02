@@ -77,9 +77,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Энэ и-мэйл хаяг аль хэдийн бүртгэгдсэн байна" });
       }
       
-      const existingUserByPhone = await storage.getUserByPhone(phone);
-      if (existingUserByPhone) {
-        return res.status(400).json({ message: "Энэ утасны дугаар аль хэдийн бүртгэгдсэн байна" });
+      // Only check phone if it's provided
+      if (phone) {
+        const existingUserByPhone = await storage.getUserByPhone(phone);
+        if (existingUserByPhone) {
+          return res.status(400).json({ message: "Энэ утасны дугаар аль хэдийн бүртгэгдсэн байна" });
+        }
       }
 
       // Store password in plain text (as requested by user)
