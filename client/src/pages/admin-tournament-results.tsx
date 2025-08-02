@@ -471,7 +471,7 @@ export default function AdminTournamentResultsPage() {
         <Tabs defaultValue="rankings" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="rankings">Эцсийн байр</TabsTrigger>
-            <TabsTrigger value="knockout">Шоронтох тулаан</TabsTrigger>
+            <TabsTrigger value="knockout">Шигшээ тоглолт</TabsTrigger>
             <TabsTrigger value="groups">Хэсгийн тоглолт</TabsTrigger>
           </TabsList>
 
