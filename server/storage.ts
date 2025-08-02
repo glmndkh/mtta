@@ -406,7 +406,7 @@ export class DatabaseStorage implements IStorage {
   async getTournamentParticipants(tournamentId: string): Promise<any[]> {
     const result = await db
       .select({
-        id: tournamentParticipants.id,
+        id: players.id,  // Return player ID instead of participation ID
         participationType: tournamentParticipants.participationType,
         registeredAt: tournamentParticipants.registeredAt,
         firstName: users.firstName,
