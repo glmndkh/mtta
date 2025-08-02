@@ -840,12 +840,18 @@ export default function AdminTournamentResultsPage() {
                                     <Input
                                       value={player.position || ''}
                                       onChange={(e) => {
-                                        const updated = [...groupStageTables];
-                                        updated[groupIndex].players[playerIndex].position = e.target.value;
-                                        setGroupStageTables(updated);
+                                        const value = e.target.value;
+                                        // Only allow single digits 1-7
+                                        if (value === '' || (/^[1-7]$/.test(value))) {
+                                          const updated = [...groupStageTables];
+                                          // Convert to number for database storage, empty string for display
+                                          updated[groupIndex].players[playerIndex].position = value === '' ? '' : parseInt(value, 10);
+                                          setGroupStageTables(updated);
+                                        }
                                       }}
                                       placeholder="1"
                                       className="w-full h-8 text-center text-xs font-bold"
+                                      maxLength={1}
                                     />
                                   </td>
                                 </tr>
