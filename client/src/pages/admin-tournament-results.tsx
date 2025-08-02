@@ -358,6 +358,11 @@ export default function AdminTournamentResultsPage() {
     group.standings = standings;
   };
 
+  // Recalculate standings helper function
+  const recalculateStandings = (group: GroupStageTable) => {
+    calculateGroupStandings(group);
+  };
+
   // Helper functions for knockout stage
   const addKnockoutRound = (round: string) => {
     const roundCount = knockoutMatches.filter(m => m.round === round).length;
