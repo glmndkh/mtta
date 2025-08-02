@@ -11,6 +11,7 @@ import {
   leagues,
   tournamentParticipants,
   achievements,
+  tournamentResults,
   type User,
   type UpsertUser,
   type Player,
@@ -30,6 +31,8 @@ import {
   type League,
   type Achievement,
   type InsertAchievement,
+  type TournamentResults,
+  type InsertTournamentResults,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
@@ -99,6 +102,11 @@ export interface IStorage {
   // League operations
   getAllLeagues(): Promise<League[]>;
   getTeamsByLeague(leagueId: string): Promise<Team[]>;
+
+  // Tournament results operations
+  getTournamentResults(tournamentId: string): Promise<TournamentResults | undefined>;
+  upsertTournamentResults(results: InsertTournamentResults): Promise<TournamentResults>;
+  publishTournamentResults(tournamentId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -522,6 +530,46 @@ export class DatabaseStorage implements IStorage {
       .from(teams)
       .where(eq(teams.leagueId, leagueId))
       .orderBy(desc(teams.points), desc(teams.wins));
+  }
+
+  // Tournament results operations
+  async getTournamentResults(tournamentId: string): Promise<TournamentResults | undefined> {
+    const [results] = await db
+      .select()
+      .from(tournamentResults)
+      .where(eq(tournamentResults.tournamentId, tournamentId));
+    return results;
+  }
+
+  async upsertTournamentResults(resultsData: InsertTournamentResults): Promise<TournamentResults> {
+    const [results] = await db
+      .insert(tournamentResults)
+      .values({
+        ...resultsData,
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: tournamentResults.tournamentId,
+        set: {
+          groupStageResults: resultsData.groupStageResults,
+          knockoutResults: resultsData.knockoutResults,
+          finalRankings: resultsData.finalRankings,
+          isPublished: resultsData.isPublished,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return results;
+  }
+
+  async publishTournamentResults(tournamentId: string): Promise<void> {
+    await db
+      .update(tournamentResults)
+      .set({
+        isPublished: true,
+        updatedAt: new Date(),
+      })
+      .where(eq(tournamentResults.tournamentId, tournamentId));
   }
 }
 

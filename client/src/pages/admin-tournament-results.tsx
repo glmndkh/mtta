@@ -1,328 +1,719 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { useRoute, useLocation } from "wouter";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Plus, Trash2, Save, Users, Trophy, Target } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import Navigation from "@/components/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Separator } from "@/components/ui/separator";
-import { Trophy, Calendar, Users, Target, Plus, Edit3 } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { isUnauthorizedError } from "@/lib/authUtils";
+import type { Tournament, TournamentResults, TournamentParticipant } from "@shared/schema";
 
-const matchResultSchema = z.object({
-  winnerId: z.string().min(1, "Ялагч сонгоно уу"),
-  sets: z.array(z.object({
-    setNumber: z.number(),
-    player1Score: z.number().min(0),
-    player2Score: z.number().min(0)
-  })).min(1, "Хамгийн багадаа 1 сет оруулна уу")
-});
+// Types for Excel-style tournament result editing
+interface GroupStageMatch {
+  id: string;
+  player1: { id: string; name: string };
+  player2: { id: string; name: string };
+  score: string;
+  winner?: string;
+}
 
-export default function AdminTournamentResults() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+interface GroupStageGroup {
+  name: string;
+  matches: GroupStageMatch[];
+  standings: Array<{
+    playerId: string;
+    playerName: string;
+    wins: number;
+    losses: number;
+    points: number;
+  }>;
+}
+
+interface KnockoutMatch {
+  id: string;
+  round: string;
+  player1?: { id: string; name: string };
+  player2?: { id: string; name: string };
+  score?: string;
+  winner?: { id: string; name: string };
+  position: { x: number; y: number };
+}
+
+interface FinalRanking {
+  position: number;
+  playerId: string;
+  playerName: string;
+  prize?: string;
+}
+
+export default function AdminTournamentResultsPage() {
+  const [match, params] = useRoute("/admin/tournament/:id/results");
+  const [, setLocation] = useLocation();
+  const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  // Redirect if not admin
+
+  // State for editing
+  const [groupStageGroups, setGroupStageGroups] = useState<GroupStageGroup[]>([]);
+  const [knockoutMatches, setKnockoutMatches] = useState<KnockoutMatch[]>([]);
+  const [finalRankings, setFinalRankings] = useState<FinalRanking[]>([]);
+  const [isPublished, setIsPublished] = useState(false);
+
+  // Fetch tournament data
+  const { data: tournament, isLoading: tournamentLoading } = useQuery<Tournament>({
+    queryKey: ['/api/tournaments', params?.id],
+    enabled: !!params?.id,
+  });
+
+  // Fetch tournament participants
+  const { data: participants = [] } = useQuery<TournamentParticipant[]>({
+    queryKey: ['/api/tournaments', params?.id, 'participants'],
+    enabled: !!params?.id,
+  });
+
+  // Fetch existing results
+  const { data: existingResults } = useQuery<TournamentResults>({
+    queryKey: ['/api/tournaments', params?.id, 'results'],
+    enabled: !!params?.id,
+  });
+
+  // Load existing results into state
   useEffect(() => {
-    if (!isLoading && (!isAuthenticated || (user && user.role !== 'admin'))) {
-      toast({
-        title: "Хандах эрхгүй",
-        description: "Зөвхөн админ хэрэглэгч энэ хуудсыг үзэх боломжтой",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 500);
-      return;
+    if (existingResults) {
+      setGroupStageGroups((existingResults.groupStageResults as GroupStageGroup[]) || []);
+      setKnockoutMatches((existingResults.knockoutResults as KnockoutMatch[]) || []);
+      setFinalRankings((existingResults.finalRankings as FinalRanking[]) || []);
+      setIsPublished(existingResults.isPublished || false);
     }
-  }, [isAuthenticated, isLoading, user, toast]);
+  }, [existingResults]);
 
-  // Fetch tournaments
-  const { data: tournaments = [], isLoading: tournamentsLoading } = useQuery({
-    queryKey: ["/api/tournaments"],
-    enabled: isAuthenticated && user?.role === 'admin',
-    retry: false,
-  });
+  // Save results mutation
+  const saveResultsMutation = useMutation({
+    mutationFn: async () => {
+      const resultsData = {
+        tournamentId: params?.id,
+        groupStageResults: groupStageGroups,
+        knockoutResults: knockoutMatches,
+        finalRankings: finalRankings,
+        isPublished: isPublished,
+      };
 
-  const [selectedTournamentId, setSelectedTournamentId] = useState<string>("");
-  
-  // Fetch matches for selected tournament
-  const { data: matches = [], isLoading: matchesLoading } = useQuery({
-    queryKey: ["/api/admin/tournaments", selectedTournamentId, "matches"],
-    enabled: !!selectedTournamentId && isAuthenticated && user?.role === 'admin',
-    retry: false,
-  });
-
-  // Form for updating match results
-  const form = useForm({
-    resolver: zodResolver(matchResultSchema),
-    defaultValues: {
-      winnerId: "",
-      sets: [{ setNumber: 1, player1Score: 0, player2Score: 0 }]
-    }
-  });
-
-  // Mutation for updating match results
-  const updateMatchMutation = useMutation({
-    mutationFn: async ({ matchId, data }: { matchId: string; data: any }) => {
-      await apiRequest(`/api/matches/${matchId}/result`, {
-        method: "PUT",
-        body: JSON.stringify(data),
+      return apiRequest('/api/admin/tournament-results', {
+        method: 'POST',
+        body: resultsData,
       });
     },
     onSuccess: () => {
       toast({
-        title: "Амжилттай",
-        description: "Тоглолтын үр дүн шинэчлэгдлээ",
+        title: "Амжилттай хадгалагдлаа",
+        description: "Тэмцээний үр дүн амжилттай шинэчлэгдлээ",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/tournaments", selectedTournamentId, "matches"] });
-      form.reset();
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', params?.id, 'results'] });
     },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Нэвтрэх шаардлагатай",
-          description: "Та дахин нэвтэрнэ үү...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
+    onError: () => {
       toast({
-        title: "Алдаа",
-        description: "Үр дүн шинэчлэхэд алдаа гарлаа",
+        title: "Алдаа гарлаа",
+        description: "Үр дүн хадгалахад алдаа гарлаа",
         variant: "destructive",
       });
     },
   });
 
-  const onSubmit = (data: any, matchId: string) => {
-    updateMatchMutation.mutate({ matchId, data });
-  };
-
-  if (isLoading || tournamentsLoading) {
+  // Check if user is admin
+  if (!isAuthenticated || user?.role !== 'admin') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mtta-green mx-auto mb-4"></div>
-          <p className="text-gray-600">Уншиж байна...</p>
+          <h1 className="text-2xl font-bold mb-2 text-gray-900">Хандах эрхгүй</h1>
+          <p className="text-gray-600 mb-4">Зөвхөн админ хэрэглэгч энэ хуудсыг харах боломжтой.</p>
+          <Button 
+            onClick={() => setLocation('/tournaments')}
+            variant="outline"
+          >
+            Тэмцээний хуудас руу буцах
+          </Button>
         </div>
       </div>
     );
   }
 
-  if (!isAuthenticated || !user || user.role !== 'admin') {
-    return null;
+  if (tournamentLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Тэмцээний мэдээлэл ачаалж байна...</p>
+        </div>
+      </div>
+    );
   }
+
+  if (!tournament) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2 text-gray-900">Тэмцээн олдсонгүй</h1>
+          <Button 
+            onClick={() => setLocation('/admin/tournaments')}
+            variant="outline"
+          >
+            Буцах
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Helper functions for group stage
+  const addGroup = () => {
+    const newGroup: GroupStageGroup = {
+      name: `Групп ${groupStageGroups.length + 1}`,
+      matches: [],
+      standings: [],
+    };
+    setGroupStageGroups([...groupStageGroups, newGroup]);
+  };
+
+  const removeGroup = (index: number) => {
+    setGroupStageGroups(groupStageGroups.filter((_, i) => i !== index));
+  };
+
+  const updateGroupName = (index: number, name: string) => {
+    const updated = [...groupStageGroups];
+    updated[index].name = name;
+    setGroupStageGroups(updated);
+  };
+
+  const addMatchToGroup = (groupIndex: number) => {
+    const newMatch: GroupStageMatch = {
+      id: `match_${Date.now()}_${Math.random()}`,
+      player1: { id: '', name: '' },
+      player2: { id: '', name: '' },
+      score: '',
+      winner: undefined,
+    };
+    
+    const updated = [...groupStageGroups];
+    updated[groupIndex].matches.push(newMatch);
+    setGroupStageGroups(updated);
+  };
+
+  const updateMatch = (groupIndex: number, matchIndex: number, field: string, value: any) => {
+    const updated = [...groupStageGroups];
+    if (field.includes('.')) {
+      const [parent, child] = field.split('.');
+      (updated[groupIndex].matches[matchIndex] as any)[parent][child] = value;
+    } else {
+      (updated[groupIndex].matches[matchIndex] as any)[field] = value;
+    }
+    setGroupStageGroups(updated);
+  };
+
+  // Helper functions for knockout stage
+  const addKnockoutRound = (round: string) => {
+    const roundCount = knockoutMatches.filter(m => m.round === round).length;
+    const newMatch: KnockoutMatch = {
+      id: `knockout_${Date.now()}_${Math.random()}`,
+      round,
+      position: { x: 0, y: roundCount * 100 },
+    };
+    setKnockoutMatches([...knockoutMatches, newMatch]);
+  };
+
+  const updateKnockoutMatch = (index: number, field: string, value: any) => {
+    const updated = [...knockoutMatches];
+    if (field.includes('.')) {
+      const [parent, child] = field.split('.');
+      (updated[index] as any)[parent] = (updated[index] as any)[parent] || {};
+      (updated[index] as any)[parent][child] = value;
+    } else {
+      (updated[index] as any)[field] = value;
+    }
+    setKnockoutMatches(updated);
+  };
+
+  // Helper functions for final rankings
+  const addRanking = () => {
+    const newRanking: FinalRanking = {
+      position: finalRankings.length + 1,
+      playerId: '',
+      playerName: '',
+      prize: '',
+    };
+    setFinalRankings([...finalRankings, newRanking]);
+  };
+
+  const updateRanking = (index: number, field: string, value: any) => {
+    const updated = [...finalRankings];
+    (updated[index] as any)[field] = value;
+    setFinalRankings(updated);
+  };
+
+  const removeRanking = (index: number) => {
+    setFinalRankings(finalRankings.filter((_, i) => i !== index));
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Тэмцээний Үр Дүн Оруулах</h1>
-          <p className="text-gray-600">Тэмцээний тоглолтуудын үр дүн оруулж, тоглогчдын статистик шинэчлэх</p>
+      {/* Header */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="ghost"
+                onClick={() => setLocation('/admin/tournaments')}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Буцах
+              </Button>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {tournament.name} - Үр дүн оруулах
+                </h1>
+                <p className="text-gray-600">
+                  Тэмцээний үр дүнг оруулж, нийтлэх
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="published"
+                  checked={isPublished}
+                  onChange={(e) => setIsPublished(e.target.checked)}
+                  className="rounded"
+                />
+                <label htmlFor="published" className="text-sm font-medium">
+                  Нийтэд харуулах
+                </label>
+              </div>
+              <Button
+                onClick={() => saveResultsMutation.mutate()}
+                disabled={saveResultsMutation.isPending}
+                className="flex items-center gap-2"
+              >
+                <Save className="w-4 h-4" />
+                {saveResultsMutation.isPending ? 'Хадгалж байна...' : 'Хадгалах'}
+              </Button>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Tournament Selection */}
-          <div className="lg:col-span-1">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Tabs defaultValue="rankings" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="rankings">Эцсийн байр</TabsTrigger>
+            <TabsTrigger value="knockout">Шоронтох тулаан</TabsTrigger>
+            <TabsTrigger value="groups">Групп тулаан</TabsTrigger>
+          </TabsList>
+
+          {/* Final Rankings Editor */}
+          <TabsContent value="rankings">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Trophy className="mr-2 h-5 w-5 text-mtta-green" />
-                  Тэмцээн Сонгох
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Trophy className="w-5 h-5" />
+                      Эцсийн байр
+                    </CardTitle>
+                    <CardDescription>
+                      Тэмцээний эцсийн үр дүн ба байрлал оруулах
+                    </CardDescription>
+                  </div>
+                  <Button onClick={addRanking} className="flex items-center gap-2">
+                    <Plus className="w-4 h-4" />
+                    Байр нэмэх
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {tournaments.map((tournament: any) => (
-                    <div
-                      key={tournament.id}
-                      className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                        selectedTournamentId === tournament.id
-                          ? 'border-mtta-green bg-green-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      onClick={() => setSelectedTournamentId(tournament.id)}
-                    >
-                      <h3 className="font-medium text-gray-900">{tournament.name}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{tournament.description}</p>
-                      <div className="flex items-center justify-between mt-2">
-                        <Badge 
-                          variant={tournament.status === 'ongoing' ? "default" : "secondary"}
-                          className={tournament.status === 'ongoing' ? "mtta-green text-white" : ""}
+                  {finalRankings.map((ranking, index) => (
+                    <div key={index} className="grid grid-cols-12 gap-4 items-center p-4 border rounded-lg">
+                      <div className="col-span-1">
+                        <Input
+                          type="number"
+                          value={ranking.position}
+                          onChange={(e) => updateRanking(index, 'position', parseInt(e.target.value))}
+                          placeholder="Байр"
+                        />
+                      </div>
+                      <div className="col-span-4">
+                        <Select
+                          value={ranking.playerId}
+                          onValueChange={(value) => {
+                            const participant = participants.find(p => 
+                              `${p.firstName} ${p.lastName}` === value
+                            );
+                            updateRanking(index, 'playerId', participant?.id || '');
+                            updateRanking(index, 'playerName', value);
+                          }}
                         >
-                          {tournament.status === 'registration' ? 'Бүртгэл' :
-                           tournament.status === 'ongoing' ? 'Явагдаж байгаа' : 'Дууссан'}
-                        </Badge>
-                        <span className="text-xs text-gray-500">
-                          {tournament.startDate ? new Date(tournament.startDate).toLocaleDateString('mn-MN') : ''}
-                        </span>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Тоглогч сонгох" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {participants.map((participant) => (
+                              <SelectItem 
+                                key={participant.id}
+                                value={`${participant.firstName} ${participant.lastName}`}
+                              >
+                                {participant.firstName} {participant.lastName}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="col-span-3">
+                        <Input
+                          value={ranking.prize || ''}
+                          onChange={(e) => updateRanking(index, 'prize', e.target.value)}
+                          placeholder="Шагнал (сайн дурын)"
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => removeRanking(index)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
                   ))}
+                  {finalRankings.length === 0 && (
+                    <p className="text-gray-500 text-center py-8">
+                      "Байр нэмэх" товчийг дарж эцсийн байр оруулна уу
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </TabsContent>
 
-          {/* Tournament Matches */}
-          <div className="lg:col-span-2">
-            {selectedTournamentId ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Users className="mr-2 h-5 w-5 text-mtta-green" />
-                    Тоглолтын Жагсаалт
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {matchesLoading ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mtta-green mx-auto mb-2"></div>
-                      <p className="text-gray-600">Тоглолтууд уншиж байна...</p>
-                    </div>
-                  ) : matches.length === 0 ? (
-                    <div className="text-center py-8">
-                      <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-600">Тоглолт байхгүй байна</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {matches.map((match: any) => (
-                        <div key={match.id} className="border border-gray-200 rounded-lg p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <div>
-                              <h4 className="font-medium text-gray-900">
-                                {match.player1?.user?.firstName} {match.player1?.user?.lastName} vs{' '}
-                                {match.player2?.user?.firstName} {match.player2?.user?.lastName}
-                              </h4>
-                              <p className="text-sm text-gray-600">
-                                Шаталт: {match.round || 'Тодорхойгүй'} • 
-                                Огноо: {match.scheduledAt ? new Date(match.scheduledAt).toLocaleDateString('mn-MN') : 'Тодорхойгүй'}
-                              </p>
-                            </div>
-                            <Badge 
-                              variant={match.status === 'completed' ? "default" : "secondary"}
-                              className={match.status === 'completed' ? "mtta-green text-white" : ""}
-                            >
-                              {match.status === 'scheduled' ? 'Товлогдсон' :
-                               match.status === 'ongoing' ? 'Явагдаж байгаа' : 'Дууссан'}
-                            </Badge>
-                          </div>
+          {/* Knockout Editor */}
+          <TabsContent value="knockout">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Шоронтох тулаан</CardTitle>
+                    <CardDescription>
+                      Шаардлагат тоглолтууд ба тэдгээрийн үр дүн
+                    </CardDescription>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button onClick={() => addKnockoutRound('quarterfinal')} size="sm">
+                      Дөрөвний финал
+                    </Button>
+                    <Button onClick={() => addKnockoutRound('semifinal')} size="sm">
+                      Хагас финал
+                    </Button>
+                    <Button onClick={() => addKnockoutRound('final')} size="sm">
+                      Финал
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {['final', 'semifinal', 'quarterfinal'].map((round) => {
+                    const roundMatches = knockoutMatches.filter(match => match.round === round);
+                    if (roundMatches.length === 0) return null;
 
-                          {match.status === 'completed' ? (
-                            <div className="bg-green-50 p-3 rounded-lg">
-                              <p className="text-sm font-medium text-green-800">
-                                Ялагч: {match.winner?.user?.firstName} {match.winner?.user?.lastName}
-                              </p>
-                              <p className="text-xs text-green-600 mt-1">
-                                Сетүүд: {match.sets?.length || 0} сет
-                              </p>
-                            </div>
-                          ) : (
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button size="sm" className="mtta-green text-white hover:bg-mtta-green-dark">
-                                  <Edit3 className="h-4 w-4 mr-2" />
-                                  Үр дүн оруулах
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Тоглолтын Үр Дүн Оруулах</DialogTitle>
-                                </DialogHeader>
-                                <Form {...form}>
-                                  <form onSubmit={form.handleSubmit((data) => onSubmit(data, match.id))} className="space-y-4">
-                                    <FormField
-                                      control={form.control}
-                                      name="winnerId"
-                                      render={({ field }) => (
-                                        <FormItem>
-                                          <FormLabel>Ялагч</FormLabel>
-                                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                              <SelectTrigger>
-                                                <SelectValue placeholder="Ялагч сонгоно уу" />
-                                              </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                              <SelectItem value={match.player1Id}>
-                                                {match.player1?.user?.firstName} {match.player1?.user?.lastName}
-                                              </SelectItem>
-                                              <SelectItem value={match.player2Id}>
-                                                {match.player2?.user?.firstName} {match.player2?.user?.lastName}
-                                              </SelectItem>
-                                            </SelectContent>
-                                          </Select>
-                                          <FormMessage />
-                                        </FormItem>
-                                      )}
-                                    />
+                    const roundNames: Record<string, string> = {
+                      final: 'Финал',
+                      semifinal: 'Хагас финал',
+                      quarterfinal: 'Дөрөвний финал',
+                    };
 
-                                    <div className="space-y-3">
-                                      <Label>Сетүүдийн оноо</Label>
-                                      {[1, 2, 3].map((setNumber) => (
-                                        <div key={setNumber} className="grid grid-cols-3 gap-2 items-center">
-                                          <Label className="text-sm">Сет {setNumber}:</Label>
-                                          <Input
-                                            type="number"
-                                            placeholder={`${match.player1?.user?.firstName?.charAt(0) || 'A'}`}
-                                            {...form.register(`sets.${setNumber - 1}.player1Score`, { valueAsNumber: true })}
-                                          />
-                                          <Input
-                                            type="number"
-                                            placeholder={`${match.player2?.user?.firstName?.charAt(0) || 'B'}`}
-                                            {...form.register(`sets.${setNumber - 1}.player2Score`, { valueAsNumber: true })}
-                                          />
-                                        </div>
+                    return (
+                      <div key={round}>
+                        <h3 className="text-lg font-semibold mb-3">{roundNames[round]}</h3>
+                        <div className="space-y-4">
+                          {roundMatches.map((match, matchIdx) => {
+                            const globalIndex = knockoutMatches.findIndex(m => m.id === match.id);
+                            return (
+                              <div key={match.id} className="grid grid-cols-12 gap-4 items-center p-4 border rounded-lg">
+                                <div className="col-span-3">
+                                  <Select
+                                    value={match.player1?.name || ''}
+                                    onValueChange={(value) => {
+                                      const participant = participants.find(p => 
+                                        `${p.firstName} ${p.lastName}` === value
+                                      );
+                                      updateKnockoutMatch(globalIndex, 'player1', {
+                                        id: participant?.id || '',
+                                        name: value
+                                      });
+                                    }}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Тоглогч 1" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {participants.map((participant) => (
+                                        <SelectItem 
+                                          key={participant.id}
+                                          value={`${participant.firstName} ${participant.lastName}`}
+                                        >
+                                          {participant.firstName} {participant.lastName}
+                                        </SelectItem>
                                       ))}
-                                    </div>
-
-                                    <Button
-                                      type="submit"
-                                      className="w-full mtta-green text-white hover:bg-mtta-green-dark"
-                                      disabled={updateMatchMutation.isPending}
-                                    >
-                                      {updateMatchMutation.isPending ? "Хадгалж байна..." : "Үр дүн хадгалах"}
-                                    </Button>
-                                  </form>
-                                </Form>
-                              </DialogContent>
-                            </Dialog>
-                          )}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="col-span-3">
+                                  <Select
+                                    value={match.player2?.name || ''}
+                                    onValueChange={(value) => {
+                                      const participant = participants.find(p => 
+                                        `${p.firstName} ${p.lastName}` === value
+                                      );
+                                      updateKnockoutMatch(globalIndex, 'player2', {
+                                        id: participant?.id || '',
+                                        name: value
+                                      });
+                                    }}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Тоглогч 2" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {participants.map((participant) => (
+                                        <SelectItem 
+                                          key={participant.id}
+                                          value={`${participant.firstName} ${participant.lastName}`}
+                                        >
+                                          {participant.firstName} {participant.lastName}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="col-span-2">
+                                  <Input
+                                    value={match.score || ''}
+                                    onChange={(e) => updateKnockoutMatch(globalIndex, 'score', e.target.value)}
+                                    placeholder="Оноо (3-1)"
+                                  />
+                                </div>
+                                <div className="col-span-3">
+                                  <Select
+                                    value={match.winner?.name || ''}
+                                    onValueChange={(value) => {
+                                      const participant = participants.find(p => 
+                                        `${p.firstName} ${p.lastName}` === value
+                                      );
+                                      updateKnockoutMatch(globalIndex, 'winner', {
+                                        id: participant?.id || '',
+                                        name: value
+                                      });
+                                    }}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Ялагч" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {match.player1?.name && (
+                                        <SelectItem value={match.player1.name}>
+                                          {match.player1.name}
+                                        </SelectItem>
+                                      )}
+                                      {match.player2?.name && (
+                                        <SelectItem value={match.player2.name}>
+                                          {match.player2.name}
+                                        </SelectItem>
+                                      )}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    );
+                  })}
+                  {knockoutMatches.length === 0 && (
+                    <p className="text-gray-500 text-center py-8">
+                      Дээрх товчнуудаар шоронтох тулааны тоглолт нэмнэ үү
+                    </p>
                   )}
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="text-center py-16">
-                  <Trophy className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Тэмцээн сонгоно уу</h3>
-                  <p className="text-gray-600">Үр дүн оруулахын тулд зүүн талаас тэмцээн сонгоно уу</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Group Stage Editor */}
+          <TabsContent value="groups">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="w-5 h-5" />
+                      Групп тулаан
+                    </CardTitle>
+                    <CardDescription>
+                      Группийн тоглолтууд ба үр дүн
+                    </CardDescription>
+                  </div>
+                  <Button onClick={addGroup} className="flex items-center gap-2">
+                    <Plus className="w-4 h-4" />
+                    Групп нэмэх
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {groupStageGroups.map((group, groupIndex) => (
+                    <div key={groupIndex} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <Input
+                          value={group.name}
+                          onChange={(e) => updateGroupName(groupIndex, e.target.value)}
+                          className="max-w-xs"
+                          placeholder="Группийн нэр"
+                        />
+                        <div className="flex space-x-2">
+                          <Button 
+                            onClick={() => addMatchToGroup(groupIndex)}
+                            size="sm"
+                            className="flex items-center gap-2"
+                          >
+                            <Plus className="w-4 h-4" />
+                            Тоглолт нэмэх
+                          </Button>
+                          <Button
+                            onClick={() => removeGroup(groupIndex)}
+                            variant="destructive"
+                            size="sm"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        {group.matches.map((match, matchIndex) => (
+                          <div key={match.id} className="grid grid-cols-12 gap-4 items-center p-3 bg-gray-50 rounded">
+                            <div className="col-span-3">
+                              <Select
+                                value={match.player1.name}
+                                onValueChange={(value) => {
+                                  const participant = participants.find(p => 
+                                    `${p.firstName} ${p.lastName}` === value
+                                  );
+                                  updateMatch(groupIndex, matchIndex, 'player1', {
+                                    id: participant?.id || '',
+                                    name: value
+                                  });
+                                }}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Тоглогч 1" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {participants.map((participant) => (
+                                    <SelectItem 
+                                      key={participant.id}
+                                      value={`${participant.firstName} ${participant.lastName}`}
+                                    >
+                                      {participant.firstName} {participant.lastName}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="col-span-3">
+                              <Select
+                                value={match.player2.name}
+                                onValueChange={(value) => {
+                                  const participant = participants.find(p => 
+                                    `${p.firstName} ${p.lastName}` === value
+                                  );
+                                  updateMatch(groupIndex, matchIndex, 'player2', {
+                                    id: participant?.id || '',
+                                    name: value
+                                  });
+                                }}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Тоглогч 2" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {participants.map((participant) => (
+                                    <SelectItem 
+                                      key={participant.id}
+                                      value={`${participant.firstName} ${participant.lastName}`}
+                                    >
+                                      {participant.firstName} {participant.lastName}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="col-span-2">
+                              <Input
+                                value={match.score}
+                                onChange={(e) => updateMatch(groupIndex, matchIndex, 'score', e.target.value)}
+                                placeholder="Оноо (3-1)"
+                              />
+                            </div>
+                            <div className="col-span-3">
+                              <Select
+                                value={match.winner || ''}
+                                onValueChange={(value) => updateMatch(groupIndex, matchIndex, 'winner', value)}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Ялагч" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {match.player1.name && (
+                                    <SelectItem value={match.player1.id}>
+                                      {match.player1.name}
+                                    </SelectItem>
+                                  )}
+                                  {match.player2.name && (
+                                    <SelectItem value={match.player2.id}>
+                                      {match.player2.name}
+                                    </SelectItem>
+                                  )}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        ))}
+                        {group.matches.length === 0 && (
+                          <p className="text-gray-500 text-center py-4">
+                            "Тоглолт нэмэх" товчийг дарж тоглолт нэмнэ үү
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {groupStageGroups.length === 0 && (
+                    <p className="text-gray-500 text-center py-8">
+                      "Групп нэмэх" товчийг дарж группийн тулаан үүсгэнэ үү
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
