@@ -149,6 +149,7 @@ function TournamentRegistrationButton({
 
 // Participants table component
 function TournamentParticipants({ tournamentId }: { tournamentId: string }) {
+  const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [clubFilter, setClubFilter] = useState("all");
   const [participationTypeFilter, setParticipationTypeFilter] = useState("all");
