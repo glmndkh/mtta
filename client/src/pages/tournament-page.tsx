@@ -616,6 +616,34 @@ export default function TournamentPage() {
                     </Badge>
                   </div>
                 </div>
+                
+                {/* View Results Button - only show when tournament is completed */}
+                {tournament.status === 'completed' && (
+                  <div className="mt-4 pt-4 border-t">
+                    <Button 
+                      onClick={() => setLocation(`/tournament/${tournament.id}/results`)}
+                      className="w-full flex items-center gap-2"
+                      variant="outline"
+                    >
+                      <Trophy className="w-4 h-4" />
+                      Үр дүн харах
+                    </Button>
+                  </div>
+                )}
+                
+                {/* Admin Results Button - only for admins */}
+                {user?.role === 'admin' && (
+                  <div className={tournament.status === 'completed' ? 'mt-2' : 'mt-4 pt-4 border-t'}>
+                    <Button 
+                      onClick={() => setLocation(`/admin/tournament/${tournament.id}/results`)}
+                      className="w-full flex items-center gap-2"
+                      variant="secondary"
+                    >
+                      <FileText className="w-4 h-4" />
+                      Үр дүн оруулах (Админ)
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

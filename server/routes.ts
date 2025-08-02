@@ -8,6 +8,13 @@ import bcrypt from "bcrypt";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
 
+// Extend session type to include userId
+declare module 'express-session' {
+  interface SessionData {
+    userId?: string;
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
@@ -869,14 +876,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         player = await storage.createPlayer({
           userId: userId,
-          firstName: user.firstName || "Unknown",
-          lastName: user.lastName || "Player",
-          email: user.email || "",
-          phone: "",
           dateOfBirth: new Date(), // Default date, user can update later
-          gender: "male", // Default gender, user can update later
-          allAgesRanking: 0,
-          ownAgeRanking: 0,
           rank: "Шинэ тоглогч"
         });
       }
@@ -967,7 +967,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
         req.body.fileURL,
         {
-          owner: req.session.userId,
+          owner: req.session.userId!,
           visibility: req.body.isPublic ? "public" : "private",
         },
       );
@@ -1020,6 +1020,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error searching for public object:", error);
       return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Tournament results routes
+  // Get tournament results
+  app.get('/api/tournaments/:tournamentId/results', async (req, res) => {
+    try {
+      const { tournamentId } = req.params;
+      const results = await storage.getTournamentResults(tournamentId);
+      
+      if (!results) {
+        return res.status(404).json({ message: "Tournament results not found" });
+      }
+      
+      res.json(results);
+    } catch (error) {
+      console.error("Error fetching tournament results:", error);
+      res.status(500).json({ message: "Failed to fetch tournament results" });
+    }
+  });
+
+  // Admin route to save tournament results
+  app.post('/api/admin/tournament-results', isAuthenticated, async (req: any, res) => {
+    try {
+      // Check if user is admin
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { tournamentId, groupStageResults, knockoutResults, finalRankings, isPublished } = req.body;
+
+      if (!tournamentId) {
+        return res.status(400).json({ message: "Tournament ID is required" });
+      }
+
+      const resultsData = {
+        tournamentId,
+        groupStageResults: groupStageResults || null,
+        knockoutResults: knockoutResults || null,
+        finalRankings: finalRankings || null,
+        isPublished: isPublished || false,
+      };
+
+      const results = await storage.upsertTournamentResults(resultsData);
+      res.json({ message: "Tournament results saved successfully", results });
+    } catch (error) {
+      console.error("Error saving tournament results:", error);
+      res.status(500).json({ message: "Failed to save tournament results" });
+    }
+  });
+
+  // Admin route to publish tournament results
+  app.put('/api/admin/tournament-results/:tournamentId/publish', isAuthenticated, async (req: any, res) => {
+    try {
+      // Check if user is admin
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { tournamentId } = req.params;
+      await storage.publishTournamentResults(tournamentId);
+      
+      res.json({ message: "Tournament results published successfully" });
+    } catch (error) {
+      console.error("Error publishing tournament results:", error);
+      res.status(500).json({ message: "Failed to publish tournament results" });
     }
   });
 

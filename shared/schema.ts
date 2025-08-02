@@ -180,6 +180,18 @@ export const matchSets = pgTable("match_sets", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Tournament results table for storing structured tournament results
+export const tournamentResults = pgTable("tournament_results", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  tournamentId: varchar("tournament_id").references(() => tournaments.id).notNull().unique(),
+  groupStageResults: jsonb("group_stage_results"), // JSON structure for group stage data
+  knockoutResults: jsonb("knockout_results"), // JSON structure for bracket/knockout data
+  finalRankings: jsonb("final_rankings"), // Final tournament rankings/placements
+  isPublished: boolean("is_published").default(false), // Whether results are visible to users
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Leagues table
 export const leagues = pgTable("leagues", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -279,6 +291,14 @@ export const matchesRelations = relations(matches, ({ one, many }) => ({
   sets: many(matchSets),
 }));
 
+// Tournament results relations
+export const tournamentResultsRelations = relations(tournamentResults, ({ one }) => ({
+  tournament: one(tournaments, {
+    fields: [tournamentResults.tournamentId],
+    references: [tournaments.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -327,6 +347,12 @@ export const insertAchievementSchema = createInsertSchema(achievements).omit({
   createdAt: true,
 });
 
+export const insertTournamentResultsSchema = createInsertSchema(tournamentResults).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -349,3 +375,5 @@ export type Team = typeof teams.$inferSelect;
 export type League = typeof leagues.$inferSelect;
 export type TournamentParticipant = typeof tournamentParticipants.$inferSelect;
 export type InsertTournamentParticipant = typeof tournamentParticipants.$inferInsert;
+export type TournamentResults = typeof tournamentResults.$inferSelect;
+export type InsertTournamentResults = z.infer<typeof insertTournamentResultsSchema>;
