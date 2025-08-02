@@ -613,7 +613,19 @@ export class DatabaseStorage implements IStorage {
           if (Array.isArray(groupData)) {
             for (const group of groupData) {
               if (group.players && group.resultMatrix) {
-                const playerIndex = group.players.findIndex((p: any) => p.id === playerId);
+                // Try to find player by user ID or player ID
+                let playerIndex = group.players.findIndex((p: any) => p.id === playerId);
+                
+                // If not found by player ID, try to find by user ID
+                if (playerIndex === -1) {
+                  // Get the player record to find user ID
+                  const playerRecord = await db.select().from(players).where(eq(players.id, playerId)).limit(1);
+                  if (playerRecord.length > 0) {
+                    const userId = playerRecord[0].userId;
+                    playerIndex = group.players.findIndex((p: any) => p.id === userId);
+                  }
+                }
+                
                 if (playerIndex !== -1) {
                   // This player was in this group
                   const playerData = group.players[playerIndex];
@@ -624,6 +636,14 @@ export class DatabaseStorage implements IStorage {
                       const matchResult = group.resultMatrix[playerIndex]?.[opponentIndex];
                       if (matchResult && matchResult.trim() !== '') {
                         const opponent = group.players[opponentIndex];
+                        
+                        // Determine winner based on score
+                        let isWinner;
+                        if (matchResult.includes('-')) {
+                          const [score1, score2] = matchResult.split('-').map(s => parseInt(s.trim()));
+                          isWinner = score1 > score2;
+                        }
+                        
                         tournamentMatches.push({
                           tournament: result.tournament,
                           stage: 'Группийн шат',
@@ -633,6 +653,7 @@ export class DatabaseStorage implements IStorage {
                           playerWins: playerData.wins || '0/0',
                           playerPosition: playerData.position || '-',
                           date: result.tournament.startDate,
+                          isWinner: isWinner,
                         });
                       }
                     }
@@ -658,10 +679,31 @@ export class DatabaseStorage implements IStorage {
           
           if (Array.isArray(knockoutData)) {
             for (const match of knockoutData) {
-              if ((match.player1?.id === playerId || match.player2?.id === playerId) && match.score) {
-                const isPlayer1 = match.player1?.id === playerId;
+              let isPlayerInMatch = false;
+              let isPlayer1 = false;
+              
+              // Check if player is in this match (by player ID or user ID)
+              if (match.player1?.id === playerId || match.player2?.id === playerId) {
+                isPlayerInMatch = true;
+                isPlayer1 = match.player1?.id === playerId;
+              } else {
+                // Try with user ID
+                const playerRecord = await db.select().from(players).where(eq(players.id, playerId)).limit(1);
+                if (playerRecord.length > 0) {
+                  const userId = playerRecord[0].userId;
+                  if (match.player1?.id === userId || match.player2?.id === userId) {
+                    isPlayerInMatch = true;
+                    isPlayer1 = match.player1?.id === userId;
+                  }
+                }
+              }
+              
+              if (isPlayerInMatch && match.score) {
                 const opponent = isPlayer1 ? match.player2 : match.player1;
-                const isWinner = match.winner?.id === playerId;
+                // Check winner by both player ID and user ID
+                const playerRecord = await db.select().from(players).where(eq(players.id, playerId)).limit(1);
+                const isWinner = match.winner?.id === playerId || 
+                  (playerRecord.length > 0 && match.winner?.id === playerRecord[0].userId);
                 
                 tournamentMatches.push({
                   tournament: result.tournament,
