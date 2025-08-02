@@ -20,14 +20,20 @@ interface GroupStageMatch {
 }
 
 interface GroupStageGroup {
-  name: string;
-  matches: GroupStageMatch[];
+  groupName: string;
+  players: Array<{
+    id: string;
+    name: string;
+    club?: string;
+  }>;
+  resultMatrix: string[][];
   standings: Array<{
     playerId: string;
     playerName: string;
     wins: number;
     losses: number;
     points: number;
+    position: number;
   }>;
 }
 
@@ -304,70 +310,84 @@ export default function TournamentResultsPage() {
                 groupStageResults.map((group, index) => (
                   <Card key={index}>
                     <CardHeader>
-                      <CardTitle>{group.name}</CardTitle>
+                      <CardTitle>{group.groupName}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="grid gap-6 lg:grid-cols-2">
-                        {/* Group Standings */}
+                        {/* Results Matrix Table */}
                         <div>
-                          <h4 className="font-semibold mb-3">Групп зэрэглэл</h4>
-                          <div className="space-y-2">
-                            {group.standings.map((standing, idx) => (
-                              <div key={standing.playerId} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                                <div className="flex items-center space-x-3">
-                                  <span className="font-semibold text-gray-600">{idx + 1}.</span>
-                                  <button
-                                    onClick={() => navigateToProfile(standing.playerId)}
-                                    className="text-blue-600 hover:text-blue-800 hover:underline"
-                                  >
-                                    {standing.playerName}
-                                  </button>
-                                </div>
-                                <div className="text-sm text-gray-600">
-                                  {standing.wins}Я - {standing.losses}Х ({standing.points} оноо)
-                                </div>
-                              </div>
-                            ))}
+                          <h4 className="font-semibold mb-3">Үр дүн хүснэгт</h4>
+                          <div className="overflow-x-auto">
+                            <table className="w-full border-collapse">
+                              <thead>
+                                <tr>
+                                  <th className="border p-2 text-left">№</th>
+                                  <th className="border p-2 text-left">Нэр</th>
+                                  {(group.players || []).map((_, colIndex) => (
+                                    <th key={colIndex} className="border p-2 text-center">{colIndex + 1}</th>
+                                  ))}
+                                  <th className="border p-2 text-center">Өгсөн</th>
+                                  <th className="border p-2 text-center">Байр</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {(group.players || []).map((player, rowIndex) => {
+                                  const rowResults = group.resultMatrix?.[rowIndex] || [];
+                                  const wins = rowResults.filter(result => result && result !== '' && result.includes('-') && result.split('-')[0] > result.split('-')[1]).length || 0;
+                                  const losses = rowResults.filter(result => result && result !== '' && result.includes('-') && result.split('-')[0] < result.split('-')[1]).length || 0;
+                                  return (
+                                    <tr key={player.id}>
+                                      <td className="border p-2">{rowIndex + 1}</td>
+                                      <td className="border p-2">
+                                        <button
+                                          onClick={() => navigateToProfile(player.id)}
+                                          className="text-blue-600 hover:text-blue-800 hover:underline"
+                                        >
+                                          {player.name}
+                                        </button>
+                                      </td>
+                                      {(group.resultMatrix?.[rowIndex] || []).map((result, colIndex) => (
+                                        <td key={colIndex} className="border p-2 text-center">
+                                          {rowIndex === colIndex ? '*****' : (result || '')}
+                                        </td>
+                                      ))}
+                                      <td className="border p-2 text-center">{wins}/{losses}</td>
+                                      <td className="border p-2 text-center font-bold">
+                                        {group.standings.find(s => s.playerId === player.id)?.position || wins + 1}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
                           </div>
                         </div>
 
-                        {/* Group Matches */}
+                        {/* Group Standings */}
                         <div>
-                          <h4 className="font-semibold mb-3">Тоглолтууд</h4>
+                          <h4 className="font-semibold mb-3">Эцсийн байрлал</h4>
                           <div className="space-y-2">
-                            {group.matches.map((match) => (
-                              <div key={match.id} className="p-2 border rounded text-sm">
-                                <div className="flex justify-between items-center">
-                                  <div className="space-y-1">
-                                    <div className="flex items-center space-x-2">
-                                      <button
-                                        onClick={() => navigateToProfile(match.player1.id)}
-                                        className="text-blue-600 hover:text-blue-800 hover:underline"
-                                      >
-                                        {match.player1.name}
-                                      </button>
-                                      {match.winner === match.player1.id && (
-                                        <Badge variant="outline" className="text-xs">Ялагч</Badge>
-                                      )}
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                      <button
-                                        onClick={() => navigateToProfile(match.player2.id)}
-                                        className="text-blue-600 hover:text-blue-800 hover:underline"
-                                      >
-                                        {match.player2.name}
-                                      </button>
-                                      {match.winner === match.player2.id && (
-                                        <Badge variant="outline" className="text-xs">Ялагч</Badge>
-                                      )}
-                                    </div>
+                            {(group.standings || []).length > 0 ? (group.standings || [])
+                              .sort((a, b) => (a.position || 0) - (b.position || 0))
+                              .map((standing) => (
+                                <div key={standing.playerId} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                                  <div className="flex items-center space-x-3">
+                                    <span className="font-semibold text-gray-600">{standing.position}.</span>
+                                    <button
+                                      onClick={() => navigateToProfile(standing.playerId)}
+                                      className="text-blue-600 hover:text-blue-800 hover:underline"
+                                    >
+                                      {standing.playerName}
+                                    </button>
                                   </div>
-                                  <div className="font-semibold">
-                                    {match.score}
+                                  <div className="text-sm text-gray-600">
+                                    {standing.wins}Я - {standing.losses}Х
                                   </div>
                                 </div>
-                              </div>
-                            ))}
+                              )) : (
+                                <p className="text-gray-500 text-center">Байрлал тооцоолоогүй байна</p>
+                              )
+                            }
                           </div>
                         </div>
                       </div>
