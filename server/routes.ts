@@ -579,7 +579,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/players/:id', async (req, res) => {
     try {
-      const player = await storage.getPlayerWithUser(req.params.id);
+      let player = await storage.getPlayerWithUser(req.params.id);
+      
+      // If not found by player ID, try to find by user ID
+      if (!player) {
+        player = await storage.getPlayerByUserId(req.params.id);
+      }
+      
       if (!player) {
         return res.status(404).json({ message: "Тоглогч олдсонгүй" });
       }
