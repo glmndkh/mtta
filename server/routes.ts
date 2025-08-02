@@ -548,6 +548,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all users for admin autocomplete
+  app.get('/api/admin/users', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Зөвхөн админ хэрэглэгч хэрэглэгчдийг харж болно" });
+      }
+
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Хэрэглэгчдийн мэдээлэл авахад алдаа гарлаа" });
+    }
+  });
+
   // Player routes
   app.post('/api/players', requireAuth, async (req: any, res) => {
     try {

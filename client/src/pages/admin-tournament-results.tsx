@@ -11,7 +11,8 @@ import { ArrowLeft, Plus, Trash2, Save, Users, Trophy, Target } from "lucide-rea
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { Tournament, TournamentResults, TournamentParticipant } from "@shared/schema";
+import { UserAutocomplete } from "@/components/UserAutocomplete";
+import type { Tournament, TournamentResults, TournamentParticipant, User } from "@shared/schema";
 
 // Types for Excel-style tournament result editing
 // Excel-style group stage table - represents round-robin within a group
@@ -35,16 +36,6 @@ interface GroupStageTable {
     totalMatches: number;
     points: number;
   }>;
-}
-
-interface KnockoutMatch {
-  id: string;
-  round: string;
-  player1?: { id: string; name: string };
-  player2?: { id: string; name: string };
-  score?: string;
-  winner?: { id: string; name: string };
-  position: { x: number; y: number };
 }
 
 interface KnockoutMatch {
@@ -104,6 +95,12 @@ export default function AdminTournamentResultsPage() {
   const { data: existingResults } = useQuery<TournamentResults>({
     queryKey: ['/api/tournaments', tournamentId, 'results'],
     enabled: !!tournamentId,
+  });
+
+  // Fetch all users for autocomplete
+  const { data: allUsers = [] } = useQuery<User[]>({
+    queryKey: ['/api/admin/users'],
+    enabled: !!tournamentId && user?.role === 'admin',
   });
 
   // Load existing results into state
@@ -496,30 +493,16 @@ export default function AdminTournamentResultsPage() {
                         />
                       </div>
                       <div className="col-span-4">
-                        <Select
-                          value={ranking.playerId}
-                          onValueChange={(value) => {
-                            const participant = participants.find(p => 
-                              `${p.firstName} ${p.lastName}` === value
-                            );
-                            updateRanking(index, 'playerId', participant?.id || '');
-                            updateRanking(index, 'playerName', value);
+                        <UserAutocomplete
+                          users={allUsers}
+                          value={ranking.playerName || ''}
+                          onSelect={(user) => {
+                            updateRanking(index, 'playerId', user.id);
+                            updateRanking(index, 'playerName', `${user.firstName} ${user.lastName}`);
                           }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Тоглогч сонгох" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {participants.map((participant) => (
-                              <SelectItem 
-                                key={participant.id}
-                                value={`${participant.firstName} ${participant.lastName}`}
-                              >
-                                {participant.firstName} {participant.lastName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          placeholder="Тоглогч хайх..."
+                          className="w-full"
+                        />
                       </div>
                       <div className="col-span-3">
                         <Input
@@ -562,13 +545,13 @@ export default function AdminTournamentResultsPage() {
                   </div>
                   <div className="flex space-x-2">
                     <Button onClick={() => addKnockoutRound('quarterfinal')} size="sm">
-                      Дөрөвний финал
+                      + Дөрөвний финал
                     </Button>
                     <Button onClick={() => addKnockoutRound('semifinal')} size="sm">
-                      Хагас финал
+                      + Хагас финал
                     </Button>
                     <Button onClick={() => addKnockoutRound('final')} size="sm">
-                      Финал
+                      + Финал
                     </Button>
                   </div>
                 </div>
@@ -594,60 +577,32 @@ export default function AdminTournamentResultsPage() {
                             return (
                               <div key={match.id} className="grid grid-cols-12 gap-4 items-center p-4 border rounded-lg">
                                 <div className="col-span-3">
-                                  <Select
+                                  <UserAutocomplete
+                                    users={allUsers}
                                     value={match.player1?.name || ''}
-                                    onValueChange={(value) => {
-                                      const participant = participants.find(p => 
-                                        `${p.firstName} ${p.lastName}` === value
-                                      );
+                                    onSelect={(user) => {
                                       updateKnockoutMatch(globalIndex, 'player1', {
-                                        id: participant?.id || '',
-                                        name: value
+                                        id: user.id,
+                                        name: `${user.firstName} ${user.lastName}`
                                       });
                                     }}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Тоглогч 1" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {participants.map((participant) => (
-                                        <SelectItem 
-                                          key={participant.id}
-                                          value={`${participant.firstName} ${participant.lastName}`}
-                                        >
-                                          {participant.firstName} {participant.lastName}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                                    placeholder="Тоглогч 1 хайх..."
+                                    className="w-full"
+                                  />
                                 </div>
                                 <div className="col-span-3">
-                                  <Select
+                                  <UserAutocomplete
+                                    users={allUsers}
                                     value={match.player2?.name || ''}
-                                    onValueChange={(value) => {
-                                      const participant = participants.find(p => 
-                                        `${p.firstName} ${p.lastName}` === value
-                                      );
+                                    onSelect={(user) => {
                                       updateKnockoutMatch(globalIndex, 'player2', {
-                                        id: participant?.id || '',
-                                        name: value
+                                        id: user.id,
+                                        name: `${user.firstName} ${user.lastName}`
                                       });
                                     }}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Тоглогч 2" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {participants.map((participant) => (
-                                        <SelectItem 
-                                          key={participant.id}
-                                          value={`${participant.firstName} ${participant.lastName}`}
-                                        >
-                                          {participant.firstName} {participant.lastName}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                                    placeholder="Тоглогч 2 хайх..."
+                                    className="w-full"
+                                  />
                                 </div>
                                 <div className="col-span-2">
                                   <Input
@@ -660,17 +615,20 @@ export default function AdminTournamentResultsPage() {
                                   <Select
                                     value={match.winner?.name || ''}
                                     onValueChange={(value) => {
-                                      const participant = participants.find(p => 
-                                        `${p.firstName} ${p.lastName}` === value
-                                      );
-                                      updateKnockoutMatch(globalIndex, 'winner', {
-                                        id: participant?.id || '',
-                                        name: value
-                                      });
+                                      let selectedPlayer;
+                                      if (value === match.player1?.name) {
+                                        selectedPlayer = match.player1;
+                                      } else if (value === match.player2?.name) {
+                                        selectedPlayer = match.player2;
+                                      }
+                                      
+                                      if (selectedPlayer) {
+                                        updateKnockoutMatch(globalIndex, 'winner', selectedPlayer);
+                                      }
                                     }}
                                   >
                                     <SelectTrigger>
-                                      <SelectValue placeholder="Ялагч" />
+                                      <SelectValue placeholder="Ялагч сонгох" />
                                     </SelectTrigger>
                                     <SelectContent>
                                       {match.player1?.name && (
@@ -686,6 +644,17 @@ export default function AdminTournamentResultsPage() {
                                     </SelectContent>
                                   </Select>
                                 </div>
+                                <div className="col-span-1">
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => {
+                                      setKnockoutMatches(knockoutMatches.filter(m => m.id !== match.id));
+                                    }}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
                               </div>
                             );
                           })}
@@ -694,9 +663,15 @@ export default function AdminTournamentResultsPage() {
                     );
                   })}
                   {knockoutMatches.length === 0 && (
-                    <p className="text-gray-500 text-center py-8">
-                      Дээрх товчнуудаар шоронтох тулааны тоглолт нэмнэ үү
-                    </p>
+                    <div className="text-center py-8">
+                      <Trophy className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                      <p className="text-gray-500 mb-4">
+                        Дээрх товчнуудаар шоронтох тулааны тоглолт нэмнэ үү
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        Хэрэглэгчдийг хайж тоглогч сонгож, оноо, ялагчийг тэмдэглэнэ үү
+                      </p>
+                    </div>
                   )}
                 </div>
               </CardContent>
