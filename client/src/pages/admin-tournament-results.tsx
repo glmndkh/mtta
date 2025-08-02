@@ -14,24 +14,37 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Tournament, TournamentResults, TournamentParticipant } from "@shared/schema";
 
 // Types for Excel-style tournament result editing
-interface GroupStageMatch {
-  id: string;
-  player1: { id: string; name: string };
-  player2: { id: string; name: string };
-  score: string;
-  winner?: string;
-}
-
-interface GroupStageGroup {
-  name: string;
-  matches: GroupStageMatch[];
+// Excel-style group stage table - represents round-robin within a group
+interface GroupStageTable {
+  groupName: string;
+  players: Array<{
+    id: string;
+    name: string;
+    club: string;
+  }>;
+  // Matrix of results [player1Index][player2Index] = score (e.g., "3-1")
+  resultMatrix: string[][];
+  // Calculated standings
   standings: Array<{
+    position: number;
     playerId: string;
     playerName: string;
+    club: string;
     wins: number;
     losses: number;
+    totalMatches: number;
     points: number;
   }>;
+}
+
+interface KnockoutMatch {
+  id: string;
+  round: string;
+  player1?: { id: string; name: string };
+  player2?: { id: string; name: string };
+  score?: string;
+  winner?: { id: string; name: string };
+  position: { x: number; y: number };
 }
 
 interface KnockoutMatch {
@@ -60,7 +73,7 @@ export default function AdminTournamentResultsPage() {
   const queryClient = useQueryClient();
 
   // State for editing
-  const [groupStageGroups, setGroupStageGroups] = useState<GroupStageGroup[]>([]);
+  const [groupStageTables, setGroupStageTables] = useState<GroupStageTable[]>([]);
   const [knockoutMatches, setKnockoutMatches] = useState<KnockoutMatch[]>([]);
   const [finalRankings, setFinalRankings] = useState<FinalRanking[]>([]);
   const [isPublished, setIsPublished] = useState(false);
@@ -96,7 +109,7 @@ export default function AdminTournamentResultsPage() {
   // Load existing results into state
   useEffect(() => {
     if (existingResults) {
-      setGroupStageGroups((existingResults.groupStageResults as GroupStageGroup[]) || []);
+      setGroupStageTables((existingResults.groupStageResults as GroupStageTable[]) || []);
       setKnockoutMatches((existingResults.knockoutResults as KnockoutMatch[]) || []);
       setFinalRankings((existingResults.finalRankings as FinalRanking[]) || []);
       setIsPublished(existingResults.isPublished || false);
@@ -109,16 +122,25 @@ export default function AdminTournamentResultsPage() {
       if (!tournamentId) return;
       const resultsData = {
         tournamentId: tournamentId,
-        groupStageResults: groupStageGroups,
+        groupStageResults: groupStageTables,
         knockoutResults: knockoutMatches,
         finalRankings: finalRankings,
         isPublished: isPublished,
       };
 
-      return apiRequest('/api/admin/tournament-results', {
+      const response = await fetch('/api/admin/tournament-results', {
         method: 'POST',
-        body: resultsData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(resultsData),
       });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save results');
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -247,48 +269,96 @@ export default function AdminTournamentResultsPage() {
   }
 
   // Helper functions for group stage
-  const addGroup = () => {
-    const newGroup: GroupStageGroup = {
-      name: `Групп ${groupStageGroups.length + 1}`,
-      matches: [],
+  const addGroupTable = () => {
+    const newTable: GroupStageTable = {
+      groupName: `Групп ${groupStageTables.length + 1}`,
+      players: [],
+      resultMatrix: [],
       standings: [],
     };
-    setGroupStageGroups([...groupStageGroups, newGroup]);
+    setGroupStageTables([...groupStageTables, newTable]);
   };
 
-  const removeGroup = (index: number) => {
-    setGroupStageGroups(groupStageGroups.filter((_, i) => i !== index));
+  const removeGroupTable = (index: number) => {
+    setGroupStageTables(groupStageTables.filter((_, i) => i !== index));
   };
 
   const updateGroupName = (index: number, name: string) => {
-    const updated = [...groupStageGroups];
-    updated[index].name = name;
-    setGroupStageGroups(updated);
+    const updated = [...groupStageTables];
+    updated[index].groupName = name;
+    setGroupStageTables(updated);
   };
 
-  const addMatchToGroup = (groupIndex: number) => {
-    const newMatch: GroupStageMatch = {
-      id: `match_${Date.now()}_${Math.random()}`,
-      player1: { id: '', name: '' },
-      player2: { id: '', name: '' },
-      score: '',
-      winner: undefined,
-    };
+  const addPlayerToGroup = (groupIndex: number, player: { id: string; name: string; club: string }) => {
+    const updated = [...groupStageTables];
+    updated[groupIndex].players.push(player);
     
-    const updated = [...groupStageGroups];
-    updated[groupIndex].matches.push(newMatch);
-    setGroupStageGroups(updated);
+    // Expand result matrix
+    const playerCount = updated[groupIndex].players.length;
+    updated[groupIndex].resultMatrix = Array(playerCount).fill(null).map(() => 
+      Array(playerCount).fill('')
+    );
+    
+    setGroupStageTables(updated);
   };
 
-  const updateMatch = (groupIndex: number, matchIndex: number, field: string, value: any) => {
-    const updated = [...groupStageGroups];
-    if (field.includes('.')) {
-      const [parent, child] = field.split('.');
-      (updated[groupIndex].matches[matchIndex] as any)[parent][child] = value;
-    } else {
-      (updated[groupIndex].matches[matchIndex] as any)[field] = value;
-    }
-    setGroupStageGroups(updated);
+  const updateMatchResult = (groupIndex: number, player1Index: number, player2Index: number, score: string) => {
+    const updated = [...groupStageTables];
+    updated[groupIndex].resultMatrix[player1Index][player2Index] = score;
+    
+    // Calculate standings
+    calculateGroupStandings(updated[groupIndex]);
+    setGroupStageTables(updated);
+  };
+
+  const calculateGroupStandings = (group: GroupStageTable) => {
+    const standings = group.players.map((player, playerIndex) => {
+      let wins = 0;
+      let losses = 0;
+      let totalMatches = 0;
+
+      // Check results against other players
+      for (let opponentIndex = 0; opponentIndex < group.players.length; opponentIndex++) {
+        if (playerIndex !== opponentIndex) {
+          const result = group.resultMatrix[playerIndex][opponentIndex];
+          if (result && result.includes('-')) {
+            const [playerScore, opponentScore] = result.split('-').map(s => parseInt(s.trim()));
+            if (!isNaN(playerScore) && !isNaN(opponentScore)) {
+              totalMatches++;
+              if (playerScore > opponentScore) {
+                wins++;
+              } else {
+                losses++;
+              }
+            }
+          }
+        }
+      }
+
+      return {
+        position: 0, // Will be calculated after sorting
+        playerId: player.id,
+        playerName: player.name,
+        club: player.club,
+        wins,
+        losses,
+        totalMatches,
+        points: wins * 2 + (totalMatches - wins - losses), // 2 points for win, 1 for draw
+      };
+    });
+
+    // Sort by points (descending), then by wins
+    standings.sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      return b.wins - a.wins;
+    });
+
+    // Assign positions
+    standings.forEach((standing, index) => {
+      standing.position = index + 1;
+    });
+
+    group.standings = standings;
   };
 
   // Helper functions for knockout stage
@@ -647,7 +717,7 @@ export default function AdminTournamentResultsPage() {
                       Группийн тоглолтууд ба үр дүн
                     </CardDescription>
                   </div>
-                  <Button onClick={addGroup} className="flex items-center gap-2">
+                  <Button onClick={addGroupTable} className="flex items-center gap-2">
                     <Plus className="w-4 h-4" />
                     Групп нэмэх
                   </Button>
@@ -655,26 +725,35 @@ export default function AdminTournamentResultsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {groupStageGroups.map((group, groupIndex) => (
+                  {groupStageTables.map((group, groupIndex) => (
                     <div key={groupIndex} className="border rounded-lg p-4">
                       <div className="flex items-center justify-between mb-4">
                         <Input
-                          value={group.name}
+                          value={group.groupName}
                           onChange={(e) => updateGroupName(groupIndex, e.target.value)}
                           className="max-w-xs"
                           placeholder="Группийн нэр"
                         />
                         <div className="flex space-x-2">
                           <Button 
-                            onClick={() => addMatchToGroup(groupIndex)}
+                            onClick={() => {
+                              const participantOptions = participants.map(p => ({
+                                id: p.id || '',
+                                name: `${p.firstName} ${p.lastName}`,
+                                club: p.clubName || ''
+                              }));
+                              if (participantOptions.length > 0) {
+                                addPlayerToGroup(groupIndex, participantOptions[0]);
+                              }
+                            }}
                             size="sm"
                             className="flex items-center gap-2"
                           >
                             <Plus className="w-4 h-4" />
-                            Тоглолт нэмэх
+                            Тоглогч нэмэх
                           </Button>
                           <Button
-                            onClick={() => removeGroup(groupIndex)}
+                            onClick={() => removeGroupTable(groupIndex)}
                             variant="destructive"
                             size="sm"
                           >
@@ -683,105 +762,113 @@ export default function AdminTournamentResultsPage() {
                         </div>
                       </div>
 
-                      <div className="space-y-3">
-                        {group.matches.map((match, matchIndex) => (
-                          <div key={match.id} className="grid grid-cols-12 gap-4 items-center p-3 bg-gray-50 rounded">
-                            <div className="col-span-3">
-                              <Select
-                                value={match.player1.name}
-                                onValueChange={(value) => {
-                                  const participant = participants.find(p => 
-                                    `${p.firstName} ${p.lastName}` === value
-                                  );
-                                  updateMatch(groupIndex, matchIndex, 'player1', {
-                                    id: participant?.id || '',
-                                    name: value
-                                  });
-                                }}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Тоглогч 1" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {participants.map((participant) => (
-                                    <SelectItem 
-                                      key={participant.id}
-                                      value={`${participant.firstName} ${participant.lastName}`}
+                      {/* Excel-style Result Matrix Table */}
+                      {group.players.length > 0 && (
+                        <div className="overflow-x-auto">
+                          <table className="w-full border-collapse border border-gray-300">
+                            <thead>
+                              <tr className="bg-yellow-100">
+                                <th className="border border-gray-300 p-2 text-sm font-bold">№</th>
+                                <th className="border border-gray-300 p-2 text-sm font-bold">Нэрс</th>
+                                <th className="border border-gray-300 p-2 text-sm font-bold">Клуб</th>
+                                {group.players.map((player, index) => (
+                                  <th key={index} className="border border-gray-300 p-2 text-sm font-bold w-16">
+                                    {index + 1}
+                                  </th>
+                                ))}
+                                <th className="border border-gray-300 p-2 text-sm font-bold">Өгсөн</th>
+                                <th className="border border-gray-300 p-2 text-sm font-bold">Байр</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {group.players.map((player, playerIndex) => (
+                                <tr key={playerIndex} className="hover:bg-gray-50">
+                                  <td className="border border-gray-300 p-2 text-center font-medium">
+                                    {playerIndex + 1}
+                                  </td>
+                                  <td className="border border-gray-300 p-2">
+                                    <button 
+                                      className="text-blue-600 hover:underline cursor-pointer"
+                                      onClick={() => setLocation(`/profile/${player.id}`)}
                                     >
-                                      {participant.firstName} {participant.lastName}
-                                    </SelectItem>
+                                      {player.name}
+                                    </button>
+                                  </td>
+                                  <td className="border border-gray-300 p-2 text-sm text-gray-600">
+                                    {player.club}
+                                  </td>
+                                  {group.players.map((opponent, opponentIndex) => (
+                                    <td key={opponentIndex} className="border border-gray-300 p-1">
+                                      {playerIndex === opponentIndex ? (
+                                        <div className="w-full h-8 bg-gray-200 flex items-center justify-center text-xs">
+                                          *****
+                                        </div>
+                                      ) : (
+                                        <Input
+                                          value={group.resultMatrix[playerIndex]?.[opponentIndex] || ''}
+                                          onChange={(e) => updateMatchResult(groupIndex, playerIndex, opponentIndex, e.target.value)}
+                                          placeholder="3-1"
+                                          className="w-full h-8 text-center text-xs"
+                                        />
+                                      )}
+                                    </td>
                                   ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="col-span-3">
-                              <Select
-                                value={match.player2.name}
-                                onValueChange={(value) => {
-                                  const participant = participants.find(p => 
-                                    `${p.firstName} ${p.lastName}` === value
-                                  );
-                                  updateMatch(groupIndex, matchIndex, 'player2', {
-                                    id: participant?.id || '',
-                                    name: value
-                                  });
-                                }}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Тоглогч 2" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {participants.map((participant) => (
-                                    <SelectItem 
-                                      key={participant.id}
-                                      value={`${participant.firstName} ${participant.lastName}`}
-                                    >
-                                      {participant.firstName} {participant.lastName}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="col-span-2">
-                              <Input
-                                value={match.score}
-                                onChange={(e) => updateMatch(groupIndex, matchIndex, 'score', e.target.value)}
-                                placeholder="Оноо (3-1)"
-                              />
-                            </div>
-                            <div className="col-span-3">
-                              <Select
-                                value={match.winner || ''}
-                                onValueChange={(value) => updateMatch(groupIndex, matchIndex, 'winner', value)}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Ялагч" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {match.player1.name && (
-                                    <SelectItem value={match.player1.id}>
-                                      {match.player1.name}
-                                    </SelectItem>
-                                  )}
-                                  {match.player2.name && (
-                                    <SelectItem value={match.player2.id}>
-                                      {match.player2.name}
-                                    </SelectItem>
-                                  )}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                        ))}
-                        {group.matches.length === 0 && (
-                          <p className="text-gray-500 text-center py-4">
-                            "Тоглолт нэмэх" товчийг дарж тоглолт нэмнэ үү
-                          </p>
-                        )}
+                                  <td className="border border-gray-300 p-2 text-center text-sm">
+                                    {group.standings.find(s => s.playerId === player.id)?.wins || 0}/
+                                    {group.standings.find(s => s.playerId === player.id)?.totalMatches || 0}
+                                  </td>
+                                  <td className="border border-gray-300 p-2 text-center font-bold">
+                                    {group.standings.find(s => s.playerId === player.id)?.position || '-'}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                      
+                      {/* Player Selection */}
+                      <div className="mt-4">
+                        <Select 
+                          onValueChange={(value) => {
+                            const participant = participants.find(p => 
+                              `${p.firstName} ${p.lastName}` === value
+                            );
+                            if (participant) {
+                              addPlayerToGroup(groupIndex, {
+                                id: participant.id || '',
+                                name: `${participant.firstName} ${participant.lastName}`,
+                                club: participant.clubName || ''
+                              });
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Группд тоглогч нэмэх" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {participants
+                              .filter(p => !group.players.some(gp => gp.id === p.id))
+                              .map((participant) => (
+                                <SelectItem 
+                                  key={participant.id} 
+                                  value={`${participant.firstName} ${participant.lastName}`}
+                                >
+                                  {participant.firstName} {participant.lastName} ({participant.clubName})
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
                       </div>
+                      
+                      {group.players.length === 0 && (
+                        <p className="text-gray-500 text-center py-4">
+                          Дээрх сонголтоос тоглогч нэмж эхлэнэ үү
+                        </p>
+                      )}
                     </div>
                   ))}
-                  {groupStageGroups.length === 0 && (
+                  {groupStageTables.length === 0 && (
                     <p className="text-gray-500 text-center py-8">
                       "Групп нэмэх" товчийг дарж группийн тулаан үүсгэнэ үү
                     </p>
