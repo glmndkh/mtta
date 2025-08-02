@@ -281,7 +281,10 @@ export default function TournamentResultsPage() {
                                       <td className="border p-2">{rowIndex + 1}</td>
                                       <td className="border p-2">
                                         <button
-                                          onClick={() => navigateToProfile(player.id)}
+                                          onClick={() => {
+                                            console.log('Navigate to player profile:', player.id);
+                                            navigateToProfile(player.id);
+                                          }}
                                           className="text-blue-600 hover:text-blue-800 hover:underline"
                                         >
                                           {player.name}
@@ -315,7 +318,10 @@ export default function TournamentResultsPage() {
                                   <div className="flex items-center space-x-3">
                                     <span className="font-semibold text-gray-600">{standing.position}.</span>
                                     <button
-                                      onClick={() => navigateToProfile(standing.playerId)}
+                                      onClick={() => {
+                                        console.log('Navigate to player profile:', standing.playerId);
+                                        navigateToProfile(standing.playerId);
+                                      }}
                                       className="text-blue-600 hover:text-blue-800 hover:underline"
                                     >
                                       {standing.playerName}

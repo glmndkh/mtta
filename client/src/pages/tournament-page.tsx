@@ -263,8 +263,8 @@ function TournamentParticipants({ tournamentId }: { tournamentId: string }) {
                     <button 
                       className="flex items-center gap-2 text-left hover:text-blue-600 transition-colors"
                       onClick={() => {
-                        // TODO: Navigate to player profile page
                         console.log('Navigate to player profile:', participant.id);
+                        setLocation(`/player/${participant.id}`);
                       }}
                     >
                       <User className="w-4 h-4" />
