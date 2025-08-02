@@ -23,6 +23,12 @@ A comprehensive web application for the Mongolian Table Tennis Association that 
 - **Admin-only results input interface** with secure authentication and role-based access control
 - **Complete API integration** with tournament results endpoints for saving, retrieving, and publishing results
 
+### Win/Loss Statistics Fix (August 2025)
+- **Accurate statistics calculation** fixed to count only from current published tournament results
+- **Player statistics reset and recalculated** to eliminate counting from previous deleted tournament data
+- **Statistics now match visible match history** ensuring consistency between displayed matches and win/loss counts
+- **Manual correction system** implemented for precise player statistics when needed
+
 ### Password Storage Update (August 2025)
 - **Plain text password storage** implemented as requested by user
 - **Authentication system updated** to compare passwords directly without encryption
