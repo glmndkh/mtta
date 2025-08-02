@@ -751,16 +751,10 @@ export class DatabaseStorage implements IStorage {
         }
       }
       
-      // Update player statistics in database
+      // Update player statistics in database (replace, don't add to existing)
       for (const [playerId, stats] of Object.entries(playerStats)) {
         if (stats.wins > 0 || stats.losses > 0) {
-          // Get current stats
-          const [currentPlayer] = await db.select().from(players).where(eq(players.id, playerId)).limit(1);
-          if (currentPlayer) {
-            const newWins = (currentPlayer.wins || 0) + stats.wins;
-            const newLosses = (currentPlayer.losses || 0) + stats.losses;
-            await this.updatePlayerStats(playerId, newWins, newLosses);
-          }
+          await this.updatePlayerStats(playerId, stats.wins, stats.losses);
         }
       }
     } catch (error) {
