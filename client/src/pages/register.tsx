@@ -19,7 +19,7 @@ const registerSchema = z.object({
     required_error: "Хүйсээ сонгоно уу",
   }),
   dateOfBirth: z.string().min(1, "Төрсөн огноогоо оруулна уу"),
-  phone: z.string().min(8, "Утасны дугаар хамгийн багадаа 8 тэмдэгт байх ёстой"),
+  phone: z.string().optional(),
   email: z.string().email("И-мэйл хаягаа зөв оруулна уу"),
   clubAffiliation: z.string().min(1, "Клубын мэдээлэл эсвэл тоглодог газрын нэрийг оруулна уу"),
   password: z.string().min(6, "Нууц үг дор хаяж 6 тэмдэгт байх ёстой"),
@@ -189,9 +189,9 @@ export default function Register() {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Утасны дугаар</FormLabel>
+                    <FormLabel>Утасны дугаар <span className="text-gray-500 text-sm">(заавал биш)</span></FormLabel>
                     <FormControl>
-                      <Input placeholder="99887766" {...field} />
+                      <Input placeholder="+976 xxxxxxxx" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
