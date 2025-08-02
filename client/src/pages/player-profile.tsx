@@ -230,7 +230,7 @@ export default function PlayerProfilePage() {
                                             variant={isWinner ? "default" : "destructive"}
                                             className="mb-1"
                                           >
-                                            {isWinner ? 'Ялалт' : 'Хожил'}
+                                            {isWinner ? 'Ялалт' : 'Хожигдол'}
                                           </Badge>
                                         ) : (
                                           <Badge variant="outline" className="mb-1">
@@ -302,7 +302,7 @@ export default function PlayerProfilePage() {
                                         variant={isWinner ? "default" : "destructive"}
                                         className="mb-1"
                                       >
-                                        {isWinner ? 'Ялалт' : 'Хожил'}
+                                        {isWinner ? 'Ялалт' : 'Хожигдол'}
                                       </Badge>
                                       <p className="text-xs text-gray-500">
                                         {match.sets?.map((set: any) => `${set.player1Score}-${set.player2Score}`).join(', ')}
