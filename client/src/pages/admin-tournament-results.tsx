@@ -22,6 +22,8 @@ interface GroupStageTable {
     id: string;
     name: string;
     club: string;
+    wins?: string;
+    position?: string;
   }>;
   // Matrix of results [player1Index][player2Index] = score (e.g., "3-1")
   resultMatrix: string[][];
@@ -286,9 +288,13 @@ export default function AdminTournamentResultsPage() {
     setGroupStageTables(updated);
   };
 
-  const addPlayerToGroup = (groupIndex: number, player: { id: string; name: string; club: string }) => {
+  const addPlayerToGroup = (groupIndex: number, player: { id: string; name: string; club: string; wins?: string; position?: string }) => {
     const updated = [...groupStageTables];
-    updated[groupIndex].players.push(player);
+    updated[groupIndex].players.push({
+      ...player,
+      wins: player.wins || '',
+      position: player.position || ''
+    });
     
     // Expand result matrix
     const playerCount = updated[groupIndex].players.length;
@@ -819,12 +825,29 @@ export default function AdminTournamentResultsPage() {
                                       )}
                                     </td>
                                   ))}
-                                  <td className="border border-gray-300 p-2 text-center text-sm">
-                                    {group.standings.find(s => s.playerId === player.id)?.wins || 0}/
-                                    {group.standings.find(s => s.playerId === player.id)?.totalMatches || 0}
+                                  <td className="border border-gray-300 p-2">
+                                    <Input
+                                      value={player.wins || ''}
+                                      onChange={(e) => {
+                                        const updated = [...groupStageTables];
+                                        updated[groupIndex].players[playerIndex].wins = e.target.value;
+                                        setGroupStageTables(updated);
+                                      }}
+                                      placeholder="0/1"
+                                      className="w-full h-8 text-center text-xs"
+                                    />
                                   </td>
-                                  <td className="border border-gray-300 p-2 text-center font-bold">
-                                    {group.standings.find(s => s.playerId === player.id)?.position || '-'}
+                                  <td className="border border-gray-300 p-2">
+                                    <Input
+                                      value={player.position || ''}
+                                      onChange={(e) => {
+                                        const updated = [...groupStageTables];
+                                        updated[groupIndex].players[playerIndex].position = e.target.value;
+                                        setGroupStageTables(updated);
+                                      }}
+                                      placeholder="1"
+                                      className="w-full h-8 text-center text-xs font-bold"
+                                    />
                                   </td>
                                 </tr>
                               ))}
