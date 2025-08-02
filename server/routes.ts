@@ -600,6 +600,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Tournament match history for a player
+  app.get('/api/players/:id/tournament-matches', async (req, res) => {
+    try {
+      const tournamentMatches = await storage.getPlayerTournamentMatches(req.params.id);
+      res.json(tournamentMatches);
+    } catch (error) {
+      console.error("Error fetching player tournament matches:", error);
+      res.status(500).json({ message: "Тэмцээний тоглолтын түүх авахад алдаа гарлаа" });
+    }
+  });
+
   app.get('/api/players/:id/achievements', async (req, res) => {
     try {
       const achievements = await storage.getPlayerAchievements(req.params.id);

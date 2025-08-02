@@ -108,6 +108,9 @@ export interface IStorage {
   getTournamentResults(tournamentId: string): Promise<TournamentResults | undefined>;
   upsertTournamentResults(results: InsertTournamentResults): Promise<TournamentResults>;
   publishTournamentResults(tournamentId: string): Promise<void>;
+  
+  // Player tournament match history
+  getPlayerTournamentMatches(playerId: string): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -578,6 +581,97 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date(),
       })
       .where(eq(tournamentResults.tournamentId, tournamentId));
+  }
+
+  // Player tournament match history
+  async getPlayerTournamentMatches(playerId: string): Promise<any[]> {
+    const tournamentMatches: any[] = [];
+    
+    // Get all published tournament results where this player participated
+    const results = await db
+      .select({
+        tournamentResults: tournamentResults,
+        tournament: tournaments,
+      })
+      .from(tournamentResults)
+      .innerJoin(tournaments, eq(tournamentResults.tournamentId, tournaments.id))
+      .where(eq(tournamentResults.isPublished, true));
+
+    for (const result of results) {
+      const { groupStageResults, knockoutResults, finalRankings } = result.tournamentResults;
+      
+      // Check group stage matches
+      if (groupStageResults) {
+        try {
+          const groupData = JSON.parse(groupStageResults);
+          if (Array.isArray(groupData)) {
+            for (const group of groupData) {
+              if (group.players && group.resultMatrix) {
+                const playerIndex = group.players.findIndex((p: any) => p.id === playerId);
+                if (playerIndex !== -1) {
+                  // This player was in this group
+                  const playerData = group.players[playerIndex];
+                  
+                  // Find matches for this player
+                  for (let opponentIndex = 0; opponentIndex < group.players.length; opponentIndex++) {
+                    if (playerIndex !== opponentIndex) {
+                      const matchResult = group.resultMatrix[playerIndex]?.[opponentIndex];
+                      if (matchResult && matchResult.trim() !== '') {
+                        const opponent = group.players[opponentIndex];
+                        tournamentMatches.push({
+                          tournament: result.tournament,
+                          stage: 'Группийн шат',
+                          groupName: group.groupName || `Бүлэг ${group.id || ''}`,
+                          opponent: opponent,
+                          result: matchResult,
+                          playerWins: playerData.wins || '0/0',
+                          playerPosition: playerData.position || '-',
+                          date: result.tournament.startDate,
+                        });
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing group stage results:', e);
+        }
+      }
+      
+      // Check knockout stage matches
+      if (knockoutResults) {
+        try {
+          const knockoutData = JSON.parse(knockoutResults);
+          if (Array.isArray(knockoutData)) {
+            for (const match of knockoutData) {
+              if ((match.player1?.id === playerId || match.player2?.id === playerId) && match.score) {
+                const isPlayer1 = match.player1?.id === playerId;
+                const opponent = isPlayer1 ? match.player2 : match.player1;
+                const isWinner = match.winner?.id === playerId;
+                
+                tournamentMatches.push({
+                  tournament: result.tournament,
+                  stage: `Шилжилтийн шат - ${match.round || 'Тодорхойгүй'}`,
+                  opponent: opponent,
+                  result: match.score,
+                  isWinner: isWinner,
+                  date: result.tournament.startDate,
+                });
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing knockout results:', e);
+        }
+      }
+    }
+    
+    // Sort by tournament date (newest first)
+    return tournamentMatches.sort((a, b) => 
+      new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()
+    );
   }
 }
 

@@ -64,6 +64,13 @@ export default function PlayerDashboard() {
     },
   });
 
+  // Fetch tournament match history
+  const { data: tournamentMatches = [], isLoading: tournamentMatchesLoading } = useQuery({
+    queryKey: ["/api/players", playerData?.player?.id, "tournament-matches"],
+    enabled: !!playerData?.player?.id,
+    retry: false,
+  });
+
   // Fetch membership info
   const { data: membership } = useQuery({
     queryKey: ["/api/players", playerData?.player?.id, "membership"],
@@ -270,12 +277,12 @@ export default function PlayerDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {matchesLoading ? (
+                {(matchesLoading || tournamentMatchesLoading) ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mtta-green mx-auto mb-2"></div>
                     <p className="text-gray-600">Тоглолтын түүх уншиж байна...</p>
                   </div>
-                ) : matches.length === 0 ? (
+                ) : matches.length === 0 && tournamentMatches.length === 0 ? (
                   <div className="text-center py-8">
                     <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600">Одоогоор тоглолтын түүх байхгүй байна</p>
@@ -284,56 +291,159 @@ export default function PlayerDashboard() {
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    {matches.slice(0, 5).map((match: any) => {
-                      const isPlayer1 = match.player1Id === player?.id;
-                      const isWinner = match.winnerId === player?.id;
-                      const opponent = isPlayer1 ? match.player2 : match.player1;
-                      
-                      return (
-                        <div 
-                          key={match.id}
-                          className={`flex items-center justify-between p-3 rounded-lg ${
-                            match.status === 'completed'
-                              ? isWinner 
-                                ? 'bg-green-50 border border-green-200'
-                                : 'bg-red-50 border border-red-200'
-                              : 'bg-gray-50 border border-gray-200'
-                          }`}
-                        >
-                          <div>
-                            <p className="font-medium text-gray-900">
-                              vs {opponent?.user?.firstName} {opponent?.user?.lastName}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {match.scheduledAt 
-                                ? new Date(match.scheduledAt).toLocaleDateString('mn-MN')
-                                : 'Огноо тодорхойгүй'
-                              }
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            {match.status === 'completed' ? (
-                              <>
-                                <Badge 
-                                  variant={isWinner ? "default" : "destructive"}
-                                  className={isWinner ? "mtta-green text-white" : ""}
-                                >
-                                  {isWinner ? 'Ялагдсан' : 'Хожигдсон'}
-                                </Badge>
-                                <p className="text-xs text-gray-500 mt-1">
-                                  {match.sets?.length || 0} сет
-                                </p>
-                              </>
-                            ) : (
-                              <Badge variant="outline">
-                                {match.status === 'scheduled' ? 'Товлогдсон' : 'Явагдаж байгаа'}
-                              </Badge>
-                            )}
-                          </div>
+                  <div className="space-y-4">
+                    {/* Tournament Match History */}
+                    {tournamentMatches.length > 0 && (
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-3 flex items-center">
+                          <Trophy className="h-4 w-4 mr-2 text-mtta-green" />
+                          Тэмцээний тоглолтууд
+                        </h4>
+                        <div className="space-y-3">
+                          {tournamentMatches.slice(0, 3).map((match: any, index: number) => {
+                            const isWinner = match.isWinner;
+                            const hasResult = match.result && match.result.trim() !== '';
+                            
+                            return (
+                              <div 
+                                key={`tournament-${index}`}
+                                className={`p-3 rounded-lg border ${
+                                  hasResult
+                                    ? isWinner === true
+                                      ? 'bg-green-50 border-green-200'
+                                      : isWinner === false
+                                      ? 'bg-red-50 border-red-200'
+                                      : 'bg-blue-50 border-blue-200'
+                                    : 'bg-gray-50 border-gray-200'
+                                }`}
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <p className="font-medium text-gray-900 mb-1">
+                                      {match.tournament?.name || 'Тэмцээн'}
+                                    </p>
+                                    <p className="text-sm text-gray-600 mb-1">
+                                      {match.stage}
+                                      {match.groupName && ` - ${match.groupName}`}
+                                    </p>
+                                    <div className="flex items-center text-sm text-gray-700">
+                                      <span className="font-medium">vs</span>
+                                      <span className="ml-2">
+                                        {match.opponent?.name || 'Харсагч олдсонгүй'}
+                                      </span>
+                                    </div>
+                                    {match.date && (
+                                      <p className="text-xs text-gray-500 mt-1">
+                                        {new Date(match.date).toLocaleDateString('mn-MN')}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div className="text-right ml-4">
+                                    {hasResult ? (
+                                      <>
+                                        {isWinner !== undefined ? (
+                                          <Badge 
+                                            variant={isWinner ? "default" : "destructive"}
+                                            className="mb-1"
+                                          >
+                                            {isWinner ? 'Ялалт' : 'Хожил'}
+                                          </Badge>
+                                        ) : (
+                                          <Badge variant="outline" className="mb-1">
+                                            Тэнцсэн
+                                          </Badge>
+                                        )}
+                                        <p className="text-xs text-gray-600">
+                                          {match.result}
+                                        </p>
+                                        {match.playerWins && (
+                                          <p className="text-xs text-gray-500">
+                                            Групп: {match.playerWins} | Байр: {match.playerPosition}
+                                          </p>
+                                        )}
+                                      </>
+                                    ) : (
+                                      <Badge variant="outline">
+                                        Хүлээгдэж буй
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                      );
-                    })}
+                      </div>
+                    )}
+
+                    {/* Regular Match History */}
+                    {matches.length > 0 && (
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-3 flex items-center">
+                          <Target className="h-4 w-4 mr-2 text-mtta-green" />
+                          Ердийн тоглолтууд
+                        </h4>
+                        <div className="space-y-3">
+                          {matches.slice(0, 3).map((match: any) => {
+                            const isPlayer1 = match.player1Id === player?.id;
+                            const isWinner = match.winnerId === player?.id;
+                            const opponent = isPlayer1 ? match.player2 : match.player1;
+                            
+                            return (
+                              <div 
+                                key={match.id}
+                                className={`flex items-center justify-between p-3 rounded-lg ${
+                                  match.status === 'completed'
+                                    ? isWinner 
+                                      ? 'bg-green-50 border border-green-200'
+                                      : 'bg-red-50 border border-red-200'
+                                    : 'bg-gray-50 border border-gray-200'
+                                }`}
+                              >
+                                <div>
+                                  <p className="font-medium text-gray-900">
+                                    vs {opponent?.user?.firstName} {opponent?.user?.lastName}
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    {match.scheduledAt 
+                                      ? new Date(match.scheduledAt).toLocaleDateString('mn-MN')
+                                      : 'Огноо тодорхойгүй'
+                                    }
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  {match.status === 'completed' ? (
+                                    <>
+                                      <Badge 
+                                        variant={isWinner ? "default" : "destructive"}
+                                        className="mb-1"
+                                      >
+                                        {isWinner ? 'Ялалт' : 'Хожил'}
+                                      </Badge>
+                                      <p className="text-xs text-gray-500">
+                                        {match.sets?.map((set: any) => `${set.player1Score}-${set.player2Score}`).join(', ')}
+                                      </p>
+                                    </>
+                                  ) : (
+                                    <Badge variant="outline">
+                                      {match.status === 'scheduled' ? 'Товлогдсон' : 'Хүлээгдэж буй'}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {(matches.length > 3 || tournamentMatches.length > 3) && (
+                      <div className="text-center pt-3">
+                        <Button variant="outline" size="sm">
+                          Бүх тоглолт харах ({matches.length + tournamentMatches.length})
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
