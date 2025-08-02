@@ -291,7 +291,7 @@ export default function TournamentResultsPage() {
                                         </button>
                                       </td>
                                       {(group.resultMatrix?.[rowIndex] || []).map((result, colIndex) => (
-                                        <td key={colIndex} className="border p-2 text-center">
+                                        <td key={colIndex} className="border p-2 text-center text-sm">
                                           {rowIndex === colIndex ? '*****' : (result || '')}
                                         </td>
                                       ))}
