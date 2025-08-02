@@ -47,6 +47,7 @@ export interface IStorage {
   getUserByPhone(phone: string): Promise<User | undefined>;
   createSimpleUser(userData: any): Promise<User>;
   updateUserProfile(userId: string, userData: any): Promise<User>;
+  getAllUsers(): Promise<User[]>;
 
   // Player operations
   getPlayer(id: string): Promise<Player | undefined>;
@@ -180,6 +181,13 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return user;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db
+      .select()
+      .from(users)
+      .orderBy(users.firstName, users.lastName);
   }
 
   // Player operations

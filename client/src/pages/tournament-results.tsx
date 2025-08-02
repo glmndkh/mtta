@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Trophy, Medal, Users, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
+import { KnockoutBracket } from "@/components/KnockoutBracket";
 import type { Tournament, TournamentResults } from "@shared/schema";
 
 // Types for structured tournament results
@@ -225,80 +226,20 @@ export default function TournamentResultsPage() {
           <TabsContent value="knockout">
             <Card>
               <CardHeader>
-                <CardTitle>Шоронтох тулаан</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="w-5 h-5" />
+                  Шоронтох тулаан
+                </CardTitle>
                 <CardDescription>
-                  Шаардлагат тоглолтууд ба тэдгээрийн үр дүн
+                  Тэмцээний шоронтох шатны үр дүн
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {knockoutResults.length > 0 ? (
-                  <div className="space-y-6">
-                    {['final', 'semifinal', 'quarterfinal', 'round16'].map((round) => {
-                      const roundMatches = knockoutResults.filter(match => match.round === round);
-                      if (roundMatches.length === 0) return null;
-
-                      const roundNames: Record<string, string> = {
-                        final: 'Финал',
-                        semifinal: 'Хагас финал',
-                        quarterfinal: 'Дөрөвний финал',
-                        round16: '16-ын тулаан'
-                      };
-
-                      return (
-                        <div key={round}>
-                          <h3 className="text-lg font-semibold mb-3">{roundNames[round]}</h3>
-                          <div className="grid gap-4 md:grid-cols-2">
-                            {roundMatches.map((match) => (
-                              <div key={match.id} className="p-4 border rounded-lg">
-                                <div className="flex justify-between items-center">
-                                  <div className="space-y-2">
-                                    <div className="flex items-center space-x-2">
-                                      {match.player1 ? (
-                                        <button
-                                          onClick={() => navigateToProfile(match.player1!.id)}
-                                          className="text-blue-600 hover:text-blue-800 hover:underline"
-                                        >
-                                          {match.player1.name}
-                                        </button>
-                                      ) : (
-                                        <span className="text-gray-400">TBD</span>
-                                      )}
-                                      {match.winner?.id === match.player1?.id && (
-                                        <Badge variant="default">Ялагч</Badge>
-                                      )}
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                      {match.player2 ? (
-                                        <button
-                                          onClick={() => navigateToProfile(match.player2!.id)}
-                                          className="text-blue-600 hover:text-blue-800 hover:underline"
-                                        >
-                                          {match.player2.name}
-                                        </button>
-                                      ) : (
-                                        <span className="text-gray-400">TBD</span>
-                                      )}
-                                      {match.winner?.id === match.player2?.id && (
-                                        <Badge variant="default">Ялагч</Badge>
-                                      )}
-                                    </div>
-                                  </div>
-                                  {match.score && (
-                                    <div className="text-lg font-semibold text-gray-900">
-                                      {match.score}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-gray-500 text-center py-8">Шоронтох тулааны мэдээлэл алга байна</p>
-                )}
+                <KnockoutBracket
+                  matches={knockoutResults}
+                  onPlayerClick={navigateToProfile}
+                  isViewOnly={true}
+                />
               </CardContent>
             </Card>
           </TabsContent>
