@@ -467,13 +467,12 @@ export default function AdminTournamentResultsPage() {
           </div>
         </div>
       </div>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="rankings" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="rankings">Эцсийн байр</TabsTrigger>
             <TabsTrigger value="knockout">Шоронтох тулаан</TabsTrigger>
-            <TabsTrigger value="groups">Групп тулаан</TabsTrigger>
+            <TabsTrigger value="groups">Хэсгийн тоглолт</TabsTrigger>
           </TabsList>
 
           {/* Final Rankings Editor */}
