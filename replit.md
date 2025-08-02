@@ -8,10 +8,15 @@ A comprehensive web application for the Mongolian Table Tennis Association that 
 - Node.js/Express backend with flexible tournament creation
 - PostgreSQL database with Drizzle ORM
 - Tailwind CSS for responsive, mobile-first design
-- Password-based authentication system with bcrypt encryption
+- Password-based authentication system with plain text storage
 - Full internationalization with comprehensive Mongolian language support
 
 ## Recent Changes
+
+### Password Storage Update (August 2025)
+- **Plain text password storage** implemented as requested by user
+- **Authentication system updated** to compare passwords directly without encryption
+- **Profile update functionality** modified to work with plain text password verification
 
 ### User Profile Management System (August 2025)
 - **Comprehensive user profile update functionality** allowing users to modify all registration information
@@ -26,7 +31,7 @@ A comprehensive web application for the Mongolian Table Tennis Association that 
 ### Authentication Features
 - **Registration**: Requires email/phone, name, password (min 6 chars), and role
 - **Login**: Requires email/phone and password
-- **Password Security**: Uses bcrypt with salt rounds of 10
+- **Password Storage**: Passwords stored in plain text format (as requested by user)
 - **Session Management**: Simple session-based authentication
 - **Form Validation**: Client-side validation with Zod schemas
 - **Error Handling**: Comprehensive error messages in Mongolian
@@ -53,7 +58,7 @@ A comprehensive web application for the Mongolian Table Tennis Association that 
 ### Database Schema
 - **users table**: Added `password` field (nullable for backward compatibility)
 - **Authentication**: Email or phone + password required
-- **Password Storage**: Hashed with bcrypt, never stored in plaintext
+- **Password Storage**: Stored in plain text format (as requested by user)
 
 ## Development Guidelines
 - Follow fullstack_js guidelines for React/Node.js development
