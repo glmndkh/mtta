@@ -1,0 +1,78 @@
+Маш тодорхой ойлгомжтой шаардлага байна. Энийг англиар, Replit эсвэл хөгжүүлэлтийн багт ойлгомжтой байдлаар functionality + UX/UI + admin input + error condition-ийн хамт өгч болох хэлбэрээр орчуулж байна:
+
+🖥 User-Facing Match Results Display
+✅ 1. Group Stage Results — Table Format
+Group stage match results must be displayed in a clean table format for users.
+
+Because of that, admins must also input the results via a table interface (similar to Excel).
+
+The table should include:
+
+Player names
+
+Scores
+
+Win/Loss status
+
+Group position/rank (optional)
+
+Example table:
+
+Player A	Player B	Score	Winner
+Bat Erdene	Bold Ganbaatar	3–1	Bat Erdene
+Davaa Munkh	Sain Erdenee	2–3	Sain Erdenee
+
+✅ 2. Knockout Stage — Visual Bracket (Tree Diagram)
+The knockout stage must be displayed as a bracket-style diagram, not just a list.
+
+Admins must be able to input the knockout round results via a visual bracket editor:
+
+Drag-and-drop or structured input of each round and match
+
+Select players from the system
+
+Input scores
+
+The bracket should update visually in real-time as matches are entered
+
+Example structure:
+
+css
+Хуулах
+Засах
+Quarterfinals         Semifinals           Final
+-------------         ------------         -------
+Player A   ┐
+           ├──> Player A ┐
+Player B   ┘            │
+                        ├──> Player A (Champion)
+Player C   ┐            │
+           ├──> Player C ┘
+Player D   ┘
+All player names must be clickable and lead to their user profile.
+
+❌ 3. Problem: Result Submission Not Working
+You mentioned that admin is currently unable to submit match results.
+
+Please ensure the following:
+
+Backend allows saving of both group & bracket data
+
+All required fields are filled before submission
+
+Proper error messages are shown when saving fails
+
+🔗 4. External Reference Link
+You mentioned you have a site for inspiration. Please share the link, and I’ll review the UI/UX, logic, and help you implement a similar interface or flow in your system.
+
+Let me know once you send the link — I can help reverse engineer or recreate the core features you're aiming for.
+
+
+
+
+
+
+
+
+
+ChatGPT-ээс асуух

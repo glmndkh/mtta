@@ -1,0 +1,154 @@
+Tournament Results – Admin Input & User View Requirements
+✅ 1. "View Results" Button
+Show a "View Results" button only when the tournament has officially ended.
+
+Users should not see this button while the tournament is still ongoing.
+
+🛠 2. Admin: Inputting Tournament Results
+Admins will enter results for both:
+
+Group Stage Matches
+
+Knockout Stage (Bracket) Matches
+
+Both sections must behave like an Excel-style interface, with the following features:
+
+📋 Group Stage Matches
+Admin can:
+
+Add or remove columns and rows dynamically
+
+Fill in match data for each cell (e.g. Player A vs Player B, score)
+
+When entering player names:
+
+The system should auto-suggest from registered user accounts
+
+Selected players will be linked to their profile page
+
+🧾 Knockout (Bracket) Matches
+Similar behavior:
+
+Dynamic addition/removal of rounds and players
+
+Player search and selection from user base
+
+Score entry
+
+Visual structure (e.g. Round of 8, Semifinal, Final)
+
+Again, players' names must be clickable and link to their profiles.
+
+👀 3. User View: Tournament Results Page
+Once results are entered:
+
+Users can view:
+
+Full group stage results in a clean, table-like format
+
+Full knockout bracket in a structured visual view
+
+All player names are clickable, leading to their profile pages
+
+Logged-in players can go to their profile and see their match history from that tournament.
+
+💡 Optional Enhancements (suggested)
+Highlight winners in brackets/tables
+
+Display match stats per player (wins, losses, total points)
+
+Show final rankings or placement (e.g. 1st place, 2nd place...)
+
+🧪 Example Workflow:
+Tournament ends
+
+Admin opens result editor
+
+Inputs group + knockout data (Excel-style)
+
+Results saved
+
+“View Results” button appears for users
+
+Players & visitors see structured results and click through to profiles
+
+Хэрвээ хүсвэл энэ үр дүн оруулах Excel загварыг React дээр хэрхэн хийх жишээ (editable table component), эсвэл Firebase/Express backend-тэй яаж холбох код өгч болно. Хэлээд л өгөөрэй.
+
+
+
+
+
+
+
+
+Та хэлэхдээ:
+Хэрэглэгчид харагдах байдал иймэрхүү хүснэгтээр харагдах ёстой. Хүснэгтээр харагдуулах учраас хүснэгтээр тоглолтын үр дүн оруулмаар байна. Бас нугалааны зураг өгсөн. Нугалааг бас ингэж схемээр харуулмаар байгаа учраас нугалааны үр дүн оруулахад схем зурж оруулмаар байна. Бас үр дүн оруулж болохгүй байна. Чамд нэг site link өгсөн санаа аваарай
+
+
+ChatGPT хэлсэн:
+Маш тодорхой ойлгомжтой шаардлага байна. Энийг англиар, Replit эсвэл хөгжүүлэлтийн багт ойлгомжтой байдлаар functionality + UX/UI + admin input + error condition-ийн хамт өгч болох хэлбэрээр орчуулж байна:
+
+🖥 User-Facing Match Results Display
+✅ 1. Group Stage Results — Table Format
+Group stage match results must be displayed in a clean table format for users.
+
+Because of that, admins must also input the results via a table interface (similar to Excel).
+
+The table should include:
+
+Player names
+
+Scores
+
+Win/Loss status
+
+Group position/rank (optional)
+
+Example table:
+
+Player A	Player B	Score	Winner
+Bat Erdene	Bold Ganbaatar	3–1	Bat Erdene
+Davaa Munkh	Sain Erdenee	2–3	Sain Erdenee
+
+✅ 2. Knockout Stage — Visual Bracket (Tree Diagram)
+The knockout stage must be displayed as a bracket-style diagram, not just a list.
+
+Admins must be able to input the knockout round results via a visual bracket editor:
+
+Drag-and-drop or structured input of each round and match
+
+Select players from the system
+
+Input scores
+
+The bracket should update visually in real-time as matches are entered
+
+Example structure:
+
+css
+Хуулах
+Засах
+Quarterfinals         Semifinals           Final
+-------------         ------------         -------
+Player A   ┐
+           ├──> Player A ┐
+Player B   ┘            │
+                        ├──> Player A (Champion)
+Player C   ┐            │
+           ├──> Player C ┘
+Player D   ┘
+All player names must be clickable and lead to their user profile.
+
+❌ 3. Problem: Result Submission Not Working
+You mentioned that admin is currently unable to submit match results.
+
+Please ensure the following:
+
+Backend allows saving of both group & bracket data
+
+All required fields are filled before submission
+
+Proper error messages are shown when saving fails
+
+🔗 4. External Reference Link
+You mentioned you have a site for inspiration. Please share the link, and I’ll review the UI/UX, logic, and help you implement a similar interface or flow in your system.
