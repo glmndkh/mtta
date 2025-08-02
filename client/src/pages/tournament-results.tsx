@@ -273,37 +273,8 @@ export default function TournamentResultsPage() {
                               </thead>
                               <tbody>
                                 {(group.players || []).map((player, rowIndex) => {
-                                  const rowResults = group.resultMatrix?.[rowIndex] || [];
-                                  // Count wins and losses from individual scores (both "3-1" format and individual "3", "1" scores)
-                                  let wins = 0;
-                                  let losses = 0;
-                                  
-                                  rowResults.forEach((result, colIndex) => {
-                                    if (result && result !== '' && rowIndex !== colIndex) {
-                                      if (result.includes('-')) {
-                                        // Handle "3-1" format
-                                        const [score1, score2] = result.split('-').map(s => parseInt(s.trim()));
-                                        if (!isNaN(score1) && !isNaN(score2)) {
-                                          if (score1 > score2) wins++;
-                                          else if (score1 < score2) losses++;
-                                        }
-                                      } else {
-                                        // Handle individual scores like "3", "1", etc.
-                                        const score = parseInt(result.trim());
-                                        if (!isNaN(score) && score > 0) {
-                                          // Look at opponent's score in the same match
-                                          const opponentScore = group.resultMatrix?.[colIndex]?.[rowIndex];
-                                          if (opponentScore && opponentScore !== '') {
-                                            const oppScore = parseInt(opponentScore.trim());
-                                            if (!isNaN(oppScore)) {
-                                              if (score > oppScore) wins++;
-                                              else if (score < oppScore) losses++;
-                                            }
-                                          }
-                                        }
-                                      }
-                                    }
-                                  });
+                                  // Use the admin-entered wins value directly from the data structure
+                                  const adminEnteredWins = player.wins || '0/0';
                                   return (
                                     <tr key={player.id}>
                                       <td className="border p-2">{rowIndex + 1}</td>
@@ -323,9 +294,9 @@ export default function TournamentResultsPage() {
                                           {rowIndex === colIndex ? '*****' : (result || '')}
                                         </td>
                                       ))}
-                                      <td className="border p-2 text-center">{wins}/{losses}</td>
+                                      <td className="border p-2 text-center">{adminEnteredWins}</td>
                                       <td className="border p-2 text-center font-bold">
-                                        {group.standings.find(s => s.playerId === player.id)?.position || wins + 1}
+                                        {player.position || group.standings.find(s => s.playerId === player.id)?.position || ''}
                                       </td>
                                     </tr>
                                   );
