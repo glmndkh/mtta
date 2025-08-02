@@ -329,7 +329,9 @@ export default function PlayerDashboard() {
                                     <div className="flex items-center text-sm text-gray-700">
                                       <span className="font-medium">vs</span>
                                       <span className="ml-2">
-                                        {match.opponent?.name || 'Харсагч олдсонгүй'}
+                                        {match.opponent?.name || 
+                                         (match.opponent?.user ? `${match.opponent.user.firstName} ${match.opponent.user.lastName}` : 
+                                          'Харсагч олдсонгүй')}
                                       </span>
                                     </div>
                                     {match.date && (

@@ -603,7 +603,13 @@ export class DatabaseStorage implements IStorage {
       // Check group stage matches
       if (groupStageResults) {
         try {
-          const groupData = JSON.parse(groupStageResults);
+          let groupData;
+          if (typeof groupStageResults === 'string') {
+            groupData = JSON.parse(groupStageResults);
+          } else {
+            groupData = groupStageResults;
+          }
+          
           if (Array.isArray(groupData)) {
             for (const group of groupData) {
               if (group.players && group.resultMatrix) {
@@ -643,7 +649,13 @@ export class DatabaseStorage implements IStorage {
       // Check knockout stage matches
       if (knockoutResults) {
         try {
-          const knockoutData = JSON.parse(knockoutResults);
+          let knockoutData;
+          if (typeof knockoutResults === 'string') {
+            knockoutData = JSON.parse(knockoutResults);
+          } else {
+            knockoutData = knockoutResults;
+          }
+          
           if (Array.isArray(knockoutData)) {
             for (const match of knockoutData) {
               if ((match.player1?.id === playerId || match.player2?.id === playerId) && match.score) {
