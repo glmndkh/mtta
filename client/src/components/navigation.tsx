@@ -93,12 +93,11 @@ export default function Navigation() {
                 </Button>
               </div>
             ) : (
-              <Button 
-                onClick={() => window.location.href = '/api/login'}
-                className="hidden md:inline-flex mtta-green text-white hover:bg-mtta-green-dark"
-              >
-                Нэвтрэх
-              </Button>
+              <Link href="/login">
+                <Button className="hidden md:inline-flex mtta-green text-white hover:bg-mtta-green-dark">
+                  Нэвтрэх
+                </Button>
+              </Link>
             )}
             
             {/* Mobile menu button */}
@@ -187,15 +186,14 @@ export default function Navigation() {
                 </button>
               </>
             ) : (
-              <button
-                onClick={() => {
-                  setShowMobileMenu(false);
-                  window.location.href = '/api/login';
-                }}
-                className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-white bg-mtta-green hover:bg-mtta-green-dark w-full"
-              >
-                <span>Нэвтрэх</span>
-              </button>
+              <Link href="/login">
+                <button
+                  onClick={() => setShowMobileMenu(false)}
+                  className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-white bg-mtta-green hover:bg-mtta-green-dark w-full"
+                >
+                  <span>Нэвтрэх</span>
+                </button>
+              </Link>
             )}
           </div>
         </div>

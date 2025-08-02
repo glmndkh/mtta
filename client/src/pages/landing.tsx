@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,14 +77,12 @@ export default function Landing() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button 
-              size="lg" 
-              className="bg-white text-mtta-green hover:bg-gray-100"
-              onClick={() => window.location.href = '/api/login'}
-            >
-              <UserPlus className="mr-2 h-5 w-5" />
-              Бүртгүүлэх
-            </Button>
+            <Link href="/register">
+              <Button size="lg" className="bg-white text-mtta-green hover:bg-gray-100">
+                <UserPlus className="mr-2 h-5 w-5" />
+                Бүртгүүлэх
+              </Button>
+            </Link>
             
           </div>
         </div>
@@ -155,12 +154,11 @@ export default function Landing() {
                     </div>
                     <a href="#" className="text-sm text-mtta-green hover:text-mtta-green-dark">Нууц үг мартсан уу?</a>
                   </div>
-                  <Button 
-                    className="w-full mtta-green text-white hover:bg-mtta-green-dark"
-                    onClick={() => window.location.href = '/api/login'}
-                  >
-                    Нэвтрэх
-                  </Button>
+                  <Link href="/login">
+                    <Button className="w-full mtta-green text-white hover:bg-mtta-green-dark">
+                      Нэвтрэх
+                    </Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>
@@ -208,12 +206,11 @@ export default function Landing() {
                     <Label htmlFor="signup-password">Нууц үг</Label>
                     <Input id="signup-password" type="password" placeholder="••••••••" />
                   </div>
-                  <Button 
-                    className="w-full mtta-green text-white hover:bg-mtta-green-dark"
-                    onClick={() => window.location.href = '/api/login'}
-                  >
-                    Бүртгүүлэх
-                  </Button>
+                  <Link href="/register">
+                    <Button className="w-full mtta-green text-white hover:bg-mtta-green-dark">
+                      Бүртгүүлэх
+                    </Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>
