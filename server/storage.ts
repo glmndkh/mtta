@@ -296,7 +296,7 @@ export class DatabaseStorage implements IStorage {
         .update(players)
         .set({ rank })
         .where(eq(players.id, playerId));
-      return result.rowCount > 0;
+      return (result.rowCount ?? 0) > 0;
     } catch (error) {
       console.error("Error updating player rank:", error);
       return false;
@@ -678,148 +678,6 @@ export class DatabaseStorage implements IStorage {
         playerStats[participant.playerId] = { wins: 0, losses: 0 };
       }
       
-      // Process group stage results
-      if (tournamentResult.groupStageResults) {
-        try {
-          let groupData;
-          if (typeof tournamentResult.groupStageResults === 'string') {
-            groupData = JSON.parse(tournamentResult.groupStageResults);
-          } else {
-            groupData = tournamentResult.groupStageResults;
-          }
-          
-          if (Array.isArray(groupData)) {
-            for (const group of groupData) {
-              if (group.players && group.resultMatrix) {
-                for (let i = 0; i < group.players.length; i++) {
-                  for (let j = i + 1; j < group.players.length; j++) {
-                    // Process each match only once by only checking upper triangle
-                    const result1 = group.resultMatrix[i] && group.resultMatrix[i][j];
-                    const result2 = group.resultMatrix[j] && group.resultMatrix[j][i];
-                    
-                    if ((result1 && result1 !== '' && result1 !== '-') || (result2 && result2 !== '' && result2 !== '-')) {
-                        const player1 = group.players[i];
-                        const player2 = group.players[j];
-                        
-                        // Find player records by matching user ID from tournament data to player's user_id
-                        const player1Record = participants.find(p => {
-                          // First try direct match with player ID
-                          if (p.playerId === player1.id) return true;
-                          // Then try to match user ID - get the player record and check user_id
-                          return false; // We'll handle this differently
-                        });
-                        const player2Record = participants.find(p => {
-                          // First try direct match with player ID  
-                          if (p.playerId === player2.id) return true;
-                          // Then try to match user ID - get the player record and check user_id
-                          return false; // We'll handle this differently
-                        });
-                        
-                        // If direct match failed, try user ID matching
-                        let player1Id = player1Record?.playerId;
-                        let player2Id = player2Record?.playerId;
-                        
-                        if (!player1Id) {
-                          // Find by user ID in players table
-                          const playerByUserId = await db.select().from(players).where(eq(players.userId, player1.id)).limit(1);
-                          if (playerByUserId.length > 0) {
-                            const participantRecord = participants.find(p => p.playerId === playerByUserId[0].id);
-                            if (participantRecord) player1Id = participantRecord.playerId;
-                          }
-                        }
-                        
-                        if (!player2Id) {
-                          // Find by user ID in players table
-                          const playerByUserId = await db.select().from(players).where(eq(players.userId, player2.id)).limit(1);
-                          if (playerByUserId.length > 0) {
-                            const participantRecord = participants.find(p => p.playerId === playerByUserId[0].id);
-                            if (participantRecord) player2Id = participantRecord.playerId;
-                          }
-                        }
-                        
-                        if (player1Id && player2Id) {
-                          
-                          // Handle individual scores like "3", "1", etc.
-                          let score1, score2;
-                          
-                          if (result1 && result1 !== '' && result1 !== '-') {
-                            score1 = parseInt(result1.trim());
-                          }
-                          if (result2 && result2 !== '' && result2 !== '-') {
-                            score2 = parseInt(result2.trim());
-                          }
-                          
-                          // We need both scores to determine winner
-                          if (!isNaN(score1) && !isNaN(score2)) {
-                            if (!playerStats[player1Id]) playerStats[player1Id] = { wins: 0, losses: 0 };
-                            if (!playerStats[player2Id]) playerStats[player2Id] = { wins: 0, losses: 0 };
-                            
-                            if (score1 > score2) {
-                              // Player 1 wins
-                              playerStats[player1Id].wins++;
-                              playerStats[player2Id].losses++;
-                            } else if (score2 > score1) {
-                              // Player 2 wins
-                              playerStats[player2Id].wins++;
-                              playerStats[player1Id].losses++;
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        } catch (e) {
-          console.error('Error processing group stage results for stats:', e);
-        }
-      }
-      
-      // Process knockout results
-      if (tournamentResult.knockoutResults) {
-        try {
-          let knockoutData;
-          if (typeof tournamentResult.knockoutResults === 'string') {
-            knockoutData = JSON.parse(tournamentResult.knockoutResults);
-          } else {
-            knockoutData = tournamentResult.knockoutResults;
-          }
-          
-          if (Array.isArray(knockoutData)) {
-            for (const match of knockoutData) {
-              if (match.player1 && match.player2 && match.score && match.winner) {
-                // Find player IDs
-                const player1Record = participants.find(p => p.userId === match.player1.id || p.playerId === match.player1.id);
-                const player2Record = participants.find(p => p.userId === match.player2.id || p.playerId === match.player2.id);
-                
-                if (player1Record && player2Record) {
-                  const player1Id = player1Record.playerId;
-                  const player2Id = player2Record.playerId;
-                  const winnerId = participants.find(p => p.userId === match.winner.id || p.playerId === match.winner.id)?.playerId;
-                  
-                  if (winnerId) {
-                    if (!playerStats[player1Id]) playerStats[player1Id] = { wins: 0, losses: 0 };
-                    if (!playerStats[player2Id]) playerStats[player2Id] = { wins: 0, losses: 0 };
-                    
-                    if (winnerId === player1Id) {
-                      playerStats[player1Id].wins++;
-                      playerStats[player2Id].losses++;
-                    } else if (winnerId === player2Id) {
-                      playerStats[player2Id].wins++;
-                      playerStats[player1Id].losses++;
-                    }
-                  }
-                }
-              }
-            }
-          }
-        } catch (e) {
-          console.error('Error processing knockout results for stats:', e);
-        }
-      }
-      
       // Update player statistics in database (replace, don't add to existing)
       for (const [playerId, stats] of Object.entries(playerStats)) {
         if (stats.wins > 0 || stats.losses > 0) {
@@ -909,7 +767,7 @@ export class DatabaseStorage implements IStorage {
                         // Determine winner based on score
                         let isWinner;
                         if (matchResult.includes('-')) {
-                          const [score1, score2] = matchResult.split('-').map(s => parseInt(s.trim()));
+                          const [score1, score2] = matchResult.split('-').map((s: string) => parseInt(s.trim()));
                           isWinner = score1 > score2;
                         }
                         
