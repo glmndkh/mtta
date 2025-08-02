@@ -305,6 +305,11 @@ export default function TournamentPage() {
     enabled: isAuthenticated && !!params?.id,
   });
 
+  const { data: tournamentResults } = useQuery({
+    queryKey: ['/api/tournaments', params?.id, 'results'],
+    enabled: !!params?.id,
+  });
+
   // Check if user meets rating requirements - always call useMemo
   const canRegister = useMemo(() => {
     if (!tournament || !isAuthenticated || !user) return false;
@@ -617,8 +622,8 @@ export default function TournamentPage() {
                   </div>
                 </div>
                 
-                {/* View Results Button - only show when tournament is completed */}
-                {tournament.status === 'completed' && (
+                {/* View Results Button - show when tournament results exist and are published */}
+                {tournamentResults && tournamentResults.isPublished && (
                   <div className="mt-4 pt-4 border-t">
                     <Button 
                       onClick={() => setLocation(`/tournament/${tournament.id}/results`)}
