@@ -1042,7 +1042,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin route to save tournament results
-  app.post('/api/admin/tournament-results', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/tournament-results', async (req: any, res) => {
     try {
       // Check if user is admin
       const userId = req.session?.userId;
@@ -1078,7 +1078,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin route to publish tournament results
-  app.put('/api/admin/tournament-results/:tournamentId/publish', isAuthenticated, async (req: any, res) => {
+  app.put('/api/admin/tournament-results/:tournamentId/publish', async (req: any, res) => {
     try {
       // Check if user is admin
       const userId = req.session?.userId;
