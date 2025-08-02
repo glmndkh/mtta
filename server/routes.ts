@@ -1138,6 +1138,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update all player statistics from all published tournaments
+  app.post('/api/players/update-all-stats', async (req, res) => {
+    try {
+      await storage.updateAllPlayerStatsFromTournaments();
+      res.json({ message: "Бүх тоглогчийн статистик шинэчлэгдлээ" });
+    } catch (error) {
+      console.error("Error updating all player stats:", error);
+      res.status(500).json({ message: "Статистик шинэчлэхэд алдаа гарлаа" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

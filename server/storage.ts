@@ -768,6 +768,27 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async updateAllPlayerStatsFromTournaments(): Promise<void> {
+    try {
+      // Reset all player stats to 0
+      await db.update(players).set({ wins: 0, losses: 0, winPercentage: 0 });
+      
+      // Get all published tournaments
+      const publishedTournaments = await db
+        .select({ id: tournaments.id })
+        .from(tournaments)
+        .innerJoin(tournamentResults, eq(tournaments.id, tournamentResults.tournamentId))
+        .where(eq(tournamentResults.isPublished, true));
+      
+      // Update stats for each tournament
+      for (const tournament of publishedTournaments) {
+        await this.updatePlayerStatsFromTournament(tournament.id);
+      }
+    } catch (error) {
+      console.error('Error updating all player stats:', error);
+    }
+  }
+
   // Player tournament match history
   async getPlayerTournamentMatches(playerId: string): Promise<any[]> {
     const tournamentMatches: any[] = [];
