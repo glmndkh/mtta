@@ -254,87 +254,54 @@ export default function TournamentResultsPage() {
                       <CardTitle>{group.groupName}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid gap-6 lg:grid-cols-2">
-                        {/* Results Matrix Table */}
-                        <div>
-                          <h4 className="font-semibold mb-3">Үр дүн хүснэгт</h4>
-                          <div className="overflow-x-auto">
-                            <table className="w-full border-collapse">
-                              <thead>
-                                <tr>
-                                  <th className="border p-2 text-left">№</th>
-                                  <th className="border p-2 text-left">Нэр</th>
-                                  {(group.players || []).map((_, colIndex) => (
-                                    <th key={colIndex} className="border p-2 text-center">{colIndex + 1}</th>
-                                  ))}
-                                  <th className="border p-2 text-center">Өгсөн</th>
-                                  <th className="border p-2 text-center">Байр</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {(group.players || []).map((player, rowIndex) => {
-                                  // Use the admin-entered wins value directly from the data structure
-                                  const adminEnteredWins = player.wins || '0/0';
-                                  return (
-                                    <tr key={player.id}>
-                                      <td className="border p-2">{rowIndex + 1}</td>
-                                      <td className="border p-2">
-                                        <button
-                                          onClick={() => {
-                                            console.log('Navigate to player profile:', player.id);
-                                            navigateToProfile(player.id);
-                                          }}
-                                          className="text-blue-600 hover:text-blue-800 hover:underline"
-                                        >
-                                          {player.name}
-                                        </button>
+                      {/* Results Matrix Table */}
+                      <div>
+                        <h4 className="font-semibold mb-3">Үр дүн хүснэгт</h4>
+                        <div className="overflow-x-auto">
+                          <table className="w-full border-collapse">
+                            <thead>
+                              <tr>
+                                <th className="border p-2 text-left">№</th>
+                                <th className="border p-2 text-left">Нэр</th>
+                                {(group.players || []).map((_, colIndex) => (
+                                  <th key={colIndex} className="border p-2 text-center">{colIndex + 1}</th>
+                                ))}
+                                <th className="border p-2 text-center">Өгсөн</th>
+                                <th className="border p-2 text-center">Байр</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(group.players || []).map((player, rowIndex) => {
+                                // Use the admin-entered wins value directly from the data structure
+                                const adminEnteredWins = player.wins || '0/0';
+                                return (
+                                  <tr key={player.id}>
+                                    <td className="border p-2">{rowIndex + 1}</td>
+                                    <td className="border p-2">
+                                      <button
+                                        onClick={() => {
+                                          console.log('Navigate to player profile:', player.id);
+                                          navigateToProfile(player.id);
+                                        }}
+                                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                                      >
+                                        {player.name}
+                                      </button>
+                                    </td>
+                                    {(group.resultMatrix?.[rowIndex] || []).map((result, colIndex) => (
+                                      <td key={colIndex} className="border p-2 text-center text-sm">
+                                        {rowIndex === colIndex ? '*****' : (result || '')}
                                       </td>
-                                      {(group.resultMatrix?.[rowIndex] || []).map((result, colIndex) => (
-                                        <td key={colIndex} className="border p-2 text-center text-sm">
-                                          {rowIndex === colIndex ? '*****' : (result || '')}
-                                        </td>
-                                      ))}
-                                      <td className="border p-2 text-center">{adminEnteredWins}</td>
-                                      <td className="border p-2 text-center font-bold">
-                                        {player.position || group.standings.find(s => s.playerId === player.id)?.position || ''}
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-
-                        {/* Group Standings */}
-                        <div>
-                          <h4 className="font-semibold mb-3">Эцсийн байрлал</h4>
-                          <div className="space-y-2">
-                            {(group.standings || []).length > 0 ? (group.standings || [])
-                              .sort((a, b) => (a.position || 0) - (b.position || 0))
-                              .map((standing) => (
-                                <div key={standing.playerId} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                                  <div className="flex items-center space-x-3">
-                                    <span className="font-semibold text-gray-600">{standing.position}.</span>
-                                    <button
-                                      onClick={() => {
-                                        console.log('Navigate to player profile:', standing.playerId);
-                                        navigateToProfile(standing.playerId);
-                                      }}
-                                      className="text-blue-600 hover:text-blue-800 hover:underline"
-                                    >
-                                      {standing.playerName}
-                                    </button>
-                                  </div>
-                                  <div className="text-sm text-gray-600">
-                                    {standing.wins}Я - {standing.losses}Х
-                                  </div>
-                                </div>
-                              )) : (
-                                <p className="text-gray-500 text-center">Байрлал тооцоолоогүй байна</p>
-                              )
-                            }
-                          </div>
+                                    ))}
+                                    <td className="border p-2 text-center">{adminEnteredWins}</td>
+                                    <td className="border p-2 text-center font-bold">
+                                      {player.position || group.standings.find(s => s.playerId === player.id)?.position || ''}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
                         </div>
                       </div>
                     </CardContent>
