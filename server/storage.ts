@@ -615,6 +615,157 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date(),
       })
       .where(eq(tournamentResults.tournamentId, tournamentId));
+    
+    // Update player statistics when results are published
+    await this.updatePlayerStatsFromTournament(tournamentId);
+  }
+  
+  async updatePlayerStatsFromTournament(tournamentId: string): Promise<void> {
+    try {
+      // Get tournament results
+      const [tournamentResult] = await db
+        .select()
+        .from(tournamentResults)
+        .where(eq(tournamentResults.tournamentId, tournamentId))
+        .limit(1);
+      
+      if (!tournamentResult) return;
+      
+      // Get all players who participated in this tournament
+      const participants = await db
+        .select({
+          playerId: players.id,
+          userId: players.userId,
+        })
+        .from(tournamentParticipants)
+        .innerJoin(players, eq(tournamentParticipants.playerId, players.id))
+        .where(eq(tournamentParticipants.tournamentId, tournamentId));
+      
+      // Track wins and losses for each player
+      const playerStats: { [playerId: string]: { wins: number; losses: number } } = {};
+      
+      // Initialize stats for all participants
+      for (const participant of participants) {
+        playerStats[participant.playerId] = { wins: 0, losses: 0 };
+      }
+      
+      // Process group stage results
+      if (tournamentResult.groupStageResults) {
+        try {
+          let groupData;
+          if (typeof tournamentResult.groupStageResults === 'string') {
+            groupData = JSON.parse(tournamentResult.groupStageResults);
+          } else {
+            groupData = tournamentResult.groupStageResults;
+          }
+          
+          if (Array.isArray(groupData)) {
+            for (const group of groupData) {
+              if (group.players && group.resultMatrix) {
+                for (let i = 0; i < group.players.length; i++) {
+                  for (let j = 0; j < group.players.length; j++) {
+                    if (i !== j && group.resultMatrix[i] && group.resultMatrix[i][j]) {
+                      const result = group.resultMatrix[i][j];
+                      if (result && result !== '-') {
+                        const player1 = group.players[i];
+                        const player2 = group.players[j];
+                        
+                        // Find player IDs (could be user ID or player ID)
+                        const player1Record = participants.find(p => p.userId === player1.id || p.playerId === player1.id);
+                        const player2Record = participants.find(p => p.userId === player2.id || p.playerId === player2.id);
+                        
+                        if (player1Record && player2Record) {
+                          const player1Id = player1Record.playerId;
+                          const player2Id = player2Record.playerId;
+                          
+                          // Determine winner based on score
+                          const scores = result.split('-').map((s: string) => parseInt(s.trim()));
+                          if (scores.length === 2 && !isNaN(scores[0]) && !isNaN(scores[1])) {
+                            if (scores[0] > scores[1]) {
+                              // Player 1 wins
+                              if (!playerStats[player1Id]) playerStats[player1Id] = { wins: 0, losses: 0 };
+                              if (!playerStats[player2Id]) playerStats[player2Id] = { wins: 0, losses: 0 };
+                              playerStats[player1Id].wins++;
+                              playerStats[player2Id].losses++;
+                            } else if (scores[1] > scores[0]) {
+                              // Player 2 wins
+                              if (!playerStats[player1Id]) playerStats[player1Id] = { wins: 0, losses: 0 };
+                              if (!playerStats[player2Id]) playerStats[player2Id] = { wins: 0, losses: 0 };
+                              playerStats[player2Id].wins++;
+                              playerStats[player1Id].losses++;
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Error processing group stage results for stats:', e);
+        }
+      }
+      
+      // Process knockout results
+      if (tournamentResult.knockoutResults) {
+        try {
+          let knockoutData;
+          if (typeof tournamentResult.knockoutResults === 'string') {
+            knockoutData = JSON.parse(tournamentResult.knockoutResults);
+          } else {
+            knockoutData = tournamentResult.knockoutResults;
+          }
+          
+          if (Array.isArray(knockoutData)) {
+            for (const match of knockoutData) {
+              if (match.player1 && match.player2 && match.score && match.winner) {
+                // Find player IDs
+                const player1Record = participants.find(p => p.userId === match.player1.id || p.playerId === match.player1.id);
+                const player2Record = participants.find(p => p.userId === match.player2.id || p.playerId === match.player2.id);
+                
+                if (player1Record && player2Record) {
+                  const player1Id = player1Record.playerId;
+                  const player2Id = player2Record.playerId;
+                  const winnerId = participants.find(p => p.userId === match.winner.id || p.playerId === match.winner.id)?.playerId;
+                  
+                  if (winnerId) {
+                    if (!playerStats[player1Id]) playerStats[player1Id] = { wins: 0, losses: 0 };
+                    if (!playerStats[player2Id]) playerStats[player2Id] = { wins: 0, losses: 0 };
+                    
+                    if (winnerId === player1Id) {
+                      playerStats[player1Id].wins++;
+                      playerStats[player2Id].losses++;
+                    } else if (winnerId === player2Id) {
+                      playerStats[player2Id].wins++;
+                      playerStats[player1Id].losses++;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Error processing knockout results for stats:', e);
+        }
+      }
+      
+      // Update player statistics in database
+      for (const [playerId, stats] of Object.entries(playerStats)) {
+        if (stats.wins > 0 || stats.losses > 0) {
+          // Get current stats
+          const [currentPlayer] = await db.select().from(players).where(eq(players.id, playerId)).limit(1);
+          if (currentPlayer) {
+            const newWins = (currentPlayer.wins || 0) + stats.wins;
+            const newLosses = (currentPlayer.losses || 0) + stats.losses;
+            await this.updatePlayerStats(playerId, newWins, newLosses);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error updating player stats from tournament:', error);
+    }
   }
 
   // Player tournament match history
