@@ -36,9 +36,16 @@ export default function Landing() {
             </div>
 
             <div className="flex items-center space-x-4">
-              <Button onClick={() => window.location.href = '/login'} className="mtta-green text-white hover:bg-mtta-green-dark">
-                Нэвтрэх
-              </Button>
+              <Link href="/register">
+                <Button variant="outline" className="border-mtta-green text-mtta-green hover:bg-mtta-green hover:text-white">
+                  Бүртгүүлэх
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button className="mtta-green text-white hover:bg-mtta-green-dark">
+                  Нэвтрэх
+                </Button>
+              </Link>
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -60,6 +67,18 @@ export default function Landing() {
               <a href="#" className="block text-gray-700 hover:text-mtta-green py-2">Клубууд</a>
               <a href="#" className="block text-gray-700 hover:text-mtta-green py-2">Лиг</a>
               <a href="#" className="block text-gray-700 hover:text-mtta-green py-2">Мэдээ</a>
+              <div className="flex flex-col space-y-2 pt-2 border-t">
+                <Link href="/register">
+                  <Button variant="outline" className="w-full border-mtta-green text-mtta-green hover:bg-mtta-green hover:text-white">
+                    Бүртгүүлэх
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button className="w-full mtta-green text-white hover:bg-mtta-green-dark">
+                    Нэвтрэх
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         )}
@@ -122,101 +141,7 @@ export default function Landing() {
           </div>
         </div>
       </section>
-      {/* Login/Signup Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Нэвтрэх эсвэл Бүртгүүлэх</h2>
-            <p className="text-lg text-gray-600">Өөрийн профайл үүсгэж, тэмцээнд оролцох, клуб удирдах боломжтой</p>
-          </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Login Card */}
-            <Card className="shadow-lg">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold text-gray-900 mb-2">Нэвтрэх</CardTitle>
-                <p className="text-gray-600">Өөрийн эрхээр нэвтэрнэ үү</p>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">И-мэйл хаяг</Label>
-                    <Input id="login-email" type="email" placeholder="example@email.com" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">Нууц үг</Label>
-                    <Input id="login-password" type="password" placeholder="••••••••" />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <input type="checkbox" id="remember" className="rounded border-gray-300" />
-                      <Label htmlFor="remember" className="text-sm text-gray-600">Сануулах</Label>
-                    </div>
-                    <a href="#" className="text-sm text-mtta-green hover:text-mtta-green-dark">Нууц үг мартсан уу?</a>
-                  </div>
-                  <Link href="/login">
-                    <Button className="w-full mtta-green text-white hover:bg-mtta-green-dark">
-                      Нэвтрэх
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Signup Card */}
-            <Card className="shadow-lg">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold text-gray-900 mb-2">Бүртгүүлэх</CardTitle>
-                <p className="text-gray-600">Шинэ эрх үүсгэх</p>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-firstname">Нэр</Label>
-                      <Input id="signup-firstname" placeholder="Нэр" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-lastname">Овог</Label>
-                      <Input id="signup-lastname" placeholder="Овог" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">И-мэйл хаяг</Label>
-                    <Input id="signup-email" type="email" placeholder="example@email.com" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-phone">Утасны дугаар</Label>
-                    <Input id="signup-phone" type="tel" placeholder="+976 xxxxxxxx" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-role">Хэрэглэгчийн төрөл</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Төрөл сонгоно уу" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="player">Тоглогч</SelectItem>
-                        <SelectItem value="club_owner">Клубын эзэн</SelectItem>
-                        <SelectItem value="score_recorder">Оноо бүртгэгч</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Нууц үг</Label>
-                    <Input id="signup-password" type="password" placeholder="••••••••" />
-                  </div>
-                  <Link href="/register">
-                    <Button className="w-full mtta-green text-white hover:bg-mtta-green-dark">
-                      Бүртгүүлэх
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
       {/* Membership Info */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
