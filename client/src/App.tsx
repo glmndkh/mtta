@@ -14,6 +14,7 @@ import Clubs from "@/pages/clubs";
 import Leagues from "@/pages/leagues";
 import News from "@/pages/news";
 import AdminTournamentResults from "@/pages/admin-tournament-results";
+import AdminTournaments from "@/pages/admin-tournaments";
 import ExcelTournamentDemo from "@/pages/excel-tournament-demo";
 import AdminTournamentCreate from "@/pages/admin-tournament-create";
 import AdminTournamentGenerator from "@/pages/admin-tournament-generator";
@@ -47,6 +48,7 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/dashboard" component={PlayerDashboard} />
           <Route path="/profile" component={Profile} />
+          <Route path="/admin/tournaments" component={AdminTournaments} />
           <Route path="/admin/tournament/:id/results" component={AdminTournamentResults} />
           <Route path="/admin/tournament-results" component={AdminTournamentResults} />
           <Route path="/admin/tournament-create" component={AdminTournamentGenerator} />
