@@ -274,8 +274,36 @@ export default function TournamentResultsPage() {
                               <tbody>
                                 {(group.players || []).map((player, rowIndex) => {
                                   const rowResults = group.resultMatrix?.[rowIndex] || [];
-                                  const wins = rowResults.filter(result => result && result !== '' && result.includes('-') && result.split('-')[0] > result.split('-')[1]).length || 0;
-                                  const losses = rowResults.filter(result => result && result !== '' && result.includes('-') && result.split('-')[0] < result.split('-')[1]).length || 0;
+                                  // Count wins and losses from individual scores (both "3-1" format and individual "3", "1" scores)
+                                  let wins = 0;
+                                  let losses = 0;
+                                  
+                                  rowResults.forEach((result, colIndex) => {
+                                    if (result && result !== '' && rowIndex !== colIndex) {
+                                      if (result.includes('-')) {
+                                        // Handle "3-1" format
+                                        const [score1, score2] = result.split('-').map(s => parseInt(s.trim()));
+                                        if (!isNaN(score1) && !isNaN(score2)) {
+                                          if (score1 > score2) wins++;
+                                          else if (score1 < score2) losses++;
+                                        }
+                                      } else {
+                                        // Handle individual scores like "3", "1", etc.
+                                        const score = parseInt(result.trim());
+                                        if (!isNaN(score) && score > 0) {
+                                          // Look at opponent's score in the same match
+                                          const opponentScore = group.resultMatrix?.[colIndex]?.[rowIndex];
+                                          if (opponentScore && opponentScore !== '') {
+                                            const oppScore = parseInt(opponentScore.trim());
+                                            if (!isNaN(oppScore)) {
+                                              if (score > oppScore) wins++;
+                                              else if (score < oppScore) losses++;
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  });
                                   return (
                                     <tr key={player.id}>
                                       <td className="border p-2">{rowIndex + 1}</td>
