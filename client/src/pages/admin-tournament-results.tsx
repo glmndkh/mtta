@@ -53,6 +53,7 @@ interface FinalRanking {
 
 export default function AdminTournamentResultsPage() {
   const [match, params] = useRoute("/admin/tournament/:id/results");
+  const [fallbackMatch] = useRoute("/admin/tournament-results");
   const [, setLocation] = useLocation();
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
@@ -64,22 +65,32 @@ export default function AdminTournamentResultsPage() {
   const [finalRankings, setFinalRankings] = useState<FinalRanking[]>([]);
   const [isPublished, setIsPublished] = useState(false);
 
+  // Check if we have a tournament ID, if not show tournament selection
+  const tournamentId = params?.id;
+  const isOnFallbackRoute = fallbackMatch && !tournamentId;
+
+  // Fetch all tournaments for selection page
+  const { data: allTournaments = [] } = useQuery<Tournament[]>({
+    queryKey: ['/api/tournaments'],
+    enabled: isOnFallbackRoute,
+  });
+
   // Fetch tournament data
   const { data: tournament, isLoading: tournamentLoading } = useQuery<Tournament>({
-    queryKey: ['/api/tournaments', params?.id],
-    enabled: !!params?.id,
+    queryKey: ['/api/tournaments', tournamentId],
+    enabled: !!tournamentId,
   });
 
   // Fetch tournament participants
   const { data: participants = [] } = useQuery<TournamentParticipant[]>({
-    queryKey: ['/api/tournaments', params?.id, 'participants'],
-    enabled: !!params?.id,
+    queryKey: ['/api/tournaments', tournamentId, 'participants'],
+    enabled: !!tournamentId,
   });
 
   // Fetch existing results
   const { data: existingResults } = useQuery<TournamentResults>({
-    queryKey: ['/api/tournaments', params?.id, 'results'],
-    enabled: !!params?.id,
+    queryKey: ['/api/tournaments', tournamentId, 'results'],
+    enabled: !!tournamentId,
   });
 
   // Load existing results into state
@@ -95,8 +106,9 @@ export default function AdminTournamentResultsPage() {
   // Save results mutation
   const saveResultsMutation = useMutation({
     mutationFn: async () => {
+      if (!tournamentId) return;
       const resultsData = {
-        tournamentId: params?.id,
+        tournamentId: tournamentId,
         groupStageResults: groupStageGroups,
         knockoutResults: knockoutMatches,
         finalRankings: finalRankings,
@@ -125,7 +137,7 @@ export default function AdminTournamentResultsPage() {
   });
 
   // Check if user is admin
-  if (!isAuthenticated || user?.role !== 'admin') {
+  if (!isAuthenticated || (user as any)?.role !== 'admin') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -137,6 +149,71 @@ export default function AdminTournamentResultsPage() {
           >
             Тэмцээний хуудас руу буцах
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show tournament selection when no tournament ID is provided
+  if (isOnFallbackRoute) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Button
+                  variant="ghost"
+                  onClick={() => setLocation('/tournaments')}
+                  className="flex items-center gap-2"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Буцах
+                </Button>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Тэмцээний үр дүн оруулах</h1>
+                  <p className="text-sm text-gray-600">Тэмцээн сонгоод үр дүн оруулна уу</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {allTournaments.map((tournament) => (
+              <Card key={tournament.id} className="hover:shadow-lg transition-shadow cursor-pointer"
+                    onClick={() => setLocation(`/admin/tournament/${tournament.id}/results`)}>
+                <CardHeader>
+                  <CardTitle className="text-lg">{tournament.name}</CardTitle>
+                  <CardDescription>{tournament.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Статус:</span>
+                      <Badge className={
+                        tournament.status === 'registration' ? 'bg-green-100 text-green-800' :
+                        tournament.status === 'ongoing' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }>
+                        {tournament.status === 'registration' ? 'Бүртгэл' : 
+                         tournament.status === 'ongoing' ? 'Болж байна' : 'Дууссан'}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Байршил:</span>
+                      <span>{tournament.location}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Огноо:</span>
+                      <span>{new Date(tournament.startDate).toLocaleDateString('mn-MN')}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     );

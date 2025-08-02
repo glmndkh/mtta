@@ -45,6 +45,7 @@ function Router() {
           <Route path="/dashboard" component={PlayerDashboard} />
           <Route path="/profile" component={Profile} />
           <Route path="/admin/tournament/:id/results" component={AdminTournamentResults} />
+          <Route path="/admin/tournament-results" component={AdminTournamentResults} />
           <Route path="/admin/tournament-create" component={AdminTournamentGenerator} />
         </>
       )}

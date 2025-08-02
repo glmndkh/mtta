@@ -632,7 +632,7 @@ export default function TournamentPage() {
                 )}
                 
                 {/* Admin Results Button - only for admins */}
-                {user?.role === 'admin' && (
+                {(user as any)?.role === 'admin' && (
                   <div className={tournament.status === 'completed' ? 'mt-2' : 'mt-4 pt-4 border-t'}>
                     <Button 
                       onClick={() => setLocation(`/admin/tournament/${tournament.id}/results`)}
