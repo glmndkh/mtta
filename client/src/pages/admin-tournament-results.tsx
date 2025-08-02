@@ -317,15 +317,20 @@ export default function AdminTournamentResultsPage() {
       // Check results against other players
       for (let opponentIndex = 0; opponentIndex < group.players.length; opponentIndex++) {
         if (playerIndex !== opponentIndex) {
-          const result = group.resultMatrix[playerIndex][opponentIndex];
-          if (result && result.includes('-')) {
-            const [playerScore, opponentScore] = result.split('-').map(s => parseInt(s.trim()));
-            if (!isNaN(playerScore) && !isNaN(opponentScore)) {
-              totalMatches++;
-              if (playerScore > opponentScore) {
-                wins++;
-              } else {
-                losses++;
+          const result = group.resultMatrix[playerIndex]?.[opponentIndex];
+          if (result && result.trim() !== '' && result.includes('-')) {
+            const parts = result.split('-');
+            if (parts.length === 2) {
+              const playerScore = parseInt(parts[0].trim());
+              const opponentScore = parseInt(parts[1].trim());
+              if (!isNaN(playerScore) && !isNaN(opponentScore)) {
+                totalMatches++;
+                if (playerScore > opponentScore) {
+                  wins++;
+                } else if (playerScore < opponentScore) {
+                  losses++;
+                }
+                // If playerScore === opponentScore, it's a draw
               }
             }
           }
@@ -344,10 +349,10 @@ export default function AdminTournamentResultsPage() {
       };
     });
 
-    // Sort by points (descending), then by wins
+    // Sort by wins first (descending), then by total matches
     standings.sort((a, b) => {
-      if (b.points !== a.points) return b.points - a.points;
-      return b.wins - a.wins;
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      return b.totalMatches - a.totalMatches;
     });
 
     // Assign positions
