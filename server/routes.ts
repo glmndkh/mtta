@@ -75,9 +75,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Энэ утасны дугаар аль хэдийн бүртгэгдсэн байна" });
       }
 
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
-
+      // Store password in plain text (as requested by user)
       // Create user with all required fields
       const userData = {
         email,
@@ -88,7 +86,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dateOfBirth: new Date(dateOfBirth),
         clubAffiliation,
         role,
-        password: hashedPassword
+        password
       };
       
       console.log("Creating user with data:", userData);
@@ -130,9 +128,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Энэ хэрэглэгч нууц үг тохируулаагүй байна. Нууц үг тохируулна уу." });
       }
 
-      // Verify password
-      const isValidPassword = await bcrypt.compare(password, user.password);
-      if (!isValidPassword) {
+      // Verify password (plain text comparison)
+      if (password !== user.password) {
         return res.status(401).json({ message: "Буруу нууц үг" });
       }
 
@@ -221,7 +218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Хэрэглэгчийн нууц үг тохируулагдаагүй байна" });
       }
 
-      const isValidPassword = await bcrypt.compare(currentPassword, currentUser.password);
+      const isValidPassword = currentPassword === currentUser.password;
       if (!isValidPassword) {
         return res.status(401).json({ message: "Буруу нууц үг" });
       }
