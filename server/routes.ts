@@ -621,6 +621,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/players/:id/membership', async (req, res) => {
+    try {
+      const membership = await storage.getPlayerMembership(req.params.id);
+      res.json(membership);
+    } catch (error) {
+      console.error("Error fetching player membership:", error);
+      res.status(500).json({ message: "Гишүүнчлэлийн мэдээлэл авахад алдаа гарлаа" });
+    }
+  });
+
   // Admin route to create achievements
   app.post('/api/admin/achievements', requireAuth, async (req: any, res) => {
     try {

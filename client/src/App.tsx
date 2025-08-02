@@ -21,6 +21,7 @@ import TournamentLanding from "@/pages/tournament-landing";
 import TournamentPage from "@/pages/tournament-page";
 import TournamentResults from "@/pages/tournament-results";
 import Profile from "@/pages/profile";
+import PlayerProfilePage from "@/pages/player-profile";
 import { useAuth } from "@/hooks/useAuth";
 
 function Router() {
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/tournament-landing" component={TournamentLanding} />
       <Route path="/tournament/:id" component={TournamentPage} />
       <Route path="/tournament/:id/results" component={TournamentResults} />
+      <Route path="/player/:id" component={PlayerProfilePage} />
       <Route path="/tournaments" component={Tournaments} />
       <Route path="/clubs" component={Clubs} />
       <Route path="/leagues" component={Leagues} />
