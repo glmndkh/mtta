@@ -66,8 +66,9 @@ export default function PlayerProfilePage() {
     );
   }
 
-  const player = playerData.player;
-  const user = playerData.user;
+  // The API now returns a flattened object with both player and user data
+  const player = playerData;
+  const user = playerData;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -92,7 +93,7 @@ export default function PlayerProfilePage() {
             <Card className="bg-gradient-to-br from-mtta-green to-mtta-green-dark text-white">
               <CardContent className="p-6 text-[#000000]">
                 <div className="text-center mb-6">
-                  {user.profileImageUrl ? (
+                  {user?.profileImageUrl ? (
                     <img 
                       src={user.profileImageUrl} 
                       alt="Player profile" 
@@ -103,7 +104,7 @@ export default function PlayerProfilePage() {
                       <User className="h-12 w-12" />
                     </div>
                   )}
-                  <h2 className="text-2xl font-bold">{user.firstName} {user.lastName}</h2>
+                  <h2 className="text-2xl font-bold">{user?.firstName} {user?.lastName}</h2>
                   <p className="opacity-80">Тоглогч</p>
                   {player?.memberNumber && (
                     <p className="text-sm opacity-70 mt-1">Гишүүн №: {player.memberNumber}</p>
@@ -113,15 +114,15 @@ export default function PlayerProfilePage() {
                 <div className="space-y-3">
                   <div className="flex items-center">
                     <Mail className="h-4 w-4 mr-2" />
-                    <span className="text-sm">{user.email}</span>
+                    <span className="text-sm">{user?.email}</span>
                   </div>
-                  {user.phone && (
+                  {user?.phone && (
                     <div className="flex items-center">
                       <Phone className="h-4 w-4 mr-2" />
                       <span className="text-sm">{user.phone}</span>
                     </div>
                   )}
-                  {user.clubAffiliation && (
+                  {user?.clubAffiliation && (
                     <div className="flex items-center">
                       <MapPin className="h-4 w-4 mr-2" />
                       <span className="text-sm">{user.clubAffiliation}</span>

@@ -199,6 +199,40 @@ export class DatabaseStorage implements IStorage {
     return player;
   }
 
+  async getPlayerWithUser(id: string): Promise<any | undefined> {
+    const result = await db
+      .select({
+        player: players,
+        user: users,
+      })
+      .from(players)
+      .innerJoin(users, eq(players.userId, users.id))
+      .where(eq(players.id, id))
+      .limit(1);
+    
+    if (result.length === 0) {
+      return undefined;
+    }
+    
+    return {
+      id: result[0].player.id,
+      userId: result[0].player.userId,
+      rank: result[0].player.rank,
+      wins: result[0].player.wins,
+      losses: result[0].player.losses,
+      winPercentage: result[0].player.winPercentage,
+      memberNumber: result[0].player.memberNumber,
+      firstName: result[0].user.firstName,
+      lastName: result[0].user.lastName,
+      email: result[0].user.email,
+      phone: result[0].user.phone,
+      clubAffiliation: result[0].user.clubAffiliation,
+      gender: result[0].user.gender,
+      dateOfBirth: result[0].user.dateOfBirth,
+      profileImageUrl: result[0].user.profileImageUrl,
+    };
+  }
+
   async getPlayerByUserId(userId: string): Promise<Player | undefined> {
     const [player] = await db.select().from(players).where(eq(players.userId, userId));
     return player;

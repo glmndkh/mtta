@@ -579,7 +579,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/players/:id', async (req, res) => {
     try {
-      const player = await storage.getPlayer(req.params.id);
+      const player = await storage.getPlayerWithUser(req.params.id);
       if (!player) {
         return res.status(404).json({ message: "Тоглогч олдсонгүй" });
       }
