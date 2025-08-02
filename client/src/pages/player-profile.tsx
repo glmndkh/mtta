@@ -144,7 +144,7 @@ export default function PlayerProfilePage() {
                     <p className="font-bold text-lg">{player?.wins || 0}</p>
                   </div>
                   <div>
-                    <span className="opacity-80 text-sm">Хожил:</span>
+                    <span className="opacity-80 text-sm">Хожигдол:</span>
                     <p className="font-bold text-lg">{player?.losses || 0}</p>
                   </div>
                 </div>
