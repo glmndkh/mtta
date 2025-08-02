@@ -712,13 +712,14 @@ export default function AdminTournamentResultsPage() {
                         <div className="flex space-x-2">
                           <Button 
                             onClick={() => {
-                              const participantOptions = participants.map(p => ({
-                                id: p.id || '',
-                                name: `${p.firstName} ${p.lastName}`,
-                                club: p.clubName || ''
-                              }));
-                              if (participantOptions.length > 0) {
-                                addPlayerToGroup(groupIndex, participantOptions[0]);
+                              // Use first available user as placeholder
+                              const availableUsers = allUsers.filter(user => !group.players.some(gp => gp.id === user.id));
+                              if (availableUsers.length > 0) {
+                                addPlayerToGroup(groupIndex, {
+                                  id: availableUsers[0].id,
+                                  name: `${availableUsers[0].firstName} ${availableUsers[0].lastName}`,
+                                  club: availableUsers[0].clubAffiliation || ''
+                                });
                               }
                             }}
                             size="sm"
@@ -762,12 +763,32 @@ export default function AdminTournamentResultsPage() {
                                     {playerIndex + 1}
                                   </td>
                                   <td className="border border-gray-300 p-2">
-                                    <button 
-                                      className="text-blue-600 hover:underline cursor-pointer"
-                                      onClick={() => setLocation(`/profile/${player.id}`)}
-                                    >
-                                      {player.name}
-                                    </button>
+                                    <div className="flex items-center justify-between">
+                                      <button 
+                                        className="text-blue-600 hover:underline cursor-pointer flex-1 text-left"
+                                        onClick={() => setLocation(`/profile/${player.id}`)}
+                                      >
+                                        {player.name}
+                                      </button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                          const updated = [...groupStageTables];
+                                          updated[groupIndex].players.splice(playerIndex, 1);
+                                          // Reset result matrix for this player
+                                          updated[groupIndex].resultMatrix = updated[groupIndex].resultMatrix.filter((_, i) => i !== playerIndex);
+                                          updated[groupIndex].resultMatrix.forEach(row => {
+                                            row.splice(playerIndex, 1);
+                                          });
+                                          recalculateStandings(updated[groupIndex]);
+                                          setGroupStageTables(updated);
+                                        }}
+                                        className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
+                                    </div>
                                   </td>
                                   <td className="border border-gray-300 p-2 text-sm text-gray-600">
                                     {player.club}
@@ -802,44 +823,33 @@ export default function AdminTournamentResultsPage() {
                         </div>
                       )}
                       
-                      {/* Player Selection */}
+                      {/* Player Selection with UserAutocomplete */}
                       <div className="mt-4">
-                        <Select 
-                          onValueChange={(value) => {
-                            const participant = participants.find(p => 
-                              `${p.firstName} ${p.lastName}` === value
-                            );
-                            if (participant) {
-                              addPlayerToGroup(groupIndex, {
-                                id: participant.id || '',
-                                name: `${participant.firstName} ${participant.lastName}`,
-                                club: participant.clubName || ''
-                              });
-                            }
+                        <UserAutocomplete
+                          users={allUsers.filter(user => !group.players.some(gp => gp.id === user.id))}
+                          value=""
+                          onSelect={(user) => {
+                            addPlayerToGroup(groupIndex, {
+                              id: user.id,
+                              name: `${user.firstName} ${user.lastName}`,
+                              club: user.clubAffiliation || ''
+                            });
                           }}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Группд тоглогч нэмэх" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {participants
-                              .filter(p => !group.players.some(gp => gp.id === p.id))
-                              .map((participant) => (
-                                <SelectItem 
-                                  key={participant.id} 
-                                  value={`${participant.firstName} ${participant.lastName}`}
-                                >
-                                  {participant.firstName} {participant.lastName} ({participant.clubName})
-                                </SelectItem>
-                              ))}
-                          </SelectContent>
-                        </Select>
+                          placeholder="Группд тоглогч хайж нэмэх..."
+                          className="w-full"
+                        />
                       </div>
                       
                       {group.players.length === 0 && (
-                        <p className="text-gray-500 text-center py-4">
-                          Дээрх сонголтоос тоглогч нэмж эхлэнэ үү
-                        </p>
+                        <div className="text-center py-8">
+                          <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                          <p className="text-gray-500 mb-2">
+                            Дээрх хайлтаас тоглогч нэмж эхлэнэ үү
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            Хэрэглэгчдийг хайж, группд нэмэх боломжтой
+                          </p>
+                        </div>
                       )}
                     </div>
                   ))}
