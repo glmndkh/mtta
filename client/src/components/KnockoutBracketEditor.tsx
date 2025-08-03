@@ -178,53 +178,90 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
 
   // Handle score changes and auto-determine winner
   const handleScoreChange = (matchId: string, scoreField: 'player1Score' | 'player2Score', value: string) => {
-    setMatches(prev => prev.map(match => {
-      if (match.id !== matchId) return match;
-      
-      const updatedMatch = { ...match, [scoreField]: value };
-      
-      // Auto-determine winner based on scores
-      const p1Score = parseInt(updatedMatch.player1Score || '0');
-      const p2Score = parseInt(updatedMatch.player2Score || '0');
-      
-      if (p1Score > 0 && p2Score > 0 && p1Score !== p2Score) {
-        const winner = p1Score > p2Score ? updatedMatch.player1 : updatedMatch.player2;
-        updatedMatch.winner = winner;
+    setMatches(prev => {
+      const newMatches = prev.map(match => {
+        if (match.id !== matchId) return match;
         
-        // Auto-advance winner to next round
-        if (winner && updatedMatch.nextMatchId) {
-          setTimeout(() => advanceWinnerToNextRound(updatedMatch), 100);
+        const updatedMatch = { ...match, [scoreField]: value };
+        
+        // Auto-determine winner based on scores
+        const p1Score = parseInt(updatedMatch.player1Score || '0');
+        const p2Score = parseInt(updatedMatch.player2Score || '0');
+        
+        if (p1Score > 0 && p2Score > 0 && p1Score !== p2Score) {
+          const winner = p1Score > p2Score ? updatedMatch.player1 : updatedMatch.player2;
+          updatedMatch.winner = winner;
         }
+        
+        return updatedMatch;
+      });
+      
+      // Find the updated match and advance winner if needed
+      const updatedMatch = newMatches.find(m => m.id === matchId);
+      if (updatedMatch?.winner && updatedMatch.nextMatchId) {
+        // Auto-advance winner to next round
+        const currentRoundMatches = newMatches.filter(m => m.round === updatedMatch.round);
+        const matchIndex = currentRoundMatches.findIndex(m => m.id === updatedMatch.id);
+        const nextPosition = matchIndex % 2 === 0 ? 'player1' : 'player2';
+        
+        const finalMatches = newMatches.map(m => 
+          m.id === updatedMatch.nextMatchId 
+            ? { ...m, [nextPosition]: updatedMatch.winner }
+            : m
+        );
+        
+        toast({
+          title: "Ялагч дараагийн шатанд шилжлээ",
+          description: `${updatedMatch.winner.name} автоматаар дараагийн тоглолтонд орлоо`
+        });
+        
+        return finalMatches;
       }
       
-      return updatedMatch;
-    }));
+      return newMatches;
+    });
   };
 
   // Handle manual winner selection
   const handleWinnerSelection = (matchId: string, winnerId: string) => {
-    const match = matches.find(m => m.id === matchId);
-    if (!match) return;
-    
-    const winner = winnerId === match.player1?.id ? match.player1 :
-                   winnerId === match.player2?.id ? match.player2 : undefined;
-    
-    setMatches(prev => prev.map(m => 
-      m.id === matchId ? { ...m, winner } : m
-    ));
-    
-    // Auto-advance winner to next round
-    if (winner && match.nextMatchId) {
-      setTimeout(() => advanceWinnerToNextRound({ ...match, winner }), 100);
-    }
+    setMatches(prev => {
+      const match = prev.find(m => m.id === matchId);
+      if (!match) return prev;
+      
+      const winner = winnerId === match.player1?.id ? match.player1 :
+                     winnerId === match.player2?.id ? match.player2 : undefined;
+      
+      const newMatches = prev.map(m => 
+        m.id === matchId ? { ...m, winner } : m
+      );
+      
+      // Auto-advance winner to next round
+      if (winner && match.nextMatchId) {
+        const currentRoundMatches = newMatches.filter(m => m.round === match.round);
+        const matchIndex = currentRoundMatches.findIndex(m => m.id === match.id);
+        const nextPosition = matchIndex % 2 === 0 ? 'player1' : 'player2';
+        
+        const finalMatches = newMatches.map(m => 
+          m.id === match.nextMatchId 
+            ? { ...m, [nextPosition]: winner }
+            : m
+        );
+        
+        toast({
+          title: "Ялагч дараагийн шатанд шилжлээ",
+          description: `${winner.name} автоматаар дараагийн тоглолтонд орлоо`
+        });
+        
+        return finalMatches;
+      }
+      
+      return newMatches;
+    });
   };
 
   // Advance winner to next round automatically
   const advanceWinnerToNextRound = (match: Match) => {
     if (!match.winner || !match.nextMatchId) return;
-    
-    const nextMatch = matches.find(m => m.id === match.nextMatchId);
-    if (!nextMatch) return;
     
     // Determine which position in next match
     const currentRoundMatches = matches.filter(m => m.round === match.round);
