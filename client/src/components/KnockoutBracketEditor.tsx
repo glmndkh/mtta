@@ -44,22 +44,22 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
   const svgRef = useRef<SVGSVGElement>(null);
   const { toast } = useToast();
 
-  // Generate standard tournament bracket structure
+  // Generate standard tournament bracket structure with better spacing
   const generateBracket = useCallback((playerCount: number) => {
     const rounds = Math.ceil(Math.log2(playerCount));
     const newMatches: Match[] = [];
     
-    // Calculate positions for each round
-    const MATCH_HEIGHT = 120;
-    const ROUND_WIDTH = 300;
-    const START_Y = 50;
+    // Calculate positions for each round with better spacing
+    const MATCH_HEIGHT = 90; // Reduced height for smaller boxes
+    const ROUND_WIDTH = 250; // Reduced width for better visibility
+    const START_Y = 30;
     
     for (let round = 1; round <= rounds; round++) {
       const matchesInRound = Math.pow(2, rounds - round);
       const roundName = getRoundName(matchesInRound);
       
       for (let matchIndex = 0; matchIndex < matchesInRound; matchIndex++) {
-        const ySpacing = Math.pow(2, round - 1) * MATCH_HEIGHT;
+        const ySpacing = Math.pow(2, round - 1) * MATCH_HEIGHT + 20; // Add extra spacing
         const yOffset = START_Y + matchIndex * ySpacing;
         
         const match: Match = {
@@ -67,7 +67,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
           round,
           roundName,
           position: {
-            x: (round - 1) * ROUND_WIDTH + 50,
+            x: (round - 1) * ROUND_WIDTH + 30,
             y: yOffset
           }
         };
@@ -98,8 +98,8 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     }
   };
 
-  // Auto-populate first round with qualified players
-  const populateWithQualifiedPlayers = useCallback(() => {
+  // Create empty bracket structure without auto-populating players
+  const createEmptyBracket = useCallback(() => {
     if (qualifiedPlayers.length < 4) {
       toast({
         title: "Хангалтгүй тоглогч",
@@ -110,46 +110,36 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     }
 
     const bracket = generateBracket(qualifiedPlayers.length);
-    const firstRoundMatches = bracket.filter(m => m.round === 1);
-    
-    // Populate first round matches with qualified players
-    firstRoundMatches.forEach((match, index) => {
-      const player1Index = index * 2;
-      const player2Index = index * 2 + 1;
-      
-      if (qualifiedPlayers[player1Index]) {
-        match.player1 = {
-          id: qualifiedPlayers[player1Index].id,
-          name: qualifiedPlayers[player1Index].name
-        };
-      }
-      
-      if (qualifiedPlayers[player2Index]) {
-        match.player2 = {
-          id: qualifiedPlayers[player2Index].id,
-          name: qualifiedPlayers[player2Index].name
-        };
-      }
-    });
-    
     setMatches(bracket);
     toast({
       title: "Шигшээ тоглолт үүсгэгдлээ",
-      description: `${qualifiedPlayers.length} тоглогчийн шигшээ тоглолт амжилттай үүсгэгдлээ`
+      description: `${qualifiedPlayers.length} тоглогчийн хоосон шигшээ тоглолт үүсгэгдлээ`
     });
   }, [qualifiedPlayers, generateBracket]);
 
-  // Handle player drop on match
-  const handlePlayerDrop = (matchId: string, position: 'player1' | 'player2') => {
-    if (!draggedPlayer) return;
+  // Handle manual player selection from dropdown
+  const handlePlayerSelect = (matchId: string, position: 'player1' | 'player2', playerId: string) => {
+    let selectedPlayer: Player | undefined;
     
-    setMatches(prev => prev.map(match => 
-      match.id === matchId 
-        ? { ...match, [position]: draggedPlayer }
-        : match
-    ));
+    if (playerId === 'lucky_draw') {
+      selectedPlayer = { id: 'lucky_draw', name: 'Lucky draw' };
+    } else {
+      const user = users.find(u => u.id === playerId);
+      if (user) {
+        selectedPlayer = { 
+          id: user.id, 
+          name: `${user.firstName || ''} ${user.lastName || ''}`.trim() 
+        };
+      }
+    }
     
-    setDraggedPlayer(null);
+    if (selectedPlayer) {
+      setMatches(prev => prev.map(match => 
+        match.id === matchId 
+          ? { ...match, [position]: selectedPlayer }
+          : match
+      ));
+    }
   };
 
   // Update match data
@@ -189,10 +179,10 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
       const nextMatch = matches.find(m => m.id === match.nextMatchId);
       if (!nextMatch) return null;
       
-      const x1 = match.position.x + 280;
-      const y1 = match.position.y + 60;
+      const x1 = match.position.x + 224; // Adjusted for smaller width (56*4)
+      const y1 = match.position.y + 45; // Adjusted for smaller height
       const x2 = nextMatch.position.x;
-      const y2 = nextMatch.position.y + 60;
+      const y2 = nextMatch.position.y + 45;
       
       return (
         <line
@@ -216,8 +206,8 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">Шигшээ тоглолтын удирдлага</h3>
           <div className="flex gap-2">
-            <Button onClick={populateWithQualifiedPlayers} disabled={qualifiedPlayers.length < 4}>
-              Авто шигшээ үүсгэх
+            <Button onClick={createEmptyBracket} disabled={qualifiedPlayers.length < 4}>
+              Хоосон шигшээ үүсгэх
             </Button>
             <Button onClick={() => onSave(matches)} variant="outline">
               <Save className="w-4 h-4 mr-2" />
@@ -230,20 +220,19 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
           </div>
         </div>
         
-        {/* Qualified Players Pool */}
+        {/* Qualified Players Info (for reference only) */}
         {qualifiedPlayers.length > 0 && (
           <div>
             <h4 className="font-medium mb-2">Шалгарсан тоглогчид ({qualifiedPlayers.length})</h4>
-            <div className="flex flex-wrap gap-2">
-              {qualifiedPlayers.map(player => (
-                <div
-                  key={player.id}
-                  className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm cursor-move"
-                  draggable
-                  onDragStart={() => setDraggedPlayer({ id: player.id, name: player.name })}
-                >
-                  {player.name} ({player.groupName} - {player.position})
-                </div>
+            <p className="text-sm text-gray-600">
+              Админ доорх талбаруудаас тоглогчдыг гараар сонгоно уу
+            </p>
+            <div className="text-xs text-gray-500 mt-1">
+              {qualifiedPlayers.map((player, index) => (
+                <span key={player.id}>
+                  {player.name} ({player.groupName})
+                  {index < qualifiedPlayers.length - 1 ? ', ' : ''}
+                </span>
               ))}
             </div>
           </div>
@@ -270,107 +259,79 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
               {renderConnections()}
             </svg>
 
-            {/* Match Cards */}
+            {/* Compact Match Cards */}
             {matches.map(match => (
               <div
                 key={match.id}
-                className={`absolute bg-white border-2 rounded-lg p-3 w-72 shadow-lg transition-all ${
-                  selectedMatch === match.id ? 'border-blue-500 shadow-xl' : 'border-gray-300'
-                }`}
+                className="absolute bg-white border-2 border-gray-300 rounded-lg p-2 w-56 shadow-md hover:shadow-lg transition-shadow"
                 style={{
                   left: match.position.x,
                   top: match.position.y,
                   zIndex: 10
                 }}
-                onClick={() => setSelectedMatch(match.id)}
               >
                 {/* Match Header */}
-                <div className="flex items-center justify-between mb-3">
-                  <Badge variant="outline" className="text-xs">
+                <div className="flex items-center justify-between mb-2">
+                  <Badge variant="outline" className="text-xs px-1 py-0">
                     {match.roundName}
                   </Badge>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMatches(prev => prev.filter(m => m.id !== match.id));
-                    }}
-                    className="h-6 w-6 p-0 text-red-500"
+                    onClick={() => setMatches(prev => prev.filter(m => m.id !== match.id))}
+                    className="h-5 w-5 p-0 text-red-500 hover:text-red-700"
                   >
                     <Trash2 className="w-3 h-3" />
                   </Button>
                 </div>
 
-                {/* Player 1 */}
-                <div 
-                  className="mb-2 p-2 border border-dashed border-gray-300 rounded min-h-[40px] flex items-center"
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    handlePlayerDrop(match.id, 'player1');
-                  }}
-                  onDragOver={(e) => e.preventDefault()}
-                >
-                  {match.player1 ? (
-                    <div className="flex items-center justify-between w-full">
-                      <span className="text-sm font-medium">{match.player1.name}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => updateMatch(match.id, 'player1', undefined)}
-                        className="h-4 w-4 p-0"
-                      >
-                        ×
-                      </Button>
-                    </div>
-                  ) : (
-                    <span className="text-gray-400 text-sm">Тоглогч 1 чирэх</span>
-                  )}
+                {/* Player 1 Selection */}
+                <div className="mb-2">
+                  <select
+                    className="w-full p-1 border rounded text-xs"
+                    value={match.player1?.id || ''}
+                    onChange={(e) => handlePlayerSelect(match.id, 'player1', e.target.value)}
+                  >
+                    <option value="">Тоглогч 1 сонгох</option>
+                    <option value="lucky_draw">Lucky draw</option>
+                    {users.map(user => (
+                      <option key={user.id} value={user.id}>
+                        {user.firstName} {user.lastName}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                {/* VS */}
-                <div className="text-center text-xs text-gray-500 mb-2">VS</div>
+                {/* VS Divider */}
+                <div className="text-center text-xs text-gray-400 my-1">VS</div>
 
-                {/* Player 2 */}
-                <div 
-                  className="mb-3 p-2 border border-dashed border-gray-300 rounded min-h-[40px] flex items-center"
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    handlePlayerDrop(match.id, 'player2');
-                  }}
-                  onDragOver={(e) => e.preventDefault()}
-                >
-                  {match.player2 ? (
-                    <div className="flex items-center justify-between w-full">
-                      <span className="text-sm font-medium">{match.player2.name}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => updateMatch(match.id, 'player2', undefined)}
-                        className="h-4 w-4 p-0"
-                      >
-                        ×
-                      </Button>
-                    </div>
-                  ) : (
-                    <span className="text-gray-400 text-sm">Тоглогч 2 чирэх</span>
-                  )}
+                {/* Player 2 Selection */}
+                <div className="mb-2">
+                  <select
+                    className="w-full p-1 border rounded text-xs"
+                    value={match.player2?.id || ''}
+                    onChange={(e) => handlePlayerSelect(match.id, 'player2', e.target.value)}
+                  >
+                    <option value="">Тоглогч 2 сонгох</option>
+                    <option value="lucky_draw">Lucky draw</option>
+                    {users.map(user => (
+                      <option key={user.id} value={user.id}>
+                        {user.firstName} {user.lastName}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                {/* Score Input */}
-                <div className="mb-3">
+                {/* Score and Winner Row */}
+                <div className="grid grid-cols-2 gap-1 mb-2">
                   <Input
-                    placeholder="Оноо (3-1)"
+                    placeholder="Оноо"
                     value={match.score || ''}
                     onChange={(e) => updateMatch(match.id, 'score', e.target.value)}
-                    className="text-center text-sm"
+                    className="text-center text-xs h-7"
                   />
-                </div>
-
-                {/* Winner Selection */}
-                <div className="mb-3">
                   <select
-                    className="w-full p-2 border rounded text-sm"
+                    className="w-full p-1 border rounded text-xs h-7"
                     value={match.winner?.id || ''}
                     onChange={(e) => {
                       const winnerId = e.target.value;
@@ -379,35 +340,45 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                       updateMatch(match.id, 'winner', winner);
                     }}
                   >
-                    <option value="">Ялагч сонгох</option>
+                    <option value="">Ялагч</option>
                     {match.player1 && (
-                      <option value={match.player1.id}>{match.player1.name}</option>
+                      <option value={match.player1.id}>
+                        {match.player1.name.length > 10 ? 
+                          match.player1.name.substring(0, 10) + '...' : 
+                          match.player1.name}
+                      </option>
                     )}
                     {match.player2 && (
-                      <option value={match.player2.id}>{match.player2.name}</option>
+                      <option value={match.player2.id}>
+                        {match.player2.name.length > 10 ? 
+                          match.player2.name.substring(0, 10) + '...' : 
+                          match.player2.name}
+                      </option>
                     )}
                   </select>
                 </div>
+
+                {/* Winner Badge */}
+                {match.winner && (
+                  <div className="text-center">
+                    <span className="inline-flex items-center px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
+                      🏆 {match.winner.name.length > 12 ? 
+                           match.winner.name.substring(0, 12) + '...' : 
+                           match.winner.name}
+                    </span>
+                  </div>
+                )}
 
                 {/* Advance Winner Button */}
                 {match.winner && match.nextMatchId && (
                   <Button
                     onClick={() => advanceWinner(match)}
                     size="sm"
-                    className="w-full text-xs"
+                    className="w-full text-xs mt-1 h-6"
                     variant="outline"
                   >
-                    {match.winner.name} дараагийн шатанд
+                    Дараагийн шат
                   </Button>
-                )}
-
-                {/* Winner Display */}
-                {match.winner && (
-                  <div className="mt-2 p-2 bg-yellow-50 rounded border border-yellow-200 text-center">
-                    <span className="text-sm font-medium text-yellow-800">
-                      🏆 {match.winner.name}
-                    </span>
-                  </div>
                 )}
               </div>
             ))}
@@ -416,11 +387,11 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
           <div className="text-center py-12 bg-gray-50 rounded-lg">
             <h3 className="text-lg font-semibold mb-2">Шигшээ тоглолт үүсгэх</h3>
             <p className="text-gray-600 mb-4">
-              Дээрх "Авто шигшээ үүсгэх" товчийг дарж эхлэнэ үү
+              Дээрх "Хоосон шигшээ үүсгэх" товчийг дарж эхлэнэ үү
             </p>
             {qualifiedPlayers.length >= 4 && (
-              <Button onClick={populateWithQualifiedPlayers}>
-                {qualifiedPlayers.length} тоглогчийн шигшээ үүсгэх
+              <Button onClick={createEmptyBracket}>
+                {qualifiedPlayers.length} тоглогчийн хоосон шигшээ үүсгэх
               </Button>
             )}
           </div>
