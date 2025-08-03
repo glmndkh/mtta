@@ -7,12 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, Trash2, Save, Users, Trophy, Target } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, Users, Trophy, Target, Download, Upload, FileSpreadsheet } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { UserAutocomplete } from "@/components/UserAutocomplete";
 import type { Tournament, TournamentResults, TournamentParticipant, User } from "@shared/schema";
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 // Types for Excel-style tournament result editing
 // Excel-style group stage table - represents round-robin within a group
@@ -418,6 +420,118 @@ export default function AdminTournamentResultsPage() {
     setFinalRankings(finalRankings.filter((_, i) => i !== index));
   };
 
+  // Excel Import/Export Functions
+  const exportToExcel = () => {
+    const wb = XLSX.utils.book_new();
+    
+    // Export Knockout Matches
+    if (knockoutMatches.length > 0) {
+      const knockoutData = knockoutMatches.map(match => ({
+        'Шат': match.round,
+        'Тоглогч 1': match.player1?.name || '',
+        'Тоглогч 2': match.player2?.name || '',
+        'Оноо': match.score || '',
+        'Ялагч': match.winner?.name || ''
+      }));
+      const ws1 = XLSX.utils.json_to_sheet(knockoutData);
+      XLSX.utils.book_append_sheet(wb, ws1, 'Шигшээ тоглолт');
+    }
+    
+    // Export Group Stage Results
+    if (groupStageTables.length > 0) {
+      groupStageTables.forEach((group, index) => {
+        const groupData = group.players.map((player, playerIndex) => {
+          const rowData: any = {
+            '№': playerIndex + 1,
+            'Нэрс': player.name,
+            'Клуб': player.club,
+            'Өгсөн': player.wins || '',
+            'Байр': player.position || ''
+          };
+          
+          // Add match results columns
+          group.players.forEach((opponent, opponentIndex) => {
+            if (playerIndex !== opponentIndex) {
+              rowData[`vs ${opponent.name}`] = group.resultMatrix[playerIndex]?.[opponentIndex] || '';
+            }
+          });
+          
+          return rowData;
+        });
+        
+        const ws = XLSX.utils.json_to_sheet(groupData);
+        XLSX.utils.book_append_sheet(wb, ws, `${group.groupName || `Групп ${index + 1}`}`);
+      });
+    }
+    
+    // Export Final Rankings
+    if (finalRankings.length > 0) {
+      const rankingData = finalRankings.map(ranking => ({
+        'Байр': ranking.position,
+        'Тоглогч': ranking.playerName,
+        'Шагнал': ranking.prize || ''
+      }));
+      const ws3 = XLSX.utils.json_to_sheet(rankingData);
+      XLSX.utils.book_append_sheet(wb, ws3, 'Эцсийн байр');
+    }
+    
+    // Save file
+    const fileName = `${tournament?.name || 'Tournament'}_Results_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    toast({
+      title: "Excel файл экспорт хийгдлээ",
+      description: `${fileName} файл татагдлаа`,
+    });
+  };
+
+  const importFromExcel = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        
+        // Import knockout matches from "Шигшээ тоглолт" sheet
+        if (workbook.SheetNames.includes('Шигшээ тоглолт')) {
+          const worksheet = workbook.Sheets['Шигшээ тоглолт'];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet);
+          
+          const importedMatches: KnockoutMatch[] = jsonData.map((row: any, index) => ({
+            id: `imported_${Date.now()}_${index}`,
+            round: row['Шат'] || 'quarterfinal',
+            player1: row['Тоглогч 1'] ? { id: `temp_${Date.now()}_1_${index}`, name: row['Тоглогч 1'] } : undefined,
+            player2: row['Тоглогч 2'] ? { id: `temp_${Date.now()}_2_${index}`, name: row['Тоглогч 2'] } : undefined,
+            score: row['Оноо'] || '',
+            winner: row['Ялагч'] ? { id: `temp_${Date.now()}_w_${index}`, name: row['Ялагч'] } : undefined,
+            position: { x: index * 200, y: index * 100 }
+          }));
+          
+          setKnockoutMatches(prev => [...prev, ...importedMatches]);
+        }
+        
+        toast({
+          title: "Excel файл импорт хийгдлээ",
+          description: "Өгөгдөл амжилттай уншигдлаа",
+        });
+        
+      } catch (error) {
+        console.error('Excel import error:', error);
+        toast({
+          title: "Алдаа гарлаа",
+          description: "Excel файл уншихад алдаа гарлаа",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    reader.readAsArrayBuffer(file);
+    // Reset file input
+    event.target.value = '';
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -489,10 +603,43 @@ export default function AdminTournamentResultsPage() {
                       Тэмцээний эцсийн үр дүн ба байрлал оруулах
                     </CardDescription>
                   </div>
-                  <Button onClick={addRanking} className="flex items-center gap-2">
-                    <Plus className="w-4 h-4" />
-                    Байр нэмэх
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button onClick={addRanking} className="flex items-center gap-2">
+                      <Plus className="w-4 h-4" />
+                      Байр нэмэх
+                    </Button>
+                    <div className="flex space-x-2 border-l pl-2">
+                      <Button 
+                        onClick={exportToExcel} 
+                        variant="outline" 
+                        size="sm"
+                        className="flex items-center gap-2"
+                      >
+                        <Download className="w-4 h-4" />
+                        Excel татах
+                      </Button>
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept=".xlsx,.xls"
+                          onChange={importFromExcel}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          id="excel-import-rankings"
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="flex items-center gap-2"
+                          asChild
+                        >
+                          <label htmlFor="excel-import-rankings" className="cursor-pointer">
+                            <Upload className="w-4 h-4" />
+                            Excel оруулах
+                          </label>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -558,16 +705,49 @@ export default function AdminTournamentResultsPage() {
                       Шаардлагат тоглолтууд ба тэдгээрийн үр дүн
                     </CardDescription>
                   </div>
-                  <div className="flex space-x-2">
-                    <Button onClick={() => addKnockoutRound('quarterfinal')} size="sm">
-                      + Дөрөвний финал
-                    </Button>
-                    <Button onClick={() => addKnockoutRound('semifinal')} size="sm">
-                      + Хагас финал
-                    </Button>
-                    <Button onClick={() => addKnockoutRound('final')} size="sm">
-                      + Финал
-                    </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <div className="flex space-x-2">
+                      <Button onClick={() => addKnockoutRound('quarterfinal')} size="sm">
+                        + Дөрөвний финал
+                      </Button>
+                      <Button onClick={() => addKnockoutRound('semifinal')} size="sm">
+                        + Хагас финал
+                      </Button>
+                      <Button onClick={() => addKnockoutRound('final')} size="sm">
+                        + Финал
+                      </Button>
+                    </div>
+                    <div className="flex space-x-2 border-l pl-2">
+                      <Button 
+                        onClick={exportToExcel} 
+                        variant="outline" 
+                        size="sm"
+                        className="flex items-center gap-2"
+                      >
+                        <Download className="w-4 h-4" />
+                        Excel татах
+                      </Button>
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept=".xlsx,.xls"
+                          onChange={importFromExcel}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          id="excel-import"
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="flex items-center gap-2"
+                          asChild
+                        >
+                          <label htmlFor="excel-import" className="cursor-pointer">
+                            <Upload className="w-4 h-4" />
+                            Excel оруулах
+                          </label>
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </CardHeader>
@@ -707,10 +887,43 @@ export default function AdminTournamentResultsPage() {
                       Группийн тоглолтууд ба үр дүн
                     </CardDescription>
                   </div>
-                  <Button onClick={addGroupTable} className="flex items-center gap-2">
-                    <Plus className="w-4 h-4" />
-                    Групп нэмэх
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button onClick={addGroupTable} className="flex items-center gap-2">
+                      <Plus className="w-4 h-4" />
+                      Групп нэмэх
+                    </Button>
+                    <div className="flex space-x-2 border-l pl-2">
+                      <Button 
+                        onClick={exportToExcel} 
+                        variant="outline" 
+                        size="sm"
+                        className="flex items-center gap-2"
+                      >
+                        <Download className="w-4 h-4" />
+                        Excel татах
+                      </Button>
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept=".xlsx,.xls"
+                          onChange={importFromExcel}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          id="excel-import-groups"
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="flex items-center gap-2"
+                          asChild
+                        >
+                          <label htmlFor="excel-import-groups" className="cursor-pointer">
+                            <Upload className="w-4 h-4" />
+                            Excel оруулах
+                          </label>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
