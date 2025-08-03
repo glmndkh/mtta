@@ -26,6 +26,8 @@ interface GroupStageGroup {
     id: string;
     name: string;
     club?: string;
+    position?: string;
+    wins?: string;
   }>;
   resultMatrix: string[][];
   standings: Array<{
@@ -132,6 +134,7 @@ export default function TournamentResultsPage() {
   const finalRankings: FinalRanking[] = results.finalRankings as FinalRanking[] || [];
 
   const navigateToProfile = (playerId: string) => {
+    console.log('Navigating to player profile:', playerId);
     setLocation(`/player/${playerId}`);
   };
 
