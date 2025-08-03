@@ -15,13 +15,17 @@ A comprehensive web application for the Mongolian Table Tennis Association that 
 
 ### Tournament Results Management System (August 2025)
 - **Comprehensive tournament results system** with both admin input and user viewing capabilities
-- **Excel-style admin interface** for group stage and knockout bracket management with dynamic row/column controls
+- **Excel-style admin interface** for group stage management with dynamic row/column controls
+- **Traditional tournament bracket display** exactly matching reference images with quarterfinals → semifinals → finals progression
+- **Manual knockout bracket creation** giving admins complete control over match creation and player connections
 - **Player auto-suggestion and linking** using intelligent search with profile connections
-- **Structured results viewing** with group stage tables and visual knockout brackets for users
+- **Structured results viewing** with group stage tables and traditional visual tournament brackets for users
 - **Advanced tournament results database schema** supporting both group stage and knockout formats with player references
 - **Conditional UI elements** including "View Results" button that only appears when tournaments are completed
 - **Admin-only results input interface** with secure authentication and role-based access control
 - **Complete API integration** with tournament results endpoints for saving, retrieving, and publishing results
+- **Manual bracket controls** with individual buttons to add quarterfinals, semifinals, and finals matches
+- **No automatic calculations** - admin manually creates all matches and connections as requested
 
 ### Win/Loss Statistics Fix (August 2025)
 - **Accurate statistics calculation** fixed to count only from current published tournament results
