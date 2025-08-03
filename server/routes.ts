@@ -568,6 +568,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Player routes
+  app.get('/api/players', async (req, res) => {
+    try {
+      const players = await storage.getAllPlayers();
+      res.json(players);
+    } catch (error) {
+      console.error("Error fetching players:", error);
+      res.status(500).json({ message: "Тоглогчдын мэдээлэл авахад алдаа гарлаа" });
+    }
+  });
+
   app.post('/api/players', requireAuth, async (req: any, res) => {
     try {
       const userId = req.session.userId;
@@ -589,9 +599,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         player = await storage.getPlayerByUserId(req.params.id);
       }
       
+      // If still not found, try to create a player profile for this user ID
       if (!player) {
-        return res.status(404).json({ message: "Тоглогч олдсонгүй" });
+        try {
+          player = await storage.ensurePlayerExists(req.params.id);
+        } catch (ensureError) {
+          // If we can't create a player, it means the user doesn't exist
+          return res.status(404).json({ message: "Тоглогч олдсонгүй" });
+        }
       }
+      
       res.json(player);
     } catch (error) {
       console.error("Error fetching player:", error);
@@ -632,7 +649,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/players/:id/membership', async (req, res) => {
     try {
-      const membership = await storage.getPlayerMembership(req.params.id);
+      const membership = await storage.getMembership(req.params.id);
       res.json(membership);
     } catch (error) {
       console.error("Error fetching player membership:", error);

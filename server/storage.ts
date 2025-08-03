@@ -267,6 +267,31 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  async ensurePlayerExists(userId: string): Promise<any> {
+    // Check if player already exists
+    let player = await this.getPlayerByUserId(userId);
+    
+    if (!player) {
+      // Get user info
+      const user = await this.getUser(userId);
+      if (!user) {
+        throw new Error("User not found");
+      }
+      
+      // Create player profile automatically
+      const newPlayer = await this.createPlayer({
+        userId: userId,
+        dateOfBirth: new Date(), // Default date
+        rank: "Шинэ тоглогч"
+      });
+      
+      // Return the player with user info
+      player = await this.getPlayerByUserId(userId);
+    }
+    
+    return player;
+  }
+
   async createPlayer(playerData: InsertPlayer): Promise<Player> {
     const memberNumber = `TT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
     const [player] = await db
@@ -303,7 +328,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getAllPlayers(): Promise<Player[]> {
+  async getAllPlayers(): Promise<any[]> {
     return await db
       .select()
       .from(players)
@@ -327,7 +352,7 @@ export class DatabaseStorage implements IStorage {
     return newAchievement;
   }
 
-  async getTournamentMatches(tournamentId: string): Promise<Match[]> {
+  async getTournamentMatches(tournamentId: string): Promise<any[]> {
     return await db
       .select()
       .from(matches)
