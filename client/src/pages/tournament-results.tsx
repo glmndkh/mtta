@@ -224,24 +224,106 @@ export default function TournamentResultsPage() {
 
           {/* Knockout Bracket */}
           <TabsContent value="knockout">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="w-5 h-5" />
-                  Шоронтох тулаан
-                </CardTitle>
-                <CardDescription>
-                  Тэмцээний шоронтох шатны үр дүн
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <KnockoutBracket
-                  matches={knockoutResults}
-                  onPlayerClick={navigateToProfile}
-                  isViewOnly={true}
-                />
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              {/* Qualified Players from Groups */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    Группээс шалгарсан тоглогчид
+                  </CardTitle>
+                  <CardDescription>
+                    Группийн тулаанаас шигшээ тоглолтод шалгарсан эхний 2 тоглогч
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {groupStageResults.map((group, groupIndex) => {
+                      // Get top 2 players from each group based on position
+                      const qualifiedPlayers = (group.players || [])
+                        .filter(player => {
+                          const position = parseInt(player.position || '99');
+                          return position <= 2; // Only top 2 positions qualify
+                        })
+                        .sort((a, b) => {
+                          const posA = parseInt(a.position || '99');
+                          const posB = parseInt(b.position || '99');
+                          return posA - posB;
+                        });
+
+                      return (
+                        <Card key={groupIndex} className="border-l-4 border-l-blue-500">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-lg">{group.groupName}</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-2">
+                              {qualifiedPlayers.map((player, playerIndex) => (
+                                <div 
+                                  key={player.id} 
+                                  className={`flex items-center justify-between p-3 rounded-lg ${
+                                    playerIndex === 0 ? 'bg-yellow-50 border border-yellow-200' : 'bg-gray-50 border border-gray-200'
+                                  }`}
+                                >
+                                  <div className="flex items-center space-x-3">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
+                                      playerIndex === 0 ? 'bg-yellow-500' : 'bg-gray-400'
+                                    }`}>
+                                      {player.position}
+                                    </div>
+                                    <button
+                                      onClick={() => navigateToProfile(player.id)}
+                                      className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                                    >
+                                      {player.name}
+                                    </button>
+                                  </div>
+                                  <div className="text-sm text-gray-600">
+                                    {player.wins || '0/0'}
+                                  </div>
+                                </div>
+                              ))}
+                              {qualifiedPlayers.length === 0 && (
+                                <p className="text-gray-500 text-sm text-center py-4">
+                                  Шалгарсан тоглогч алга
+                                </p>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Knockout Bracket */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Trophy className="w-5 h-5" />
+                    Шигшээ тоглолт
+                  </CardTitle>
+                  <CardDescription>
+                    Шалгарсан тоглогчдын хоорондох шигшээ тулаан
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {knockoutResults.length > 0 ? (
+                    <KnockoutBracket
+                      matches={knockoutResults}
+                      onPlayerClick={navigateToProfile}
+                      isViewOnly={true}
+                    />
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <Trophy className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                      <p>Шигшээ тоглолтын мэдээлэл хараахан бэлэн болоогүй байна</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Group Stage */}
