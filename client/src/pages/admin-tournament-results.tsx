@@ -126,16 +126,13 @@ export default function AdminTournamentResultsPage() {
           <TabsContent value="spreadsheet">
             <Card>
               <CardHeader>
-                <CardTitle>Excel маягийн хүснэгт</CardTitle>
+                <CardTitle>Excel-style хүснэгт</CardTitle>
                 <CardDescription>
-                  Excel шиг мөр, багана чөлөөтэй нэмж засварлана уу. 
-                  Cells дээр дарж форматлах боломжтой.
+                  Excel шиг хүснэгт үүсгэж, мөр ба багана нэмэх/хасах, форматлах боломжтой.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <SpreadsheetGrid
-                  initialRows={12}
-                  initialCols={8}
                   data={knockoutGridData}
                   onChange={setKnockoutGridData}
                 />
@@ -149,29 +146,29 @@ export default function AdminTournamentResultsPage() {
               <CardHeader>
                 <CardTitle>Урьдчилан үзэх</CardTitle>
                 <CardDescription>
-                  Баримт болон хүснэгтийн эцсийн дүр төрх
+                  Таны үүсгэсэн баримт болон хүснэгтийг хэрэглэгчид харагдах байдлаар үзүүлнэ.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-8">
-                  {/* Document Preview */}
+                  {/* Document Content Preview */}
                   {documentContent && (
-                    <div className="border rounded-lg p-6 bg-white">
-                      <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
-                        📄 Баримт бичиг
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4 text-gray-800">
+                        Баримт агуулга
                       </h3>
                       <div 
-                        className="prose prose-sm max-w-none"
+                        className="prose prose-sm max-w-none p-4 bg-white border rounded-lg"
                         dangerouslySetInnerHTML={{ __html: documentContent }}
                       />
                     </div>
                   )}
-                  
-                  {/* Grid Preview */}
+
+                  {/* Spreadsheet Preview */}
                   {knockoutGridData.length > 0 && (
-                    <div className="border rounded-lg p-6 bg-white overflow-auto">
-                      <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
-                        📊 Excel хүснэгт
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4 text-gray-800">
+                        Хүснэгт агуулга
                       </h3>
                       <table className="w-full border-collapse border border-gray-300">
                         <tbody>
