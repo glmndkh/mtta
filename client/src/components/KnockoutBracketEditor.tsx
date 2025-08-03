@@ -18,7 +18,8 @@ interface Match {
   roundName: string;
   player1?: Player;
   player2?: Player;
-  score?: string;
+  player1Score?: string;
+  player2Score?: string;
   winner?: Player;
   position: { x: number; y: number };
   nextMatchId?: string;
@@ -143,17 +144,51 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     }
   };
 
-  // Update match data
-  const updateMatch = (matchId: string, field: keyof Match, value: any) => {
-    setMatches(prev => prev.map(match => 
-      match.id === matchId 
-        ? { ...match, [field]: value }
-        : match
-    ));
+  // Handle score changes and auto-determine winner
+  const handleScoreChange = (matchId: string, scoreField: 'player1Score' | 'player2Score', value: string) => {
+    setMatches(prev => prev.map(match => {
+      if (match.id !== matchId) return match;
+      
+      const updatedMatch = { ...match, [scoreField]: value };
+      
+      // Auto-determine winner based on scores
+      const p1Score = parseInt(updatedMatch.player1Score || '0');
+      const p2Score = parseInt(updatedMatch.player2Score || '0');
+      
+      if (p1Score > 0 && p2Score > 0 && p1Score !== p2Score) {
+        const winner = p1Score > p2Score ? updatedMatch.player1 : updatedMatch.player2;
+        updatedMatch.winner = winner;
+        
+        // Auto-advance winner to next round
+        if (winner && updatedMatch.nextMatchId) {
+          setTimeout(() => advanceWinnerToNextRound(updatedMatch), 100);
+        }
+      }
+      
+      return updatedMatch;
+    }));
   };
 
-  // Advance winner to next match
-  const advanceWinner = (match: Match) => {
+  // Handle manual winner selection
+  const handleWinnerSelection = (matchId: string, winnerId: string) => {
+    const match = matches.find(m => m.id === matchId);
+    if (!match) return;
+    
+    const winner = winnerId === match.player1?.id ? match.player1 :
+                   winnerId === match.player2?.id ? match.player2 : undefined;
+    
+    setMatches(prev => prev.map(m => 
+      m.id === matchId ? { ...m, winner } : m
+    ));
+    
+    // Auto-advance winner to next round
+    if (winner && match.nextMatchId) {
+      setTimeout(() => advanceWinnerToNextRound({ ...match, winner }), 100);
+    }
+  };
+
+  // Advance winner to next round automatically
+  const advanceWinnerToNextRound = (match: Match) => {
     if (!match.winner || !match.nextMatchId) return;
     
     const nextMatch = matches.find(m => m.id === match.nextMatchId);
@@ -164,13 +199,28 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     const matchIndex = currentRoundMatches.findIndex(m => m.id === match.id);
     const nextPosition = matchIndex % 2 === 0 ? 'player1' : 'player2';
     
-    updateMatch(match.nextMatchId, nextPosition, match.winner);
+    setMatches(prev => prev.map(m => 
+      m.id === match.nextMatchId 
+        ? { ...m, [nextPosition]: match.winner }
+        : m
+    ));
     
     toast({
-      title: "Тоглогч дараагийн шатанд шилжлээ",
-      description: `${match.winner.name} дараагийн тоглолтонд оролцоно`
+      title: "Ялагч дараагийн шатанд шилжлээ",
+      description: `${match.winner.name} автоматаар дараагийн тоглолтонд орлоо`
     });
   };
+
+  // Update match data
+  const updateMatch = (matchId: string, field: keyof Match, value: any) => {
+    setMatches(prev => prev.map(match => 
+      match.id === matchId 
+        ? { ...match, [field]: value }
+        : match
+    ));
+  };
+
+
 
   // Render connection lines
   const renderConnections = () => {
@@ -180,10 +230,10 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
       const nextMatch = matches.find(m => m.id === match.nextMatchId);
       if (!nextMatch) return null;
       
-      const x1 = match.position.x + 224; // Match box width
-      const y1 = match.position.y + 60; // Center of match box
+      const x1 = match.position.x + 256; // Updated match box width (w-64)
+      const y1 = match.position.y + 70; // Center of match box
       const x2 = nextMatch.position.x;
-      const y2 = nextMatch.position.y + 60;
+      const y2 = nextMatch.position.y + 70;
       
       return (
         <line
@@ -245,17 +295,17 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
         {matches.length > 0 ? (
           <div 
             ref={containerRef}
-            className="relative bg-white border rounded-lg p-6 overflow-auto"
+            className="relative bg-white border rounded-lg p-3 md:p-6 overflow-auto"
             style={{ 
-              minHeight: '1200px',
-              minWidth: '1600px'
+              minHeight: '800px',
+              minWidth: '1200px'
             }}
           >
             {/* SVG for connection lines */}
             <svg 
               ref={svgRef}
               className="absolute inset-0 w-full h-full pointer-events-none"
-              style={{ zIndex: 1 }}
+              style={{ zIndex: 1, minHeight: '800px', minWidth: '1200px' }}
             >
               {renderConnections()}
             </svg>
@@ -264,7 +314,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
             {matches.map(match => (
               <div
                 key={match.id}
-                className="absolute bg-white border-2 border-gray-300 rounded-lg p-2 w-56 shadow-md hover:shadow-lg transition-shadow"
+                className="absolute bg-white border-2 border-gray-300 rounded-lg p-2 md:p-3 w-56 md:w-64 shadow-md hover:shadow-lg transition-shadow"
                 style={{
                   left: match.position.x,
                   top: match.position.y,
@@ -289,12 +339,12 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                 {/* Player 1 Selection */}
                 <div className="mb-2">
                   <select
-                    className="w-full p-1 border rounded text-xs"
+                    className="w-full p-1 border rounded text-xs bg-blue-50"
                     value={match.player1?.id || ''}
                     onChange={(e) => handlePlayerSelect(match.id, 'player1', e.target.value)}
                   >
                     <option value="">Тоглогч 1 сонгох</option>
-                    <option value="lucky_draw">Lucky draw</option>
+                    <option value="lucky_draw">🎲 Lucky draw</option>
                     {users.map(user => (
                       <option key={`${match.id}-p1-${user.id}`} value={user.id}>
                         {user.firstName} {user.lastName}
@@ -309,12 +359,12 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                 {/* Player 2 Selection */}
                 <div className="mb-2">
                   <select
-                    className="w-full p-1 border rounded text-xs"
+                    className="w-full p-1 border rounded text-xs bg-red-50"
                     value={match.player2?.id || ''}
                     onChange={(e) => handlePlayerSelect(match.id, 'player2', e.target.value)}
                   >
                     <option value="">Тоглогч 2 сонгох</option>
-                    <option value="lucky_draw">Lucky draw</option>
+                    <option value="lucky_draw">🎲 Lucky draw</option>
                     {users.map(user => (
                       <option key={`${match.id}-p2-${user.id}`} value={user.id}>
                         {user.firstName} {user.lastName}
@@ -323,63 +373,67 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                   </select>
                 </div>
 
-                {/* Score and Winner Row */}
+                {/* Score Input */}
                 <div className="grid grid-cols-2 gap-1 mb-2">
                   <Input
-                    placeholder="Оноо"
-                    value={match.score || ''}
-                    onChange={(e) => updateMatch(match.id, 'score', e.target.value)}
+                    placeholder="Тоглогч 1 оноо"
+                    value={match.player1Score || ''}
+                    onChange={(e) => handleScoreChange(match.id, 'player1Score', e.target.value)}
                     className="text-center text-xs h-7"
+                    type="number"
+                    min="0"
                   />
+                  <Input
+                    placeholder="Тоглогч 2 оноо"
+                    value={match.player2Score || ''}
+                    onChange={(e) => handleScoreChange(match.id, 'player2Score', e.target.value)}
+                    className="text-center text-xs h-7"
+                    type="number"
+                    min="0"
+                  />
+                </div>
+
+                {/* Winner Selection */}
+                <div className="mb-2">
                   <select
                     className="w-full p-1 border rounded text-xs h-7"
                     value={match.winner?.id || ''}
-                    onChange={(e) => {
-                      const winnerId = e.target.value;
-                      const winner = winnerId === match.player1?.id ? match.player1 :
-                                   winnerId === match.player2?.id ? match.player2 : undefined;
-                      updateMatch(match.id, 'winner', winner);
-                    }}
+                    onChange={(e) => handleWinnerSelection(match.id, e.target.value)}
                   >
-                    <option value="">Ялагч</option>
+                    <option value="">Ялагч сонгох</option>
                     {match.player1 && (
                       <option value={match.player1.id}>
-                        {match.player1.name.length > 10 ? 
-                          match.player1.name.substring(0, 10) + '...' : 
+                        {match.player1.name.length > 15 ? 
+                          match.player1.name.substring(0, 15) + '...' : 
                           match.player1.name}
                       </option>
                     )}
                     {match.player2 && (
                       <option value={match.player2.id}>
-                        {match.player2.name.length > 10 ? 
-                          match.player2.name.substring(0, 10) + '...' : 
+                        {match.player2.name.length > 15 ? 
+                          match.player2.name.substring(0, 15) + '...' : 
                           match.player2.name}
                       </option>
                     )}
                   </select>
                 </div>
 
-                {/* Winner Badge */}
-                {match.winner && (
-                  <div className="text-center">
-                    <span className="inline-flex items-center px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
-                      🏆 {match.winner.name.length > 12 ? 
-                           match.winner.name.substring(0, 12) + '...' : 
-                           match.winner.name}
-                    </span>
+                {/* Score Display and Winner Badge */}
+                {(match.player1Score || match.player2Score || match.winner) && (
+                  <div className="text-center mt-2 pt-2 border-t border-gray-200">
+                    {(match.player1Score && match.player2Score) && (
+                      <div className="text-xs text-gray-600 mb-1">
+                        {match.player1Score} - {match.player2Score}
+                      </div>
+                    )}
+                    {match.winner && (
+                      <span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded font-medium">
+                        🏆 {match.winner.name.length > 12 ? 
+                             match.winner.name.substring(0, 12) + '...' : 
+                             match.winner.name}
+                      </span>
+                    )}
                   </div>
-                )}
-
-                {/* Advance Winner Button */}
-                {match.winner && match.nextMatchId && (
-                  <Button
-                    onClick={() => advanceWinner(match)}
-                    size="sm"
-                    className="w-full text-xs mt-1 h-6"
-                    variant="outline"
-                  >
-                    Дараагийн шат
-                  </Button>
                 )}
               </div>
             ))}
