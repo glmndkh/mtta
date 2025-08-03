@@ -7,14 +7,15 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, Trash2, Save, Users, Trophy, Target, Download, Upload, FileSpreadsheet, Move, RotateCcw } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, Users, Trophy, Target, Download, Upload, FileSpreadsheet } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { UserAutocomplete } from "@/components/UserAutocomplete";
+import { KnockoutBracketEditor } from "@/components/KnockoutBracketEditor";
 import type { Tournament, TournamentResults, TournamentParticipant, User } from "@shared/schema";
 import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
+
 
 // Types for Excel-style tournament result editing
 // Excel-style group stage table - represents round-robin within a group
@@ -408,115 +409,7 @@ export default function AdminTournamentResultsPage() {
     return qualified;
   };
 
-  // Auto-generate knockout bracket from qualified players
-  const generateKnockoutBracket = () => {
-    const qualified = getQualifiedPlayers();
-    if (qualified.length < 4) {
-      toast({
-        title: "Хангалтгүй тоглогч",
-        description: "Шигшээ тоглолт үүсгэхийн тулд дор хаяж 4 тоглогч шаардлагатай",
-        variant: "destructive",
-      });
-      return;
-    }
 
-    // Clear existing knockout matches
-    setKnockoutMatches([]);
-
-    const totalPlayers = qualified.length;
-    let matches: KnockoutMatch[] = [];
-
-    // Create initial bracket structure based on number of qualified players
-    if (totalPlayers >= 8) {
-      // Quarterfinals (8 players -> 4 matches)
-      for (let i = 0; i < 4; i++) {
-        const player1 = qualified[i * 2];
-        const player2 = qualified[i * 2 + 1];
-        matches.push({
-          id: `qf_${Date.now()}_${i}`,
-          round: 'quarterfinal',
-          player1: player1 ? { id: player1.id, name: player1.name } : undefined,
-          player2: player2 ? { id: player2.id, name: player2.name } : undefined,
-          position: { x: 50, y: 50 + i * 120 }
-        });
-      }
-
-      // Semifinals (4 winners -> 2 matches)
-      for (let i = 0; i < 2; i++) {
-        matches.push({
-          id: `sf_${Date.now()}_${i}`,
-          round: 'semifinal',
-          position: { x: 350, y: 110 + i * 240 }
-        });
-      }
-
-      // Final (2 winners -> 1 match)
-      matches.push({
-        id: `f_${Date.now()}`,
-        round: 'final',
-        position: { x: 650, y: 230 }
-      });
-    } else if (totalPlayers >= 4) {
-      // Semifinals (4 players -> 2 matches)
-      for (let i = 0; i < 2; i++) {
-        const player1 = qualified[i * 2];
-        const player2 = qualified[i * 2 + 1];
-        matches.push({
-          id: `sf_${Date.now()}_${i}`,
-          round: 'semifinal',
-          player1: player1 ? { id: player1.id, name: player1.name } : undefined,
-          player2: player2 ? { id: player2.id, name: player2.name } : undefined,
-          position: { x: 50, y: 110 + i * 240 }
-        });
-      }
-
-      // Final (2 winners -> 1 match)
-      matches.push({
-        id: `f_${Date.now()}`,
-        round: 'final',
-        position: { x: 350, y: 230 }
-      });
-    }
-
-    setKnockoutMatches(matches);
-    toast({
-      title: "Шигшээ тоглолт үүсгэгдлээ",
-      description: `${qualified.length} тоглогчтой шигшээ тоглолт амжилттай үүсгэгдлээ`,
-    });
-  };
-
-  // Helper functions for knockout stage
-  const addKnockoutRound = (round: string) => {
-    const roundCount = knockoutMatches.filter(m => m.round === round).length;
-    const newMatch: KnockoutMatch = {
-      id: `knockout_${Date.now()}_${Math.random()}`,
-      round,
-      position: { x: 50 + roundCount * 300, y: 50 + roundCount * 100 },
-    };
-    setKnockoutMatches([...knockoutMatches, newMatch]);
-  };
-
-  // Drag functionality for knockout matches
-  const handleMatchDrag = (matchId: string, newPosition: { x: number; y: number }) => {
-    const updated = knockoutMatches.map(match => 
-      match.id === matchId 
-        ? { ...match, position: newPosition }
-        : match
-    );
-    setKnockoutMatches(updated);
-  };
-
-  const updateKnockoutMatch = (index: number, field: string, value: any) => {
-    const updated = [...knockoutMatches];
-    if (field.includes('.')) {
-      const [parent, child] = field.split('.');
-      (updated[index] as any)[parent] = (updated[index] as any)[parent] || {};
-      (updated[index] as any)[parent][child] = value;
-    } else {
-      (updated[index] as any)[field] = value;
-    }
-    setKnockoutMatches(updated);
-  };
 
   // Helper functions for final rankings
   const addRanking = () => {
@@ -825,26 +718,7 @@ export default function AdminTournamentResultsPage() {
                     </CardDescription>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <div className="flex space-x-2">
-                      <Button 
-                        onClick={generateKnockoutBracket} 
-                        className="flex items-center gap-2"
-                        disabled={getQualifiedPlayers().length < 4}
-                      >
-                        <Trophy className="w-4 h-4" />
-                        Авто шигшээ үүсгэх
-                      </Button>
-                      <Button onClick={() => addKnockoutRound('quarterfinal')} size="sm" variant="outline">
-                        + Дөрөвний финал
-                      </Button>
-                      <Button onClick={() => addKnockoutRound('semifinal')} size="sm" variant="outline">
-                        + Хагас финал
-                      </Button>
-                      <Button onClick={() => addKnockoutRound('final')} size="sm" variant="outline">
-                        + Финал
-                      </Button>
-                    </div>
-                    <div className="flex space-x-2 border-l pl-2">
+                    <div className="flex space-x-2 border-r pr-2">
                       <Button 
                         onClick={exportToExcel} 
                         variant="outline" 
@@ -879,230 +753,37 @@ export default function AdminTournamentResultsPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                {/* Show qualified players summary */}
-                {getQualifiedPlayers().length > 0 && (
-                  <div className="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
-                    <h4 className="font-semibold text-green-800 mb-2">
-                      Шалгарсан тоглогчид ({getQualifiedPlayers().length} тоглогч)
-                    </h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      {getQualifiedPlayers().map((player, index) => (
-                        <div key={player.id} className="bg-white p-2 rounded border text-sm">
-                          <div className="font-medium">{player.name}</div>
-                          <div className="text-gray-600 text-xs">
-                            {player.groupName} - {player.position}-р байр
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Visual Knockout Bracket */}
-                <div className="relative">
-                  {knockoutMatches.length > 0 ? (
-                    <div className="relative bg-gray-50 rounded-lg p-6 min-h-[600px] overflow-auto">
-                      <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                        {/* Draw connecting lines between matches */}
-                        {knockoutMatches.map(match => {
-                          const semifinals = knockoutMatches.filter(m => m.round === 'semifinal');
-                          const finals = knockoutMatches.filter(m => m.round === 'final');
-                          
-                          if (match.round === 'quarterfinal' && semifinals.length > 0) {
-                            const matchIndex = knockoutMatches.filter(m => m.round === 'quarterfinal').indexOf(match);
-                            const targetSemifinal = semifinals[Math.floor(matchIndex / 2)];
-                            if (targetSemifinal) {
-                              return (
-                                <line
-                                  key={`line-${match.id}`}
-                                  x1={match.position.x + 280}
-                                  y1={match.position.y + 40}
-                                  x2={targetSemifinal.position.x}
-                                  y2={targetSemifinal.position.y + 40}
-                                  stroke="#9CA3AF"
-                                  strokeWidth="2"
-                                />
-                              );
-                            }
-                          }
-                          
-                          if (match.round === 'semifinal' && finals.length > 0) {
-                            return (
-                              <line
-                                key={`line-${match.id}`}
-                                x1={match.position.x + 280}
-                                y1={match.position.y + 40}
-                                x2={finals[0].position.x}
-                                y2={finals[0].position.y + 40}
-                                stroke="#9CA3AF"
-                                strokeWidth="2"
-                              />
-                            );
-                          }
-                          
-                          return null;
-                        })}
-                      </svg>
-
-                      {/* Draggable match cards */}
-                      {knockoutMatches.map((match, index) => (
-                        <div
-                          key={match.id}
-                          className="absolute bg-white border-2 border-gray-300 rounded-lg p-4 w-80 shadow-lg cursor-move hover:shadow-xl transition-shadow"
-                          style={{
-                            left: match.position.x,
-                            top: match.position.y,
-                            zIndex: 10
-                          }}
-                          draggable
-                          onDragEnd={(e) => {
-                            const rect = (e.target as HTMLElement).offsetParent?.getBoundingClientRect();
-                            if (rect) {
-                              handleMatchDrag(match.id, {
-                                x: e.clientX - rect.left - 140,
-                                y: e.clientY - rect.top - 60
-                              });
-                            }
-                          }}
-                        >
-                          <div className="flex items-center justify-between mb-3">
-                            <Badge variant={
-                              match.round === 'final' ? 'default' :
-                              match.round === 'semifinal' ? 'secondary' : 'outline'
-                            }>
-                              {match.round === 'final' ? 'Финал' :
-                               match.round === 'semifinal' ? 'Хагас финал' : 'Дөрөвний финал'}
-                            </Badge>
-                            <div className="flex items-center gap-1">
-                              <Move className="w-4 h-4 text-gray-400" />
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setKnockoutMatches(knockoutMatches.filter(m => m.id !== match.id));
-                                }}
-                                className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          </div>
-                          
-                          <div className="space-y-3">
-                            <div>
-                              <label className="text-xs text-gray-600 mb-1 block">Тоглогч 1</label>
-                              <UserAutocomplete
-                                users={allUsers}
-                                value={match.player1?.name || ''}
-                                onSelect={(user) => {
-                                  updateKnockoutMatch(index, 'player1', {
-                                    id: user.id,
-                                    name: `${user.firstName} ${user.lastName}`
-                                  });
-                                }}
-                                placeholder="Тоглогч хайх..."
-                                className="w-full"
-                              />
-                            </div>
-                            
-                            <div>
-                              <label className="text-xs text-gray-600 mb-1 block">Тоглогч 2</label>
-                              <UserAutocomplete
-                                users={allUsers}
-                                value={match.player2?.name || ''}
-                                onSelect={(user) => {
-                                  updateKnockoutMatch(index, 'player2', {
-                                    id: user.id,
-                                    name: `${user.firstName} ${user.lastName}`
-                                  });
-                                }}
-                                placeholder="Тоглогч хайх..."
-                                className="w-full"
-                              />
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <label className="text-xs text-gray-600 mb-1 block">Оноо</label>
-                                <Input
-                                  value={match.score || ''}
-                                  onChange={(e) => updateKnockoutMatch(index, 'score', e.target.value)}
-                                  placeholder="3-1"
-                                  className="text-center"
-                                />
-                              </div>
-                              <div>
-                                <label className="text-xs text-gray-600 mb-1 block">Ялагч</label>
-                                <Select
-                                  value={match.winner?.name || ''}
-                                  onValueChange={(value) => {
-                                    let selectedPlayer;
-                                    if (value === match.player1?.name) {
-                                      selectedPlayer = match.player1;
-                                    } else if (value === match.player2?.name) {
-                                      selectedPlayer = match.player2;
-                                    }
-                                    
-                                    if (selectedPlayer) {
-                                      updateKnockoutMatch(index, 'winner', selectedPlayer);
-                                    }
-                                  }}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Сонгох" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {match.player1?.name && (
-                                      <SelectItem value={match.player1.name}>
-                                        {match.player1.name}
-                                      </SelectItem>
-                                    )}
-                                    {match.player2?.name && (
-                                      <SelectItem value={match.player2.name}>
-                                        {match.player2.name}
-                                      </SelectItem>
-                                    )}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-                            
-                            {match.winner && (
-                              <div className="mt-2 p-2 bg-yellow-50 rounded border border-yellow-200 text-center">
-                                <Trophy className="w-4 h-4 inline-block mr-1 text-yellow-600" />
-                                <span className="text-sm font-medium text-yellow-800">
-                                  {match.winner.name}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <Trophy className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                        Шигшээ тоглолт үүсгэх
-                      </h3>
-                      <p className="text-gray-500 mb-4">
-                        Группийн тоглолтоос шалгарсан тоглогчдоор автоматаар шигшээ тоглолт үүсгэнэ үү
-                      </p>
-                      <p className="text-sm text-gray-400 mb-6">
-                        Эсвэл дээрх товчнуудаар гараар тоглолт нэмнэ үү
-                      </p>
-                      {getQualifiedPlayers().length >= 4 && (
-                        <Button 
-                          onClick={generateKnockoutBracket} 
-                          className="flex items-center gap-2"
-                        >
-                          <Trophy className="w-4 h-4" />
-                          {getQualifiedPlayers().length} тоглогчийн шигшээ үүсгэх
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <KnockoutBracketEditor
+                  initialMatches={knockoutMatches.map(match => ({
+                    id: match.id,
+                    round: match.round === 'final' ? 3 : match.round === 'semifinal' ? 2 : 1,
+                    roundName: match.round === 'final' ? 'Финал' : 
+                              match.round === 'semifinal' ? 'Хагас финал' : 'Дөрөвний финал',
+                    player1: match.player1,
+                    player2: match.player2,
+                    score: match.score,
+                    winner: match.winner,
+                    position: match.position
+                  }))}
+                  users={allUsers}
+                  qualifiedPlayers={getQualifiedPlayers()}
+                  onSave={(newMatches) => {
+                    // Convert back to original format
+                    const convertedMatches = newMatches.map(match => ({
+                      id: match.id,
+                      round: match.round === 3 ? 'final' : match.round === 2 ? 'semifinal' : 'quarterfinal',
+                      player1: match.player1,
+                      player2: match.player2,
+                      score: match.score,
+                      winner: match.winner,
+                      position: match.position
+                    }));
+                    setKnockoutMatches(convertedMatches);
+                    
+                    // Auto-save via existing mutation
+                    saveResultsMutation.mutate();
+                  }}
+                />
               </CardContent>
             </Card>
           </TabsContent>
