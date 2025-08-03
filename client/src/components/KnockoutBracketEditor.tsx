@@ -119,6 +119,38 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     });
   }, [qualifiedPlayers, generateBracket]);
 
+  // Get players already selected in other matches
+  const getSelectedPlayerIds = (currentMatchId: string, currentPosition?: string) => {
+    const selectedIds = new Set<string>();
+    
+    matches.forEach(match => {
+      if (match.id === currentMatchId) {
+        // For current match, exclude the other position
+        if (currentPosition === 'player1' && match.player2?.id && match.player2.id !== 'lucky_draw') {
+          selectedIds.add(match.player2.id);
+        } else if (currentPosition === 'player2' && match.player1?.id && match.player1.id !== 'lucky_draw') {
+          selectedIds.add(match.player1.id);
+        }
+      } else {
+        // For other matches, exclude all selected players
+        if (match.player1?.id && match.player1.id !== 'lucky_draw') {
+          selectedIds.add(match.player1.id);
+        }
+        if (match.player2?.id && match.player2.id !== 'lucky_draw') {
+          selectedIds.add(match.player2.id);
+        }
+      }
+    });
+    
+    return selectedIds;
+  };
+
+  // Get available players for a specific match and position
+  const getAvailableUsers = (matchId: string, position: 'player1' | 'player2') => {
+    const selectedIds = getSelectedPlayerIds(matchId, position);
+    return users.filter(user => !selectedIds.has(user.id));
+  };
+
   // Handle manual player selection from dropdown
   const handlePlayerSelect = (matchId: string, position: 'player1' | 'player2', playerId: string) => {
     let selectedPlayer: Player | undefined;
@@ -271,23 +303,48 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
           </div>
         </div>
         
-        {/* Qualified Players Info (for reference only) */}
-        {qualifiedPlayers.length > 0 && (
-          <div>
-            <h4 className="font-medium mb-2">Шалгарсан тоглогчид ({qualifiedPlayers.length})</h4>
-            <p className="text-sm text-gray-600">
-              Админ доорх талбаруудаас тоглогчдыг гараар сонгоно уу
-            </p>
-            <div className="text-xs text-gray-500 mt-1">
-              {qualifiedPlayers.map((player, index) => (
-                <span key={player.id}>
-                  {player.name} ({player.groupName})
-                  {index < qualifiedPlayers.length - 1 ? ', ' : ''}
-                </span>
-              ))}
+        {/* Player Selection Info */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Qualified Players Info */}
+          {qualifiedPlayers.length > 0 && (
+            <div>
+              <h4 className="font-medium mb-2">Шалгарсан тоглогчид ({qualifiedPlayers.length})</h4>
+              <p className="text-sm text-gray-600 mb-1">
+                Админ доорх талбаруудаас тоглогчдыг гараар сонгоно уу
+              </p>
+              <div className="text-xs text-gray-500">
+                {qualifiedPlayers.map((player, index) => (
+                  <span key={player.id}>
+                    {player.name} ({player.groupName})
+                    {index < qualifiedPlayers.length - 1 ? ', ' : ''}
+                  </span>
+                ))}
+              </div>
             </div>
+          )}
+          
+          {/* Player Selection Status */}
+          <div>
+            <h4 className="font-medium mb-2">Тоглогч сонголтын төлөв</h4>
+            <div className="text-sm space-y-1">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-blue-50 border rounded"></div>
+                <span className="text-gray-600">Тоглогч 1 сонгох</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-red-50 border rounded"></div>
+                <span className="text-gray-600">Тоглогч 2 сонгох</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs">🎲</span>
+                <span className="text-gray-600">Lucky draw сонголт</span>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Сонгогдсон тоглогчид бусад тоглолтын жагсаалтаас автоматаар хасагдана
+            </p>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Bracket Visualization */}
@@ -345,12 +402,17 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                   >
                     <option value="">Тоглогч 1 сонгох</option>
                     <option value="lucky_draw">🎲 Lucky draw</option>
-                    {users.map(user => (
+                    {getAvailableUsers(match.id, 'player1').map(user => (
                       <option key={`${match.id}-p1-${user.id}`} value={user.id}>
                         {user.firstName} {user.lastName}
                       </option>
                     ))}
                   </select>
+                  {getAvailableUsers(match.id, 'player1').length === 0 && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      Бүх тоглогч сонгогдсон
+                    </div>
+                  )}
                 </div>
 
                 {/* VS Divider */}
@@ -365,12 +427,17 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                   >
                     <option value="">Тоглогч 2 сонгох</option>
                     <option value="lucky_draw">🎲 Lucky draw</option>
-                    {users.map(user => (
+                    {getAvailableUsers(match.id, 'player2').map(user => (
                       <option key={`${match.id}-p2-${user.id}`} value={user.id}>
                         {user.firstName} {user.lastName}
                       </option>
                     ))}
                   </select>
+                  {getAvailableUsers(match.id, 'player2').length === 0 && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      Бүх тоглогч сонгогдсон
+                    </div>
+                  )}
                 </div>
 
                 {/* Score Input */}
