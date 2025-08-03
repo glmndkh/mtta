@@ -440,12 +440,17 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                     <option value="">Тоглогч 1 сонгох</option>
                     <option value="lucky_draw">🎲 Lucky draw</option>
                     {getAvailableUsers(match.id, 'player1').map(user => (
-                      <option key={`${match.id}-p1-${user.id}`} value={user.id}>
+                      <option key={`p1-${user.id}`} value={user.id}>
                         {user.firstName} {user.lastName}
                       </option>
                     ))}
                   </select>
-                  {getAvailableUsers(match.id, 'player1').length === 0 && (
+                  {match.player1 && (
+                    <div className="text-xs text-blue-600 mt-1 font-medium">
+                      Сонгогдсон: {match.player1.name}
+                    </div>
+                  )}
+                  {getAvailableUsers(match.id, 'player1').length === 0 && !match.player1 && (
                     <div className="text-xs text-gray-500 mt-1">
                       Бүх тоглогч сонгогдсон
                     </div>
@@ -465,12 +470,17 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                     <option value="">Тоглогч 2 сонгох</option>
                     <option value="lucky_draw">🎲 Lucky draw</option>
                     {getAvailableUsers(match.id, 'player2').map(user => (
-                      <option key={`${match.id}-p2-${user.id}`} value={user.id}>
+                      <option key={`p2-${user.id}`} value={user.id}>
                         {user.firstName} {user.lastName}
                       </option>
                     ))}
                   </select>
-                  {getAvailableUsers(match.id, 'player2').length === 0 && (
+                  {match.player2 && (
+                    <div className="text-xs text-red-600 mt-1 font-medium">
+                      Сонгогдсон: {match.player2.name}
+                    </div>
+                  )}
+                  {getAvailableUsers(match.id, 'player2').length === 0 && !match.player2 && (
                     <div className="text-xs text-gray-500 mt-1">
                       Бүх тоглогч сонгогдсон
                     </div>
