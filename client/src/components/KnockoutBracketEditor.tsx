@@ -44,22 +44,23 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
   const svgRef = useRef<SVGSVGElement>(null);
   const { toast } = useToast();
 
-  // Generate standard tournament bracket structure with better spacing
+  // Generate standard tournament bracket structure with proper spacing to prevent overlap
   const generateBracket = useCallback((playerCount: number) => {
     const rounds = Math.ceil(Math.log2(playerCount));
     const newMatches: Match[] = [];
     
-    // Calculate positions for each round with better spacing
-    const MATCH_HEIGHT = 90; // Reduced height for smaller boxes
-    const ROUND_WIDTH = 250; // Reduced width for better visibility
-    const START_Y = 30;
+    // Calculate positions for each round with much better spacing to prevent overlap
+    const MATCH_HEIGHT = 120; // Increased height for proper spacing between boxes
+    const ROUND_WIDTH = 280; // Increased width for better separation
+    const START_Y = 50; // More top margin
     
     for (let round = 1; round <= rounds; round++) {
       const matchesInRound = Math.pow(2, rounds - round);
       const roundName = getRoundName(matchesInRound);
       
       for (let matchIndex = 0; matchIndex < matchesInRound; matchIndex++) {
-        const ySpacing = Math.pow(2, round - 1) * MATCH_HEIGHT + 20; // Add extra spacing
+        // Much larger spacing to completely prevent overlap
+        const ySpacing = Math.pow(2, round - 1) * MATCH_HEIGHT + (round * 50); // Much more progressive spacing
         const yOffset = START_Y + matchIndex * ySpacing;
         
         const match: Match = {
@@ -67,7 +68,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
           round,
           roundName,
           position: {
-            x: (round - 1) * ROUND_WIDTH + 30,
+            x: (round - 1) * ROUND_WIDTH + 40,
             y: yOffset
           }
         };
@@ -179,10 +180,10 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
       const nextMatch = matches.find(m => m.id === match.nextMatchId);
       if (!nextMatch) return null;
       
-      const x1 = match.position.x + 224; // Adjusted for smaller width (56*4)
-      const y1 = match.position.y + 45; // Adjusted for smaller height
+      const x1 = match.position.x + 224; // Match box width
+      const y1 = match.position.y + 60; // Center of match box
       const x2 = nextMatch.position.x;
-      const y2 = nextMatch.position.y + 45;
+      const y2 = nextMatch.position.y + 60;
       
       return (
         <line
@@ -246,8 +247,8 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
             ref={containerRef}
             className="relative bg-white border rounded-lg p-6 overflow-auto"
             style={{ 
-              minHeight: '800px',
-              minWidth: Math.max(...matches.map(m => m.position.x)) + 350 
+              minHeight: '1200px',
+              minWidth: '1600px'
             }}
           >
             {/* SVG for connection lines */}
@@ -295,7 +296,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                     <option value="">Тоглогч 1 сонгох</option>
                     <option value="lucky_draw">Lucky draw</option>
                     {users.map(user => (
-                      <option key={user.id} value={user.id}>
+                      <option key={`${match.id}-p1-${user.id}`} value={user.id}>
                         {user.firstName} {user.lastName}
                       </option>
                     ))}
@@ -315,7 +316,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                     <option value="">Тоглогч 2 сонгох</option>
                     <option value="lucky_draw">Lucky draw</option>
                     {users.map(user => (
-                      <option key={user.id} value={user.id}>
+                      <option key={`${match.id}-p2-${user.id}`} value={user.id}>
                         {user.firstName} {user.lastName}
                       </option>
                     ))}
