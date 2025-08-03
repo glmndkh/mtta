@@ -678,11 +678,137 @@ export class DatabaseStorage implements IStorage {
         playerStats[participant.playerId] = { wins: 0, losses: 0 };
       }
       
+      // Process group stage results
+      if (tournamentResult.groupStageResults) {
+        try {
+          let groupData;
+          if (typeof tournamentResult.groupStageResults === 'string') {
+            groupData = JSON.parse(tournamentResult.groupStageResults);
+          } else {
+            groupData = tournamentResult.groupStageResults;
+          }
+          
+          if (Array.isArray(groupData)) {
+            for (const group of groupData) {
+              if (group.players && group.resultMatrix) {
+                // Process each match in the group
+                for (let i = 0; i < group.players.length; i++) {
+                  for (let j = i + 1; j < group.players.length; j++) {
+                    // Get match results from both directions to handle different input formats
+                    const result1 = group.resultMatrix[i] && group.resultMatrix[i][j];
+                    const result2 = group.resultMatrix[j] && group.resultMatrix[j][i];
+                    
+                    // Process the match if there's a result
+                    if ((result1 && result1 !== '' && result1 !== '*****') || (result2 && result2 !== '' && result2 !== '*****')) {
+                      const player1 = group.players[i];
+                      const player2 = group.players[j];
+                      
+                      // Find player records by matching user ID from tournament data
+                      let player1Id = null;
+                      let player2Id = null;
+                      
+                      // Try to find by user ID first, then by player ID
+                      for (const participant of participants) {
+                        if (participant.userId === player1.id || participant.playerId === player1.id) {
+                          player1Id = participant.playerId;
+                        }
+                        if (participant.userId === player2.id || participant.playerId === player2.id) {
+                          player2Id = participant.playerId;
+                        }
+                      }
+                      
+                      if (player1Id && player2Id) {
+                        // Determine winner based on sets/scores
+                        let player1Wins = false;
+                        let player2Wins = false;
+                        
+                        // Parse individual match result (e.g., "3" vs "2" means 3 sets vs 2 sets)
+                        if (result1 && result1 !== '' && result1 !== '*****') {
+                          const score1 = parseInt(result1.toString().trim());
+                          if (!isNaN(score1)) {
+                            if (result2 && result2 !== '' && result2 !== '*****') {
+                              const score2 = parseInt(result2.toString().trim());
+                              if (!isNaN(score2)) {
+                                if (score1 > score2) {
+                                  player1Wins = true;
+                                } else if (score2 > score1) {
+                                  player2Wins = true;
+                                }
+                              }
+                            }
+                          }
+                        }
+                        
+                        // Update win/loss counts
+                        if (player1Wins) {
+                          playerStats[player1Id].wins++;
+                          playerStats[player2Id].losses++;
+                        } else if (player2Wins) {
+                          playerStats[player2Id].wins++;
+                          playerStats[player1Id].losses++;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Error processing group stage results for stats:', e);
+        }
+      }
+      
+      // Process knockout results
+      if (tournamentResult.knockoutResults) {
+        try {
+          let knockoutData;
+          if (typeof tournamentResult.knockoutResults === 'string') {
+            knockoutData = JSON.parse(tournamentResult.knockoutResults);
+          } else {
+            knockoutData = tournamentResult.knockoutResults;
+          }
+          
+          if (Array.isArray(knockoutData)) {
+            for (const match of knockoutData) {
+              if (match.player1 && match.player2 && match.winner) {
+                // Find player IDs
+                let player1Id = null;
+                let player2Id = null;
+                let winnerId = null;
+                
+                for (const participant of participants) {
+                  if (participant.userId === match.player1.id || participant.playerId === match.player1.id) {
+                    player1Id = participant.playerId;
+                  }
+                  if (participant.userId === match.player2.id || participant.playerId === match.player2.id) {
+                    player2Id = participant.playerId;
+                  }
+                  if (participant.userId === match.winner.id || participant.playerId === match.winner.id) {
+                    winnerId = participant.playerId;
+                  }
+                }
+                
+                if (player1Id && player2Id && winnerId) {
+                  if (winnerId === player1Id) {
+                    playerStats[player1Id].wins++;
+                    playerStats[player2Id].losses++;
+                  } else if (winnerId === player2Id) {
+                    playerStats[player2Id].wins++;
+                    playerStats[player1Id].losses++;
+                  }
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Error processing knockout results for stats:', e);
+        }
+      }
+      
       // Update player statistics in database (replace, don't add to existing)
       for (const [playerId, stats] of Object.entries(playerStats)) {
-        if (stats.wins > 0 || stats.losses > 0) {
-          await this.updatePlayerStats(playerId, stats.wins, stats.losses);
-        }
+        await this.updatePlayerStats(playerId, stats.wins, stats.losses);
       }
     } catch (error) {
       console.error('Error updating player stats from tournament:', error);
