@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Trophy, Medal, Users, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
-import { KnockoutBracket } from "@/components/KnockoutBracket";
+// Remove unused KnockoutBracket import
 import type { Tournament, TournamentResults } from "@shared/schema";
 
 // Types for structured tournament results
@@ -313,11 +313,168 @@ export default function TournamentResultsPage() {
                 </CardHeader>
                 <CardContent>
                   {knockoutResults.length > 0 ? (
-                    <KnockoutBracket
-                      matches={knockoutResults}
-                      onPlayerClick={navigateToProfile}
-                      isViewOnly={true}
-                    />
+                    <div className="bg-white border rounded-lg p-6 overflow-x-auto">
+                      <div className="tournament-bracket flex justify-center min-w-[1200px]">
+                        {/* Quarterfinals Column */}
+                        {knockoutResults.filter(m => m.round === 'quarterfinal').length > 0 && (
+                          <div className="bracket-round flex flex-col justify-center space-y-8 mr-16">
+                            <h3 className="text-center font-semibold mb-4 text-gray-700">Дөрөвний финал</h3>
+                            {knockoutResults.filter(m => m.round === 'quarterfinal').map((match) => (
+                              <div key={match.id} className="bracket-match bg-gray-50 border-2 border-gray-200 rounded-lg p-4 w-60">
+                                <div className="space-y-3">
+                                  <div className="player-row flex items-center justify-between p-2 bg-white rounded border">
+                                    <div className="flex-1">
+                                      <button
+                                        onClick={() => match.player1?.id && navigateToProfile(match.player1.id)}
+                                        className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                                      >
+                                        {match.player1?.name || 'TBD'}
+                                      </button>
+                                    </div>
+                                    <div className="ml-2 font-bold text-lg min-w-[24px] text-center">
+                                      {match.score && match.winner?.id === match.player1?.id 
+                                        ? match.score.split('-')[0] 
+                                        : match.score ? match.score.split('-')[0] : ''}
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="player-row flex items-center justify-between p-2 bg-white rounded border">
+                                    <div className="flex-1">
+                                      <button
+                                        onClick={() => match.player2?.id && navigateToProfile(match.player2.id)}
+                                        className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                                      >
+                                        {match.player2?.name || 'TBD'}
+                                      </button>
+                                    </div>
+                                    <div className="ml-2 font-bold text-lg min-w-[24px] text-center">
+                                      {match.score && match.winner?.id === match.player2?.id 
+                                        ? match.score.split('-')[1] 
+                                        : match.score ? match.score.split('-')[1] : ''}
+                                    </div>
+                                  </div>
+                                  
+                                  {match.score && (
+                                    <div className="text-center text-sm text-gray-600 mt-2">
+                                      Оноо: {match.score}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Semifinals Column */}
+                        {knockoutResults.filter(m => m.round === 'semifinal').length > 0 && (
+                          <div className="bracket-round flex flex-col justify-center space-y-16 mr-16">
+                            <h3 className="text-center font-semibold mb-4 text-gray-700">Хагас финал</h3>
+                            {knockoutResults.filter(m => m.round === 'semifinal').map((match) => (
+                              <div key={match.id} className="bracket-match bg-gray-50 border-2 border-gray-200 rounded-lg p-4 w-60">
+                                <div className="space-y-3">
+                                  <div className="player-row flex items-center justify-between p-2 bg-white rounded border">
+                                    <div className="flex-1">
+                                      <button
+                                        onClick={() => match.player1?.id && navigateToProfile(match.player1.id)}
+                                        className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                                      >
+                                        {match.player1?.name || 'TBD'}
+                                      </button>
+                                    </div>
+                                    <div className="ml-2 font-bold text-lg min-w-[24px] text-center">
+                                      {match.score && match.winner?.id === match.player1?.id 
+                                        ? match.score.split('-')[0] 
+                                        : match.score ? match.score.split('-')[0] : ''}
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="player-row flex items-center justify-between p-2 bg-white rounded border">
+                                    <div className="flex-1">
+                                      <button
+                                        onClick={() => match.player2?.id && navigateToProfile(match.player2.id)}
+                                        className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                                      >
+                                        {match.player2?.name || 'TBD'}
+                                      </button>
+                                    </div>
+                                    <div className="ml-2 font-bold text-lg min-w-[24px] text-center">
+                                      {match.score && match.winner?.id === match.player2?.id 
+                                        ? match.score.split('-')[1] 
+                                        : match.score ? match.score.split('-')[1] : ''}
+                                    </div>
+                                  </div>
+                                  
+                                  {match.score && (
+                                    <div className="text-center text-sm text-gray-600 mt-2">
+                                      Оноо: {match.score}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Finals Column */}
+                        {knockoutResults.filter(m => m.round === 'final').length > 0 && (
+                          <div className="bracket-round flex flex-col justify-center">
+                            <h3 className="text-center font-semibold mb-4 text-gray-700">Финал</h3>
+                            {knockoutResults.filter(m => m.round === 'final').map((match) => (
+                              <div key={match.id} className="bracket-match bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4 w-60">
+                                <div className="space-y-3">
+                                  <div className="player-row flex items-center justify-between p-2 bg-white rounded border">
+                                    <div className="flex-1">
+                                      <button
+                                        onClick={() => match.player1?.id && navigateToProfile(match.player1.id)}
+                                        className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                                      >
+                                        {match.player1?.name || 'TBD'}
+                                      </button>
+                                    </div>
+                                    <div className="ml-2 font-bold text-lg min-w-[24px] text-center">
+                                      {match.score && match.winner?.id === match.player1?.id 
+                                        ? match.score.split('-')[0] 
+                                        : match.score ? match.score.split('-')[0] : ''}
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="player-row flex items-center justify-between p-2 bg-white rounded border">
+                                    <div className="flex-1">
+                                      <button
+                                        onClick={() => match.player2?.id && navigateToProfile(match.player2.id)}
+                                        className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                                      >
+                                        {match.player2?.name || 'TBD'}
+                                      </button>
+                                    </div>
+                                    <div className="ml-2 font-bold text-lg min-w-[24px] text-center">
+                                      {match.score && match.winner?.id === match.player2?.id 
+                                        ? match.score.split('-')[1] 
+                                        : match.score ? match.score.split('-')[1] : ''}
+                                    </div>
+                                  </div>
+                                  
+                                  {match.score && (
+                                    <div className="text-center text-sm text-gray-600 mt-2">
+                                      Оноо: {match.score}
+                                    </div>
+                                  )}
+                                  
+                                  {match.winner && (
+                                    <div className="mt-2 p-2 bg-yellow-100 rounded border border-yellow-400 text-center">
+                                      <Trophy className="w-4 h-4 inline-block mr-1 text-yellow-600" />
+                                      <span className="text-sm font-bold text-yellow-800">
+                                        Аварга: {match.winner.name}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   ) : (
                     <div className="text-center py-8 text-gray-500">
                       <Trophy className="w-12 h-12 mx-auto mb-4 text-gray-300" />
