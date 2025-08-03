@@ -408,82 +408,7 @@ export default function AdminTournamentResultsPage() {
     return qualified;
   };
 
-  // Auto-generate knockout bracket from qualified players
-  const generateKnockoutBracket = () => {
-    const qualified = getQualifiedPlayers();
-    if (qualified.length < 4) {
-      toast({
-        title: "Хангалтгүй тоглогч",
-        description: "Шигшээ тоглолт үүсгэхийн тулд дор хаяж 4 тоглогч шаардлагатай",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Clear existing knockout matches
-    setKnockoutMatches([]);
-
-    const totalPlayers = qualified.length;
-    let matches: KnockoutMatch[] = [];
-
-    // Create initial bracket structure based on number of qualified players
-    if (totalPlayers >= 8) {
-      // Quarterfinals (8 players -> 4 matches)
-      for (let i = 0; i < 4; i++) {
-        const player1 = qualified[i * 2];
-        const player2 = qualified[i * 2 + 1];
-        matches.push({
-          id: `qf_${Date.now()}_${i}`,
-          round: 'quarterfinal',
-          player1: player1 ? { id: player1.id, name: player1.name } : undefined,
-          player2: player2 ? { id: player2.id, name: player2.name } : undefined,
-          position: { x: 50, y: 50 + i * 120 }
-        });
-      }
-
-      // Semifinals (4 winners -> 2 matches)
-      for (let i = 0; i < 2; i++) {
-        matches.push({
-          id: `sf_${Date.now()}_${i}`,
-          round: 'semifinal',
-          position: { x: 350, y: 110 + i * 240 }
-        });
-      }
-
-      // Final (2 winners -> 1 match)
-      matches.push({
-        id: `f_${Date.now()}`,
-        round: 'final',
-        position: { x: 650, y: 230 }
-      });
-    } else if (totalPlayers >= 4) {
-      // Semifinals (4 players -> 2 matches)
-      for (let i = 0; i < 2; i++) {
-        const player1 = qualified[i * 2];
-        const player2 = qualified[i * 2 + 1];
-        matches.push({
-          id: `sf_${Date.now()}_${i}`,
-          round: 'semifinal',
-          player1: player1 ? { id: player1.id, name: player1.name } : undefined,
-          player2: player2 ? { id: player2.id, name: player2.name } : undefined,
-          position: { x: 50, y: 110 + i * 240 }
-        });
-      }
-
-      // Final (2 winners -> 1 match)
-      matches.push({
-        id: `f_${Date.now()}`,
-        round: 'final',
-        position: { x: 350, y: 230 }
-      });
-    }
-
-    setKnockoutMatches(matches);
-    toast({
-      title: "Шигшээ тоглолт үүсгэгдлээ",
-      description: `${qualified.length} тоглогчтой шигшээ тоглолт амжилттай үүсгэгдлээ`,
-    });
-  };
+  // Removed automatic generation - admin creates matches manually
 
   // Helper functions for knockout stage
   const addKnockoutRound = (round: string) => {
@@ -826,22 +751,61 @@ export default function AdminTournamentResultsPage() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <div className="flex space-x-2">
-                      <Button 
-                        onClick={generateKnockoutBracket} 
-                        className="flex items-center gap-2"
-                        disabled={getQualifiedPlayers().length < 4}
+                      <Button
+                        onClick={() => {
+                          const newMatch: KnockoutMatch = {
+                            id: `qf_${Date.now()}_${Math.random()}`,
+                            round: 'quarterfinal',
+                            position: { x: 50, y: 50 + knockoutMatches.filter(m => m.round === 'quarterfinal').length * 120 }
+                          };
+                          setKnockoutMatches([...knockoutMatches, newMatch]);
+                        }}
+                        size="sm"
+                        variant="outline"
                       >
-                        <Trophy className="w-4 h-4" />
-                        Авто шигшээ үүсгэх
+                        <Plus className="w-4 h-4 mr-1" />
+                        Дөрөвний финал
                       </Button>
-                      <Button onClick={() => addKnockoutRound('quarterfinal')} size="sm" variant="outline">
-                        + Дөрөвний финал
+                      
+                      <Button
+                        onClick={() => {
+                          const newMatch: KnockoutMatch = {
+                            id: `sf_${Date.now()}_${Math.random()}`,
+                            round: 'semifinal',
+                            position: { x: 400, y: 110 + knockoutMatches.filter(m => m.round === 'semifinal').length * 200 }
+                          };
+                          setKnockoutMatches([...knockoutMatches, newMatch]);
+                        }}
+                        size="sm"
+                        variant="outline"
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Хагас финал
                       </Button>
-                      <Button onClick={() => addKnockoutRound('semifinal')} size="sm" variant="outline">
-                        + Хагас финал
+                      
+                      <Button
+                        onClick={() => {
+                          const newMatch: KnockoutMatch = {
+                            id: `f_${Date.now()}_${Math.random()}`,
+                            round: 'final',
+                            position: { x: 750, y: 210 }
+                          };
+                          setKnockoutMatches([...knockoutMatches, newMatch]);
+                        }}
+                        size="sm"
+                        variant="outline"
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Финал
                       </Button>
-                      <Button onClick={() => addKnockoutRound('final')} size="sm" variant="outline">
-                        + Финал
+                      
+                      <Button
+                        onClick={() => setKnockoutMatches([])}
+                        size="sm"
+                        variant="destructive"
+                      >
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        Бүгдийг арилгах
                       </Button>
                     </div>
                     <div className="flex space-x-2 border-l pl-2">
@@ -879,24 +843,16 @@ export default function AdminTournamentResultsPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                {/* Show qualified players summary */}
-                {getQualifiedPlayers().length > 0 && (
-                  <div className="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
-                    <h4 className="font-semibold text-green-800 mb-2">
-                      Шалгарсан тоглогчид ({getQualifiedPlayers().length} тоглогч)
-                    </h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      {getQualifiedPlayers().map((player, index) => (
-                        <div key={player.id} className="bg-white p-2 rounded border text-sm">
-                          <div className="font-medium">{player.name}</div>
-                          <div className="text-gray-600 text-xs">
-                            {player.groupName} - {player.position}-р байр
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* Manual Bracket Creation Notice */}
+                <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h4 className="font-semibold text-blue-800 mb-2">
+                    Гараар шигшээ тоглолт үүсгэх
+                  </h4>
+                  <p className="text-blue-700 text-sm">
+                    Дээрх товчлууруудыг ашиглан тоглолт нэмж, тоглогчдыг сонгож, үр дүнг оруулна уу. 
+                    Та бүх холболтыг өөрсдөө удирдаж болно.
+                  </p>
+                </div>
 
                 {/* Traditional Tournament Bracket */}
                 <div className="relative">
@@ -1259,23 +1215,14 @@ export default function AdminTournamentResultsPage() {
                     <div className="text-center py-12">
                       <Trophy className="w-16 h-16 mx-auto mb-4 text-gray-300" />
                       <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                        Шигшээ тоглолт үүсгэх
+                        Шигшээ тоглолт байхгүй
                       </h3>
                       <p className="text-gray-500 mb-4">
-                        Группийн тоглолтоос шалгарсан тоглогчдоор автоматаар шигшээ тоглолт үүсгэнэ үү
+                        Дээрх товчлууруудыг ашиглан шигшээ тоглолт нэмж эхлэнэ үү
                       </p>
-                      <p className="text-sm text-gray-400 mb-6">
-                        Эсвэл дээрх товчнуудаар гараар тоглолт нэмнэ үү
+                      <p className="text-sm text-gray-400">
+                        Та өөрсдөө тоглолт нэмж, тоглогч сонгож, холболт хийж болно
                       </p>
-                      {getQualifiedPlayers().length >= 4 && (
-                        <Button 
-                          onClick={generateKnockoutBracket} 
-                          className="flex items-center gap-2"
-                        >
-                          <Trophy className="w-4 h-4" />
-                          {getQualifiedPlayers().length} тоглогчийн шигшээ үүсгэх
-                        </Button>
-                      )}
                     </div>
                   )}
                 </div>
