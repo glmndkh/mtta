@@ -72,10 +72,12 @@ export default function TournamentManagement() {
     teamId: number;
     sets: Array<number>;
     setsWon: number;
+    opponentId?: number;
   }>>([
     { id: 1, name: "", teamId: 1, sets: [11, 11, 11, 0, 0], setsWon: 3 },
     { id: 2, name: "", teamId: 2, sets: [0, 0, 0, 0, 0], setsWon: 0 }
   ]);
+  const [editingScore, setEditingScore] = useState<{playerId: number, setIndex: number} | null>(null);
   
   // Get current group data for compatibility
   const groupData = groups.find(g => g.id === activeGroupId)?.players || [];
@@ -1292,41 +1294,171 @@ export default function TournamentManagement() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Input 
-                                placeholder="Тамирчины нэр" 
-                                className="border-0 bg-transparent"
-                                value={player.name}
-                                onChange={(e) => {
-                                  const updatedPlayers = matchPlayers.map(p => 
-                                    p.id === player.id ? { ...p, name: e.target.value } : p
-                                  );
-                                  setMatchPlayers(updatedPlayers);
-                                }}
-                              />
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    className="w-full justify-start h-8 p-1 font-normal"
+                                  >
+                                    {player.name || "Тамирчины нэр"}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-80 p-0">
+                                  <Command>
+                                    <CommandInput placeholder="Тоглогч хайх..." />
+                                    <CommandList>
+                                      <CommandEmpty>Тоглогч олдсонгүй.</CommandEmpty>
+                                      <CommandGroup heading={`${player.teamId === 1 ? selectedTeam1?.name || 'Баг 1' : selectedTeam2?.name || 'Баг 2'} тоглогчид`}>
+                                        {validExistingTeams
+                                          .find(team => team.id === (player.teamId === 1 ? selectedTeam1?.id : selectedTeam2?.id))
+                                          ?.players?.map((teamPlayer: any) => (
+                                          <CommandItem
+                                            key={teamPlayer.id}
+                                            value={`${teamPlayer.firstName} ${teamPlayer.lastName}`}
+                                            onSelect={() => {
+                                              const updatedPlayers = matchPlayers.map(p => 
+                                                p.id === player.id 
+                                                  ? { ...p, name: `${teamPlayer.firstName} ${teamPlayer.lastName}` } 
+                                                  : p
+                                              );
+                                              setMatchPlayers(updatedPlayers);
+                                            }}
+                                          >
+                                            <Check
+                                              className={`mr-2 h-4 w-4 ${
+                                                player.name === `${teamPlayer.firstName} ${teamPlayer.lastName}` ? "opacity-100" : "opacity-0"
+                                              }`}
+                                            />
+                                            {teamPlayer.firstName} {teamPlayer.lastName}
+                                          </CommandItem>
+                                        ))}
+                                      </CommandGroup>
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
                             </TableCell>
                             {player.sets.map((score, setIndex) => (
                               <TableCell key={setIndex} className="text-center">
-                                {setIndex < 3 || (setIndex < 5 && player.sets[setIndex] > 0) ? (
-                                  <Input 
-                                    placeholder={setIndex < 3 ? "11" : "0"}
-                                    className="w-12 h-8 text-center p-1 border border-gray-300"
-                                    value={score || ""}
-                                    onChange={(e) => {
-                                      const newScore = parseInt(e.target.value) || 0;
-                                      const updatedPlayers = matchPlayers.map(p => 
-                                        p.id === player.id 
-                                          ? { 
-                                              ...p, 
-                                              sets: p.sets.map((s, i) => i === setIndex ? newScore : s),
-                                              setsWon: p.sets.filter((s, i) => i !== setIndex ? s >= 11 : newScore >= 11).length
-                                            } 
-                                          : p
-                                      );
-                                      setMatchPlayers(updatedPlayers);
+                                {setIndex < 3 || (setIndex < 5 && (player.sets[setIndex] > 0 || editingScore?.playerId === player.id && editingScore?.setIndex === setIndex)) ? (
+                                  <Popover
+                                    open={editingScore?.playerId === player.id && editingScore?.setIndex === setIndex}
+                                    onOpenChange={(open) => {
+                                      if (open) {
+                                        setEditingScore({ playerId: player.id, setIndex });
+                                      } else {
+                                        setEditingScore(null);
+                                      }
                                     }}
-                                  />
+                                  >
+                                    <PopoverTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        className={`w-12 h-8 text-center p-1 text-xs ${
+                                          score >= 11 ? 'bg-green-100 border-green-300' : 
+                                          score > 0 ? 'bg-yellow-100 border-yellow-300' : 
+                                          'bg-white border-gray-300'
+                                        }`}
+                                      >
+                                        {score || ""}
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-80 p-4">
+                                      <div className="space-y-4">
+                                        <h4 className="font-medium">Set {setIndex + 1} дүн засах</h4>
+                                        <div className="space-y-2">
+                                          <Label>{player.name || 'Тоглогч'} оноо</Label>
+                                          <Input 
+                                            type="number"
+                                            placeholder="11"
+                                            value={score || ""}
+                                            onChange={(e) => {
+                                              const newScore = parseInt(e.target.value) || 0;
+                                              const updatedPlayers = matchPlayers.map(p => 
+                                                p.id === player.id 
+                                                  ? { 
+                                                      ...p, 
+                                                      sets: p.sets.map((s, i) => i === setIndex ? newScore : s),
+                                                      setsWon: p.sets.map((s, i) => i === setIndex ? newScore : s).filter(s => s >= 11).length
+                                                    } 
+                                                  : p
+                                              );
+                                              setMatchPlayers(updatedPlayers);
+                                            }}
+                                          />
+                                        </div>
+                                        
+                                        <div className="space-y-2">
+                                          <Label>Өрсөлдөгч тоглогч</Label>
+                                          <Popover>
+                                            <PopoverTrigger asChild>
+                                              <Button
+                                                variant="outline"
+                                                className="w-full justify-between"
+                                              >
+                                                {player.opponentId ? 
+                                                  matchPlayers.find(p => p.id === player.opponentId)?.name || "Тоглогч сонгох" :
+                                                  "Тоглогч сонгох"
+                                                }
+                                                <Search className="w-4 h-4" />
+                                              </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-80 p-0">
+                                              <Command>
+                                                <CommandInput placeholder="Өрсөлдөгч хайх..." />
+                                                <CommandList>
+                                                  <CommandEmpty>Тоглогч олдсонгүй.</CommandEmpty>
+                                                  <CommandGroup heading="Өрсөлдөгч багийн тоглогчид">
+                                                    {matchPlayers
+                                                      .filter(p => p.teamId !== player.teamId)
+                                                      .map((opponent) => (
+                                                      <CommandItem
+                                                        key={opponent.id}
+                                                        value={opponent.name}
+                                                        onSelect={() => {
+                                                          const updatedPlayers = matchPlayers.map(p => 
+                                                            p.id === player.id ? { ...p, opponentId: opponent.id } : p
+                                                          );
+                                                          setMatchPlayers(updatedPlayers);
+                                                        }}
+                                                      >
+                                                        <Check
+                                                          className={`mr-2 h-4 w-4 ${
+                                                            player.opponentId === opponent.id ? "opacity-100" : "opacity-0"
+                                                          }`}
+                                                        />
+                                                        {opponent.name || `Тоглогч ${opponent.id}`}
+                                                      </CommandItem>
+                                                    ))}
+                                                  </CommandGroup>
+                                                </CommandList>
+                                              </Command>
+                                            </PopoverContent>
+                                          </Popover>
+                                        </div>
+                                        
+                                        <div className="flex justify-end gap-2">
+                                          <Button 
+                                            variant="outline" 
+                                            size="sm"
+                                            onClick={() => setEditingScore(null)}
+                                          >
+                                            Болих
+                                          </Button>
+                                          <Button 
+                                            size="sm"
+                                            onClick={() => setEditingScore(null)}
+                                          >
+                                            Хадгалах
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    </PopoverContent>
+                                  </Popover>
                                 ) : (
-                                  <div className="w-12 h-8 bg-gray-200 rounded"></div>
+                                  <div className="w-12 h-8 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-400">
+                                    -
+                                  </div>
                                 )}
                               </TableCell>
                             ))}
@@ -1351,7 +1483,8 @@ export default function TournamentManagement() {
                                     name: "",
                                     teamId: 1,
                                     sets: [0, 0, 0, 0, 0],
-                                    setsWon: 0
+                                    setsWon: 0,
+                                    opponentId: undefined
                                   }]);
                                 }}
                               >
@@ -1369,7 +1502,8 @@ export default function TournamentManagement() {
                                     name: "",
                                     teamId: 2,
                                     sets: [0, 0, 0, 0, 0],
-                                    setsWon: 0
+                                    setsWon: 0,
+                                    opponentId: undefined
                                   }]);
                                 }}
                               >
