@@ -9,7 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trophy, Users, Calendar, Crown, Target, TrendingUp } from "lucide-react";
+import { Trophy, Users, Calendar, Crown, Target, TrendingUp, Eye } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Leagues() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -201,6 +202,16 @@ export default function Leagues() {
                       </div>
                     </CardContent>
                   </Card>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 mb-6">
+                    <Link href={`/leagues/${selectedLeague}`}>
+                      <Button className="flex items-center gap-2">
+                        <Eye className="w-4 h-4" />
+                        Дэлгэрэнгүй үзэх
+                      </Button>
+                    </Link>
+                  </div>
 
                   {/* League Table */}
                   <LeagueTable teams={teams} />

@@ -1377,6 +1377,64 @@ export class DatabaseStorage implements IStorage {
     return teamsWithPlayers;
   }
 
+  async getLeagueMatches(leagueId: string): Promise<any[]> {
+    try {
+      // Get all league matches with team details
+      const matches = await db
+        .select({
+          id: leagueMatches.id,
+          leagueId: leagueMatches.leagueId,
+          team1Score: leagueMatches.team1Score,
+          team2Score: leagueMatches.team2Score,
+          matchDate: leagueMatches.matchDate,
+          matchTime: leagueMatches.matchTime,
+          status: leagueMatches.status,
+          createdAt: leagueMatches.createdAt,
+          team1: {
+            id: sql<string>`team1.id`,
+            name: sql<string>`team1.name`,
+            logoUrl: sql<string>`team1.logo_url`,
+          },
+          team2: {
+            id: sql<string>`team2.id`, 
+            name: sql<string>`team2.name`,
+            logoUrl: sql<string>`team2.logo_url`,
+          },
+        })
+        .from(leagueMatches)
+        .leftJoin(
+          sql`${tournamentTeams} as team1`,
+          eq(leagueMatches.team1Id, sql`team1.id`)
+        )
+        .leftJoin(
+          sql`${tournamentTeams} as team2`,
+          eq(leagueMatches.team2Id, sql`team2.id`)
+        )
+        .where(eq(leagueMatches.leagueId, leagueId))
+        .orderBy(desc(leagueMatches.matchDate));
+
+      // Get player matches for each league match
+      const matchesWithPlayerMatches = await Promise.all(
+        matches.map(async (match) => {
+          const playerMatches = await db
+            .select()
+            .from(leaguePlayerMatches)
+            .where(eq(leaguePlayerMatches.leagueMatchId, match.id));
+
+          return {
+            ...match,
+            playerMatches,
+          };
+        })
+      );
+
+      return matchesWithPlayerMatches;
+    } catch (error) {
+      console.error("Error fetching league matches:", error);
+      return [];
+    }
+  }
+
   async getLeagueById(leagueId: string) {
     try {
       const [league] = await db

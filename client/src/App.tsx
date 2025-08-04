@@ -12,6 +12,7 @@ import PlayerDashboard from "@/pages/player-dashboard";
 import Tournaments from "@/pages/tournaments";
 import Clubs from "@/pages/clubs";
 import Leagues from "@/pages/leagues";
+import LeagueDetails from "@/pages/league-details";
 import News from "@/pages/news";
 import AdminTournamentResults from "@/pages/admin-tournament-results";
 import AdminTournaments from "@/pages/admin-tournaments";
@@ -41,6 +42,7 @@ function Router() {
       <Route path="/tournaments" component={Tournaments} />
       <Route path="/clubs" component={Clubs} />
       <Route path="/leagues" component={Leagues} />
+      <Route path="/leagues/:id" component={LeagueDetails} />
       <Route path="/news" component={News} />
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />
