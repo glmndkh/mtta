@@ -64,6 +64,18 @@ export default function TournamentManagement() {
     }
   ]);
   const [activeGroupId, setActiveGroupId] = useState<number>(1);
+  const [selectedTeam1, setSelectedTeam1] = useState<any>(null);
+  const [selectedTeam2, setSelectedTeam2] = useState<any>(null);
+  const [matchPlayers, setMatchPlayers] = useState<Array<{
+    id: number;
+    name: string;
+    teamId: number;
+    sets: Array<number>;
+    setsWon: number;
+  }>>([
+    { id: 1, name: "", teamId: 1, sets: [11, 11, 11, 0, 0], setsWon: 3 },
+    { id: 2, name: "", teamId: 2, sets: [0, 0, 0, 0, 0], setsWon: 0 }
+  ]);
   
   // Get current group data for compatibility
   const groupData = groups.find(g => g.id === activeGroupId)?.players || [];
@@ -1143,15 +1155,85 @@ export default function TournamentManagement() {
                   <div className="space-y-4">
                     <h4 className="font-medium">Нэгдүгээр баг</h4>
                     <div className="space-y-2">
-                      <Input placeholder="Багийн нэр" />
-                      <Input placeholder="Багийн лого" type="file" accept="image/*" />
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-between"
+                          >
+                            {selectedTeam1 ? selectedTeam1.name : "Баг сонгох"}
+                            <Search className="w-4 h-4" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 p-0">
+                          <Command>
+                            <CommandInput placeholder="Багийн нэрээр хайх..." />
+                            <CommandList>
+                              <CommandEmpty>Баг олдсонгүй.</CommandEmpty>
+                              <CommandGroup heading="Бүртгэлтэй багууд">
+                                {validExistingTeams.map((team: any) => (
+                                  <CommandItem
+                                    key={team.id}
+                                    value={team.name}
+                                    onSelect={() => {
+                                      setSelectedTeam1(team);
+                                    }}
+                                  >
+                                    <Check
+                                      className={`mr-2 h-4 w-4 ${
+                                        selectedTeam1?.id === team.id ? "opacity-100" : "opacity-0"
+                                      }`}
+                                    />
+                                    {team.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   </div>
                   <div className="space-y-4">
                     <h4 className="font-medium">Хоёрдугаар баг</h4>
                     <div className="space-y-2">
-                      <Input placeholder="Багийн нэр" />
-                      <Input placeholder="Багийн лого" type="file" accept="image/*" />
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-between"
+                          >
+                            {selectedTeam2 ? selectedTeam2.name : "Баг сонгох"}
+                            <Search className="w-4 h-4" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 p-0">
+                          <Command>
+                            <CommandInput placeholder="Багийн нэрээр хайх..." />
+                            <CommandList>
+                              <CommandEmpty>Баг олдсонгүй.</CommandEmpty>
+                              <CommandGroup heading="Бүртгэлтэй багууд">
+                                {validExistingTeams.filter((team: any) => team.id !== selectedTeam1?.id).map((team: any) => (
+                                  <CommandItem
+                                    key={team.id}
+                                    value={team.name}
+                                    onSelect={() => {
+                                      setSelectedTeam2(team);
+                                    }}
+                                  >
+                                    <Check
+                                      className={`mr-2 h-4 w-4 ${
+                                        selectedTeam2?.id === team.id ? "opacity-100" : "opacity-0"
+                                      }`}
+                                    />
+                                    {team.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   </div>
                 </div>
@@ -1160,13 +1242,23 @@ export default function TournamentManagement() {
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <div className="flex items-center justify-center gap-8">
                     <div className="flex items-center gap-2">
-                      <div className="w-12 h-12 bg-gray-300 rounded"></div>
-                      <span className="font-medium">Багийн нэр</span>
+                      <div className="w-12 h-12 bg-gray-300 rounded flex items-center justify-center text-xs text-gray-600">
+                        Лого
+                      </div>
+                      <span className="font-medium">
+                        {selectedTeam1 ? selectedTeam1.name : 'Багийн нэр'}
+                      </span>
                     </div>
-                    <div className="text-2xl font-bold">5 : 4</div>
+                    <div className="text-2xl font-bold">
+                      {matchPlayers.filter(p => p.teamId === 1).reduce((sum, p) => sum + p.setsWon, 0)} : {matchPlayers.filter(p => p.teamId === 2).reduce((sum, p) => sum + p.setsWon, 0)}
+                    </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">Багийн нэр</span>
-                      <div className="w-12 h-12 bg-gray-300 rounded"></div>
+                      <span className="font-medium">
+                        {selectedTeam2 ? selectedTeam2.name : 'Багийн нэр'}
+                      </span>
+                      <div className="w-12 h-12 bg-gray-300 rounded flex items-center justify-center text-xs text-gray-600">
+                        Лого
+                      </div>
                     </div>
                   </div>
                   <div className="text-center text-sm text-gray-600 mt-2">
@@ -1192,93 +1284,99 @@ export default function TournamentManagement() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {/* First Player Row */}
-                        <TableRow>
-                          <TableCell>
-                            <div className="w-8 h-8 bg-gray-300 rounded"></div>
-                          </TableCell>
-                          <TableCell>
-                            <Input placeholder="Тамирчины нэр" className="border-0 bg-transparent" />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Input 
-                              placeholder="11" 
-                              className="w-12 h-8 text-center p-1 border border-gray-300"
-                              defaultValue="11"
-                            />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Input 
-                              placeholder="11" 
-                              className="w-12 h-8 text-center p-1 border border-gray-300"
-                              defaultValue="11"
-                            />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Input 
-                              placeholder="11" 
-                              className="w-12 h-8 text-center p-1 border border-gray-300"
-                              defaultValue="11"
-                            />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <div className="w-12 h-8 bg-gray-200 rounded"></div>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <div className="w-12 h-8 bg-gray-200 rounded"></div>
-                          </TableCell>
-                          <TableCell className="text-center font-bold">3</TableCell>
-                        </TableRow>
-                        
-                        {/* Second Player Row */}
-                        <TableRow>
-                          <TableCell>
-                            <div className="w-8 h-8 bg-gray-300 rounded"></div>
-                          </TableCell>
-                          <TableCell>
-                            <Input placeholder="Тамирчины нэр" className="border-0 bg-transparent" />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Input 
-                              placeholder="0" 
-                              className="w-12 h-8 text-center p-1 border border-gray-300"
-                              defaultValue="0"
-                            />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Input 
-                              placeholder="0" 
-                              className="w-12 h-8 text-center p-1 border border-gray-300"
-                              defaultValue="0"
-                            />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Input 
-                              placeholder="0" 
-                              className="w-12 h-8 text-center p-1 border border-gray-300"
-                              defaultValue="0"
-                            />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <div className="w-12 h-8 bg-gray-200 rounded"></div>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <div className="w-12 h-8 bg-gray-200 rounded"></div>
-                          </TableCell>
-                          <TableCell className="text-center font-bold">0</TableCell>
-                        </TableRow>
+                        {matchPlayers.map((player, index) => (
+                          <TableRow key={player.id}>
+                            <TableCell>
+                              <div className="w-8 h-8 bg-gray-300 rounded flex items-center justify-center text-xs">
+                                {player.teamId === 1 ? (selectedTeam1?.name?.charAt(0) || 'A') : (selectedTeam2?.name?.charAt(0) || 'B')}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Input 
+                                placeholder="Тамирчины нэр" 
+                                className="border-0 bg-transparent"
+                                value={player.name}
+                                onChange={(e) => {
+                                  const updatedPlayers = matchPlayers.map(p => 
+                                    p.id === player.id ? { ...p, name: e.target.value } : p
+                                  );
+                                  setMatchPlayers(updatedPlayers);
+                                }}
+                              />
+                            </TableCell>
+                            {player.sets.map((score, setIndex) => (
+                              <TableCell key={setIndex} className="text-center">
+                                {setIndex < 3 || (setIndex < 5 && player.sets[setIndex] > 0) ? (
+                                  <Input 
+                                    placeholder={setIndex < 3 ? "11" : "0"}
+                                    className="w-12 h-8 text-center p-1 border border-gray-300"
+                                    value={score || ""}
+                                    onChange={(e) => {
+                                      const newScore = parseInt(e.target.value) || 0;
+                                      const updatedPlayers = matchPlayers.map(p => 
+                                        p.id === player.id 
+                                          ? { 
+                                              ...p, 
+                                              sets: p.sets.map((s, i) => i === setIndex ? newScore : s),
+                                              setsWon: p.sets.filter((s, i) => i !== setIndex ? s >= 11 : newScore >= 11).length
+                                            } 
+                                          : p
+                                      );
+                                      setMatchPlayers(updatedPlayers);
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="w-12 h-8 bg-gray-200 rounded"></div>
+                                )}
+                              </TableCell>
+                            ))}
+                            <TableCell className="text-center font-bold">
+                              {player.setsWon}
+                            </TableCell>
+                          </TableRow>
+                        ))}
 
                         {/* Add more player rows */}
                         <TableRow>
                           <TableCell colSpan={8} className="text-center py-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              className="text-blue-500"
-                            >
-                              <Plus className="w-4 h-4 mr-1" />
-                              Тоглогч нэмэх
-                            </Button>
+                            <div className="flex justify-center gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="text-blue-500"
+                                onClick={() => {
+                                  const newId = Math.max(...matchPlayers.map(p => p.id)) + 1;
+                                  setMatchPlayers([...matchPlayers, {
+                                    id: newId,
+                                    name: "",
+                                    teamId: 1,
+                                    sets: [0, 0, 0, 0, 0],
+                                    setsWon: 0
+                                  }]);
+                                }}
+                              >
+                                <Plus className="w-4 h-4 mr-1" />
+                                {selectedTeam1?.name || 'Баг 1'} тоглогч нэмэх
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="text-green-500"
+                                onClick={() => {
+                                  const newId = Math.max(...matchPlayers.map(p => p.id)) + 1;
+                                  setMatchPlayers([...matchPlayers, {
+                                    id: newId,
+                                    name: "",
+                                    teamId: 2,
+                                    sets: [0, 0, 0, 0, 0],
+                                    setsWon: 0
+                                  }]);
+                                }}
+                              >
+                                <Plus className="w-4 h-4 mr-1" />
+                                {selectedTeam2?.name || 'Баг 2'} тоглогч нэмэх
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       </TableBody>
