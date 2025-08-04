@@ -506,7 +506,6 @@ export default function TournamentManagement() {
           Удирдлагын цэс
         </Badge>
       </div>
-
       {/* Management Options Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {managementOptions.map((option) => {
@@ -549,7 +548,6 @@ export default function TournamentManagement() {
           );
         })}
       </div>
-
       {/* Active Section Content */}
       {activeSection && (
         <Card className="mb-6">
@@ -1166,7 +1164,7 @@ export default function TournamentManagement() {
             {activeSection === 'create-match' && (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Тоглолтын дүн оруулах</h3>
+                  <h3 className="text-lg font-semibold">Багийн тоглолт</h3>
                   <Button 
                     variant="outline" 
                     onClick={() => setActiveSection(null)}
@@ -1617,7 +1615,6 @@ export default function TournamentManagement() {
           </CardContent>
         </Card>
       )}
-
       {/* Status Information */}
       <Card>
         <CardHeader>
