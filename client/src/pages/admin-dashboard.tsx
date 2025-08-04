@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ export default function AdminDashboard() {
   const [formData, setFormData] = useState<any>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   // Data queries
   const { data: users, isLoading: usersLoading } = useQuery({
@@ -135,6 +136,17 @@ export default function AdminDashboard() {
   };
 
   const handleTournamentManagement = (tournamentId: string, action: string) => {
+    if (action === 'manage-tournament') {
+      // Navigate to tournament management page
+      setLocation(`/admin/tournament/${tournamentId}/manage`);
+      return;
+    }
+    if (action === 'manage-league') {
+      // Navigate to league management page  
+      setLocation(`/admin/league/${tournamentId}/manage`);
+      return;
+    }
+    
     switch(action) {
       case 'add-team':
         toast({
@@ -902,21 +914,9 @@ export default function AdminDashboard() {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-48">
-                                  <DropdownMenuItem onClick={() => handleTournamentManagement(tournament.id, 'add-team')}>
-                                    <UserPlus className="w-4 h-4 mr-2" />
-                                    Баг нэмэх
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleTournamentManagement(tournament.id, 'add-group-match')}>
-                                    <Play className="w-4 h-4 mr-2" />
-                                    Бүлгийн тоглолт нэмэх
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleTournamentManagement(tournament.id, 'create-match')}>
-                                    <Zap className="w-4 h-4 mr-2" />
-                                    Тоглолт үүсгэх
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleTournamentManagement(tournament.id, 'create-playoff')}>
-                                    <Trophy className="w-4 h-4 mr-2" />
-                                    Play-off буюу баг хуваах
+                                  <DropdownMenuItem onClick={() => handleTournamentManagement(tournament.id, 'manage-tournament')}>
+                                    <Settings className="w-4 h-4 mr-2" />
+                                    Удирдлагын самбар нээх
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
@@ -978,21 +978,9 @@ export default function AdminDashboard() {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
-                                  <DropdownMenuItem onClick={() => handleTournamentManagement(league.id, 'add-team')}>
-                                    <UserPlus className="w-4 h-4 mr-2" />
-                                    Баг нэмэх
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleTournamentManagement(league.id, 'add-group-match')}>
-                                    <Play className="w-4 h-4 mr-2" />
-                                    Бүлгийн тоглолт нэмэх
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleTournamentManagement(league.id, 'create-match')}>
-                                    <Zap className="w-4 h-4 mr-2" />
-                                    Тоглолт үүсгэх
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleTournamentManagement(league.id, 'create-playoff')}>
-                                    <Play className="w-4 h-4 mr-2" />
-                                    Play-off буюу баг хуваах
+                                  <DropdownMenuItem onClick={() => handleTournamentManagement(league.id, 'manage-league')}>
+                                    <Settings className="w-4 h-4 mr-2" />
+                                    Удирдлагын самбар нээх
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
