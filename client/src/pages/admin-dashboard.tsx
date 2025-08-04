@@ -795,7 +795,7 @@ export default function AdminDashboard() {
                   <h2 className="text-2xl font-bold">Тэмцээнүүд</h2>
                   <div className="flex gap-2">
                     <Button
-                      onClick={() => window.open('/admin/tournament-generator', '_blank')}
+                      onClick={() => window.open('/admin/generator', '_blank')}
                       className="flex items-center gap-2"
                     >
                       <Plus className="w-4 h-4" />
