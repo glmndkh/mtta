@@ -1182,19 +1182,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin middleware to check if user is admin
   const isAdminRole = async (req: any, res: any, next: any) => {
     try {
+      console.log("Admin middleware - Session:", req.session?.userId);
       if (!req.session?.userId) {
-        console.log("No session userId found");
+        console.log("No session userId found in admin middleware");
         return res.status(401).json({ message: "Нэвтрэх шаардлагатай" });
       }
       
       const user = await storage.getUser(req.session.userId);
-      console.log("User found:", user?.email, "Role:", user?.role);
+      console.log("Admin middleware - User found:", user?.email, "Role:", user?.role);
       
       if (!user || user.role !== 'admin') {
-        console.log("User is not admin");
+        console.log("User is not admin, role:", user?.role);
         return res.status(403).json({ message: "Админ эрх шаардлагатай" });
       }
       
+      console.log("Admin middleware - Access granted");
       next();
     } catch (error) {
       console.error("Admin check error:", error);
@@ -1203,7 +1205,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Admin statistics endpoint
-  app.get('/api/admin/stats', isAuthenticated, isAdminRole, async (req, res) => {
+  app.get('/api/admin/stats', requireAuth, isAdminRole, async (req, res) => {
     try {
       console.log("Admin stats route accessed by user:", req.session?.userId);
       const stats = await storage.getAdminStatistics();
@@ -1218,7 +1220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===================
   // ADMIN USERS CRUD
   // ===================
-  app.get('/api/admin/users', isAuthenticated, isAdminRole, async (req, res) => {
+  app.get('/api/admin/users', requireAuth, isAdminRole, async (req, res) => {
     try {
       const users = await storage.getAllUsers();
       res.json(users);
@@ -1228,7 +1230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/admin/users/:id', isAuthenticated, isAdminRole, async (req, res) => {
+  app.put('/api/admin/users/:id', requireAuth, isAdminRole, async (req, res) => {
     try {
       const updateData = req.body;
       const user = await storage.updateUserProfile(req.params.id, updateData);
@@ -1242,7 +1244,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===================
   // ADMIN PLAYERS CRUD
   // ===================
-  app.get('/api/admin/players', isAuthenticated, isAdminRole, async (req, res) => {
+  app.get('/api/admin/players', requireAuth, isAdminRole, async (req, res) => {
     try {
       const players = await storage.getAllPlayers();
       res.json(players);
@@ -1252,7 +1254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/admin/players/:id', isAuthenticated, isAdminRole, async (req, res) => {
+  app.put('/api/admin/players/:id', requireAuth, isAdminRole, async (req, res) => {
     try {
       const updateData = req.body;
       const player = await storage.updatePlayer(req.params.id, updateData);
@@ -1266,7 +1268,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/admin/players/:id', isAuthenticated, isAdminRole, async (req, res) => {
+  app.delete('/api/admin/players/:id', requireAuth, isAdminRole, async (req, res) => {
     try {
       const success = await storage.deletePlayer(req.params.id);
       if (!success) {
@@ -1282,7 +1284,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===================
   // ADMIN CLUBS CRUD
   // ===================
-  app.get('/api/admin/clubs', isAuthenticated, isAdminRole, async (req, res) => {
+  app.get('/api/admin/clubs', requireAuth, isAdminRole, async (req, res) => {
     try {
       const clubs = await storage.getAllClubs();
       res.json(clubs);
@@ -1292,7 +1294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/clubs', isAuthenticated, isAdminRole, async (req, res) => {
+  app.post('/api/admin/clubs', requireAuth, isAdminRole, async (req, res) => {
     try {
       const clubData = insertClubSchema.parse(req.body);
       const club = await storage.createClub(clubData);
@@ -1303,7 +1305,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/admin/clubs/:id', isAuthenticated, isAdminRole, async (req, res) => {
+  app.put('/api/admin/clubs/:id', requireAuth, isAdminRole, async (req, res) => {
     try {
       const updateData = req.body;
       const club = await storage.updateClub(req.params.id, updateData);
@@ -1317,7 +1319,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/admin/clubs/:id', isAuthenticated, isAdminRole, async (req, res) => {
+  app.delete('/api/admin/clubs/:id', requireAuth, isAdminRole, async (req, res) => {
     try {
       const success = await storage.deleteClub(req.params.id);
       if (!success) {
@@ -1333,7 +1335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===================
   // ADMIN TOURNAMENTS CRUD (Additional endpoints)
   // ===================
-  app.get('/api/admin/tournaments', isAuthenticated, isAdminRole, async (req, res) => {
+  app.get('/api/admin/tournaments', requireAuth, isAdminRole, async (req, res) => {
     try {
       const tournaments = await storage.getTournaments();
       res.json(tournaments);
@@ -1346,7 +1348,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===================
   // ADMIN LEAGUES CRUD
   // ===================
-  app.get('/api/admin/leagues', isAuthenticated, isAdminRole, async (req, res) => {
+  app.get('/api/admin/leagues', requireAuth, isAdminRole, async (req, res) => {
     try {
       const leagues = await storage.getAllLeagues();
       res.json(leagues);
@@ -1356,7 +1358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/leagues', isAuthenticated, isAdminRole, async (req, res) => {
+  app.post('/api/admin/leagues', requireAuth, isAdminRole, async (req, res) => {
     try {
       const leagueData = req.body;
       const league = await storage.createLeague(leagueData);
@@ -1367,7 +1369,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/admin/leagues/:id', isAuthenticated, isAdminRole, async (req, res) => {
+  app.put('/api/admin/leagues/:id', requireAuth, isAdminRole, async (req, res) => {
     try {
       const updateData = req.body;
       const league = await storage.updateLeague(req.params.id, updateData);
@@ -1381,7 +1383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/admin/leagues/:id', isAuthenticated, isAdminRole, async (req, res) => {
+  app.delete('/api/admin/leagues/:id', requireAuth, isAdminRole, async (req, res) => {
     try {
       const success = await storage.deleteLeague(req.params.id);
       if (!success) {
@@ -1397,7 +1399,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===================
   // ADMIN NEWS CRUD
   // ===================
-  app.get('/api/admin/news', isAuthenticated, isAdminRole, async (req, res) => {
+  app.get('/api/admin/news', requireAuth, isAdminRole, async (req, res) => {
     try {
       const news = await storage.getAllNews();
       res.json(news);
@@ -1407,7 +1409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/news', isAuthenticated, isAdminRole, async (req: any, res) => {
+  app.post('/api/admin/news', requireAuth, isAdminRole, async (req: any, res) => {
     try {
       const authorId = req.session.userId;
       const newsData = insertNewsSchema.parse({ ...req.body, authorId });
@@ -1419,7 +1421,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/admin/news/:id', isAuthenticated, isAdminRole, async (req, res) => {
+  app.put('/api/admin/news/:id', requireAuth, isAdminRole, async (req, res) => {
     try {
       const updateData = req.body;
       const news = await storage.updateNews(req.params.id, updateData);
@@ -1433,7 +1435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/admin/news/:id', isAuthenticated, isAdminRole, async (req, res) => {
+  app.delete('/api/admin/news/:id', requireAuth, isAdminRole, async (req, res) => {
     try {
       const success = await storage.deleteNews(req.params.id);
       if (!success) {
@@ -1449,7 +1451,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===================
   // ADMIN HOMEPAGE SLIDERS CRUD
   // ===================
-  app.get('/api/admin/sliders', isAuthenticated, isAdminRole, async (req, res) => {
+  app.get('/api/admin/sliders', requireAuth, isAdminRole, async (req, res) => {
     try {
       const sliders = await storage.getAllHomepageSliders();
       res.json(sliders);
@@ -1459,7 +1461,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/sliders', isAuthenticated, isAdminRole, async (req, res) => {
+  app.post('/api/admin/sliders', requireAuth, isAdminRole, async (req, res) => {
     try {
       const sliderData = insertHomepageSliderSchema.parse(req.body);
       const slider = await storage.createHomepageSlider(sliderData);
@@ -1470,7 +1472,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/admin/sliders/:id', isAuthenticated, isAdminRole, async (req, res) => {
+  app.put('/api/admin/sliders/:id', requireAuth, isAdminRole, async (req, res) => {
     try {
       const updateData = req.body;
       const slider = await storage.updateHomepageSlider(req.params.id, updateData);
@@ -1484,7 +1486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/admin/sliders/:id', isAuthenticated, isAdminRole, async (req, res) => {
+  app.delete('/api/admin/sliders/:id', requireAuth, isAdminRole, async (req, res) => {
     try {
       const success = await storage.deleteHomepageSlider(req.params.id);
       if (!success) {
