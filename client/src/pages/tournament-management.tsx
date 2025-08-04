@@ -1313,7 +1313,7 @@ export default function TournamentManagement() {
                       onClick={() => setShowMatchDetails(!showMatchDetails)}
                       className="text-blue-600 hover:text-blue-800"
                     >
-                      {showMatchDetails ? 'Дэлгэрэнгүйг хаах' : 'Дэлгэрэнгүй харах'}
+                      {showMatchDetails ? 'Хувь тоглолт' : 'Дэлгэрэнгүй харах'}
                     </Button>
                   </div>
                 </div>
