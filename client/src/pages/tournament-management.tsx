@@ -1396,13 +1396,17 @@ export default function TournamentManagement() {
                         {matchPlayers.map((player, index) => (
                           <TableRow key={player.id}>
                             <TableCell>
-                              <div className="w-8 h-8 bg-gray-300 rounded flex items-center justify-center text-xs">
+                              <div className="w-8 h-8 bg-gray-300 rounded flex items-center justify-center text-xs overflow-hidden">
                                 {(() => {
                                   const team = player.teamId === 1 ? selectedTeam1 : selectedTeam2;
                                   if (team?.logoUrl) {
-                                    return <img src={team.logoUrl} alt={team.name} className="w-full h-full rounded object-cover" />;
+                                    return <img src={team.logoUrl} alt={team.name} className="w-full h-full object-cover" />;
                                   }
-                                  return team?.name?.charAt(0) || (player.teamId === 1 ? 'A' : 'B');
+                                  return (
+                                    <span className="font-semibold text-gray-700">
+                                      {team?.name?.charAt(0)?.toUpperCase() || (player.teamId === 1 ? 'A' : 'B')}
+                                    </span>
+                                  );
                                 })()}
                               </div>
                             </TableCell>
