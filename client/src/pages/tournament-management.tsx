@@ -79,10 +79,32 @@ export default function TournamentManagement() {
   ]);
   const [editingScore, setEditingScore] = useState<{playerId: number, setIndex: number} | null>(null);
   const [numberOfSets, setNumberOfSets] = useState<number>(3);
+  
+  // Get current group data for compatibility
+  const groupData = groups.find(g => g.id === activeGroupId)?.players || [];
+
+  const handleBackToAdmin = () => {
+    setLocation("/admin/dashboard");
+  };
+
+  // Fetch all users
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ['/api/admin/users'],
+    enabled: activeSection === 'add-team' || activeSection === 'add-group-match'
+  });
+
+  // Load existing tournament teams
+  const { data: existingTeams = [] } = useQuery({
+    queryKey: ['/api/tournaments', id, 'teams'],
+    enabled: !!id
+  });
+
+  // Type guard for existingTeams
+  const validExistingTeams = Array.isArray(existingTeams) ? existingTeams : [];
 
   // Auto-populate match players when teams are selected
   useEffect(() => {
-    if (selectedTeam1 && selectedTeam2) {
+    if (selectedTeam1 && selectedTeam2 && validExistingTeams.length > 0) {
       const team1Data = validExistingTeams.find(team => team.id === selectedTeam1.id);
       const team2Data = validExistingTeams.find(team => team.id === selectedTeam2.id);
       
@@ -134,29 +156,7 @@ export default function TournamentManagement() {
         }
       }
     }
-  }, [selectedTeam1, selectedTeam2, validExistingTeams, numberOfSets]);
-  
-  // Get current group data for compatibility
-  const groupData = groups.find(g => g.id === activeGroupId)?.players || [];
-
-  const handleBackToAdmin = () => {
-    setLocation("/admin/dashboard");
-  };
-
-  // Fetch all users
-  const { data: allUsers = [] } = useQuery({
-    queryKey: ['/api/admin/users'],
-    enabled: activeSection === 'add-team' || activeSection === 'add-group-match'
-  });
-
-  // Load existing tournament teams
-  const { data: existingTeams = [] } = useQuery({
-    queryKey: ['/api/tournaments', id, 'teams'],
-    enabled: !!id
-  });
-
-  // Type guard for existingTeams
-  const validExistingTeams = Array.isArray(existingTeams) ? existingTeams : [];
+  }, [selectedTeam1, selectedTeam2, validExistingTeams, numberOfSets, matchPlayers]);
 
   // Create team mutation
   const createTeamMutation = useMutation({
