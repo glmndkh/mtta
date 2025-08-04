@@ -23,6 +23,7 @@ import TournamentPage from "@/pages/tournament-page";
 import TournamentResults from "@/pages/tournament-results";
 import Profile from "@/pages/profile";
 import PlayerProfilePage from "@/pages/player-profile";
+import AdminDashboard from "@/pages/admin-dashboard";
 import { useAuth } from "@/hooks/useAuth";
 
 function Router() {
@@ -48,6 +49,7 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/dashboard" component={PlayerDashboard} />
           <Route path="/profile" component={Profile} />
+          <Route path="/admin/dashboard" component={AdminDashboard} />
           <Route path="/admin/tournaments" component={AdminTournaments} />
           <Route path="/admin/tournament/:id/results" component={AdminTournamentResults} />
           <Route path="/admin/tournament-results" component={AdminTournamentResults} />

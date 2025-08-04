@@ -12,6 +12,7 @@ import {
   tournamentParticipants,
   achievements,
   tournamentResults,
+  homepageSliders,
   type User,
   type UpsertUser,
   type Player,
@@ -33,6 +34,8 @@ import {
   type InsertAchievement,
   type TournamentResults,
   type InsertTournamentResults,
+  type HomepageSlider,
+  type InsertHomepageSlider,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
@@ -336,6 +339,20 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(clubs, eq(players.clubId, clubs.id));
   }
 
+  async updatePlayer(id: string, playerData: Partial<InsertPlayer>): Promise<Player | undefined> {
+    const [player] = await db
+      .update(players)
+      .set(playerData)
+      .where(eq(players.id, id))
+      .returning();
+    return player;
+  }
+
+  async deletePlayer(id: string): Promise<boolean> {
+    const result = await db.delete(players).where(eq(players.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
   async getPlayerAchievements(playerId: string): Promise<Achievement[]> {
     return await db
       .select()
@@ -379,6 +396,20 @@ export class DatabaseStorage implements IStorage {
 
   async getAllClubs(): Promise<Club[]> {
     return await db.select().from(clubs).orderBy(clubs.name);
+  }
+
+  async updateClub(id: string, clubData: Partial<InsertClub>): Promise<Club | undefined> {
+    const [club] = await db
+      .update(clubs)
+      .set(clubData)
+      .where(eq(clubs.id, id))
+      .returning();
+    return club;
+  }
+
+  async deleteClub(id: string): Promise<boolean> {
+    const result = await db.delete(clubs).where(eq(clubs.id, id));
+    return (result.rowCount || 0) > 0;
   }
 
   // Tournament operations
@@ -592,6 +623,73 @@ export class DatabaseStorage implements IStorage {
       .where(eq(newsFeed.id, id));
   }
 
+  async updateNews(id: string, newsData: Partial<InsertNews>): Promise<News | undefined> {
+    const [news] = await db
+      .update(newsFeed)
+      .set(newsData)
+      .where(eq(newsFeed.id, id))
+      .returning();
+    return news;
+  }
+
+  async deleteNews(id: string): Promise<boolean> {
+    const result = await db.delete(newsFeed).where(eq(newsFeed.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getAllNews(): Promise<News[]> {
+    return await db
+      .select()
+      .from(newsFeed)
+      .orderBy(desc(newsFeed.createdAt));
+  }
+
+  // Homepage slider operations
+  async getHomepageSlider(id: string): Promise<HomepageSlider | undefined> {
+    const [slider] = await db.select().from(homepageSliders).where(eq(homepageSliders.id, id));
+    return slider;
+  }
+
+  async createHomepageSlider(sliderData: InsertHomepageSlider): Promise<HomepageSlider> {
+    const [slider] = await db.insert(homepageSliders).values({
+      ...sliderData,
+      updatedAt: new Date(),
+    }).returning();
+    return slider;
+  }
+
+  async updateHomepageSlider(id: string, sliderData: Partial<InsertHomepageSlider>): Promise<HomepageSlider | undefined> {
+    const [slider] = await db
+      .update(homepageSliders)
+      .set({
+        ...sliderData,
+        updatedAt: new Date(),
+      })
+      .where(eq(homepageSliders.id, id))
+      .returning();
+    return slider;
+  }
+
+  async deleteHomepageSlider(id: string): Promise<boolean> {
+    const result = await db.delete(homepageSliders).where(eq(homepageSliders.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getAllHomepageSliders(): Promise<HomepageSlider[]> {
+    return await db
+      .select()
+      .from(homepageSliders)
+      .orderBy(homepageSliders.sortOrder);
+  }
+
+  async getActiveHomepageSliders(): Promise<HomepageSlider[]> {
+    return await db
+      .select()
+      .from(homepageSliders)
+      .where(eq(homepageSliders.isActive, true))
+      .orderBy(homepageSliders.sortOrder);
+  }
+
   // Membership operations
   async getMembership(playerId: string): Promise<Membership | undefined> {
     const [membership] = await db
@@ -621,6 +719,30 @@ export class DatabaseStorage implements IStorage {
   // League operations
   async getAllLeagues(): Promise<League[]> {
     return await db.select().from(leagues).orderBy(desc(leagues.startDate));
+  }
+
+  async getLeague(id: string): Promise<League | undefined> {
+    const [league] = await db.select().from(leagues).where(eq(leagues.id, id));
+    return league;
+  }
+
+  async createLeague(leagueData: any): Promise<League> {
+    const [league] = await db.insert(leagues).values(leagueData).returning();
+    return league;
+  }
+
+  async updateLeague(id: string, leagueData: any): Promise<League | undefined> {
+    const [league] = await db
+      .update(leagues)
+      .set(leagueData)
+      .where(eq(leagues.id, id))
+      .returning();
+    return league;
+  }
+
+  async deleteLeague(id: string): Promise<boolean> {
+    const result = await db.delete(leagues).where(eq(leagues.id, id));
+    return (result.rowCount || 0) > 0;
   }
 
   async getTeamsByLeague(leagueId: string): Promise<Team[]> {
