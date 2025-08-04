@@ -39,20 +39,34 @@ export default function TournamentManagement() {
   ]);
   const [searchOpen, setSearchOpen] = useState<{[key: string]: boolean}>({});
   const [groupMatchType, setGroupMatchType] = useState<'team' | 'individual' | null>(null);
-  const [groupData, setGroupData] = useState<Array<{
+  const [groups, setGroups] = useState<Array<{
     id: number;
     name: string;
-    club: string;
-    matches: { [key: string]: string };
-    wins: number;
-    losses: number;
-    rank: number | string;
+    players: Array<{
+      id: number;
+      name: string;
+      club: string;
+      matches: { [key: string]: string };
+      wins: number;
+      losses: number;
+      rank: number | string;
+    }>;
   }>>([
-    { id: 1, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 1 },
-    { id: 2, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 2 },
-    { id: 3, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 3 },
-    { id: 4, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 4 }
+    {
+      id: 1,
+      name: "Групп A",
+      players: [
+        { id: 1, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 1 },
+        { id: 2, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 2 },
+        { id: 3, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 3 },
+        { id: 4, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 4 }
+      ]
+    }
   ]);
+  const [activeGroupId, setActiveGroupId] = useState<number>(1);
+  
+  // Get current group data for compatibility
+  const groupData = groups.find(g => g.id === activeGroupId)?.players || [];
 
   const handleBackToAdmin = () => {
     setLocation("/admin/dashboard");
@@ -279,42 +293,88 @@ export default function TournamentManagement() {
     console.log("Saving teams:", teamsToSave);
   };
 
-  const handleAddGroupPlayer = () => {
-    const newId = Math.max(...groupData.map(p => p.id)) + 1;
-    const newPlayer = { 
-      id: newId, 
-      name: "", 
-      club: "", 
-      matches: {}, 
-      wins: 0, 
-      losses: 0, 
-      rank: newId 
+  const handleAddGroup = () => {
+    const newGroupId = Math.max(...groups.map(g => g.id)) + 1;
+    const groupLetter = String.fromCharCode(65 + groups.length); // A, B, C, etc.
+    const newGroup = {
+      id: newGroupId,
+      name: `Групп ${groupLetter}`,
+      players: [
+        { id: 1, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 1 },
+        { id: 2, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 2 },
+        { id: 3, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 3 },
+        { id: 4, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 4 }
+      ]
     };
-    setGroupData([...groupData, newPlayer]);
+    setGroups([...groups, newGroup]);
+    setActiveGroupId(newGroupId);
+    toast({ title: `${newGroup.name} амжилттай нэмэгдлээ`, variant: "default" });
+  };
+
+  const handleAddGroupPlayer = () => {
+    const currentGroup = groups.find(g => g.id === activeGroupId);
+    if (!currentGroup) return;
+    
+    const newId = Math.max(...currentGroup.players.map(p => p.id)) + 1;
+    const updatedGroups = groups.map(group => 
+      group.id === activeGroupId 
+        ? {
+            ...group,
+            players: [...group.players, {
+              id: newId,
+              name: "",
+              club: "",
+              matches: {},
+              wins: 0,
+              losses: 0,
+              rank: newId
+            }]
+          }
+        : group
+    );
+    setGroups(updatedGroups);
   };
 
   const handleRemoveGroupPlayer = (id: number) => {
-    if (groupData.length > 1) {
-      setGroupData(groupData.filter(p => p.id !== id));
-    }
+    const currentGroup = groups.find(g => g.id === activeGroupId);
+    if (!currentGroup || currentGroup.players.length <= 1) return;
+    
+    const updatedGroups = groups.map(group => 
+      group.id === activeGroupId 
+        ? { ...group, players: group.players.filter(p => p.id !== id) }
+        : group
+    );
+    setGroups(updatedGroups);
   };
 
   const handleGroupPlayerChange = (id: number, field: string, value: string) => {
-    setGroupData(groupData.map(player => 
-      player.id === id ? { ...player, [field]: value } : player
-    ));
+    const updatedGroups = groups.map(group => 
+      group.id === activeGroupId 
+        ? {
+            ...group,
+            players: group.players.map(p => 
+              p.id === id ? { ...p, [field]: value } : p
+            )
+          }
+        : group
+    );
+    setGroups(updatedGroups);
   };
 
   const handleMatchResultChange = (playerId: number, opponentId: number | string, result: string) => {
-    setGroupData(groupData.map(player => {
-      if (player.id === playerId) {
-        return {
-          ...player,
-          matches: { ...player.matches, [opponentId]: result }
-        };
-      }
-      return player;
-    }));
+    const updatedGroups = groups.map(group => 
+      group.id === activeGroupId 
+        ? {
+            ...group,
+            players: group.players.map(p => 
+              p.id === playerId 
+                ? { ...p, matches: { ...p.matches, [opponentId]: result } }
+                : p
+            )
+          }
+        : group
+    );
+    setGroups(updatedGroups);
   };
 
 
@@ -796,6 +856,7 @@ export default function TournamentManagement() {
                         <Button 
                           variant="outline"
                           className="bg-blue-500 hover:bg-blue-600 text-white"
+                          onClick={handleAddGroup}
                         >
                           <Plus className="w-4 h-4 mr-2" />
                           Групп нэмэх
@@ -809,6 +870,28 @@ export default function TournamentManagement() {
                         </Button>
                       </div>
                     </div>
+
+                    {/* Group Selector */}
+                    {groups.length > 1 && (
+                      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-700">Групп сонгох:</span>
+                          <div className="flex gap-2">
+                            {groups.map(group => (
+                              <Button
+                                key={group.id}
+                                variant={activeGroupId === group.id ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setActiveGroupId(group.id)}
+                                className={activeGroupId === group.id ? "bg-blue-500 hover:bg-blue-600" : ""}
+                              >
+                                {group.name}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Group Table */}
                     <div className="border rounded-lg overflow-hidden">
