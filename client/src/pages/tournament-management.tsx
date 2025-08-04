@@ -57,7 +57,7 @@ export default function TournamentManagement() {
   // Fetch all users
   const { data: allUsers = [] } = useQuery({
     queryKey: ['/api/admin/users'],
-    enabled: activeSection === 'add-team'
+    enabled: activeSection === 'add-team' || activeSection === 'add-group-match'
   });
 
   const handleAddTeam = () => {
@@ -217,12 +217,7 @@ export default function TournamentManagement() {
     }));
   };
 
-  const calculateStats = (player: any) => {
-    const results = Object.values(player.matches) as string[];
-    const wins = results.filter(r => r && r !== "****" && parseInt(r.split('/')[0] || '0') > parseInt(r.split('/')[1] || '0')).length;
-    const losses = results.filter(r => r && r !== "****" && parseInt(r.split('/')[0] || '0') < parseInt(r.split('/')[1] || '0')).length;
-    return { wins, losses };
-  };
+
 
   const handleSaveGroupTable = () => {
     // TODO: Implement group table saving logic
@@ -668,18 +663,59 @@ export default function TournamentManagement() {
                         </TableHeader>
                         <TableBody>
                           {groupData.map((player, playerIndex) => {
-                            const stats = calculateStats(player);
                             return (
                               <TableRow key={player.id}>
                                 <TableCell className="font-medium bg-yellow-50">{playerIndex + 1}</TableCell>
                                 <TableCell className="bg-blue-50">
                                   <div className="flex items-center gap-2">
-                                    <Input
-                                      placeholder={groupMatchType === 'team' ? 'Багийн нэр' : 'Тоглогчийн нэр'}
-                                      value={player.name}
-                                      onChange={(e) => handleGroupPlayerChange(player.id, 'name', e.target.value)}
-                                      className="min-w-[120px] border-0 bg-transparent p-1"
-                                    />
+                                    <Popover 
+                                      open={searchOpen[`group-${player.id}`] || false} 
+                                      onOpenChange={(open) => setSearchOpen({ ...searchOpen, [`group-${player.id}`]: open })}
+                                    >
+                                      <PopoverTrigger asChild>
+                                        <Input
+                                          placeholder={groupMatchType === 'team' ? 'Багийн нэр' : 'Тоглогчийн нэр'}
+                                          value={player.name}
+                                          onChange={(e) => {
+                                            handleGroupPlayerChange(player.id, 'name', e.target.value);
+                                            if (e.target.value.length > 0) {
+                                              setSearchOpen({ ...searchOpen, [`group-${player.id}`]: true });
+                                            }
+                                          }}
+                                          className="min-w-[120px] border-0 bg-transparent p-1 cursor-pointer"
+                                        />
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-80 p-0" align="start">
+                                        <Command>
+                                          <CommandInput placeholder="Хэрэглэгчийн нэрээр хайх..." />
+                                          <CommandList>
+                                            <CommandEmpty>Хэрэглэгч олдсонгүй</CommandEmpty>
+                                            <CommandGroup heading="Бүртгэлтэй хэрэглэгчид">
+                                              {getAvailableUsers().filter((user: any) => 
+                                                user.name && user.name.toLowerCase().includes((player.name || '').toLowerCase())
+                                              ).map((user: any) => (
+                                                <CommandItem
+                                                  key={user.id}
+                                                  value={`${user.name || user.email} ${user.email}`}
+                                                  onSelect={() => {
+                                                    handleGroupPlayerChange(player.id, 'name', user.name || user.email);
+                                                    setSearchOpen({ ...searchOpen, [`group-${player.id}`]: false });
+                                                  }}
+                                                  className="flex items-center justify-between"
+                                                >
+                                                  <div>
+                                                    <div className="font-medium">{user.name || user.email}</div>
+                                                    <div className="text-xs text-gray-500">
+                                                      {user.email} • {user.role === 'admin' ? 'Админ' : user.role === 'club_owner' ? 'Клубын эзэн' : 'Тоглогч'}
+                                                    </div>
+                                                  </div>
+                                                </CommandItem>
+                                              ))}
+                                            </CommandGroup>
+                                          </CommandList>
+                                        </Command>
+                                      </PopoverContent>
+                                    </Popover>
                                     <Button
                                       variant="outline"
                                       size="sm"
@@ -716,10 +752,20 @@ export default function TournamentManagement() {
                                   </TableCell>
                                 ))}
                                 <TableCell className="text-center">
-                                  {stats.wins}/{stats.losses + stats.wins}
+                                  <Input
+                                    placeholder="0/0"
+                                    value={player.matches['total'] || ""}
+                                    onChange={(e) => handleMatchResultChange(player.id, 'total', e.target.value)}
+                                    className="w-16 h-8 text-center p-1 border border-gray-300"
+                                  />
                                 </TableCell>
                                 <TableCell className="text-center font-bold">
-                                  {playerIndex + 1}
+                                  <Input
+                                    placeholder="1"
+                                    value={player.rank || playerIndex + 1}
+                                    onChange={(e) => handleGroupPlayerChange(player.id, 'rank', e.target.value)}
+                                    className="w-12 h-8 text-center p-1 border border-gray-300"
+                                  />
                                 </TableCell>
                               </TableRow>
                             );
