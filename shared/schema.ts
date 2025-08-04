@@ -218,6 +218,24 @@ export const teams = pgTable("teams", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Tournament teams table for managing teams within specific tournaments
+export const tournamentTeams = pgTable("tournament_teams", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  tournamentId: varchar("tournament_id").references(() => tournaments.id).notNull(),
+  name: varchar("name").notNull(),
+  logoUrl: varchar("logo_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Tournament team players for linking players to tournament teams
+export const tournamentTeamPlayers = pgTable("tournament_team_players", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  tournamentTeamId: varchar("tournament_team_id").references(() => tournamentTeams.id).notNull(),
+  playerId: varchar("player_id").references(() => users.id).notNull(), // Link directly to users for easier management
+  playerName: varchar("player_name").notNull(), // Store display name
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // News feed table
 export const newsFeed = pgTable("news_feed", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -400,3 +418,18 @@ export type TournamentParticipant = typeof tournamentParticipants.$inferSelect;
 export type InsertTournamentParticipant = typeof tournamentParticipants.$inferInsert;
 export type TournamentResults = typeof tournamentResults.$inferSelect;
 export type InsertTournamentResults = z.infer<typeof insertTournamentResultsSchema>;
+
+// Tournament teams schemas
+export const insertTournamentTeamSchema = createInsertSchema(tournamentTeams).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertTournamentTeam = z.infer<typeof insertTournamentTeamSchema>;
+export type TournamentTeam = typeof tournamentTeams.$inferSelect;
+
+export const insertTournamentTeamPlayerSchema = createInsertSchema(tournamentTeamPlayers).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertTournamentTeamPlayer = z.infer<typeof insertTournamentTeamPlayerSchema>;
+export type TournamentTeamPlayer = typeof tournamentTeamPlayers.$inferSelect;

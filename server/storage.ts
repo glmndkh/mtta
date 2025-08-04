@@ -13,6 +13,8 @@ import {
   achievements,
   tournamentResults,
   homepageSliders,
+  tournamentTeams,
+  tournamentTeamPlayers,
   type User,
   type UpsertUser,
   type Player,
@@ -36,6 +38,10 @@ import {
   type InsertTournamentResults,
   type HomepageSlider,
   type InsertHomepageSlider,
+  type TournamentTeam,
+  type InsertTournamentTeam,
+  type TournamentTeamPlayer,
+  type InsertTournamentTeamPlayer,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
@@ -117,6 +123,12 @@ export interface IStorage {
 
   // Admin statistics
   getAdminStatistics(): Promise<any>;
+
+  // Tournament team operations
+  createTournamentTeam(tournamentId: string, teamData: { name: string; logoUrl?: string }): Promise<TournamentTeam>;
+  addPlayerToTournamentTeam(teamId: string, playerId: string, playerName: string): Promise<TournamentTeamPlayer>;
+  getTournamentTeams(tournamentId: string): Promise<Array<TournamentTeam & { players: TournamentTeamPlayer[] }>>;
+  deleteTournamentTeam(teamId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1243,6 +1255,63 @@ export class DatabaseStorage implements IStorage {
       console.error('Error getting admin statistics:', error);
       throw error;
     }
+  }
+
+  // Tournament team operations
+  async createTournamentTeam(tournamentId: string, teamData: { name: string; logoUrl?: string }): Promise<TournamentTeam> {
+    const [team] = await db
+      .insert(tournamentTeams)
+      .values({
+        tournamentId,
+        name: teamData.name,
+        logoUrl: teamData.logoUrl,
+      })
+      .returning();
+    return team;
+  }
+
+  async addPlayerToTournamentTeam(teamId: string, playerId: string, playerName: string): Promise<TournamentTeamPlayer> {
+    const [player] = await db
+      .insert(tournamentTeamPlayers)
+      .values({
+        tournamentTeamId: teamId,
+        playerId,
+        playerName,
+      })
+      .returning();
+    return player;
+  }
+
+  async getTournamentTeams(tournamentId: string): Promise<Array<TournamentTeam & { players: TournamentTeamPlayer[] }>> {
+    const teams = await db
+      .select()
+      .from(tournamentTeams)
+      .where(eq(tournamentTeams.tournamentId, tournamentId));
+
+    const teamsWithPlayers = await Promise.all(
+      teams.map(async (team) => {
+        const players = await db
+          .select()
+          .from(tournamentTeamPlayers)
+          .where(eq(tournamentTeamPlayers.tournamentTeamId, team.id));
+        
+        return {
+          ...team,
+          players,
+        };
+      })
+    );
+
+    return teamsWithPlayers;
+  }
+
+  async deleteTournamentTeam(teamId: string): Promise<boolean> {
+    // Delete players first
+    await db.delete(tournamentTeamPlayers).where(eq(tournamentTeamPlayers.tournamentTeamId, teamId));
+    
+    // Delete team
+    const result = await db.delete(tournamentTeams).where(eq(tournamentTeams.id, teamId));
+    return result.rowCount > 0;
   }
 }
 

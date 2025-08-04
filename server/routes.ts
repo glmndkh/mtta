@@ -1528,6 +1528,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Tournament team endpoints (admin only)
+  app.post('/api/tournaments/:tournamentId/teams', requireAuth, async (req, res) => {
+    try {
+      const { tournamentId } = req.params;
+      const teamData = req.body;
+      const team = await storage.createTournamentTeam(tournamentId, teamData);
+      res.json(team);
+    } catch (error) {
+      console.error("Error creating tournament team:", error);
+      res.status(500).json({ message: "Failed to create tournament team" });
+    }
+  });
+
+  app.post('/api/tournament-teams/:teamId/players', requireAuth, async (req, res) => {
+    try {
+      const { teamId } = req.params;
+      const { playerId, playerName } = req.body;
+      const player = await storage.addPlayerToTournamentTeam(teamId, playerId, playerName);
+      res.json(player);
+    } catch (error) {
+      console.error("Error adding player to tournament team:", error);
+      res.status(500).json({ message: "Failed to add player to tournament team" });
+    }
+  });
+
+  app.get('/api/tournaments/:tournamentId/teams', async (req, res) => {
+    try {
+      const { tournamentId } = req.params;
+      const teams = await storage.getTournamentTeams(tournamentId);
+      res.json(teams);
+    } catch (error) {
+      console.error("Error fetching tournament teams:", error);
+      res.status(500).json({ message: "Failed to fetch tournament teams" });
+    }
+  });
+
+  app.delete('/api/tournament-teams/:teamId', requireAuth, async (req, res) => {
+    try {
+      const { teamId } = req.params;
+      const deleted = await storage.deleteTournamentTeam(teamId);
+      res.json({ success: deleted });
+    } catch (error) {
+      console.error("Error deleting tournament team:", error);
+      res.status(500).json({ message: "Failed to delete tournament team" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
