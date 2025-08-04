@@ -63,8 +63,6 @@ export default function AdminTournamentGenerator() {
   const [newParticipationType, setNewParticipationType] = useState("");
   const [richDescription, setRichDescription] = useState("");
   const [previewMode, setPreviewMode] = useState(false);
-  const [backgroundImageUrl, setBackgroundImageUrl] = useState("");
-  const [regulationDocumentUrl, setRegulationDocumentUrl] = useState("");
 
   // Redirect if not admin
   useEffect(() => {
@@ -117,60 +115,7 @@ export default function AdminTournamentGenerator() {
     }
   });
 
-  // File upload handlers
-  const handleBackgroundImageUpload = async () => {
-    const response = await fetch("/api/objects/upload", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-    });
-    const { uploadURL } = await response.json();
-    return { method: "PUT" as const, url: uploadURL };
-  };
-
-  const handleBackgroundImageComplete = async (result: any) => {
-    if (result.successful && result.successful[0]) {
-      const uploadURL = result.successful[0].uploadURL;
-      const finalizeResponse = await fetch("/api/objects/finalize", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileURL: uploadURL, isPublic: true }),
-      });
-      const { objectPath } = await finalizeResponse.json();
-      setBackgroundImageUrl(objectPath);
-      form.setValue("backgroundImageUrl", objectPath);
-      toast({
-        title: "Амжилттай",
-        description: "Арын зураг амжилттай хуулагдлаа",
-      });
-    }
-  };
-
-  const handleRegulationDocumentUpload = async () => {
-    const response = await fetch("/api/objects/upload", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-    });
-    const { uploadURL } = await response.json();
-    return { method: "PUT" as const, url: uploadURL };
-  };
-
-  const handleRegulationDocumentComplete = async (result: any) => {
-    if (result.successful && result.successful[0]) {
-      const uploadURL = result.successful[0].uploadURL;
-      const finalizeResponse = await fetch("/api/objects/finalize", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileURL: uploadURL, isPublic: false }),
-      });
-      const { objectPath } = await finalizeResponse.json();
-      setRegulationDocumentUrl(objectPath);
-      form.setValue("regulationDocumentUrl", objectPath);
-      toast({
-        title: "Амжилттай",
-        description: "Дүрмийн баримт бичиг амжилттай хуулагдлаа",
-      });
-    }
-  };
+  // Participation type management
 
   const addCustomParticipationType = () => {
     if (newParticipationType.trim() && !customParticipationTypes.includes(newParticipationType.trim())) {
@@ -221,8 +166,6 @@ export default function AdminTournamentGenerator() {
     const finalData = {
       ...data,
       richDescription: richDescription,
-      backgroundImageUrl: backgroundImageUrl,
-      regulationDocumentUrl: regulationDocumentUrl,
       participationTypes: [...data.participationTypes, ...customParticipationTypes],
       minRating: data.minRating === "none" ? null : parseInt(data.minRating) || null,
       maxRating: data.maxRating === "none" ? null : parseInt(data.maxRating) || null,
@@ -413,43 +356,35 @@ export default function AdminTournamentGenerator() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label className="text-sm font-medium mb-2 block">Арын зураг</Label>
-                    <ObjectUploader
-                      maxNumberOfFiles={1}
-                      maxFileSize={5242880} // 5MB
-                      onGetUploadParameters={handleBackgroundImageUpload}
-                      onComplete={handleBackgroundImageComplete}
-                      buttonClassName="w-full"
-                    >
-                      <div className="flex items-center justify-center">
-                        <Upload className="h-4 w-4 mr-2" />
-                        Арын зураг хуулах
-                      </div>
-                    </ObjectUploader>
-                    {backgroundImageUrl && (
-                      <p className="text-sm text-green-600 mt-2">✓ Арын зураг хуулагдлаа</p>
+                  <FormField
+                    control={form.control}
+                    name="backgroundImageUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Арын зургийн URL</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://example.com/background.jpg" {...field} />
+                        </FormControl>
+                        <p className="text-sm text-gray-500">💡 Object storage-д зураг хуулж URL-г энд оруулна уу</p>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  </div>
+                  />
 
-                  <div>
-                    <Label className="text-sm font-medium mb-2 block">Дүрмийн баримт бичиг</Label>
-                    <ObjectUploader
-                      maxNumberOfFiles={1}
-                      maxFileSize={10485760} // 10MB
-                      onGetUploadParameters={handleRegulationDocumentUpload}
-                      onComplete={handleRegulationDocumentComplete}
-                      buttonClassName="w-full"
-                    >
-                      <div className="flex items-center justify-center">
-                        <FileText className="h-4 w-4 mr-2" />
-                        Дүрмийн баримт хуулах
-                      </div>
-                    </ObjectUploader>
-                    {regulationDocumentUrl && (
-                      <p className="text-sm text-green-600 mt-2">✓ Дүрмийн баримт хуулагдлаа</p>
+                  <FormField
+                    control={form.control}
+                    name="regulationDocumentUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Дүрмийн баримт бичгийн URL</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://example.com/regulations.pdf" {...field} />
+                        </FormControl>
+                        <p className="text-sm text-gray-500">💡 Object storage-д баримт хуулж URL-г энд оруулна уу</p>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  </div>
+                  />
                 </div>
               </CardContent>
             </Card>
