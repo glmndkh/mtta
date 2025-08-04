@@ -1205,7 +1205,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin statistics endpoint
   app.get('/api/admin/stats', isAuthenticated, isAdminRole, async (req, res) => {
     try {
+      console.log("Admin stats route accessed by user:", req.session?.userId);
       const stats = await storage.getAdminStatistics();
+      console.log("Stats fetched successfully:", !!stats);
       res.json(stats);
     } catch (error) {
       console.error("Error fetching admin statistics:", error);

@@ -6,12 +6,14 @@ import { Users, Shield, Building, Trophy, Calendar, Newspaper, TrendingUp, Award
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 export default function AdminStatsDashboard() {
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading, error } = useQuery({
     queryKey: ['/api/admin/stats'],
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
-  if (isLoading || !stats) {
+  console.log('Stats query:', { data: stats, isLoading, error });
+
+  if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[...Array(6)].map((_, i) => (
@@ -23,6 +25,32 @@ export default function AdminStatsDashboard() {
           </Card>
         ))}
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Алдаа гарлаа</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-red-600">Статистик ачаалахад алдаа гарлаа. Та админ эрхтэй нэвтэрсэн эсэхээ шалгана уу.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Мэдээлэл олдсонгүй</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>Статистикийн мэдээлэл олдсонгүй.</p>
+        </CardContent>
+      </Card>
     );
   }
 
