@@ -1470,10 +1470,11 @@ export default function TournamentManagement() {
                                                 }
                                                 
                                                 return teamData.players.map((teamPlayer: any) => {
-                                                  // Use firstName + lastName from the joined user data
-                                                  const playerName = teamPlayer.firstName && teamPlayer.lastName 
-                                                    ? `${teamPlayer.firstName} ${teamPlayer.lastName}`
-                                                    : teamPlayer.playerName || `Тоглогч ${teamPlayer.playerId}`;
+                                                  // Use playerName directly since firstName/lastName join might not be working
+                                                  const playerName = teamPlayer.playerName || 
+                                                    (teamPlayer.firstName && teamPlayer.lastName 
+                                                      ? `${teamPlayer.firstName} ${teamPlayer.lastName}`
+                                                      : `Тоглогч ${teamPlayer.playerId}`);
                                                   
                                                   return (
                                                     <CommandItem
