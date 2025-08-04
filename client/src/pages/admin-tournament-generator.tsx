@@ -20,7 +20,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { ObjectUploader } from "@/components/ObjectUploader";
+// Object uploader will be added later when needed
 
 const tournamentSchema = z.object({
   name: z.string().min(1, "Тэмцээний нэр заавал байх ёстой"),
