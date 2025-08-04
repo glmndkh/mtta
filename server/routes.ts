@@ -1360,15 +1360,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/leagues', requireAuth, isAdminRole, async (req, res) => {
     try {
-      const leagueData = req.body;
+      const leagueData = { ...req.body };
+      console.log("Create league data received:", JSON.stringify(leagueData, null, 2));
       
-      // Parse date strings into Date objects
-      if (leagueData.startDate) {
+      // Validate required fields
+      if (!leagueData.name || !leagueData.name.trim()) {
+        return res.status(400).json({ message: "Лигийн нэр заавал оруулна уу" });
+      }
+      
+      // Parse date strings into Date objects, handle empty strings
+      if (leagueData.startDate && typeof leagueData.startDate === 'string' && leagueData.startDate.trim() !== '') {
         leagueData.startDate = new Date(leagueData.startDate);
+        if (isNaN(leagueData.startDate.getTime())) {
+          return res.status(400).json({ message: "Эхлэх огноо буруу форматтай байна" });
+        }
+      } else {
+        return res.status(400).json({ message: "Эхлэх огноо заавал оруулна уу" });
       }
-      if (leagueData.endDate) {
+      
+      if (leagueData.endDate && typeof leagueData.endDate === 'string' && leagueData.endDate.trim() !== '') {
         leagueData.endDate = new Date(leagueData.endDate);
+        if (isNaN(leagueData.endDate.getTime())) {
+          return res.status(400).json({ message: "Дуусах огноо буруу форматтай байна" });
+        }
+      } else {
+        return res.status(400).json({ message: "Дуусах огноо заавал оруулна уу" });
       }
+      
+      // Handle registrationDeadline if provided
+      if (leagueData.registrationDeadline && typeof leagueData.registrationDeadline === 'string' && leagueData.registrationDeadline.trim() !== '') {
+        leagueData.registrationDeadline = new Date(leagueData.registrationDeadline);
+        if (isNaN(leagueData.registrationDeadline.getTime())) {
+          return res.status(400).json({ message: "Бүртгэлийн эцсийн хугацаа буруу форматтай байна" });
+        }
+      } else {
+        delete leagueData.registrationDeadline;
+      }
+      
+      console.log("Processed create league data:", JSON.stringify(leagueData, null, 2));
       
       const league = await storage.createLeague(leagueData);
       res.json(league);
