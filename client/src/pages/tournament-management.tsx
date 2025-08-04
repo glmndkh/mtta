@@ -74,10 +74,11 @@ export default function TournamentManagement() {
     setsWon: number;
     opponentId?: number;
   }>>([
-    { id: 1, name: "", teamId: 1, sets: [11, 11, 11, 0, 0], setsWon: 3 },
-    { id: 2, name: "", teamId: 2, sets: [0, 0, 0, 0, 0], setsWon: 0 }
+    { id: 1, name: "", teamId: 1, sets: [11, 11, 11], setsWon: 3 },
+    { id: 2, name: "", teamId: 2, sets: [0, 0, 0], setsWon: 0 }
   ]);
   const [editingScore, setEditingScore] = useState<{playerId: number, setIndex: number} | null>(null);
+  const [numberOfSets, setNumberOfSets] = useState<number>(3);
   
   // Get current group data for compatibility
   const groupData = groups.find(g => g.id === activeGroupId)?.players || [];
@@ -1277,12 +1278,53 @@ export default function TournamentManagement() {
                         <TableRow className="bg-gray-100">
                           <TableHead className="w-20">Багийн лого</TableHead>
                           <TableHead>Тамирчины нэр</TableHead>
-                          <TableHead className="w-16 text-center">1</TableHead>
-                          <TableHead className="w-16 text-center">2</TableHead>
-                          <TableHead className="w-16 text-center">3</TableHead>
-                          <TableHead className="w-16 text-center">4</TableHead>
-                          <TableHead className="w-16 text-center">5</TableHead>
+                          {Array.from({ length: numberOfSets }, (_, i) => (
+                            <TableHead key={i} className="w-16 text-center">{i + 1}</TableHead>
+                          ))}
                           <TableHead className="w-20 text-center">Харьцаа</TableHead>
+                          <TableHead className="w-32 text-center">
+                            <div className="flex gap-1 justify-center">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-6 w-6 p-0 text-green-600"
+                                onClick={() => {
+                                  if (numberOfSets < 7) {
+                                    setNumberOfSets(numberOfSets + 1);
+                                    setMatchPlayers(players => 
+                                      players.map(p => ({
+                                        ...p,
+                                        sets: [...p.sets, 0]
+                                      }))
+                                    );
+                                  }
+                                }}
+                                disabled={numberOfSets >= 7}
+                              >
+                                <Plus className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-6 w-6 p-0 text-red-600"
+                                onClick={() => {
+                                  if (numberOfSets > 1) {
+                                    setNumberOfSets(numberOfSets - 1);
+                                    setMatchPlayers(players => 
+                                      players.map(p => ({
+                                        ...p,
+                                        sets: p.sets.slice(0, -1),
+                                        setsWon: p.sets.slice(0, -1).filter(s => s >= 11).length
+                                      }))
+                                    );
+                                  }
+                                }}
+                                disabled={numberOfSets <= 1}
+                              >
+                                <Minus className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1355,9 +1397,11 @@ export default function TournamentManagement() {
                                 </PopoverContent>
                               </Popover>
                             </TableCell>
-                            {player.sets.map((score, setIndex) => (
+                            {Array.from({ length: numberOfSets }, (_, setIndex) => {
+                              const score = player.sets[setIndex] || 0;
+                              return (
                               <TableCell key={setIndex} className="text-center">
-                                {setIndex < 3 || (setIndex < 5 && (player.sets[setIndex] > 0 || editingScore?.playerId === player.id && editingScore?.setIndex === setIndex)) ? (
+                                {setIndex < numberOfSets ? (
                                   <Popover
                                     open={editingScore?.playerId === player.id && editingScore?.setIndex === setIndex}
                                     onOpenChange={(open) => {
@@ -1391,15 +1435,18 @@ export default function TournamentManagement() {
                                             value={score || ""}
                                             onChange={(e) => {
                                               const newScore = parseInt(e.target.value) || 0;
-                                              const updatedPlayers = matchPlayers.map(p => 
-                                                p.id === player.id 
-                                                  ? { 
-                                                      ...p, 
-                                                      sets: p.sets.map((s, i) => i === setIndex ? newScore : s),
-                                                      setsWon: p.sets.map((s, i) => i === setIndex ? newScore : s).filter(s => s >= 11).length
-                                                    } 
-                                                  : p
-                                              );
+                                              const updatedPlayers = matchPlayers.map(p => {
+                                                if (p.id === player.id) {
+                                                  const newSets = [...p.sets];
+                                                  newSets[setIndex] = newScore;
+                                                  return {
+                                                    ...p,
+                                                    sets: newSets,
+                                                    setsWon: newSets.filter(s => s >= 11).length
+                                                  };
+                                                }
+                                                return p;
+                                              });
                                               setMatchPlayers(updatedPlayers);
                                             }}
                                           />
@@ -1492,7 +1539,8 @@ export default function TournamentManagement() {
                                   </div>
                                 )}
                               </TableCell>
-                            ))}
+                            );
+                            })}
                             <TableCell className="text-center font-bold">
                               {player.setsWon}
                             </TableCell>
@@ -1501,7 +1549,7 @@ export default function TournamentManagement() {
 
                         {/* Add more player rows */}
                         <TableRow>
-                          <TableCell colSpan={8} className="text-center py-2">
+                          <TableCell colSpan={numberOfSets + 3} className="text-center py-2">
                             <div className="flex justify-center gap-2">
                               <Button 
                                 variant="outline" 
@@ -1513,7 +1561,7 @@ export default function TournamentManagement() {
                                     id: newId,
                                     name: "",
                                     teamId: 1,
-                                    sets: [0, 0, 0, 0, 0],
+                                    sets: Array(numberOfSets).fill(0),
                                     setsWon: 0,
                                     opponentId: undefined
                                   }]);
@@ -1532,7 +1580,7 @@ export default function TournamentManagement() {
                                     id: newId,
                                     name: "",
                                     teamId: 2,
-                                    sets: [0, 0, 0, 0, 0],
+                                    sets: Array(numberOfSets).fill(0),
                                     setsWon: 0,
                                     opponentId: undefined
                                   }]);
