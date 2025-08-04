@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -79,6 +79,62 @@ export default function TournamentManagement() {
   ]);
   const [editingScore, setEditingScore] = useState<{playerId: number, setIndex: number} | null>(null);
   const [numberOfSets, setNumberOfSets] = useState<number>(3);
+
+  // Auto-populate match players when teams are selected
+  useEffect(() => {
+    if (selectedTeam1 && selectedTeam2) {
+      const team1Data = validExistingTeams.find(team => team.id === selectedTeam1.id);
+      const team2Data = validExistingTeams.find(team => team.id === selectedTeam2.id);
+      
+      const newMatchPlayers = [];
+      
+      // Add team 1 players (up to 4 players)
+      if (team1Data?.players) {
+        team1Data.players.slice(0, 4).forEach((player: any, index: number) => {
+          const playerName = player.firstName && player.lastName 
+            ? `${player.firstName} ${player.lastName}`
+            : player.playerName || `Тоглогч ${index + 1}`;
+          
+          newMatchPlayers.push({
+            id: index + 1,
+            name: playerName,
+            teamId: 1,
+            sets: Array(numberOfSets).fill(0),
+            setsWon: 0,
+            opponentId: undefined
+          });
+        });
+      }
+      
+      // Add team 2 players (up to 4 players)
+      if (team2Data?.players) {
+        team2Data.players.slice(0, 4).forEach((player: any, index: number) => {
+          const playerName = player.firstName && player.lastName 
+            ? `${player.firstName} ${player.lastName}`
+            : player.playerName || `Тоглогч ${index + 1}`;
+          
+          newMatchPlayers.push({
+            id: team1Data?.players?.length + index + 1 || index + 5,
+            name: playerName,
+            teamId: 2,
+            sets: Array(numberOfSets).fill(0),
+            setsWon: 0,
+            opponentId: undefined
+          });
+        });
+      }
+      
+      // Only update if we have players and current matchPlayers are empty or default
+      if (newMatchPlayers.length > 0) {
+        const hasDefaultPlayers = matchPlayers.length <= 2 && 
+          matchPlayers.every(p => p.name === "" || p.name === "Тамирчины нэр");
+        
+        if (hasDefaultPlayers) {
+          setMatchPlayers(newMatchPlayers);
+        }
+      }
+    }
+  }, [selectedTeam1, selectedTeam2, validExistingTeams, numberOfSets]);
   
   // Get current group data for compatibility
   const groupData = groups.find(g => g.id === activeGroupId)?.players || [];
@@ -1246,7 +1302,11 @@ export default function TournamentManagement() {
                   <div className="flex items-center justify-center gap-8">
                     <div className="flex items-center gap-2">
                       <div className="w-12 h-12 bg-gray-300 rounded flex items-center justify-center text-xs text-gray-600">
-                        Лого
+                        {selectedTeam1?.logoUrl ? (
+                          <img src={selectedTeam1.logoUrl} alt={selectedTeam1.name} className="w-full h-full rounded object-cover" />
+                        ) : (
+                          selectedTeam1?.name?.charAt(0) || 'A'
+                        )}
                       </div>
                       <span className="font-medium">
                         {selectedTeam1 ? selectedTeam1.name : 'Багийн нэр'}
@@ -1260,7 +1320,11 @@ export default function TournamentManagement() {
                         {selectedTeam2 ? selectedTeam2.name : 'Багийн нэр'}
                       </span>
                       <div className="w-12 h-12 bg-gray-300 rounded flex items-center justify-center text-xs text-gray-600">
-                        Лого
+                        {selectedTeam2?.logoUrl ? (
+                          <img src={selectedTeam2.logoUrl} alt={selectedTeam2.name} className="w-full h-full rounded object-cover" />
+                        ) : (
+                          selectedTeam2?.name?.charAt(0) || 'B'
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1332,7 +1396,13 @@ export default function TournamentManagement() {
                           <TableRow key={player.id}>
                             <TableCell>
                               <div className="w-8 h-8 bg-gray-300 rounded flex items-center justify-center text-xs">
-                                {player.teamId === 1 ? (selectedTeam1?.name?.charAt(0) || 'A') : (selectedTeam2?.name?.charAt(0) || 'B')}
+                                {(() => {
+                                  const team = player.teamId === 1 ? selectedTeam1 : selectedTeam2;
+                                  if (team?.logoUrl) {
+                                    return <img src={team.logoUrl} alt={team.name} className="w-full h-full rounded object-cover" />;
+                                  }
+                                  return team?.name?.charAt(0) || (player.teamId === 1 ? 'A' : 'B');
+                                })()}
                               </div>
                             </TableCell>
                             <TableCell>
