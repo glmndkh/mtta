@@ -1309,29 +1309,46 @@ export default function TournamentManagement() {
                                     <CommandList>
                                       <CommandEmpty>Тоглогч олдсонгүй.</CommandEmpty>
                                       <CommandGroup heading={`${player.teamId === 1 ? selectedTeam1?.name || 'Баг 1' : selectedTeam2?.name || 'Баг 2'} тоглогчид`}>
-                                        {validExistingTeams
-                                          .find(team => team.id === (player.teamId === 1 ? selectedTeam1?.id : selectedTeam2?.id))
-                                          ?.players?.map((teamPlayer: any) => (
-                                          <CommandItem
-                                            key={teamPlayer.id}
-                                            value={`${teamPlayer.firstName} ${teamPlayer.lastName}`}
-                                            onSelect={() => {
-                                              const updatedPlayers = matchPlayers.map(p => 
-                                                p.id === player.id 
-                                                  ? { ...p, name: `${teamPlayer.firstName} ${teamPlayer.lastName}` } 
-                                                  : p
-                                              );
-                                              setMatchPlayers(updatedPlayers);
-                                            }}
-                                          >
-                                            <Check
-                                              className={`mr-2 h-4 w-4 ${
-                                                player.name === `${teamPlayer.firstName} ${teamPlayer.lastName}` ? "opacity-100" : "opacity-0"
-                                              }`}
-                                            />
-                                            {teamPlayer.firstName} {teamPlayer.lastName}
-                                          </CommandItem>
-                                        ))}
+                                        {(() => {
+                                          const selectedTeam = player.teamId === 1 ? selectedTeam1 : selectedTeam2;
+                                          const teamData = validExistingTeams.find(team => team.id === selectedTeam?.id);
+                                          
+                                          if (!teamData?.players || teamData.players.length === 0) {
+                                            return (
+                                              <CommandItem disabled>
+                                                Тус багт тоглогч байхгүй
+                                              </CommandItem>
+                                            );
+                                          }
+                                          
+                                          return teamData.players.map((teamPlayer: any) => {
+                                            const playerName = teamPlayer.firstName && teamPlayer.lastName 
+                                              ? `${teamPlayer.firstName} ${teamPlayer.lastName}`
+                                              : teamPlayer.name || `Тоглогч ${teamPlayer.id}`;
+                                            
+                                            return (
+                                              <CommandItem
+                                                key={teamPlayer.id}
+                                                value={playerName}
+                                                onSelect={() => {
+                                                  const updatedPlayers = matchPlayers.map(p => 
+                                                    p.id === player.id 
+                                                      ? { ...p, name: playerName } 
+                                                      : p
+                                                  );
+                                                  setMatchPlayers(updatedPlayers);
+                                                }}
+                                              >
+                                                <Check
+                                                  className={`mr-2 h-4 w-4 ${
+                                                    player.name === playerName ? "opacity-100" : "opacity-0"
+                                                  }`}
+                                                />
+                                                {playerName}
+                                              </CommandItem>
+                                            );
+                                          });
+                                        })()}
                                       </CommandGroup>
                                     </CommandList>
                                   </Command>
@@ -1409,27 +1426,41 @@ export default function TournamentManagement() {
                                                 <CommandList>
                                                   <CommandEmpty>Тоглогч олдсонгүй.</CommandEmpty>
                                                   <CommandGroup heading="Өрсөлдөгч багийн тоглогчид">
-                                                    {matchPlayers
-                                                      .filter(p => p.teamId !== player.teamId)
-                                                      .map((opponent) => (
-                                                      <CommandItem
-                                                        key={opponent.id}
-                                                        value={opponent.name}
-                                                        onSelect={() => {
-                                                          const updatedPlayers = matchPlayers.map(p => 
-                                                            p.id === player.id ? { ...p, opponentId: opponent.id } : p
-                                                          );
-                                                          setMatchPlayers(updatedPlayers);
-                                                        }}
-                                                      >
-                                                        <Check
-                                                          className={`mr-2 h-4 w-4 ${
-                                                            player.opponentId === opponent.id ? "opacity-100" : "opacity-0"
-                                                          }`}
-                                                        />
-                                                        {opponent.name || `Тоглогч ${opponent.id}`}
-                                                      </CommandItem>
-                                                    ))}
+                                                    {(() => {
+                                                      const opponents = matchPlayers.filter(p => p.teamId !== player.teamId);
+                                                      
+                                                      if (opponents.length === 0) {
+                                                        return (
+                                                          <CommandItem disabled>
+                                                            Өрсөлдөгч тоглогч байхгүй
+                                                          </CommandItem>
+                                                        );
+                                                      }
+                                                      
+                                                      return opponents.map((opponent) => {
+                                                        const opponentName = opponent.name || `Тоглогч ${opponent.id}`;
+                                                        
+                                                        return (
+                                                          <CommandItem
+                                                            key={opponent.id}
+                                                            value={opponentName}
+                                                            onSelect={() => {
+                                                              const updatedPlayers = matchPlayers.map(p => 
+                                                                p.id === player.id ? { ...p, opponentId: opponent.id } : p
+                                                              );
+                                                              setMatchPlayers(updatedPlayers);
+                                                            }}
+                                                          >
+                                                            <Check
+                                                              className={`mr-2 h-4 w-4 ${
+                                                                player.opponentId === opponent.id ? "opacity-100" : "opacity-0"
+                                                              }`}
+                                                            />
+                                                            {opponentName}
+                                                          </CommandItem>
+                                                        );
+                                                      });
+                                                    })()}
                                                   </CommandGroup>
                                                 </CommandList>
                                               </Command>
