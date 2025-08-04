@@ -38,7 +38,7 @@ export default function ProfilePage() {
   // Fetch current user data
   const { data: user, isLoading } = useQuery({
     queryKey: ["/api/auth/user"],
-  });
+  }) as { data: any, isLoading: boolean };
 
   const form = useForm<ProfileUpdateForm>({
     resolver: zodResolver(profileUpdateSchema),
@@ -403,13 +403,13 @@ function LeagueMatchesSection({ userId }: { userId?: string }) {
       <CardContent>
         {isLoading ? (
           <div className="text-center py-4">Тоглолтууд ачааллаж байна...</div>
-        ) : !leagueMatches || leagueMatches.length === 0 ? (
+        ) : !leagueMatches || (leagueMatches as any)?.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             Танд одоогоор бүртгэгдсэн лигийн тоглолт байхгүй байна.
           </div>
         ) : (
           <div className="space-y-4">
-            {leagueMatches.map((match: any) => (
+            {(leagueMatches as any)?.map((match: any) => (
               <Card key={match.id} className="border-l-4 border-l-blue-500">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">

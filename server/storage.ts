@@ -1232,7 +1232,7 @@ export class DatabaseStorage implements IStorage {
           role: r.role
         })),
         tournamentStatus: tournamentStatus.map(t => ({
-          name: t.status === 'upcoming' ? 'Удахгүй' :
+          name: t.status === 'registration' ? 'Бүртгэл' :
                 t.status === 'ongoing' ? 'Явагдаж байгаа' :
                 t.status === 'completed' ? 'Дууссан' : t.status,
           value: t.count,
@@ -1337,7 +1337,7 @@ export class DatabaseStorage implements IStorage {
     
     // Delete team
     const result = await db.delete(tournamentTeams).where(eq(tournamentTeams.id, teamId));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   // League team methods (reuse tournament team tables for leagues)
