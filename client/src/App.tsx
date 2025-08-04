@@ -50,6 +50,7 @@ function Router() {
           <Route path="/dashboard" component={PlayerDashboard} />
           <Route path="/profile" component={Profile} />
           <Route path="/admin/dashboard" component={AdminDashboard} />
+          <Route path="/admin" component={AdminDashboard} />
           <Route path="/admin/generator" component={AdminTournamentGenerator} />
           <Route path="/admin/tournaments" component={AdminTournaments} />
           <Route path="/admin/tournament/:id/results" component={AdminTournamentResults} />
