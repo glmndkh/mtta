@@ -51,9 +51,9 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     const newMatches: Match[] = [];
     
     // Calculate positions for each round with much better spacing to prevent overlap
-    const MATCH_HEIGHT = 120; // Increased height for proper spacing between boxes
-    const ROUND_WIDTH = 280; // Increased width for better separation
-    const START_Y = 50; // More top margin
+    const MATCH_HEIGHT = 200; // Much larger height to accommodate all form elements
+    const ROUND_WIDTH = 300; // Increased width for better separation
+    const START_Y = 60; // More top margin
     
     for (let round = 1; round <= rounds; round++) {
       const matchesInRound = Math.pow(2, rounds - round);
@@ -61,7 +61,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
       
       for (let matchIndex = 0; matchIndex < matchesInRound; matchIndex++) {
         // Much larger spacing to completely prevent overlap
-        const ySpacing = Math.pow(2, round - 1) * MATCH_HEIGHT + (round * 50); // Much more progressive spacing
+        const ySpacing = Math.pow(2, round - 1) * MATCH_HEIGHT + (round * 80); // Even more progressive spacing
         const yOffset = START_Y + matchIndex * ySpacing;
         
         const match: Match = {
@@ -399,7 +399,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
             <svg 
               ref={svgRef}
               className="absolute inset-0 w-full h-full pointer-events-none"
-              style={{ zIndex: 1, minHeight: '800px', minWidth: '1200px' }}
+              style={{ zIndex: 1, minHeight: '1200px', minWidth: '1500px' }}
             >
               {renderConnections()}
             </svg>
@@ -408,7 +408,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
             {matches.map(match => (
               <div
                 key={match.id}
-                className="absolute bg-white border-2 border-gray-300 rounded-lg p-2 md:p-3 w-56 md:w-64 shadow-md hover:shadow-lg transition-shadow"
+                className="absolute bg-white border-2 border-gray-300 rounded-lg p-3 w-64 md:w-72 min-h-[180px] shadow-md hover:shadow-lg transition-shadow"
                 style={{
                   left: match.position.x,
                   top: match.position.y,
@@ -488,23 +488,29 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                 </div>
 
                 {/* Score Input */}
-                <div className="grid grid-cols-2 gap-1 mb-2">
-                  <Input
-                    placeholder="Тоглогч 1 оноо"
-                    value={match.player1Score || ''}
-                    onChange={(e) => handleScoreChange(match.id, 'player1Score', e.target.value)}
-                    className="text-center text-xs h-7"
-                    type="number"
-                    min="0"
-                  />
-                  <Input
-                    placeholder="Тоглогч 2 оноо"
-                    value={match.player2Score || ''}
-                    onChange={(e) => handleScoreChange(match.id, 'player2Score', e.target.value)}
-                    className="text-center text-xs h-7"
-                    type="number"
-                    min="0"
-                  />
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <div>
+                    <label className="text-xs text-gray-600 mb-1 block">Тоглогч 1 оноо</label>
+                    <Input
+                      placeholder="0"
+                      value={match.player1Score || ''}
+                      onChange={(e) => handleScoreChange(match.id, 'player1Score', e.target.value)}
+                      className="text-center text-sm h-8"
+                      type="number"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600 mb-1 block">Тоглогч 2 оноо</label>
+                    <Input
+                      placeholder="0"
+                      value={match.player2Score || ''}
+                      onChange={(e) => handleScoreChange(match.id, 'player2Score', e.target.value)}
+                      className="text-center text-sm h-8"
+                      type="number"
+                      min="0"
+                    />
+                  </div>
                 </div>
 
                 {/* Winner Selection */}
