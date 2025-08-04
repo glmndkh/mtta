@@ -1455,6 +1455,12 @@ export default function TournamentManagement() {
                                                 const selectedTeam = player.teamId === 1 ? selectedTeam1 : selectedTeam2;
                                                 const teamData = validExistingTeams.find(team => team.id === selectedTeam?.id);
                                                 
+                                                // Debug log to see the team data structure
+                                                console.log('Team data:', teamData);
+                                                if (teamData?.players) {
+                                                  console.log('Players in team:', teamData.players);
+                                                }
+                                                
                                                 if (!teamData?.players || teamData.players.length === 0) {
                                                   return (
                                                     <CommandItem disabled>
@@ -1464,9 +1470,10 @@ export default function TournamentManagement() {
                                                 }
                                                 
                                                 return teamData.players.map((teamPlayer: any) => {
+                                                  // Use firstName + lastName from the joined user data
                                                   const playerName = teamPlayer.firstName && teamPlayer.lastName 
                                                     ? `${teamPlayer.firstName} ${teamPlayer.lastName}`
-                                                    : teamPlayer.name || `Тоглогч ${teamPlayer.id}`;
+                                                    : teamPlayer.playerName || `Тоглогч ${teamPlayer.playerId}`;
                                                   
                                                   return (
                                                     <CommandItem
