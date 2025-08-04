@@ -11,12 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Trash2, Plus, Users, Shield, Building, Trophy, Calendar, Newspaper, Images } from "lucide-react";
+import { Pencil, Trash2, Plus, Users, Shield, Building, Trophy, Calendar, Newspaper, Images, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import AdminStatsDashboard from "@/components/admin-stats-dashboard";
 
 export default function AdminDashboard() {
-  const [selectedTab, setSelectedTab] = useState("users");
+  const [selectedTab, setSelectedTab] = useState("stats");
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [formData, setFormData] = useState<any>({});
@@ -626,7 +627,11 @@ export default function AdminDashboard() {
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
+          <TabsTrigger value="stats" className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4" />
+            Статистик
+          </TabsTrigger>
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             Хэрэглэгчид
@@ -715,6 +720,31 @@ export default function AdminDashboard() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <h2 className="text-2xl font-bold">Тэмцээнүүд</h2>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => window.open('/admin/tournament-generator', '_blank')}
+                      className="flex items-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Шинэ тэмцээн үүсгэх
+                    </Button>
+                    <Button
+                      onClick={() => window.open('/admin/tournaments', '_blank')}
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      <Trophy className="w-4 h-4" />
+                      Тэмцээн удирдах
+                    </Button>
+                    <Button
+                      onClick={() => window.open('/admin/tournament-results', '_blank')}
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      <Calendar className="w-4 h-4" />
+                      Үр дүн оруулах
+                    </Button>
+                  </div>
                 </div>
                 
                 {tournamentsLoading ? (
@@ -879,6 +909,18 @@ export default function AdminDashboard() {
                   </Table>
                 )}
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="stats">
+          <Card>
+            <CardHeader>
+              <CardTitle>Системийн статистик</CardTitle>
+              <CardDescription>Нийт системийн үзүүлэлт ба дэлгэрэнгүй статистик</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AdminStatsDashboard />
             </CardContent>
           </Card>
         </TabsContent>

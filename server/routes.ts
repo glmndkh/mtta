@@ -1183,11 +1183,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const isAdminRole = async (req: any, res: any, next: any) => {
     try {
       if (!req.session?.userId) {
+        console.log("No session userId found");
         return res.status(401).json({ message: "Нэвтрэх шаардлагатай" });
       }
       
       const user = await storage.getUser(req.session.userId);
+      console.log("User found:", user?.email, "Role:", user?.role);
+      
       if (!user || user.role !== 'admin') {
+        console.log("User is not admin");
         return res.status(403).json({ message: "Админ эрх шаардлагатай" });
       }
       
@@ -1197,6 +1201,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Эрх шалгахад алдаа гарлаа" });
     }
   };
+
+  // Admin statistics endpoint
+  app.get('/api/admin/stats', isAuthenticated, isAdminRole, async (req, res) => {
+    try {
+      const stats = await storage.getAdminStatistics();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching admin statistics:", error);
+      res.status(500).json({ message: "Статистик авахад алдаа гарлаа" });
+    }
+  });
 
   // ===================
   // ADMIN USERS CRUD

@@ -114,6 +114,9 @@ export interface IStorage {
   
   // Player tournament match history
   getPlayerTournamentMatches(playerId: string): Promise<any[]>;
+
+  // Admin statistics
+  getAdminStatistics(): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1126,6 +1129,120 @@ export class DatabaseStorage implements IStorage {
     return tournamentMatches.sort((a, b) => 
       new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()
     );
+  }
+
+  async getAdminStatistics(): Promise<any> {
+    try {
+      // Get total counts
+      const [userCount] = await db.select({ count: sql<number>`count(*)`.as('count') }).from(users);
+      const [playerCount] = await db.select({ count: sql<number>`count(*)`.as('count') }).from(players);
+      const [clubCount] = await db.select({ count: sql<number>`count(*)`.as('count') }).from(clubs);
+      const [tournamentCount] = await db.select({ count: sql<number>`count(*)`.as('count') }).from(tournaments);
+      const [leagueCount] = await db.select({ count: sql<number>`count(*)`.as('count') }).from(leagues);
+      const [newsCount] = await db.select({ count: sql<number>`count(*)`.as('count') }).from(newsFeed);
+      
+      // Get user role distribution
+      const roleDistribution = await db
+        .select({
+          role: users.role,
+          count: sql<number>`count(*)`.as('count')
+        })
+        .from(users)
+        .groupBy(users.role);
+
+      // Get tournament status distribution
+      const tournamentStatus = await db
+        .select({
+          status: tournaments.status,
+          count: sql<number>`count(*)`.as('count')
+        })
+        .from(tournaments)
+        .groupBy(tournaments.status);
+
+      // Get monthly registrations for the last 6 months
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      
+      const monthlyRegistrations = await db
+        .select({
+          month: sql<string>`TO_CHAR(created_at, 'YYYY-MM')`.as('month'),
+          count: sql<number>`count(*)`.as('count')
+        })
+        .from(users)
+        .where(sql`created_at >= ${sixMonthsAgo}`)
+        .groupBy(sql`TO_CHAR(created_at, 'YYYY-MM')`)
+        .orderBy(sql`TO_CHAR(created_at, 'YYYY-MM')`);
+
+      // Get news by category
+      const newsByCategory = await db
+        .select({
+          category: newsFeed.category,
+          count: sql<number>`count(*)`.as('count')
+        })
+        .from(newsFeed)
+        .groupBy(newsFeed.category);
+
+      // Get top players by wins
+      const topPlayers = await db
+        .select({
+          playerId: players.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          wins: players.wins,
+          losses: players.losses,
+          rank: players.rank
+        })
+        .from(players)
+        .innerJoin(users, eq(players.userId, users.id))
+        .orderBy(desc(players.wins))
+        .limit(10);
+
+      return {
+        totals: {
+          users: userCount.count || 0,
+          players: playerCount.count || 0,
+          clubs: clubCount.count || 0,
+          tournaments: tournamentCount.count || 0,
+          leagues: leagueCount.count || 0,
+          news: newsCount.count || 0
+        },
+        roleDistribution: roleDistribution.map(r => ({
+          name: r.role === 'admin' ? 'Админ' : 
+                r.role === 'player' ? 'Тоглогч' :
+                r.role === 'club_owner' ? 'Клубын эзэн' : 'Хэрэглэгч',
+          value: r.count,
+          role: r.role
+        })),
+        tournamentStatus: tournamentStatus.map(t => ({
+          name: t.status === 'upcoming' ? 'Удахгүй' :
+                t.status === 'ongoing' ? 'Явагдаж байгаа' :
+                t.status === 'completed' ? 'Дууссан' : t.status,
+          value: t.count,
+          status: t.status
+        })),
+        monthlyRegistrations: monthlyRegistrations.map(m => ({
+          month: m.month,
+          count: m.count
+        })),
+        newsByCategory: newsByCategory.map(n => ({
+          name: n.category === 'tournament' ? 'Тэмцээн' :
+                n.category === 'news' ? 'Мэдээ' :
+                n.category === 'training' ? 'Бэлтгэл' :
+                n.category === 'urgent' ? 'Яаралтай' : n.category,
+          value: n.count,
+          category: n.category
+        })),
+        topPlayers: topPlayers.map(p => ({
+          name: `${p.firstName} ${p.lastName}`,
+          wins: p.wins || 0,
+          losses: p.losses || 0,
+          rank: p.rank
+        }))
+      };
+    } catch (error) {
+      console.error('Error getting admin statistics:', error);
+      throw error;
+    }
   }
 }
 
