@@ -311,6 +311,32 @@ export default function TournamentManagement() {
     toast({ title: `${newGroup.name} амжилттай нэмэгдлээ`, variant: "default" });
   };
 
+  const handleDeleteGroup = (groupId: number) => {
+    if (groups.length <= 1) {
+      toast({ title: "Хамгийн багадаа нэг групп байх ёстой", variant: "destructive" });
+      return;
+    }
+    
+    const groupToDelete = groups.find(g => g.id === groupId);
+    const updatedGroups = groups.filter(g => g.id !== groupId);
+    setGroups(updatedGroups);
+    
+    // If deleting active group, switch to first remaining group
+    if (activeGroupId === groupId) {
+      setActiveGroupId(updatedGroups[0].id);
+    }
+    
+    toast({ title: `${groupToDelete?.name} устгагдлаа`, variant: "default" });
+  };
+
+  const handleRenameGroup = (groupId: number, newName: string) => {
+    const updatedGroups = groups.map(group =>
+      group.id === groupId ? { ...group, name: newName } : group
+    );
+    setGroups(updatedGroups);
+    toast({ title: "Группын нэр өөрчлөгдлөө", variant: "default" });
+  };
+
   const handleAddGroupPlayer = () => {
     const currentGroup = groups.find(g => g.id === activeGroupId);
     if (!currentGroup) return;
@@ -853,14 +879,7 @@ export default function TournamentManagement() {
                         >
                           Буцах
                         </Button>
-                        <Button 
-                          variant="outline"
-                          className="bg-blue-500 hover:bg-blue-600 text-white"
-                          onClick={handleAddGroup}
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          Групп нэмэх
-                        </Button>
+
                         <Button 
                           onClick={handleAddGroupPlayer}
                           className="bg-green-500 hover:bg-green-600 text-white"
@@ -871,15 +890,33 @@ export default function TournamentManagement() {
                       </div>
                     </div>
 
-                    {/* Group Selector */}
-                    {groups.length > 1 && (
-                      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-700">Групп сонгох:</span>
-                          <div className="flex gap-2">
-                            {groups.map(group => (
+                    {/* Group Management */}
+                    <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-medium text-gray-700">Группууд:</span>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleAddGroup}
+                            className="bg-blue-500 hover:bg-blue-600 text-white"
+                          >
+                            <Plus className="w-3 h-3 mr-1" />
+                            Групп нэмэх
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        {groups.map(group => (
+                          <div
+                            key={group.id}
+                            className={`flex items-center justify-between p-2 rounded border ${
+                              activeGroupId === group.id ? 'bg-blue-100 border-blue-300' : 'bg-white border-gray-200'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
                               <Button
-                                key={group.id}
                                 variant={activeGroupId === group.id ? "default" : "outline"}
                                 size="sm"
                                 onClick={() => setActiveGroupId(group.id)}
@@ -887,11 +924,33 @@ export default function TournamentManagement() {
                               >
                                 {group.name}
                               </Button>
-                            ))}
+                              <Input
+                                value={group.name}
+                                onChange={(e) => handleRenameGroup(group.id, e.target.value)}
+                                className="h-7 w-32 text-xs"
+                                placeholder="Группын нэр"
+                              />
+                            </div>
+                            
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs text-gray-500">
+                                {group.players.filter(p => p.name.trim()).length} тоглогч
+                              </span>
+                              {groups.length > 1 && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeleteGroup(group.id)}
+                                  className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              )}
+                            </div>
                           </div>
-                        </div>
+                        ))}
                       </div>
-                    )}
+                    </div>
 
                     {/* Group Table */}
                     <div className="border rounded-lg overflow-hidden">
