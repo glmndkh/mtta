@@ -817,8 +817,11 @@ export default function TournamentManagement() {
                           <TableRow className="bg-yellow-100">
                             <TableHead className="w-16 bg-yellow-200">№</TableHead>
                             <TableHead className="bg-yellow-200">
-                              {groupMatchType === 'team' ? 'Багын нэр' : 'Тамирчин / Баг'}
+                              {groupMatchType === 'team' ? 'Багын нэр' : 'Тамирчин'}
                             </TableHead>
+                            {groupMatchType === 'individual' && (
+                              <TableHead className="bg-yellow-200">Баг</TableHead>
+                            )}
                             {groupData.map((_, index) => (
                               <TableHead key={index + 1} className="w-16 text-center bg-yellow-200">
                                 {index + 1}
@@ -841,7 +844,7 @@ export default function TournamentManagement() {
                                     >
                                       <PopoverTrigger asChild>
                                         <Input
-                                          placeholder={groupMatchType === 'team' ? 'Багийн нэр' : 'Тамирчин / Баг'}
+                                          placeholder={groupMatchType === 'team' ? 'Багийн нэр' : 'Тамирчийн нэр'}
                                           value={player.name}
                                           onChange={(e) => {
                                             handleGroupPlayerChange(player.id, 'name', e.target.value);
@@ -904,6 +907,16 @@ export default function TournamentManagement() {
                                     </Button>
                                   </div>
                                 </TableCell>
+                                {groupMatchType === 'individual' && (
+                                  <TableCell>
+                                    <Input
+                                      placeholder="Баг"
+                                      value={player.club}
+                                      onChange={(e) => handleGroupPlayerChange(player.id, 'club', e.target.value)}
+                                      className="min-w-[100px] border-0 bg-transparent p-1"
+                                    />
+                                  </TableCell>
+                                )}
 
                                 {groupData.map((opponent, opponentIndex) => (
                                   <TableCell key={opponent.id} className="text-center">
