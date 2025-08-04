@@ -911,13 +911,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/leagues/:id', async (req, res) => {
+    try {
+      const league = await storage.getLeague(req.params.id);
+      if (!league) {
+        return res.status(404).json({ message: "Лиг олдсонгүй" });
+      }
+      res.json(league);
+    } catch (error) {
+      console.error("Error fetching league:", error);
+      res.status(500).json({ message: "Лигийн мэдээлэл авахад алдаа гарлаа" });
+    }
+  });
+
   app.get('/api/leagues/:id/teams', async (req, res) => {
     try {
-      const teams = await storage.getTeamsByLeague(req.params.id);
+      const teams = await storage.getLeagueTeams(req.params.id);
       res.json(teams);
     } catch (error) {
       console.error("Error fetching league teams:", error);
       res.status(500).json({ message: "Лигийн багуудын жагсаалт авахад алдаа гарлаа" });
+    }
+  });
+
+  app.get('/api/leagues/:id/matches', async (req, res) => {
+    try {
+      const matches = await storage.getLeagueMatches(req.params.id);
+      res.json(matches);
+    } catch (error) {
+      console.error("Error fetching league matches:", error);
+      res.status(500).json({ message: "Лигийн тоглолтуудын жагсаалт авахад алдаа гарлаа" });
     }
   });
 
