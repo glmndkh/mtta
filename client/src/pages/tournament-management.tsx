@@ -39,10 +39,10 @@ export default function TournamentManagement() {
     id: number;
     name: string;
     club: string;
-    matches: { [key: number]: string };
+    matches: { [key: string]: string };
     wins: number;
     losses: number;
-    rank: number;
+    rank: number | string;
   }>>([
     { id: 1, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 1 },
     { id: 2, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 2 },
@@ -205,7 +205,7 @@ export default function TournamentManagement() {
     ));
   };
 
-  const handleMatchResultChange = (playerId: number, opponentId: number, result: string) => {
+  const handleMatchResultChange = (playerId: number, opponentId: number | string, result: string) => {
     setGroupData(groupData.map(player => {
       if (player.id === playerId) {
         return {
@@ -687,24 +687,31 @@ export default function TournamentManagement() {
                                       </PopoverTrigger>
                                       <PopoverContent className="w-80 p-0" align="start">
                                         <Command>
-                                          <CommandInput placeholder="Хэрэглэгчийн нэрээр хайх..." />
+                                          <CommandInput placeholder="Тоглогчийн нэр эсвэл имэйлээр хайх..." />
                                           <CommandList>
                                             <CommandEmpty>Хэрэглэгч олдсонгүй</CommandEmpty>
                                             <CommandGroup heading="Бүртгэлтэй хэрэглэгчид">
-                                              {getAvailableUsers().filter((user: any) => 
-                                                user.name && user.name.toLowerCase().includes((player.name || '').toLowerCase())
-                                              ).map((user: any) => (
+                                              {getAvailableUsers().filter((user: any) => {
+                                                const searchTerm = (player.name || '').toLowerCase();
+                                                const userName = (user.name || user.email || '').toLowerCase();
+                                                const userEmail = (user.email || '').toLowerCase();
+                                                return userName.includes(searchTerm) || userEmail.includes(searchTerm);
+                                              }).map((user: any) => (
                                                 <CommandItem
                                                   key={user.id}
                                                   value={`${user.name || user.email} ${user.email}`}
                                                   onSelect={() => {
-                                                    handleGroupPlayerChange(player.id, 'name', user.name || user.email);
+                                                    // Use the actual name if available, otherwise use email
+                                                    const displayName = user.name && user.name.trim() ? user.name : user.email;
+                                                    handleGroupPlayerChange(player.id, 'name', displayName);
                                                     setSearchOpen({ ...searchOpen, [`group-${player.id}`]: false });
                                                   }}
                                                   className="flex items-center justify-between"
                                                 >
                                                   <div>
-                                                    <div className="font-medium">{user.name || user.email}</div>
+                                                    <div className="font-medium">
+                                                      {user.name && user.name.trim() ? user.name : user.email}
+                                                    </div>
                                                     <div className="text-xs text-gray-500">
                                                       {user.email} • {user.role === 'admin' ? 'Админ' : user.role === 'club_owner' ? 'Клубын эзэн' : 'Тоглогч'}
                                                     </div>
