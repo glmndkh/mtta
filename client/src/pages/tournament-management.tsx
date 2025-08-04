@@ -2,10 +2,13 @@ import { useParams, useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, UserPlus, Play, Zap, Users, Upload, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, UserPlus, Play, Zap, Users, Upload, Plus, Trash2, Search, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 export default function TournamentManagement() {
@@ -14,20 +17,27 @@ export default function TournamentManagement() {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [teamName, setTeamName] = useState("");
   const [teamLogo, setTeamLogo] = useState<File | null>(null);
-  const [players, setPlayers] = useState<Array<{id: number, name: string}>>([
-    { id: 1, name: "" },
-    { id: 2, name: "" },
-    { id: 3, name: "" },
-    { id: 4, name: "" }
+  const [players, setPlayers] = useState<Array<{id: number, name: string, playerId?: string}>>([
+    { id: 1, name: "", playerId: undefined },
+    { id: 2, name: "", playerId: undefined },
+    { id: 3, name: "", playerId: undefined },
+    { id: 4, name: "", playerId: undefined }
   ]);
+  const [searchOpen, setSearchOpen] = useState<{[key: number]: boolean}>({});
 
   const handleBackToAdmin = () => {
     setLocation("/admin/dashboard");
   };
 
+  // Fetch registered players
+  const { data: registeredPlayers = [] } = useQuery({
+    queryKey: ['/api/admin/players'],
+    enabled: activeSection === 'add-team'
+  });
+
   const handleAddPlayer = () => {
     const newId = Math.max(...players.map(p => p.id)) + 1;
-    setPlayers([...players, { id: newId, name: "" }]);
+    setPlayers([...players, { id: newId, name: "", playerId: undefined }]);
   };
 
   const handleRemovePlayer = (id: number) => {
@@ -37,7 +47,24 @@ export default function TournamentManagement() {
   };
 
   const handlePlayerNameChange = (id: number, name: string) => {
-    setPlayers(players.map(p => p.id === id ? { ...p, name } : p));
+    setPlayers(players.map(p => p.id === id ? { ...p, name, playerId: undefined } : p));
+  };
+
+  const handleSelectPlayer = (teamPlayerId: number, player: any) => {
+    setPlayers(players.map(p => 
+      p.id === teamPlayerId ? { ...p, name: player.name, playerId: player.id } : p
+    ));
+    setSearchOpen({ ...searchOpen, [teamPlayerId]: false });
+  };
+
+  const getAvailablePlayers = (currentPlayerId?: string) => {
+    const selectedPlayerIds = players
+      .filter(p => p.playerId && p.playerId !== currentPlayerId)
+      .map(p => p.playerId);
+    
+    return registeredPlayers.filter((player: any) => 
+      !selectedPlayerIds.includes(player.id)
+    );
   };
 
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -266,11 +293,58 @@ export default function TournamentManagement() {
                           <TableRow key={player.id}>
                             <TableCell className="font-medium">{index + 1}</TableCell>
                             <TableCell>
-                              <Input
-                                placeholder="Тоглогчийн нэрийг оруулна уу"
-                                value={player.name}
-                                onChange={(e) => handlePlayerNameChange(player.id, e.target.value)}
-                              />
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  placeholder="Тоглогчийн нэрийг оруулна уу"
+                                  value={player.name}
+                                  onChange={(e) => handlePlayerNameChange(player.id, e.target.value)}
+                                  className="flex-1"
+                                />
+                                <Popover 
+                                  open={searchOpen[player.id] || false} 
+                                  onOpenChange={(open) => setSearchOpen({ ...searchOpen, [player.id]: open })}
+                                >
+                                  <PopoverTrigger asChild>
+                                    <Button variant="outline" size="sm" className="px-2">
+                                      <Search className="w-4 h-4" />
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-80 p-0" align="start">
+                                    <Command>
+                                      <CommandInput placeholder="Тоглогч хайх..." />
+                                      <CommandList>
+                                        <CommandEmpty>Тоглогч олдсонгүй</CommandEmpty>
+                                        <CommandGroup heading="Бүртгэлтэй тоглогчид">
+                                          {getAvailablePlayers(player.playerId).map((registeredPlayer: any) => (
+                                            <CommandItem
+                                              key={registeredPlayer.id}
+                                              value={registeredPlayer.name}
+                                              onSelect={() => handleSelectPlayer(player.id, registeredPlayer)}
+                                              className="flex items-center justify-between"
+                                            >
+                                              <div>
+                                                <div className="font-medium">{registeredPlayer.name}</div>
+                                                {registeredPlayer.club && (
+                                                  <div className="text-xs text-gray-500">{registeredPlayer.club}</div>
+                                                )}
+                                              </div>
+                                              {player.playerId === registeredPlayer.id && (
+                                                <Check className="w-4 h-4" />
+                                              )}
+                                            </CommandItem>
+                                          ))}
+                                        </CommandGroup>
+                                      </CommandList>
+                                    </Command>
+                                  </PopoverContent>
+                                </Popover>
+                              </div>
+                              {player.playerId && (
+                                <div className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                                  <Check className="w-3 h-3" />
+                                  Бүртгэлтэй тоглогч сонгосон
+                                </div>
+                              )}
                             </TableCell>
                             <TableCell>
                               <Button
