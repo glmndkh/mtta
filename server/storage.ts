@@ -127,7 +127,7 @@ export interface IStorage {
   // Tournament team operations
   createTournamentTeam(tournamentId: string, teamData: { name: string; logoUrl?: string }): Promise<TournamentTeam>;
   addPlayerToTournamentTeam(teamId: string, playerId: string, playerName: string): Promise<TournamentTeamPlayer>;
-  getTournamentTeams(tournamentId: string): Promise<Array<TournamentTeam & { players: TournamentTeamPlayer[] }>>;
+  getTournamentTeams(tournamentId: string): Promise<Array<TournamentTeam & { players: Array<TournamentTeamPlayer & { firstName: string; lastName: string; email: string }> }>>;
   deleteTournamentTeam(teamId: string): Promise<boolean>;
 }
 
@@ -1283,7 +1283,7 @@ export class DatabaseStorage implements IStorage {
     return player;
   }
 
-  async getTournamentTeams(tournamentId: string): Promise<Array<TournamentTeam & { players: TournamentTeamPlayer[] }>> {
+  async getTournamentTeams(tournamentId: string): Promise<Array<TournamentTeam & { players: Array<TournamentTeamPlayer & { firstName: string; lastName: string; email: string }> }>> {
     const teams = await db
       .select()
       .from(tournamentTeams)
@@ -1291,14 +1291,33 @@ export class DatabaseStorage implements IStorage {
 
     const teamsWithPlayers = await Promise.all(
       teams.map(async (team) => {
-        const players = await db
-          .select()
+        const playersData = await db
+          .select({
+            id: tournamentTeamPlayers.id,
+            createdAt: tournamentTeamPlayers.createdAt,
+            tournamentTeamId: tournamentTeamPlayers.tournamentTeamId,
+            playerId: tournamentTeamPlayers.playerId,
+            playerName: tournamentTeamPlayers.playerName,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            email: users.email,
+          })
           .from(tournamentTeamPlayers)
+          .innerJoin(users, eq(tournamentTeamPlayers.playerId, users.id))
           .where(eq(tournamentTeamPlayers.tournamentTeamId, team.id));
         
         return {
           ...team,
-          players,
+          players: playersData.map(p => ({
+            id: p.id,
+            createdAt: p.createdAt,
+            tournamentTeamId: p.tournamentTeamId,
+            playerId: p.playerId,
+            playerName: p.playerName,
+            firstName: p.firstName || '',
+            lastName: p.lastName || '',
+            email: p.email || '',
+          })),
         };
       })
     );
