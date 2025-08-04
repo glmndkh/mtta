@@ -927,7 +927,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/leagues/:id/teams', async (req, res) => {
     try {
       const teams = await storage.getLeagueTeams(req.params.id);
-      res.json(teams);
+      
+      // Transform teams to include stats (wins, losses, points, matchesPlayed)
+      const teamsWithStats = teams.map(team => ({
+        id: team.id,
+        name: team.name,
+        logoUrl: team.logoUrl,
+        points: 0, // Will be calculated from matches
+        wins: 0, // Will be calculated from matches  
+        losses: 0, // Will be calculated from matches
+        matchesPlayed: 0, // Will be calculated from matches
+        colorTheme: '#22C55E', // Default color
+        players: team.players,
+      }));
+      
+      res.json(teamsWithStats);
     } catch (error) {
       console.error("Error fetching league teams:", error);
       res.status(500).json({ message: "Лигийн багуудын жагсаалт авахад алдаа гарлаа" });
@@ -941,6 +955,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching league matches:", error);
       res.status(500).json({ message: "Лигийн тоглолтуудын жагсаалт авахад алдаа гарлаа" });
+    }
+  });
+
+  // League team management
+  app.post('/api/admin/leagues/:id/teams', async (req, res) => {
+    try {
+      const { name, logoUrl } = req.body;
+      const team = await storage.createLeagueTeam(req.params.id, { name, logoUrl });
+      res.json(team);
+    } catch (error) {
+      console.error("Error creating league team:", error);
+      res.status(500).json({ message: "Лигийн баг үүсгэхэд алдаа гарлаа" });
     }
   });
 
