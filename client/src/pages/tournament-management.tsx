@@ -70,14 +70,19 @@ export default function TournamentManagement() {
     enabled: !!id
   });
 
+  // Type guard for existingTeams
+  const validExistingTeams = Array.isArray(existingTeams) ? existingTeams : [];
+
   // Create team mutation
   const createTeamMutation = useMutation({
     mutationFn: async (teamData: { name: string; logoUrl?: string }) => {
-      return apiRequest(`/api/tournaments/${id}/teams`, {
+      const response = await fetch(`/api/tournaments/${id}/teams`, {
         method: 'POST',
         body: JSON.stringify(teamData),
         headers: { 'Content-Type': 'application/json' }
       });
+      if (!response.ok) throw new Error('Failed to create team');
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/tournaments', id, 'teams'] });
@@ -91,11 +96,13 @@ export default function TournamentManagement() {
   // Add player to team mutation
   const addPlayerToTeamMutation = useMutation({
     mutationFn: async ({ teamId, playerId, playerName }: { teamId: string; playerId: string; playerName: string }) => {
-      return apiRequest(`/api/tournament-teams/${teamId}/players`, {
+      const response = await fetch(`/api/tournament-teams/${teamId}/players`, {
         method: 'POST',
         body: JSON.stringify({ playerId, playerName }),
         headers: { 'Content-Type': 'application/json' }
       });
+      if (!response.ok) throw new Error('Failed to add player');
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/tournaments', id, 'teams'] });
@@ -105,9 +112,11 @@ export default function TournamentManagement() {
   // Delete team mutation
   const deleteTeamMutation = useMutation({
     mutationFn: async (teamId: string) => {
-      return apiRequest(`/api/tournament-teams/${teamId}`, {
+      const response = await fetch(`/api/tournament-teams/${teamId}`, {
         method: 'DELETE'
       });
+      if (!response.ok) throw new Error('Failed to delete team');
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/tournaments', id, 'teams'] });
@@ -463,11 +472,11 @@ export default function TournamentManagement() {
                   </div>
 
                   {/* Display existing saved teams */}
-                  {existingTeams && existingTeams.length > 0 && (
+                  {validExistingTeams && validExistingTeams.length > 0 && (
                     <div className="mb-6">
                       <h4 className="text-lg font-semibold mb-3">Хадгалагдсан багууд</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {existingTeams.map((team: any) => (
+                        {validExistingTeams.map((team: any) => (
                           <Card key={team.id} className="border-green-200 bg-green-50">
                             <CardContent className="p-4">
                               <div className="flex items-center justify-between mb-2">
@@ -484,7 +493,7 @@ export default function TournamentManagement() {
                               <p className="text-sm text-gray-600">
                                 Тоглогчид: {team.players?.length || 0} хүн
                               </p>
-                              {team.players && team.players.length > 0 && (
+                              {team.players && Array.isArray(team.players) && team.players.length > 0 && (
                                 <div className="mt-2">
                                   <p className="text-xs text-gray-500 mb-1">Тоглогчдын жагсаалт:</p>
                                   <div className="text-xs space-y-1">
@@ -840,7 +849,7 @@ export default function TournamentManagement() {
                                           <CommandList>
                                             <CommandEmpty>Хэрэглэгч олдсонгүй. Хайлт хийхийн тулд нэр бичнэ үү.</CommandEmpty>
                                             <CommandGroup heading="Бүртгэлтэй хэрэглэгчид">
-                                              {allUsers && allUsers.length > 0 ? allUsers.map((user: any) => {
+                                              {allUsers && Array.isArray(allUsers) && allUsers.length > 0 ? allUsers.map((user: any) => {
                                                 // Create full name from firstName + lastName
                                                 const fullName = user.firstName && user.lastName 
                                                   ? `${user.firstName} ${user.lastName}` 
