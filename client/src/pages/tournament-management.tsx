@@ -51,8 +51,10 @@ export default function TournamentManagement() {
   };
 
   const handleSelectPlayer = (teamPlayerId: number, user: any) => {
+    // Use name if available, otherwise use email but prefer the name
+    const displayName = user.name && user.name.trim() ? user.name : user.email;
     setPlayers(players.map(p => 
-      p.id === teamPlayerId ? { ...p, name: user.name || user.email, playerId: user.id } : p
+      p.id === teamPlayerId ? { ...p, name: displayName, playerId: user.id } : p
     ));
     setSearchOpen({ ...searchOpen, [teamPlayerId]: false });
   };
@@ -62,8 +64,10 @@ export default function TournamentManagement() {
       .filter(p => p.playerId && p.playerId !== currentPlayerId)
       .map(p => p.playerId);
     
-    return allUsers.filter((user: any) => 
-      !selectedPlayerIds.includes(user.id)
+    return (allUsers as any[]).filter((user: any) => 
+      !selectedPlayerIds.includes(user.id) && 
+      // Only show users that have a name (not just email)
+      user.name && user.name.trim()
     );
   };
 
