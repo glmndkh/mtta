@@ -1265,6 +1265,7 @@ export class DatabaseStorage implements IStorage {
         tournamentId,
         name: teamData.name,
         logoUrl: teamData.logoUrl,
+        entityType: 'tournament' // Mark this as a tournament team
       })
       .returning();
     return team;
@@ -1322,6 +1323,7 @@ export class DatabaseStorage implements IStorage {
         tournamentId: leagueId, // Using tournament_teams table for leagues too
         name: teamData.name,
         logoUrl: teamData.logoUrl,
+        entityType: 'league' // Mark this as a league team
       })
       .returning();
     return team;
