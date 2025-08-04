@@ -1346,6 +1346,7 @@ export default function TournamentManagement() {
                             <TableHead key={i} className="w-16 text-center">{i + 1}</TableHead>
                           ))}
                           <TableHead className="w-20 text-center">Харьцаа</TableHead>
+                          <TableHead className="w-16 text-center">Устгах</TableHead>
                           <TableHead className="w-32 text-center">
                             <div className="flex gap-1 justify-center">
                               <Button
@@ -1614,12 +1615,25 @@ export default function TournamentManagement() {
                             <TableCell className="text-center font-bold">
                               {player.setsWon}
                             </TableCell>
+                            <TableCell className="text-center">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-red-600 hover:bg-red-50"
+                                onClick={() => {
+                                  const updatedPlayers = matchPlayers.filter(p => p.id !== player.id);
+                                  setMatchPlayers(updatedPlayers);
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </TableCell>
                           </TableRow>
                         ))}
 
                         {/* Add more player rows */}
                         <TableRow>
-                          <TableCell colSpan={numberOfSets + 3} className="text-center py-2">
+                          <TableCell colSpan={numberOfSets + 4} className="text-center py-2">
                             <div className="flex justify-center gap-2">
                               <Button 
                                 variant="outline" 
