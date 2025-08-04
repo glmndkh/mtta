@@ -133,7 +133,8 @@ export default function TournamentManagement() {
     
     return (allUsers as any[]).filter((user: any) => 
       !selectedPlayerIds.includes(user.id) && 
-      user.name && user.name.trim()
+      // Show users with name or email if no name exists
+      (user.name && user.name.trim()) || (user.email && user.email.trim())
     );
   };
 
@@ -427,12 +428,12 @@ export default function TournamentManagement() {
                                                 {getAvailableUsers(player.playerId).map((user: any) => (
                                                   <CommandItem
                                                     key={user.id}
-                                                    value={user.name}
+                                                    value={`${user.name || user.email} ${user.email}`}
                                                     onSelect={() => handleSelectPlayer(team.id, player.id, user)}
                                                     className="flex items-center justify-between"
                                                   >
                                                     <div>
-                                                      <div className="font-medium">{user.name}</div>
+                                                      <div className="font-medium">{user.name || user.email}</div>
                                                       <div className="text-xs text-gray-500">
                                                         {user.email} • {user.role === 'admin' ? 'Админ' : user.role === 'club_owner' ? 'Клубын эзэн' : 'Тоглогч'}
                                                       </div>
