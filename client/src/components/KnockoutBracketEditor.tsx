@@ -440,7 +440,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                     <option value="">Тоглогч 1 сонгох</option>
                     <option value="lucky_draw">🎲 Lucky draw</option>
                     {getAvailableUsers(match.id, 'player1').map(user => (
-                      <option key={`p1-${user.id}`} value={user.id}>
+                      <option key={`${match.id}-p1-${user.id}`} value={user.id}>
                         {user.firstName} {user.lastName}
                       </option>
                     ))}
@@ -470,7 +470,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                     <option value="">Тоглогч 2 сонгох</option>
                     <option value="lucky_draw">🎲 Lucky draw</option>
                     {getAvailableUsers(match.id, 'player2').map(user => (
-                      <option key={`p2-${user.id}`} value={user.id}>
+                      <option key={`${match.id}-p2-${user.id}`} value={user.id}>
                         {user.firstName} {user.lastName}
                       </option>
                     ))}
