@@ -11,8 +11,9 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Trash2, Plus, Users, Shield, Building, Trophy, Calendar, Newspaper, Images, TrendingUp, Upload, Link as LinkIcon, ArrowLeft } from "lucide-react";
+import { Pencil, Trash2, Plus, Users, Shield, Building, Trophy, Calendar, Newspaper, Images, TrendingUp, Upload, Link as LinkIcon, ArrowLeft, Settings, UserPlus, Play, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import AdminStatsDashboard from "@/components/admin-stats-dashboard";
@@ -130,6 +131,41 @@ export default function AdminDashboard() {
   const handleDelete = (id: string) => {
     if (confirm("Устгахдаа итгэлтэй байна уу?")) {
       deleteMutation.mutate(`/api/admin/${selectedTab}/${id}`);
+    }
+  };
+
+  const handleTournamentManagement = (tournamentId: string, action: string) => {
+    switch(action) {
+      case 'add-team':
+        toast({
+          title: "Баг нэмэх",
+          description: `Тэмцээн ${tournamentId}-д баг нэмэх функц удахгүй нэмэгдэнэ`,
+        });
+        // TODO: Implement add team functionality
+        break;
+      case 'add-group-match':
+        toast({
+          title: "Бүлгийн тоглолт нэмэх",
+          description: `Тэмцээн ${tournamentId}-д бүлгийн тоглолт нэмэх функц удахгүй нэмэгдэнэ`,
+        });
+        // TODO: Implement add group stage match functionality
+        break;
+      case 'create-match':
+        toast({
+          title: "Тоглолт үүсгэх",
+          description: `Тэмцээн ${tournamentId}-д тоглолт үүсгэх функц удахгүй нэмэгдэнэ`,
+        });
+        // TODO: Implement create match functionality
+        break;
+      case 'create-playoff':
+        toast({
+          title: "Play-off буюу баг хуваах",
+          description: `Тэмцээн ${tournamentId}-д Play-off буюу баг хуваах функц удахгүй нэмэгдэнэ`,
+        });
+        // TODO: Implement create playoff bracket functionality
+        break;
+      default:
+        break;
     }
   };
 
@@ -858,6 +894,32 @@ export default function AdminDashboard() {
                               <Button size="sm" variant="destructive" onClick={() => handleDelete(tournament.id)}>
                                 <Trash2 className="w-4 h-4" />
                               </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button size="sm" variant="secondary">
+                                    <Settings className="w-4 h-4 mr-1" />
+                                    Удирдах
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuItem onClick={() => handleTournamentManagement(tournament.id, 'add-team')}>
+                                    <UserPlus className="w-4 h-4 mr-2" />
+                                    Баг нэмэх
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleTournamentManagement(tournament.id, 'add-group-match')}>
+                                    <Play className="w-4 h-4 mr-2" />
+                                    Бүлгийн тоглолт нэмэх
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleTournamentManagement(tournament.id, 'create-match')}>
+                                    <Zap className="w-4 h-4 mr-2" />
+                                    Тоглолт үүсгэх
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleTournamentManagement(tournament.id, 'create-playoff')}>
+                                    <Trophy className="w-4 h-4 mr-2" />
+                                    Play-off буюу баг хуваах
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </TableCell>
                         </TableRow>
