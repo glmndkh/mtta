@@ -79,6 +79,8 @@ export default function TournamentManagement() {
   ]);
   const [editingScore, setEditingScore] = useState<{playerId: number, setIndex: number} | null>(null);
   const [numberOfSets, setNumberOfSets] = useState<number>(3);
+  const [team1Score, setTeam1Score] = useState<number>(0);
+  const [team2Score, setTeam2Score] = useState<number>(0);
   
   // Get current group data for compatibility
   const groupData = groups.find(g => g.id === activeGroupId)?.players || [];
@@ -1312,8 +1314,22 @@ export default function TournamentManagement() {
                         {selectedTeam1 ? selectedTeam1.name : 'Багийн нэр'}
                       </span>
                     </div>
-                    <div className="text-2xl font-bold">
-                      {matchPlayers.filter(p => p.teamId === 1).reduce((sum, p) => sum + p.setsWon, 0)} : {matchPlayers.filter(p => p.teamId === 2).reduce((sum, p) => sum + p.setsWon, 0)}
+                    <div className="flex items-center gap-2">
+                      <Input 
+                        type="number"
+                        min="0"
+                        className="w-16 h-10 text-center text-xl font-bold"
+                        value={team1Score}
+                        onChange={(e) => setTeam1Score(parseInt(e.target.value) || 0)}
+                      />
+                      <span className="text-2xl font-bold">:</span>
+                      <Input 
+                        type="number"
+                        min="0"
+                        className="w-16 h-10 text-center text-xl font-bold"
+                        value={team2Score}
+                        onChange={(e) => setTeam2Score(parseInt(e.target.value) || 0)}
+                      />
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-medium">
