@@ -1382,12 +1382,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const updateData = req.body;
       
-      // Parse date strings into Date objects
-      if (updateData.startDate) {
+      // Parse date strings into Date objects, handle empty strings
+      if (updateData.startDate && updateData.startDate.trim() !== '') {
         updateData.startDate = new Date(updateData.startDate);
+        // Check if date is valid
+        if (isNaN(updateData.startDate.getTime())) {
+          return res.status(400).json({ message: "Эхлэх огноо буруу форматтай байна" });
+        }
+      } else {
+        delete updateData.startDate; // Remove empty date field
       }
-      if (updateData.endDate) {
+      
+      if (updateData.endDate && updateData.endDate.trim() !== '') {
         updateData.endDate = new Date(updateData.endDate);
+        // Check if date is valid
+        if (isNaN(updateData.endDate.getTime())) {
+          return res.status(400).json({ message: "Дуусах огноо буруу форматтай байна" });
+        }
+      } else {
+        delete updateData.endDate; // Remove empty date field
       }
       
       const league = await storage.updateLeague(req.params.id, updateData);

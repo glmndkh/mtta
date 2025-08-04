@@ -183,7 +183,35 @@ export default function AdminDashboard() {
 
   const openEditDialog = (item: any) => {
     setEditingItem(item);
-    setFormData({ ...item });
+    
+    // Format dates for HTML date inputs (YYYY-MM-DD format)
+    const formattedItem = { ...item };
+    if (item.startDate) {
+      const startDate = new Date(item.startDate);
+      if (!isNaN(startDate.getTime())) {
+        formattedItem.startDate = startDate.toISOString().split('T')[0];
+      }
+    }
+    if (item.endDate) {
+      const endDate = new Date(item.endDate);
+      if (!isNaN(endDate.getTime())) {
+        formattedItem.endDate = endDate.toISOString().split('T')[0];
+      }
+    }
+    if (item.registrationDeadline) {
+      const regDeadline = new Date(item.registrationDeadline);
+      if (!isNaN(regDeadline.getTime())) {
+        formattedItem.registrationDeadline = regDeadline.toISOString().split('T')[0];
+      }
+    }
+    if (item.dateOfBirth) {
+      const dob = new Date(item.dateOfBirth);
+      if (!isNaN(dob.getTime())) {
+        formattedItem.dateOfBirth = dob.toISOString().split('T')[0];
+      }
+    }
+    
+    setFormData(formattedItem);
   };
 
   const openCreateDialog = () => {
