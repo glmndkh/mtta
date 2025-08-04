@@ -121,13 +121,17 @@ export default function TournamentManagement() {
   };
 
   const handleSelectPlayer = (teamId: number, playerId: number, user: any) => {
-    const displayName = user.name && user.name.trim() ? user.name : user.email;
+    // Create full name from firstName + lastName
+    const fullName = user.firstName && user.lastName 
+      ? `${user.firstName} ${user.lastName}` 
+      : (user.firstName || user.lastName || user.email);
+      
     setTeams(teams.map(team => {
       if (team.id === teamId) {
         return {
           ...team,
           players: team.players.map(p => 
-            p.id === playerId ? { ...p, name: displayName, playerId: user.id } : p
+            p.id === playerId ? { ...p, name: fullName, playerId: user.id } : p
           )
         };
       }
@@ -486,24 +490,31 @@ export default function TournamentManagement() {
                                             <CommandList>
                                               <CommandEmpty>Хэрэглэгч олдсонгүй</CommandEmpty>
                                               <CommandGroup heading="Бүртгэлтэй хэрэглэгчид">
-                                                {getAvailableUsers(player.playerId).map((user: any) => (
-                                                  <CommandItem
-                                                    key={user.id}
-                                                    value={`${user.name || user.email} ${user.email}`}
-                                                    onSelect={() => handleSelectPlayer(team.id, player.id, user)}
-                                                    className="flex items-center justify-between"
-                                                  >
-                                                    <div>
-                                                      <div className="font-medium">{user.name || user.email}</div>
-                                                      <div className="text-xs text-gray-500">
-                                                        {user.email} • {user.role === 'admin' ? 'Админ' : user.role === 'club_owner' ? 'Клубын эзэн' : 'Тоглогч'}
+                                                {getAvailableUsers(player.playerId).map((user: any) => {
+                                                  // Create full name from firstName + lastName
+                                                  const fullName = user.firstName && user.lastName 
+                                                    ? `${user.firstName} ${user.lastName}` 
+                                                    : (user.firstName || user.lastName || user.email);
+                                                    
+                                                  return (
+                                                    <CommandItem
+                                                      key={user.id}
+                                                      value={`${fullName} ${user.email}`}
+                                                      onSelect={() => handleSelectPlayer(team.id, player.id, user)}
+                                                      className="flex items-center justify-between"
+                                                    >
+                                                      <div>
+                                                        <div className="font-medium">{fullName}</div>
+                                                        <div className="text-xs text-gray-500">
+                                                          {user.email} • {user.role === 'admin' ? 'Админ' : user.role === 'club_owner' ? 'Клубын эзэн' : 'Тоглогч'}
+                                                        </div>
                                                       </div>
-                                                    </div>
-                                                    {player.playerId === user.id && (
-                                                      <Check className="w-4 h-4" />
-                                                    )}
-                                                  </CommandItem>
-                                                ))}
+                                                      {player.playerId === user.id && (
+                                                        <Check className="w-4 h-4" />
+                                                      )}
+                                                    </CommandItem>
+                                                  );
+                                                })}
                                               </CommandGroup>
                                             </CommandList>
                                           </Command>
