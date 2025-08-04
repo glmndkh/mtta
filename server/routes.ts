@@ -1361,6 +1361,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/leagues', requireAuth, isAdminRole, async (req, res) => {
     try {
       const leagueData = req.body;
+      
+      // Parse date strings into Date objects
+      if (leagueData.startDate) {
+        leagueData.startDate = new Date(leagueData.startDate);
+      }
+      if (leagueData.endDate) {
+        leagueData.endDate = new Date(leagueData.endDate);
+      }
+      
       const league = await storage.createLeague(leagueData);
       res.json(league);
     } catch (error) {
@@ -1372,6 +1381,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/admin/leagues/:id', requireAuth, isAdminRole, async (req, res) => {
     try {
       const updateData = req.body;
+      
+      // Parse date strings into Date objects
+      if (updateData.startDate) {
+        updateData.startDate = new Date(updateData.startDate);
+      }
+      if (updateData.endDate) {
+        updateData.endDate = new Date(updateData.endDate);
+      }
+      
       const league = await storage.updateLeague(req.params.id, updateData);
       if (!league) {
         return res.status(404).json({ message: "Лиг олдсонгүй" });
