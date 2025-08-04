@@ -82,8 +82,8 @@ export default function TournamentManagement() {
       matchDate: matchDate || null,
       matchTime: matchTime || null,
       playerMatches: matches.map(match => ({
-        player1Id: match.player1.playerId || null,
-        player2Id: match.player2.playerId || null,
+        player1Id: (match.player1 as any).playerId || null,
+        player2Id: (match.player2 as any).playerId || null,
         player1Name: match.player1.name,
         player2Name: match.player2.name,
         sets: match.player1.sets.map((score, index) => ({

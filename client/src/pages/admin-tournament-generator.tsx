@@ -505,11 +505,12 @@ export default function AdminTournamentGenerator() {
                           <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                             <FormControl>
                               <Checkbox
-                                checked={field.value?.includes(type.id)}
+                                checked={field.value?.includes(type.id) || false}
                                 onCheckedChange={(checked) => {
+                                  const currentValue = field.value || [];
                                   return checked
-                                    ? field.onChange([...field.value, type.id])
-                                    : field.onChange(field.value?.filter((value) => value !== type.id))
+                                    ? field.onChange([...currentValue, type.id])
+                                    : field.onChange(currentValue.filter((value: string) => value !== type.id))
                                 }}
                               />
                             </FormControl>
