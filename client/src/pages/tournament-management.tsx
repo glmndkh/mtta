@@ -688,31 +688,35 @@ export default function TournamentManagement() {
                                         <Command>
                                           <CommandInput placeholder="Тоглогчийн нэр эсвэл имэйлээр хайх..." />
                                           <CommandList>
-                                            {console.log('Available users for group search:', allUsers)}
                                             <CommandEmpty>Хэрэглэгч олдсонгүй. Хайлт хийхийн тулд нэр бичнэ үү.</CommandEmpty>
                                             <CommandGroup heading="Бүртгэлтэй хэрэглэгчид">
-                                              {allUsers && allUsers.length > 0 ? allUsers.map((user: any) => (
-                                                <CommandItem
-                                                  key={user.id}
-                                                  value={`${user.name || user.email} ${user.email}`}
-                                                  onSelect={() => {
-                                                    // Use the actual name if available, otherwise use email
-                                                    const displayName = user.name && user.name.trim() ? user.name : user.email;
-                                                    handleGroupPlayerChange(player.id, 'name', displayName);
-                                                    setSearchOpen({ ...searchOpen, [`group-${player.id}`]: false });
-                                                  }}
-                                                  className="flex items-center justify-between"
-                                                >
-                                                  <div>
-                                                    <div className="font-medium">
-                                                      {user.name && user.name.trim() ? user.name : user.email}
+                                              {allUsers && allUsers.length > 0 ? allUsers.map((user: any) => {
+                                                // Create full name from firstName + lastName
+                                                const fullName = user.firstName && user.lastName 
+                                                  ? `${user.firstName} ${user.lastName}` 
+                                                  : (user.firstName || user.lastName || user.email);
+                                                  
+                                                return (
+                                                  <CommandItem
+                                                    key={user.id}
+                                                    value={`${fullName} ${user.email}`}
+                                                    onSelect={() => {
+                                                      handleGroupPlayerChange(player.id, 'name', fullName);
+                                                      setSearchOpen({ ...searchOpen, [`group-${player.id}`]: false });
+                                                    }}
+                                                    className="flex items-center justify-between"
+                                                  >
+                                                    <div>
+                                                      <div className="font-medium">
+                                                        {fullName}
+                                                      </div>
+                                                      <div className="text-xs text-gray-500">
+                                                        {user.email} • {user.role === 'admin' ? 'Админ' : user.role === 'club_owner' ? 'Клубын эзэн' : 'Тоглогч'}
+                                                      </div>
                                                     </div>
-                                                    <div className="text-xs text-gray-500">
-                                                      {user.email} • {user.role === 'admin' ? 'Админ' : user.role === 'club_owner' ? 'Клубын эзэн' : 'Тоглогч'}
-                                                    </div>
-                                                  </div>
-                                                </CommandItem>
-                                              )) : (
+                                                  </CommandItem>
+                                                );
+                                              }) : (
                                                 <CommandItem disabled>
                                                   Хэрэглэгчид ачаалж байна...
                                                 </CommandItem>
