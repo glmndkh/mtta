@@ -215,7 +215,25 @@ export default function AdminDashboard() {
   };
 
   const openCreateDialog = () => {
-    setFormData({});
+    // Initialize with appropriate default values based on active tab
+    let defaultData = {};
+    
+    if (activeTab === 'leagues') {
+      // For leagues, provide sensible default dates
+      const today = new Date();
+      const nextMonth = new Date(today);
+      nextMonth.setMonth(today.getMonth() + 1);
+      
+      defaultData = {
+        name: '',
+        description: '',
+        season: '',
+        startDate: today.toISOString().split('T')[0],
+        endDate: nextMonth.toISOString().split('T')[0]
+      };
+    }
+    
+    setFormData(defaultData);
     setIsCreateDialogOpen(true);
   };
 
