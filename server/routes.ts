@@ -1380,7 +1380,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/admin/leagues/:id', requireAuth, isAdminRole, async (req, res) => {
     try {
-      const updateData = { ...req.body };
+      // Remove readonly fields that shouldn't be updated
+      const { id, createdAt, updatedAt, ...rawUpdateData } = req.body;
+      const updateData = { ...rawUpdateData };
+      
       console.log("Update data received:", JSON.stringify(updateData, null, 2));
       
       // Parse date strings into Date objects, handle empty strings and different types
