@@ -24,6 +24,7 @@ import TournamentResults from "@/pages/tournament-results";
 import Profile from "@/pages/profile";
 import PlayerProfilePage from "@/pages/player-profile";
 import AdminDashboard from "@/pages/admin-dashboard";
+import TournamentManagement from "@/pages/tournament-management";
 import { useAuth } from "@/hooks/useAuth";
 
 function Router() {
@@ -54,6 +55,8 @@ function Router() {
           <Route path="/admin/tournament/:id/results" component={AdminTournamentResults} />
           <Route path="/admin/tournament-results" component={AdminTournamentResults} />
           <Route path="/admin/tournament-create" component={AdminTournamentGenerator} />
+          <Route path="/admin/tournament/:id/manage" component={TournamentManagement} />
+          <Route path="/admin/league/:id/manage" component={TournamentManagement} />
           <Route path="/excel-tournament-demo" component={ExcelTournamentDemo} />
         </>
       )}
