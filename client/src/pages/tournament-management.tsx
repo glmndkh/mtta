@@ -66,21 +66,16 @@ export default function TournamentManagement() {
   const [activeGroupId, setActiveGroupId] = useState<number>(1);
   const [selectedTeam1, setSelectedTeam1] = useState<any>(null);
   const [selectedTeam2, setSelectedTeam2] = useState<any>(null);
-  const [matchPlayers, setMatchPlayers] = useState<Array<{
+  const [matches, setMatches] = useState<Array<{
     id: number;
-    name: string;
-    teamId: number;
-    sets: Array<number>;
-    setsWon: number;
-    opponentId?: number;
-  }>>([
-    { id: 1, name: "", teamId: 1, sets: [11, 11, 11], setsWon: 3 },
-    { id: 2, name: "", teamId: 2, sets: [0, 0, 0], setsWon: 0 }
-  ]);
-  const [editingScore, setEditingScore] = useState<{playerId: number, setIndex: number} | null>(null);
-  const [numberOfSets, setNumberOfSets] = useState<number>(3);
+    player1: { id: number; name: string; teamId: 1; sets: number[]; setsWon: number; };
+    player2: { id: number; name: string; teamId: 2; sets: number[]; setsWon: number; };
+    numberOfSets: number;
+  }>>([]);
+  const [editingScore, setEditingScore] = useState<{matchId: number, playerId: number, setIndex: number} | null>(null);
   const [team1Score, setTeam1Score] = useState<number>(0);
   const [team2Score, setTeam2Score] = useState<number>(0);
+  const [showMatchDetails, setShowMatchDetails] = useState<boolean>(false);
   
   // Get current group data for compatibility
   const groupData = groups.find(g => g.id === activeGroupId)?.players || [];
@@ -104,61 +99,30 @@ export default function TournamentManagement() {
   // Type guard for existingTeams
   const validExistingTeams = Array.isArray(existingTeams) ? existingTeams : [];
 
-  // Auto-populate match players when teams are selected
-  useEffect(() => {
-    if (selectedTeam1 && selectedTeam2 && validExistingTeams.length > 0) {
-      const team1Data = validExistingTeams.find(team => team.id === selectedTeam1.id);
-      const team2Data = validExistingTeams.find(team => team.id === selectedTeam2.id);
-      
-      const newMatchPlayers = [];
-      
-      // Add team 1 players (up to 4 players)
-      if (team1Data?.players) {
-        team1Data.players.slice(0, 4).forEach((player: any, index: number) => {
-          const playerName = player.firstName && player.lastName 
-            ? `${player.firstName} ${player.lastName}`
-            : player.playerName || `Тоглогч ${index + 1}`;
-          
-          newMatchPlayers.push({
-            id: index + 1,
-            name: playerName,
-            teamId: 1,
-            sets: Array(numberOfSets).fill(0),
-            setsWon: 0,
-            opponentId: undefined
-          });
-        });
-      }
-      
-      // Add team 2 players (up to 4 players)
-      if (team2Data?.players) {
-        team2Data.players.slice(0, 4).forEach((player: any, index: number) => {
-          const playerName = player.firstName && player.lastName 
-            ? `${player.firstName} ${player.lastName}`
-            : player.playerName || `Тоглогч ${index + 1}`;
-          
-          newMatchPlayers.push({
-            id: team1Data?.players?.length + index + 1 || index + 5,
-            name: playerName,
-            teamId: 2,
-            sets: Array(numberOfSets).fill(0),
-            setsWon: 0,
-            opponentId: undefined
-          });
-        });
-      }
-      
-      // Only update if we have players and current matchPlayers are empty or default
-      if (newMatchPlayers.length > 0) {
-        const hasDefaultPlayers = matchPlayers.length <= 2 && 
-          matchPlayers.every(p => p.name === "" || p.name === "Тамирчины нэр");
-        
-        if (hasDefaultPlayers) {
-          setMatchPlayers(newMatchPlayers);
-        }
-      }
-    }
-  }, [selectedTeam1, selectedTeam2, validExistingTeams, numberOfSets, matchPlayers]);
+  // Function to add a new match
+  const addNewMatch = () => {
+    const newMatchId = matches.length + 1;
+    const defaultSets = 3;
+    
+    setMatches([...matches, {
+      id: newMatchId,
+      player1: {
+        id: newMatchId * 2 - 1,
+        name: "",
+        teamId: 1,
+        sets: Array(defaultSets).fill(0),
+        setsWon: 0
+      },
+      player2: {
+        id: newMatchId * 2,
+        name: "",
+        teamId: 2,
+        sets: Array(defaultSets).fill(0),
+        setsWon: 0
+      },
+      numberOfSets: defaultSets
+    }]);
+  };
 
   // Create team mutation
   const createTeamMutation = useMutation({
@@ -1345,361 +1309,248 @@ export default function TournamentManagement() {
                     </div>
                   </div>
                   <div className="text-center text-sm text-gray-600 mt-2">
-                    Дэлгэрэнгүй
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setShowMatchDetails(!showMatchDetails)}
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      {showMatchDetails ? 'Дэлгэрэнгүйг хаах' : 'Дэлгэрэнгүй харах'}
+                    </Button>
                   </div>
                 </div>
 
-                {/* Individual Match Results Table */}
-                <div className="space-y-4">
-                  <h4 className="font-medium">Тоглогчдын дэлгэрэнгүй дүн</h4>
-                  <div className="border rounded-lg overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-gray-100">
-                          <TableHead className="w-20">Багийн лого</TableHead>
-                          <TableHead>Тамирчины нэр</TableHead>
-                          {Array.from({ length: numberOfSets }, (_, i) => (
-                            <TableHead key={i} className="w-16 text-center">{i + 1}</TableHead>
-                          ))}
-                          <TableHead className="w-20 text-center">Харьцаа</TableHead>
-                          <TableHead className="w-16 text-center">Устгах</TableHead>
-                          <TableHead className="w-32 text-center">
-                            <div className="flex gap-1 justify-center">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-6 w-6 p-0 text-green-600"
-                                onClick={() => {
-                                  if (numberOfSets < 7) {
-                                    setNumberOfSets(numberOfSets + 1);
-                                    setMatchPlayers(players => 
-                                      players.map(p => ({
-                                        ...p,
-                                        sets: [...p.sets, 0]
-                                      }))
-                                    );
-                                  }
-                                }}
-                                disabled={numberOfSets >= 7}
-                              >
-                                <Plus className="w-3 h-3" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-6 w-6 p-0 text-red-600"
-                                onClick={() => {
-                                  if (numberOfSets > 1) {
-                                    setNumberOfSets(numberOfSets - 1);
-                                    setMatchPlayers(players => 
-                                      players.map(p => ({
-                                        ...p,
-                                        sets: p.sets.slice(0, -1),
-                                        setsWon: p.sets.slice(0, -1).filter(s => s >= 11).length
-                                      }))
-                                    );
-                                  }
-                                }}
-                                disabled={numberOfSets <= 1}
-                              >
-                                <Minus className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {matchPlayers.map((player, index) => (
-                          <TableRow key={player.id}>
-                            <TableCell>
-                              <div className="w-8 h-8 bg-gray-300 rounded flex items-center justify-center text-xs overflow-hidden">
-                                {(() => {
-                                  const team = player.teamId === 1 ? selectedTeam1 : selectedTeam2;
-                                  if (team?.logoUrl) {
-                                    return <img src={team.logoUrl} alt={team.name} className="w-full h-full object-cover" />;
-                                  }
-                                  return (
-                                    <span className="font-semibold text-gray-700">
-                                      {team?.name?.charAt(0)?.toUpperCase() || (player.teamId === 1 ? 'A' : 'B')}
-                                    </span>
-                                  );
-                                })()}
+                {/* Individual Match Results Tables */}
+                {showMatchDetails && (
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                      <h4 className="font-medium">Тоглолтын дэлгэрэнгүй дүн</h4>
+                      <Button 
+                        onClick={addNewMatch}
+                        className="bg-green-500 hover:bg-green-600 text-white"
+                        size="sm"
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Тоглолт нэмэх
+                      </Button>
+                    </div>
+                    {matches.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>Тоглолт нэмээгүй байна</p>
+                        <p className="text-sm">Дээрх "Тоглолт нэмэх" товчийг дарж эхний тоглолтыг нэмнэ үү</p>
+                      </div>
+                    ) : (
+                      matches.map((match, matchIndex) => (
+                        <div key={match.id} className="border rounded-lg overflow-hidden mb-4">
+                          <div className="bg-gray-100 px-4 py-2 border-b">
+                            <div className="flex justify-between items-center">
+                              <h5 className="font-medium">Тоглолт {match.id}</h5>
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 text-green-600"
+                                  onClick={() => {
+                                    if (match.numberOfSets < 7) {
+                                      const updatedMatches = matches.map(m => 
+                                        m.id === match.id 
+                                          ? {
+                                              ...m,
+                                              numberOfSets: m.numberOfSets + 1,
+                                              player1: { ...m.player1, sets: [...m.player1.sets, 0] },
+                                              player2: { ...m.player2, sets: [...m.player2.sets, 0] }
+                                            }
+                                          : m
+                                      );
+                                      setMatches(updatedMatches);
+                                    }
+                                  }}
+                                  disabled={match.numberOfSets >= 7}
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 text-red-600"
+                                  onClick={() => {
+                                    if (match.numberOfSets > 1) {
+                                      const updatedMatches = matches.map(m => 
+                                        m.id === match.id 
+                                          ? {
+                                              ...m,
+                                              numberOfSets: m.numberOfSets - 1,
+                                              player1: { ...m.player1, sets: m.player1.sets.slice(0, -1), setsWon: m.player1.sets.slice(0, -1).filter(s => s >= 11).length },
+                                              player2: { ...m.player2, sets: m.player2.sets.slice(0, -1), setsWon: m.player2.sets.slice(0, -1).filter(s => s >= 11).length }
+                                            }
+                                          : m
+                                      );
+                                      setMatches(updatedMatches);
+                                    }
+                                  }}
+                                  disabled={match.numberOfSets <= 1}
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 text-red-600"
+                                  onClick={() => {
+                                    const updatedMatches = matches.filter(m => m.id !== match.id);
+                                    setMatches(updatedMatches);
+                                  }}
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
                               </div>
-                            </TableCell>
-                            <TableCell>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    className="w-full justify-start h-8 p-1 font-normal"
-                                  >
-                                    {player.name || "Тамирчины нэр"}
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-80 p-0">
-                                  <Command>
-                                    <CommandInput placeholder="Тоглогч хайх..." />
-                                    <CommandList>
-                                      <CommandEmpty>Тоглогч олдсонгүй.</CommandEmpty>
-                                      <CommandGroup heading={`${player.teamId === 1 ? selectedTeam1?.name || 'Баг 1' : selectedTeam2?.name || 'Баг 2'} тоглогчид`}>
-                                        {(() => {
-                                          const selectedTeam = player.teamId === 1 ? selectedTeam1 : selectedTeam2;
-                                          const teamData = validExistingTeams.find(team => team.id === selectedTeam?.id);
-                                          
-                                          if (!teamData?.players || teamData.players.length === 0) {
-                                            return (
-                                              <CommandItem disabled>
-                                                Тус багт тоглогч байхгүй
-                                              </CommandItem>
-                                            );
-                                          }
-                                          
-                                          return teamData.players.map((teamPlayer: any) => {
-                                            const playerName = teamPlayer.firstName && teamPlayer.lastName 
-                                              ? `${teamPlayer.firstName} ${teamPlayer.lastName}`
-                                              : teamPlayer.name || `Тоглогч ${teamPlayer.id}`;
-                                            
-                                            return (
-                                              <CommandItem
-                                                key={teamPlayer.id}
-                                                value={playerName}
-                                                onSelect={() => {
-                                                  const updatedPlayers = matchPlayers.map(p => 
-                                                    p.id === player.id 
-                                                      ? { ...p, name: playerName } 
-                                                      : p
-                                                  );
-                                                  setMatchPlayers(updatedPlayers);
-                                                }}
-                                              >
-                                                <Check
-                                                  className={`mr-2 h-4 w-4 ${
-                                                    player.name === playerName ? "opacity-100" : "opacity-0"
-                                                  }`}
-                                                />
-                                                {playerName}
-                                              </CommandItem>
-                                            );
-                                          });
-                                        })()}
-                                      </CommandGroup>
-                                    </CommandList>
-                                  </Command>
-                                </PopoverContent>
-                              </Popover>
-                            </TableCell>
-                            {Array.from({ length: numberOfSets }, (_, setIndex) => {
-                              const score = player.sets[setIndex] || 0;
-                              return (
-                              <TableCell key={setIndex} className="text-center">
-                                {setIndex < numberOfSets ? (
-                                  <Popover
-                                    open={editingScore?.playerId === player.id && editingScore?.setIndex === setIndex}
-                                    onOpenChange={(open) => {
-                                      if (open) {
-                                        setEditingScore({ playerId: player.id, setIndex });
-                                      } else {
-                                        setEditingScore(null);
-                                      }
-                                    }}
-                                  >
-                                    <PopoverTrigger asChild>
-                                      <Button
-                                        variant="outline"
-                                        className={`w-12 h-8 text-center p-1 text-xs ${
-                                          score >= 11 ? 'bg-green-100 border-green-300' : 
-                                          score > 0 ? 'bg-yellow-100 border-yellow-300' : 
-                                          'bg-white border-gray-300'
-                                        }`}
-                                      >
-                                        {score || ""}
-                                      </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-80 p-4">
-                                      <div className="space-y-4">
-                                        <h4 className="font-medium">Set {setIndex + 1} дүн засах</h4>
-                                        <div className="space-y-2">
-                                          <Label>{player.name || 'Тоглогч'} оноо</Label>
-                                          <Input 
-                                            type="number"
-                                            placeholder="11"
-                                            value={score || ""}
-                                            onChange={(e) => {
-                                              const newScore = parseInt(e.target.value) || 0;
-                                              const updatedPlayers = matchPlayers.map(p => {
-                                                if (p.id === player.id) {
-                                                  const newSets = [...p.sets];
-                                                  newSets[setIndex] = newScore;
-                                                  return {
-                                                    ...p,
-                                                    sets: newSets,
-                                                    setsWon: newSets.filter(s => s >= 11).length
-                                                  };
-                                                }
-                                                return p;
-                                              });
-                                              setMatchPlayers(updatedPlayers);
-                                            }}
-                                          />
-                                        </div>
-                                        
-                                        <div className="space-y-2">
-                                          <Label>Өрсөлдөгч тоглогч</Label>
-                                          <Popover>
-                                            <PopoverTrigger asChild>
-                                              <Button
-                                                variant="outline"
-                                                className="w-full justify-between"
-                                              >
-                                                {player.opponentId ? 
-                                                  matchPlayers.find(p => p.id === player.opponentId)?.name || "Тоглогч сонгох" :
-                                                  "Тоглогч сонгох"
-                                                }
-                                                <Search className="w-4 h-4" />
-                                              </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-80 p-0">
-                                              <Command>
-                                                <CommandInput placeholder="Өрсөлдөгч хайх..." />
-                                                <CommandList>
-                                                  <CommandEmpty>Тоглогч олдсонгүй.</CommandEmpty>
-                                                  <CommandGroup heading="Өрсөлдөгч багийн тоглогчид">
-                                                    {(() => {
-                                                      const opponents = matchPlayers.filter(p => p.teamId !== player.teamId);
-                                                      
-                                                      if (opponents.length === 0) {
-                                                        return (
-                                                          <CommandItem disabled>
-                                                            Өрсөлдөгч тоглогч байхгүй
-                                                          </CommandItem>
-                                                        );
-                                                      }
-                                                      
-                                                      return opponents.map((opponent) => {
-                                                        const opponentName = opponent.name || `Тоглогч ${opponent.id}`;
-                                                        
-                                                        return (
-                                                          <CommandItem
-                                                            key={opponent.id}
-                                                            value={opponentName}
-                                                            onSelect={() => {
-                                                              const updatedPlayers = matchPlayers.map(p => 
-                                                                p.id === player.id ? { ...p, opponentId: opponent.id } : p
-                                                              );
-                                                              setMatchPlayers(updatedPlayers);
-                                                            }}
-                                                          >
-                                                            <Check
-                                                              className={`mr-2 h-4 w-4 ${
-                                                                player.opponentId === opponent.id ? "opacity-100" : "opacity-0"
-                                                              }`}
-                                                            />
-                                                            {opponentName}
-                                                          </CommandItem>
-                                                        );
-                                                      });
-                                                    })()}
-                                                  </CommandGroup>
-                                                </CommandList>
-                                              </Command>
-                                            </PopoverContent>
-                                          </Popover>
-                                        </div>
-                                        
-                                        <div className="flex justify-end gap-2">
-                                          <Button 
-                                            variant="outline" 
-                                            size="sm"
-                                            onClick={() => setEditingScore(null)}
-                                          >
-                                            Болих
-                                          </Button>
-                                          <Button 
-                                            size="sm"
-                                            onClick={() => setEditingScore(null)}
-                                          >
-                                            Хадгалах
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    </PopoverContent>
-                                  </Popover>
-                                ) : (
-                                  <div className="w-12 h-8 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-400">
-                                    -
-                                  </div>
-                                )}
-                              </TableCell>
-                            );
-                            })}
-                            <TableCell className="text-center font-bold">
-                              {player.setsWon}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 w-8 p-0 text-red-600 hover:bg-red-50"
-                                onClick={() => {
-                                  const updatedPlayers = matchPlayers.filter(p => p.id !== player.id);
-                                  setMatchPlayers(updatedPlayers);
-                                }}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-
-                        {/* Add more player rows */}
-                        <TableRow>
-                          <TableCell colSpan={numberOfSets + 4} className="text-center py-2">
-                            <div className="flex justify-center gap-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                className="text-blue-500"
-                                onClick={() => {
-                                  const newId = Math.max(...matchPlayers.map(p => p.id)) + 1;
-                                  setMatchPlayers([...matchPlayers, {
-                                    id: newId,
-                                    name: "",
-                                    teamId: 1,
-                                    sets: Array(numberOfSets).fill(0),
-                                    setsWon: 0,
-                                    opponentId: undefined
-                                  }]);
-                                }}
-                              >
-                                <Plus className="w-4 h-4 mr-1" />
-                                {selectedTeam1?.name || 'Баг 1'} тоглогч нэмэх
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                className="text-green-500"
-                                onClick={() => {
-                                  const newId = Math.max(...matchPlayers.map(p => p.id)) + 1;
-                                  setMatchPlayers([...matchPlayers, {
-                                    id: newId,
-                                    name: "",
-                                    teamId: 2,
-                                    sets: Array(numberOfSets).fill(0),
-                                    setsWon: 0,
-                                    opponentId: undefined
-                                  }]);
-                                }}
-                              >
-                                <Plus className="w-4 h-4 mr-1" />
-                                {selectedTeam2?.name || 'Баг 2'} тоглогч нэмэх
-                              </Button>
                             </div>
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
+                          </div>
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="bg-gray-50">
+                                <TableHead className="w-20">Багийн лого</TableHead>
+                                <TableHead>Тамирчины нэр</TableHead>
+                                {Array.from({ length: match.numberOfSets }, (_, i) => (
+                                  <TableHead key={i} className="w-16 text-center">{i + 1}</TableHead>
+                                ))}
+                                <TableHead className="w-20 text-center">Ялсан сет</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {[match.player1, match.player2].map((player, playerIndex) => (
+                                <TableRow key={`${match.id}-${player.id}`}>
+                                  <TableCell>
+                                    <div className="w-8 h-8 bg-gray-300 rounded flex items-center justify-center text-xs overflow-hidden">
+                                      {(() => {
+                                        const team = player.teamId === 1 ? selectedTeam1 : selectedTeam2;
+                                        if (team?.logoUrl) {
+                                          return <img src={team.logoUrl} alt={team.name} className="w-full h-full object-cover" />;
+                                        }
+                                        return (
+                                          <span className="font-semibold text-gray-700">
+                                            {team?.name?.charAt(0)?.toUpperCase() || (player.teamId === 1 ? 'A' : 'B')}
+                                          </span>
+                                        );
+                                      })()}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Popover>
+                                      <PopoverTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          className="w-full justify-start h-8 p-1 font-normal"
+                                        >
+                                          {player.name || "Тамирчины нэр"}
+                                        </Button>
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-80 p-0">
+                                        <Command>
+                                          <CommandInput placeholder="Тоглогч хайх..." />
+                                          <CommandList>
+                                            <CommandEmpty>Тоглогч олдсонгүй.</CommandEmpty>
+                                            <CommandGroup heading={`${player.teamId === 1 ? selectedTeam1?.name || 'Баг 1' : selectedTeam2?.name || 'Баг 2'} тоглогчид`}>
+                                              {(() => {
+                                                const selectedTeam = player.teamId === 1 ? selectedTeam1 : selectedTeam2;
+                                                const teamData = validExistingTeams.find(team => team.id === selectedTeam?.id);
+                                                
+                                                if (!teamData?.players || teamData.players.length === 0) {
+                                                  return (
+                                                    <CommandItem disabled>
+                                                      Тус багт тоглогч байхгүй
+                                                    </CommandItem>
+                                                  );
+                                                }
+                                                
+                                                return teamData.players.map((teamPlayer: any) => {
+                                                  const playerName = teamPlayer.firstName && teamPlayer.lastName 
+                                                    ? `${teamPlayer.firstName} ${teamPlayer.lastName}`
+                                                    : teamPlayer.name || `Тоглогч ${teamPlayer.id}`;
+                                                  
+                                                  return (
+                                                    <CommandItem
+                                                      key={teamPlayer.id}
+                                                      value={playerName}
+                                                      onSelect={() => {
+                                                        const updatedMatches = matches.map(m => 
+                                                          m.id === match.id 
+                                                            ? {
+                                                                ...m,
+                                                                [player.teamId === 1 ? 'player1' : 'player2']: {
+                                                                  ...player,
+                                                                  name: playerName
+                                                                }
+                                                              }
+                                                            : m
+                                                        );
+                                                        setMatches(updatedMatches);
+                                                      }}
+                                                    >
+                                                      <Check
+                                                        className={`mr-2 h-4 w-4 ${
+                                                          player.name === playerName ? "opacity-100" : "opacity-0"
+                                                        }`}
+                                                      />
+                                                      {playerName}
+                                                    </CommandItem>
+                                                  );
+                                                });
+                                              })()}
+                                            </CommandGroup>
+                                          </CommandList>
+                                        </Command>
+                                      </PopoverContent>
+                                    </Popover>
+                                  </TableCell>
+                                  {Array.from({ length: match.numberOfSets }, (_, setIndex) => {
+                                    const score = player.sets[setIndex] || 0;
+                                    return (
+                                      <TableCell key={setIndex} className="text-center">
+                                        <Button
+                                          variant="outline"
+                                          className={`w-12 h-8 text-center p-1 text-xs ${
+                                            score >= 11 ? 'bg-green-100 border-green-300' : 
+                                            score > 0 ? 'bg-yellow-100 border-yellow-300' : 
+                                            'bg-white border-gray-300'
+                                          }`}
+                                          onClick={() => {
+                                            const newScore = prompt(`Set ${setIndex + 1} дүн оруулах:`, score.toString());
+                                            if (newScore !== null) {
+                                              const scoreNumber = parseInt(newScore) || 0;
+                                              const updatedMatches = matches.map(m => 
+                                                m.id === match.id 
+                                                  ? {
+                                                      ...m,
+                                                      [player.teamId === 1 ? 'player1' : 'player2']: {
+                                                        ...player,
+                                                        sets: player.sets.map((s, i) => i === setIndex ? scoreNumber : s),
+                                                        setsWon: player.sets.map((s, i) => i === setIndex ? scoreNumber : s).filter(s => s >= 11).length
+                                                      }
+                                                    }
+                                                  : m
+                                              );
+                                              setMatches(updatedMatches);
+                                            }
+                                          }}
+                                        >
+                                          {score || ""}
+                                        </Button>
+                                      </TableCell>
+                                    );
+                                  })}
+                                  <TableCell className="text-center font-bold">
+                                    {player.setsWon}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      ))
+                    )}
                   </div>
-                </div>
+                )}
 
                 {/* Match Date and Time */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
