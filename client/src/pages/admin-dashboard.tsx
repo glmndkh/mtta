@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Trash2, Plus, Users, Shield, Building, Trophy, Calendar, Newspaper, Images, TrendingUp } from "lucide-react";
+import { Pencil, Trash2, Plus, Users, Shield, Building, Trophy, Calendar, Newspaper, Images, TrendingUp, Upload, Link } from "lucide-react";
+// Note: For now we'll use URL input, but this can be enhanced with file upload later
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import AdminStatsDashboard from "@/components/admin-stats-dashboard";
@@ -52,7 +53,7 @@ export default function AdminDashboard() {
 
   const { data: news, isLoading: newsLoading } = useQuery({
     queryKey: ['/api/admin/news'],
-    enabled: selectedTab === 'news'
+    enabled: selectedTab === 'news' || selectedTab === 'sliders'
   });
 
   const { data: sliders, isLoading: slidersLoading } = useQuery({
@@ -569,21 +570,83 @@ export default function AdminDashboard() {
               />
             </div>
             <div>
-              <Label htmlFor="imageUrl">Зургийн URL</Label>
+              <Label className="flex items-center gap-2">
+                <Upload className="w-4 h-4" />
+                Слайдерын зургийн URL
+              </Label>
               <Input
                 id="imageUrl"
                 value={formData.imageUrl || ''}
                 onChange={(e) => setFormData({...formData, imageUrl: e.target.value})}
+                placeholder="https://example.com/image.jpg эсвэл /path/to/image.jpg"
               />
+              <div className="text-sm text-gray-500 mt-1">
+                💡 Зургийг object storage-д байршуулж линкийг энд хуулна уу
+              </div>
             </div>
             <div>
-              <Label htmlFor="linkUrl">Холбоосын URL</Label>
-              <Input
-                id="linkUrl"
-                value={formData.linkUrl || ''}
-                onChange={(e) => setFormData({...formData, linkUrl: e.target.value})}
-              />
+              <Label className="flex items-center gap-2">
+                <Link className="w-4 h-4" />
+                Холбоос төрөл
+              </Label>
+              <Select 
+                value={formData.linkType || 'custom'} 
+                onValueChange={(value) => setFormData({...formData, linkType: value, linkUrl: ''})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Холбоосын төрлийг сонгоно уу" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="news">Мэдээ нийтлэлээс сонгох</SelectItem>
+                  <SelectItem value="custom">Гараар холбоос оруулах</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+            {formData.linkType === 'news' ? (
+              <div>
+                <Label htmlFor="selectedNews">Мэдээ нийтлэл сонгох</Label>
+                <Select 
+                  value={formData.selectedNewsId || ''} 
+                  onValueChange={(value) => {
+                    const selectedArticle = Array.isArray(news) ? news.find((article: any) => article.id === value) : null;
+                    setFormData({
+                      ...formData, 
+                      selectedNewsId: value, 
+                      linkUrl: `/news/${value}`,
+                      buttonText: formData.buttonText || 'Дэлгэрэнгүй үзэх'
+                    });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Мэдээ нийтлэл сонгоно уу" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {news && Array.isArray(news) ? news.filter((article: any) => article.published).map((article: any) => (
+                      <SelectItem key={article.id} value={article.id}>
+                        {article.title}
+                      </SelectItem>
+                    )) : (
+                      <SelectItem value="" disabled>Нийтлэгдсэн мэдээ байхгүй</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+                {formData.selectedNewsId && (
+                  <div className="text-sm text-gray-600 mt-1">
+                    Холбоос: /news/{formData.selectedNewsId}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div>
+                <Label htmlFor="linkUrl">Холбоосын URL</Label>
+                <Input
+                  id="linkUrl"
+                  value={formData.linkUrl || ''}
+                  onChange={(e) => setFormData({...formData, linkUrl: e.target.value})}
+                  placeholder="https://example.com эсвэл /page-name"
+                />
+              </div>
+            )}
             <div>
               <Label htmlFor="buttonText">Товчны текст</Label>
               <Input
