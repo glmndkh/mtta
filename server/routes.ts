@@ -1380,28 +1380,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/admin/leagues/:id', requireAuth, isAdminRole, async (req, res) => {
     try {
-      const updateData = req.body;
+      const updateData = { ...req.body };
+      console.log("Update data received:", JSON.stringify(updateData, null, 2));
       
-      // Parse date strings into Date objects, handle empty strings
-      if (updateData.startDate && updateData.startDate.trim() !== '') {
-        updateData.startDate = new Date(updateData.startDate);
-        // Check if date is valid
-        if (isNaN(updateData.startDate.getTime())) {
-          return res.status(400).json({ message: "Эхлэх огноо буруу форматтай байна" });
+      // Parse date strings into Date objects, handle empty strings and different types
+      if (updateData.startDate !== undefined) {
+        if (typeof updateData.startDate === 'string' && updateData.startDate.trim() !== '') {
+          updateData.startDate = new Date(updateData.startDate);
+          // Check if date is valid
+          if (isNaN(updateData.startDate.getTime())) {
+            return res.status(400).json({ message: "Эхлэх огноо буруу форматтай байна" });
+          }
+        } else {
+          delete updateData.startDate; // Remove empty/invalid date field
         }
-      } else {
-        delete updateData.startDate; // Remove empty date field
       }
       
-      if (updateData.endDate && updateData.endDate.trim() !== '') {
-        updateData.endDate = new Date(updateData.endDate);
-        // Check if date is valid
-        if (isNaN(updateData.endDate.getTime())) {
-          return res.status(400).json({ message: "Дуусах огноо буруу форматтай байна" });
+      if (updateData.endDate !== undefined) {
+        if (typeof updateData.endDate === 'string' && updateData.endDate.trim() !== '') {
+          updateData.endDate = new Date(updateData.endDate);
+          // Check if date is valid
+          if (isNaN(updateData.endDate.getTime())) {
+            return res.status(400).json({ message: "Дуусах огноо буруу форматтай байна" });
+          }
+        } else {
+          delete updateData.endDate; // Remove empty/invalid date field
         }
-      } else {
-        delete updateData.endDate; // Remove empty date field
       }
+      
+      // Handle registrationDeadline if it exists
+      if (updateData.registrationDeadline !== undefined) {
+        if (typeof updateData.registrationDeadline === 'string' && updateData.registrationDeadline.trim() !== '') {
+          updateData.registrationDeadline = new Date(updateData.registrationDeadline);
+          if (isNaN(updateData.registrationDeadline.getTime())) {
+            return res.status(400).json({ message: "Бүртгэлийн эцсийн хугацаа буруу форматтай байна" });
+          }
+        } else {
+          delete updateData.registrationDeadline;
+        }
+      }
+      
+      console.log("Processed update data:", JSON.stringify(updateData, null, 2));
       
       const league = await storage.updateLeague(req.params.id, updateData);
       if (!league) {
