@@ -35,16 +35,19 @@ export default function TournamentManagement() {
   ]);
   const [searchOpen, setSearchOpen] = useState<{[key: string]: boolean}>({});
   const [groupMatchType, setGroupMatchType] = useState<'team' | 'individual' | null>(null);
-  const [groupMatches, setGroupMatches] = useState<Array<{
+  const [groupData, setGroupData] = useState<Array<{
     id: number;
-    team1: string;
-    team2: string;
-    score1: string;
-    score2: string;
-    date: string;
-    time: string;
+    name: string;
+    club: string;
+    matches: { [key: number]: string };
+    wins: number;
+    losses: number;
+    rank: number;
   }>>([
-    { id: 1, team1: "", team2: "", score1: "", score2: "", date: "", time: "" }
+    { id: 1, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 1 },
+    { id: 2, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 2 },
+    { id: 3, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 3 },
+    { id: 4, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 4 }
   ]);
 
   const handleBackToAdmin = () => {
@@ -176,37 +179,55 @@ export default function TournamentManagement() {
     console.log("Saving teams:", teamsToSave);
   };
 
-  const handleAddGroupMatch = () => {
-    const newId = Math.max(...groupMatches.map(m => m.id)) + 1;
-    setGroupMatches([...groupMatches, {
-      id: newId,
-      team1: "",
-      team2: "",
-      score1: "",
-      score2: "",
-      date: "",
-      time: ""
-    }]);
+  const handleAddGroupPlayer = () => {
+    const newId = Math.max(...groupData.map(p => p.id)) + 1;
+    const newPlayer = { 
+      id: newId, 
+      name: "", 
+      club: "", 
+      matches: {}, 
+      wins: 0, 
+      losses: 0, 
+      rank: newId 
+    };
+    setGroupData([...groupData, newPlayer]);
   };
 
-  const handleRemoveGroupMatch = (id: number) => {
-    if (groupMatches.length > 1) {
-      setGroupMatches(groupMatches.filter(m => m.id !== id));
+  const handleRemoveGroupPlayer = (id: number) => {
+    if (groupData.length > 1) {
+      setGroupData(groupData.filter(p => p.id !== id));
     }
   };
 
-  const handleGroupMatchChange = (id: number, field: string, value: string) => {
-    setGroupMatches(groupMatches.map(match => 
-      match.id === id ? { ...match, [field]: value } : match
+  const handleGroupPlayerChange = (id: number, field: string, value: string) => {
+    setGroupData(groupData.map(player => 
+      player.id === id ? { ...player, [field]: value } : player
     ));
   };
 
-  const handleSaveGroupMatches = () => {
-    // TODO: Implement group matches saving logic
-    const matchesToSave = groupMatches.filter(match => 
-      match.team1.trim() && match.team2.trim()
-    );
-    console.log("Saving group matches:", { type: groupMatchType, matches: matchesToSave });
+  const handleMatchResultChange = (playerId: number, opponentId: number, result: string) => {
+    setGroupData(groupData.map(player => {
+      if (player.id === playerId) {
+        return {
+          ...player,
+          matches: { ...player.matches, [opponentId]: result }
+        };
+      }
+      return player;
+    }));
+  };
+
+  const calculateStats = (player: any) => {
+    const results = Object.values(player.matches) as string[];
+    const wins = results.filter(r => r && r !== "****" && parseInt(r.split('/')[0] || '0') > parseInt(r.split('/')[1] || '0')).length;
+    const losses = results.filter(r => r && r !== "****" && parseInt(r.split('/')[0] || '0') < parseInt(r.split('/')[1] || '0')).length;
+    return { wins, losses };
+  };
+
+  const handleSaveGroupTable = () => {
+    // TODO: Implement group table saving logic
+    const tableToSave = groupData.filter(player => player.name.trim());
+    console.log("Saving group table:", { type: groupMatchType, players: tableToSave });
   };
 
   const managementOptions = [
@@ -619,130 +640,114 @@ export default function TournamentManagement() {
                           Буцах
                         </Button>
                         <Button 
-                          onClick={handleAddGroupMatch}
+                          onClick={handleAddGroupPlayer}
                           className="bg-green-500 hover:bg-green-600 text-white"
                         >
                           <Plus className="w-4 h-4 mr-2" />
-                          Тэмцээн нэмэх
+                          {groupMatchType === 'team' ? 'Баг нэмэх' : 'Тоглогч нэмэх'}
                         </Button>
                       </div>
                     </div>
 
-                    {/* Group Matches Table */}
+                    {/* Group Table */}
                     <div className="border rounded-lg overflow-hidden">
                       <Table>
                         <TableHeader>
-                          <TableRow className="bg-gray-50">
-                            <TableHead className="w-16">№</TableHead>
-                            <TableHead>{groupMatchType === 'team' ? 'Баг 1' : 'Тоглогч 1'}</TableHead>
-                            <TableHead>Оноо</TableHead>
-                            <TableHead className="w-8">:</TableHead>
-                            <TableHead>Оноо</TableHead>
-                            <TableHead>{groupMatchType === 'team' ? 'Баг 2' : 'Тоглогч 2'}</TableHead>
-                            <TableHead className="w-32">
-                              <Calendar className="w-4 h-4 inline mr-1" />
-                              Огноо
-                            </TableHead>
-                            <TableHead className="w-32">
-                              <Clock className="w-4 h-4 inline mr-1" />
-                              Цаг
-                            </TableHead>
-                            <TableHead className="w-20">Үйлдэл</TableHead>
+                          <TableRow className="bg-yellow-100">
+                            <TableHead className="w-16 bg-yellow-200">№</TableHead>
+                            <TableHead className="bg-yellow-200">{groupMatchType === 'team' ? 'Нэрс' : 'Нэрс'}</TableHead>
+                            <TableHead className="bg-yellow-200">{groupMatchType === 'team' ? 'Клуб' : 'Клуб'}</TableHead>
+                            {groupData.map((_, index) => (
+                              <TableHead key={index + 1} className="w-16 text-center bg-yellow-200">
+                                {index + 1}
+                              </TableHead>
+                            ))}
+                            <TableHead className="w-24 bg-yellow-200">Өгсөн</TableHead>
+                            <TableHead className="w-16 bg-yellow-200">Байр</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {groupMatches.map((match, index) => (
-                            <TableRow key={match.id}>
-                              <TableCell className="font-medium">{index + 1}</TableCell>
-                              <TableCell>
-                                <Input
-                                  placeholder={groupMatchType === 'team' ? 'Багийн нэр' : 'Тоглогчийн нэр'}
-                                  value={match.team1}
-                                  onChange={(e) => handleGroupMatchChange(match.id, 'team1', e.target.value)}
-                                  className="min-w-[150px]"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Input
-                                  placeholder="0"
-                                  type="number"
-                                  min="0"
-                                  value={match.score1}
-                                  onChange={(e) => handleGroupMatchChange(match.id, 'score1', e.target.value)}
-                                  className="w-16 text-center"
-                                />
-                              </TableCell>
-                              <TableCell className="text-center font-bold">:</TableCell>
-                              <TableCell>
-                                <Input
-                                  placeholder="0"
-                                  type="number"
-                                  min="0"
-                                  value={match.score2}
-                                  onChange={(e) => handleGroupMatchChange(match.id, 'score2', e.target.value)}
-                                  className="w-16 text-center"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Input
-                                  placeholder={groupMatchType === 'team' ? 'Багийн нэр' : 'Тоглогчийн нэр'}
-                                  value={match.team2}
-                                  onChange={(e) => handleGroupMatchChange(match.id, 'team2', e.target.value)}
-                                  className="min-w-[150px]"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Input
-                                  type="date"
-                                  value={match.date}
-                                  onChange={(e) => handleGroupMatchChange(match.id, 'date', e.target.value)}
-                                  className="w-full"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Input
-                                  type="time"
-                                  value={match.time}
-                                  onChange={(e) => handleGroupMatchChange(match.id, 'time', e.target.value)}
-                                  className="w-full"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleRemoveGroupMatch(match.id)}
-                                  disabled={groupMatches.length === 1}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
+                          {groupData.map((player, playerIndex) => {
+                            const stats = calculateStats(player);
+                            return (
+                              <TableRow key={player.id}>
+                                <TableCell className="font-medium bg-yellow-50">{playerIndex + 1}</TableCell>
+                                <TableCell className="bg-blue-50">
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      placeholder={groupMatchType === 'team' ? 'Багийн нэр' : 'Тоглогчийн нэр'}
+                                      value={player.name}
+                                      onChange={(e) => handleGroupPlayerChange(player.id, 'name', e.target.value)}
+                                      className="min-w-[120px] border-0 bg-transparent p-1"
+                                    />
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleRemoveGroupPlayer(player.id)}
+                                      disabled={groupData.length === 1}
+                                      className="h-6 w-6 p-0"
+                                    >
+                                      <Trash2 className="w-3 h-3 text-red-500" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <Input
+                                    placeholder="Клуб"
+                                    value={player.club}
+                                    onChange={(e) => handleGroupPlayerChange(player.id, 'club', e.target.value)}
+                                    className="min-w-[100px] border-0 bg-transparent p-1"
+                                  />
+                                </TableCell>
+                                {groupData.map((opponent, opponentIndex) => (
+                                  <TableCell key={opponent.id} className="text-center">
+                                    {player.id === opponent.id ? (
+                                      <div className="w-12 h-8 bg-gray-200 flex items-center justify-center text-gray-500">
+                                        ****
+                                      </div>
+                                    ) : (
+                                      <Input
+                                        placeholder="3"
+                                        value={player.matches[opponent.id] || ""}
+                                        onChange={(e) => handleMatchResultChange(player.id, opponent.id, e.target.value)}
+                                        className="w-12 h-8 text-center p-1 border border-gray-300"
+                                      />
+                                    )}
+                                  </TableCell>
+                                ))}
+                                <TableCell className="text-center">
+                                  {stats.wins}/{stats.losses + stats.wins}
+                                </TableCell>
+                                <TableCell className="text-center font-bold">
+                                  {playerIndex + 1}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
                         </TableBody>
                       </Table>
                     </div>
 
-                    {/* Match Summary */}
+                    {/* Group Summary */}
                     <div className="bg-blue-50 p-4 rounded-lg">
-                      <h4 className="font-medium mb-2">Тэмцээний мэдээлэл:</h4>
+                      <h4 className="font-medium mb-2">Группын мэдээлэл:</h4>
                       <ul className="space-y-1 text-sm text-gray-700">
                         <li>• Төрөл: {groupMatchType === 'team' ? 'Багийн группын тэмцээн' : 'Хувь хүний группын тэмцээн'}</li>
-                        <li>• Тэмцээний тоо: {groupMatches.length}</li>
-                        <li>• Бүрэн бөглөсөн: {groupMatches.filter(m => m.team1.trim() && m.team2.trim()).length}</li>
-                        <li>• Оноо бүхий: {groupMatches.filter(m => m.score1 || m.score2).length}</li>
+                        <li>• {groupMatchType === 'team' ? 'Багуудын' : 'Тоглогчдын'} тоо: {groupData.length}</li>
+                        <li>• Бүрэн бөглөсөн: {groupData.filter(p => p.name.trim()).length}</li>
+                        <li>• Тоглолт бүхий: {groupData.filter(p => Object.keys(p.matches).length > 0).length}</li>
                       </ul>
                     </div>
 
                     {/* Save Button */}
                     <div className="flex justify-end">
                       <Button 
-                        onClick={handleSaveGroupMatches}
+                        onClick={handleSaveGroupTable}
                         className="bg-blue-500 hover:bg-blue-600 text-white"
-                        disabled={groupMatches.filter(m => m.team1.trim() && m.team2.trim()).length === 0}
+                        disabled={groupData.filter(p => p.name.trim()).length === 0}
                       >
                         <TableIcon className="w-4 h-4 mr-2" />
-                        Группын тэмцээн хадгалах ({groupMatches.filter(m => m.team1.trim() && m.team2.trim()).length})
+                        Группын хүснэгт хадгалах ({groupData.filter(p => p.name.trim()).length})
                       </Button>
                     </div>
                   </div>
