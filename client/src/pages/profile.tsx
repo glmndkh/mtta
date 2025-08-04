@@ -363,7 +363,108 @@ export default function ProfilePage() {
             </Form>
           </CardContent>
         </Card>
+
+        {/* League Matches Section */}
+        <LeagueMatchesSection userId={user?.id} />
       </div>
     </div>
+  );
+}
+
+// League Matches Component
+function LeagueMatchesSection({ userId }: { userId?: string }) {
+  const [expandedMatches, setExpandedMatches] = useState<Set<string>>(new Set());
+
+  const { data: leagueMatches, isLoading } = useQuery({
+    queryKey: [`/api/players/${userId}/league-matches`],
+    enabled: !!userId,
+  });
+
+  const toggleMatchExpansion = (matchId: string) => {
+    const newExpanded = new Set(expandedMatches);
+    if (newExpanded.has(matchId)) {
+      newExpanded.delete(matchId);
+    } else {
+      newExpanded.add(matchId);
+    }
+    setExpandedMatches(newExpanded);
+  };
+
+  if (!userId) return null;
+
+  return (
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle className="text-xl font-bold">Лигийн тоглолтууд</CardTitle>
+        <CardDescription>
+          Таны оролцсон лигийн тоглолтуудын дэлгэрэнгүй мэдээлэл
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="text-center py-4">Тоглолтууд ачааллаж байна...</div>
+        ) : !leagueMatches || leagueMatches.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            Танд одоогоор бүртгэгдсэн лигийн тоглолт байхгүй байна.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {leagueMatches.map((match: any) => (
+              <Card key={match.id} className="border-l-4 border-l-blue-500">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="text-lg font-semibold">
+                        {match.team1.name} {match.team1Score}:{match.team2Score} {match.team2.name}
+                      </div>
+                      {match.matchDate && (
+                        <div className="text-sm text-gray-500">
+                          {new Date(match.matchDate).toLocaleDateString('mn-MN')}
+                          {match.matchTime && ` ${match.matchTime}`}
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleMatchExpansion(match.id)}
+                    >
+                      {expandedMatches.has(match.id) ? 'Хаах' : 'Дэлгэрэнгүй үзэх'}
+                    </Button>
+                  </div>
+
+                  {expandedMatches.has(match.id) && (
+                    <div className="mt-4 pt-4 border-t">
+                      <h4 className="font-semibold mb-3 text-gray-700">Хувь тоглолтууд:</h4>
+                      <div className="space-y-3">
+                        {match.playerMatches.map((playerMatch: any, index: number) => (
+                          <div key={playerMatch.id} className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="font-medium">
+                                {playerMatch.player1Name} vs {playerMatch.player2Name}
+                              </div>
+                              <div className="text-sm font-bold">
+                                {playerMatch.player1SetsWon}:{playerMatch.player2SetsWon}
+                              </div>
+                            </div>
+                            {playerMatch.sets && playerMatch.sets.length > 0 && (
+                              <div className="text-sm text-gray-600">
+                                Сетүүд: {playerMatch.sets.map((set: any, setIndex: number) => 
+                                  `${set.player1}-${set.player2}`
+                                ).join(', ')}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

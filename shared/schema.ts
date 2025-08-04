@@ -237,6 +237,35 @@ export const tournamentTeamPlayers = pgTable("tournament_team_players", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// League matches table for storing team vs team matches
+export const leagueMatches = pgTable("league_matches", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  leagueId: varchar("league_id").notNull(), // Reference to tournament/league
+  team1Id: varchar("team1_id").references(() => tournamentTeams.id).notNull(),
+  team2Id: varchar("team2_id").references(() => tournamentTeams.id).notNull(),
+  team1Score: integer("team1_score").default(0), // Number of individual matches won by team 1
+  team2Score: integer("team2_score").default(0), // Number of individual matches won by team 2
+  matchDate: timestamp("match_date"),
+  matchTime: varchar("match_time"),
+  status: varchar("status").default("completed"), // "scheduled", "in_progress", "completed"
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Individual player matches within league matches
+export const leaguePlayerMatches = pgTable("league_player_matches", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  leagueMatchId: varchar("league_match_id").references(() => leagueMatches.id).notNull(),
+  player1Id: varchar("player1_id").references(() => users.id).notNull(),
+  player2Id: varchar("player2_id").references(() => users.id).notNull(),
+  player1Name: varchar("player1_name").notNull(),
+  player2Name: varchar("player2_name").notNull(),
+  sets: jsonb("sets").notNull(), // Array of set scores: [{player1: 11, player2: 9}, {player1: 8, player2: 11}, ...]
+  player1SetsWon: integer("player1_sets_won").default(0),
+  player2SetsWon: integer("player2_sets_won").default(0),
+  winnerId: varchar("winner_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // News feed table
 export const newsFeed = pgTable("news_feed", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -434,3 +463,18 @@ export const insertTournamentTeamPlayerSchema = createInsertSchema(tournamentTea
 });
 export type InsertTournamentTeamPlayer = z.infer<typeof insertTournamentTeamPlayerSchema>;
 export type TournamentTeamPlayer = typeof tournamentTeamPlayers.$inferSelect;
+
+// League match schemas
+export const insertLeagueMatchSchema = createInsertSchema(leagueMatches).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertLeagueMatch = z.infer<typeof insertLeagueMatchSchema>;
+export type LeagueMatch = typeof leagueMatches.$inferSelect;
+
+export const insertLeaguePlayerMatchSchema = createInsertSchema(leaguePlayerMatches).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertLeaguePlayerMatch = z.infer<typeof insertLeaguePlayerMatchSchema>;
+export type LeaguePlayerMatch = typeof leaguePlayerMatches.$inferSelect;

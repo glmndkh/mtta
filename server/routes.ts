@@ -1595,6 +1595,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // League match endpoints
+  app.post('/api/leagues/:leagueId/matches', requireAuth, async (req, res) => {
+    try {
+      const { leagueId } = req.params;
+      const { team1Id, team2Id, team1Score, team2Score, matchDate, matchTime, playerMatches } = req.body;
+
+      // Create the main league match
+      const leagueMatch = await storage.createLeagueMatch({
+        leagueId,
+        team1Id,
+        team2Id,
+        team1Score: team1Score || 0,
+        team2Score: team2Score || 0,
+        matchDate: matchDate ? new Date(matchDate) : null,
+        matchTime,
+        status: 'completed'
+      });
+
+      // Create individual player matches
+      const createdPlayerMatches = [];
+      if (playerMatches && Array.isArray(playerMatches)) {
+        for (const playerMatch of playerMatches) {
+          // Convert sets array to proper format and calculate winners
+          const sets = playerMatch.sets || [];
+          const player1SetsWon = sets.filter((set: any) => set.player1 >= 11 && set.player1 > set.player2).length;
+          const player2SetsWon = sets.filter((set: any) => set.player2 >= 11 && set.player2 > set.player1).length;
+          const winnerId = player1SetsWon > player2SetsWon ? playerMatch.player1Id : 
+                          player2SetsWon > player1SetsWon ? playerMatch.player2Id : null;
+
+          const createdPlayerMatch = await storage.createLeaguePlayerMatch({
+            leagueMatchId: leagueMatch.id,
+            player1Id: playerMatch.player1Id,
+            player2Id: playerMatch.player2Id,
+            player1Name: playerMatch.player1Name,
+            player2Name: playerMatch.player2Name,
+            sets: sets,
+            player1SetsWon,
+            player2SetsWon,
+            winnerId
+          });
+          createdPlayerMatches.push(createdPlayerMatch);
+        }
+      }
+
+      res.json({ 
+        match: leagueMatch, 
+        playerMatches: createdPlayerMatches 
+      });
+    } catch (error) {
+      console.error("Error saving league match:", error);
+      res.status(500).json({ message: "Failed to save league match" });
+    }
+  });
+
+  // Get league matches for a player (for profile display)
+  app.get('/api/players/:playerId/league-matches', async (req, res) => {
+    try {
+      const { playerId } = req.params;
+      const matches = await storage.getLeagueMatchesForPlayer(playerId);
+      res.json(matches);
+    } catch (error) {
+      console.error("Error fetching player league matches:", error);
+      res.status(500).json({ message: "Failed to fetch player league matches" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
