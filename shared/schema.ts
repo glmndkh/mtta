@@ -221,9 +221,10 @@ export const teams = pgTable("teams", {
 // Tournament teams table for managing teams within specific tournaments
 export const tournamentTeams = pgTable("tournament_teams", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  tournamentId: varchar("tournament_id").references(() => tournaments.id).notNull(),
+  tournamentId: varchar("tournament_id").notNull(), // Removed foreign key constraint for flexibility
   name: varchar("name").notNull(),
   logoUrl: varchar("logo_url"),
+  entityType: varchar("entity_type").default("tournament"), // 'tournament' or 'league'
   createdAt: timestamp("created_at").defaultNow(),
 });
 
