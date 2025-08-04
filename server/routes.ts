@@ -1533,8 +1533,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { tournamentId } = req.params;
       const teamData = req.body;
-      const team = await storage.createTournamentTeam(tournamentId, teamData);
-      res.json(team);
+      
+      // Check if this is actually a league ID by checking if it exists in leagues table
+      const league = await storage.getLeagueById(tournamentId);
+      if (league) {
+        // This is a league, create a league team instead
+        const team = await storage.createLeagueTeam(tournamentId, teamData);
+        res.json(team);
+      } else {
+        // This is a tournament
+        const team = await storage.createTournamentTeam(tournamentId, teamData);
+        res.json(team);
+      }
     } catch (error) {
       console.error("Error creating tournament team:", error);
       res.status(500).json({ message: "Failed to create tournament team" });
@@ -1556,8 +1566,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/tournaments/:tournamentId/teams', async (req, res) => {
     try {
       const { tournamentId } = req.params;
-      const teams = await storage.getTournamentTeams(tournamentId);
-      res.json(teams);
+      
+      // Check if this is actually a league ID
+      const league = await storage.getLeagueById(tournamentId);
+      if (league) {
+        // This is a league, get league teams
+        const teams = await storage.getLeagueTeams(tournamentId);
+        res.json(teams);
+      } else {
+        // This is a tournament
+        const teams = await storage.getTournamentTeams(tournamentId);
+        res.json(teams);
+      }
     } catch (error) {
       console.error("Error fetching tournament teams:", error);
       res.status(500).json({ message: "Failed to fetch tournament teams" });
