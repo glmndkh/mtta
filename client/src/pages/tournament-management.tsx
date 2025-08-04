@@ -11,7 +11,7 @@ export default function TournamentManagement() {
   const [activeSection, setActiveSection] = useState<string | null>(null);
 
   const handleBackToAdmin = () => {
-    setLocation("/admin");
+    setLocation("/admin/dashboard");
   };
 
   const managementOptions = [
