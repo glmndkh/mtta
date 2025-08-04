@@ -809,8 +809,7 @@ export default function TournamentManagement() {
                         <TableHeader>
                           <TableRow className="bg-yellow-100">
                             <TableHead className="w-16 bg-yellow-200">№</TableHead>
-                            <TableHead className="bg-yellow-200">{groupMatchType === 'team' ? 'Нэрс' : 'Нэрс'}</TableHead>
-                            <TableHead className="bg-yellow-200">{groupMatchType === 'team' ? 'Клуб' : 'Клуб'}</TableHead>
+                            <TableHead className="bg-yellow-200">Багын нэр</TableHead>
                             {groupData.map((_, index) => (
                               <TableHead key={index + 1} className="w-16 text-center bg-yellow-200">
                                 {index + 1}
@@ -896,14 +895,7 @@ export default function TournamentManagement() {
                                     </Button>
                                   </div>
                                 </TableCell>
-                                <TableCell>
-                                  <Input
-                                    placeholder="Клуб"
-                                    value={player.club}
-                                    onChange={(e) => handleGroupPlayerChange(player.id, 'club', e.target.value)}
-                                    className="min-w-[100px] border-0 bg-transparent p-1"
-                                  />
-                                </TableCell>
+
                                 {groupData.map((opponent, opponentIndex) => (
                                   <TableCell key={opponent.id} className="text-center">
                                     {player.id === opponent.id ? (
