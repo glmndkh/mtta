@@ -232,6 +232,21 @@ export const newsFeed = pgTable("news_feed", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Homepage sliders table
+export const homepageSliders = pgTable("homepage_sliders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title").notNull(),
+  subtitle: text("subtitle"),
+  description: text("description"),
+  imageUrl: varchar("image_url").notNull(),
+  linkUrl: varchar("link_url"),
+  buttonText: varchar("button_text"),
+  isActive: boolean("is_active").default(true),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   player: one(players, {
@@ -336,6 +351,12 @@ export const insertNewsSchema = createInsertSchema(newsFeed).omit({
   publishedAt: true,
 });
 
+export const insertHomepageSliderSchema = createInsertSchema(homepageSliders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertMembershipSchema = createInsertSchema(memberships).omit({
   id: true,
   createdAt: true,
@@ -373,6 +394,8 @@ export type InsertAchievement = z.infer<typeof insertAchievementSchema>;
 export type Achievement = typeof achievements.$inferSelect;
 export type Team = typeof teams.$inferSelect;
 export type League = typeof leagues.$inferSelect;
+export type InsertHomepageSlider = z.infer<typeof insertHomepageSliderSchema>;
+export type HomepageSlider = typeof homepageSliders.$inferSelect;
 export type TournamentParticipant = typeof tournamentParticipants.$inferSelect;
 export type InsertTournamentParticipant = typeof tournamentParticipants.$inferInsert;
 export type TournamentResults = typeof tournamentResults.$inferSelect;

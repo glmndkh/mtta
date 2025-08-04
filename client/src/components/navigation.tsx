@@ -72,11 +72,23 @@ export default function Navigation() {
                       </div>
                     </Link>
                   </>
+                ) : user.role === 'admin' ? (
+                  <>
+                    <Link href="/admin/dashboard">
+                      <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-mtta-green hover:bg-gray-50 cursor-pointer">
+                        <User className="h-4 w-4" />
+                        <span>Админ самбар</span>
+                      </div>
+                    </Link>
+                    <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700">
+                      <User className="h-4 w-4" />
+                      <span>{user.firstName} (Админ)</span>
+                    </div>
+                  </>
                 ) : (
                   <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700">
                     <User className="h-4 w-4" />
                     <span>{user.firstName} ({
-                      user.role === 'admin' ? 'Админ' :
                       user.role === 'club_owner' ? 'Клубын эзэн' :
                       user.role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч'
                     })</span>

@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertPlayerSchema, insertClubSchema, insertTournamentSchema, insertMatchSchema, insertNewsSchema, insertMembershipSchema } from "@shared/schema";
+import { insertPlayerSchema, insertClubSchema, insertTournamentSchema, insertMatchSchema, insertNewsSchema, insertMembershipSchema, insertHomepageSliderSchema } from "@shared/schema";
 import { z } from "zod";
 
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
@@ -1172,6 +1172,322 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating all player stats:", error);
       res.status(500).json({ message: "Статистик шинэчлэхэд алдаа гарлаа" });
+    }
+  });
+
+  // ================================
+  // ADMIN ROUTES FOR CRUD OPERATIONS
+  // ================================
+  
+  // Admin middleware to check if user is admin
+  const isAdminRole = async (req: any, res: any, next: any) => {
+    try {
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Нэвтрэх шаардлагатай" });
+      }
+      
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Админ эрх шаардлагатай" });
+      }
+      
+      next();
+    } catch (error) {
+      console.error("Admin check error:", error);
+      res.status(500).json({ message: "Эрх шалгахад алдаа гарлаа" });
+    }
+  };
+
+  // ===================
+  // ADMIN USERS CRUD
+  // ===================
+  app.get('/api/admin/users', isAuthenticated, isAdminRole, async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching all users:", error);
+      res.status(500).json({ message: "Хэрэглэгчдийн жагсаалт авахад алдаа гарлаа" });
+    }
+  });
+
+  app.put('/api/admin/users/:id', isAuthenticated, isAdminRole, async (req, res) => {
+    try {
+      const updateData = req.body;
+      const user = await storage.updateUserProfile(req.params.id, updateData);
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(400).json({ message: "Хэрэглэгч засварлахад алдаа гарлаа" });
+    }
+  });
+
+  // ===================
+  // ADMIN PLAYERS CRUD
+  // ===================
+  app.get('/api/admin/players', isAuthenticated, isAdminRole, async (req, res) => {
+    try {
+      const players = await storage.getAllPlayers();
+      res.json(players);
+    } catch (error) {
+      console.error("Error fetching all players:", error);
+      res.status(500).json({ message: "Тоглогчдын жагсаалт авахад алдаа гарлаа" });
+    }
+  });
+
+  app.put('/api/admin/players/:id', isAuthenticated, isAdminRole, async (req, res) => {
+    try {
+      const updateData = req.body;
+      const player = await storage.updatePlayer(req.params.id, updateData);
+      if (!player) {
+        return res.status(404).json({ message: "Тоглогч олдсонгүй" });
+      }
+      res.json(player);
+    } catch (error) {
+      console.error("Error updating player:", error);
+      res.status(400).json({ message: "Тоглогч засварлахад алдаа гарлаа" });
+    }
+  });
+
+  app.delete('/api/admin/players/:id', isAuthenticated, isAdminRole, async (req, res) => {
+    try {
+      const success = await storage.deletePlayer(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Тоглогч олдсонгүй" });
+      }
+      res.json({ message: "Тоглогч амжилттай устгагдлаа" });
+    } catch (error) {
+      console.error("Error deleting player:", error);
+      res.status(400).json({ message: "Тоглогч устгахад алдаа гарлаа" });
+    }
+  });
+
+  // ===================
+  // ADMIN CLUBS CRUD
+  // ===================
+  app.get('/api/admin/clubs', isAuthenticated, isAdminRole, async (req, res) => {
+    try {
+      const clubs = await storage.getAllClubs();
+      res.json(clubs);
+    } catch (error) {
+      console.error("Error fetching all clubs:", error);
+      res.status(500).json({ message: "Клубуудын жагсаалт авахад алдаа гарлаа" });
+    }
+  });
+
+  app.post('/api/admin/clubs', isAuthenticated, isAdminRole, async (req, res) => {
+    try {
+      const clubData = insertClubSchema.parse(req.body);
+      const club = await storage.createClub(clubData);
+      res.json(club);
+    } catch (error) {
+      console.error("Error creating club:", error);
+      res.status(400).json({ message: "Клуб үүсгэхэд алдаа гарлаа" });
+    }
+  });
+
+  app.put('/api/admin/clubs/:id', isAuthenticated, isAdminRole, async (req, res) => {
+    try {
+      const updateData = req.body;
+      const club = await storage.updateClub(req.params.id, updateData);
+      if (!club) {
+        return res.status(404).json({ message: "Клуб олдсонгүй" });
+      }
+      res.json(club);
+    } catch (error) {
+      console.error("Error updating club:", error);
+      res.status(400).json({ message: "Клуб засварлахад алдаа гарлаа" });
+    }
+  });
+
+  app.delete('/api/admin/clubs/:id', isAuthenticated, isAdminRole, async (req, res) => {
+    try {
+      const success = await storage.deleteClub(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Клуб олдсонгүй" });
+      }
+      res.json({ message: "Клуб амжилттай устгагдлаа" });
+    } catch (error) {
+      console.error("Error deleting club:", error);
+      res.status(400).json({ message: "Клуб устгахад алдаа гарлаа" });
+    }
+  });
+
+  // ===================
+  // ADMIN TOURNAMENTS CRUD (Additional endpoints)
+  // ===================
+  app.get('/api/admin/tournaments', isAuthenticated, isAdminRole, async (req, res) => {
+    try {
+      const tournaments = await storage.getTournaments();
+      res.json(tournaments);
+    } catch (error) {
+      console.error("Error fetching all tournaments:", error);
+      res.status(500).json({ message: "Тэмцээнүүдийн жагсаалт авахад алдаа гарлаа" });
+    }
+  });
+
+  // ===================
+  // ADMIN LEAGUES CRUD
+  // ===================
+  app.get('/api/admin/leagues', isAuthenticated, isAdminRole, async (req, res) => {
+    try {
+      const leagues = await storage.getAllLeagues();
+      res.json(leagues);
+    } catch (error) {
+      console.error("Error fetching all leagues:", error);
+      res.status(500).json({ message: "Лигийн жагсаалт авахад алдаа гарлаа" });
+    }
+  });
+
+  app.post('/api/admin/leagues', isAuthenticated, isAdminRole, async (req, res) => {
+    try {
+      const leagueData = req.body;
+      const league = await storage.createLeague(leagueData);
+      res.json(league);
+    } catch (error) {
+      console.error("Error creating league:", error);
+      res.status(400).json({ message: "Лиг үүсгэхэд алдаа гарлаа" });
+    }
+  });
+
+  app.put('/api/admin/leagues/:id', isAuthenticated, isAdminRole, async (req, res) => {
+    try {
+      const updateData = req.body;
+      const league = await storage.updateLeague(req.params.id, updateData);
+      if (!league) {
+        return res.status(404).json({ message: "Лиг олдсонгүй" });
+      }
+      res.json(league);
+    } catch (error) {
+      console.error("Error updating league:", error);
+      res.status(400).json({ message: "Лиг засварлахад алдаа гарлаа" });
+    }
+  });
+
+  app.delete('/api/admin/leagues/:id', isAuthenticated, isAdminRole, async (req, res) => {
+    try {
+      const success = await storage.deleteLeague(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Лиг олдсонгүй" });
+      }
+      res.json({ message: "Лиг амжилттай устгагдлаа" });
+    } catch (error) {
+      console.error("Error deleting league:", error);
+      res.status(400).json({ message: "Лиг устгахад алдаа гарлаа" });
+    }
+  });
+
+  // ===================
+  // ADMIN NEWS CRUD
+  // ===================
+  app.get('/api/admin/news', isAuthenticated, isAdminRole, async (req, res) => {
+    try {
+      const news = await storage.getAllNews();
+      res.json(news);
+    } catch (error) {
+      console.error("Error fetching all news:", error);
+      res.status(500).json({ message: "Мэдээний жагсаалт авахад алдаа гарлаа" });
+    }
+  });
+
+  app.post('/api/admin/news', isAuthenticated, isAdminRole, async (req: any, res) => {
+    try {
+      const authorId = req.session.userId;
+      const newsData = insertNewsSchema.parse({ ...req.body, authorId });
+      const news = await storage.createNews(newsData);
+      res.json(news);
+    } catch (error) {
+      console.error("Error creating news:", error);
+      res.status(400).json({ message: "Мэдээ үүсгэхэд алдаа гарлаа" });
+    }
+  });
+
+  app.put('/api/admin/news/:id', isAuthenticated, isAdminRole, async (req, res) => {
+    try {
+      const updateData = req.body;
+      const news = await storage.updateNews(req.params.id, updateData);
+      if (!news) {
+        return res.status(404).json({ message: "Мэдээ олдсонгүй" });
+      }
+      res.json(news);
+    } catch (error) {
+      console.error("Error updating news:", error);
+      res.status(400).json({ message: "Мэдээ засварлахад алдаа гарлаа" });
+    }
+  });
+
+  app.delete('/api/admin/news/:id', isAuthenticated, isAdminRole, async (req, res) => {
+    try {
+      const success = await storage.deleteNews(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Мэдээ олдсонгүй" });
+      }
+      res.json({ message: "Мэдээ амжилттай устгагдлаа" });
+    } catch (error) {
+      console.error("Error deleting news:", error);
+      res.status(400).json({ message: "Мэдээ устгахад алдаа гарлаа" });
+    }
+  });
+
+  // ===================
+  // ADMIN HOMEPAGE SLIDERS CRUD
+  // ===================
+  app.get('/api/admin/sliders', isAuthenticated, isAdminRole, async (req, res) => {
+    try {
+      const sliders = await storage.getAllHomepageSliders();
+      res.json(sliders);
+    } catch (error) {
+      console.error("Error fetching all sliders:", error);
+      res.status(500).json({ message: "Слайдерын жагсаалт авахад алдаа гарлаа" });
+    }
+  });
+
+  app.post('/api/admin/sliders', isAuthenticated, isAdminRole, async (req, res) => {
+    try {
+      const sliderData = insertHomepageSliderSchema.parse(req.body);
+      const slider = await storage.createHomepageSlider(sliderData);
+      res.json(slider);
+    } catch (error) {
+      console.error("Error creating slider:", error);
+      res.status(400).json({ message: "Слайдер үүсгэхэд алдаа гарлаа" });
+    }
+  });
+
+  app.put('/api/admin/sliders/:id', isAuthenticated, isAdminRole, async (req, res) => {
+    try {
+      const updateData = req.body;
+      const slider = await storage.updateHomepageSlider(req.params.id, updateData);
+      if (!slider) {
+        return res.status(404).json({ message: "Слайдер олдсонгүй" });
+      }
+      res.json(slider);
+    } catch (error) {
+      console.error("Error updating slider:", error);
+      res.status(400).json({ message: "Слайдер засварлахад алдаа гарлаа" });
+    }
+  });
+
+  app.delete('/api/admin/sliders/:id', isAuthenticated, isAdminRole, async (req, res) => {
+    try {
+      const success = await storage.deleteHomepageSlider(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Слайдер олдсонгүй" });
+      }
+      res.json({ message: "Слайдер амжилттай устгагдлаа" });
+    } catch (error) {
+      console.error("Error deleting slider:", error);
+      res.status(400).json({ message: "Слайдер устгахад алдаа гарлаа" });
+    }
+  });
+
+  // Public endpoint for active sliders
+  app.get('/api/sliders', async (req, res) => {
+    try {
+      const sliders = await storage.getActiveHomepageSliders();
+      res.json(sliders);
+    } catch (error) {
+      console.error("Error fetching active sliders:", error);
+      res.status(500).json({ message: "Идэвхтэй слайдерууд авахад алдаа гарлаа" });
     }
   });
 
