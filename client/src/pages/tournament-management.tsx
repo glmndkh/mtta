@@ -678,10 +678,9 @@ export default function TournamentManagement() {
                                           value={player.name}
                                           onChange={(e) => {
                                             handleGroupPlayerChange(player.id, 'name', e.target.value);
-                                            if (e.target.value.length > 0) {
-                                              setSearchOpen({ ...searchOpen, [`group-${player.id}`]: true });
-                                            }
+                                            setSearchOpen({ ...searchOpen, [`group-${player.id}`]: true });
                                           }}
+                                          onFocus={() => setSearchOpen({ ...searchOpen, [`group-${player.id}`]: true })}
                                           className="min-w-[120px] border-0 bg-transparent p-1 cursor-pointer"
                                         />
                                       </PopoverTrigger>
@@ -689,14 +688,10 @@ export default function TournamentManagement() {
                                         <Command>
                                           <CommandInput placeholder="Тоглогчийн нэр эсвэл имэйлээр хайх..." />
                                           <CommandList>
-                                            <CommandEmpty>Хэрэглэгч олдсонгүй</CommandEmpty>
+                                            {console.log('Available users for group search:', allUsers)}
+                                            <CommandEmpty>Хэрэглэгч олдсонгүй. Хайлт хийхийн тулд нэр бичнэ үү.</CommandEmpty>
                                             <CommandGroup heading="Бүртгэлтэй хэрэглэгчид">
-                                              {getAvailableUsers().filter((user: any) => {
-                                                const searchTerm = (player.name || '').toLowerCase();
-                                                const userName = (user.name || user.email || '').toLowerCase();
-                                                const userEmail = (user.email || '').toLowerCase();
-                                                return userName.includes(searchTerm) || userEmail.includes(searchTerm);
-                                              }).map((user: any) => (
+                                              {allUsers && allUsers.length > 0 ? allUsers.map((user: any) => (
                                                 <CommandItem
                                                   key={user.id}
                                                   value={`${user.name || user.email} ${user.email}`}
@@ -717,7 +712,11 @@ export default function TournamentManagement() {
                                                     </div>
                                                   </div>
                                                 </CommandItem>
-                                              ))}
+                                              )) : (
+                                                <CommandItem disabled>
+                                                  Хэрэглэгчид ачаалж байна...
+                                                </CommandItem>
+                                              )}
                                             </CommandGroup>
                                           </CommandList>
                                         </Command>
