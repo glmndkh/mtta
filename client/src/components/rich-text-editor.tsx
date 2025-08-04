@@ -39,7 +39,10 @@ export default function RichTextEditor({ content, onChange, placeholder, classNa
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        // Disable the default link extension from StarterKit to avoid conflicts
+        link: false,
+      }),
       Image.configure({
         inline: true,
         allowBase64: true,
