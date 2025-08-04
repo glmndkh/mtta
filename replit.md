@@ -23,6 +23,22 @@ A comprehensive web application for the Mongolian Table Tennis Association that 
 - **Admin-only results input interface** with secure authentication and role-based access control
 - **Complete API integration** with tournament results endpoints for saving, retrieving, and publishing results
 
+### Advanced Group Management System (August 2025)
+- **Multi-group tournament support** with separate player lists and match results per group
+- **Group creation functionality** with automatic naming (Group A, B, C, etc.)
+- **Group deletion and renaming** with inline editing and safety constraints
+- **Group selector interface** for easy navigation between multiple tournament groups
+- **Player/team column separation** with distinct "Тамирчин" and "Баг" columns for individual tournaments
+- **Enhanced group management UI** with player counts and visual group selection
+
+### Match Creation System (August 2025)
+- **Comprehensive match result input form** with team selection and individual player scoring
+- **Set-by-set score tracking** following table tennis match format (up to 5 sets)
+- **Visual match overview** with team logos and final score display
+- **Individual player performance tracking** with detailed score input per set
+- **Team vs team result recording** with automatic score calculation
+- **Match metadata input** including date, time, and venue information
+
 ### Win/Loss Statistics Fix (August 2025)
 - **Accurate statistics calculation** fixed to count only from current published tournament results
 - **Player statistics reset and recalculated** to eliminate counting from previous deleted tournament data

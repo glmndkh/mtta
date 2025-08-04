@@ -1127,24 +1127,186 @@ export default function TournamentManagement() {
             )}
 
             {activeSection === 'create-match' && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Тоглолт үүсгэх</h3>
-                <p className="text-gray-600">
-                  Хоёр багийн хоорондох дэлгэрэнгүй тоглолтын мэдээлэл оруулах.
-                </p>
-                <div className="bg-orange-50 p-4 rounded-lg">
-                  <h4 className="font-medium mb-2">Тоглолтын мэдээлэл:</h4>
-                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
-                    <li>Тоглох багууд сонгох</li>
-                    <li>Тоглолтын огноо ба цаг</li>
-                    <li>Байршил ба талбай</li>
-                    <li>Шүүгчийн мэдээлэл</li>
-                    <li>Дүрэм ба онооны систем</li>
-                  </ul>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Тоглолтын дүн оруулах</h3>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setActiveSection(null)}
+                  >
+                    Буцах
+                  </Button>
                 </div>
-                <Button className="bg-orange-500 hover:bg-orange-600 text-white">
-                  Тоглолт үүсгэх
-                </Button>
+
+                {/* Team Selection */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Нэгдүгээр баг</h4>
+                    <div className="space-y-2">
+                      <Input placeholder="Багийн нэр" />
+                      <Input placeholder="Багийн лого" type="file" accept="image/*" />
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Хоёрдугаар баг</h4>
+                    <div className="space-y-2">
+                      <Input placeholder="Багийн нэр" />
+                      <Input placeholder="Багийн лого" type="file" accept="image/*" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Match Overview */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-center gap-8">
+                    <div className="flex items-center gap-2">
+                      <div className="w-12 h-12 bg-gray-300 rounded"></div>
+                      <span className="font-medium">Багийн нэр</span>
+                    </div>
+                    <div className="text-2xl font-bold">5 : 4</div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">Багийн нэр</span>
+                      <div className="w-12 h-12 bg-gray-300 rounded"></div>
+                    </div>
+                  </div>
+                  <div className="text-center text-sm text-gray-600 mt-2">
+                    Дэлгэрэнгүй
+                  </div>
+                </div>
+
+                {/* Individual Match Results Table */}
+                <div className="space-y-4">
+                  <h4 className="font-medium">Тоглогчдын дэлгэрэнгүй дүн</h4>
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gray-100">
+                          <TableHead className="w-20">Багийн лого</TableHead>
+                          <TableHead>Тамирчины нэр</TableHead>
+                          <TableHead className="w-16 text-center">1</TableHead>
+                          <TableHead className="w-16 text-center">2</TableHead>
+                          <TableHead className="w-16 text-center">3</TableHead>
+                          <TableHead className="w-16 text-center">4</TableHead>
+                          <TableHead className="w-16 text-center">5</TableHead>
+                          <TableHead className="w-20 text-center">Харьцаа</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {/* First Player Row */}
+                        <TableRow>
+                          <TableCell>
+                            <div className="w-8 h-8 bg-gray-300 rounded"></div>
+                          </TableCell>
+                          <TableCell>
+                            <Input placeholder="Тамирчины нэр" className="border-0 bg-transparent" />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Input 
+                              placeholder="11" 
+                              className="w-12 h-8 text-center p-1 border border-gray-300"
+                              defaultValue="11"
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Input 
+                              placeholder="11" 
+                              className="w-12 h-8 text-center p-1 border border-gray-300"
+                              defaultValue="11"
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Input 
+                              placeholder="11" 
+                              className="w-12 h-8 text-center p-1 border border-gray-300"
+                              defaultValue="11"
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="w-12 h-8 bg-gray-200 rounded"></div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="w-12 h-8 bg-gray-200 rounded"></div>
+                          </TableCell>
+                          <TableCell className="text-center font-bold">3</TableCell>
+                        </TableRow>
+                        
+                        {/* Second Player Row */}
+                        <TableRow>
+                          <TableCell>
+                            <div className="w-8 h-8 bg-gray-300 rounded"></div>
+                          </TableCell>
+                          <TableCell>
+                            <Input placeholder="Тамирчины нэр" className="border-0 bg-transparent" />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Input 
+                              placeholder="0" 
+                              className="w-12 h-8 text-center p-1 border border-gray-300"
+                              defaultValue="0"
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Input 
+                              placeholder="0" 
+                              className="w-12 h-8 text-center p-1 border border-gray-300"
+                              defaultValue="0"
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Input 
+                              placeholder="0" 
+                              className="w-12 h-8 text-center p-1 border border-gray-300"
+                              defaultValue="0"
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="w-12 h-8 bg-gray-200 rounded"></div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="w-12 h-8 bg-gray-200 rounded"></div>
+                          </TableCell>
+                          <TableCell className="text-center font-bold">0</TableCell>
+                        </TableRow>
+
+                        {/* Add more player rows */}
+                        <TableRow>
+                          <TableCell colSpan={8} className="text-center py-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="text-blue-500"
+                            >
+                              <Plus className="w-4 h-4 mr-1" />
+                              Тоглогч нэмэх
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+
+                {/* Match Date and Time */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Тоглолтын огноо</Label>
+                    <Input type="date" />
+                  </div>
+                  <div>
+                    <Label>Тоглолтын цаг</Label>
+                    <Input type="time" />
+                  </div>
+                </div>
+
+                {/* Save Button */}
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setActiveSection(null)}>
+                    Цуцлах
+                  </Button>
+                  <Button className="bg-orange-500 hover:bg-orange-600 text-white">
+                    Тоглолтын дүн хадгалах
+                  </Button>
+                </div>
               </div>
             )}
 
