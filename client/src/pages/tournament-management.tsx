@@ -29,9 +29,9 @@ export default function TournamentManagement() {
     setLocation("/admin/dashboard");
   };
 
-  // Fetch registered players
-  const { data: registeredPlayers = [] } = useQuery({
-    queryKey: ['/api/admin/players'],
+  // Fetch all users
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ['/api/admin/users'],
     enabled: activeSection === 'add-team'
   });
 
@@ -50,20 +50,20 @@ export default function TournamentManagement() {
     setPlayers(players.map(p => p.id === id ? { ...p, name, playerId: undefined } : p));
   };
 
-  const handleSelectPlayer = (teamPlayerId: number, player: any) => {
+  const handleSelectPlayer = (teamPlayerId: number, user: any) => {
     setPlayers(players.map(p => 
-      p.id === teamPlayerId ? { ...p, name: player.name, playerId: player.id } : p
+      p.id === teamPlayerId ? { ...p, name: user.name || user.email, playerId: user.id } : p
     ));
     setSearchOpen({ ...searchOpen, [teamPlayerId]: false });
   };
 
-  const getAvailablePlayers = (currentPlayerId?: string) => {
+  const getAvailableUsers = (currentPlayerId?: string) => {
     const selectedPlayerIds = players
       .filter(p => p.playerId && p.playerId !== currentPlayerId)
       .map(p => p.playerId);
     
-    return registeredPlayers.filter((player: any) => 
-      !selectedPlayerIds.includes(player.id)
+    return allUsers.filter((user: any) => 
+      !selectedPlayerIds.includes(user.id)
     );
   };
 
@@ -79,7 +79,7 @@ export default function TournamentManagement() {
     console.log("Saving team:", {
       name: teamName,
       logo: teamLogo,
-      players: players.filter(p => p.name.trim() !== "")
+      players: players.filter(p => p.name && p.name.trim() !== "")
     });
   };
 
@@ -259,7 +259,7 @@ export default function TournamentManagement() {
                     <ul className="space-y-1 text-sm text-gray-700">
                       <li>• Багийн нэр: {teamName || "Оруулаагүй"}</li>
                       <li>• Лого: {teamLogo ? "Оруулсан" : "Оруулаагүй"}</li>
-                      <li>• Тоглогчдын тоо: {players.filter(p => p.name.trim()).length}</li>
+                      <li>• Тоглогчдын тоо: {players.filter(p => p.name && p.name.trim()).length}</li>
                     </ul>
                   </div>
                 </div>
@@ -311,24 +311,24 @@ export default function TournamentManagement() {
                                   </PopoverTrigger>
                                   <PopoverContent className="w-80 p-0" align="start">
                                     <Command>
-                                      <CommandInput placeholder="Тоглогч хайх..." />
+                                      <CommandInput placeholder="Хэрэглэгч хайх..." />
                                       <CommandList>
-                                        <CommandEmpty>Тоглогч олдсонгүй</CommandEmpty>
-                                        <CommandGroup heading="Бүртгэлтэй тоглогчид">
-                                          {getAvailablePlayers(player.playerId).map((registeredPlayer: any) => (
+                                        <CommandEmpty>Хэрэглэгч олдсонгүй</CommandEmpty>
+                                        <CommandGroup heading="Бүртгэлтэй хэрэглэгчид">
+                                          {getAvailableUsers(player.playerId).map((user: any) => (
                                             <CommandItem
-                                              key={registeredPlayer.id}
-                                              value={registeredPlayer.name}
-                                              onSelect={() => handleSelectPlayer(player.id, registeredPlayer)}
+                                              key={user.id}
+                                              value={user.name || user.email}
+                                              onSelect={() => handleSelectPlayer(player.id, user)}
                                               className="flex items-center justify-between"
                                             >
                                               <div>
-                                                <div className="font-medium">{registeredPlayer.name}</div>
-                                                {registeredPlayer.club && (
-                                                  <div className="text-xs text-gray-500">{registeredPlayer.club}</div>
-                                                )}
+                                                <div className="font-medium">{user.name || user.email}</div>
+                                                <div className="text-xs text-gray-500">
+                                                  {user.email} • {user.role === 'admin' ? 'Админ' : user.role === 'club_owner' ? 'Клубын эзэн' : 'Тоглогч'}
+                                                </div>
                                               </div>
-                                              {player.playerId === registeredPlayer.id && (
+                                              {player.playerId === user.id && (
                                                 <Check className="w-4 h-4" />
                                               )}
                                             </CommandItem>
@@ -342,7 +342,7 @@ export default function TournamentManagement() {
                               {player.playerId && (
                                 <div className="text-xs text-green-600 mt-1 flex items-center gap-1">
                                   <Check className="w-3 h-3" />
-                                  Бүртгэлтэй тоглогч сонгосон
+                                  Бүртгэлтэй хэрэглэгч сонгосон
                                 </div>
                               )}
                             </TableCell>
@@ -368,7 +368,7 @@ export default function TournamentManagement() {
                   <Button 
                     onClick={handleSaveTeam}
                     className="bg-blue-500 hover:bg-blue-600 text-white"
-                    disabled={!teamName.trim() || players.filter(p => p.name.trim()).length === 0}
+                    disabled={!teamName.trim() || players.filter(p => p.name && p.name.trim()).length === 0}
                   >
                     <UserPlus className="w-4 h-4 mr-2" />
                     Баг хадгалах
