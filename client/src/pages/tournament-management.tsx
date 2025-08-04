@@ -8,13 +8,17 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function TournamentManagement() {
   const { id } = useParams();
   const [, setLocation] = useLocation();
   const [activeSection, setActiveSection] = useState<string | null>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [teams, setTeams] = useState<Array<{
     id: number;
     name: string;
@@ -58,6 +62,57 @@ export default function TournamentManagement() {
   const { data: allUsers = [] } = useQuery({
     queryKey: ['/api/admin/users'],
     enabled: activeSection === 'add-team' || activeSection === 'add-group-match'
+  });
+
+  // Load existing tournament teams
+  const { data: existingTeams = [] } = useQuery({
+    queryKey: ['/api/tournaments', id, 'teams'],
+    enabled: !!id
+  });
+
+  // Create team mutation
+  const createTeamMutation = useMutation({
+    mutationFn: async (teamData: { name: string; logoUrl?: string }) => {
+      return apiRequest(`/api/tournaments/${id}/teams`, {
+        method: 'POST',
+        body: JSON.stringify(teamData),
+        headers: { 'Content-Type': 'application/json' }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', id, 'teams'] });
+      toast({ title: "Баг амжилттай үүсгэгдлээ", variant: "default" });
+    },
+    onError: () => {
+      toast({ title: "Баг үүсгэхэд алдаа гарлаа", variant: "destructive" });
+    }
+  });
+
+  // Add player to team mutation
+  const addPlayerToTeamMutation = useMutation({
+    mutationFn: async ({ teamId, playerId, playerName }: { teamId: string; playerId: string; playerName: string }) => {
+      return apiRequest(`/api/tournament-teams/${teamId}/players`, {
+        method: 'POST',
+        body: JSON.stringify({ playerId, playerName }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', id, 'teams'] });
+    }
+  });
+
+  // Delete team mutation
+  const deleteTeamMutation = useMutation({
+    mutationFn: async (teamId: string) => {
+      return apiRequest(`/api/tournament-teams/${teamId}`, {
+        method: 'DELETE'
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', id, 'teams'] });
+      toast({ title: "Баг амжилттай устгагдлаа", variant: "default" });
+    }
   });
 
   const handleAddTeam = () => {
@@ -170,6 +225,38 @@ export default function TournamentManagement() {
     setTeams(teams.map(team => 
       team.id === teamId ? { ...team, name } : team
     ));
+  };
+
+  // Save team to database
+  const handleSaveTeam = async (team: any) => {
+    if (!team.name.trim()) {
+      toast({ title: "Багийн нэр оруулна уу", variant: "destructive" });
+      return;
+    }
+
+    try {
+      // Create the team
+      const createdTeam = await createTeamMutation.mutateAsync({
+        name: team.name,
+        logoUrl: undefined // Will implement file upload later
+      });
+
+      // Add players to the team
+      for (const player of team.players) {
+        if (player.playerId && player.name) {
+          await addPlayerToTeamMutation.mutateAsync({
+            teamId: createdTeam.id,
+            playerId: player.playerId,
+            playerName: player.name
+          });
+        }
+      }
+
+      toast({ title: "Баг амжилттай хадгалагдлаа", variant: "default" });
+    } catch (error) {
+      console.error('Error saving team:', error);
+      toast({ title: "Баг хадгалахад алдаа гарлаа", variant: "destructive" });
+    }
   };
 
   const handleSaveTeams = () => {
@@ -374,6 +461,47 @@ export default function TournamentManagement() {
                       Шинэ баг нэмэх
                     </Button>
                   </div>
+
+                  {/* Display existing saved teams */}
+                  {existingTeams && existingTeams.length > 0 && (
+                    <div className="mb-6">
+                      <h4 className="text-lg font-semibold mb-3">Хадгалагдсан багууд</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {existingTeams.map((team: any) => (
+                          <Card key={team.id} className="border-green-200 bg-green-50">
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between mb-2">
+                                <h5 className="font-medium">{team.name}</h5>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => deleteTeamMutation.mutate(team.id)}
+                                  className="text-red-600 border-red-600 hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                              <p className="text-sm text-gray-600">
+                                Тоглогчид: {team.players?.length || 0} хүн
+                              </p>
+                              {team.players && team.players.length > 0 && (
+                                <div className="mt-2">
+                                  <p className="text-xs text-gray-500 mb-1">Тоглогчдын жагсаалт:</p>
+                                  <div className="text-xs space-y-1">
+                                    {team.players.map((player: any, index: number) => (
+                                      <div key={player.id}>
+                                        {index + 1}. {player.playerName}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Teams List */}
@@ -382,15 +510,26 @@ export default function TournamentManagement() {
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-lg">Баг #{teamIndex + 1}</CardTitle>
-                        {teams.length > 1 && (
+                        <div className="flex gap-2">
                           <Button
-                            variant="outline"
+                            variant="default"
                             size="sm"
-                            onClick={() => handleRemoveTeam(team.id)}
+                            onClick={() => handleSaveTeam(team)}
+                            disabled={createTeamMutation.isPending || !team.name.trim()}
+                            className="bg-green-600 hover:bg-green-700 text-white"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            {createTeamMutation.isPending ? "Хадгалж байна..." : "Хадгалах"}
                           </Button>
-                        )}
+                          {teams.length > 1 && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRemoveTeam(team.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
