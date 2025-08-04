@@ -2,7 +2,7 @@ import { useParams, useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, UserPlus, Play, Zap, Users, Upload, Plus, Trash2, Search, Check } from "lucide-react";
+import { ArrowLeft, UserPlus, Play, Zap, Users, Upload, Plus, Trash2, Search, Check, TableIcon, Calendar, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -34,6 +34,18 @@ export default function TournamentManagement() {
     }
   ]);
   const [searchOpen, setSearchOpen] = useState<{[key: string]: boolean}>({});
+  const [groupMatchType, setGroupMatchType] = useState<'team' | 'individual' | null>(null);
+  const [groupMatches, setGroupMatches] = useState<Array<{
+    id: number;
+    team1: string;
+    team2: string;
+    score1: string;
+    score2: string;
+    date: string;
+    time: string;
+  }>>([
+    { id: 1, team1: "", team2: "", score1: "", score2: "", date: "", time: "" }
+  ]);
 
   const handleBackToAdmin = () => {
     setLocation("/admin/dashboard");
@@ -164,6 +176,39 @@ export default function TournamentManagement() {
     console.log("Saving teams:", teamsToSave);
   };
 
+  const handleAddGroupMatch = () => {
+    const newId = Math.max(...groupMatches.map(m => m.id)) + 1;
+    setGroupMatches([...groupMatches, {
+      id: newId,
+      team1: "",
+      team2: "",
+      score1: "",
+      score2: "",
+      date: "",
+      time: ""
+    }]);
+  };
+
+  const handleRemoveGroupMatch = (id: number) => {
+    if (groupMatches.length > 1) {
+      setGroupMatches(groupMatches.filter(m => m.id !== id));
+    }
+  };
+
+  const handleGroupMatchChange = (id: number, field: string, value: string) => {
+    setGroupMatches(groupMatches.map(match => 
+      match.id === id ? { ...match, [field]: value } : match
+    ));
+  };
+
+  const handleSaveGroupMatches = () => {
+    // TODO: Implement group matches saving logic
+    const matchesToSave = groupMatches.filter(match => 
+      match.team1.trim() && match.team2.trim()
+    );
+    console.log("Saving group matches:", { type: groupMatchType, matches: matchesToSave });
+  };
+
   const managementOptions = [
     {
       id: 'add-team',
@@ -175,11 +220,11 @@ export default function TournamentManagement() {
     },
     {
       id: 'add-group-match',
-      title: 'Бүлгийн тоглолт нэмэх',
-      description: 'Бүлгийн шатны тоглолтуудыг тохируулах ба удирдах',
-      icon: Users,
+      title: 'Группын тэмцээн нэмэх',
+      description: 'Группын шатны тэмцээний хүснэгт үүсгэх',
+      icon: TableIcon,
       color: 'bg-green-500 hover:bg-green-600',
-      details: 'Бүлгийн тоглолтын хуваарь ба дүрэм'
+      details: 'Багийн болон хувь хүний группын тэмцээн'
     },
     {
       id: 'create-match',
@@ -491,23 +536,217 @@ export default function TournamentManagement() {
             )}
 
             {activeSection === 'add-group-match' && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Бүлгийн тоглолт нэмэх</h3>
-                <p className="text-gray-600">
-                  Бүлгийн шатны тоглолтуудыг тохируулж, хуваарийг зохион байгуулах.
-                </p>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <h4 className="font-medium mb-2">Бүлгийн тоглолтын тохиргоо:</h4>
-                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
-                    <li>Бүлэг үүсгэх ба багуудыг хуваах</li>
-                    <li>Тоглолтын хуваарь гаргах</li>
-                    <li>Оноо тооцооны систем тохируулах</li>
-                    <li>Шөвгийн шатанд шилжих шалгуур</li>
-                  </ul>
-                </div>
-                <Button className="bg-green-500 hover:bg-green-600 text-white">
-                  Бүлгийн тоглолт эхлүүлэх
-                </Button>
+              <div className="space-y-6">
+                {!groupMatchType ? (
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold">Группын тэмцээний төрөл сонгоно уу</h3>
+                      <p className="text-gray-600">
+                        Та багийн группын тэмцээн эсвэл хувь хүний группын тэмцээн үүсгэх боломжтой.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <Card className="border-2 hover:border-blue-500 cursor-pointer transition-colors" 
+                            onClick={() => setGroupMatchType('team')}>
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <Users className="w-5 h-5 text-blue-500" />
+                            Багийн группын тэмцээн
+                          </CardTitle>
+                          <CardDescription>
+                            Багуудын хоорондох группын шатны тэмцээний хүснэгт үүсгэх
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-sm text-gray-600">
+                            • Багуудын нэрээр тэмцээн үүсгэх<br/>
+                            • Багийн оноо тооцоолох<br/>
+                            • Группын хүснэгт үүсгэх
+                          </p>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="border-2 hover:border-green-500 cursor-pointer transition-colors" 
+                            onClick={() => setGroupMatchType('individual')}>
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <UserPlus className="w-5 h-5 text-green-500" />
+                            Хувь хүний группын тэмцээн
+                          </CardTitle>
+                          <CardDescription>
+                            Тоглогчдын хоорондох группын шатны тэмцээний хүснэгт үүсгэх
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-sm text-gray-600">
+                            • Тоглогчдын нэрээр тэмцээн үүсгэх<br/>
+                            • Хувь хүний оноо тооцоолох<br/>
+                            • Хувь хүний группын хүснэгт үүсгэх
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                          {groupMatchType === 'team' ? (
+                            <>
+                              <Users className="w-5 h-5 text-blue-500" />
+                              Багийн группын тэмцээн
+                            </>
+                          ) : (
+                            <>
+                              <UserPlus className="w-5 h-5 text-green-500" />
+                              Хувь хүний группын тэмцээн
+                            </>
+                          )}
+                        </h3>
+                        <p className="text-gray-600">
+                          {groupMatchType === 'team' 
+                            ? 'Багуудын хоорондох группын шатны тэмцээний хүснэгт' 
+                            : 'Тоглогчдын хоорондох группын шатны тэмцээний хүснэгт'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setGroupMatchType(null)}
+                        >
+                          Буцах
+                        </Button>
+                        <Button 
+                          onClick={handleAddGroupMatch}
+                          className="bg-green-500 hover:bg-green-600 text-white"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Тэмцээн нэмэх
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Group Matches Table */}
+                    <div className="border rounded-lg overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-gray-50">
+                            <TableHead className="w-16">№</TableHead>
+                            <TableHead>{groupMatchType === 'team' ? 'Баг 1' : 'Тоглогч 1'}</TableHead>
+                            <TableHead>Оноо</TableHead>
+                            <TableHead className="w-8">:</TableHead>
+                            <TableHead>Оноо</TableHead>
+                            <TableHead>{groupMatchType === 'team' ? 'Баг 2' : 'Тоглогч 2'}</TableHead>
+                            <TableHead className="w-32">
+                              <Calendar className="w-4 h-4 inline mr-1" />
+                              Огноо
+                            </TableHead>
+                            <TableHead className="w-32">
+                              <Clock className="w-4 h-4 inline mr-1" />
+                              Цаг
+                            </TableHead>
+                            <TableHead className="w-20">Үйлдэл</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {groupMatches.map((match, index) => (
+                            <TableRow key={match.id}>
+                              <TableCell className="font-medium">{index + 1}</TableCell>
+                              <TableCell>
+                                <Input
+                                  placeholder={groupMatchType === 'team' ? 'Багийн нэр' : 'Тоглогчийн нэр'}
+                                  value={match.team1}
+                                  onChange={(e) => handleGroupMatchChange(match.id, 'team1', e.target.value)}
+                                  className="min-w-[150px]"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  placeholder="0"
+                                  type="number"
+                                  min="0"
+                                  value={match.score1}
+                                  onChange={(e) => handleGroupMatchChange(match.id, 'score1', e.target.value)}
+                                  className="w-16 text-center"
+                                />
+                              </TableCell>
+                              <TableCell className="text-center font-bold">:</TableCell>
+                              <TableCell>
+                                <Input
+                                  placeholder="0"
+                                  type="number"
+                                  min="0"
+                                  value={match.score2}
+                                  onChange={(e) => handleGroupMatchChange(match.id, 'score2', e.target.value)}
+                                  className="w-16 text-center"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  placeholder={groupMatchType === 'team' ? 'Багийн нэр' : 'Тоглогчийн нэр'}
+                                  value={match.team2}
+                                  onChange={(e) => handleGroupMatchChange(match.id, 'team2', e.target.value)}
+                                  className="min-w-[150px]"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  type="date"
+                                  value={match.date}
+                                  onChange={(e) => handleGroupMatchChange(match.id, 'date', e.target.value)}
+                                  className="w-full"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  type="time"
+                                  value={match.time}
+                                  onChange={(e) => handleGroupMatchChange(match.id, 'time', e.target.value)}
+                                  className="w-full"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleRemoveGroupMatch(match.id)}
+                                  disabled={groupMatches.length === 1}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    {/* Match Summary */}
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h4 className="font-medium mb-2">Тэмцээний мэдээлэл:</h4>
+                      <ul className="space-y-1 text-sm text-gray-700">
+                        <li>• Төрөл: {groupMatchType === 'team' ? 'Багийн группын тэмцээн' : 'Хувь хүний группын тэмцээн'}</li>
+                        <li>• Тэмцээний тоо: {groupMatches.length}</li>
+                        <li>• Бүрэн бөглөсөн: {groupMatches.filter(m => m.team1.trim() && m.team2.trim()).length}</li>
+                        <li>• Оноо бүхий: {groupMatches.filter(m => m.score1 || m.score2).length}</li>
+                      </ul>
+                    </div>
+
+                    {/* Save Button */}
+                    <div className="flex justify-end">
+                      <Button 
+                        onClick={handleSaveGroupMatches}
+                        className="bg-blue-500 hover:bg-blue-600 text-white"
+                        disabled={groupMatches.filter(m => m.team1.trim() && m.team2.trim()).length === 0}
+                      >
+                        <TableIcon className="w-4 h-4 mr-2" />
+                        Группын тэмцээн хадгалах ({groupMatches.filter(m => m.team1.trim() && m.team2.trim()).length})
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
