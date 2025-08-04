@@ -15,6 +15,8 @@ import {
   homepageSliders,
   tournamentTeams,
   tournamentTeamPlayers,
+  leagueMatches,
+  leaguePlayerMatches,
   type User,
   type UpsertUser,
   type Player,
@@ -42,9 +44,13 @@ import {
   type InsertTournamentTeam,
   type TournamentTeamPlayer,
   type InsertTournamentTeamPlayer,
+  type LeagueMatch,
+  type InsertLeagueMatch,
+  type LeaguePlayerMatch,
+  type InsertLeaguePlayerMatch,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, or } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -1384,6 +1390,88 @@ export class DatabaseStorage implements IStorage {
       console.error('Error getting league by ID:', error);
       return null;
     }
+  }
+
+  // League match methods
+  async createLeagueMatch(matchData: InsertLeagueMatch): Promise<LeagueMatch> {
+    const [match] = await db
+      .insert(leagueMatches)
+      .values(matchData)
+      .returning();
+    return match;
+  }
+
+  async createLeaguePlayerMatch(playerMatchData: InsertLeaguePlayerMatch): Promise<LeaguePlayerMatch> {
+    const [playerMatch] = await db
+      .insert(leaguePlayerMatches)
+      .values(playerMatchData)
+      .returning();
+    return playerMatch;
+  }
+
+  async getLeagueMatchesForPlayer(playerId: string): Promise<Array<LeagueMatch & { 
+    team1: TournamentTeam; 
+    team2: TournamentTeam;
+    playerMatches: LeaguePlayerMatch[];
+  }>> {
+    // Get all league matches where the player participated
+    const playerMatches = await db
+      .select({
+        leagueMatchId: leaguePlayerMatches.leagueMatchId,
+      })
+      .from(leaguePlayerMatches)
+      .where(or(
+        eq(leaguePlayerMatches.player1Id, playerId),
+        eq(leaguePlayerMatches.player2Id, playerId)
+      ));
+
+    const matchIds = Array.from(new Set(playerMatches.map(pm => pm.leagueMatchId)));
+    
+    if (matchIds.length === 0) {
+      return [];
+    }
+
+    // Get league matches with team information
+    const matches = await Promise.all(
+      matchIds.map(async (matchId) => {
+        const [match] = await db
+          .select()
+          .from(leagueMatches)
+          .where(eq(leagueMatches.id, matchId));
+
+        if (!match) return null;
+
+        // Get team information
+        const [team1] = await db
+          .select()
+          .from(tournamentTeams)
+          .where(eq(tournamentTeams.id, match.team1Id));
+
+        const [team2] = await db
+          .select()
+          .from(tournamentTeams)
+          .where(eq(tournamentTeams.id, match.team2Id));
+
+        // Get all player matches for this league match
+        const playerMatchesForThisMatch = await db
+          .select()
+          .from(leaguePlayerMatches)
+          .where(eq(leaguePlayerMatches.leagueMatchId, matchId));
+
+        return {
+          ...match,
+          team1: team1 || {} as TournamentTeam,
+          team2: team2 || {} as TournamentTeam, 
+          playerMatches: playerMatchesForThisMatch,
+        };
+      })
+    );
+
+    return matches.filter(match => match !== null) as Array<LeagueMatch & { 
+      team1: TournamentTeam; 
+      team2: TournamentTeam;
+      playerMatches: LeaguePlayerMatch[];
+    }>;
   }
 }
 

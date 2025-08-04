@@ -19,6 +19,83 @@ export default function TournamentManagement() {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Save match mutation
+  const saveMatchMutation = useMutation({
+    mutationFn: async (matchData: any) => {
+      const response = await fetch(`/api/leagues/${id}/matches`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(matchData),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save match');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ description: "Тоглолтын дүн амжилттай хадгалагдлаа" });
+      // Reset form
+      setMatches([]);
+      setTeam1Score(0);
+      setTeam2Score(0);
+      setMatchDate('');
+      setMatchTime('');
+      setActiveSection(null);
+    },
+    onError: () => {
+      toast({ 
+        description: "Тоглолтын дүн хадгалахад алдаа гарлаа",
+        variant: "destructive"
+      });
+    },
+  });
+
+  // Save match handler
+  const handleSaveMatch = () => {
+    if (!selectedTeam1 || !selectedTeam2) {
+      toast({ 
+        description: "Багуудыг сонгоно уу",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (matches.length === 0) {
+      toast({ 
+        description: "Тоглолт нэмнэ үү",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Prepare match data for API
+    const matchData = {
+      team1Id: selectedTeam1.id,
+      team2Id: selectedTeam2.id,
+      team1Score,
+      team2Score,
+      matchDate: matchDate || null,
+      matchTime: matchTime || null,
+      playerMatches: matches.map(match => ({
+        player1Id: match.player1.playerId || null,
+        player2Id: match.player2.playerId || null,
+        player1Name: match.player1.name,
+        player2Name: match.player2.name,
+        sets: match.player1.sets.map((score, index) => ({
+          player1: score,
+          player2: match.player2.sets[index] || 0
+        }))
+      }))
+    };
+
+    saveMatchMutation.mutate(matchData);
+  };
+
   const [teams, setTeams] = useState<Array<{
     id: number;
     name: string;
@@ -76,6 +153,8 @@ export default function TournamentManagement() {
   const [team1Score, setTeam1Score] = useState<number>(0);
   const [team2Score, setTeam2Score] = useState<number>(0);
   const [showMatchDetails, setShowMatchDetails] = useState<boolean>(false);
+  const [matchDate, setMatchDate] = useState<string>('');
+  const [matchTime, setMatchTime] = useState<string>('');
   
   // Get current group data for compatibility
   const groupData = groups.find(g => g.id === activeGroupId)?.players || [];
@@ -1562,11 +1641,19 @@ export default function TournamentManagement() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label>Тоглолтын огноо</Label>
-                    <Input type="date" />
+                    <Input 
+                      type="date" 
+                      value={matchDate}
+                      onChange={(e) => setMatchDate(e.target.value)}
+                    />
                   </div>
                   <div>
                     <Label>Тоглолтын цаг</Label>
-                    <Input type="time" />
+                    <Input 
+                      type="time" 
+                      value={matchTime}
+                      onChange={(e) => setMatchTime(e.target.value)}
+                    />
                   </div>
                 </div>
 
@@ -1575,8 +1662,12 @@ export default function TournamentManagement() {
                   <Button variant="outline" onClick={() => setActiveSection(null)}>
                     Цуцлах
                   </Button>
-                  <Button className="bg-orange-500 hover:bg-orange-600 text-white">
-                    Тоглолтын дүн хадгалах
+                  <Button 
+                    className="bg-orange-500 hover:bg-orange-600 text-white"
+                    onClick={handleSaveMatch}
+                    disabled={saveMatchMutation.isPending}
+                  >
+                    {saveMatchMutation.isPending ? "Хадгалж байна..." : "Тоглолтын дүн хадгалах"}
                   </Button>
                 </div>
               </div>
