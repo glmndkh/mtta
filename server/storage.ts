@@ -1313,6 +1313,57 @@ export class DatabaseStorage implements IStorage {
     const result = await db.delete(tournamentTeams).where(eq(tournamentTeams.id, teamId));
     return result.rowCount > 0;
   }
+
+  // League team methods (reuse tournament team tables for leagues)
+  async createLeagueTeam(leagueId: string, teamData: { name: string; logoUrl?: string }): Promise<TournamentTeam> {
+    const [team] = await db
+      .insert(tournamentTeams)
+      .values({
+        tournamentId: leagueId, // Using tournament_teams table for leagues too
+        name: teamData.name,
+        logoUrl: teamData.logoUrl,
+      })
+      .returning();
+    return team;
+  }
+
+  async getLeagueTeams(leagueId: string): Promise<Array<TournamentTeam & { players: TournamentTeamPlayer[] }>> {
+    const teams = await db
+      .select()
+      .from(tournamentTeams)
+      .where(eq(tournamentTeams.tournamentId, leagueId));
+
+    const teamsWithPlayers = await Promise.all(
+      teams.map(async (team) => {
+        const players = await db
+          .select()
+          .from(tournamentTeamPlayers)
+          .where(eq(tournamentTeamPlayers.tournamentTeamId, team.id));
+        
+        return {
+          ...team,
+          players,
+        };
+      })
+    );
+
+    return teamsWithPlayers;
+  }
+
+  async getLeagueById(leagueId: string) {
+    try {
+      const [league] = await db
+        .select()
+        .from(leagues)
+        .where(eq(leagues.id, leagueId))
+        .limit(1);
+      
+      return league;
+    } catch (error) {
+      console.error('Error getting league by ID:', error);
+      return null;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
