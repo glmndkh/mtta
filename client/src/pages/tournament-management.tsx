@@ -794,6 +794,13 @@ export default function TournamentManagement() {
                           Буцах
                         </Button>
                         <Button 
+                          variant="outline"
+                          className="bg-blue-500 hover:bg-blue-600 text-white"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Групп нэмэх
+                        </Button>
+                        <Button 
                           onClick={handleAddGroupPlayer}
                           className="bg-green-500 hover:bg-green-600 text-white"
                         >
@@ -809,7 +816,9 @@ export default function TournamentManagement() {
                         <TableHeader>
                           <TableRow className="bg-yellow-100">
                             <TableHead className="w-16 bg-yellow-200">№</TableHead>
-                            <TableHead className="bg-yellow-200">Багын нэр</TableHead>
+                            <TableHead className="bg-yellow-200">
+                              {groupMatchType === 'team' ? 'Багын нэр' : 'Тамирчин / Баг'}
+                            </TableHead>
                             {groupData.map((_, index) => (
                               <TableHead key={index + 1} className="w-16 text-center bg-yellow-200">
                                 {index + 1}
@@ -832,7 +841,7 @@ export default function TournamentManagement() {
                                     >
                                       <PopoverTrigger asChild>
                                         <Input
-                                          placeholder={groupMatchType === 'team' ? 'Багийн нэр' : 'Тоглогчийн нэр'}
+                                          placeholder={groupMatchType === 'team' ? 'Багийн нэр' : 'Тамирчин / Баг'}
                                           value={player.name}
                                           onChange={(e) => {
                                             handleGroupPlayerChange(player.id, 'name', e.target.value);
