@@ -2,16 +2,58 @@ import { useParams, useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, UserPlus, Play, Zap, Users } from "lucide-react";
+import { ArrowLeft, UserPlus, Play, Zap, Users, Upload, Plus, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useState } from "react";
 
 export default function TournamentManagement() {
   const { id } = useParams();
   const [, setLocation] = useLocation();
   const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [teamName, setTeamName] = useState("");
+  const [teamLogo, setTeamLogo] = useState<File | null>(null);
+  const [players, setPlayers] = useState<Array<{id: number, name: string}>>([
+    { id: 1, name: "" },
+    { id: 2, name: "" },
+    { id: 3, name: "" },
+    { id: 4, name: "" }
+  ]);
 
   const handleBackToAdmin = () => {
     setLocation("/admin/dashboard");
+  };
+
+  const handleAddPlayer = () => {
+    const newId = Math.max(...players.map(p => p.id)) + 1;
+    setPlayers([...players, { id: newId, name: "" }]);
+  };
+
+  const handleRemovePlayer = (id: number) => {
+    if (players.length > 1) {
+      setPlayers(players.filter(p => p.id !== id));
+    }
+  };
+
+  const handlePlayerNameChange = (id: number, name: string) => {
+    setPlayers(players.map(p => p.id === id ? { ...p, name } : p));
+  };
+
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setTeamLogo(file);
+    }
+  };
+
+  const handleSaveTeam = () => {
+    // TODO: Implement team saving logic
+    console.log("Saving team:", {
+      name: teamName,
+      logo: teamLogo,
+      players: players.filter(p => p.name.trim() !== "")
+    });
   };
 
   const managementOptions = [
@@ -141,24 +183,123 @@ export default function TournamentManagement() {
           </CardHeader>
           <CardContent>
             {activeSection === 'add-team' && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Баг нэмэх</h3>
-                <p className="text-gray-600">
-                  Энэ хэсэгт та шинэ баг үүсгэж, багийн нэр, лого оруулж, 
-                  багийн тоглогчдыг бүртгэх боломжтой.
-                </p>
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="font-medium mb-2">Баг үүсгэхэд шаардлагатай:</h4>
-                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
-                    <li>Багийн нэр</li>
-                    <li>Багийн лого (сонголттой)</li>
-                    <li>Багийн тоглогчдын жагсаалт</li>
-                    <li>Ахлагчийн мэдээлэл</li>
-                  </ul>
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Баг нэмэх</h3>
+                  <p className="text-gray-600">
+                    Энэ хэсэгт та шинэ баг үүсгэж, багийн нэр, лого оруулж, 
+                    багийн тоглогчдыг бүртгэх боломжтой.
+                  </p>
                 </div>
-                <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-                  Баг үүсгэх формыг нээх
-                </Button>
+
+                {/* Team Basic Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="teamName">Багийн нэр</Label>
+                      <Input
+                        id="teamName"
+                        placeholder="Багийн нэрийг оруулна уу"
+                        value={teamName}
+                        onChange={(e) => setTeamName(e.target.value)}
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="teamLogo">Багийн лого</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="teamLogo"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleLogoUpload}
+                          className="flex-1"
+                        />
+                        <Button variant="outline" size="icon">
+                          <Upload className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      {teamLogo && (
+                        <p className="text-sm text-green-600 mt-1">
+                          Сонгосон файл: {teamLogo.name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h4 className="font-medium mb-2">Багийн мэдээлэл:</h4>
+                    <ul className="space-y-1 text-sm text-gray-700">
+                      <li>• Багийн нэр: {teamName || "Оруулаагүй"}</li>
+                      <li>• Лого: {teamLogo ? "Оруулсан" : "Оруулаагүй"}</li>
+                      <li>• Тоглогчдын тоо: {players.filter(p => p.name.trim()).length}</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Players Table */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-lg font-medium">Тоглогчдын жагсаалт</h4>
+                    <Button 
+                      onClick={handleAddPlayer}
+                      size="sm"
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Тоглогч нэмэх
+                    </Button>
+                  </div>
+
+                  <div className="border rounded-lg">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-16">№</TableHead>
+                          <TableHead>Тоглогчийн нэр</TableHead>
+                          <TableHead className="w-20">Үйлдэл</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {players.map((player, index) => (
+                          <TableRow key={player.id}>
+                            <TableCell className="font-medium">{index + 1}</TableCell>
+                            <TableCell>
+                              <Input
+                                placeholder="Тоглогчийн нэрийг оруулна уу"
+                                value={player.name}
+                                onChange={(e) => handlePlayerNameChange(player.id, e.target.value)}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleRemovePlayer(player.id)}
+                                disabled={players.length === 1}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+
+                {/* Save Button */}
+                <div className="flex justify-end">
+                  <Button 
+                    onClick={handleSaveTeam}
+                    className="bg-blue-500 hover:bg-blue-600 text-white"
+                    disabled={!teamName.trim() || players.filter(p => p.name.trim()).length === 0}
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Баг хадгалах
+                  </Button>
+                </div>
               </div>
             )}
 
