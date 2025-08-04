@@ -376,7 +376,7 @@ function LeagueMatchesSection({ userId }: { userId?: string }) {
   const [expandedMatches, setExpandedMatches] = useState<Set<string>>(new Set());
 
   const { data: leagueMatches, isLoading } = useQuery({
-    queryKey: [`/api/players/${userId}/league-matches`],
+    queryKey: [`/api/users/${userId}/league-matches`],
     enabled: !!userId,
   });
 

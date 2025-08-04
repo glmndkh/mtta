@@ -1661,6 +1661,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get league matches for a user (by userId, looks up player first)
+  app.get('/api/users/:userId/league-matches', async (req, res) => {
+    try {
+      const { userId } = req.params;
+      
+      // First, find the player associated with this user
+      const player = await storage.getPlayerByUserId(userId);
+      if (!player) {
+        return res.json([]); // Return empty array if user has no player profile
+      }
+      
+      const matches = await storage.getLeagueMatchesForPlayer(player.id);
+      res.json(matches);
+    } catch (error) {
+      console.error("Error fetching user league matches:", error);
+      res.status(500).json({ message: "Failed to fetch user league matches" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
