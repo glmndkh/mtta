@@ -970,6 +970,32 @@ export default function AdminDashboard() {
                           <TableCell>{new Date(league.endDate).toLocaleDateString('mn-MN')}</TableCell>
                           <TableCell>
                             <div className="flex gap-2">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button size="sm" variant="outline">
+                                    <Settings className="w-4 h-4 mr-1" />
+                                    Удирдах
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                  <DropdownMenuItem onClick={() => handleTournamentManagement(league.id, 'add-team')}>
+                                    <UserPlus className="w-4 h-4 mr-2" />
+                                    Баг нэмэх
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleTournamentManagement(league.id, 'add-group-match')}>
+                                    <Play className="w-4 h-4 mr-2" />
+                                    Бүлгийн тоглолт нэмэх
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleTournamentManagement(league.id, 'create-match')}>
+                                    <Zap className="w-4 h-4 mr-2" />
+                                    Тоглолт үүсгэх
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleTournamentManagement(league.id, 'create-playoff')}>
+                                    <Play className="w-4 h-4 mr-2" />
+                                    Play-off буюу баг хуваах
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                               <Button size="sm" variant="outline" onClick={() => openEditDialog(league)}>
                                 <Pencil className="w-4 h-4" />
                               </Button>
