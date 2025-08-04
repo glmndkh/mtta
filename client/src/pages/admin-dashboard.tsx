@@ -215,10 +215,10 @@ export default function AdminDashboard() {
   };
 
   const openCreateDialog = () => {
-    // Initialize with appropriate default values based on active tab
+    // Initialize with appropriate default values based on selected tab
     let defaultData = {};
     
-    if (activeTab === 'leagues') {
+    if (selectedTab === 'leagues') {
       // For leagues, provide sensible default dates
       const today = new Date();
       const nextMonth = new Date(today);
