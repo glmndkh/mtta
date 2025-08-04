@@ -1524,8 +1524,8 @@ export default function TournamentManagement() {
                                           }`}
                                           onClick={() => {
                                             const newScore = prompt(`Set ${setIndex + 1} дүн оруулах:`, score.toString());
-                                            if (newScore !== null) {
-                                              const scoreNumber = parseInt(newScore) || 0;
+                                            if (newScore !== null && newScore !== '') {
+                                              const scoreNumber = parseInt(newScore) >= 0 ? parseInt(newScore) : 0;
                                               const updatedMatches = matches.map(m => 
                                                 m.id === match.id 
                                                   ? {
@@ -1542,7 +1542,7 @@ export default function TournamentManagement() {
                                             }
                                           }}
                                         >
-                                          {score || ""}
+                                          {score === 0 ? "0" : score || ""}
                                         </Button>
                                       </TableCell>
                                     );
