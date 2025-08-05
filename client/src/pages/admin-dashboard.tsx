@@ -123,8 +123,12 @@ export default function AdminDashboard() {
   };
 
   const handleUpdate = () => {
+    const endpoint = selectedTab === 'players' 
+      ? `/api/admin/players/${editingItem.id}`
+      : `/api/admin/${selectedTab}/${editingItem.id}`;
+    
     updateMutation.mutate({
-      endpoint: `/api/admin/${selectedTab}/${editingItem.id}`,
+      endpoint,
       data: formData
     });
   };
@@ -214,6 +218,16 @@ export default function AdminDashboard() {
     setFormData(formattedItem);
   };
 
+  const openEditPlayerDialog = (player: any) => {
+    setEditingItem(player.players);
+    setFormData({
+      id: player.players?.id,
+      rank: player.players?.rank || '',
+      points: player.players?.points || 0,
+      achievements: player.players?.achievements || ''
+    });
+  };
+
   const openCreateDialog = () => {
     // Initialize with appropriate default values based on selected tab
     let defaultData = {};
@@ -299,6 +313,8 @@ export default function AdminDashboard() {
               <TableHead>Гишүүний дугаар</TableHead>
               <TableHead>Нэр</TableHead>
               <TableHead>Зэрэглэл</TableHead>
+              <TableHead>Оноо</TableHead>
+              <TableHead>Амжилт</TableHead>
               <TableHead>Хожил/Ялагдал</TableHead>
               <TableHead>Үйлдэл</TableHead>
             </TableRow>
@@ -308,11 +324,17 @@ export default function AdminDashboard() {
               <TableRow key={player.players?.id}>
                 <TableCell>{player.players?.memberNumber}</TableCell>
                 <TableCell>{player.users?.firstName} {player.users?.lastName}</TableCell>
-                <TableCell>{player.players?.rank}</TableCell>
+                <TableCell>{player.players?.rank || 'Тодорхойгүй'}</TableCell>
+                <TableCell>{player.players?.points || 0}</TableCell>
+                <TableCell>
+                  <div className="max-w-32 truncate" title={player.players?.achievements}>
+                    {player.players?.achievements || 'Байхгүй'}
+                  </div>
+                </TableCell>
                 <TableCell>{player.players?.wins}/{player.players?.losses}</TableCell>
                 <TableCell>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => openEditDialog(player.players)}>
+                    <Button size="sm" variant="outline" onClick={() => openEditPlayerDialog(player)}>
                       <Pencil className="w-4 h-4" />
                     </Button>
                     <Button size="sm" variant="destructive" onClick={() => handleDelete(player.players?.id)}>
@@ -521,6 +543,51 @@ export default function AdminDashboard() {
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                 />
               </div>
+            </div>
+          </>
+        );
+
+      case 'players':
+        return (
+          <>
+            <div>
+              <Label htmlFor="rank">Зэрэглэл</Label>
+              <Select 
+                value={formData.rank || ''} 
+                onValueChange={(value) => setFormData({...formData, rank: value})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Зэрэглэл сонгоно уу" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="3-р зэрэг">3-р зэрэг</SelectItem>
+                  <SelectItem value="2-р зэрэг">2-р зэрэг</SelectItem>
+                  <SelectItem value="1-р зэрэг">1-р зэрэг</SelectItem>
+                  <SelectItem value="дэд мастер">дэд мастер</SelectItem>
+                  <SelectItem value="спортын мастер">спортын мастер</SelectItem>
+                  <SelectItem value="олон улсын хэмжээний мастер">олон улсын хэмжээний мастер</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="points">Оноо</Label>
+              <Input
+                id="points"
+                type="number"
+                value={formData.points || 0}
+                onChange={(e) => setFormData({...formData, points: parseInt(e.target.value) || 0})}
+                placeholder="Тоглогчийн оноо"
+              />
+            </div>
+            <div>
+              <Label htmlFor="achievements">Амжилт</Label>
+              <Textarea
+                id="achievements"
+                value={formData.achievements || ''}
+                onChange={(e) => setFormData({...formData, achievements: e.target.value})}
+                placeholder="Тоглогчийн амжилтууд..."
+                rows={4}
+              />
             </div>
           </>
         );
