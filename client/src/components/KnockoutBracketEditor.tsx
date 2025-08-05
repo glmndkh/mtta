@@ -52,30 +52,32 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     }
   }, [initialMatches]);
 
-  // Generate standard tournament bracket structure with 3rd place playoff
+  // Generate compact asymmetric tournament bracket structure
   const generateBracket = useCallback((playerCount: number) => {
     const rounds = Math.ceil(Math.log2(playerCount));
     const newMatches: Match[] = [];
     
-    // Calculate positions for each round with spacing to prevent overlap
-    const MATCH_HEIGHT = 200;
-    const ROUND_WIDTH = 300;
-    const START_Y = 60;
+    // Compact spacing for more efficient layout
+    const MATCH_HEIGHT = 140;
+    const ROUND_WIDTH = 220;
+    const START_Y = 40;
     
     for (let round = 1; round <= rounds; round++) {
       const matchesInRound = Math.pow(2, rounds - round);
       const roundName = getRoundName(matchesInRound);
       
       for (let matchIndex = 0; matchIndex < matchesInRound; matchIndex++) {
-        const ySpacing = Math.pow(2, round - 1) * MATCH_HEIGHT + (round * 80);
-        const yOffset = START_Y + matchIndex * ySpacing;
+        // Asymmetric positioning - stagger matches vertically for better flow
+        const baseSpacing = Math.pow(2, round - 1) * MATCH_HEIGHT;
+        const roundOffset = round * 30; // Less spacing between rounds
+        const yOffset = START_Y + matchIndex * baseSpacing + roundOffset;
         
         const match: Match = {
           id: `match_${round}_${matchIndex}`,
           round,
           roundName,
           position: {
-            x: (round - 1) * ROUND_WIDTH + 40,
+            x: (round - 1) * ROUND_WIDTH + 30,
             y: yOffset
           }
         };
@@ -90,15 +92,15 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
       }
     }
     
-    // Add 3rd place playoff match if we have semifinals
+    // Add 3rd place playoff match positioned asymmetrically
     if (rounds >= 2) {
       const thirdPlaceMatch: Match = {
         id: 'third_place_playoff',
-        round: rounds, // Same round as final
+        round: rounds,
         roundName: '3-р байрын тоглолт',
         position: {
-          x: (rounds - 1) * ROUND_WIDTH + 40,
-          y: START_Y + 400 // Position below the final
+          x: (rounds - 1) * ROUND_WIDTH + 30,
+          y: START_Y + 320 // Position below but closer to final
         }
       };
       newMatches.push(thirdPlaceMatch);
@@ -565,15 +567,15 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
             ref={containerRef}
             className="relative bg-white border rounded-lg p-3 md:p-6 overflow-auto"
             style={{ 
-              minHeight: '800px',
-              minWidth: '1200px'
+              minHeight: '600px',
+              minWidth: '900px'
             }}
           >
             {/* SVG for connection lines */}
             <svg 
               ref={svgRef}
               className="absolute inset-0 w-full h-full pointer-events-none"
-              style={{ zIndex: 1, minHeight: '1200px', minWidth: '1500px' }}
+              style={{ zIndex: 1, minHeight: '700px', minWidth: '1000px' }}
             >
               {renderConnections()}
             </svg>
@@ -582,152 +584,132 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
             {matches.map(match => (
               <div
                 key={match.id}
-                className="absolute bg-white border-2 border-gray-300 rounded-lg p-3 w-64 md:w-72 min-h-[180px] shadow-md hover:shadow-lg transition-shadow"
+                className="absolute bg-white border border-gray-300 rounded-md p-2 w-48 min-h-[100px] shadow-sm hover:shadow-md transition-shadow"
                 style={{
                   left: match.position.x,
                   top: match.position.y,
                   zIndex: 10
                 }}
               >
-                {/* Match Header */}
-                <div className="flex items-center justify-between mb-2">
-                  <Badge variant="outline" className="text-xs px-1 py-0">
+                {/* Compact Match Header */}
+                <div className="flex items-center justify-between mb-1">
+                  <Badge variant="outline" className="text-xs px-1 py-0 text-gray-600">
                     {match.roundName}
                   </Badge>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setMatches(prev => prev.filter(m => m.id !== match.id))}
-                    className="h-5 w-5 p-0 text-red-500 hover:text-red-700"
+                    className="h-4 w-4 p-0 text-red-400 hover:text-red-600"
                   >
-                    <Trash2 className="w-3 h-3" />
+                    <Trash2 className="w-2 h-2" />
                   </Button>
                 </div>
 
-                {/* Player 1 Selection */}
-                <div className="mb-2">
-                  <select
-                    className="w-full p-1 border rounded text-xs bg-blue-50"
-                    value={match.player1?.id || ''}
-                    onChange={(e) => handlePlayerSelect(match.id, 'player1', e.target.value)}
-                  >
-                    <option value="">Тоглогч 1 сонгох</option>
-                    <option value="lucky_draw">🎲 Lucky draw</option>
-                    {getAvailableUsers(match.id, 'player1').map(user => (
-                      <option key={`${match.id}-p1-${user.id}`} value={user.id}>
-                        {user.firstName} {user.lastName}
-                      </option>
-                    ))}
-                  </select>
-                  {match.player1 && (
-                    <div className="text-xs text-blue-600 mt-1 font-medium">
-                      Сонгогдсон: {match.player1.name}
+                {/* Compact Player Display */}
+                <div className="space-y-1 mb-2">
+                  {/* Player 1 */}
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex-1 min-w-0">
+                      {match.player1 ? (
+                        <span className="text-blue-700 font-medium truncate block">
+                          {match.player1.name}
+                        </span>
+                      ) : (
+                        <select
+                          className="w-full text-xs border rounded px-1 py-0 bg-blue-50"
+                          value=""
+                          onChange={(e) => handlePlayerSelect(match.id, 'player1', e.target.value)}
+                        >
+                          <option value="">P1</option>
+                          {getAvailableUsers(match.id, 'player1').slice(0, 5).map(user => (
+                            <option key={user.id} value={user.id}>
+                              {user.firstName} {user.lastName}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
-                  )}
-                  {getAvailableUsers(match.id, 'player1').length === 0 && !match.player1 && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      Бүх тоглогч сонгогдсон
-                    </div>
-                  )}
-                </div>
-
-                {/* VS Divider */}
-                <div className="text-center text-xs text-gray-400 my-1">VS</div>
-
-                {/* Player 2 Selection */}
-                <div className="mb-2">
-                  <select
-                    className="w-full p-1 border rounded text-xs bg-red-50"
-                    value={match.player2?.id || ''}
-                    onChange={(e) => handlePlayerSelect(match.id, 'player2', e.target.value)}
-                  >
-                    <option value="">Тоглогч 2 сонгох</option>
-                    <option value="lucky_draw">🎲 Lucky draw</option>
-                    {getAvailableUsers(match.id, 'player2').map(user => (
-                      <option key={`${match.id}-p2-${user.id}`} value={user.id}>
-                        {user.firstName} {user.lastName}
-                      </option>
-                    ))}
-                  </select>
-                  {match.player2 && (
-                    <div className="text-xs text-red-600 mt-1 font-medium">
-                      Сонгогдсон: {match.player2.name}
-                    </div>
-                  )}
-                  {getAvailableUsers(match.id, 'player2').length === 0 && !match.player2 && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      Бүх тоглогч сонгогдсон
-                    </div>
-                  )}
-                </div>
-
-                {/* Score Input */}
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  <div>
-                    <label className="text-xs text-gray-600 mb-1 block">Тоглогч 1 оноо</label>
-                    <Input
-                      placeholder="0"
-                      value={match.player1Score || ''}
-                      onChange={(e) => handleScoreChange(match.id, 'player1Score', e.target.value)}
-                      className="text-center text-sm h-8"
-                      type="number"
-                      min="0"
-                    />
+                    <span className="ml-2 font-mono text-sm">
+                      {match.player1Score || '-'}
+                    </span>
                   </div>
-                  <div>
-                    <label className="text-xs text-gray-600 mb-1 block">Тоглогч 2 оноо</label>
-                    <Input
-                      placeholder="0"
-                      value={match.player2Score || ''}
-                      onChange={(e) => handleScoreChange(match.id, 'player2Score', e.target.value)}
-                      className="text-center text-sm h-8"
-                      type="number"
-                      min="0"
-                    />
+
+                  {/* Player 2 */}
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex-1 min-w-0">
+                      {match.player2 ? (
+                        <span className="text-red-700 font-medium truncate block">
+                          {match.player2.name}
+                        </span>
+                      ) : (
+                        <select
+                          className="w-full text-xs border rounded px-1 py-0 bg-red-50"
+                          value=""
+                          onChange={(e) => handlePlayerSelect(match.id, 'player2', e.target.value)}
+                        >
+                          <option value="">P2</option>
+                          {getAvailableUsers(match.id, 'player2').slice(0, 5).map(user => (
+                            <option key={user.id} value={user.id}>
+                              {user.firstName} {user.lastName}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                    <span className="ml-2 font-mono text-sm">
+                      {match.player2Score || '-'}
+                    </span>
                   </div>
                 </div>
 
-                {/* Winner Selection */}
-                <div className="mb-2">
+                {/* Compact Score Input */}
+                <div className="grid grid-cols-2 gap-1 mb-2">
+                  <Input
+                    placeholder="0"
+                    value={match.player1Score || ''}
+                    onChange={(e) => handleScoreChange(match.id, 'player1Score', e.target.value)}
+                    className="text-center text-xs h-6 bg-blue-50"
+                    type="number"
+                    min="0"
+                  />
+                  <Input
+                    placeholder="0"
+                    value={match.player2Score || ''}
+                    onChange={(e) => handleScoreChange(match.id, 'player2Score', e.target.value)}
+                    className="text-center text-xs h-6 bg-red-50"
+                    type="number"
+                    min="0"
+                  />
+                </div>
+
+                {/* Compact Winner Selection & Display */}
+                {match.winner ? (
+                  <div className="text-center">
+                    <span className="inline-flex items-center px-1 py-0 bg-green-100 text-green-800 text-xs rounded">
+                      🏆 {match.winner.name.length > 10 ? 
+                           match.winner.name.substring(0, 10) + '...' : 
+                           match.winner.name}
+                    </span>
+                  </div>
+                ) : (
                   <select
-                    className="w-full p-1 border rounded text-xs h-7"
-                    value={match.winner?.id || ''}
+                    className="w-full p-1 border rounded text-xs h-6"
+                    value=""
                     onChange={(e) => handleWinnerSelection(match.id, e.target.value)}
                   >
-                    <option value="">Ялагч сонгох</option>
+                    <option value="">Winner</option>
                     {match.player1 && (
                       <option value={match.player1.id}>
-                        {match.player1.name.length > 15 ? 
-                          match.player1.name.substring(0, 15) + '...' : 
-                          match.player1.name}
+                        {match.player1.name.substring(0, 12)}
                       </option>
                     )}
                     {match.player2 && (
                       <option value={match.player2.id}>
-                        {match.player2.name.length > 15 ? 
-                          match.player2.name.substring(0, 15) + '...' : 
-                          match.player2.name}
+                        {match.player2.name.substring(0, 12)}
                       </option>
                     )}
                   </select>
-                </div>
-
-                {/* Score Display and Winner Badge */}
-                {(match.player1Score || match.player2Score || match.winner) && (
-                  <div className="text-center mt-2 pt-2 border-t border-gray-200">
-                    {(match.player1Score && match.player2Score) && (
-                      <div className="text-xs text-gray-600 mb-1">
-                        {match.player1Score} - {match.player2Score}
-                      </div>
-                    )}
-                    {match.winner && (
-                      <span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded font-medium">
-                        🏆 {match.winner.name.length > 12 ? 
-                             match.winner.name.substring(0, 12) + '...' : 
-                             match.winner.name}
-                      </span>
-                    )}
-                  </div>
                 )}
               </div>
             ))}
