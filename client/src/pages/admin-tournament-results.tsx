@@ -289,7 +289,14 @@ export default function AdminTournamentResultsPage() {
   };
 
   const removeGroupTable = (index: number) => {
-    setGroupStageTables(groupStageTables.filter((_, i) => i !== index));
+    const updatedTables = groupStageTables.filter((_, i) => i !== index);
+    setGroupStageTables(updatedTables);
+    
+    // Force re-render to update available players
+    setTimeout(() => {
+      // This will trigger a re-calculation of available players
+      setGroupStageTables([...updatedTables]);
+    }, 0);
   };
 
   const updateGroupName = (index: number, name: string) => {
@@ -1016,6 +1023,7 @@ export default function AdminTournamentResultsPage() {
                         </div>
                         
                         {(() => {
+                          // Recalculate available players each time
                           const availablePlayers = allUsers.filter(user => {
                             // Only show users who are registered for this tournament
                             const isRegisteredForTournament = participants.some(participant => 
@@ -1023,21 +1031,33 @@ export default function AdminTournamentResultsPage() {
                             );
                             
                             // Check if player is already in ANY group in this tournament
+                            // Use current state of groupStageTables
                             const isInAnyGroup = groupStageTables.some(anyGroup => 
-                              anyGroup.players.some(gp => gp.id === user.id)
+                              anyGroup.players && anyGroup.players.some(gp => gp.id === user.id)
                             );
                             
                             return isRegisteredForTournament && !isInAnyGroup && user.firstName && user.lastName;
                           });
 
                           if (availablePlayers.length === 0) {
+                            const totalRegistered = participants.length;
+                            const totalInGroups = groupStageTables.reduce((total, group) => 
+                              total + (group.players ? group.players.length : 0), 0
+                            );
+                            
                             return (
                               <div className="text-center py-3 border-2 border-dashed border-gray-300 rounded-lg bg-white">
                                 <p className="text-sm text-gray-600 mb-1">
-                                  Энэ группд нэмэх боломжтой тоглогч байхгүй байна
+                                  {totalInGroups === 0 
+                                    ? "Тэмцээнд бүртгүүлсэн тоглогч байхгүй байна"
+                                    : "Энэ группд нэмэх боломжтой тоглогч байхгүй байна"
+                                  }
                                 </p>
                                 <p className="text-xs text-gray-400">
-                                  Бусад группаас тоглогч хасаж энэ группд нэмэх боломжтой
+                                  {totalInGroups > 0 && "Бусад группаас тоглогч хасаж энэ группд нэмэх боломжтой"}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Боломжтой: {totalRegistered - totalInGroups}/{totalRegistered} тоглогч
                                 </p>
                               </div>
                             );
