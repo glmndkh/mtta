@@ -136,6 +136,11 @@ export interface IStorage {
   addPlayerToTournamentTeam(teamId: string, playerId: string, playerName: string): Promise<TournamentTeamPlayer>;
   getTournamentTeams(tournamentId: string): Promise<Array<TournamentTeam & { players: Array<TournamentTeamPlayer & { firstName: string; lastName: string; email: string }> }>>;
   deleteTournamentTeam(teamId: string): Promise<boolean>;
+
+  // Player tournament and match operations
+  getPlayerTournamentRegistrations(playerId: string): Promise<any[]>;
+  getPlayerMatchesWithDetails(playerId: string): Promise<any[]>;
+  getPlayerTeams(playerId: string): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1564,6 +1569,67 @@ export class DatabaseStorage implements IStorage {
       team2: TournamentTeam;
       playerMatches: LeaguePlayerMatch[];
     }>;
+  }
+
+  // Player tournament and match operations
+  async getPlayerTournamentRegistrations(playerId: string): Promise<any[]> {
+    return await db
+      .select()
+      .from(tournamentParticipants)
+      .where(eq(tournamentParticipants.playerId, playerId));
+  }
+
+  async getPlayerMatchesWithDetails(playerId: string): Promise<any[]> {
+    // For now, let's get existing tournament match data from tournament results
+    const playerTournamentMatches = await this.getPlayerTournamentMatches(playerId);
+    
+    // Format for frontend consumption  
+    return playerTournamentMatches.map((match: any) => ({
+      id: match.matchId || `match_${Date.now()}_${Math.random()}`,
+      tournamentId: match.tournamentId,
+      tournamentName: match.tournamentName,
+      date: match.date,
+      opponent: match.opponent,
+      result: match.result,
+      score: match.score || 'N/A'
+    }));
+  }
+
+  async getPlayerTeams(playerId: string): Promise<any[]> {
+    const teams = await db
+      .select({
+        id: tournamentTeams.id,
+        name: tournamentTeams.name,
+        logoUrl: tournamentTeams.logoUrl,
+        tournamentId: tournamentTeams.tournamentId,
+        tournamentName: tournaments.name,
+      })
+      .from(tournamentTeamPlayers)
+      .innerJoin(tournamentTeams, eq(tournamentTeamPlayers.tournamentTeamId, tournamentTeams.id))
+      .innerJoin(tournaments, eq(tournamentTeams.tournamentId, tournaments.id))
+      .where(eq(tournamentTeamPlayers.playerId, playerId));
+
+    // Get other team members for each team
+    const teamsWithMembers = await Promise.all(
+      teams.map(async (team) => {
+        const members = await db
+          .select({
+            playerName: tournamentTeamPlayers.playerName,
+          })
+          .from(tournamentTeamPlayers)
+          .where(eq(tournamentTeamPlayers.tournamentTeamId, team.id));
+
+        return {
+          id: team.id,
+          name: team.name,
+          tournament: team.tournamentName,
+          members: members.map(m => m.playerName),
+          logoUrl: team.logoUrl
+        };
+      })
+    );
+
+    return teamsWithMembers;
   }
 }
 
