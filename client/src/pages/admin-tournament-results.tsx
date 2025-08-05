@@ -1022,25 +1022,53 @@ export default function AdminTournamentResultsPage() {
                       
                       {/* Player Selection with UserAutocomplete */}
                       <div className="mt-4">
-                        <UserAutocomplete
-                          users={allUsers.filter(user => {
+                        {(() => {
+                          const availablePlayers = allUsers.filter(user => {
+                            // Only show users who are registered for this tournament
+                            const isRegisteredForTournament = participants.some(participant => 
+                              participant.userId === user.id
+                            );
+                            
                             // Check if player is already in ANY group in this tournament
                             const isInAnyGroup = groupStageTables.some(anyGroup => 
                               anyGroup.players.some(gp => gp.id === user.id)
                             );
-                            return !isInAnyGroup;
-                          })}
-                          value=""
-                          onSelect={(user) => {
-                            addPlayerToGroup(groupIndex, {
-                              id: user.id,
-                              name: `${user.firstName} ${user.lastName}`,
-                              club: user.clubAffiliation || ''
-                            });
-                          }}
-                          placeholder="Группд тоглогч хайж нэмэх..."
-                          className="w-full"
-                        />
+                            
+                            return isRegisteredForTournament && !isInAnyGroup;
+                          });
+
+                          if (availablePlayers.length === 0) {
+                            const totalRegistered = participants.length;
+                            const totalInGroups = groupStageTables.reduce((total, group) => total + group.players.length, 0);
+                            
+                            return (
+                              <div className="text-center py-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                                <p className="text-sm text-gray-600 mb-1">
+                                  Бүх тоглогч группд хуваарилагдсан байна
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {totalInGroups}/{totalRegistered} тоглогч группд орсон
+                                </p>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <UserAutocomplete
+                              users={availablePlayers}
+                              value=""
+                              onSelect={(user) => {
+                                addPlayerToGroup(groupIndex, {
+                                  id: user.id,
+                                  name: `${user.firstName} ${user.lastName}`,
+                                  club: user.clubAffiliation || ''
+                                });
+                              }}
+                              placeholder="Тэмцээнд бүртгүүлсэн тоглогч хайж нэмэх..."
+                              className="w-full"
+                            />
+                          );
+                        })()}
                       </div>
                       
                       {group.players.length === 0 && (
@@ -1050,7 +1078,7 @@ export default function AdminTournamentResultsPage() {
                             Дээрх хайлтаас тоглогч нэмж эхлэнэ үү
                           </p>
                           <p className="text-sm text-gray-400">
-                            Хэрэглэгчдийг хайж, группд нэмэх боломжтой
+                            Зөвхөн тэмцээнд бүртгүүлсэн тоглогчдыг нэмэх боломжтой
                           </p>
                         </div>
                       )}
