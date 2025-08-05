@@ -142,12 +142,50 @@ export default function AdminTournamentResultsPage() {
         console.log('Available rounds:', knockoutResults.map(m => m.round));
         
         // Look for final match - it might be stored as round 3 or with roundName 'Финал'
-        const finalMatch = knockoutResults.find(m => 
+        // Also check if we need to identify the final based on tournament structure
+        let finalMatch = knockoutResults.find(m => 
           m.round === 'final' || 
           m.round === 3 || 
           (m as any).roundName === 'Финал'
         );
-        console.log('Found existing final match:', finalMatch);
+        
+        // If no final match found, but we have semifinals, create rankings from semifinal winners
+        if (!finalMatch) {
+          const semifinals = knockoutResults.filter(m => m.round === 'semifinal');
+          console.log('Found semifinals:', semifinals);
+          
+          // Filter out 3rd place playoff from semifinals
+          const actualSemifinals = semifinals.filter(m => m.id !== 'third_place_playoff');
+          
+          if (actualSemifinals.length >= 1 && actualSemifinals[0]?.winner) {
+            // Use the actual semifinal winner as the champion
+            const champion = actualSemifinals[0].winner;
+            
+            // For runner-up, try to find the other semifinal winner, or use semifinal loser
+            let runnerUp = null;
+            if (actualSemifinals.length === 2 && actualSemifinals[1]?.winner) {
+              runnerUp = actualSemifinals[1].winner;
+            } else {
+              // Use the loser from the winning semifinal
+              const winningSemifinal = actualSemifinals[0];
+              runnerUp = winningSemifinal.player1?.id === champion.id ? winningSemifinal.player2 : winningSemifinal.player1;
+            }
+            
+            if (runnerUp) {
+              // Create a virtual final match for ranking calculation
+              finalMatch = {
+                round: 'final',
+                player1: champion,
+                player2: runnerUp,
+                winner: champion
+              };
+              
+              console.log('Created virtual final match from actual semifinals:', finalMatch);
+            }
+          }
+        }
+        
+        console.log('Found/created final match:', finalMatch);
         
         if (finalMatch?.winner && finalMatch.player1 && finalMatch.player2) {
           calculatedRankings.push({
@@ -1004,8 +1042,42 @@ export default function AdminTournamentResultsPage() {
                     console.log('Available roundNames:', newMatches.map(m => m.roundName));
                     
                     // Find final match
-                    const finalMatch = newMatches.find(m => m.roundName === 'Финал');
-                    console.log('Found final match:', finalMatch);
+                    let finalMatch = newMatches.find(m => m.roundName === 'Финал');
+                    
+                    // If no final found, check if we can construct it from semifinals
+                    if (!finalMatch) {
+                      const semifinals = newMatches.filter(m => m.roundName === 'Хагас финал');
+                      // Filter out 3rd place playoff
+                      const actualSemifinals = semifinals.filter(m => m.id !== 'third_place_playoff');
+                      console.log('Found actual semifinals for final construction:', actualSemifinals);
+                      
+                      if (actualSemifinals.length >= 1 && actualSemifinals[0]?.winner) {
+                        const champion = actualSemifinals[0].winner;
+                        
+                        // For runner-up, try to find other semifinal winner or use semifinal loser
+                        let runnerUp = null;
+                        if (actualSemifinals.length === 2 && actualSemifinals[1]?.winner) {
+                          runnerUp = actualSemifinals[1].winner;
+                        } else {
+                          // Use the loser from the winning semifinal
+                          const winningSemifinal = actualSemifinals[0];
+                          runnerUp = winningSemifinal.player1?.id === champion.id ? winningSemifinal.player2 : winningSemifinal.player1;
+                        }
+                        
+                        if (runnerUp) {
+                          // Create virtual final for ranking calculation
+                          finalMatch = {
+                            roundName: 'Финал',
+                            player1: champion,
+                            player2: runnerUp,
+                            winner: champion
+                          };
+                          console.log('Created virtual final from actual semifinals:', finalMatch);
+                        }
+                      }
+                    }
+                    
+                    console.log('Found/created final match:', finalMatch);
                     
                     if (finalMatch?.winner && finalMatch.player1 && finalMatch.player2) {
                       // 1st place: final winner
