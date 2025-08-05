@@ -2184,6 +2184,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get league matches for a user (by userId, looks up player first)
+  // User avatar endpoint
+  app.get('/api/users/:userId/avatar', async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const user = await storage.getUser(userId);
+      
+      if (!user || !user.profileImageUrl) {
+        return res.status(404).json({ error: "Profile image not found" });
+      }
+      
+      // Handle base64 images
+      if (user.profileImageUrl.startsWith('data:image/')) {
+        const base64Data = user.profileImageUrl.split(',')[1];
+        const mimeType = user.profileImageUrl.split(';')[0].split(':')[1];
+        
+        const buffer = Buffer.from(base64Data, 'base64');
+        res.set({
+          'Content-Type': mimeType,
+          'Content-Length': buffer.length,
+          'Cache-Control': 'public, max-age=3600'
+        });
+        return res.send(buffer);
+      }
+      
+      // Handle URL-based images (redirect)
+      res.redirect(user.profileImageUrl);
+    } catch (error) {
+      console.error("Error serving avatar:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   app.get('/api/users/:userId/league-matches', async (req, res) => {
     try {
       const { userId } = req.params;
