@@ -139,8 +139,14 @@ export default function AdminTournamentResultsPage() {
         const calculatedRankings: FinalRanking[] = [];
         
         console.log('Loading existing knockout results:', knockoutResults);
+        console.log('Available rounds:', knockoutResults.map(m => m.round));
         
-        const finalMatch = knockoutResults.find(m => m.round === 'final');
+        // Look for final match - it might be stored as round 3 or with roundName 'Финал'
+        const finalMatch = knockoutResults.find(m => 
+          m.round === 'final' || 
+          m.round === 3 || 
+          (m as any).roundName === 'Финал'
+        );
         console.log('Found existing final match:', finalMatch);
         
         if (finalMatch?.winner && finalMatch.player1 && finalMatch.player2) {
@@ -939,19 +945,41 @@ export default function AdminTournamentResultsPage() {
                 )}
 
                 <KnockoutBracketEditor
-                  initialMatches={knockoutMatches.map(match => ({
-                    id: match.id,
-                    round: match.round === 'final' ? 3 : match.round === 'semifinal' ? 2 : 1,
-                    roundName: match.round === 'final' ? 'Финал' : 
-                              match.round === 'semifinal' ? 'Хагас финал' : 'Дөрөвний финал',
-                    player1: match.player1,
-                    player2: match.player2,
-                    player1Score: match.player1Score,
-                    player2Score: match.player2Score,
-                    score: match.score,
-                    winner: match.winner,
-                    position: match.position
-                  }))}
+                  initialMatches={knockoutMatches.map(match => {
+                    // Map round values more comprehensively
+                    let roundNum = 1;
+                    let roundName = 'Дөрөвний финал';
+                    
+                    if (match.round === 'final' || match.round === 3) {
+                      roundNum = 3;
+                      roundName = 'Финал';
+                    } else if (match.round === 'semifinal' || match.round === 2) {
+                      roundNum = 2;
+                      roundName = 'Хагас финал';
+                    } else if (match.round === 'quarterfinal' || match.round === 1) {
+                      roundNum = 1;
+                      roundName = 'Дөрөвний финал';
+                    }
+                    
+                    // Special case for 3rd place playoff
+                    if (match.id === 'third_place_playoff') {
+                      roundNum = 3; // Same level as final
+                      roundName = '3-р байрын тоглолт';
+                    }
+                    
+                    return {
+                      id: match.id,
+                      round: roundNum,
+                      roundName: roundName,
+                      player1: match.player1,
+                      player2: match.player2,
+                      player1Score: match.player1Score,
+                      player2Score: match.player2Score,
+                      score: match.score,
+                      winner: match.winner,
+                      position: match.position
+                    };
+                  })}
                   users={allUsers}
                   qualifiedPlayers={getQualifiedPlayers()}
                   onSave={(newMatches) => {
@@ -973,6 +1001,7 @@ export default function AdminTournamentResultsPage() {
                     const newFinalRankings: FinalRanking[] = [];
                     
                     console.log('All matches for ranking calculation:', newMatches);
+                    console.log('Available roundNames:', newMatches.map(m => m.roundName));
                     
                     // Find final match
                     const finalMatch = newMatches.find(m => m.roundName === 'Финал');
