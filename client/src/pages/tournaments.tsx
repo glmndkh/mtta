@@ -292,20 +292,34 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
             </div>
           )}
           
-          {/* Dark overlay for text readability */}
-          <div className="absolute inset-0 bg-black/50" />
+          {/* Dark green overlay for text readability */}
+          <div className="absolute inset-0 bg-green-900/80" />
         </div>
 
         {/* Content Overlay */}
         <div className="relative z-10 h-full">
           <div className="h-full flex flex-col p-6 lg:p-8 gap-6">
-            {/* Top Section - Time Display and Registration Stats */}
-            <div className="mb-4 space-y-3">
-              <TournamentTimeDisplay 
-                startDate={tournament.startDate}
-                endDate={tournament.endDate}
-                className="bg-white/95 backdrop-blur-sm"
-              />
+            {/* Top Section - Countdown Timer and Registration Stats */}
+            <div className="flex items-start justify-between mb-4">
+              {/* Countdown Timer - Visible and Compact */}
+              <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 text-white">
+                {countdown.days > 0 ? (
+                  <div className="text-center">
+                    <div className="text-2xl font-bold">{countdown.days}</div>
+                    <div className="text-xs text-gray-300">ӨДӨР</div>
+                    <div className="text-sm">{countdown.hours}ц {countdown.minutes}м</div>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <div className="text-lg font-bold">
+                      {countdown.hours}:{countdown.minutes.toString().padStart(2, '0')}:{countdown.seconds.toString().padStart(2, '0')}
+                    </div>
+                    <div className="text-xs text-gray-300">ЦАГ:МИН:СЕК</div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Registration Stats */}
               <TournamentRegistrationStats tournamentId={tournament.id} />
             </div>
 
@@ -318,7 +332,7 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
                   <div className="w-6 h-4 bg-red-600 rounded-sm flex items-center justify-center">
                     <span className="text-xs font-bold">🇲🇳</span>
                   </div>
-                  <span className="text-sm bg-black/30 px-3 py-1 rounded">
+                  <span className="text-sm bg-black/40 px-3 py-1 rounded text-white font-medium">
                     {formatDateRange()}
                   </span>
                 </div>
@@ -348,13 +362,22 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
                 </div>
               )}
 
-              {/* Categories */}
-              <div className="flex flex-wrap gap-2">
-                {(tournament.categories || tournament.participationTypes || []).map((category) => (
-                  <Badge key={category} variant="secondary" className="bg-black/70 text-white">
-                    {CATEGORY_LABELS[category] || category}
-                  </Badge>
-                ))}
+              {/* Tournament Types & Categories */}
+              <div className="space-y-2">
+                <div className="text-white/90 text-sm font-medium">Тэмцээний төрөл:</div>
+                <div className="flex flex-wrap gap-2">
+                  {(tournament.categories || tournament.participationTypes || []).map((category) => (
+                    <Badge key={category} variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
+                      {CATEGORY_LABELS[category] || category}
+                    </Badge>
+                  ))}
+                  {(!tournament.categories || tournament.categories.length === 0) && 
+                   (!tournament.participationTypes || tournament.participationTypes.length === 0) && (
+                    <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                      Ганцаарчилсан
+                    </Badge>
+                  )}
+                </div>
               </div>
 
                 {/* Action Buttons */}
