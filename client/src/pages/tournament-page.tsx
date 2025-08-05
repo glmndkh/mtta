@@ -96,32 +96,28 @@ function MedalWinnersSection({
       case 1:
         return { 
           icon: Crown, 
-          color: "text-yellow-500",
-          bgColor: "bg-yellow-50",
+          color: "text-yellow-400",
           title: "Алтан медаль",
           place: "1-р байр"
         };
       case 2:
         return { 
           icon: Medal, 
-          color: "text-gray-400",
-          bgColor: "bg-gray-50",
+          color: "text-gray-300",
           title: "Мөнгөн медаль",
           place: "2-р байр"
         };
       case 3:
         return { 
           icon: Award, 
-          color: "text-amber-600",
-          bgColor: "bg-amber-50",
+          color: "text-amber-400",
           title: "Хүрэл медаль",
           place: "3-р байр"
         };
       default:
         return { 
           icon: Trophy, 
-          color: "text-blue-500",
-          bgColor: "bg-blue-50",
+          color: "text-blue-400",
           title: "Медаль",
           place: `${position}-р байр`
         };
@@ -129,9 +125,9 @@ function MedalWinnersSection({
   };
 
   return (
-    <div className="bg-white/90 backdrop-blur-sm rounded-lg p-6 mt-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center flex items-center justify-center gap-2">
-        <Trophy className="w-6 h-6 text-yellow-500" />
+    <div className="bg-black/20 backdrop-blur-sm rounded-lg p-6 mt-6">
+      <h2 className="text-2xl font-bold text-white mb-6 text-center flex items-center justify-center gap-2">
+        <Trophy className="w-6 h-6 text-yellow-400" />
         Медальтнууд
       </h2>
       
@@ -143,10 +139,10 @@ function MedalWinnersSection({
           return (
             <div 
               key={ranking.playerId}
-              className={`${medalInfo.bgColor} rounded-lg p-4 text-center min-w-[200px] border-2 ${
-                ranking.position === 1 ? 'border-yellow-300' : 
+              className={`bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center min-w-[200px] border-2 ${
+                ranking.position === 1 ? 'border-yellow-400' : 
                 ranking.position === 2 ? 'border-gray-300' : 
-                'border-amber-300'
+                'border-amber-400'
               }`}
             >
               <div className="flex flex-col items-center space-y-3">
@@ -163,11 +159,8 @@ function MedalWinnersSection({
                 </Avatar>
                 
                 <div>
-                  <p className="font-bold text-lg text-gray-900">{ranking.playerName}</p>
+                  <p className="font-bold text-lg text-white">{ranking.playerName}</p>
                   <p className={`text-sm font-medium ${medalInfo.color}`}>{medalInfo.place}</p>
-                  {ranking.prize && (
-                    <p className="text-xs text-gray-600 mt-1">{ranking.prize}</p>
-                  )}
                 </div>
               </div>
             </div>
