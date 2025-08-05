@@ -904,6 +904,8 @@ export default function AdminTournamentResultsPage() {
                     }
                     
                     console.log('Selected final match for rankings:', finalMatch);
+                    console.log('Final match players:', finalMatch?.player1?.name, 'vs', finalMatch?.player2?.name);
+                    console.log('Final match winner:', finalMatch?.winner?.name);
                     
                     if (finalMatch?.winner && finalMatch.player1 && finalMatch.player2) {
                       // 1st place: final winner
@@ -913,7 +915,7 @@ export default function AdminTournamentResultsPage() {
                         playerName: finalMatch.winner.name
                       });
                       
-                      // 2nd place: final loser (the other player in final)
+                      // 2nd place: final loser (the other player in final) - ALWAYS from final match
                       const finalLoser = finalMatch.player1.id === finalMatch.winner.id ? finalMatch.player2 : finalMatch.player1;
                       newFinalRankings.push({
                         position: 2,
@@ -921,7 +923,7 @@ export default function AdminTournamentResultsPage() {
                         playerName: finalLoser.name
                       });
                       
-                      console.log('Final match results - Winner:', finalMatch.winner.name, 'Loser:', finalLoser.name);
+                      console.log('Final match results - Winner:', finalMatch.winner.name, 'Loser (2nd place):', finalLoser.name);
                     } else if (finalMatch?.player1 && finalMatch?.player2 && !finalMatch.winner) {
                       // If final has players but no winner yet, don't add rankings
                       console.log('Final match has players but no winner determined yet');
