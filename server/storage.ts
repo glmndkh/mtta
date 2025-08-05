@@ -1581,19 +1581,166 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPlayerMatchesWithDetails(playerId: string): Promise<any[]> {
-    // For now, let's get existing tournament match data from tournament results
-    const playerTournamentMatches = await this.getPlayerTournamentMatches(playerId);
-    
-    // Format for frontend consumption  
-    return playerTournamentMatches.map((match: any) => ({
-      id: match.matchId || `match_${Date.now()}_${Math.random()}`,
-      tournamentId: match.tournamentId || match.tournament?.id,
-      tournamentName: match.tournamentName || match.tournament?.name,
-      date: match.date,
-      opponent: typeof match.opponent === 'string' ? match.opponent : match.opponent?.name || 'Unknown',
-      result: match.isWinner ? 'win' : 'loss',
-      score: match.result || match.score || 'N/A'
-    }));
+    try {
+      // First get the player record to check if they exist
+      const [playerRecord] = await db.select().from(players).where(eq(players.id, playerId)).limit(1);
+      if (!playerRecord) return [];
+      
+      const userId = playerRecord.userId;
+      const matches: any[] = [];
+
+      // Get all tournament results where this player participated
+      const results = await db
+        .select({
+          id: tournamentResults.id,
+          tournamentId: tournamentResults.tournamentId,
+          groupStageResults: tournamentResults.groupStageResults,
+          knockoutResults: tournamentResults.knockoutResults,
+          finalRankings: tournamentResults.finalRankings,
+          tournament: {
+            id: tournaments.id,
+            name: tournaments.name,
+            startDate: tournaments.startDate,
+            endDate: tournaments.endDate
+          }
+        })
+        .from(tournamentResults)
+        .innerJoin(tournaments, eq(tournamentResults.tournamentId, tournaments.id))
+        .where(eq(tournamentResults.isPublished, true));
+
+      // Parse each tournament result to extract individual matches
+      for (const result of results) {
+        try {
+          // Check group stage results
+          if (result.groupStageResults) {
+            let groupData;
+            if (typeof result.groupStageResults === 'string') {
+              groupData = JSON.parse(result.groupStageResults);
+            } else {
+              groupData = result.groupStageResults;
+            }
+
+            // Look through all groups for this player's matches
+            Object.entries(groupData).forEach(([groupName, group]: [string, any]) => {
+              if (group.players && Array.isArray(group.players)) {
+                // Find the player's row in the group
+                const playerRowIndex = group.players.findIndex((player: any) => 
+                  player.id === playerId || player.id === userId
+                );
+                
+                if (playerRowIndex !== -1) {
+                  const playerRow = group.players[playerRowIndex];
+                  
+                  // Extract matches from the player's results against other players
+                  group.players.forEach((opponent: any, opponentIndex: number) => {
+                    if (opponentIndex !== playerRowIndex && opponent.id) {
+                      // Look for score in the results matrix
+                      let playerScore, opponentScore, matchResult;
+                      
+                      // Check if we have results data
+                      if (playerRow.results && playerRow.results[opponentIndex] !== undefined) {
+                        const scoreStr = playerRow.results[opponentIndex];
+                        if (scoreStr && scoreStr !== '*****') {
+                          const scoreParts = scoreStr.split('/');
+                          if (scoreParts.length === 2) {
+                            playerScore = parseInt(scoreParts[0]);
+                            opponentScore = parseInt(scoreParts[1]);
+                            matchResult = playerScore > opponentScore ? 'win' : 'loss';
+                          }
+                        }
+                      }
+                      
+                      // Also check if opponent has result against this player
+                      if (!matchResult && opponent.results && opponent.results[playerRowIndex] !== undefined) {
+                        const scoreStr = opponent.results[playerRowIndex];
+                        if (scoreStr && scoreStr !== '*****') {
+                          const scoreParts = scoreStr.split('/');
+                          if (scoreParts.length === 2) {
+                            opponentScore = parseInt(scoreParts[0]);
+                            playerScore = parseInt(scoreParts[1]);
+                            matchResult = playerScore > opponentScore ? 'win' : 'loss';
+                          }
+                        }
+                      }
+                      
+                      // Only add if we have a valid result
+                      if (matchResult && playerScore !== undefined && opponentScore !== undefined) {
+                        matches.push({
+                          id: `group_${result.tournamentId}_${groupName}_${playerRowIndex}_${opponentIndex}`,
+                          tournamentId: result.tournamentId,
+                          tournamentName: result.tournament.name,
+                          date: result.tournament.startDate,
+                          opponent: opponent.name || 'Тодорхойгүй',
+                          result: matchResult,
+                          score: `${playerScore}-${opponentScore}`,
+                          stage: 'group',
+                          matchType: `${groupName}`,
+                          groupName: groupName
+                        });
+                      }
+                    }
+                  });
+                }
+              }
+            });
+          }
+
+          // Check knockout results for bronze medal match and other knockout matches
+          if (result.knockoutResults) {
+            let knockoutData;
+            if (typeof result.knockoutResults === 'string') {
+              knockoutData = JSON.parse(result.knockoutResults);
+            } else {
+              knockoutData = result.knockoutResults;
+            }
+
+            // Parse knockout matches
+            if (knockoutData.matches) {
+              knockoutData.matches.forEach((match: any) => {
+                if (match.player1?.id === playerId || match.player1?.id === userId ||
+                    match.player2?.id === playerId || match.player2?.id === userId) {
+                  
+                  const isPlayer1 = match.player1?.id === playerId || match.player1?.id === userId;
+                  const opponent = isPlayer1 ? match.player2 : match.player1;
+                  const playerScore = isPlayer1 ? match.player1Score : match.player2Score;
+                  const opponentScore = isPlayer1 ? match.player2Score : match.player1Score;
+                  
+                  let matchResult = 'unknown';
+                  if (playerScore !== undefined && opponentScore !== undefined) {
+                    matchResult = playerScore > opponentScore ? 'win' : 'loss';
+                  }
+
+                  // Determine match type for knockout
+                  let matchType = match.round || 'knockout';
+                  if (match.round === 'bronze_medal') {
+                    matchType = 'Хүрэл медалийн тоглолт';
+                  }
+
+                  matches.push({
+                    id: `knockout_${match.id}_${playerId}`,
+                    tournamentId: result.tournamentId,
+                    tournamentName: result.tournament.name,
+                    date: result.tournament.startDate,
+                    opponent: opponent?.name || 'Тодорхойгүй',
+                    result: matchResult,
+                    score: `${playerScore}-${opponentScore}`,
+                    stage: 'knockout',
+                    matchType: matchType
+                  });
+                }
+              });
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing tournament results:', e);
+        }
+      }
+
+      return matches.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    } catch (error) {
+      console.error('Error in getPlayerMatchesWithDetails:', error);
+      return [];
+    }
   }
 
   async getPlayerTeams(playerId: string): Promise<any[]> {
