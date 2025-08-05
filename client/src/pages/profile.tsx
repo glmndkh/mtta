@@ -167,7 +167,14 @@ export default function Profile() {
   });
 
   const [selectedProvince, setSelectedProvince] = useState<string>('');
-  const availableCities = selectedProvince ? (MONGOLIA_CITIES as any)[selectedProvince] || [] : [];
+  
+  // Get available cities based on selected province OR the profile's province (for initial load)
+  const getAvailableCities = () => {
+    const province = selectedProvince || profileData.province;
+    return province ? (MONGOLIA_CITIES as any)[province] || [] : [];
+  };
+  
+  const availableCities = getAvailableCities();
 
   // Fetch user profile
   const { data: profile, isLoading } = useQuery({
@@ -245,7 +252,7 @@ export default function Profile() {
   // Initialize profile data when loaded
   useEffect(() => {
     if (profile) {
-      setProfileData({
+      const newProfileData = {
         id: profile.id || '',
         email: profile.email || '',
         phone: profile.phone || '',
@@ -265,8 +272,13 @@ export default function Profile() {
         membershipEndDate: profile.membershipEndDate || '',
         membershipActive: profile.membershipActive || false,
         membershipAmount: profile.membershipAmount || 0
-      });
+      };
+      
+      setProfileData(newProfileData);
       setSelectedProvince(profile.province || '');
+      
+      // Debug log to check what values we're getting
+      console.log('Profile loaded - province:', profile.province, 'city:', profile.city);
     }
   }, [profile]);
 
