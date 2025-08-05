@@ -604,11 +604,13 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                   </Button>
                 </div>
 
-                {/* Player 1 Selection */}
-                <div className="mb-2">
+                {/* Player 1 Selection with Score */}
+                <div className="mb-2 flex gap-2 items-center">
                   <select
-                    className={`w-full p-1 border rounded text-xs ${
-                      match.winner?.id === match.player1?.id ? 'bg-green-100 border-green-400' : 'bg-blue-50'
+                    className={`flex-1 p-1 border rounded text-xs ${
+                      match.player1Score && match.player2Score && 
+                      parseInt(match.player1Score) > parseInt(match.player2Score) ? 
+                      'bg-green-100 border-green-400' : 'bg-blue-50'
                     }`}
                     value={match.player1?.id || ''}
                     onChange={(e) => handlePlayerSelect(match.id, 'player1', e.target.value)}
@@ -621,16 +623,27 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                       </option>
                     ))}
                   </select>
+                  <Input
+                    placeholder="0"
+                    value={match.player1Score || ''}
+                    onChange={(e) => handleScoreChange(match.id, 'player1Score', e.target.value)}
+                    className="w-12 text-center text-sm h-7"
+                    type="number"
+                    min="0"
+                    max="9"
+                  />
                 </div>
 
                 {/* VS Divider */}
                 <div className="text-center text-xs text-gray-400 my-1">VS</div>
 
-                {/* Player 2 Selection */}
-                <div className="mb-2">
+                {/* Player 2 Selection with Score */}
+                <div className="mb-2 flex gap-2 items-center">
                   <select
-                    className={`w-full p-1 border rounded text-xs ${
-                      match.winner?.id === match.player2?.id ? 'bg-green-100 border-green-400' : 'bg-red-50'
+                    className={`flex-1 p-1 border rounded text-xs ${
+                      match.player1Score && match.player2Score && 
+                      parseInt(match.player2Score) > parseInt(match.player1Score) ? 
+                      'bg-green-100 border-green-400' : 'bg-red-50'
                     }`}
                     value={match.player2?.id || ''}
                     onChange={(e) => handlePlayerSelect(match.id, 'player2', e.target.value)}
@@ -643,74 +656,23 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                       </option>
                     ))}
                   </select>
+                  <Input
+                    placeholder="0"
+                    value={match.player2Score || ''}
+                    onChange={(e) => handleScoreChange(match.id, 'player2Score', e.target.value)}
+                    className="w-12 text-center text-sm h-7"
+                    type="number"
+                    min="0"
+                    max="9"
+                  />
                 </div>
 
-                {/* Score Input */}
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  <div>
-                    <label className="text-xs text-gray-600 mb-1 block">Тоглогч 1 оноо</label>
-                    <Input
-                      placeholder="0"
-                      value={match.player1Score || ''}
-                      onChange={(e) => handleScoreChange(match.id, 'player1Score', e.target.value)}
-                      className="text-center text-sm h-8"
-                      type="number"
-                      min="0"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-600 mb-1 block">Тоглогч 2 оноо</label>
-                    <Input
-                      placeholder="0"
-                      value={match.player2Score || ''}
-                      onChange={(e) => handleScoreChange(match.id, 'player2Score', e.target.value)}
-                      className="text-center text-sm h-8"
-                      type="number"
-                      min="0"
-                    />
-                  </div>
-                </div>
-
-                {/* Winner Selection - Click on player dropdown to set as winner */}
-                {match.player1 && match.player2 && (
-                  <div className="mb-2 p-2 bg-gray-50 rounded text-xs">
-                    <p className="text-gray-600 mb-1">Ялагч: Дээрх тоглогчийн нэр дээр дарж сонгоно уу</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button
-                        variant={match.winner?.id === match.player1.id ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleWinnerSelection(match.id, match.player1!.id)}
-                        className="h-6 text-xs"
-                      >
-                        {match.player1.name.substring(0, 12)}...
-                      </Button>
-                      <Button
-                        variant={match.winner?.id === match.player2.id ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleWinnerSelection(match.id, match.player2!.id)}
-                        className="h-6 text-xs"
-                      >
-                        {match.player2.name.substring(0, 12)}...
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Score Display and Winner Badge */}
-                {(match.player1Score || match.player2Score || match.winner) && (
+                {/* Compact Score Display */}
+                {(match.player1Score && match.player2Score) && (
                   <div className="text-center mt-2 pt-2 border-t border-gray-200">
-                    {(match.player1Score && match.player2Score) && (
-                      <div className="text-xs text-gray-600 mb-1">
-                        {match.player1Score} - {match.player2Score}
-                      </div>
-                    )}
-                    {match.winner && (
-                      <span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded font-medium">
-                        🏆 {match.winner.name.length > 12 ? 
-                             match.winner.name.substring(0, 12) + '...' : 
-                             match.winner.name}
-                      </span>
-                    )}
+                    <div className="text-sm font-medium text-gray-800">
+                      {match.player1Score} - {match.player2Score}
+                    </div>
                   </div>
                 )}
               </div>
