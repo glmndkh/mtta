@@ -615,8 +615,14 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                     value={match.player1?.id || ''}
                     onChange={(e) => handlePlayerSelect(match.id, 'player1', e.target.value)}
                   >
-                    <option value="">Тоглогч 1 сонгох</option>
-                    <option value="lucky_draw">🎲 Lucky draw</option>
+                    {!match.player1 && <option value="">Тоглогч 1 сонгох</option>}
+                    {!match.player1 && <option value="lucky_draw">🎲 Lucky draw</option>}
+                    {match.player1?.id === 'lucky_draw' && (
+                      <option value="lucky_draw">🎲 Lucky draw</option>
+                    )}
+                    {match.player1 && match.player1.id !== 'lucky_draw' && (
+                      <option value={match.player1.id}>{match.player1.name}</option>
+                    )}
                     {getAvailableUsers(match.id, 'player1').map(user => (
                       <option key={`${match.id}-p1-${user.id}`} value={user.id}>
                         {user.firstName} {user.lastName}
@@ -648,8 +654,14 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                     value={match.player2?.id || ''}
                     onChange={(e) => handlePlayerSelect(match.id, 'player2', e.target.value)}
                   >
-                    <option value="">Тоглогч 2 сонгох</option>
-                    <option value="lucky_draw">🎲 Lucky draw</option>
+                    {!match.player2 && <option value="">Тоглогч 2 сонгох</option>}
+                    {!match.player2 && <option value="lucky_draw">🎲 Lucky draw</option>}
+                    {match.player2?.id === 'lucky_draw' && (
+                      <option value="lucky_draw">🎲 Lucky draw</option>
+                    )}
+                    {match.player2 && match.player2.id !== 'lucky_draw' && (
+                      <option value={match.player2.id}>{match.player2.name}</option>
+                    )}
                     {getAvailableUsers(match.id, 'player2').map(user => (
                       <option key={`${match.id}-p2-${user.id}`} value={user.id}>
                         {user.firstName} {user.lastName}
