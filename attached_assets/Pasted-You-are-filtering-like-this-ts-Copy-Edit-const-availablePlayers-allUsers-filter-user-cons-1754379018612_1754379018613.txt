@@ -1,0 +1,80 @@
+You are filtering like this:
+
+ts
+Copy
+Edit
+const availablePlayers = allUsers.filter(user => {
+  const isRegisteredForTournament = participants.some(participant => 
+    participant.id === user.id
+  );
+  const isInAnyGroup = groupStageTables.some(anyGroup => 
+    anyGroup.players && anyGroup.players.some(gp => gp.id === user.id)
+  );
+  const isValidUser = user.firstName && user.lastName;
+
+  return isRegisteredForTournament && !isInAnyGroup && isValidUser;
+});
+Possible problems:
+
+participants may not use the same id as allUsers:
+
+Many tournament schemas use participant.userId (or userId) rather than id.
+
+In your current code, you're comparing participant.id with user.id.
+If participant.id is the participant row ID, it will never match.
+
+Fix:
+
+ts
+Copy
+Edit
+const isRegisteredForTournament = participants.some(participant => 
+  participant.userId === user.id
+);
+Your UserAutocomplete requires firstName and lastName, and you are filtering with:
+
+ts
+Copy
+Edit
+const isValidUser = user.firstName && user.lastName;
+If your 8 participants do not have both first and last name (e.g., firstName only), they will be filtered out.
+
+Quick fix for testing:
+
+ts
+Copy
+Edit
+const isValidUser = !!user.firstName; // only check first name
+If participants are loaded but allUsers is empty or has no matching IDs, the filter returns an empty array.
+Since you log console.log('Participants:', participants); console.log('All users:', allUsers);, check the IDs in console to verify.
+
+2. Debugging steps
+To confirm:
+
+ts
+Copy
+Edit
+console.log(
+  'participants sample', participants.slice(0,3),
+  'allUsers sample', allUsers.slice(0,3)
+);
+Compare the fields—likely you need to map participant.userId to user.id.
+
+✅ Main Fix
+Change your available player check:
+
+ts
+Copy
+Edit
+const availablePlayers = allUsers.filter(user => {
+  const isRegisteredForTournament = participants.some(p => 
+    (p.userId || p.id) === user.id
+  );
+
+  const isInAnyGroup = groupStageTables.some(g => 
+    g.players.some(gp => gp.id === user.id)
+  );
+
+  return isRegisteredForTournament && !isInAnyGroup;
+});
+If you want, I can rewrite your available player calculation so it never blocks valid participants and works with either participant.id or participant.userId.
