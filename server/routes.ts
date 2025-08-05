@@ -240,6 +240,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/user/profile', requireAuth, async (req: any, res) => {
     try {
       const userId = req.session.userId;
+      console.log('Profile update request body:', JSON.stringify(req.body, null, 2));
+      
       const {
         name,
         email,
@@ -260,6 +262,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         membershipActive,
         membershipAmount
       } = req.body;
+      
+      console.log('Extracted province:', province);
+      console.log('Extracted city:', city);
 
       // Parse name into firstName and lastName
       const nameParts = (name || '').trim().split(' ');
@@ -268,6 +273,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Convert date string to Date object if provided
       const dobDate = dateOfBirth ? new Date(dateOfBirth) : undefined;
+
+      console.log('Data being sent to storage:', {
+        email,
+        phone,
+        firstName,
+        lastName,
+        gender,
+        dateOfBirth: dobDate,
+        clubAffiliation: clubName,
+        profileImageUrl: profilePicture,
+        province,
+        city,
+        rubberTypes: rubberTypes || [],
+        handedness,
+        playingStyles: playingStyles || [],
+        bio,
+        membershipType,
+        membershipStartDate: membershipStartDate ? new Date(membershipStartDate) : undefined,
+        membershipEndDate: membershipEndDate ? new Date(membershipEndDate) : undefined,
+        membershipActive,
+        membershipAmount
+      });
 
       const updatedUser = await storage.updateUserProfile(userId, {
         email,
@@ -290,6 +317,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         membershipActive,
         membershipAmount
       });
+      
+      console.log('Updated user result:', updatedUser);
 
       if (!updatedUser) {
         return res.status(404).json({ message: "Хэрэглэгч олдсонгүй" });
