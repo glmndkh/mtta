@@ -203,6 +203,13 @@ export class DatabaseStorage implements IStorage {
         phone: userData.phone,
         email: userData.email,
         clubAffiliation: userData.clubAffiliation,
+        profileImageUrl: userData.profileImageUrl,
+        province: userData.province,
+        city: userData.city,
+        rubberTypes: userData.rubberTypes,
+        handedness: userData.handedness,
+        playingStyles: userData.playingStyles,
+        bio: userData.bio,
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId))

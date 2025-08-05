@@ -53,12 +53,12 @@ export default function Navigation() {
           <div className="flex items-center space-x-4">
             {isAuthenticated && user ? (
               <div className="hidden md:flex items-center space-x-4">
-                {user.role === 'player' ? (
+                {(user as any).role === 'player' ? (
                   <>
                     <Link href="/dashboard">
                       <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-mtta-green hover:bg-gray-50 cursor-pointer">
                         <User className="h-4 w-4" />
-                        <span>{user.firstName}</span>
+                        <span>{(user as any).firstName}</span>
                       </div>
                     </Link>
                     <Link href="/profile">
@@ -68,7 +68,7 @@ export default function Navigation() {
                       </div>
                     </Link>
                   </>
-                ) : user.role === 'admin' ? (
+                ) : (user as any).role === 'admin' ? (
                   <>
                     <Link href="/admin/dashboard">
                       <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-mtta-green hover:bg-gray-50 cursor-pointer">
@@ -78,15 +78,15 @@ export default function Navigation() {
                     </Link>
                     <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700">
                       <User className="h-4 w-4" />
-                      <span>{user.firstName} (Админ)</span>
+                      <span>{(user as any).firstName} (Админ)</span>
                     </div>
                   </>
                 ) : (
                   <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700">
                     <User className="h-4 w-4" />
-                    <span>{user.firstName} ({
-                      user.role === 'club_owner' ? 'Клубын эзэн' :
-                      user.role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч'
+                    <span>{(user as any).firstName} ({
+                      (user as any).role === 'club_owner' ? 'Клубын эзэн' :
+                      (user as any).role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч'
                     })</span>
                   </div>
                 )}
@@ -147,7 +147,7 @@ export default function Navigation() {
             
             {isAuthenticated && user ? (
               <>
-                {user.role === 'player' && (
+                {(user as any).role === 'player' && (
                   <Link href="/dashboard">
                     <div 
                       className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-mtta-green hover:bg-gray-50 cursor-pointer"
@@ -160,7 +160,7 @@ export default function Navigation() {
                 )}
                 
                 {/* Admin-only mobile menu items */}
-                {user?.role === 'admin' && (
+                {(user as any)?.role === 'admin' && (
                   <>
                     <Link href="/admin/generator">
                       <div 

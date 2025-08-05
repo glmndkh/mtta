@@ -199,6 +199,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
 
+  // Profile routes
+  app.get('/api/user/profile', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user) {
+        return res.status(404).json({ message: "Хэрэглэгч олдсонгүй" });
+      }
+      
+      // Format the response to match the profile interface
+      const profileData = {
+        id: user.id,
+        email: user.email,
+        phone: user.phone,
+        name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+        gender: user.gender,
+        dateOfBirth: user.dateOfBirth ? user.dateOfBirth.toISOString().split('T')[0] : undefined,
+        clubName: user.clubAffiliation,
+        profilePicture: user.profileImageUrl,
+        province: user.province,
+        city: user.city,
+        rubberTypes: user.rubberTypes || [],
+        handedness: user.handedness,
+        playingStyles: user.playingStyles || [],
+        bio: user.bio
+      };
+      
+      res.json(profileData);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      res.status(500).json({ message: "Профайл мэдээлэл авахад алдаа гарлаа" });
+    }
+  });
+
+  app.put('/api/user/profile', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.session.userId;
+      const {
+        name,
+        email,
+        phone,
+        gender,
+        dateOfBirth,
+        clubName,
+        profilePicture,
+        province,
+        city,
+        rubberTypes,
+        handedness,
+        playingStyles,
+        bio
+      } = req.body;
+
+      // Parse name into firstName and lastName
+      const nameParts = (name || '').trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      // Convert date string to Date object if provided
+      const dobDate = dateOfBirth ? new Date(dateOfBirth) : undefined;
+
+      const updatedUser = await storage.updateUserProfile(userId, {
+        email,
+        phone,
+        firstName,
+        lastName,
+        gender,
+        dateOfBirth: dobDate,
+        clubAffiliation: clubName,
+        profileImageUrl: profilePicture,
+        province,
+        city,
+        rubberTypes: rubberTypes || [],
+        handedness,
+        playingStyles: playingStyles || [],
+        bio
+      });
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "Хэрэглэгч олдсонгүй" });
+      }
+
+      res.json({ message: "Профайл амжилттай шинэчлэгдлээ" });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Профайл шинэчлэхэд алдаа гарлаа" });
+    }
+  });
+
   // Profile update route
   app.put('/api/auth/profile', requireAuth, async (req: any, res) => {
     try {
