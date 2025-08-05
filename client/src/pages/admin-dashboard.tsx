@@ -17,6 +17,7 @@ import { Pencil, Trash2, Plus, Users, Shield, Building, Trophy, Calendar, Newspa
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import AdminStatsDashboard from "@/components/admin-stats-dashboard";
+import { ObjectUploader } from "@/components/ObjectUploader";
 
 export default function AdminDashboard() {
   const [selectedTab, setSelectedTab] = useState("stats");
@@ -59,6 +60,12 @@ export default function AdminDashboard() {
   const { data: teams, isLoading: teamsLoading } = useQuery({
     queryKey: ['/api/admin/teams'],
     enabled: selectedTab === 'teams'
+  });
+
+  // Load all users for player selection dropdown
+  const { data: allUsers } = useQuery({
+    queryKey: ['/api/admin/users'],
+    enabled: selectedTab === 'teams' && (isCreateDialogOpen || editingItem)
   });
 
   const { data: news, isLoading: newsLoading } = useQuery({
@@ -802,35 +809,60 @@ export default function AdminDashboard() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="logoUrl">Багийн лого URL</Label>
-                <Input
-                  id="logoUrl"
-                  value={formData.logoUrl || ''}
-                  onChange={(e) => setFormData({...formData, logoUrl: e.target.value})}
-                />
-              </div>
-              <div>
-                <Label htmlFor="sponsorLogo">Ивээн тэтгэгчийн лого URL</Label>
-                <Input
-                  id="sponsorLogo"
-                  value={formData.sponsorLogo || ''}
-                  onChange={(e) => setFormData({...formData, sponsorLogo: e.target.value})}
-                />
-              </div>
+            <div>
+              <Label className="flex items-center gap-2">
+                <Upload className="w-4 h-4" />
+                Ивээн тэтгэгчийн лого оруулах
+              </Label>
+              <ObjectUploader
+                maxNumberOfFiles={1}
+                maxFileSize={5242880} // 5MB
+                onGetUploadParameters={async () => {
+                  const response = await fetch('/api/objects/upload', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json'
+                    }
+                  });
+                  const data = await response.json();
+                  return {
+                    method: 'PUT' as const,
+                    url: data.uploadURL
+                  };
+                }}
+                onComplete={(result) => {
+                  if (result.successful.length > 0) {
+                    const uploadedFileUrl = result.successful[0].uploadURL;
+                    setFormData({...formData, sponsorLogo: uploadedFileUrl});
+                    toast({
+                      title: "Амжилттай",
+                      description: "Лого амжилттай хуулагдлаа"
+                    });
+                  }
+                }}
+                buttonClassName="w-full"
+              >
+                <div className="flex items-center gap-2">
+                  <Upload className="w-4 h-4" />
+                  <span>Лого файл сонгох</span>
+                </div>
+              </ObjectUploader>
+              {formData.sponsorLogo && (
+                <div className="mt-2">
+                  <img src={formData.sponsorLogo} alt="Sponsor Logo" className="w-16 h-16 object-contain" />
+                </div>
+              )}
             </div>
             <div>
               <Label htmlFor="playerIds">Тоглогчид сонгох</Label>
               <Select 
-                value={formData.selectedPlayer || ''} 
+                value={formData.selectedPlayerId || ""} 
                 onValueChange={(value) => {
-                  const currentPlayers = formData.playerIds || [];
-                  if (!currentPlayers.includes(value)) {
+                  if (value && !formData.playerIds?.includes(value)) {
                     setFormData({
-                      ...formData, 
-                      playerIds: [...currentPlayers, value],
-                      selectedPlayer: ''
+                      ...formData,
+                      selectedPlayerId: "",
+                      playerIds: [...(formData.playerIds || []), value]
                     });
                   }
                 }}
@@ -839,24 +871,25 @@ export default function AdminDashboard() {
                   <SelectValue placeholder="Тоглогч нэмэх" />
                 </SelectTrigger>
                 <SelectContent>
-                  {players && Array.isArray(players) ? players.map((player: any) => (
-                    <SelectItem key={player.players?.id} value={player.players?.id}>
-                      {player.users?.firstName} {player.users?.lastName} - {player.players?.memberNumber}
+                  {allUsers && allUsers.filter((user: any) => user.role === 'player').map((player: any) => (
+                    <SelectItem key={player.id} value={player.id}>
+                      {player.firstName} {player.lastName}
                     </SelectItem>
-                  )) : null}
+                  ))}
                 </SelectContent>
               </Select>
               {formData.playerIds && formData.playerIds.length > 0 && (
                 <div className="mt-2 space-y-1">
-                  <Label>Сонгогдсон тоглогчид:</Label>
+                  <Label className="text-sm text-muted-foreground">Сонгосон тоглогчид:</Label>
                   {formData.playerIds.map((playerId: string) => {
-                    const player = players?.find((p: any) => p.players?.id === playerId);
-                    return (
-                      <div key={playerId} className="flex items-center justify-between bg-muted p-2 rounded">
-                        <span>{player?.users?.firstName} {player?.users?.lastName}</span>
-                        <Button 
-                          size="sm" 
+                    const player = allUsers?.find((u: any) => u.id === playerId && u.role === 'player');
+                    return player ? (
+                      <div key={playerId} className="flex items-center justify-between bg-secondary p-2 rounded">
+                        <span className="text-sm">{player.firstName} {player.lastName}</span>
+                        <Button
+                          type="button"
                           variant="ghost"
+                          size="sm"
                           onClick={() => {
                             setFormData({
                               ...formData,
@@ -864,10 +897,10 @@ export default function AdminDashboard() {
                             });
                           }}
                         >
-                          <X className="w-4 h-4" />
+                          <X className="h-4 w-4" />
                         </Button>
                       </div>
-                    );
+                    ) : null;
                   })}
                 </div>
               )}

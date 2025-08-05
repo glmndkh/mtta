@@ -2140,6 +2140,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Object storage routes for file uploads
+  app.post('/api/objects/upload', requireAuth, async (req, res) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Error getting upload URL:", error);
+      res.status(500).json({ message: "Upload URL авахад алдаа гарлаа" });
+    }
+  });
+
+  // Object storage file serving
+  app.get('/objects/:objectPath(*)', async (req, res) => {
+    const objectStorageService = new ObjectStorageService();
+    try {
+      const objectFile = await objectStorageService.getObjectEntityFile(
+        req.path,
+      );
+      objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error("Error checking object access:", error);
+      if (error instanceof ObjectNotFoundError) {
+        return res.sendStatus(404);
+      }
+      return res.sendStatus(500);
+    }
+  });
+
   // Admin team management routes
   app.get('/api/admin/teams', requireAuth, isAdminRole, async (req, res) => {
     try {
@@ -2153,12 +2182,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/teams', requireAuth, isAdminRole, async (req, res) => {
     try {
-      const { leagueId, name, logoUrl, sponsorLogo, ownerName, coachName, playerIds } = req.body;
+      const { leagueId, name, sponsorLogo, ownerName, coachName, playerIds } = req.body;
       
       // Create team
       const team = await storage.createLeagueTeam(leagueId || 'default', {
         name,
-        logoUrl,
         sponsorLogo,
         ownerName,
         coachName
@@ -2186,12 +2214,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/admin/teams/:teamId', requireAuth, isAdminRole, async (req, res) => {
     try {
       const { teamId } = req.params;
-      const { name, logoUrl, sponsorLogo, ownerName, coachName, playerIds } = req.body;
+      const { name, sponsorLogo, ownerName, coachName, playerIds } = req.body;
       
       // Update team
       const team = await storage.updateLeagueTeam(teamId, {
         name,
-        logoUrl,
         sponsorLogo,
         ownerName,
         coachName
