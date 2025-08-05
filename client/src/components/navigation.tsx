@@ -28,7 +28,6 @@ export default function Navigation() {
               <img src={mttaLogo} alt="MTTA Logo" className="h-10 w-auto" />
               <div className="hidden md:block">
                 <h1 className="text-xl font-bold text-mtta-green">MTTA</h1>
-                <p className="text-xs text-gray-600">Монголын Ширээний Теннисний Холбоо</p>
               </div>
             </div>
           </Link>
