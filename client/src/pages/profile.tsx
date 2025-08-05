@@ -916,27 +916,32 @@ export default function Profile() {
                     <div className="space-y-4">
                       {/* Group matches by tournament */}
                       {Object.entries(
-                        matches.reduce((acc: any, match: Match) => {
-                          if (!acc[match.tournamentName]) {
-                            acc[match.tournamentName] = [];
+                        matches.reduce((acc: any, match: any) => {
+                          const tournamentName = match.tournamentName || 'Тодорхойгүй тэмцээн';
+                          if (!acc[tournamentName]) {
+                            acc[tournamentName] = [];
                           }
-                          acc[match.tournamentName].push(match);
+                          acc[tournamentName].push(match);
                           return acc;
                         }, {})
                       ).map(([tournamentName, tournamentMatches]) => (
                         <div key={tournamentName} className="border rounded-lg p-4">
                           <h3 className="font-medium mb-3">{tournamentName}</h3>
                           <div className="space-y-2">
-                            {(tournamentMatches as Match[]).map((match: Match) => (
-                              <div key={match.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                            {(tournamentMatches as any[]).map((match: any, index: number) => (
+                              <div key={match.id || index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                                 <div>
-                                  <span className="text-sm">vs {match.opponent}</span>
+                                  <span className="text-sm">
+                                    vs {typeof match.opponent === 'string' ? match.opponent : 
+                                        typeof match.opponent === 'object' ? match.opponent?.name || 'Тодорхойгүй' : 
+                                        'Тодорхойгүй'}
+                                  </span>
                                   <span className="text-xs text-gray-500 ml-2">
-                                    {new Date(match.date).toLocaleDateString('mn-MN')}
+                                    {match.date ? new Date(match.date).toLocaleDateString('mn-MN') : 'Огноо тодорхойгүй'}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium">{match.score}</span>
+                                  <span className="text-sm font-medium">{match.score || 'N/A'}</span>
                                   <Badge variant={match.result === 'win' ? 'default' : 'destructive'}>
                                     {match.result === 'win' ? 'Ялалт' : 'Ялагдал'}
                                   </Badge>
