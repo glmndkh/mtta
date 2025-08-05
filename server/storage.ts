@@ -60,6 +60,7 @@ export interface IStorage {
   // Simple auth operations
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByPhone(phone: string): Promise<User | undefined>;
+  getUserById(id: string): Promise<User | undefined>;
   createSimpleUser(userData: any): Promise<User>;
   updateUserProfile(userId: string, userData: any): Promise<User>;
   getAllUsers(): Promise<User[]>;
@@ -171,6 +172,11 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByPhone(phone: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.phone, phone));
+    return user;
+  }
+
+  async getUserById(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
 
