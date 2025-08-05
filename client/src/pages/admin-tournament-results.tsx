@@ -48,6 +48,8 @@ interface KnockoutMatch {
   round: string;
   player1?: { id: string; name: string };
   player2?: { id: string; name: string };
+  player1Score?: string;
+  player2Score?: string;
   score?: string;
   winner?: { id: string; name: string };
   position: { x: number; y: number };
@@ -849,6 +851,8 @@ export default function AdminTournamentResultsPage() {
                               match.round === 'semifinal' ? 'Хагас финал' : 'Дөрөвний финал',
                     player1: match.player1,
                     player2: match.player2,
+                    player1Score: match.player1Score,
+                    player2Score: match.player2Score,
                     score: match.score,
                     winner: match.winner,
                     position: match.position
@@ -856,13 +860,15 @@ export default function AdminTournamentResultsPage() {
                   users={allUsers}
                   qualifiedPlayers={getQualifiedPlayers()}
                   onSave={(newMatches) => {
-                    // Convert back to original format
+                    // Convert back to original format and preserve individual scores
                     const convertedMatches = newMatches.map(match => ({
                       id: match.id,
                       round: match.round === 3 ? 'final' : match.round === 2 ? 'semifinal' : 'quarterfinal',
                       player1: match.player1,
                       player2: match.player2,
-                      score: match.score,
+                      player1Score: match.player1Score,
+                      player2Score: match.player2Score,
+                      score: match.score || (match.player1Score && match.player2Score ? `${match.player1Score}-${match.player2Score}` : '') as string,
                       winner: match.winner,
                       position: match.position
                     }));
