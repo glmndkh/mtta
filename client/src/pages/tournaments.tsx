@@ -300,9 +300,9 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
         <div className="relative z-10 h-full">
           <div className="h-full flex flex-col p-6 lg:p-8 gap-6">
             {/* Top Section - Countdown Timer and Registration Stats */}
-            <div className="flex items-start justify-between mb-4">
+            <div className="flex items-start justify-between mb-4 mt-2">
               {/* Countdown Timer - Visible and Compact */}
-              <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 text-white">
+              <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 text-white mt-2">
                 {countdown.days > 0 ? (
                   <div className="text-center">
                     <div className="text-2xl font-bold">{countdown.days}</div>
@@ -324,9 +324,9 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
             </div>
 
             {/* Main Content Section */}
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 flex-1">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 flex-1">
               {/* Left Section - Tournament Info */}
-              <div className="flex-1 space-y-4">
+              <div className="flex-1 space-y-3">
                 {/* Date Badge */}
                 <div className="inline-flex items-center space-x-2 text-white">
                   <div className="w-6 h-4 bg-red-600 rounded-sm flex items-center justify-center">
@@ -348,22 +348,8 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
                 {tournament.location}
               </div>
 
-              {/* Prize Money */}
-              {(tournament.prizeMoney || tournament.prizes) && (
-                <div className="text-white text-lg font-medium">
-                  Шагналын сан: <span className="font-bold">{tournament.prizeMoney || tournament.prizes}</span>
-                </div>
-              )}
-
-              {/* Entry Fee */}
-              {tournament.entryFee && parseFloat(tournament.entryFee) > 0 && (
-                <div className="text-white text-lg font-medium">
-                  Бүртгэлийн хураамж: <span className="font-bold">{parseFloat(tournament.entryFee).toLocaleString()}₮</span>
-                </div>
-              )}
-
-              {/* Tournament Types & Categories */}
-              <div className="space-y-2">
+              {/* Tournament Types & Categories - Moved Higher */}
+              <div className="space-y-1">
                 <div className="text-white/90 text-sm font-medium">Тэмцээний төрөл:</div>
                 <div className="flex flex-wrap gap-2">
                   {(tournament.categories || tournament.participationTypes || []).map((category) => (
@@ -379,6 +365,20 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
                   )}
                 </div>
               </div>
+
+              {/* Prize Money */}
+              {(tournament.prizeMoney || tournament.prizes) && (
+                <div className="text-white text-lg font-medium">
+                  Шагналын сан: <span className="font-bold">{tournament.prizeMoney || tournament.prizes}</span>
+                </div>
+              )}
+
+              {/* Entry Fee */}
+              {tournament.entryFee && parseFloat(tournament.entryFee) > 0 && (
+                <div className="text-white text-lg font-medium">
+                  Бүртгэлийн хураамж: <span className="font-bold">{parseFloat(tournament.entryFee).toLocaleString()}₮</span>
+                </div>
+              )}
 
                 {/* Action Buttons */}
                 <div className="flex flex-wrap gap-3">
