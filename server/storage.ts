@@ -784,8 +784,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   // League operations
-  async getAllLeagues(): Promise<League[]> {
-    return await db.select().from(leagues).orderBy(desc(leagues.startDate));
+  async getAllLeagues(): Promise<Array<League & { teams: Array<TournamentTeam & { players: TournamentTeamPlayer[] }> }>> {
+    const leagues = await db.select().from(leagues).orderBy(desc(leagues.startDate));
+    
+    // Get teams for each league
+    const leaguesWithTeams = await Promise.all(
+      leagues.map(async (league) => {
+        const teams = await this.getLeagueTeams(league.id);
+        return {
+          ...league,
+          teams
+        };
+      })
+    );
+    
+    return leaguesWithTeams;
   }
 
   async getLeague(id: string): Promise<League | undefined> {
@@ -1520,6 +1533,25 @@ export class DatabaseStorage implements IStorage {
     );
 
     return teamsWithPlayers;
+  }
+
+  async addTeamToLeague(leagueId: string, teamId: string): Promise<void> {
+    // Get the tournament team and update its leagueId
+    const team = await db
+      .select()
+      .from(tournamentTeams)
+      .where(eq(tournamentTeams.id, teamId))
+      .limit(1);
+
+    if (team.length === 0) {
+      throw new Error("Баг олдсонгүй");
+    }
+
+    // Update team to associate with league
+    await db
+      .update(tournamentTeams)
+      .set({ tournamentId: leagueId }) // Using tournamentId field for league association
+      .where(eq(tournamentTeams.id, teamId));
   }
 
   async getLeagueMatches(leagueId: string): Promise<any[]> {

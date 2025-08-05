@@ -1904,6 +1904,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add team to league
+  app.post('/api/admin/leagues/:leagueId/teams', requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const { leagueId } = req.params;
+      const { teamId } = req.body;
+      
+      if (!teamId) {
+        return res.status(400).json({ message: "Багийн ID заавал байх ёстой" });
+      }
+
+      // Check if league exists
+      const league = await storage.getLeagueById(leagueId);
+      if (!league) {
+        return res.status(404).json({ message: "Лиг олдсонгүй" });
+      }
+
+      // Check if team exists
+      const team = await storage.getTournamentTeamById(teamId);
+      if (!team) {
+        return res.status(404).json({ message: "Баг олдсонгүй" });
+      }
+
+      // Add team to league (you'll need to implement this in storage)
+      await storage.addTeamToLeague(leagueId, teamId);
+      
+      res.json({ message: "Баг амжилттай лигт нэмэгдлээ" });
+    } catch (error) {
+      console.error("Error adding team to league:", error);
+      res.status(500).json({ message: "Баг лигт нэмэхэд алдаа гарлаа" });
+    }
+  });
+
   // ===================
   // ADMIN NEWS CRUD
   // ===================
