@@ -801,6 +801,45 @@ export default function AdminTournamentResultsPage() {
                 </div>
               </CardHeader>
               <CardContent>
+                {/* Qualified Players Section */}
+                {getQualifiedPlayers().length > 0 && (
+                  <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <h3 className="text-lg font-semibold text-green-800 mb-3 flex items-center gap-2">
+                      <Trophy className="w-5 h-5" />
+                      Шигшээд шалгарсан тоглогчид ({getQualifiedPlayers().length})
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {getQualifiedPlayers().map((player, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-white border border-green-300 rounded-lg">
+                          <div>
+                            <div className="font-medium text-gray-900">{player.name}</div>
+                            <div className="text-sm text-gray-600">{player.groupName} - {player.position === 1 ? '1-р байр' : '2-р байр'}</div>
+                          </div>
+                          <Badge variant={player.position === 1 ? "default" : "secondary"}>
+                            {player.position === 1 ? '🥇' : '🥈'}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 text-sm text-green-700">
+                      💡 Эдгээр тоглогчдыг доорх шигшээ тоглолтын сугалаанд ашиглаж болно
+                    </div>
+                  </div>
+                )}
+
+                {/* No qualified players message */}
+                {getQualifiedPlayers().length === 0 && (
+                  <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-yellow-800">
+                      <Trophy className="w-5 h-5" />
+                      <span className="font-medium">Шигшээд шалгарсан тоглогч байхгүй</span>
+                    </div>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      Хэсгийн тоглолтыг дуусгаж, үр дүн оруулсны дараа шигшээд шалгарсан тоглогчид энд харагдана.
+                    </p>
+                  </div>
+                )}
+
                 <KnockoutBracketEditor
                   initialMatches={knockoutMatches.map(match => ({
                     id: match.id,
