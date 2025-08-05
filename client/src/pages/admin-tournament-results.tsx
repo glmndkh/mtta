@@ -1023,6 +1023,11 @@ export default function AdminTournamentResultsPage() {
                         </div>
                         
                         {(() => {
+                          // Debug logging
+                          console.log('Participants:', participants);
+                          console.log('All users:', allUsers);
+                          console.log('Group stage tables:', groupStageTables);
+                          
                           // Recalculate available players each time
                           const availablePlayers = allUsers.filter(user => {
                             // Only show users who are registered for this tournament
@@ -1036,7 +1041,16 @@ export default function AdminTournamentResultsPage() {
                               anyGroup.players && anyGroup.players.some(gp => gp.id === user.id)
                             );
                             
-                            return isRegisteredForTournament && !isInAnyGroup && user.firstName && user.lastName;
+                            const isValidUser = user.firstName && user.lastName;
+                            
+                            console.log(`User ${user.firstName} ${user.lastName}:`, {
+                              isRegisteredForTournament,
+                              isInAnyGroup,
+                              isValidUser,
+                              participantMatch: participants.find(p => p.playerId === user.id)
+                            });
+                            
+                            return isRegisteredForTournament && !isInAnyGroup && isValidUser;
                           });
 
                           if (availablePlayers.length === 0) {
@@ -1045,19 +1059,28 @@ export default function AdminTournamentResultsPage() {
                               total + (group.players ? group.players.length : 0), 0
                             );
                             
+                            console.log('Debug info:', { 
+                              totalRegistered, 
+                              totalInGroups, 
+                              participantsData: participants,
+                              allUsersCount: allUsers.length 
+                            });
+                            
                             return (
                               <div className="text-center py-3 border-2 border-dashed border-gray-300 rounded-lg bg-white">
                                 <p className="text-sm text-gray-600 mb-1">
-                                  {totalInGroups === 0 
+                                  {totalRegistered === 0 
                                     ? "Тэмцээнд бүртгүүлсэн тоглогч байхгүй байна"
+                                    : totalInGroups === totalRegistered
+                                    ? "Бүх тоглогч группд хуваарилагдсан байна"
                                     : "Энэ группд нэмэх боломжтой тоглогч байхгүй байна"
                                   }
                                 </p>
                                 <p className="text-xs text-gray-400">
-                                  {totalInGroups > 0 && "Бусад группаас тоглогч хасаж энэ группд нэмэх боломжтой"}
+                                  {totalInGroups > 0 && totalInGroups < totalRegistered && "Бусад группаас тоглогч хасаж энэ группд нэмэх боломжтой"}
                                 </p>
                                 <p className="text-xs text-gray-500 mt-1">
-                                  Боломжтой: {totalRegistered - totalInGroups}/{totalRegistered} тоглогч
+                                  Бүртгэлтэй: {totalRegistered}, Группд орсон: {totalInGroups}, Боломжтой: {totalRegistered - totalInGroups}
                                 </p>
                               </div>
                             );
