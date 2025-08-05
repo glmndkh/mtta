@@ -893,13 +893,15 @@ export default function AdminTournamentResultsPage() {
                           className="max-w-xs"
                           placeholder="Группийн нэр"
                         />
-                        <Button
-                          onClick={() => removeGroupTable(groupIndex)}
-                          variant="destructive"
-                          size="sm"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <div className="flex space-x-2">
+                          <Button
+                            onClick={() => removeGroupTable(groupIndex)}
+                            variant="destructive"
+                            size="sm"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
 
                       {/* Excel-style Result Matrix Table */}
@@ -1000,8 +1002,19 @@ export default function AdminTournamentResultsPage() {
                         </div>
                       )}
                       
-                      {/* Player Selection with UserAutocomplete */}
-                      <div className="mt-4">
+                      {/* Player Selection Section */}
+                      <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-sm font-medium text-gray-700">Тоглогч нэмэх</h4>
+                          <div className="text-xs text-gray-500">
+                            {(() => {
+                              const totalRegistered = participants.length;
+                              const totalInGroups = groupStageTables.reduce((total, group) => total + group.players.length, 0);
+                              return `${totalInGroups}/${totalRegistered} тоглогч группд орсон`;
+                            })()}
+                          </div>
+                        </div>
+                        
                         {(() => {
                           const availablePlayers = allUsers.filter(user => {
                             // Only show users who are registered for this tournament
@@ -1018,18 +1031,12 @@ export default function AdminTournamentResultsPage() {
                           });
 
                           if (availablePlayers.length === 0) {
-                            const totalRegistered = participants.length;
-                            const totalInGroups = groupStageTables.reduce((total, group) => total + group.players.length, 0);
-                            
                             return (
-                              <div className="text-center py-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                              <div className="text-center py-3 border-2 border-dashed border-gray-300 rounded-lg bg-white">
                                 <p className="text-sm text-gray-600 mb-1">
                                   Энэ группд нэмэх боломжтой тоглогч байхгүй байна
                                 </p>
-                                <p className="text-xs text-gray-500">
-                                  {totalInGroups}/{totalRegistered} тоглогч группд орсон
-                                </p>
-                                <p className="text-xs text-gray-400 mt-1">
+                                <p className="text-xs text-gray-400">
                                   Бусад группаас тоглогч хасаж энэ группд нэмэх боломжтой
                                 </p>
                               </div>
@@ -1055,7 +1062,7 @@ export default function AdminTournamentResultsPage() {
                                   });
                                 }
                               }}
-                              placeholder="Энэ группд нэмэх тоглогч хайх..."
+                              placeholder="Тоглогч сонгоод энэ группд нэмэх..."
                               className="w-full"
                             />
                           );
