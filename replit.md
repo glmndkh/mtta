@@ -45,6 +45,14 @@ A comprehensive web application for the Mongolian Table Tennis Association that 
 - **Statistics now match visible match history** ensuring consistency between displayed matches and win/loss counts
 - **Manual correction system** implemented for precise player statistics when needed
 
+### 32 Mongolian Player Accounts Creation (August 2025)
+- **Complete player database** with 32 authentic Mongolian player accounts created
+- **Realistic player profiles** including traditional Mongolian names, birth dates, phone numbers, and club affiliations
+- **Distributed club membership** across 4 main clubs: Улаанбаатар клуб, Дархан клуб, Эрдэнэт клуб, Чойбалсан клуб
+- **Gender balance** with approximately equal male and female players
+- **Age variety** spanning birth years from 1987 to 1999 for realistic age distribution
+- **Authentication ready** all accounts use "password123" for easy testing and management
+
 ### Password Storage Update (August 2025)
 - **Plain text password storage** implemented as requested by user
 - **Authentication system updated** to compare passwords directly without encryption
