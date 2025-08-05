@@ -69,6 +69,12 @@ interface FinalRanking {
   prize?: string;
 }
 
+interface TournamentResultsData {
+  groupStage?: GroupStageTable[];
+  knockoutMatches?: KnockoutMatch[];
+  finalRankings?: FinalRanking[];
+}
+
 export default function AdminTournamentResultsPage() {
   const [match, params] = useRoute("/admin/tournament/:id/results");
   const [fallbackMatch] = useRoute("/admin/tournament-results");
@@ -122,7 +128,46 @@ export default function AdminTournamentResultsPage() {
     if (existingResults) {
       setGroupStageTables((existingResults.groupStageResults as GroupStageTable[]) || []);
       setKnockoutMatches((existingResults.knockoutResults as KnockoutMatch[]) || []);
-      setFinalRankings((existingResults.finalRankings as FinalRanking[]) || []);
+      
+      // Load final rankings or calculate from knockout matches if missing
+      const savedRankings = (existingResults.finalRankings as FinalRanking[]) || [];
+      if (savedRankings.length > 0) {
+        setFinalRankings(savedRankings);
+      } else {
+        // Calculate from knockout matches if no rankings saved
+        const knockoutResults = (existingResults.knockoutResults as KnockoutMatch[]) || [];
+        const calculatedRankings: FinalRanking[] = [];
+        
+        const finalMatch = knockoutResults.find(m => m.round === 'final');
+        if (finalMatch?.winner) {
+          calculatedRankings.push({
+            position: 1,
+            playerId: finalMatch.winner.id,
+            playerName: finalMatch.winner.name
+          });
+          
+          const finalLoser = finalMatch.player1?.id === finalMatch.winner.id ? finalMatch.player2 : finalMatch.player1;
+          if (finalLoser) {
+            calculatedRankings.push({
+              position: 2,
+              playerId: finalLoser.id,
+              playerName: finalLoser.name
+            });
+          }
+        }
+        
+        const thirdPlaceMatch = knockoutResults.find(m => m.id === 'third_place_playoff');
+        if (thirdPlaceMatch?.winner) {
+          calculatedRankings.push({
+            position: 3,
+            playerId: thirdPlaceMatch.winner.id,
+            playerName: thirdPlaceMatch.winner.name
+          });
+        }
+        
+        setFinalRankings(calculatedRankings);
+      }
+      
       setIsPublished(existingResults.isPublished || false);
     }
   }, [existingResults]);
@@ -706,6 +751,46 @@ export default function AdminTournamentResultsPage() {
                 </div>
               </CardHeader>
               <CardContent>
+                {/* Display Final Rankings from Knockout Results */}
+                {finalRankings.length > 0 && (
+                  <div className="mb-6 p-4 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg">
+                    <h3 className="text-lg font-semibold text-amber-800 mb-3 flex items-center gap-2">
+                      <Trophy className="w-5 h-5" />
+                      Шигшээ тоглолтын эцсийн үр дүн ({finalRankings.length} тоглогч)
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {finalRankings.map((ranking, index) => (
+                        <div 
+                          key={index} 
+                          className={`p-4 rounded-lg border-2 text-center ${
+                            ranking.position === 1 ? 'bg-yellow-100 border-yellow-400' :
+                            ranking.position === 2 ? 'bg-gray-100 border-gray-400' :
+                            'bg-orange-100 border-orange-400'
+                          }`}
+                        >
+                          <div className="text-3xl mb-2">
+                            {ranking.position === 1 ? '🥇' : ranking.position === 2 ? '🥈' : '🥉'}
+                          </div>
+                          <div className="text-lg font-bold text-gray-800">{ranking.position}-р байр</div>
+                          <div className="font-medium text-gray-900">{ranking.playerName}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {finalRankings.length === 0 && (
+                  <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-blue-800">
+                      <Trophy className="w-5 h-5" />
+                      <span className="font-medium">Эцсийн үр дүн гараагүй</span>
+                    </div>
+                    <p className="text-sm text-blue-700 mt-1">
+                      Шигшээ тоглолтыг дуусгасны дараа эцсийн байрлал энд харагдана.
+                    </p>
+                  </div>
+                )}
+
                 <div className="space-y-4">
                   {finalRankings.map((ranking, index) => (
                     <div key={index} className="grid grid-cols-12 gap-4 items-center p-4 border rounded-lg">
@@ -873,6 +958,43 @@ export default function AdminTournamentResultsPage() {
                       position: match.position
                     }));
                     setKnockoutMatches(convertedMatches);
+                    
+                    // Calculate and update final rankings
+                    const newFinalRankings: FinalRanking[] = [];
+                    
+                    // Find final match
+                    const finalMatch = newMatches.find(m => m.roundName === 'Финал');
+                    if (finalMatch?.winner) {
+                      // 1st place: final winner
+                      newFinalRankings.push({
+                        position: 1,
+                        playerId: finalMatch.winner.id,
+                        playerName: finalMatch.winner.name
+                      });
+                      
+                      // 2nd place: final loser
+                      const finalLoser = finalMatch.player1?.id === finalMatch.winner.id ? finalMatch.player2 : finalMatch.player1;
+                      if (finalLoser) {
+                        newFinalRankings.push({
+                          position: 2,
+                          playerId: finalLoser.id,
+                          playerName: finalLoser.name
+                        });
+                      }
+                    }
+                    
+                    // Find 3rd place playoff
+                    const thirdPlaceMatch = newMatches.find(m => m.id === 'third_place_playoff');
+                    if (thirdPlaceMatch?.winner) {
+                      // 3rd place: 3rd place playoff winner
+                      newFinalRankings.push({
+                        position: 3,
+                        playerId: thirdPlaceMatch.winner.id,
+                        playerName: thirdPlaceMatch.winner.name
+                      });
+                    }
+                    
+                    setFinalRankings(newFinalRankings);
                     
                     // Auto-save via existing mutation
                     saveResultsMutation.mutate();
