@@ -252,18 +252,23 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
           if (loser) {
             const thirdPlaceMatch = finalMatches.find(m => m.id === 'third_place_playoff');
             if (thirdPlaceMatch) {
-              if (!thirdPlaceMatch.player1) {
-                return finalMatches.map(m => 
-                  m.id === 'third_place_playoff' 
-                    ? { ...m, player1: loser }
-                    : m
-                );
-              } else if (!thirdPlaceMatch.player2) {
-                return finalMatches.map(m => 
-                  m.id === 'third_place_playoff' 
-                    ? { ...m, player2: loser }
-                    : m
-                );
+              // Only add if this loser is not already in the 3rd place match
+              const loserAlreadyAdded = thirdPlaceMatch.player1?.id === loser.id || thirdPlaceMatch.player2?.id === loser.id;
+              
+              if (!loserAlreadyAdded) {
+                if (!thirdPlaceMatch.player1) {
+                  return finalMatches.map(m => 
+                    m.id === 'third_place_playoff' 
+                      ? { ...m, player1: loser }
+                      : m
+                  );
+                } else if (!thirdPlaceMatch.player2) {
+                  return finalMatches.map(m => 
+                    m.id === 'third_place_playoff' 
+                      ? { ...m, player2: loser }
+                      : m
+                  );
+                }
               }
             }
           }
@@ -294,17 +299,45 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
         m.id === matchId ? { ...m, winner } : m
       );
       
-      // Auto-advance winner to next round
+      // Auto-advance winner to next round and handle 3rd place playoff
       if (winner && match.nextMatchId) {
         const currentRoundMatches = newMatches.filter(m => m.round === match.round);
         const matchIndex = currentRoundMatches.findIndex(m => m.id === match.id);
         const nextPosition = matchIndex % 2 === 0 ? 'player1' : 'player2';
         
-        const finalMatches = newMatches.map(m => 
+        let finalMatches = newMatches.map(m => 
           m.id === match.nextMatchId 
             ? { ...m, [nextPosition]: winner }
             : m
         );
+        
+        // Handle 3rd place playoff for semifinal losers
+        if (match.roundName === 'Хагас финал') {
+          const loser = match.player1?.id === winner.id ? match.player2 : match.player1;
+          if (loser) {
+            const thirdPlaceMatch = finalMatches.find(m => m.id === 'third_place_playoff');
+            if (thirdPlaceMatch) {
+              // Only add if this loser is not already in the 3rd place match
+              const loserAlreadyAdded = thirdPlaceMatch.player1?.id === loser.id || thirdPlaceMatch.player2?.id === loser.id;
+              
+              if (!loserAlreadyAdded) {
+                if (!thirdPlaceMatch.player1) {
+                  finalMatches = finalMatches.map(m => 
+                    m.id === 'third_place_playoff' 
+                      ? { ...m, player1: loser }
+                      : m
+                  );
+                } else if (!thirdPlaceMatch.player2) {
+                  finalMatches = finalMatches.map(m => 
+                    m.id === 'third_place_playoff' 
+                      ? { ...m, player2: loser }
+                      : m
+                  );
+                }
+              }
+            }
+          }
+        }
         
         toast({
           title: "Ялагч дараагийн шатанд шилжлээ",
@@ -340,19 +373,24 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
         if (loser) {
           const thirdPlaceMatch = newMatches.find(m => m.id === 'third_place_playoff');
           if (thirdPlaceMatch) {
-            // Add loser to first available position in 3rd place match
-            if (!thirdPlaceMatch.player1) {
-              return newMatches.map(m => 
-                m.id === 'third_place_playoff' 
-                  ? { ...m, player1: loser }
-                  : m
-              );
-            } else if (!thirdPlaceMatch.player2) {
-              return newMatches.map(m => 
-                m.id === 'third_place_playoff' 
-                  ? { ...m, player2: loser }
-                  : m
-              );
+            // Only add if this loser is not already in the 3rd place match
+            const loserAlreadyAdded = thirdPlaceMatch.player1?.id === loser.id || thirdPlaceMatch.player2?.id === loser.id;
+            
+            if (!loserAlreadyAdded) {
+              // Add loser to first available position in 3rd place match
+              if (!thirdPlaceMatch.player1) {
+                return newMatches.map(m => 
+                  m.id === 'third_place_playoff' 
+                    ? { ...m, player1: loser }
+                    : m
+                );
+              } else if (!thirdPlaceMatch.player2) {
+                return newMatches.map(m => 
+                  m.id === 'third_place_playoff' 
+                    ? { ...m, player2: loser }
+                    : m
+                );
+              }
             }
           }
         }
