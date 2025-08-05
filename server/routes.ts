@@ -207,6 +207,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Хэрэглэгч олдсонгүй" });
       }
       
+      // Get player data if user is a player
+      let playerStats = null;
+      if (user.role === 'player') {
+        try {
+          playerStats = await storage.getPlayerByUserId(user.id);
+        } catch (error) {
+          console.log('No player data found for user:', user.id);
+        }
+      }
+      
       // Format the response to match the profile interface
       const profileData = {
         id: user.id,
@@ -227,11 +237,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         membershipStartDate: user.membershipStartDate,
         membershipEndDate: user.membershipEndDate,
         membershipActive: user.membershipActive,
-        membershipAmount: user.membershipAmount
+        membershipAmount: user.membershipAmount,
+        // Add player statistics
+        playerStats: playerStats ? {
+          rank: playerStats.rank,
+          points: playerStats.points,
+          achievements: playerStats.achievements,
+          wins: playerStats.wins,
+          losses: playerStats.losses,
+          memberNumber: playerStats.memberNumber
+        } : null
       };
       
       console.log('Profile response - province:', user.province);
       console.log('Profile response - city:', user.city);
+      console.log('Profile response - playerStats:', playerStats);
       console.log('Full user data from DB:', user);
       
       res.json(profileData);

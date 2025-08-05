@@ -17,6 +17,15 @@ import { AlertCircle, CheckCircle, Clock, User, Camera, MapPin, Phone, Mail, Cal
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
+interface PlayerStats {
+  rank?: string;
+  points?: number;
+  achievements?: string;
+  wins?: number;
+  losses?: number;
+  memberNumber?: string;
+}
+
 interface UserProfile {
   id: string;
   email: string;
@@ -37,6 +46,7 @@ interface UserProfile {
   membershipEndDate?: string;
   membershipActive?: boolean;
   membershipAmount?: number;
+  playerStats?: PlayerStats;
 }
 
 interface Club {
@@ -430,6 +440,68 @@ export default function Profile() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Player Statistics - Only show for players */}
+          {profile?.playerStats && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="w-5 h-5" />
+                  Тоглогчийн статистик
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                  {profile.playerStats.memberNumber && (
+                    <div className="text-center p-4 bg-gray-50 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {profile.playerStats.memberNumber}
+                      </div>
+                      <div className="text-sm text-gray-600 mt-1">Гишүүний дугаар</div>
+                    </div>
+                  )}
+                  
+                  <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">
+                      {profile.playerStats.rank || 'Шинэ тоглогч'}
+                    </div>
+                    <div className="text-sm text-gray-600 mt-1">Зэрэглэл</div>
+                  </div>
+                  
+                  <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                    <div className="text-2xl font-bold text-yellow-600">
+                      {profile.playerStats.points || 0}
+                    </div>
+                    <div className="text-sm text-gray-600 mt-1">Оноо</div>
+                  </div>
+                  
+                  <div className="text-center p-4 bg-emerald-50 rounded-lg">
+                    <div className="text-2xl font-bold text-emerald-600">
+                      {profile.playerStats.wins || 0}
+                    </div>
+                    <div className="text-sm text-gray-600 mt-1">Хожил</div>
+                  </div>
+                  
+                  <div className="text-center p-4 bg-red-50 rounded-lg">
+                    <div className="text-2xl font-bold text-red-600">
+                      {profile.playerStats.losses || 0}
+                    </div>
+                    <div className="text-sm text-gray-600 mt-1">Ялагдал</div>
+                  </div>
+                </div>
+                
+                {profile.playerStats.achievements && (
+                  <div className="mt-4 p-4 bg-purple-50 rounded-lg">
+                    <h4 className="font-semibold text-purple-900 mb-2 flex items-center gap-2">
+                      <Target className="w-4 h-4" />
+                      Амжилтууд
+                    </h4>
+                    <p className="text-purple-800">{profile.playerStats.achievements}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Main Content Tabs */}
           <Tabs defaultValue="profile" className="w-full">
