@@ -230,6 +230,11 @@ export default function AdminDashboard() {
       }
     }
     
+    // Extract player IDs for teams
+    if (selectedTab === 'teams' && item.players && Array.isArray(item.players)) {
+      formattedItem.playerIds = item.players.map((player: any) => player.playerId);
+    }
+    
     setFormData(formattedItem);
   };
 
