@@ -45,23 +45,22 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
   const svgRef = useRef<SVGSVGElement>(null);
   const { toast } = useToast();
 
-  // Generate standard tournament bracket structure with proper spacing to prevent overlap
+  // Generate standard tournament bracket structure with 3rd place playoff
   const generateBracket = useCallback((playerCount: number) => {
     const rounds = Math.ceil(Math.log2(playerCount));
     const newMatches: Match[] = [];
     
-    // Calculate positions for each round with much better spacing to prevent overlap
-    const MATCH_HEIGHT = 200; // Much larger height to accommodate all form elements
-    const ROUND_WIDTH = 300; // Increased width for better separation
-    const START_Y = 60; // More top margin
+    // Calculate positions for each round with spacing to prevent overlap
+    const MATCH_HEIGHT = 200;
+    const ROUND_WIDTH = 300;
+    const START_Y = 60;
     
     for (let round = 1; round <= rounds; round++) {
       const matchesInRound = Math.pow(2, rounds - round);
       const roundName = getRoundName(matchesInRound);
       
       for (let matchIndex = 0; matchIndex < matchesInRound; matchIndex++) {
-        // Much larger spacing to completely prevent overlap
-        const ySpacing = Math.pow(2, round - 1) * MATCH_HEIGHT + (round * 80); // Even more progressive spacing
+        const ySpacing = Math.pow(2, round - 1) * MATCH_HEIGHT + (round * 80);
         const yOffset = START_Y + matchIndex * ySpacing;
         
         const match: Match = {
@@ -82,6 +81,20 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
         
         newMatches.push(match);
       }
+    }
+    
+    // Add 3rd place playoff match if we have semifinals
+    if (rounds >= 2) {
+      const thirdPlaceMatch: Match = {
+        id: 'third_place_playoff',
+        round: rounds, // Same round as final
+        roundName: '3-р байрын тоглолт',
+        position: {
+          x: (rounds - 1) * ROUND_WIDTH + 40,
+          y: START_Y + 400 // Position below the final
+        }
+      };
+      newMatches.push(thirdPlaceMatch);
     }
     
     return newMatches;
@@ -233,6 +246,29 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
             : m
         );
         
+        // Also handle 3rd place playoff for semifinal losers
+        if (updatedMatch.roundName === 'Хагас финал') {
+          const loser = updatedMatch.player1?.id === updatedMatch.winner.id ? updatedMatch.player2 : updatedMatch.player1;
+          if (loser) {
+            const thirdPlaceMatch = finalMatches.find(m => m.id === 'third_place_playoff');
+            if (thirdPlaceMatch) {
+              if (!thirdPlaceMatch.player1) {
+                return finalMatches.map(m => 
+                  m.id === 'third_place_playoff' 
+                    ? { ...m, player1: loser }
+                    : m
+                );
+              } else if (!thirdPlaceMatch.player2) {
+                return finalMatches.map(m => 
+                  m.id === 'third_place_playoff' 
+                    ? { ...m, player2: loser }
+                    : m
+                );
+              }
+            }
+          }
+        }
+        
         toast({
           title: "Ялагч дараагийн шатанд шилжлээ",
           description: `${updatedMatch.winner.name} автоматаар дараагийн тоглолтонд орлоо`
@@ -282,7 +318,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     });
   };
 
-  // Advance winner to next round automatically
+  // Advance winner to next round and handle 3rd place playoff
   const advanceWinnerToNextRound = (match: Match) => {
     if (!match.winner || !match.nextMatchId) return;
     
@@ -291,11 +327,39 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     const matchIndex = currentRoundMatches.findIndex(m => m.id === match.id);
     const nextPosition = matchIndex % 2 === 0 ? 'player1' : 'player2';
     
-    setMatches(prev => prev.map(m => 
-      m.id === match.nextMatchId 
-        ? { ...m, [nextPosition]: match.winner }
-        : m
-    ));
+    setMatches(prev => {
+      const newMatches = prev.map(m => 
+        m.id === match.nextMatchId 
+          ? { ...m, [nextPosition]: match.winner }
+          : m
+      );
+      
+      // If this is a semifinal match, add loser to 3rd place playoff
+      if (match.roundName === 'Хагас финал') {
+        const loser = match.player1?.id === match.winner.id ? match.player2 : match.player1;
+        if (loser) {
+          const thirdPlaceMatch = newMatches.find(m => m.id === 'third_place_playoff');
+          if (thirdPlaceMatch) {
+            // Add loser to first available position in 3rd place match
+            if (!thirdPlaceMatch.player1) {
+              return newMatches.map(m => 
+                m.id === 'third_place_playoff' 
+                  ? { ...m, player1: loser }
+                  : m
+              );
+            } else if (!thirdPlaceMatch.player2) {
+              return newMatches.map(m => 
+                m.id === 'third_place_playoff' 
+                  ? { ...m, player2: loser }
+                  : m
+              );
+            }
+          }
+        }
+      }
+      
+      return newMatches;
+    });
     
     toast({
       title: "Ялагч дараагийн шатанд шилжлээ",
@@ -310,6 +374,45 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
         ? { ...match, [field]: value }
         : match
     ));
+  };
+
+  // Calculate final tournament rankings
+  const getFinalRankings = () => {
+    const rankings = [];
+    
+    // Find final match
+    const finalMatch = matches.find(m => m.roundName === 'Финал');
+    if (finalMatch?.winner) {
+      // 1st place: final winner
+      rankings.push({
+        position: 1,
+        player: finalMatch.winner,
+        medal: '🥇'
+      });
+      
+      // 2nd place: final loser
+      const finalLoser = finalMatch.player1?.id === finalMatch.winner.id ? finalMatch.player2 : finalMatch.player1;
+      if (finalLoser) {
+        rankings.push({
+          position: 2,
+          player: finalLoser,
+          medal: '🥈'
+        });
+      }
+    }
+    
+    // Find 3rd place playoff
+    const thirdPlaceMatch = matches.find(m => m.id === 'third_place_playoff');
+    if (thirdPlaceMatch?.winner) {
+      // 3rd place: 3rd place playoff winner
+      rankings.push({
+        position: 3,
+        player: thirdPlaceMatch.winner,
+        medal: '🥉'
+      });
+    }
+    
+    return rankings;
   };
 
 
@@ -406,6 +509,32 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Final Rankings */}
+      {getFinalRankings().length > 0 && (
+        <div className="mb-6 p-4 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg">
+          <h3 className="text-lg font-semibold text-amber-800 mb-3 flex items-center gap-2">
+            <Trophy className="w-5 h-5" />
+            Эцсийн байр суурь ({getFinalRankings().length} тоглогч)
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {getFinalRankings().map((ranking, index) => (
+              <div 
+                key={index} 
+                className={`p-4 rounded-lg border-2 text-center ${
+                  ranking.position === 1 ? 'bg-yellow-100 border-yellow-400' :
+                  ranking.position === 2 ? 'bg-gray-100 border-gray-400' :
+                  'bg-orange-100 border-orange-400'
+                }`}
+              >
+                <div className="text-3xl mb-2">{ranking.medal}</div>
+                <div className="text-lg font-bold text-gray-800">{ranking.position}-р байр</div>
+                <div className="font-medium text-gray-900">{ranking.player.name}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Bracket Visualization */}
       <div className="relative">
