@@ -1381,17 +1381,116 @@ export class DatabaseStorage implements IStorage {
   }
 
   // League team methods (reuse tournament team tables for leagues)
-  async createLeagueTeam(leagueId: string, teamData: { name: string; logoUrl?: string }): Promise<TournamentTeam> {
+  async createLeagueTeam(leagueId: string, teamData: { 
+    name: string; 
+    logoUrl?: string; 
+    sponsorLogo?: string; 
+    ownerName?: string; 
+    coachName?: string;
+  }): Promise<TournamentTeam> {
     const [team] = await db
       .insert(tournamentTeams)
       .values({
         tournamentId: leagueId, // Using tournament_teams table for leagues too
         name: teamData.name,
         logoUrl: teamData.logoUrl,
+        sponsorLogo: teamData.sponsorLogo,
+        ownerName: teamData.ownerName,
+        coachName: teamData.coachName,
         entityType: 'league' // Mark this as a league team
       })
       .returning();
     return team;
+  }
+
+  async updateLeagueTeam(teamId: string, teamData: { 
+    name?: string; 
+    logoUrl?: string; 
+    sponsorLogo?: string; 
+    ownerName?: string; 
+    coachName?: string;
+  }): Promise<TournamentTeam | null> {
+    const [team] = await db
+      .update(tournamentTeams)
+      .set(teamData)
+      .where(eq(tournamentTeams.id, teamId))
+      .returning();
+    return team || null;
+  }
+
+  async deleteLeagueTeam(teamId: string): Promise<boolean> {
+    // Delete players first
+    await db.delete(tournamentTeamPlayers).where(eq(tournamentTeamPlayers.tournamentTeamId, teamId));
+    
+    // Delete team
+    const result = await db.delete(tournamentTeams).where(eq(tournamentTeams.id, teamId));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async addPlayerToLeagueTeam(teamId: string, playerId: string, playerName: string): Promise<TournamentTeamPlayer> {
+    const [player] = await db
+      .insert(tournamentTeamPlayers)
+      .values({
+        tournamentTeamId: teamId,
+        playerId,
+        playerName,
+      })
+      .returning();
+    return player;
+  }
+
+  async removePlayerFromLeagueTeam(teamId: string, playerId: string): Promise<boolean> {
+    const result = await db
+      .delete(tournamentTeamPlayers)
+      .where(
+        and(
+          eq(tournamentTeamPlayers.tournamentTeamId, teamId),
+          eq(tournamentTeamPlayers.playerId, playerId)
+        )
+      );
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getAllLeagueTeams(): Promise<Array<TournamentTeam & { players: Array<TournamentTeamPlayer & { firstName: string; lastName: string; email: string }> }>> {
+    const teams = await db
+      .select()
+      .from(tournamentTeams)
+      .where(eq(tournamentTeams.entityType, 'league'));
+
+    const teamsWithPlayers = await Promise.all(
+      teams.map(async (team) => {
+        const playersData = await db
+          .select({
+            id: tournamentTeamPlayers.id,
+            createdAt: tournamentTeamPlayers.createdAt,
+            tournamentTeamId: tournamentTeamPlayers.tournamentTeamId,
+            playerId: tournamentTeamPlayers.playerId,
+            playerName: tournamentTeamPlayers.playerName,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            email: users.email,
+          })
+          .from(tournamentTeamPlayers)
+          .innerJoin(users, eq(tournamentTeamPlayers.playerId, users.id))
+          .where(eq(tournamentTeamPlayers.tournamentTeamId, team.id));
+        
+        return {
+          ...team,
+          players: playersData.map(p => ({
+            id: p.id,
+            createdAt: p.createdAt,
+            tournamentTeamId: p.tournamentTeamId,
+            playerId: p.playerId,
+            playerName: p.playerName,
+            firstName: p.firstName || '',
+            lastName: p.lastName || '',
+            email: p.email || '',
+          })),
+        };
+      })
+    );
+
+    return teamsWithPlayers;
   }
 
   async getLeagueTeams(leagueId: string): Promise<Array<TournamentTeam & { players: TournamentTeamPlayer[] }>> {
