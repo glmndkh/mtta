@@ -65,7 +65,7 @@ export default function AdminDashboard() {
   // Load all users for player selection dropdown
   const { data: allUsers } = useQuery({
     queryKey: ['/api/admin/users'],
-    enabled: selectedTab === 'teams' && (isCreateDialogOpen || editingItem)
+    enabled: selectedTab === 'teams' && (isCreateDialogOpen || !!editingItem)
   });
 
   const { data: news, isLoading: newsLoading } = useQuery({
