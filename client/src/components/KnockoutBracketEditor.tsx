@@ -145,10 +145,24 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     return selectedIds;
   };
 
-  // Get available players for a specific match and position
+  // Get available players for a specific match and position (only qualified players)
   const getAvailableUsers = (matchId: string, position: 'player1' | 'player2') => {
     const selectedIds = getSelectedPlayerIds(matchId, position);
-    return users.filter(user => !selectedIds.has(user.id));
+    
+    // Convert qualified players to user format and filter out already selected ones
+    const qualifiedAsUsers = qualifiedPlayers.map(qp => {
+      // Find the corresponding user data
+      const user = users.find(u => u.id === qp.id);
+      return user || {
+        id: qp.id,
+        firstName: qp.name.split(' ')[0] || qp.name,
+        lastName: qp.name.split(' ').slice(1).join(' ') || '',
+        email: '',
+        phone: ''
+      };
+    });
+    
+    return qualifiedAsUsers.filter(user => !selectedIds.has(user.id));
   };
 
   // Handle manual player selection from dropdown
@@ -158,12 +172,21 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     if (playerId === 'lucky_draw') {
       selectedPlayer = { id: 'lucky_draw', name: 'Lucky draw' };
     } else {
-      const user = users.find(u => u.id === playerId);
-      if (user) {
+      // Find player in qualified players first, then fallback to users
+      const qualifiedPlayer = qualifiedPlayers.find(qp => qp.id === playerId);
+      if (qualifiedPlayer) {
         selectedPlayer = { 
-          id: user.id, 
-          name: `${user.firstName || ''} ${user.lastName || ''}`.trim() 
+          id: qualifiedPlayer.id, 
+          name: qualifiedPlayer.name
         };
+      } else {
+        const user = users.find(u => u.id === playerId);
+        if (user) {
+          selectedPlayer = { 
+            id: user.id, 
+            name: `${user.firstName || ''} ${user.lastName || ''}`.trim() 
+          };
+        }
       }
     }
     
