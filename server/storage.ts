@@ -1586,12 +1586,12 @@ export class DatabaseStorage implements IStorage {
     // Format for frontend consumption  
     return playerTournamentMatches.map((match: any) => ({
       id: match.matchId || `match_${Date.now()}_${Math.random()}`,
-      tournamentId: match.tournamentId,
-      tournamentName: match.tournamentName,
+      tournamentId: match.tournamentId || match.tournament?.id,
+      tournamentName: match.tournamentName || match.tournament?.name,
       date: match.date,
-      opponent: match.opponent,
-      result: match.result,
-      score: match.score || 'N/A'
+      opponent: typeof match.opponent === 'string' ? match.opponent : match.opponent?.name || 'Unknown',
+      result: match.isWinner ? 'win' : 'loss',
+      score: match.result || match.score || 'N/A'
     }));
   }
 
