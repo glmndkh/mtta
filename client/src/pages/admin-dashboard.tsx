@@ -830,14 +830,36 @@ export default function AdminDashboard() {
                     url: data.uploadURL
                   };
                 }}
-                onComplete={(result) => {
-                  if (result.successful.length > 0) {
+                onComplete={async (result) => {
+                  if (result.successful && result.successful.length > 0) {
                     const uploadedFileUrl = result.successful[0].uploadURL;
-                    setFormData({...formData, sponsorLogo: uploadedFileUrl});
-                    toast({
-                      title: "Амжилттай",
-                      description: "Лого амжилттай хуулагдлаа"
-                    });
+                    
+                    // Update ACL policy and get normalized path
+                    try {
+                      const response = await fetch('/api/sponsor-logos', {
+                        method: 'PUT',
+                        headers: {
+                          'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                          sponsorLogoURL: uploadedFileUrl
+                        })
+                      });
+                      const data = await response.json();
+                      
+                      setFormData({...formData, sponsorLogo: data.objectPath});
+                      toast({
+                        title: "Амжилттай",
+                        description: "Лого амжилттай хуулагдлаа"
+                      });
+                    } catch (error) {
+                      console.error('Error setting logo ACL:', error);
+                      setFormData({...formData, sponsorLogo: uploadedFileUrl});
+                      toast({
+                        title: "Анхааруулга",
+                        description: "Лого хуулагдсан боловч зураг харагдахгүй байж магад"
+                      });
+                    }
                   }
                 }}
                 buttonClassName="w-full"
@@ -849,7 +871,11 @@ export default function AdminDashboard() {
               </ObjectUploader>
               {formData.sponsorLogo && (
                 <div className="mt-2">
-                  <img src={formData.sponsorLogo} alt="Sponsor Logo" className="w-16 h-16 object-contain" />
+                  <img 
+                    src={formData.sponsorLogo.startsWith('/objects/') ? formData.sponsorLogo : formData.sponsorLogo} 
+                    alt="Sponsor Logo" 
+                    className="w-16 h-16 object-contain border rounded"
+                  />
                 </div>
               )}
             </div>
@@ -871,7 +897,7 @@ export default function AdminDashboard() {
                   <SelectValue placeholder="Тоглогч нэмэх" />
                 </SelectTrigger>
                 <SelectContent>
-                  {allUsers && allUsers.filter((user: any) => user.role === 'player').map((player: any) => (
+                  {allUsers && Array.isArray(allUsers) && allUsers.filter((user: any) => user.role === 'player').map((player: any) => (
                     <SelectItem key={player.id} value={player.id}>
                       {player.firstName} {player.lastName}
                     </SelectItem>
@@ -882,7 +908,7 @@ export default function AdminDashboard() {
                 <div className="mt-2 space-y-1">
                   <Label className="text-sm text-muted-foreground">Сонгосон тоглогчид:</Label>
                   {formData.playerIds.map((playerId: string) => {
-                    const player = allUsers?.find((u: any) => u.id === playerId && u.role === 'player');
+                    const player = allUsers && Array.isArray(allUsers) ? allUsers.find((u: any) => u.id === playerId && u.role === 'player') : null;
                     return player ? (
                       <div key={playerId} className="flex items-center justify-between bg-secondary p-2 rounded">
                         <span className="text-sm">{player.firstName} {player.lastName}</span>

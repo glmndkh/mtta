@@ -488,6 +488,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Sponsor logo upload endpoint
+  app.put("/api/sponsor-logos", async (req, res) => {
+    if (!req.body.sponsorLogoURL) {
+      return res.status(400).json({ error: "sponsorLogoURL is required" });
+    }
+
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
+        req.body.sponsorLogoURL,
+        {
+          owner: "system",
+          visibility: "public"
+        },
+      );
+
+      res.status(200).json({
+        objectPath: objectPath,
+      });
+    } catch (error) {
+      console.error("Error setting sponsor logo:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   app.post("/api/objects/upload", requireAuth, async (req: any, res) => {
     const objectStorageService = new ObjectStorageService();
     const uploadURL = await objectStorageService.getObjectEntityUploadURL();
