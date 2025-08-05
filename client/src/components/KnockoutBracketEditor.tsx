@@ -45,6 +45,13 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
   const svgRef = useRef<SVGSVGElement>(null);
   const { toast } = useToast();
 
+  // Update matches when initialMatches changes
+  useEffect(() => {
+    if (initialMatches && initialMatches.length > 0) {
+      setMatches(initialMatches);
+    }
+  }, [initialMatches]);
+
   // Generate standard tournament bracket structure with 3rd place playoff
   const generateBracket = useCallback((playerCount: number) => {
     const rounds = Math.ceil(Math.log2(playerCount));
