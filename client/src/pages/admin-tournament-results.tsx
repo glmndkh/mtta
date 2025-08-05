@@ -728,150 +728,7 @@ export default function AdminTournamentResultsPage() {
             <TabsTrigger value="groups">Хэсгийн тоглолт</TabsTrigger>
           </TabsList>
 
-          {/* Final Rankings Editor */}
-          <TabsContent value="rankings">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Trophy className="w-5 h-5" />
-                      Эцсийн байр
-                    </CardTitle>
-                    <CardDescription>
-                      Тэмцээний эцсийн үр дүн ба байрлал оруулах
-                    </CardDescription>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button onClick={addRanking} className="flex items-center gap-2">
-                      <Plus className="w-4 h-4" />
-                      Байр нэмэх
-                    </Button>
-                    <div className="flex space-x-2 border-l pl-2">
-                      <Button 
-                        onClick={exportToExcel} 
-                        variant="outline" 
-                        size="sm"
-                        className="flex items-center gap-2"
-                      >
-                        <Download className="w-4 h-4" />
-                        Excel татах
-                      </Button>
-                      <div className="relative">
-                        <input
-                          type="file"
-                          accept=".xlsx,.xls"
-                          onChange={importFromExcel}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          id="excel-import-rankings"
-                        />
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="flex items-center gap-2"
-                          asChild
-                        >
-                          <label htmlFor="excel-import-rankings" className="cursor-pointer">
-                            <Upload className="w-4 h-4" />
-                            Excel оруулах
-                          </label>
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {/* Display Final Rankings from Knockout Results */}
-                {finalRankings.length > 0 && (
-                  <div className="mb-6 p-4 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg">
-                    <h3 className="text-lg font-semibold text-amber-800 mb-3 flex items-center gap-2">
-                      <Trophy className="w-5 h-5" />
-                      Шигшээ тоглолтын эцсийн үр дүн ({finalRankings.length} тоглогч)
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {finalRankings.map((ranking, index) => (
-                        <div 
-                          key={index} 
-                          className={`p-4 rounded-lg border-2 text-center ${
-                            ranking.position === 1 ? 'bg-yellow-100 border-yellow-400' :
-                            ranking.position === 2 ? 'bg-gray-100 border-gray-400' :
-                            'bg-orange-100 border-orange-400'
-                          }`}
-                        >
-                          <div className="text-3xl mb-2">
-                            {ranking.position === 1 ? '🥇' : ranking.position === 2 ? '🥈' : '🥉'}
-                          </div>
-                          <div className="text-lg font-bold text-gray-800">{ranking.position}-р байр</div>
-                          <div className="font-medium text-gray-900">{ranking.playerName}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {finalRankings.length === 0 && (
-                  <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-center gap-2 text-blue-800">
-                      <Trophy className="w-5 h-5" />
-                      <span className="font-medium">Эцсийн үр дүн гараагүй</span>
-                    </div>
-                    <p className="text-sm text-blue-700 mt-1">
-                      Шигшээ тоглолтыг дуусгасны дараа эцсийн байрлал энд харагдана.
-                    </p>
-                  </div>
-                )}
 
-                <div className="space-y-4">
-                  {finalRankings.map((ranking, index) => (
-                    <div key={index} className="grid grid-cols-12 gap-4 items-center p-4 border rounded-lg">
-                      <div className="col-span-1">
-                        <Input
-                          type="number"
-                          value={ranking.position}
-                          onChange={(e) => updateRanking(index, 'position', parseInt(e.target.value))}
-                          placeholder="Байр"
-                        />
-                      </div>
-                      <div className="col-span-4">
-                        <UserAutocomplete
-                          users={allUsers}
-                          value={ranking.playerName || ''}
-                          onSelect={(user) => {
-                            updateRanking(index, 'playerId', user.id);
-                            updateRanking(index, 'playerName', `${user.firstName} ${user.lastName}`);
-                          }}
-                          placeholder="Тоглогч хайх..."
-                          className="w-full"
-                        />
-                      </div>
-                      <div className="col-span-3">
-                        <Input
-                          value={ranking.prize || ''}
-                          onChange={(e) => updateRanking(index, 'prize', e.target.value)}
-                          placeholder="Шагнал (сайн дурын)"
-                        />
-                      </div>
-                      <div className="col-span-1">
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => removeRanking(index)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                  {finalRankings.length === 0 && (
-                    <p className="text-gray-500 text-center py-8">
-                      "Байр нэмэх" товчийг дарж эцсийн байр оруулна уу
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {/* Knockout Editor */}
           <TabsContent value="knockout">
@@ -879,7 +736,7 @@ export default function AdminTournamentResultsPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>Шоронтох тулаан</CardTitle>
+                    <CardTitle>Шигшээ тоглолтууд</CardTitle>
                     <CardDescription>
                       Шаардлагат тоглолтууд ба тэдгээрийн үр дүн
                     </CardDescription>
@@ -895,26 +752,6 @@ export default function AdminTournamentResultsPage() {
                         <Download className="w-4 h-4" />
                         Excel татах
                       </Button>
-                      <div className="relative">
-                        <input
-                          type="file"
-                          accept=".xlsx,.xls"
-                          onChange={importFromExcel}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          id="excel-import"
-                        />
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="flex items-center gap-2"
-                          asChild
-                        >
-                          <label htmlFor="excel-import" className="cursor-pointer">
-                            <Upload className="w-4 h-4" />
-                            Excel оруулах
-                          </label>
-                        </Button>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -960,28 +797,20 @@ export default function AdminTournamentResultsPage() {
                   </div>
                 )}
 
-                {/* Qualified Players Section */}
+                {/* Qualified Players Section - Compact */}
                 {getQualifiedPlayers().length > 0 && (
-                  <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <h3 className="text-lg font-semibold text-green-800 mb-3 flex items-center gap-2">
-                      <Trophy className="w-5 h-5" />
-                      Шигшээд шалгарсан тоглогчид ({getQualifiedPlayers().length})
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {getQualifiedPlayers().map((player, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-white border border-green-300 rounded-lg">
-                          <div>
-                            <div className="font-medium text-gray-900">{player.name}</div>
-                            <div className="text-sm text-gray-600">{player.groupName} - {player.position === 1 ? '1-р байр' : '2-р байр'}</div>
-                          </div>
-                          <Badge variant={player.position === 1 ? "default" : "secondary"}>
-                            {player.position === 1 ? '🥇' : '🥈'}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-3 text-sm text-green-700">
-                      💡 Эдгээр тоглогчдыг доорх шигшээ тоглолтын сугалаанд ашиглаж болно
+                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-green-800">
+                        Шигшээд шалгарсан тоглогчид: {getQualifiedPlayers().length}
+                      </span>
+                      <div className="flex gap-1">
+                        {getQualifiedPlayers().map((player, index) => (
+                          <span key={index} className="text-xs bg-white px-2 py-1 rounded border text-gray-700">
+                            {player.name}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
