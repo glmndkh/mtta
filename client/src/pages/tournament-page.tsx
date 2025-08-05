@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
-import { ExternalLink, Download, ArrowLeft, Users, Calendar, MapPin, Trophy, FileText, Search, Filter, AlertTriangle, User } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ExternalLink, Download, ArrowLeft, Users, Calendar, MapPin, Trophy, FileText, Search, Filter, AlertTriangle, User, Medal, Crown, Award } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -53,6 +54,130 @@ interface TournamentParticipant {
   registeredAt: string;
 }
 
+interface FinalRanking {
+  position: number;
+  playerId: string;
+  playerName: string;
+  prize?: string;
+}
+
+interface TournamentResults {
+  id: string;
+  tournamentId: string;
+  groupStageResults?: any;
+  knockoutResults?: any;
+  finalRankings?: FinalRanking[];
+  isPublished: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Medal Winners Component
+function MedalWinnersSection({ 
+  tournamentResults 
+}: { 
+  tournamentResults?: TournamentResults;
+}) {
+  if (!tournamentResults?.isPublished || !tournamentResults?.finalRankings) {
+    return null;
+  }
+
+  // Get top 3 finishers
+  const topThree = tournamentResults.finalRankings
+    .filter(ranking => ranking.position <= 3)
+    .sort((a, b) => a.position - b.position);
+
+  if (topThree.length === 0) {
+    return null;
+  }
+
+  const getMedalInfo = (position: number) => {
+    switch (position) {
+      case 1:
+        return { 
+          icon: Crown, 
+          color: "text-yellow-500",
+          bgColor: "bg-yellow-50",
+          title: "Алтан медаль",
+          place: "1-р байр"
+        };
+      case 2:
+        return { 
+          icon: Medal, 
+          color: "text-gray-400",
+          bgColor: "bg-gray-50",
+          title: "Мөнгөн медаль",
+          place: "2-р байр"
+        };
+      case 3:
+        return { 
+          icon: Award, 
+          color: "text-amber-600",
+          bgColor: "bg-amber-50",
+          title: "Хүрэл медаль",
+          place: "3-р байр"
+        };
+      default:
+        return { 
+          icon: Trophy, 
+          color: "text-blue-500",
+          bgColor: "bg-blue-50",
+          title: "Медаль",
+          place: `${position}-р байр`
+        };
+    }
+  };
+
+  return (
+    <div className="bg-white/90 backdrop-blur-sm rounded-lg p-6 mt-6">
+      <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center flex items-center justify-center gap-2">
+        <Trophy className="w-6 h-6 text-yellow-500" />
+        Медальтнууд
+      </h2>
+      
+      <div className="flex flex-wrap justify-center gap-6">
+        {topThree.map((ranking) => {
+          const medalInfo = getMedalInfo(ranking.position);
+          const MedalIcon = medalInfo.icon;
+          
+          return (
+            <div 
+              key={ranking.playerId}
+              className={`${medalInfo.bgColor} rounded-lg p-4 text-center min-w-[200px] border-2 ${
+                ranking.position === 1 ? 'border-yellow-300' : 
+                ranking.position === 2 ? 'border-gray-300' : 
+                'border-amber-300'
+              }`}
+            >
+              <div className="flex flex-col items-center space-y-3">
+                <MedalIcon className={`w-12 h-12 ${medalInfo.color}`} />
+                
+                <Avatar className="w-16 h-16">
+                  <AvatarImage 
+                    src={`/api/users/${ranking.playerId}/avatar`} 
+                    alt={ranking.playerName}
+                  />
+                  <AvatarFallback className="text-lg font-semibold">
+                    {ranking.playerName.split(' ').map(n => n[0]).join('')}
+                  </AvatarFallback>
+                </Avatar>
+                
+                <div>
+                  <p className="font-bold text-lg text-gray-900">{ranking.playerName}</p>
+                  <p className={`text-sm font-medium ${medalInfo.color}`}>{medalInfo.place}</p>
+                  {ranking.prize && (
+                    <p className="text-xs text-gray-600 mt-1">{ranking.prize}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // Tournament Registration Button Component
 function TournamentRegistrationButton({ 
   tournament, 
@@ -73,7 +198,10 @@ function TournamentRegistrationButton({
         window.location.href = "/login";
         return;
       }
-      return apiRequest('POST', `/api/tournaments/${tournament.id}/register`, { participationType });
+      return apiRequest(`/api/tournaments/${tournament.id}/register`, { 
+        method: 'POST', 
+        body: JSON.stringify({ participationType }) 
+      });
     },
     onSuccess: () => {
       toast({
@@ -306,7 +434,7 @@ export default function TournamentPage() {
     enabled: isAuthenticated && !!params?.id,
   });
 
-  const { data: tournamentResults } = useQuery({
+  const { data: tournamentResults } = useQuery<TournamentResults>({
     queryKey: ['/api/tournaments', params?.id, 'results'],
     enabled: !!params?.id,
   });
@@ -417,6 +545,9 @@ export default function TournamentPage() {
                   <span>Зохион байгуулагч: {tournament.organizer}</span>
                 </div>
               </div>
+              
+              {/* Medal Winners Section */}
+              <MedalWinnersSection tournamentResults={tournamentResults} />
             </div>
           </div>
         </div>
