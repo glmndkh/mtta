@@ -893,33 +893,13 @@ export default function AdminTournamentResultsPage() {
                           className="max-w-xs"
                           placeholder="Группийн нэр"
                         />
-                        <div className="flex space-x-2">
-                          <Button 
-                            onClick={() => {
-                              // Use first available user as placeholder
-                              const availableUsers = allUsers.filter(user => !group.players.some(gp => gp.id === user.id));
-                              if (availableUsers.length > 0) {
-                                addPlayerToGroup(groupIndex, {
-                                  id: availableUsers[0].id,
-                                  name: `${availableUsers[0].firstName} ${availableUsers[0].lastName}`,
-                                  club: availableUsers[0].clubAffiliation || ''
-                                });
-                              }
-                            }}
-                            size="sm"
-                            className="flex items-center gap-2"
-                          >
-                            <Plus className="w-4 h-4" />
-                            Тоглогч нэмэх
-                          </Button>
-                          <Button
-                            onClick={() => removeGroupTable(groupIndex)}
-                            variant="destructive"
-                            size="sm"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+                        <Button
+                          onClick={() => removeGroupTable(groupIndex)}
+                          variant="destructive"
+                          size="sm"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
 
                       {/* Excel-style Result Matrix Table */}
@@ -1086,10 +1066,10 @@ export default function AdminTournamentResultsPage() {
                         <div className="text-center py-8">
                           <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                           <p className="text-gray-500 mb-2">
-                            Энэ группд тоглогч нэмж эхлэнэ үү
+                            Дээрх сонголтоос тоглогч сонгож нэмнэ үү
                           </p>
                           <p className="text-sm text-gray-400">
-                            Зөвхөн тэмцээнд бүртгүүлсэн, өөр группд ороогүй тоглогчдыг нэмэх боломжтой
+                            Зөвхөн тэмцээнд бүртгүүлсэн, өөр группд ороогүй тоглогчдыг сонгох боломжтой
                           </p>
                         </div>
                       )}
