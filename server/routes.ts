@@ -230,6 +230,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         membershipAmount: user.membershipAmount
       };
       
+      console.log('Profile response - province:', user.province);
+      console.log('Profile response - city:', user.city);
+      console.log('Full user data from DB:', user);
+      
       res.json(profileData);
     } catch (error) {
       console.error("Error fetching profile:", error);
