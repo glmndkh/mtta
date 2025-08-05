@@ -52,31 +52,32 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     }
   }, [initialMatches]);
 
-  // Generate standard tournament bracket structure with 3rd place playoff
+  // Generate asymmetric tournament bracket structure with proper tree layout
   const generateBracket = useCallback((playerCount: number) => {
     const rounds = Math.ceil(Math.log2(playerCount));
     const newMatches: Match[] = [];
     
-    // Calculate positions for each round with spacing to prevent overlap
-    const MATCH_HEIGHT = 200;
-    const ROUND_WIDTH = 300;
-    const START_Y = 60;
+    // Asymmetric positioning - each round moves toward center/right
+    const ROUND_WIDTH = 350;  // Wider spacing between rounds
+    const START_Y = 80;
     
     for (let round = 1; round <= rounds; round++) {
       const matchesInRound = Math.pow(2, rounds - round);
       const roundName = getRoundName(matchesInRound);
       
       for (let matchIndex = 0; matchIndex < matchesInRound; matchIndex++) {
-        const ySpacing = Math.pow(2, round - 1) * MATCH_HEIGHT + (round * 80);
-        const yOffset = START_Y + matchIndex * ySpacing;
+        // Asymmetric Y positioning - matches converge toward center as rounds progress
+        const verticalSpacing = Math.pow(2, round) * 120; // Increasing spacing per round
+        const centerOffset = (matchesInRound - 1) * verticalSpacing / 2; // Center the group
+        const yPosition = START_Y + (matchIndex * verticalSpacing) - centerOffset + (round * 50);
         
         const match: Match = {
           id: `match_${round}_${matchIndex}`,
           round,
           roundName,
           position: {
-            x: (round - 1) * ROUND_WIDTH + 40,
-            y: yOffset
+            x: 50 + (round - 1) * ROUND_WIDTH, // Each round moves right
+            y: Math.max(yPosition, 60) // Ensure minimum Y position
           }
         };
         
@@ -90,15 +91,15 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
       }
     }
     
-    // Add 3rd place playoff match if we have semifinals
+    // Add 3rd place playoff match - positioned separately at bottom center
     if (rounds >= 2) {
       const thirdPlaceMatch: Match = {
         id: 'third_place_playoff',
-        round: rounds, // Same round as final
+        round: rounds,
         roundName: '3-р байрын тоглолт',
         position: {
-          x: (rounds - 1) * ROUND_WIDTH + 40,
-          y: START_Y + 400 // Position below the final
+          x: 200 + (rounds - 2) * ROUND_WIDTH / 2, // Center horizontally between semifinals and final
+          y: START_Y + 450 // Well below other matches
         }
       };
       newMatches.push(thirdPlaceMatch);
