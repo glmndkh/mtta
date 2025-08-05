@@ -549,30 +549,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
       </div>
 
       {/* Final Rankings */}
-      {getFinalRankings().length > 0 && (
-        <div className="mb-6 p-4 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg">
-          <h3 className="text-lg font-semibold text-amber-800 mb-3 flex items-center gap-2">
-            <Trophy className="w-5 h-5" />
-            Эцсийн байр суурь ({getFinalRankings().length} тоглогч)
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {getFinalRankings().map((ranking, index) => (
-              <div 
-                key={index} 
-                className={`p-4 rounded-lg border-2 text-center ${
-                  ranking.position === 1 ? 'bg-yellow-100 border-yellow-400' :
-                  ranking.position === 2 ? 'bg-gray-100 border-gray-400' :
-                  'bg-orange-100 border-orange-400'
-                }`}
-              >
-                <div className="text-3xl mb-2">{ranking.medal}</div>
-                <div className="text-lg font-bold text-gray-800">{ranking.position}-р байр</div>
-                <div className="font-medium text-gray-900">{ranking.player.name}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+
 
       {/* Bracket Visualization */}
       <div className="relative">
