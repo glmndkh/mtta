@@ -785,11 +785,11 @@ export class DatabaseStorage implements IStorage {
 
   // League operations
   async getAllLeagues(): Promise<Array<League & { teams: Array<TournamentTeam & { players: TournamentTeamPlayer[] }> }>> {
-    const leagues = await db.select().from(leagues).orderBy(desc(leagues.startDate));
+    const leaguesList = await db.select().from(leagues).orderBy(desc(leagues.startDate));
     
     // Get teams for each league
     const leaguesWithTeams = await Promise.all(
-      leagues.map(async (league) => {
+      leaguesList.map(async (league) => {
         const teams = await this.getLeagueTeams(league.id);
         return {
           ...league,
