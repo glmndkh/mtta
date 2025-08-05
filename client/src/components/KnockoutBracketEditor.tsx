@@ -464,32 +464,67 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
 
 
 
-  // Render connection lines
+  // Render connection lines with improved visual flow
   const renderConnections = () => {
-    return matches.map(match => {
-      if (!match.nextMatchId) return null;
-      
-      const nextMatch = matches.find(m => m.id === match.nextMatchId);
-      if (!nextMatch) return null;
-      
-      const x1 = match.position.x + 256; // Updated match box width (w-64)
-      const y1 = match.position.y + 70; // Center of match box
-      const x2 = nextMatch.position.x;
-      const y2 = nextMatch.position.y + 70;
-      
-      return (
-        <line
-          key={`line-${match.id}`}
-          x1={x1}
-          y1={y1}
-          x2={x2}
-          y2={y2}
-          stroke="#9CA3AF"
-          strokeWidth="2"
-          strokeDasharray="5,5"
-        />
-      );
+    const connections: JSX.Element[] = [];
+    
+    matches.forEach(match => {
+      if (match.nextMatchId) {
+        const nextMatch = matches.find(m => m.id === match.nextMatchId);
+        if (nextMatch) {
+          const startX = match.position.x + 192; // Match box width (w-48)
+          const startY = match.position.y + 50; // Match center
+          const endX = nextMatch.position.x;
+          const endY = nextMatch.position.y + 50;
+          
+          // Create L-shaped connection line for better visual flow
+          const midX = startX + (endX - startX) / 2;
+          
+          connections.push(
+            <g key={`connection-${match.id}`}>
+              {/* Horizontal line from match */}
+              <line
+                x1={startX}
+                y1={startY}
+                x2={midX}
+                y2={startY}
+                stroke="#3b82f6"
+                strokeWidth="2"
+                strokeOpacity="0.6"
+              />
+              {/* Vertical connector */}
+              <line
+                x1={midX}
+                y1={startY}
+                x2={midX}
+                y2={endY}
+                stroke="#3b82f6"
+                strokeWidth="2"
+                strokeOpacity="0.6"
+              />
+              {/* Horizontal line to next match */}
+              <line
+                x1={midX}
+                y1={endY}
+                x2={endX}
+                y2={endY}
+                stroke="#3b82f6"
+                strokeWidth="2"
+                strokeOpacity="0.6"
+              />
+              {/* Arrow head */}
+              <polygon
+                points={`${endX-8},${endY-4} ${endX},${endY} ${endX-8},${endY+4}`}
+                fill="#3b82f6"
+                opacity="0.6"
+              />
+            </g>
+          );
+        }
+      }
     });
+    
+    return connections;
   };
 
   return (
@@ -606,60 +641,62 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                   </Button>
                 </div>
 
-                {/* Compact Player Display */}
+                {/* Compact Player Selection */}
                 <div className="space-y-1 mb-2">
                   {/* Player 1 */}
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex-1 min-w-0">
-                      {match.player1 ? (
-                        <span className="text-blue-700 font-medium truncate block">
+                  <div className="text-xs">
+                    {match.player1 ? (
+                      <div className="flex items-center justify-between">
+                        <span className="text-blue-700 font-medium truncate">
                           {match.player1.name}
                         </span>
-                      ) : (
-                        <select
-                          className="w-full text-xs border rounded px-1 py-0 bg-blue-50"
-                          value=""
-                          onChange={(e) => handlePlayerSelect(match.id, 'player1', e.target.value)}
-                        >
-                          <option value="">P1</option>
-                          {getAvailableUsers(match.id, 'player1').slice(0, 5).map(user => (
-                            <option key={user.id} value={user.id}>
-                              {user.firstName} {user.lastName}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    </div>
-                    <span className="ml-2 font-mono text-sm">
-                      {match.player1Score || '-'}
-                    </span>
+                        <span className="ml-2 font-mono text-sm">
+                          {match.player1Score || '-'}
+                        </span>
+                      </div>
+                    ) : (
+                      <select
+                        className="w-full text-xs border rounded px-1 py-0 bg-blue-50"
+                        value={match.player1?.id || ''}
+                        onChange={(e) => handlePlayerSelect(match.id, 'player1', e.target.value)}
+                      >
+                        <option value="">Тоглогч 1 сонгох</option>
+                        <option value="lucky_draw">🎲 Lucky draw</option>
+                        {getAvailableUsers(match.id, 'player1').map(user => (
+                          <option key={`${match.id}-p1-${user.id}`} value={user.id}>
+                            {user.firstName} {user.lastName}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
 
                   {/* Player 2 */}
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex-1 min-w-0">
-                      {match.player2 ? (
-                        <span className="text-red-700 font-medium truncate block">
+                  <div className="text-xs">
+                    {match.player2 ? (
+                      <div className="flex items-center justify-between">
+                        <span className="text-red-700 font-medium truncate">
                           {match.player2.name}
                         </span>
-                      ) : (
-                        <select
-                          className="w-full text-xs border rounded px-1 py-0 bg-red-50"
-                          value=""
-                          onChange={(e) => handlePlayerSelect(match.id, 'player2', e.target.value)}
-                        >
-                          <option value="">P2</option>
-                          {getAvailableUsers(match.id, 'player2').slice(0, 5).map(user => (
-                            <option key={user.id} value={user.id}>
-                              {user.firstName} {user.lastName}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    </div>
-                    <span className="ml-2 font-mono text-sm">
-                      {match.player2Score || '-'}
-                    </span>
+                        <span className="ml-2 font-mono text-sm">
+                          {match.player2Score || '-'}
+                        </span>
+                      </div>
+                    ) : (
+                      <select
+                        className="w-full text-xs border rounded px-1 py-0 bg-red-50"
+                        value={match.player2?.id || ''}
+                        onChange={(e) => handlePlayerSelect(match.id, 'player2', e.target.value)}
+                      >
+                        <option value="">Тоглогч 2 сонгох</option>
+                        <option value="lucky_draw">🎲 Lucky draw</option>
+                        {getAvailableUsers(match.id, 'player2').map(user => (
+                          <option key={`${match.id}-p2-${user.id}`} value={user.id}>
+                            {user.firstName} {user.lastName}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                 </div>
 
@@ -695,18 +732,22 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                 ) : (
                   <select
                     className="w-full p-1 border rounded text-xs h-6"
-                    value=""
+                    value={match.winner?.id || ''}
                     onChange={(e) => handleWinnerSelection(match.id, e.target.value)}
                   >
-                    <option value="">Winner</option>
+                    <option value="">Ялагч сонгох</option>
                     {match.player1 && (
                       <option value={match.player1.id}>
-                        {match.player1.name.substring(0, 12)}
+                        {match.player1.name.length > 12 ? 
+                          match.player1.name.substring(0, 12) + '...' : 
+                          match.player1.name}
                       </option>
                     )}
                     {match.player2 && (
                       <option value={match.player2.id}>
-                        {match.player2.name.substring(0, 12)}
+                        {match.player2.name.length > 12 ? 
+                          match.player2.name.substring(0, 12) + '...' : 
+                          match.player2.name}
                       </option>
                     )}
                   </select>
