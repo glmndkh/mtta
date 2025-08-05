@@ -1044,10 +1044,13 @@ export default function AdminTournamentResultsPage() {
                             return (
                               <div className="text-center py-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
                                 <p className="text-sm text-gray-600 mb-1">
-                                  Бүх тоглогч группд хуваарилагдсан байна
+                                  Энэ группд нэмэх боломжтой тоглогч байхгүй байна
                                 </p>
                                 <p className="text-xs text-gray-500">
                                   {totalInGroups}/{totalRegistered} тоглогч группд орсон
+                                </p>
+                                <p className="text-xs text-gray-400 mt-1">
+                                  Бусад группаас тоглогч хасаж энэ группд нэмэх боломжтой
                                 </p>
                               </div>
                             );
@@ -1072,7 +1075,7 @@ export default function AdminTournamentResultsPage() {
                                   });
                                 }
                               }}
-                              placeholder="Тэмцээнд бүртгүүлсэн тоглогч хайж нэмэх..."
+                              placeholder="Энэ группд нэмэх тоглогч хайх..."
                               className="w-full"
                             />
                           );
@@ -1083,10 +1086,10 @@ export default function AdminTournamentResultsPage() {
                         <div className="text-center py-8">
                           <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                           <p className="text-gray-500 mb-2">
-                            Дээрх хайлтаас тоглогч нэмж эхлэнэ үү
+                            Энэ группд тоглогч нэмж эхлэнэ үү
                           </p>
                           <p className="text-sm text-gray-400">
-                            Зөвхөн тэмцээнд бүртгүүлсэн тоглогчдыг нэмэх боломжтой
+                            Зөвхөн тэмцээнд бүртгүүлсэн, өөр группд ороогүй тоглогчдыг нэмэх боломжтой
                           </p>
                         </div>
                       )}
