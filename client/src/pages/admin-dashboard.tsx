@@ -877,9 +877,13 @@ export default function AdminDashboard() {
               {formData.sponsorLogo && (
                 <div className="mt-2">
                   <img 
-                    src={formData.sponsorLogo.startsWith('/objects/') ? formData.sponsorLogo : formData.sponsorLogo} 
+                    src={formData.sponsorLogo} 
                     alt="Sponsor Logo" 
                     className="w-16 h-16 object-contain border rounded"
+                    onError={(e) => {
+                      console.error('Image load error:', e);
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
                 </div>
               )}
@@ -1456,7 +1460,14 @@ export default function AdminDashboard() {
                                 <div className="font-medium">{team.name}</div>
                                 {team.sponsorLogo && (
                                   <div className="text-sm text-muted-foreground">
-                                    <img src={team.sponsorLogo} alt="Sponsor" className="w-4 h-4 inline mr-1" />
+                                    <img 
+                                      src={team.sponsorLogo} 
+                                      alt="Sponsor" 
+                                      className="w-4 h-4 inline mr-1"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                      }}
+                                    />
                                     Ивээн тэтгэгч
                                   </div>
                                 )}

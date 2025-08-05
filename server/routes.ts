@@ -465,8 +465,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/objects/:objectPath(*)", requireAuth, async (req: any, res) => {
-    const userId = req.session.userId;
+  app.get("/objects/:objectPath(*)", async (req: any, res) => {
+    const userId = req.session?.userId; // Make userId optional for public images
     const objectStorageService = new ObjectStorageService();
     try {
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
@@ -503,6 +503,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           visibility: "public"
         },
       );
+
+      console.log("Sponsor logo processed:", { 
+        input: req.body.sponsorLogoURL, 
+        output: objectPath 
+      });
 
       res.status(200).json({
         objectPath: objectPath,
