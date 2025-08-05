@@ -23,6 +23,9 @@ export default function AdminDashboard() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [formData, setFormData] = useState<any>({});
+  const [userFilter, setUserFilter] = useState("");
+  const [playerFilter, setPlayerFilter] = useState("");
+  const [clubFilter, setClubFilter] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -251,16 +254,34 @@ export default function AdminDashboard() {
     setIsCreateDialogOpen(true);
   };
 
-  const renderUsersTab = () => (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Хэрэглэгчид</h2>
-      </div>
-      
-      {usersLoading ? (
-        <div>Ачааллаж байна...</div>
-      ) : (
-        <Table>
+  const renderUsersTab = () => {
+    const filteredUsers = users && Array.isArray(users) ? users.filter((user: any) => {
+      const searchText = userFilter.toLowerCase();
+      return !searchText || 
+             user.firstName?.toLowerCase().includes(searchText) ||
+             user.lastName?.toLowerCase().includes(searchText) ||
+             user.email?.toLowerCase().includes(searchText) ||
+             user.phone?.includes(searchText) ||
+             user.role?.toLowerCase().includes(searchText);
+    }) : [];
+
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center gap-4">
+          <h2 className="text-2xl font-bold">Хэрэглэгчид</h2>
+          <div className="flex-1 max-w-sm">
+            <Input
+              placeholder="Хэрэглэгч хайх..."
+              value={userFilter}
+              onChange={(e) => setUserFilter(e.target.value)}
+            />
+          </div>
+        </div>
+        
+        {usersLoading ? (
+          <div>Ачааллаж байна...</div>
+        ) : (
+          <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Нэр</TableHead>
@@ -272,7 +293,7 @@ export default function AdminDashboard() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users && Array.isArray(users) ? users.map((user: any) => (
+            {filteredUsers.map((user: any) => (
               <TableRow key={user.id}>
                 <TableCell>{user.firstName} {user.lastName}</TableCell>
                 <TableCell>{user.email}</TableCell>
@@ -291,112 +312,156 @@ export default function AdminDashboard() {
                   </div>
                 </TableCell>
               </TableRow>
-            )) : null}
+            ))}
           </TableBody>
         </Table>
-      )}
-    </div>
-  );
-
-  const renderPlayersTab = () => (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Тоглогчид</h2>
+        )}
       </div>
-      
-      {playersLoading ? (
-        <div>Ачааллаж байна...</div>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Гишүүний дугаар</TableHead>
-              <TableHead>Нэр</TableHead>
-              <TableHead>Зэрэглэл</TableHead>
-              <TableHead>Оноо</TableHead>
-              <TableHead>Амжилт</TableHead>
-              <TableHead>Хожил/Ялагдал</TableHead>
-              <TableHead>Үйлдэл</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {players && Array.isArray(players) ? players.map((player: any) => (
-              <TableRow key={player.players?.id}>
-                <TableCell>{player.players?.memberNumber}</TableCell>
-                <TableCell>{player.users?.firstName} {player.users?.lastName}</TableCell>
-                <TableCell>{player.players?.rank || 'Тодорхойгүй'}</TableCell>
-                <TableCell>{player.players?.points || 0}</TableCell>
-                <TableCell>
-                  <div className="max-w-32 truncate" title={player.players?.achievements}>
-                    {player.players?.achievements || 'Байхгүй'}
-                  </div>
-                </TableCell>
-                <TableCell>{player.players?.wins}/{player.players?.losses}</TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => openEditPlayerDialog(player)}>
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(player.players?.id)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            )) : null}
-          </TableBody>
-        </Table>
-      )}
-    </div>
-  );
+    );
+  };
 
-  const renderClubsTab = () => (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Клубууд</h2>
-        <Button onClick={openCreateDialog}>
-          <Plus className="w-4 h-4 mr-2" />
-          Клуб нэмэх
-        </Button>
-      </div>
-      
-      {clubsLoading ? (
-        <div>Ачааллаж байна...</div>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Нэр</TableHead>
-              <TableHead>Тайлбар</TableHead>
-              <TableHead>Хаяг</TableHead>
-              <TableHead>Холбоо барих</TableHead>
-              <TableHead>Үйлдэл</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {clubs && Array.isArray(clubs) ? clubs.map((club: any) => (
-              <TableRow key={club.id}>
-                <TableCell>{club.name}</TableCell>
-                <TableCell>{club.description}</TableCell>
-                <TableCell>{club.address}</TableCell>
-                <TableCell>{club.phone} / {club.email}</TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => openEditDialog(club)}>
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(club.id)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </TableCell>
+  const renderPlayersTab = () => {
+    const filteredPlayers = players && Array.isArray(players) ? players.filter((player: any) => {
+      const searchText = playerFilter.toLowerCase();
+      return !searchText || 
+             player.users?.firstName?.toLowerCase().includes(searchText) ||
+             player.users?.lastName?.toLowerCase().includes(searchText) ||
+             player.players?.memberNumber?.toString().includes(searchText) ||
+             player.players?.rank?.toLowerCase().includes(searchText);
+    }) : [];
+
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center gap-4">
+          <h2 className="text-2xl font-bold">Тоглогчид</h2>
+          <div className="flex-1 max-w-sm">
+            <Input
+              placeholder="Тоглогч хайх..."
+              value={playerFilter}
+              onChange={(e) => setPlayerFilter(e.target.value)}
+            />
+          </div>
+        </div>
+        
+        {playersLoading ? (
+          <div>Ачааллаж байна...</div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Гишүүний дугаар</TableHead>
+                <TableHead>Нэр</TableHead>
+                <TableHead>Зэрэглэл</TableHead>
+                <TableHead>Оноо</TableHead>
+                <TableHead>Амжилт</TableHead>
+                <TableHead>Гишүүнчлэл</TableHead>
+                <TableHead>Хожил/Ялагдал</TableHead>
+                <TableHead>Үйлдэл</TableHead>
               </TableRow>
-            )) : null}
-          </TableBody>
-        </Table>
-      )}
-    </div>
-  );
+            </TableHeader>
+            <TableBody>
+              {filteredPlayers.map((player: any) => (
+                <TableRow key={player.players?.id}>
+                  <TableCell>{player.players?.memberNumber}</TableCell>
+                  <TableCell>{player.users?.firstName} {player.users?.lastName}</TableCell>
+                  <TableCell>{player.players?.rank || 'Тодорхойгүй'}</TableCell>
+                  <TableCell>{player.players?.points || 0}</TableCell>
+                  <TableCell>
+                    <div className="max-w-32 truncate" title={player.players?.achievements}>
+                      {player.players?.achievements || 'Байхгүй'}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={player.users?.membershipActive ? 'default' : 'destructive'}>
+                      {player.users?.membershipActive ? 'Идэвхтэй' : 'Идэвхгүй'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{player.players?.wins}/{player.players?.losses}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => openEditPlayerDialog(player)}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleDelete(player.players?.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
+    );
+  };
+
+  const renderClubsTab = () => {
+    const filteredClubs = clubs && Array.isArray(clubs) ? clubs.filter((club: any) => {
+      const searchText = clubFilter.toLowerCase();
+      return !searchText || 
+             club.name?.toLowerCase().includes(searchText) ||
+             club.description?.toLowerCase().includes(searchText) ||
+             club.address?.toLowerCase().includes(searchText) ||
+             club.phone?.includes(searchText) ||
+             club.email?.toLowerCase().includes(searchText);
+    }) : [];
+
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center gap-4">
+          <h2 className="text-2xl font-bold">Клубууд</h2>
+          <div className="flex-1 max-w-sm">
+            <Input
+              placeholder="Клуб хайх..."
+              value={clubFilter}
+              onChange={(e) => setClubFilter(e.target.value)}
+            />
+          </div>
+          <Button onClick={openCreateDialog}>
+            <Plus className="w-4 h-4 mr-2" />
+            Клуб нэмэх
+          </Button>
+        </div>
+        
+        {clubsLoading ? (
+          <div>Ачааллаж байна...</div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Нэр</TableHead>
+                <TableHead>Тайлбар</TableHead>
+                <TableHead>Хаяг</TableHead>
+                <TableHead>Холбоо барих</TableHead>
+                <TableHead>Үйлдэл</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredClubs.map((club: any) => (
+                <TableRow key={club.id}>
+                  <TableCell>{club.name}</TableCell>
+                  <TableCell>{club.description}</TableCell>
+                  <TableCell>{club.address}</TableCell>
+                  <TableCell>{club.phone} / {club.email}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => openEditDialog(club)}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleDelete(club.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
+    );
+  };
 
   const renderSlidersTab = () => (
     <div className="space-y-4">
