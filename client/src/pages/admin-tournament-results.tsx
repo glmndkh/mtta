@@ -889,24 +889,21 @@ export default function AdminTournamentResultsPage() {
                     console.log('All matches for ranking calculation:', newMatches);
                     console.log('Available roundNames:', newMatches.map(m => m.roundName));
                     
-                    // Find final match
-                    let finalMatch = newMatches.find(m => m.roundName === 'Финал');
+                    // Find the REAL final match - should be the one with highest round number or specific ID
+                    const allFinals = newMatches.filter(m => m.roundName === 'Финал' && m.id !== 'third_place_playoff');
+                    console.log('All final matches found:', allFinals);
                     
-                    // If no final found, check if we can construct it from stored semifinals (which are actually finals)
-                    if (!finalMatch) {
-                      const finals = newMatches.filter(m => m.roundName === 'Финал');
-                      // Filter out 3rd place playoff
-                      const actualFinals = finals.filter(m => m.id !== 'third_place_playoff');
-                      console.log('Found actual finals for ranking construction:', actualFinals);
-                      
-                      if (actualFinals.length >= 1 && actualFinals[0]?.winner) {
-                        // Use the actual final match directly
-                        finalMatch = actualFinals[0];
-                        console.log('Using actual final match for rankings:', finalMatch);
-                      }
+                    // The real final is usually the one with the highest round number or most advanced position
+                    let finalMatch = allFinals.find(m => m.id.includes('match_2_') || m.id.includes('match_3_'));
+                    
+                    // If no advanced final found, try to find by position (rightmost on bracket)
+                    if (!finalMatch && allFinals.length > 0) {
+                      finalMatch = allFinals.reduce((latest, current) => {
+                        return (current.position.x > latest.position.x) ? current : latest;
+                      });
                     }
                     
-                    console.log('Found/created final match:', finalMatch);
+                    console.log('Selected final match for rankings:', finalMatch);
                     
                     if (finalMatch?.winner && finalMatch.player1 && finalMatch.player2) {
                       // 1st place: final winner
@@ -935,14 +932,20 @@ export default function AdminTournamentResultsPage() {
                     console.log('Found 3rd place match:', thirdPlaceMatch);
                     
                     if (thirdPlaceMatch?.winner) {
-                      // 3rd place: 3rd place playoff winner
-                      newFinalRankings.push({
-                        position: 3,
-                        playerId: thirdPlaceMatch.winner.id,
-                        playerName: thirdPlaceMatch.winner.name
-                      });
-                      
-                      console.log('3rd place winner:', thirdPlaceMatch.winner.name);
+                      // Make sure 3rd place winner is not already in rankings (avoid duplicates)
+                      const alreadyRanked = newFinalRankings.some(r => r.playerId === thirdPlaceMatch.winner!.id);
+                      if (!alreadyRanked) {
+                        // 3rd place: 3rd place playoff winner
+                        newFinalRankings.push({
+                          position: 3,
+                          playerId: thirdPlaceMatch.winner.id,
+                          playerName: thirdPlaceMatch.winner.name
+                        });
+                        
+                        console.log('3rd place winner:', thirdPlaceMatch.winner.name);
+                      } else {
+                        console.log('3rd place winner already ranked, skipping duplicate');
+                      }
                     }
                     
                     console.log('Calculated final rankings:', newFinalRankings);
