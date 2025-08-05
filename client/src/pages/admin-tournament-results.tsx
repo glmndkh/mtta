@@ -1023,32 +1023,21 @@ export default function AdminTournamentResultsPage() {
                         </div>
                         
                         {(() => {
-                          // Debug logging
-                          console.log('Participants:', participants);
-                          console.log('All users:', allUsers);
-                          console.log('Group stage tables:', groupStageTables);
-                          
                           // Recalculate available players each time
                           const availablePlayers = allUsers.filter(user => {
-                            // Only show users who are registered for this tournament
-                            const isRegisteredForTournament = participants.some(participant => 
-                              participant.id === user.id
-                            );
+                            // Match participants to users by name (participants contain expanded user data)
+                            const isRegisteredForTournament = participants.some(participant => {
+                              return (participant.firstName === user.firstName && participant.lastName === user.lastName) ||
+                                     (participant.email === user.email && participant.email) ||
+                                     participant.id === user.id;
+                            });
                             
                             // Check if player is already in ANY group in this tournament
-                            // Use current state of groupStageTables
                             const isInAnyGroup = groupStageTables.some(anyGroup => 
                               anyGroup.players && anyGroup.players.some(gp => gp.id === user.id)
                             );
                             
                             const isValidUser = user.firstName && user.lastName;
-                            
-                            console.log(`User ${user.firstName} ${user.lastName}:`, {
-                              isRegisteredForTournament,
-                              isInAnyGroup,
-                              isValidUser,
-                              participantMatch: participants.find(p => p.id === user.id)
-                            });
                             
                             return isRegisteredForTournament && !isInAnyGroup && isValidUser;
                           });
@@ -1059,12 +1048,10 @@ export default function AdminTournamentResultsPage() {
                               total + (group.players ? group.players.length : 0), 0
                             );
                             
-                            console.log('Debug info:', { 
-                              totalRegistered, 
-                              totalInGroups, 
-                              participantsData: participants,
-                              allUsersCount: allUsers.length 
-                            });
+                            // Additional debug info for empty state
+                            if (totalRegistered === 0) {
+                              console.log('No participants found for tournament:', tournamentId);
+                            }
                             
                             return (
                               <div className="text-center py-3 border-2 border-dashed border-gray-300 rounded-lg bg-white">
