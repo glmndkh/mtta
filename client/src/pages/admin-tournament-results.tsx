@@ -138,32 +138,42 @@ export default function AdminTournamentResultsPage() {
         const knockoutResults = (existingResults.knockoutResults as KnockoutMatch[]) || [];
         const calculatedRankings: FinalRanking[] = [];
         
+        console.log('Loading existing knockout results:', knockoutResults);
+        
         const finalMatch = knockoutResults.find(m => m.round === 'final');
-        if (finalMatch?.winner) {
+        console.log('Found existing final match:', finalMatch);
+        
+        if (finalMatch?.winner && finalMatch.player1 && finalMatch.player2) {
           calculatedRankings.push({
             position: 1,
             playerId: finalMatch.winner.id,
             playerName: finalMatch.winner.name
           });
           
-          const finalLoser = finalMatch.player1?.id === finalMatch.winner.id ? finalMatch.player2 : finalMatch.player1;
-          if (finalLoser) {
-            calculatedRankings.push({
-              position: 2,
-              playerId: finalLoser.id,
-              playerName: finalLoser.name
-            });
-          }
+          const finalLoser = finalMatch.player1.id === finalMatch.winner.id ? finalMatch.player2 : finalMatch.player1;
+          calculatedRankings.push({
+            position: 2,
+            playerId: finalLoser.id,
+            playerName: finalLoser.name
+          });
+          
+          console.log('Existing final - Winner:', finalMatch.winner.name, 'Loser:', finalLoser.name);
         }
         
         const thirdPlaceMatch = knockoutResults.find(m => m.id === 'third_place_playoff');
+        console.log('Found existing 3rd place match:', thirdPlaceMatch);
+        
         if (thirdPlaceMatch?.winner) {
           calculatedRankings.push({
             position: 3,
             playerId: thirdPlaceMatch.winner.id,
             playerName: thirdPlaceMatch.winner.name
           });
+          
+          console.log('Existing 3rd place winner:', thirdPlaceMatch.winner.name);
         }
+        
+        console.log('Calculated rankings from existing data:', calculatedRankings);
         
         setFinalRankings(calculatedRankings);
       }
@@ -962,9 +972,13 @@ export default function AdminTournamentResultsPage() {
                     // Calculate and update final rankings
                     const newFinalRankings: FinalRanking[] = [];
                     
+                    console.log('All matches for ranking calculation:', newMatches);
+                    
                     // Find final match
                     const finalMatch = newMatches.find(m => m.roundName === 'Финал');
-                    if (finalMatch?.winner) {
+                    console.log('Found final match:', finalMatch);
+                    
+                    if (finalMatch?.winner && finalMatch.player1 && finalMatch.player2) {
                       // 1st place: final winner
                       newFinalRankings.push({
                         position: 1,
@@ -972,19 +986,24 @@ export default function AdminTournamentResultsPage() {
                         playerName: finalMatch.winner.name
                       });
                       
-                      // 2nd place: final loser
-                      const finalLoser = finalMatch.player1?.id === finalMatch.winner.id ? finalMatch.player2 : finalMatch.player1;
-                      if (finalLoser) {
-                        newFinalRankings.push({
-                          position: 2,
-                          playerId: finalLoser.id,
-                          playerName: finalLoser.name
-                        });
-                      }
+                      // 2nd place: final loser (the other player in final)
+                      const finalLoser = finalMatch.player1.id === finalMatch.winner.id ? finalMatch.player2 : finalMatch.player1;
+                      newFinalRankings.push({
+                        position: 2,
+                        playerId: finalLoser.id,
+                        playerName: finalLoser.name
+                      });
+                      
+                      console.log('Final match results - Winner:', finalMatch.winner.name, 'Loser:', finalLoser.name);
+                    } else if (finalMatch?.player1 && finalMatch?.player2 && !finalMatch.winner) {
+                      // If final has players but no winner yet, don't add rankings
+                      console.log('Final match has players but no winner determined yet');
                     }
                     
                     // Find 3rd place playoff
                     const thirdPlaceMatch = newMatches.find(m => m.id === 'third_place_playoff');
+                    console.log('Found 3rd place match:', thirdPlaceMatch);
+                    
                     if (thirdPlaceMatch?.winner) {
                       // 3rd place: 3rd place playoff winner
                       newFinalRankings.push({
@@ -992,7 +1011,11 @@ export default function AdminTournamentResultsPage() {
                         playerId: thirdPlaceMatch.winner.id,
                         playerName: thirdPlaceMatch.winner.name
                       });
+                      
+                      console.log('3rd place winner:', thirdPlaceMatch.winner.name);
                     }
+                    
+                    console.log('Calculated final rankings:', newFinalRankings);
                     
                     setFinalRankings(newFinalRankings);
                     
