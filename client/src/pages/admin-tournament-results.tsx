@@ -1032,7 +1032,7 @@ export default function AdminTournamentResultsPage() {
                           const availablePlayers = allUsers.filter(user => {
                             // Only show users who are registered for this tournament
                             const isRegisteredForTournament = participants.some(participant => 
-                              participant.playerId === user.id
+                              participant.id === user.id
                             );
                             
                             // Check if player is already in ANY group in this tournament
@@ -1047,7 +1047,7 @@ export default function AdminTournamentResultsPage() {
                               isRegisteredForTournament,
                               isInAnyGroup,
                               isValidUser,
-                              participantMatch: participants.find(p => p.playerId === user.id)
+                              participantMatch: participants.find(p => p.id === user.id)
                             });
                             
                             return isRegisteredForTournament && !isInAnyGroup && isValidUser;
