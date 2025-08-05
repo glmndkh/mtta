@@ -432,25 +432,33 @@ export default function AdminTournamentResultsPage() {
     calculateGroupStandings(group);
   };
 
-  // Get qualified players from group stage (top 2 from each group)
+  // Get qualified players from group stage (positions 1 and 2 from each group)
   const getQualifiedPlayers = (): QualifiedPlayer[] => {
     const qualified: QualifiedPlayer[] = [];
     
     groupStageTables.forEach(group => {
       if (group.standings && group.standings.length > 0) {
-        // Get top 2 players from each group
-        const topPlayers = group.standings
-          .sort((a, b) => a.position - b.position)
-          .slice(0, 2);
+        // Find players with positions 1 and 2 specifically
+        const firstPlace = group.standings.find(player => player.position === 1);
+        const secondPlace = group.standings.find(player => player.position === 2);
         
-        topPlayers.forEach(player => {
+        if (firstPlace) {
           qualified.push({
-            id: player.playerId,
-            name: player.playerName,
+            id: firstPlace.playerId,
+            name: firstPlace.playerName,
             groupName: group.groupName,
-            position: player.position
+            position: 1
           });
-        });
+        }
+        
+        if (secondPlace) {
+          qualified.push({
+            id: secondPlace.playerId,
+            name: secondPlace.playerName,
+            groupName: group.groupName,
+            position: 2
+          });
+        }
       }
     });
     
