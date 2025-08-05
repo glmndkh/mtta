@@ -298,7 +298,48 @@ export default function AdminTournamentResultsPage() {
     setGroupStageTables(updated);
   };
 
+  // Helper function to get all players already in groups
+  const getAllPlayersInGroups = (): string[] => {
+    const playerIds: string[] = [];
+    groupStageTables.forEach(group => {
+      group.players.forEach(player => {
+        playerIds.push(player.id);
+      });
+    });
+    return playerIds;
+  };
+
+  // Function to remove a player from a group
+  const removePlayerFromGroup = (groupIndex: number, playerIndex: number) => {
+    const updated = [...groupStageTables];
+    updated[groupIndex].players.splice(playerIndex, 1);
+    
+    // Rebuild result matrix with new player count
+    const playerCount = updated[groupIndex].players.length;
+    updated[groupIndex].resultMatrix = Array(playerCount).fill(null).map(() => 
+      Array(playerCount).fill('')
+    );
+    
+    // Recalculate standings
+    calculateGroupStandings(updated[groupIndex]);
+    setGroupStageTables(updated);
+  };
+
   const addPlayerToGroup = (groupIndex: number, player: { id: string; name: string; club: string; wins?: string; position?: string }) => {
+    // Check if player is already in any group
+    const isPlayerInAnyGroup = groupStageTables.some(group => 
+      group.players.some(gp => gp.id === player.id)
+    );
+    
+    if (isPlayerInAnyGroup) {
+      toast({
+        title: "Алдаа",
+        description: `${player.name} аль хэдийн өөр группд орсон байна. Нэг тоглогч зөвхөн нэг группд оролцох боломжтой.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const updated = [...groupStageTables];
     updated[groupIndex].players.push({
       ...player,
@@ -916,17 +957,7 @@ export default function AdminTournamentResultsPage() {
                                       <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => {
-                                          const updated = [...groupStageTables];
-                                          updated[groupIndex].players.splice(playerIndex, 1);
-                                          // Reset result matrix for this player
-                                          updated[groupIndex].resultMatrix = updated[groupIndex].resultMatrix.filter((_, i) => i !== playerIndex);
-                                          updated[groupIndex].resultMatrix.forEach(row => {
-                                            row.splice(playerIndex, 1);
-                                          });
-                                          recalculateStandings(updated[groupIndex]);
-                                          setGroupStageTables(updated);
-                                        }}
+                                        onClick={() => removePlayerFromGroup(groupIndex, playerIndex)}
                                         className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
                                       >
                                         <Trash2 className="w-3 h-3" />
@@ -992,7 +1023,13 @@ export default function AdminTournamentResultsPage() {
                       {/* Player Selection with UserAutocomplete */}
                       <div className="mt-4">
                         <UserAutocomplete
-                          users={allUsers.filter(user => !group.players.some(gp => gp.id === user.id))}
+                          users={allUsers.filter(user => {
+                            // Check if player is already in ANY group in this tournament
+                            const isInAnyGroup = groupStageTables.some(anyGroup => 
+                              anyGroup.players.some(gp => gp.id === user.id)
+                            );
+                            return !isInAnyGroup;
+                          })}
                           value=""
                           onSelect={(user) => {
                             addPlayerToGroup(groupIndex, {
