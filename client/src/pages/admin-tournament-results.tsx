@@ -437,28 +437,21 @@ export default function AdminTournamentResultsPage() {
     const qualified: QualifiedPlayer[] = [];
     
     groupStageTables.forEach(group => {
-      if (group.standings && group.standings.length > 0) {
-        // Find players with positions 1 and 2 specifically
-        const firstPlace = group.standings.find(player => player.position === 1);
-        const secondPlace = group.standings.find(player => player.position === 2);
-        
-        if (firstPlace) {
-          qualified.push({
-            id: firstPlace.playerId,
-            name: firstPlace.playerName,
-            groupName: group.groupName,
-            position: 1
-          });
-        }
-        
-        if (secondPlace) {
-          qualified.push({
-            id: secondPlace.playerId,
-            name: secondPlace.playerName,
-            groupName: group.groupName,
-            position: 2
-          });
-        }
+      if (group.players && group.players.length > 0) {
+        // Look at the manually entered position values in the "Байр" column
+        group.players.forEach(player => {
+          const position = parseInt(String(player.position || ''), 10);
+          
+          // Only include players with positions 1 or 2
+          if (position === 1 || position === 2) {
+            qualified.push({
+              id: player.id,
+              name: player.name,
+              groupName: group.groupName,
+              position: position
+            });
+          }
+        });
       }
     });
     
