@@ -210,6 +210,11 @@ export default function Profile() {
     enabled: !!profile,
   });
 
+  const { data: medals = [] } = useQuery({
+    queryKey: ['/api/user/medals'],
+    enabled: !!profile,
+  });
+
   // Update profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: (data: UserProfile) => apiRequest(`/api/user/profile`, {
@@ -393,7 +398,26 @@ export default function Profile() {
                   </Avatar>
                 </div>
                 <div className="text-center md:text-left flex-1">
-                  <h1 className="text-3xl font-bold text-gray-900">{profile?.name}</h1>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h1 className="text-3xl font-bold text-gray-900">{profile?.name}</h1>
+                    {/* Tournament Medals */}
+                    {medals && medals.map((medal: any) => (
+                      <div key={`${medal.tournamentId}-${medal.medalType}`} className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                        medal.medalType === 'gold' ? 'bg-yellow-100 text-yellow-800' :
+                        medal.medalType === 'silver' ? 'bg-gray-100 text-gray-800' :
+                        'bg-amber-100 text-amber-800'
+                      }`} title={`${medal.tournamentName} - ${medal.position}-р байр`}>
+                        <span className={
+                          medal.medalType === 'gold' ? 'text-yellow-600' :
+                          medal.medalType === 'silver' ? 'text-gray-600' :
+                          'text-amber-600'
+                        }>
+                          {medal.medalType === 'gold' ? '🥇' : medal.medalType === 'silver' ? '🥈' : '🥉'}
+                        </span>
+                        {medal.medal}
+                      </div>
+                    ))}
+                  </div>
                   <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-600">
                     {profile?.email && (
                       <div className="flex items-center gap-1">

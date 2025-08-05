@@ -652,6 +652,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user medals
+  app.get('/api/user/medals', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.session.userId;
+      
+      // Get player data if user is a player
+      let player = null;
+      if (req.session.user?.role === 'player') {
+        player = await storage.getPlayerByUserId(userId);
+      }
+      
+      if (!player) {
+        return res.json([]);
+      }
+      
+      // Get medals this player has earned
+      const medals = await storage.getPlayerMedals(player.id);
+      
+      res.json(medals);
+    } catch (error) {
+      console.error("Error fetching user medals:", error);
+      res.status(500).json({ message: "Медалиудыг авахад алдаа гарлаа" });
+    }
+  });
+
   // Tournament routes with simple auth
   app.post('/api/tournaments', requireAuth, async (req: any, res) => {
     try {

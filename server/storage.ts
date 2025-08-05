@@ -141,6 +141,7 @@ export interface IStorage {
   getPlayerTournamentRegistrations(playerId: string): Promise<any[]>;
   getPlayerMatchesWithDetails(playerId: string): Promise<any[]>;
   getPlayerTeams(playerId: string): Promise<any[]>;
+  getPlayerMedals(playerId: string): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1630,6 +1631,84 @@ export class DatabaseStorage implements IStorage {
     );
 
     return teamsWithMembers;
+  }
+
+  async getPlayerMedals(playerId: string): Promise<any[]> {
+    // Get player's user ID
+    const [playerRecord] = await db.select().from(players).where(eq(players.id, playerId)).limit(1);
+    if (!playerRecord) return [];
+    
+    const userId = playerRecord.userId;
+    const medals: any[] = [];
+    
+    // Get all published tournament results
+    const results = await db
+      .select({
+        id: tournamentResults.id,
+        tournamentId: tournamentResults.tournamentId,
+        finalRankings: tournamentResults.finalRankings,
+        tournament: {
+          id: tournaments.id,
+          name: tournaments.name,
+          startDate: tournaments.startDate,
+          endDate: tournaments.endDate
+        }
+      })
+      .from(tournamentResults)
+      .innerJoin(tournaments, eq(tournamentResults.tournamentId, tournaments.id))
+      .where(eq(tournamentResults.isPublished, true));
+
+    // Check each tournament's final rankings
+    for (const result of results) {
+      if (result.finalRankings) {
+        try {
+          let rankingsData;
+          if (typeof result.finalRankings === 'string') {
+            rankingsData = JSON.parse(result.finalRankings);
+          } else {
+            rankingsData = result.finalRankings;
+          }
+
+          if (Array.isArray(rankingsData)) {
+            // Find player in rankings by both player ID and user ID
+            const playerRanking = rankingsData.find((ranking: any) => 
+              ranking.playerId === playerId || ranking.playerId === userId
+            );
+            
+            if (playerRanking) {
+              let medal = null;
+              let medalType = null;
+              
+              if (playerRanking.position === 1) {
+                medal = 'Алтан медаль';
+                medalType = 'gold';
+              } else if (playerRanking.position === 2) {
+                medal = 'Мөнгөн медаль';
+                medalType = 'silver';
+              } else if (playerRanking.position === 3) {
+                medal = 'Хүрэл медаль';
+                medalType = 'bronze';
+              }
+              
+              if (medal) {
+                medals.push({
+                  tournamentId: result.tournamentId,
+                  tournamentName: result.tournament.name,
+                  position: playerRanking.position,
+                  medal: medal,
+                  medalType: medalType,
+                  date: result.tournament.endDate || result.tournament.startDate
+                });
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing final rankings:', e);
+        }
+      }
+    }
+
+    return medals.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
 }
 
