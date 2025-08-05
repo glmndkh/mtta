@@ -41,6 +41,16 @@ export const matchStatusEnum = pgEnum("match_status", ["scheduled", "ongoing", "
 // Gender enum
 export const genderEnum = pgEnum("gender", ["male", "female", "other"]);
 
+// Player rank enum
+export const playerRankEnum = pgEnum("player_rank", [
+  "3-р зэрэг", 
+  "2-р зэрэг", 
+  "1-р зэрэг", 
+  "дэд мастер", 
+  "спортын мастер", 
+  "олон улсын хэмжээний мастер"
+]);
+
 // Users table (required for Replit Auth)
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -79,7 +89,9 @@ export const players = pgTable("players", {
   clubId: varchar("club_id").references(() => clubs.id),
   rankingAllAges: integer("ranking_all_ages"),
   rankingOwnAge: integer("ranking_own_age"),
-  rank: varchar("rank"), // Admin-assigned rank (e.g., "Beginner", "Intermediate", "Advanced", "Expert")
+  rank: playerRankEnum("rank"), // Admin-assigned rank using enum
+  points: integer("points").default(0), // Admin-only editable points field
+  achievements: text("achievements"), // Admin-only editable achievements text field
   dateOfBirth: timestamp("date_of_birth"),
   wins: integer("wins").default(0),
   losses: integer("losses").default(0),

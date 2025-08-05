@@ -70,6 +70,7 @@ export interface IStorage {
   createPlayer(player: InsertPlayer): Promise<Player>;
   updatePlayerStats(playerId: string, wins: number, losses: number): Promise<void>;
   updatePlayerRank(playerId: string, rank: string): Promise<boolean>;
+  updatePlayerAdminFields(playerId: string, fields: { rank?: string | null, points?: number, achievements?: string | null }): Promise<Player | undefined>;
   getPlayersByClub(clubId: string): Promise<Player[]>;
   getAllPlayers(): Promise<Player[]>;
   getPlayerAchievements(playerId: string): Promise<Achievement[]>;
@@ -362,6 +363,26 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error("Error updating player rank:", error);
       return false;
+    }
+  }
+
+  async updatePlayerAdminFields(playerId: string, fields: { rank?: string | null, points?: number, achievements?: string | null }): Promise<Player | undefined> {
+    try {
+      const updateFields: any = {};
+      if (fields.rank !== undefined) updateFields.rank = fields.rank;
+      if (fields.points !== undefined) updateFields.points = fields.points;
+      if (fields.achievements !== undefined) updateFields.achievements = fields.achievements;
+
+      const result = await db
+        .update(players)
+        .set(updateFields)
+        .where(eq(players.id, playerId))
+        .returning();
+
+      return result[0] || undefined;
+    } catch (error) {
+      console.error("Error updating player admin fields:", error);
+      return undefined;
     }
   }
 

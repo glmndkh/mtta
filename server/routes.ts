@@ -1498,6 +1498,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update player data (admin only)
+  app.put('/api/admin/players/:playerId', requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const playerId = req.params.playerId;
+      const { rank, points, achievements } = req.body;
+
+      // Validate rank if provided
+      const validRanks = ['3-р зэрэг', '2-р зэрэг', '1-р зэрэг', 'дэд мастер', 'спортын мастер', 'олон улсын хэмжээний мастер'];
+      if (rank && !validRanks.includes(rank)) {
+        return res.status(400).json({ message: "Буруу зэрэглэл" });
+      }
+
+      // Validate points if provided
+      if (points !== undefined && (typeof points !== 'number' || points < 0)) {
+        return res.status(400).json({ message: "Оноо 0-ээс их тоо байх ёстой" });
+      }
+
+      const updatedPlayer = await storage.updatePlayerAdminFields(playerId, {
+        rank: rank || null,
+        points: points || 0,
+        achievements: achievements || null
+      });
+
+      if (!updatedPlayer) {
+        return res.status(404).json({ message: "Тоглогч олдсонгүй" });
+      }
+
+      res.json(updatedPlayer);
+    } catch (error) {
+      console.error("Error updating player:", error);
+      res.status(500).json({ message: "Тоглогчийн мэдээлэл шинэчлэхэд алдаа гарлаа" });
+    }
+  });
+
   app.put('/api/admin/players/:id', requireAuth, isAdminRole, async (req, res) => {
     try {
       const updateData = req.body;
