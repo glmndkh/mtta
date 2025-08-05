@@ -173,7 +173,7 @@ export default function TournamentResultsPage() {
         <Tabs defaultValue="finals" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="finals">Эцсийн байр</TabsTrigger>
-            <TabsTrigger value="knockout">Шоронтох тулаан</TabsTrigger>
+            <TabsTrigger value="knockout">Шигшээ тоглолт</TabsTrigger>
             <TabsTrigger value="groups">Групп тулаан</TabsTrigger>
           </TabsList>
 
@@ -300,32 +300,289 @@ export default function TournamentResultsPage() {
                 </CardContent>
               </Card>
 
-              {/* Knockout Bracket */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Trophy className="w-5 h-5" />
-                    Шигшээ тоглолт
-                  </CardTitle>
-                  <CardDescription>
-                    Шалгарсан тоглогчдын хоорондох шигшээ тулаан
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {knockoutResults.length > 0 ? (
-                    <KnockoutBracket
-                      matches={knockoutResults}
-                      onPlayerClick={navigateToProfile}
-                      isViewOnly={true}
-                    />
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
+              {/* Winners Podium */}
+              {finalRankings.length > 0 && (
+                <Card className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200">
+                  <CardHeader className="text-center">
+                    <CardTitle className="flex items-center justify-center gap-2 text-2xl">
+                      <Trophy className="w-8 h-8 text-yellow-600" />
+                      Тэмцээний эцсийн үр дүн
+                    </CardTitle>
+                    <CardDescription className="text-lg">
+                      Медаль хүртэгчид
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-end justify-center space-x-4 mb-6">
+                      {/* 2nd Place */}
+                      {finalRankings.find(r => r.position === 2) && (
+                        <div className="text-center">
+                          <div className="w-20 h-16 bg-gray-400 rounded-t-lg flex items-center justify-center mb-2">
+                            <span className="text-white text-3xl font-bold">2</span>
+                          </div>
+                          <div className="text-4xl mb-2">🥈</div>
+                          <button
+                            onClick={() => navigateToProfile(finalRankings.find(r => r.position === 2)!.playerId)}
+                            className="font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+                          >
+                            {finalRankings.find(r => r.position === 2)!.playerName}
+                          </button>
+                        </div>
+                      )}
+                      
+                      {/* 1st Place */}
+                      {finalRankings.find(r => r.position === 1) && (
+                        <div className="text-center">
+                          <div className="w-24 h-20 bg-yellow-500 rounded-t-lg flex items-center justify-center mb-2">
+                            <span className="text-white text-4xl font-bold">1</span>
+                          </div>
+                          <div className="text-6xl mb-2">🥇</div>
+                          <button
+                            onClick={() => navigateToProfile(finalRankings.find(r => r.position === 1)!.playerId)}
+                            className="font-bold text-xl text-blue-600 hover:text-blue-800 hover:underline"
+                          >
+                            {finalRankings.find(r => r.position === 1)!.playerName}
+                          </button>
+                          <div className="text-yellow-600 font-semibold mt-1">АВАРГА</div>
+                        </div>
+                      )}
+                      
+                      {/* 3rd Place */}
+                      {finalRankings.find(r => r.position === 3) && (
+                        <div className="text-center">
+                          <div className="w-20 h-16 bg-amber-600 rounded-t-lg flex items-center justify-center mb-2">
+                            <span className="text-white text-3xl font-bold">3</span>
+                          </div>
+                          <div className="text-4xl mb-2">🥉</div>
+                          <button
+                            onClick={() => navigateToProfile(finalRankings.find(r => r.position === 3)!.playerId)}
+                            className="font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+                          >
+                            {finalRankings.find(r => r.position === 3)!.playerName}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Organized Match Results */}
+              {knockoutResults.length > 0 ? (
+                <div className="space-y-6">
+                  {/* Semifinals */}
+                  {(() => {
+                    const semifinals = knockoutResults.filter(match => 
+                      match.round === "Хагас финал" || match.round === "1" || 
+                      (match.id && (match.id.includes('match_1_') || match.round.includes('финал')))
+                    );
+                    
+                    if (semifinals.length > 0) {
+                      return (
+                        <Card className="border-l-4 border-l-orange-500">
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-orange-700">
+                              <Trophy className="w-5 h-5" />
+                              Хагас финал
+                              <Badge variant="secondary">{semifinals.length} тоглолт</Badge>
+                            </CardTitle>
+                            <CardDescription>
+                              Финалд шалгарах төлөөх тоглолт
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid gap-4 md:grid-cols-2">
+                              {semifinals.map((match, index) => (
+                                <div key={match.id} className="bg-gray-50 rounded-lg p-4 border">
+                                  <div className="text-sm text-gray-600 mb-2">Тоглолт #{index + 1}</div>
+                                  <div className="space-y-2">
+                                    <div className={`flex items-center justify-between p-2 rounded ${
+                                      match.winner?.id === match.player1?.id ? 'bg-green-100 border border-green-300' : 'bg-white'
+                                    }`}>
+                                      <button
+                                        onClick={() => match.player1 && navigateToProfile(match.player1.id)}
+                                        className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                                      >
+                                        {match.player1?.name || 'TBD'}
+                                      </button>
+                                      {match.winner?.id === match.player1?.id && (
+                                        <span className="text-green-600 font-bold">Ялагч</span>
+                                      )}
+                                    </div>
+                                    <div className="text-center text-lg font-bold text-gray-600">
+                                      {match.score || 'vs'}
+                                    </div>
+                                    <div className={`flex items-center justify-between p-2 rounded ${
+                                      match.winner?.id === match.player2?.id ? 'bg-green-100 border border-green-300' : 'bg-white'
+                                    }`}>
+                                      <button
+                                        onClick={() => match.player2 && navigateToProfile(match.player2.id)}
+                                        className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                                      >
+                                        {match.player2?.name || 'TBD'}
+                                      </button>
+                                      {match.winner?.id === match.player2?.id && (
+                                        <span className="text-green-600 font-bold">Ялагч</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    }
+                  })()}
+
+                  {/* Finals */}
+                  {(() => {
+                    const finals = knockoutResults.filter(match => 
+                      match.round === "Финал" || match.round === "2" || 
+                      (match.id && match.id.includes('match_2_0'))
+                    );
+                    
+                    if (finals.length > 0) {
+                      return (
+                        <Card className="border-l-4 border-l-yellow-500 bg-yellow-50">
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-yellow-700">
+                              <Trophy className="w-6 h-6" />
+                              Финал
+                              <Badge variant="outline" className="bg-yellow-100">Аварга шалгаруулах</Badge>
+                            </CardTitle>
+                            <CardDescription>
+                              Тэмцээний хамгийн чухал тоглолт
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            {finals.map((match) => (
+                              <div key={match.id} className="bg-white rounded-lg p-6 border-2 border-yellow-200">
+                                <div className="text-center mb-4">
+                                  <h3 className="text-xl font-bold text-gray-900">ФИНАЛЫН ТОГЛОЛТ</h3>
+                                </div>
+                                <div className="space-y-3">
+                                  <div className={`flex items-center justify-between p-4 rounded-lg ${
+                                    match.winner?.id === match.player1?.id ? 'bg-yellow-100 border-2 border-yellow-400' : 'bg-gray-50'
+                                  }`}>
+                                    <button
+                                      onClick={() => match.player1 && navigateToProfile(match.player1.id)}
+                                      className="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+                                    >
+                                      {match.player1?.name || 'TBD'}
+                                    </button>
+                                    {match.winner?.id === match.player1?.id && (
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-2xl">🥇</span>
+                                        <span className="text-yellow-600 font-bold">АВАРГА</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="text-center text-2xl font-bold text-gray-800">
+                                    {match.score || 'vs'}
+                                  </div>
+                                  <div className={`flex items-center justify-between p-4 rounded-lg ${
+                                    match.winner?.id === match.player2?.id ? 'bg-yellow-100 border-2 border-yellow-400' : 'bg-gray-50'
+                                  }`}>
+                                    <button
+                                      onClick={() => match.player2 && navigateToProfile(match.player2.id)}
+                                      className="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+                                    >
+                                      {match.player2?.name || 'TBD'}
+                                    </button>
+                                    {match.winner?.id === match.player2?.id && (
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-2xl">🥇</span>
+                                        <span className="text-yellow-600 font-bold">АВАРГА</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </CardContent>
+                        </Card>
+                      );
+                    }
+                  })()}
+
+                  {/* Third Place Playoff */}
+                  {(() => {
+                    const thirdPlace = knockoutResults.filter(match => 
+                      match.round === "3-р байрын тоглолт" || match.id === "third_place_playoff"
+                    );
+                    
+                    if (thirdPlace.length > 0) {
+                      return (
+                        <Card className="border-l-4 border-l-amber-600">
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-amber-700">
+                              <Medal className="w-5 h-5" />
+                              3-р байрын тоглолт
+                              <Badge variant="outline" className="bg-amber-100">Хүрэл медаль</Badge>
+                            </CardTitle>
+                            <CardDescription>
+                              Хагас финалд хожигдсон тоглогчдын хоорондох тоглолт
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            {thirdPlace.map((match) => (
+                              <div key={match.id} className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                                <div className="space-y-2">
+                                  <div className={`flex items-center justify-between p-3 rounded ${
+                                    match.winner?.id === match.player1?.id ? 'bg-amber-100 border border-amber-300' : 'bg-white'
+                                  }`}>
+                                    <button
+                                      onClick={() => match.player1 && navigateToProfile(match.player1.id)}
+                                      className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                                    >
+                                      {match.player1?.name || 'TBD'}
+                                    </button>
+                                    {match.winner?.id === match.player1?.id && (
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xl">🥉</span>
+                                        <span className="text-amber-600 font-bold">3-р байр</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="text-center text-lg font-bold text-gray-600">
+                                    {match.score || 'vs'}
+                                  </div>
+                                  <div className={`flex items-center justify-between p-3 rounded ${
+                                    match.winner?.id === match.player2?.id ? 'bg-amber-100 border border-amber-300' : 'bg-white'
+                                  }`}>
+                                    <button
+                                      onClick={() => match.player2 && navigateToProfile(match.player2.id)}
+                                      className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                                    >
+                                      {match.player2?.name || 'TBD'}
+                                    </button>
+                                    {match.winner?.id === match.player2?.id && (
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xl">🥉</span>
+                                        <span className="text-amber-600 font-bold">3-р байр</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </CardContent>
+                        </Card>
+                      );
+                    }
+                  })()}
+                </div>
+              ) : (
+                <Card>
+                  <CardContent className="py-8">
+                    <div className="text-center text-gray-500">
                       <Trophy className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                       <p>Шигшээ тоглолтын мэдээлэл хараахан бэлэн болоогүй байна</p>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </TabsContent>
 
