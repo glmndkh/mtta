@@ -60,6 +60,12 @@ export const users = pgTable("users", {
   handedness: varchar("handedness"), // 'right' or 'left'
   playingStyles: jsonb("playing_styles").$type<string[]>().default([]), // Array of playing styles
   bio: text("bio"), // User biography/description
+  // Membership tracking
+  membershipType: membershipTypeEnum("membership_type").default("adult"),
+  membershipStartDate: timestamp("membership_start_date"),
+  membershipEndDate: timestamp("membership_end_date"),
+  membershipActive: boolean("membership_active").default(false),
+  membershipAmount: integer("membership_amount").default(0), // Amount paid for membership
   role: userRoleEnum("role").default("player").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

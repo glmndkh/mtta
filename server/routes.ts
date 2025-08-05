@@ -222,7 +222,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rubberTypes: user.rubberTypes || [],
         handedness: user.handedness,
         playingStyles: user.playingStyles || [],
-        bio: user.bio
+        bio: user.bio,
+        membershipType: user.membershipType,
+        membershipStartDate: user.membershipStartDate,
+        membershipEndDate: user.membershipEndDate,
+        membershipActive: user.membershipActive,
+        membershipAmount: user.membershipAmount
       };
       
       res.json(profileData);
@@ -248,7 +253,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rubberTypes,
         handedness,
         playingStyles,
-        bio
+        bio,
+        membershipType,
+        membershipStartDate,
+        membershipEndDate,
+        membershipActive,
+        membershipAmount
       } = req.body;
 
       // Parse name into firstName and lastName
@@ -273,7 +283,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rubberTypes: rubberTypes || [],
         handedness,
         playingStyles: playingStyles || [],
-        bio
+        bio,
+        membershipType,
+        membershipStartDate: membershipStartDate ? new Date(membershipStartDate) : undefined,
+        membershipEndDate: membershipEndDate ? new Date(membershipEndDate) : undefined,
+        membershipActive,
+        membershipAmount
       });
 
       if (!updatedUser) {
@@ -450,6 +465,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error finalizing file upload:", error);
       res.status(500).json({ error: "Internal server error" });
     }
+  });
+
+  // Membership purchase route
+  app.post('/api/user/membership', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.session.userId;
+      const { type } = req.body;
+
+      if (!type || !['adult', 'child'].includes(type)) {
+        return res.status(400).json({ message: "Буруу гишүүнчлэлийн төрөл" });
+      }
+
+      // Set membership dates (1 year from now)
+      const startDate = new Date();
+      const endDate = new Date();
+      endDate.setFullYear(endDate.getFullYear() + 1);
+
+      // Set membership amount (example prices)
+      const amount = type === 'adult' ? 50000 : 30000; // Tugrik
+
+      const updatedUser = await storage.updateUserProfile(userId, {
+        membershipType: type,
+        membershipStartDate: startDate,
+        membershipEndDate: endDate,
+        membershipActive: true,
+        membershipAmount: amount
+      });
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "Хэрэглэгч олдсонгүй" });
+      }
+
+      res.json({ 
+        message: "Гишүүнчлэл амжилттай худалдаж авлаа",
+        membershipType: type,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        amount
+      });
+    } catch (error) {
+      console.error("Error purchasing membership:", error);
+      res.status(500).json({ message: "Гишүүнчлэл худалдаж авахад алдаа гарлаа" });
+    }
+  });
+
+  // Mock API endpoints for tournaments, matches, and teams
+  app.get('/api/user/tournaments', requireAuth, async (req: any, res) => {
+    // Return empty array for now - to be implemented with real data
+    res.json([]);
+  });
+
+  app.get('/api/user/matches', requireAuth, async (req: any, res) => {
+    // Return empty array for now - to be implemented with real data
+    res.json([]);
+  });
+
+  app.get('/api/user/teams', requireAuth, async (req: any, res) => {
+    // Return empty array for now - to be implemented with real data
+    res.json([]);
   });
 
   // Tournament routes with simple auth
