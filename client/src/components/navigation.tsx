@@ -24,11 +24,8 @@ export default function Navigation() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/">
-            <div className="flex items-center space-x-4 cursor-pointer">
+            <div className="flex items-center cursor-pointer">
               <img src={mttaLogo} alt="MTTA Logo" className="h-10 w-auto" />
-              <div className="hidden md:block">
-                <h1 className="text-xl font-bold text-mtta-green">MTTA</h1>
-              </div>
             </div>
           </Link>
 
