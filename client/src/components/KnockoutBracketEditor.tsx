@@ -607,7 +607,9 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                 {/* Player 1 Selection */}
                 <div className="mb-2">
                   <select
-                    className="w-full p-1 border rounded text-xs bg-blue-50"
+                    className={`w-full p-1 border rounded text-xs ${
+                      match.winner?.id === match.player1?.id ? 'bg-green-100 border-green-400' : 'bg-blue-50'
+                    }`}
                     value={match.player1?.id || ''}
                     onChange={(e) => handlePlayerSelect(match.id, 'player1', e.target.value)}
                   >
@@ -619,16 +621,6 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                       </option>
                     ))}
                   </select>
-                  {match.player1 && (
-                    <div className="text-xs text-blue-600 mt-1 font-medium">
-                      Сонгогдсон: {match.player1.name}
-                    </div>
-                  )}
-                  {getAvailableUsers(match.id, 'player1').length === 0 && !match.player1 && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      Бүх тоглогч сонгогдсон
-                    </div>
-                  )}
                 </div>
 
                 {/* VS Divider */}
@@ -637,7 +629,9 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                 {/* Player 2 Selection */}
                 <div className="mb-2">
                   <select
-                    className="w-full p-1 border rounded text-xs bg-red-50"
+                    className={`w-full p-1 border rounded text-xs ${
+                      match.winner?.id === match.player2?.id ? 'bg-green-100 border-green-400' : 'bg-red-50'
+                    }`}
                     value={match.player2?.id || ''}
                     onChange={(e) => handlePlayerSelect(match.id, 'player2', e.target.value)}
                   >
@@ -649,16 +643,6 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                       </option>
                     ))}
                   </select>
-                  {match.player2 && (
-                    <div className="text-xs text-red-600 mt-1 font-medium">
-                      Сонгогдсон: {match.player2.name}
-                    </div>
-                  )}
-                  {getAvailableUsers(match.id, 'player2').length === 0 && !match.player2 && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      Бүх тоглогч сонгогдсон
-                    </div>
-                  )}
                 </div>
 
                 {/* Score Input */}
@@ -687,30 +671,30 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                   </div>
                 </div>
 
-                {/* Winner Selection */}
-                <div className="mb-2">
-                  <select
-                    className="w-full p-1 border rounded text-xs h-7"
-                    value={match.winner?.id || ''}
-                    onChange={(e) => handleWinnerSelection(match.id, e.target.value)}
-                  >
-                    <option value="">Ялагч сонгох</option>
-                    {match.player1 && (
-                      <option value={match.player1.id}>
-                        {match.player1.name.length > 15 ? 
-                          match.player1.name.substring(0, 15) + '...' : 
-                          match.player1.name}
-                      </option>
-                    )}
-                    {match.player2 && (
-                      <option value={match.player2.id}>
-                        {match.player2.name.length > 15 ? 
-                          match.player2.name.substring(0, 15) + '...' : 
-                          match.player2.name}
-                      </option>
-                    )}
-                  </select>
-                </div>
+                {/* Winner Selection - Click on player dropdown to set as winner */}
+                {match.player1 && match.player2 && (
+                  <div className="mb-2 p-2 bg-gray-50 rounded text-xs">
+                    <p className="text-gray-600 mb-1">Ялагч: Дээрх тоглогчийн нэр дээр дарж сонгоно уу</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant={match.winner?.id === match.player1.id ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleWinnerSelection(match.id, match.player1!.id)}
+                        className="h-6 text-xs"
+                      >
+                        {match.player1.name.substring(0, 12)}...
+                      </Button>
+                      <Button
+                        variant={match.winner?.id === match.player2.id ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleWinnerSelection(match.id, match.player2!.id)}
+                        className="h-6 text-xs"
+                      >
+                        {match.player2.name.substring(0, 12)}...
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Score Display and Winner Badge */}
                 {(match.player1Score || match.player2Score || match.winner) && (
