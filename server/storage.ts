@@ -1584,8 +1584,9 @@ export class DatabaseStorage implements IStorage {
     try {
       // First get the player record to check if they exist
       const [playerRecord] = await db.select().from(players).where(eq(players.id, playerId)).limit(1);
-      if (!playerRecord) return [];
-      
+      if (!playerRecord) {
+        return [];
+      }
       const userId = playerRecord.userId;
       const matches: any[] = [];
 
@@ -1621,68 +1622,61 @@ export class DatabaseStorage implements IStorage {
             }
 
             // Look through all groups for this player's matches
-            Object.entries(groupData).forEach(([groupName, group]: [string, any]) => {
-              if (group.players && Array.isArray(group.players)) {
-                // Find the player's row in the group
-                const playerRowIndex = group.players.findIndex((player: any) => 
-                  player.id === playerId || player.id === userId
-                );
-                
-                if (playerRowIndex !== -1) {
-                  const playerRow = group.players[playerRowIndex];
+            if (Array.isArray(groupData)) {
+              groupData.forEach((group: any) => {
+                if (group.players && Array.isArray(group.players)) {
+                  // Find the player's row in the group
+                  const playerRowIndex = group.players.findIndex((player: any) => 
+                    player.id === playerId || player.id === userId
+                  );
                   
-                  // Extract matches from the player's results against other players
-                  group.players.forEach((opponent: any, opponentIndex: number) => {
-                    if (opponentIndex !== playerRowIndex && opponent.id) {
-                      // Look for score in the results matrix
-                      let playerScore, opponentScore, matchResult;
-                      
-                      // Check if we have results data
-                      if (playerRow.results && playerRow.results[opponentIndex] !== undefined) {
-                        const scoreStr = playerRow.results[opponentIndex];
-                        if (scoreStr && scoreStr !== '*****') {
-                          const scoreParts = scoreStr.split('/');
-                          if (scoreParts.length === 2) {
-                            playerScore = parseInt(scoreParts[0]);
-                            opponentScore = parseInt(scoreParts[1]);
-                            matchResult = playerScore > opponentScore ? 'win' : 'loss';
+                  if (playerRowIndex !== -1) {
+                    const groupName = group.groupName || 'Групп';
+                    const resultMatrix = group.resultMatrix || [];
+                    
+                    // Extract matches from the result matrix
+                    group.players.forEach((opponent: any, opponentIndex: number) => {
+                      if (opponentIndex !== playerRowIndex && opponent.id) {
+                        // Look for score in the result matrix
+                        let playerScore, opponentScore, matchResult;
+                        
+                        // Check the result matrix for this player's results
+                        if (resultMatrix[playerRowIndex] && resultMatrix[playerRowIndex][opponentIndex] !== undefined) {
+                          const scoreStr = resultMatrix[playerRowIndex][opponentIndex];
+                          if (scoreStr && scoreStr !== '' && scoreStr !== '*****') {
+                            playerScore = parseInt(scoreStr);
+                            // Get opponent's score from their row
+                            if (resultMatrix[opponentIndex] && resultMatrix[opponentIndex][playerRowIndex] !== undefined) {
+                              const opponentScoreStr = resultMatrix[opponentIndex][playerRowIndex];
+                              if (opponentScoreStr && opponentScoreStr !== '' && opponentScoreStr !== '*****') {
+                                opponentScore = parseInt(opponentScoreStr);
+                                matchResult = playerScore > opponentScore ? 'win' : 'loss';
+                              }
+                            }
                           }
                         }
-                      }
-                      
-                      // Also check if opponent has result against this player
-                      if (!matchResult && opponent.results && opponent.results[playerRowIndex] !== undefined) {
-                        const scoreStr = opponent.results[playerRowIndex];
-                        if (scoreStr && scoreStr !== '*****') {
-                          const scoreParts = scoreStr.split('/');
-                          if (scoreParts.length === 2) {
-                            opponentScore = parseInt(scoreParts[0]);
-                            playerScore = parseInt(scoreParts[1]);
-                            matchResult = playerScore > opponentScore ? 'win' : 'loss';
-                          }
+                        
+                        // Only add if we have a valid result
+                        if (matchResult && playerScore !== undefined && opponentScore !== undefined) {
+                          matches.push({
+                            id: `group_${result.tournamentId}_${groupName}_${playerRowIndex}_${opponentIndex}`,
+                            tournamentId: result.tournamentId,
+                            tournamentName: result.tournament.name,
+                            date: result.tournament.startDate,
+                            opponent: opponent.name || 'Тодорхойгүй',
+                            result: matchResult,
+                            score: `${playerScore}-${opponentScore}`,
+                            stage: 'group',
+                            matchType: groupName,
+                            groupName: groupName
+                          });
                         }
                       }
-                      
-                      // Only add if we have a valid result
-                      if (matchResult && playerScore !== undefined && opponentScore !== undefined) {
-                        matches.push({
-                          id: `group_${result.tournamentId}_${groupName}_${playerRowIndex}_${opponentIndex}`,
-                          tournamentId: result.tournamentId,
-                          tournamentName: result.tournament.name,
-                          date: result.tournament.startDate,
-                          opponent: opponent.name || 'Тодорхойгүй',
-                          result: matchResult,
-                          score: `${playerScore}-${opponentScore}`,
-                          stage: 'group',
-                          matchType: `${groupName}`,
-                          groupName: groupName
-                        });
-                      }
-                    }
-                  });
+                    });
+                  }
                 }
-              }
-            });
+              });
+            }
           }
 
           // Check knockout results for bronze medal match and other knockout matches
@@ -1695,8 +1689,8 @@ export class DatabaseStorage implements IStorage {
             }
 
             // Parse knockout matches
-            if (knockoutData.matches) {
-              knockoutData.matches.forEach((match: any) => {
+            if (Array.isArray(knockoutData)) {
+              knockoutData.forEach((match: any) => {
                 if (match.player1?.id === playerId || match.player1?.id === userId ||
                     match.player2?.id === playerId || match.player2?.id === userId) {
                   
@@ -1712,9 +1706,15 @@ export class DatabaseStorage implements IStorage {
 
                   // Determine match type for knockout
                   let matchType = match.round || 'knockout';
-                  if (match.round === 'bronze_medal') {
+                  if (match.round === 'quarterfinal' && match.id === 'third_place_playoff') {
                     matchType = 'Хүрэл медалийн тоглолт';
+                  } else if (match.round === 'semifinal') {
+                    matchType = 'Хагас финал';
+                  } else if (match.round === 'final') {
+                    matchType = 'Финал';
                   }
+
+
 
                   matches.push({
                     id: `knockout_${match.id}_${playerId}`,
