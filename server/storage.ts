@@ -150,10 +150,7 @@ export class DatabaseStorage implements IStorage {
       .values(userData)
       .onConflictDoUpdate({
         target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
+        set: userData,
       })
       .returning();
     return user;
@@ -193,25 +190,34 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserProfile(userId: string, userData: any): Promise<User> {
+    const updateData: any = {
+      updatedAt: new Date(),
+    };
+    
+    // Only include fields that are defined
+    if (userData.firstName !== undefined) updateData.firstName = userData.firstName;
+    if (userData.lastName !== undefined) updateData.lastName = userData.lastName;
+    if (userData.gender !== undefined) updateData.gender = userData.gender;
+    if (userData.dateOfBirth !== undefined) updateData.dateOfBirth = userData.dateOfBirth;
+    if (userData.phone !== undefined) updateData.phone = userData.phone;
+    if (userData.email !== undefined) updateData.email = userData.email;
+    if (userData.clubAffiliation !== undefined) updateData.clubAffiliation = userData.clubAffiliation;
+    if (userData.profileImageUrl !== undefined) updateData.profileImageUrl = userData.profileImageUrl;
+    if (userData.province !== undefined) updateData.province = userData.province;
+    if (userData.city !== undefined) updateData.city = userData.city;
+    if (userData.rubberTypes !== undefined) updateData.rubberTypes = userData.rubberTypes;
+    if (userData.handedness !== undefined) updateData.handedness = userData.handedness;
+    if (userData.playingStyles !== undefined) updateData.playingStyles = userData.playingStyles;
+    if (userData.bio !== undefined) updateData.bio = userData.bio;
+    if (userData.membershipType !== undefined) updateData.membershipType = userData.membershipType;
+    if (userData.membershipStartDate !== undefined) updateData.membershipStartDate = userData.membershipStartDate;
+    if (userData.membershipEndDate !== undefined) updateData.membershipEndDate = userData.membershipEndDate;
+    if (userData.membershipActive !== undefined) updateData.membershipActive = userData.membershipActive;
+    if (userData.membershipAmount !== undefined) updateData.membershipAmount = userData.membershipAmount;
+
     const [user] = await db
       .update(users)
-      .set({
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        gender: userData.gender,
-        dateOfBirth: userData.dateOfBirth,
-        phone: userData.phone,
-        email: userData.email,
-        clubAffiliation: userData.clubAffiliation,
-        profileImageUrl: userData.profileImageUrl,
-        province: userData.province,
-        city: userData.city,
-        rubberTypes: userData.rubberTypes,
-        handedness: userData.handedness,
-        playingStyles: userData.playingStyles,
-        bio: userData.bio,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(users.id, userId))
       .returning();
     return user;
