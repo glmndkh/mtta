@@ -141,47 +141,25 @@ export default function AdminTournamentResultsPage() {
         console.log('Loading existing knockout results:', knockoutResults);
         console.log('Available rounds:', knockoutResults.map(m => m.round));
         
-        // Look for final match - it might be stored as round 3 or with roundName 'Финал'
-        // Also check if we need to identify the final based on tournament structure
+        // Look for final match - stored semifinals are actually the finals in this tournament structure
         let finalMatch = knockoutResults.find(m => 
           m.round === 'final' || 
           m.round === 3 || 
           (m as any).roundName === 'Финал'
         );
         
-        // If no final match found, but we have semifinals, create rankings from semifinal winners
+        // If no final match found, look in stored semifinals (which are actually finals)
         if (!finalMatch) {
-          const semifinals = knockoutResults.filter(m => m.round === 'semifinal');
-          console.log('Found semifinals:', semifinals);
+          const storedSemifinals = knockoutResults.filter(m => m.round === 'semifinal');
+          console.log('Found stored semifinals (actually finals):', storedSemifinals);
           
-          // Filter out 3rd place playoff from semifinals
-          const actualSemifinals = semifinals.filter(m => m.id !== 'third_place_playoff');
+          // Filter out 3rd place playoff and find the actual final
+          const actualFinals = storedSemifinals.filter(m => m.id !== 'third_place_playoff');
           
-          if (actualSemifinals.length >= 1 && actualSemifinals[0]?.winner) {
-            // Use the actual semifinal winner as the champion
-            const champion = actualSemifinals[0].winner;
-            
-            // For runner-up, try to find the other semifinal winner, or use semifinal loser
-            let runnerUp = null;
-            if (actualSemifinals.length === 2 && actualSemifinals[1]?.winner) {
-              runnerUp = actualSemifinals[1].winner;
-            } else {
-              // Use the loser from the winning semifinal
-              const winningSemifinal = actualSemifinals[0];
-              runnerUp = winningSemifinal.player1?.id === champion.id ? winningSemifinal.player2 : winningSemifinal.player1;
-            }
-            
-            if (runnerUp) {
-              // Create a virtual final match for ranking calculation
-              finalMatch = {
-                round: 'final',
-                player1: champion,
-                player2: runnerUp,
-                winner: champion
-              };
-              
-              console.log('Created virtual final match from actual semifinals:', finalMatch);
-            }
+          if (actualFinals.length >= 1 && actualFinals[0]?.winner) {
+            // Use the first actual final match directly
+            finalMatch = actualFinals[0];
+            console.log('Using stored semifinal as final match:', finalMatch);
           }
         }
         
@@ -744,9 +722,8 @@ export default function AdminTournamentResultsPage() {
         </div>
       </div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs defaultValue="rankings" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="rankings">Шагналт байр</TabsTrigger>
+        <Tabs defaultValue="knockout" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="knockout">Шигшээ тоглолт</TabsTrigger>
             <TabsTrigger value="groups">Хэсгийн тоглолт</TabsTrigger>
           </TabsList>
@@ -943,6 +920,46 @@ export default function AdminTournamentResultsPage() {
                 </div>
               </CardHeader>
               <CardContent>
+                {/* Display Final Rankings from Knockout Results */}
+                {finalRankings.length > 0 && (
+                  <div className="mb-6 p-4 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg">
+                    <h3 className="text-lg font-semibold text-amber-800 mb-3 flex items-center gap-2">
+                      <Trophy className="w-5 h-5" />
+                      Шигшээ тоглолтын эцсийн үр дүн ({finalRankings.length} тоглогч)
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {finalRankings.map((ranking, index) => (
+                        <div 
+                          key={index} 
+                          className={`p-4 rounded-lg border-2 text-center ${
+                            ranking.position === 1 ? 'bg-yellow-100 border-yellow-400' :
+                            ranking.position === 2 ? 'bg-gray-100 border-gray-400' :
+                            'bg-orange-100 border-orange-400'
+                          }`}
+                        >
+                          <div className="text-3xl mb-2">
+                            {ranking.position === 1 ? '🥇' : ranking.position === 2 ? '🥈' : '🥉'}
+                          </div>
+                          <div className="text-lg font-bold text-gray-800">{ranking.position}-р байр</div>
+                          <div className="font-medium text-gray-900">{ranking.playerName}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {finalRankings.length === 0 && (
+                  <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-blue-800">
+                      <Trophy className="w-5 h-5" />
+                      <span className="font-medium">Эцсийн үр дүн гараагүй</span>
+                    </div>
+                    <p className="text-sm text-blue-700 mt-1">
+                      Шигшээ тоглолтыг дуусгасны дараа эцсийн байрлал энд харагдана.
+                    </p>
+                  </div>
+                )}
+
                 {/* Qualified Players Section */}
                 {getQualifiedPlayers().length > 0 && (
                   <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -992,11 +1009,12 @@ export default function AdminTournamentResultsPage() {
                       roundNum = 3;
                       roundName = 'Финал';
                     } else if (match.round === 'semifinal' || match.round === 2) {
+                      // What was called "semifinal" is actually the final when only 4 players
+                      roundNum = 3;
+                      roundName = 'Финал';
+                    } else if (match.round === 'quarterfinal' || match.round === 1) {
                       roundNum = 2;
                       roundName = 'Хагас финал';
-                    } else if (match.round === 'quarterfinal' || match.round === 1) {
-                      roundNum = 1;
-                      roundName = 'Дөрөвний финал';
                     }
                     
                     // Special case for 3rd place playoff
@@ -1024,7 +1042,8 @@ export default function AdminTournamentResultsPage() {
                     // Convert back to original format and preserve individual scores
                     const convertedMatches = newMatches.map(match => ({
                       id: match.id,
-                      round: match.round === 3 ? 'final' : match.round === 2 ? 'semifinal' : 'quarterfinal',
+                      round: match.roundName === 'Финал' ? 'final' : 
+                             match.roundName === 'Хагас финал' ? 'semifinal' : 'quarterfinal',
                       player1: match.player1,
                       player2: match.player2,
                       player1Score: match.player1Score,
@@ -1044,36 +1063,17 @@ export default function AdminTournamentResultsPage() {
                     // Find final match
                     let finalMatch = newMatches.find(m => m.roundName === 'Финал');
                     
-                    // If no final found, check if we can construct it from semifinals
+                    // If no final found, check if we can construct it from stored semifinals (which are actually finals)
                     if (!finalMatch) {
-                      const semifinals = newMatches.filter(m => m.roundName === 'Хагас финал');
+                      const finals = newMatches.filter(m => m.roundName === 'Финал');
                       // Filter out 3rd place playoff
-                      const actualSemifinals = semifinals.filter(m => m.id !== 'third_place_playoff');
-                      console.log('Found actual semifinals for final construction:', actualSemifinals);
+                      const actualFinals = finals.filter(m => m.id !== 'third_place_playoff');
+                      console.log('Found actual finals for ranking construction:', actualFinals);
                       
-                      if (actualSemifinals.length >= 1 && actualSemifinals[0]?.winner) {
-                        const champion = actualSemifinals[0].winner;
-                        
-                        // For runner-up, try to find other semifinal winner or use semifinal loser
-                        let runnerUp = null;
-                        if (actualSemifinals.length === 2 && actualSemifinals[1]?.winner) {
-                          runnerUp = actualSemifinals[1].winner;
-                        } else {
-                          // Use the loser from the winning semifinal
-                          const winningSemifinal = actualSemifinals[0];
-                          runnerUp = winningSemifinal.player1?.id === champion.id ? winningSemifinal.player2 : winningSemifinal.player1;
-                        }
-                        
-                        if (runnerUp) {
-                          // Create virtual final for ranking calculation
-                          finalMatch = {
-                            roundName: 'Финал',
-                            player1: champion,
-                            player2: runnerUp,
-                            winner: champion
-                          };
-                          console.log('Created virtual final from actual semifinals:', finalMatch);
-                        }
+                      if (actualFinals.length >= 1 && actualFinals[0]?.winner) {
+                        // Use the actual final match directly
+                        finalMatch = actualFinals[0];
+                        console.log('Using actual final match for rankings:', finalMatch);
                       }
                     }
                     
