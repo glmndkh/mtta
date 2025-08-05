@@ -23,6 +23,8 @@ export default function AdminDashboard() {
   const [selectedTab, setSelectedTab] = useState("stats");
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isTeamEnrollmentDialogOpen, setIsTeamEnrollmentDialogOpen] = useState(false);
+  const [selectedLeague, setSelectedLeague] = useState<any>(null);
   const [formData, setFormData] = useState<any>({});
   const [userFilter, setUserFilter] = useState("");
   const [playerFilter, setPlayerFilter] = useState("");
@@ -59,7 +61,7 @@ export default function AdminDashboard() {
 
   const { data: teams, isLoading: teamsLoading } = useQuery({
     queryKey: ['/api/admin/teams'],
-    enabled: selectedTab === 'teams'
+    enabled: selectedTab === 'teams' || isTeamEnrollmentDialogOpen
   });
 
   // Load all users for player selection dropdown
@@ -269,6 +271,33 @@ export default function AdminDashboard() {
     
     setFormData(defaultData);
     setIsCreateDialogOpen(true);
+  };
+
+  const openTeamEnrollmentDialog = (league: any) => {
+    setSelectedLeague(league);
+    setIsTeamEnrollmentDialogOpen(true);
+  };
+
+  const enrollTeamInLeague = async (teamId: string) => {
+    if (!selectedLeague) return;
+    
+    try {
+      const response = await fetch(`/api/admin/leagues/${selectedLeague.id}/teams`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId })
+      });
+      
+      if (response.ok) {
+        toast({ title: "Амжилттай", description: "Баг лигт нэмэгдлээ" });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/leagues'] });
+        setIsTeamEnrollmentDialogOpen(false);
+      } else {
+        toast({ title: "Алдаа гарлаа", variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "Алдаа гарлаа", variant: "destructive" });
+    }
   };
 
   const renderUsersTab = () => {
@@ -1315,6 +1344,7 @@ export default function AdminDashboard() {
                         <TableHead>Улирал</TableHead>
                         <TableHead>Эхлэх огноо</TableHead>
                         <TableHead>Дуусах огноо</TableHead>
+                        <TableHead>Багууд</TableHead>
                         <TableHead>Үйлдэл</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1325,6 +1355,21 @@ export default function AdminDashboard() {
                           <TableCell>{league.season}</TableCell>
                           <TableCell>{new Date(league.startDate).toLocaleDateString('mn-MN')}</TableCell>
                           <TableCell>{new Date(league.endDate).toLocaleDateString('mn-MN')}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary">
+                                {league.teams?.length || 0} баг
+                              </Badge>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => openTeamEnrollmentDialog(league)}
+                              >
+                                <Plus className="w-4 h-4 mr-1" />
+                                Баг нэмэх
+                              </Button>
+                            </div>
+                          </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
                               <DropdownMenu>
@@ -1558,6 +1603,58 @@ export default function AdminDashboard() {
             </Button>
             <Button onClick={handleUpdate} disabled={updateMutation.isPending}>
               {updateMutation.isPending ? "Шинэчилж байна..." : "Шинэчлэх"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Team Enrollment Dialog */}
+      <Dialog open={isTeamEnrollmentDialogOpen} onOpenChange={setIsTeamEnrollmentDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Лигт баг нэмэх</DialogTitle>
+            <DialogDescription>
+              {selectedLeague?.name} лигт бүртгэгдээгүй багуудаас сонгож нэмээрэй
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {teams && Array.isArray(teams) ? (
+              <div className="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto">
+                {teams.filter((team: any) => 
+                  !selectedLeague?.teams?.some((enrolledTeam: any) => enrolledTeam.id === team.id)
+                ).map((team: any) => (
+                  <div key={team.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      {team.logoUrl && (
+                        <img src={team.logoUrl} alt={team.name} className="w-10 h-10 rounded-full" />
+                      )}
+                      <div>
+                        <div className="font-medium">{team.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {team.players?.length || 0} тоглогч
+                          {team.ownerName && ` • ${team.ownerName}`}
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => enrollTeamInLeague(team.id)}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Нэмэх
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                Баг байхгүй байна
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsTeamEnrollmentDialogOpen(false)}>
+              Хаах
             </Button>
           </DialogFooter>
         </DialogContent>
