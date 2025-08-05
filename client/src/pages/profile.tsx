@@ -169,12 +169,8 @@ export default function Profile() {
   const [selectedProvince, setSelectedProvince] = useState<string>('');
   
   // Get available cities based on selected province OR the profile's province (for initial load)
-  const getAvailableCities = () => {
-    const province = selectedProvince || profileData.province;
-    return province ? (MONGOLIA_CITIES as any)[province] || [] : [];
-  };
-  
-  const availableCities = getAvailableCities();
+  const province = selectedProvince || profileData.province;
+  const availableCities = province ? (MONGOLIA_CITIES as any)[province] || [] : [];
 
   // Fetch user profile
   const { data: profile, isLoading } = useQuery({
@@ -572,9 +568,9 @@ export default function Profile() {
                       <div>
                         <Label htmlFor="city">Сум/Дүүрэг</Label>
                         <Select 
-                          value={profileData.city || ''} 
+                          value={profileData.city} 
                           onValueChange={(city) => setProfileData(prev => ({ ...prev, city }))}
-                          disabled={!selectedProvince}
+                          disabled={!selectedProvince && !profileData.province}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Сум/Дүүрэг сонгоно уу" />
