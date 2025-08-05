@@ -53,6 +53,13 @@ export const users = pgTable("users", {
   dateOfBirth: timestamp("date_of_birth"),
   clubAffiliation: varchar("club_affiliation"), // Club name or location where they usually play
   profileImageUrl: varchar("profile_image_url"),
+  // New profile fields
+  province: varchar("province"), // Mongolia province/aimag
+  city: varchar("city"), // City/district within province
+  rubberTypes: jsonb("rubber_types").$type<string[]>().default([]), // Array of rubber types
+  handedness: varchar("handedness"), // 'right' or 'left'
+  playingStyles: jsonb("playing_styles").$type<string[]>().default([]), // Array of playing styles
+  bio: text("bio"), // User biography/description
   role: userRoleEnum("role").default("player").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
