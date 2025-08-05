@@ -249,6 +249,9 @@ export const tournamentTeams = pgTable("tournament_teams", {
   tournamentId: varchar("tournament_id").notNull(), // Removed foreign key constraint for flexibility
   name: varchar("name").notNull(),
   logoUrl: varchar("logo_url"),
+  sponsorLogo: varchar("sponsor_logo"),
+  ownerName: varchar("owner_name"),
+  coachName: varchar("coach_name"),
   entityType: varchar("entity_type").default("tournament"), // 'tournament' or 'league'
   createdAt: timestamp("created_at").defaultNow(),
 });

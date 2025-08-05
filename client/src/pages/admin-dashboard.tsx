@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Trash2, Plus, Users, Shield, Building, Trophy, Calendar, Newspaper, Images, TrendingUp, Upload, Link as LinkIcon, ArrowLeft, Settings, UserPlus, Play, Zap } from "lucide-react";
+import { Pencil, Trash2, Plus, Users, Shield, Building, Trophy, Calendar, Newspaper, Images, TrendingUp, Upload, Link as LinkIcon, ArrowLeft, Settings, UserPlus, Play, Zap, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import AdminStatsDashboard from "@/components/admin-stats-dashboard";
@@ -54,6 +54,11 @@ export default function AdminDashboard() {
   const { data: leagues, isLoading: leaguesLoading } = useQuery({
     queryKey: ['/api/admin/leagues'],
     enabled: selectedTab === 'leagues'
+  });
+
+  const { data: teams, isLoading: teamsLoading } = useQuery({
+    queryKey: ['/api/admin/teams'],
+    enabled: selectedTab === 'teams'
   });
 
   const { data: news, isLoading: newsLoading } = useQuery({
@@ -768,6 +773,108 @@ export default function AdminDashboard() {
           </>
         );
 
+      case 'teams':
+        return (
+          <>
+            <div>
+              <Label htmlFor="name">Багийн нэр</Label>
+              <Input
+                id="name"
+                value={formData.name || ''}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="ownerName">Эзний нэр</Label>
+                <Input
+                  id="ownerName"
+                  value={formData.ownerName || ''}
+                  onChange={(e) => setFormData({...formData, ownerName: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="coachName">Дасгалжуулагчийн нэр</Label>
+                <Input
+                  id="coachName"
+                  value={formData.coachName || ''}
+                  onChange={(e) => setFormData({...formData, coachName: e.target.value})}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="logoUrl">Багийн лого URL</Label>
+                <Input
+                  id="logoUrl"
+                  value={formData.logoUrl || ''}
+                  onChange={(e) => setFormData({...formData, logoUrl: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="sponsorLogo">Ивээн тэтгэгчийн лого URL</Label>
+                <Input
+                  id="sponsorLogo"
+                  value={formData.sponsorLogo || ''}
+                  onChange={(e) => setFormData({...formData, sponsorLogo: e.target.value})}
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="playerIds">Тоглогчид сонгох</Label>
+              <Select 
+                value={formData.selectedPlayer || ''} 
+                onValueChange={(value) => {
+                  const currentPlayers = formData.playerIds || [];
+                  if (!currentPlayers.includes(value)) {
+                    setFormData({
+                      ...formData, 
+                      playerIds: [...currentPlayers, value],
+                      selectedPlayer: ''
+                    });
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Тоглогч нэмэх" />
+                </SelectTrigger>
+                <SelectContent>
+                  {players && Array.isArray(players) ? players.map((player: any) => (
+                    <SelectItem key={player.players?.id} value={player.players?.id}>
+                      {player.users?.firstName} {player.users?.lastName} - {player.players?.memberNumber}
+                    </SelectItem>
+                  )) : null}
+                </SelectContent>
+              </Select>
+              {formData.playerIds && formData.playerIds.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  <Label>Сонгогдсон тоглогчид:</Label>
+                  {formData.playerIds.map((playerId: string) => {
+                    const player = players?.find((p: any) => p.players?.id === playerId);
+                    return (
+                      <div key={playerId} className="flex items-center justify-between bg-muted p-2 rounded">
+                        <span>{player?.users?.firstName} {player?.users?.lastName}</span>
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={() => {
+                            setFormData({
+                              ...formData,
+                              playerIds: formData.playerIds.filter((id: string) => id !== playerId)
+                            });
+                          }}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </>
+        );
+
       case 'sliders':
         return (
           <>
@@ -926,7 +1033,7 @@ export default function AdminDashboard() {
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="grid w-full grid-cols-9">
           <TabsTrigger value="stats" className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
             Статистик
@@ -950,6 +1057,10 @@ export default function AdminDashboard() {
           <TabsTrigger value="leagues" className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
             Лиг
+          </TabsTrigger>
+          <TabsTrigger value="teams" className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            Багууд
           </TabsTrigger>
           <TabsTrigger value="news" className="flex items-center gap-2">
             <Newspaper className="w-4 h-4" />
@@ -1226,6 +1337,84 @@ export default function AdminDashboard() {
                                 <Pencil className="w-4 h-4" />
                               </Button>
                               <Button size="sm" variant="destructive" onClick={() => handleDelete(article.id)}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )) : null}
+                    </TableBody>
+                  </Table>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="teams">
+          <Card>
+            <CardHeader>
+              <CardTitle>Багийн удирдлага</CardTitle>
+              <CardDescription>Лигийн багуудыг нэмэх, засах, устгах</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-2xl font-bold">Лигийн багууд</h2>
+                  <Button onClick={openCreateDialog}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Баг нэмэх
+                  </Button>
+                </div>
+                
+                {teamsLoading ? (
+                  <div>Ачааллаж байна...</div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Нэр</TableHead>
+                        <TableHead>Эзэн</TableHead>
+                        <TableHead>Дасгалжуулагч</TableHead>
+                        <TableHead>Тоглогчид</TableHead>
+                        <TableHead>Үйлдэл</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {teams && Array.isArray(teams) ? teams.map((team: any) => (
+                        <TableRow key={team.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {team.logoUrl && (
+                                <img src={team.logoUrl} alt={team.name} className="w-8 h-8 rounded-full" />
+                              )}
+                              <div>
+                                <div className="font-medium">{team.name}</div>
+                                {team.sponsorLogo && (
+                                  <div className="text-sm text-muted-foreground">
+                                    <img src={team.sponsorLogo} alt="Sponsor" className="w-4 h-4 inline mr-1" />
+                                    Ивээн тэтгэгч
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{team.ownerName || '-'}</TableCell>
+                          <TableCell>{team.coachName || '-'}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">
+                              {team.players?.length || 0} тоглогч
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline" onClick={() => openEditDialog(team)}>
+                                <Settings className="w-4 h-4" />
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => openEditDialog(team)}>
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button size="sm" variant="destructive" onClick={() => handleDelete(team.id)}>
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
