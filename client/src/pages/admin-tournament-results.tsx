@@ -1026,7 +1026,7 @@ export default function AdminTournamentResultsPage() {
                           const availablePlayers = allUsers.filter(user => {
                             // Only show users who are registered for this tournament
                             const isRegisteredForTournament = participants.some(participant => 
-                              participant.userId === user.id
+                              participant.playerId === user.id
                             );
                             
                             // Check if player is already in ANY group in this tournament
@@ -1034,7 +1034,7 @@ export default function AdminTournamentResultsPage() {
                               anyGroup.players.some(gp => gp.id === user.id)
                             );
                             
-                            return isRegisteredForTournament && !isInAnyGroup;
+                            return isRegisteredForTournament && !isInAnyGroup && user.firstName && user.lastName;
                           });
 
                           if (availablePlayers.length === 0) {
@@ -1055,14 +1055,22 @@ export default function AdminTournamentResultsPage() {
 
                           return (
                             <UserAutocomplete
-                              users={availablePlayers}
-                              value=""
+                              users={availablePlayers.map(user => ({
+                                id: user.id,
+                                firstName: user.firstName || '',
+                                lastName: user.lastName || '',
+                                email: user.email,
+                                clubAffiliation: user.clubAffiliation
+                              }))}
+                              value={undefined}
                               onSelect={(user) => {
-                                addPlayerToGroup(groupIndex, {
-                                  id: user.id,
-                                  name: `${user.firstName} ${user.lastName}`,
-                                  club: user.clubAffiliation || ''
-                                });
+                                if (user) {
+                                  addPlayerToGroup(groupIndex, {
+                                    id: user.id,
+                                    name: `${user.firstName} ${user.lastName}`,
+                                    club: user.clubAffiliation || ''
+                                  });
+                                }
                               }}
                               placeholder="Тэмцээнд бүртгүүлсэн тоглогч хайж нэмэх..."
                               className="w-full"
