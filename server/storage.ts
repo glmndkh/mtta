@@ -1736,6 +1736,21 @@ export class DatabaseStorage implements IStorage {
         }
       }
 
+      // Calculate and update win/loss statistics based on the matches
+      const wins = matches.filter(match => match.result === 'win').length;
+      const losses = matches.filter(match => match.result === 'loss').length;
+      const winPercentage = wins + losses > 0 ? Math.round((wins / (wins + losses)) * 10000) : 0;
+
+      // Update player statistics
+      await db
+        .update(players)
+        .set({
+          wins: wins,
+          losses: losses,
+          winPercentage: winPercentage
+        })
+        .where(eq(players.id, playerId));
+
       return matches.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     } catch (error) {
       console.error('Error in getPlayerMatchesWithDetails:', error);
