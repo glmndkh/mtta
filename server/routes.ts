@@ -563,20 +563,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Mock API endpoints for tournaments, matches, and teams
+  // User tournament and match endpoints
   app.get('/api/user/tournaments', requireAuth, async (req: any, res) => {
-    // Return empty array for now - to be implemented with real data
-    res.json([]);
+    try {
+      const userId = req.session.userId;
+      
+      // Get player data if user is a player
+      let player = null;
+      if (req.session.user?.role === 'player') {
+        player = await storage.getPlayerByUserId(userId);
+      }
+      
+      if (!player) {
+        return res.json([]);
+      }
+      
+      // Get tournaments this player is registered for
+      const registrations = await storage.getPlayerTournamentRegistrations(player.id);
+      const tournaments = [];
+      
+      for (const reg of registrations) {
+        const tournament = await storage.getTournament(reg.tournamentId);
+        if (tournament) {
+          tournaments.push({
+            id: tournament.id,
+            name: tournament.name,
+            startDate: tournament.startDate,
+            endDate: tournament.endDate,
+            location: tournament.location,
+            status: tournament.status,
+            participationType: reg.participationType
+          });
+        }
+      }
+      
+      res.json(tournaments);
+    } catch (error) {
+      console.error("Error fetching user tournaments:", error);
+      res.status(500).json({ message: "Тэмцээний мэдээлэл авахад алдаа гарлаа" });
+    }
   });
 
   app.get('/api/user/matches', requireAuth, async (req: any, res) => {
-    // Return empty array for now - to be implemented with real data
-    res.json([]);
+    try {
+      const userId = req.session.userId;
+      
+      // Get player data if user is a player
+      let player = null;
+      if (req.session.user?.role === 'player') {
+        player = await storage.getPlayerByUserId(userId);
+      }
+      
+      if (!player) {
+        return res.json([]);
+      }
+      
+      // Get player matches with tournament and opponent information
+      const matches = await storage.getPlayerMatchesWithDetails(player.id);
+      
+      res.json(matches);
+    } catch (error) {
+      console.error("Error fetching user matches:", error);
+      res.status(500).json({ message: "Тоглолтын түүх авахад алдаа гарлаа" });
+    }
   });
 
   app.get('/api/user/teams', requireAuth, async (req: any, res) => {
-    // Return empty array for now - to be implemented with real data
-    res.json([]);
+    try {
+      const userId = req.session.userId;
+      
+      // Get player data if user is a player
+      let player = null;
+      if (req.session.user?.role === 'player') {
+        player = await storage.getPlayerByUserId(userId);
+      }
+      
+      if (!player) {
+        return res.json([]);
+      }
+      
+      // Get teams this player is part of
+      const teams = await storage.getPlayerTeams(player.id);
+      
+      res.json(teams);
+    } catch (error) {
+      console.error("Error fetching user teams:", error);
+      res.status(500).json({ message: "Багийн мэдээлэл авахад алдаа гарлаа" });
+    }
   });
 
   // Tournament routes with simple auth
