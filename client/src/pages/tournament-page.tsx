@@ -148,13 +148,14 @@ function MedalWinnersSection({
               <div className="flex flex-col items-center space-y-3">
                 <MedalIcon className={`w-12 h-12 ${medalInfo.color}`} />
                 
-                <Avatar className="w-16 h-16">
+                <Avatar className="w-16 h-16 border-2 border-white">
                   <AvatarImage 
                     src={`/api/users/${ranking.playerId}/avatar`} 
                     alt={ranking.playerName}
+                    className="object-cover"
                   />
-                  <AvatarFallback className="text-lg font-semibold">
-                    {ranking.playerName.split(' ').map(n => n[0]).join('')}
+                  <AvatarFallback className="bg-gray-600 text-white text-lg font-semibold">
+                    <User className="w-8 h-8" />
                   </AvatarFallback>
                 </Avatar>
                 
