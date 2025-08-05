@@ -55,16 +55,10 @@ export default function Navigation() {
               <div className="hidden md:flex items-center space-x-4">
                 {(user as any).role === 'player' ? (
                   <>
-                    <Link href="/dashboard">
-                      <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-mtta-green hover:bg-gray-50 cursor-pointer">
-                        <User className="h-4 w-4" />
-                        <span>{(user as any).firstName}</span>
-                      </div>
-                    </Link>
                     <Link href="/profile">
                       <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-mtta-green hover:bg-gray-50 cursor-pointer">
                         <User className="h-4 w-4" />
-                        <span>Хувийн мэдээлэл</span>
+                        <span>{(user as any).firstName}</span>
                       </div>
                     </Link>
                   </>
@@ -76,19 +70,23 @@ export default function Navigation() {
                         <span>Админ самбар</span>
                       </div>
                     </Link>
-                    <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700">
-                      <User className="h-4 w-4" />
-                      <span>{(user as any).firstName} (Админ)</span>
-                    </div>
+                    <Link href="/profile">
+                      <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-mtta-green hover:bg-gray-50 cursor-pointer">
+                        <User className="h-4 w-4" />
+                        <span>{(user as any).firstName} (Админ)</span>
+                      </div>
+                    </Link>
                   </>
                 ) : (
-                  <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700">
-                    <User className="h-4 w-4" />
-                    <span>{(user as any).firstName} ({
-                      (user as any).role === 'club_owner' ? 'Клубын эзэн' :
-                      (user as any).role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч'
-                    })</span>
-                  </div>
+                  <Link href="/profile">
+                    <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-mtta-green hover:bg-gray-50 cursor-pointer">
+                      <User className="h-4 w-4" />
+                      <span>{(user as any).firstName} ({
+                        (user as any).role === 'club_owner' ? 'Клубын эзэн' :
+                        (user as any).role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч'
+                      })</span>
+                    </div>
+                  </Link>
                 )}
                 <Button
                   variant="ghost"
