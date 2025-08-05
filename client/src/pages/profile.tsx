@@ -953,20 +953,39 @@ export default function Profile() {
                           <h3 className="font-medium mb-3">{tournamentName}</h3>
                           <div className="space-y-2">
                             {(tournamentMatches as any[]).map((match: any, index: number) => (
-                              <div key={match.id || index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                                <div>
-                                  <span className="text-sm">
-                                    vs {typeof match.opponent === 'string' ? match.opponent : 
-                                        typeof match.opponent === 'object' ? match.opponent?.name || 'Тодорхойгүй' : 
-                                        'Тодорхойгүй'}
-                                  </span>
-                                  <span className="text-xs text-gray-500 ml-2">
-                                    {match.date ? new Date(match.date).toLocaleDateString('mn-MN') : 'Огноо тодорхойгүй'}
-                                  </span>
+                              <div key={match.id || index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-sm font-medium">
+                                      vs {typeof match.opponent === 'string' ? match.opponent : 
+                                          typeof match.opponent === 'object' ? match.opponent?.name || 'Тодорхойгүй' : 
+                                          'Тодорхойгүй'}
+                                    </span>
+                                    {match.matchType && match.matchType !== 'knockout' && (
+                                      <Badge variant="outline" className="text-xs">
+                                        {match.matchType}
+                                      </Badge>
+                                    )}
+                                    {match.stage === 'knockout' && (
+                                      <Badge variant="secondary" className="text-xs">
+                                        {match.matchType === 'Хүрэл медалийн тоглолт' ? 'Хүрэл медалийн тоглолт' : 'Шууд хасагдах'}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                                    <span>
+                                      {match.date ? new Date(match.date).toLocaleDateString('mn-MN') : 'Огноо тодорхойгүй'}
+                                    </span>
+                                    {match.stage && (
+                                      <span className="capitalize">
+                                        {match.stage === 'group' ? 'Групийн шат' : 'Шууд хасагдах шат'}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium">{match.score || 'N/A'}</span>
-                                  <Badge variant={match.result === 'win' ? 'default' : 'destructive'}>
+                                <div className="flex items-center gap-3">
+                                  <span className="text-sm font-bold">{match.score || 'N/A'}</span>
+                                  <Badge variant={match.result === 'win' ? 'default' : 'destructive'} className="min-w-[60px] justify-center">
                                     {match.result === 'win' ? 'Ялалт' : 'Ялагдал'}
                                   </Badge>
                                 </div>
