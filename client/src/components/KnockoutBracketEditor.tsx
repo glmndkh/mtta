@@ -667,6 +667,12 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                             {user.firstName} {user.lastName}
                           </option>
                         ))}
+                        {/* Debug: Show qualified players if no available users */}
+                        {getAvailableUsers(match.id, 'player1').length === 0 && qualifiedPlayers.map(qp => (
+                          <option key={`${match.id}-qp1-${qp.id}`} value={qp.id}>
+                            {qp.name} (Group)
+                          </option>
+                        ))}
                       </select>
                     )}
                   </div>
@@ -693,6 +699,12 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                         {getAvailableUsers(match.id, 'player2').map(user => (
                           <option key={`${match.id}-p2-${user.id}`} value={user.id}>
                             {user.firstName} {user.lastName}
+                          </option>
+                        ))}
+                        {/* Debug: Show qualified players if no available users */}
+                        {getAvailableUsers(match.id, 'player2').length === 0 && qualifiedPlayers.map(qp => (
+                          <option key={`${match.id}-qp2-${qp.id}`} value={qp.id}>
+                            {qp.name} (Group)
                           </option>
                         ))}
                       </select>
