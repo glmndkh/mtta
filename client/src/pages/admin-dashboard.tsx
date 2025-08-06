@@ -1002,16 +1002,58 @@ export default function AdminDashboard() {
             <div>
               <Label className="flex items-center gap-2">
                 <Upload className="w-4 h-4" />
-                Слайдерын зургийн URL
+                Слайдерын зураг
               </Label>
-              <Input
-                id="imageUrl"
-                value={formData.imageUrl || ''}
-                onChange={(e) => setFormData({...formData, imageUrl: e.target.value})}
-                placeholder="https://example.com/image.jpg эсвэл /path/to/image.jpg"
-              />
-              <div className="text-sm text-gray-500 mt-1">
-                💡 Зургийг object storage-д байршуулж линкийг энд хуулна уу
+              <div className="space-y-2">
+                <ObjectUploader
+                  maxNumberOfFiles={1}
+                  maxFileSize={5 * 1024 * 1024} // 5MB
+                  onGetUploadParameters={async () => {
+                    const response = await apiRequest("/api/objects/upload", {
+                      method: "POST",
+                    });
+                    return {
+                      method: "PUT" as const,
+                      url: response.uploadURL,
+                    };
+                  }}
+                  onComplete={async (result) => {
+                    if (result.successful && result.successful.length > 0) {
+                      const uploadURL = result.successful[0].uploadURL;
+                      
+                      // Set ACL policy for the uploaded image
+                      try {
+                        const aclResponse = await apiRequest("/api/objects/acl", {
+                          method: "PUT",
+                          body: { imageURL: uploadURL },
+                        });
+                        
+                        // Update form with the normalized object path
+                        setFormData({
+                          ...formData, 
+                          imageUrl: aclResponse.objectPath
+                        });
+                        
+                        toast({ title: "Зураг амжилттай хуулагдлаа" });
+                      } catch (error) {
+                        console.error("Error setting ACL:", error);
+                        toast({ 
+                          title: "Алдаа", 
+                          description: "Зураг хуулагдсан боловч зөвшөөрөл тохируулахад алдаа гарлаа",
+                          variant: "destructive"
+                        });
+                      }
+                    }
+                  }}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Зураг сонгох
+                </ObjectUploader>
+                {formData.imageUrl && (
+                  <div className="text-sm text-green-600">
+                    ✓ Зураг хуулагдлаа: {formData.imageUrl}
+                  </div>
+                )}
               </div>
             </div>
             <div>
