@@ -5,12 +5,19 @@ import Navigation from "@/components/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Building, Trophy, Medal, Calendar, Award } from "lucide-react";
+import { Users, Building, Trophy, Medal, Calendar, Award, ExternalLink } from "lucide-react";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Home() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
+  
+  // Fetch active sliders
+  const { data: sliders, isLoading: slidersLoading } = useQuery({
+    queryKey: ['/api/sliders'],
+    enabled: true,
+  });
 
   // Remove the redirect effect - let both authenticated and non-authenticated users see the same page
 
@@ -30,6 +37,47 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
+      
+      {/* Hero Slider Section */}
+      {!slidersLoading && sliders && sliders.length > 0 && (
+        <div className="w-full">
+          <div className="relative h-96 overflow-hidden">
+            <img 
+              src={sliders[0].imageUrl} 
+              alt={sliders[0].title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+              <div className="text-center text-white max-w-4xl px-6">
+                <h1 className="text-4xl md:text-6xl font-bold mb-4">
+                  {sliders[0].title}
+                </h1>
+                {sliders[0].subtitle && (
+                  <p className="text-xl md:text-2xl mb-6 opacity-90">
+                    {sliders[0].subtitle}
+                  </p>
+                )}
+                {sliders[0].description && (
+                  <p className="text-lg mb-8 opacity-80 max-w-2xl mx-auto">
+                    {sliders[0].description}
+                  </p>
+                )}
+                {sliders[0].linkUrl && sliders[0].buttonText && (
+                  <a 
+                    href={sliders[0].linkUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 mtta-green text-white px-8 py-3 rounded-lg hover:bg-opacity-90 transition-all duration-200 font-semibold"
+                  >
+                    {sliders[0].buttonText}
+                    <ExternalLink className="h-5 w-5" />
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
