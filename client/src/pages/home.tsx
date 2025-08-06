@@ -21,6 +21,12 @@ export default function Home() {
     enabled: true,
   });
 
+  // Fetch latest news for ticker
+  const { data: latestNews, isLoading: newsLoading } = useQuery({
+    queryKey: ['/api/news/latest'],
+    enabled: true,
+  });
+
   // State for current slider index
   const [currentSlider, setCurrentSlider] = useState(0);
 
@@ -145,6 +151,49 @@ export default function Home() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+      
+      {/* News Ticker Section */}
+      {!newsLoading && latestNews && latestNews.length > 0 && (
+        <div className="w-full bg-white border-b shadow-sm overflow-hidden">
+          <div className="relative h-20">
+            <div className="absolute inset-0 flex items-center">
+              <div className="flex animate-scroll-left space-x-12 w-max">
+                {/* Duplicate the news items for seamless loop */}
+                {[...latestNews, ...latestNews].map((news: any, index: number) => (
+                  <div key={`${news.id}-${index}`} className="flex items-center space-x-4 min-w-max px-6">
+                    {/* News Image */}
+                    {news.imageUrl && (
+                      <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-200">
+                        <img 
+                          src={getImageUrl(news.imageUrl)} 
+                          alt={news.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = '/api/placeholder-news-image';
+                          }}
+                        />
+                      </div>
+                    )}
+                    
+                    {/* News Content */}
+                    <div className="flex items-center space-x-4">
+                      <h3 className="text-sm font-medium text-gray-900 max-w-md truncate">
+                        {news.title}
+                      </h3>
+                      <button 
+                        onClick={() => window.location.href = `/news/${news.id}`}
+                        className="text-xs text-mtta-green hover:text-mtta-green-dark font-medium whitespace-nowrap"
+                      >
+                        Дэлгэрэнгүй унших →
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
