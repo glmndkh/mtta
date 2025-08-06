@@ -522,7 +522,7 @@ export default function TournamentPage() {
         
         {/* Hero Content */}
         <div className="relative z-10 h-full flex items-center">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          <div className="w-full px-4 sm:px-6 lg:px-8">
             <div className="text-white">
               <h1 className="text-4xl lg:text-6xl font-bold mb-4">{tournament.name}</h1>
               <div className="flex flex-wrap items-center gap-6 text-lg">
@@ -548,7 +548,7 @@ export default function TournamentPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid lg:grid-cols-3 gap-8">
           
           {/* Left Content - Tournament Details */}

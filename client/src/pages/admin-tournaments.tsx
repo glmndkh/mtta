@@ -49,7 +49,7 @@ export default function AdminTournaments() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
-        <div className="container mx-auto px-4 py-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
           <div className="animate-pulse space-y-4">
             <div className="h-8 bg-gray-200 rounded w-64"></div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -66,7 +66,7 @@ export default function AdminTournaments() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Тэмцээний удирдлага</h1>

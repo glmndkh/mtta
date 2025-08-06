@@ -142,7 +142,7 @@ export default function TournamentResultsPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Button
@@ -169,7 +169,7 @@ export default function TournamentResultsPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="finals" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="finals">Эцсийн байр</TabsTrigger>
