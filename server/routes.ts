@@ -1100,31 +1100,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all tournament results for multiple tournaments (MUST be before the parameterized route)
-  app.get('/api/tournaments/all-results', async (req, res) => {
-    try {
-      const tournaments = await storage.getAllTournaments();
-      const allResults: Record<string, any> = {};
-      
-      for (const tournament of tournaments) {
-        try {
-          const results = await storage.getTournamentResults(tournament.id);
-          if (results) {
-            allResults[tournament.id] = results;
-          }
-        } catch (error) {
-          // Skip tournaments without results
-          continue;
-        }
-      }
-      
-      res.json(allResults);
-    } catch (error) {
-      console.error("Error fetching all tournament results:", error);
-      res.status(500).json({ message: "Failed to fetch all tournament results" });
-    }
-  });
-
   app.get('/api/tournaments/:id', async (req, res) => {
     try {
       const tournament = await storage.getTournament(req.params.id);
@@ -1504,7 +1479,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Tournament results routes
-
   // Get tournament results
   app.get('/api/tournaments/:tournamentId/results', async (req, res) => {
     try {
