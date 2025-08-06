@@ -163,7 +163,7 @@ export default function Home() {
               <div 
                 className="flex space-x-16 w-max py-6"
                 style={{
-                  animation: `scroll-stepwise ${Math.max(30, latestNews.length * 8)}s linear infinite`
+                  animation: `scroll-stepwise ${Math.max(25, latestNews.length * 5)}s linear infinite`
                 }}
               >
                 {/* Duplicate the news items for seamless loop */}

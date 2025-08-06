@@ -6,35 +6,59 @@
   0% {
     transform: translateX(100%);
   }
-  8% {
-    transform: translateX(calc(100% - 250px));
+  2% {
+    transform: translateX(calc(100% - 300px));
   }
-  18% {
-    transform: translateX(calc(100% - 250px));
+  10% {
+    transform: translateX(calc(100% - 300px));
   }
-  26% {
-    transform: translateX(calc(100% - 500px));
+  12% {
+    transform: translateX(calc(100% - 600px));
   }
-  36% {
-    transform: translateX(calc(100% - 500px));
+  20% {
+    transform: translateX(calc(100% - 600px));
   }
-  44% {
-    transform: translateX(calc(100% - 750px));
+  22% {
+    transform: translateX(calc(100% - 900px));
   }
-  54% {
-    transform: translateX(calc(100% - 750px));
+  30% {
+    transform: translateX(calc(100% - 900px));
+  }
+  32% {
+    transform: translateX(calc(100% - 1200px));
+  }
+  40% {
+    transform: translateX(calc(100% - 1200px));
+  }
+  42% {
+    transform: translateX(calc(100% - 1500px));
+  }
+  50% {
+    transform: translateX(calc(100% - 1500px));
+  }
+  52% {
+    transform: translateX(calc(100% - 1800px));
+  }
+  60% {
+    transform: translateX(calc(100% - 1800px));
   }
   62% {
-    transform: translateX(calc(100% - 1000px));
+    transform: translateX(calc(100% - 2100px));
+  }
+  70% {
+    transform: translateX(calc(100% - 2100px));
   }
   72% {
-    transform: translateX(calc(100% - 1000px));
+    transform: translateX(calc(100% - 2400px));
   }
   80% {
-    transform: translateX(calc(100% - 1250px));
+    transform: translateX(calc(100% - 2400px));
+  }
+  82% {
+    transform: translateX(calc(100% - 2700px));
   }
   90% {
-    transform: translateX(calc(100% - 1250px));
+    transform: translateX(calc(100% - 2700px));
   }
   95% {
     transform: translateX(-100%);
