@@ -29,6 +29,9 @@ export default function Home() {
 
   // State for current slider index
   const [currentSlider, setCurrentSlider] = useState(0);
+  
+  // State for current news set index (for showing 3 at a time)
+  const [currentNewsSet, setCurrentNewsSet] = useState(0);
 
   // Auto-rotate sliders every 3 seconds
   useEffect(() => {
@@ -40,6 +43,18 @@ export default function Home() {
 
     return () => clearInterval(interval);
   }, [sliders]);
+
+  // Auto-rotate news sets every 3 seconds
+  useEffect(() => {
+    if (!latestNews || latestNews.length <= 3) return;
+
+    const totalSets = Math.ceil(latestNews.length / 3);
+    const interval = setInterval(() => {
+      setCurrentNewsSet((prev) => (prev + 1) % totalSets);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [latestNews]);
 
   // Helper function to get image URL from object storage or external URL
   const getImageUrl = (imageUrl: string): string => {
@@ -159,44 +174,61 @@ export default function Home() {
       {!newsLoading && latestNews && latestNews.length > 0 && (
         <div className="w-full bg-white border-b shadow-md overflow-hidden">
           <div className="relative h-60">
-            <div className="absolute inset-0 flex items-center">
-              <div 
-                className="flex space-x-16 w-max py-6"
-                style={{
-                  animation: `scroll-stepwise ${Math.max(25, latestNews.length * 5)}s linear infinite`
-                }}
-              >
-                {/* Duplicate the news items for seamless loop */}
-                {[...latestNews, ...latestNews].map((news: any, index: number) => (
-                  <div key={`${news.id}-${index}`} className="flex items-center space-x-6 min-w-max px-8 bg-gray-50 rounded-lg py-6 shadow-sm border h-40">
-                    {/* News Image */}
-                    {news.imageUrl && (
-                      <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-gray-200 shadow-md">
-                        <img 
-                          src={getImageUrl(news.imageUrl)} 
-                          alt={news.title}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.src = '/api/placeholder-news-image';
-                          }}
-                        />
+            <div className="absolute inset-0 flex items-center justify-center px-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-7xl">
+                {(() => {
+                  const startIndex = currentNewsSet * 3;
+                  const currentSet = latestNews.slice(startIndex, startIndex + 3);
+                  
+                  // Ensure we always show 3 items by cycling back to beginning if needed
+                  while (currentSet.length < 3 && latestNews.length > 0) {
+                    const remainingNeeded = 3 - currentSet.length;
+                    const additionalItems = latestNews.slice(0, remainingNeeded);
+                    currentSet.push(...additionalItems);
+                  }
+                  
+                  return currentSet.map((news: any, index: number) => (
+                    <div 
+                      key={`${news.id}-${currentNewsSet}-${index}`} 
+                      className="flex items-center space-x-4 px-6 bg-gray-50 rounded-lg py-4 shadow-sm border h-40 animate-fade-in"
+                    >
+                      {/* News Image */}
+                      {news.imageUrl && (
+                        <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-gray-200 shadow-md">
+                          <img 
+                            src={getImageUrl(news.imageUrl)} 
+                            alt={news.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = '/api/placeholder-news-image';
+                            }}
+                          />
+                        </div>
+                      )}
+                      
+                      {/* News Content */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-semibold text-gray-900 mb-1 line-clamp-2">
+                          {news.title}
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-2 line-clamp-1">
+                          {news.summary || news.content?.substring(0, 60) + '...'}
+                        </p>
+                        
+                        {/* Read More Button */}
+                        <button 
+                          onClick={() => window.location.href = `/news/${news.id}`}
+                          className="inline-flex items-center px-3 py-1 bg-mtta-green text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
+                        >
+                          Унших
+                          <svg className="ml-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
                       </div>
-                    )}
-                    
-                    {/* News Content */}
-                    <div className="flex flex-col space-y-2">
-                      <h3 className="text-base font-semibold text-gray-900 max-w-sm line-clamp-2 leading-snug">
-                        {news.title}
-                      </h3>
-                      <button 
-                        onClick={() => window.location.href = `/news/${news.id}`}
-                        className="text-sm text-mtta-green hover:text-mtta-green-dark font-medium whitespace-nowrap self-start px-4 py-1 bg-mtta-green bg-opacity-10 rounded-full hover:bg-opacity-20 transition-colors"
-                      >
-                        Дэлгэрэнгүй унших →
-                      </button>
                     </div>
-                  </div>
-                ))}
+                  ));
+                })()}
               </div>
             </div>
           </div>
