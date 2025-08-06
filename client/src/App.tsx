@@ -44,11 +44,9 @@ function Router() {
       <Route path="/leagues" component={Leagues} />
       <Route path="/leagues/:id" component={LeagueDetails} />
       <Route path="/news" component={News} />
-      {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
+      <Route path="/" component={Home} />
+      {!isLoading && isAuthenticated && (
         <>
-          <Route path="/" component={Home} />
           <Route path="/dashboard" component={PlayerDashboard} />
           <Route path="/profile" component={Profile} />
           <Route path="/admin/dashboard" component={AdminDashboard} />
