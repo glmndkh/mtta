@@ -65,7 +65,7 @@ export default function Home() {
       {/* Hero Slider Section */}
       {!slidersLoading && sliders && sliders.length > 0 && (
         <div className="w-full">
-          <div className="relative h-96 overflow-hidden bg-gradient-to-r from-mtta-green to-green-700">
+          <div className="relative h-[600px] overflow-hidden bg-gradient-to-r from-mtta-green to-green-700">
             <img 
               src={getImageUrl(sliders[0].imageUrl)} 
               alt={sliders[0].title}
