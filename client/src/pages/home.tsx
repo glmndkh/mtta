@@ -157,16 +157,16 @@ export default function Home() {
       
       {/* News Ticker Section */}
       {!newsLoading && latestNews && latestNews.length > 0 && (
-        <div className="w-full bg-white border-b shadow-sm overflow-hidden">
-          <div className="relative h-20">
+        <div className="w-full bg-white border-b shadow-md overflow-hidden">
+          <div className="relative h-32">
             <div className="absolute inset-0 flex items-center">
-              <div className="flex animate-scroll-left space-x-12 w-max">
+              <div className="flex animate-scroll-left space-x-16 w-max py-4">
                 {/* Duplicate the news items for seamless loop */}
                 {[...latestNews, ...latestNews].map((news: any, index: number) => (
-                  <div key={`${news.id}-${index}`} className="flex items-center space-x-4 min-w-max px-6">
+                  <div key={`${news.id}-${index}`} className="flex items-center space-x-6 min-w-max px-8 bg-gray-50 rounded-lg py-4 shadow-sm border">
                     {/* News Image */}
                     {news.imageUrl && (
-                      <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-200">
+                      <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-gray-200 shadow-md">
                         <img 
                           src={getImageUrl(news.imageUrl)} 
                           alt={news.title}
@@ -179,13 +179,13 @@ export default function Home() {
                     )}
                     
                     {/* News Content */}
-                    <div className="flex items-center space-x-4">
-                      <h3 className="text-sm font-medium text-gray-900 max-w-md truncate">
+                    <div className="flex flex-col space-y-2">
+                      <h3 className="text-base font-semibold text-gray-900 max-w-sm line-clamp-2 leading-snug">
                         {news.title}
                       </h3>
                       <button 
                         onClick={() => window.location.href = `/news/${news.id}`}
-                        className="text-xs text-mtta-green hover:text-mtta-green-dark font-medium whitespace-nowrap"
+                        className="text-sm text-mtta-green hover:text-mtta-green-dark font-medium whitespace-nowrap self-start px-4 py-1 bg-mtta-green bg-opacity-10 rounded-full hover:bg-opacity-20 transition-colors"
                       >
                         Дэлгэрэнгүй унших →
                       </button>
