@@ -99,11 +99,18 @@ export default function Navigation() {
                 </Button>
               </div>
             ) : (
-              <Link href="/login">
-                <Button className="hidden md:inline-flex mtta-green text-white hover:bg-mtta-green-dark">
-                  Нэвтрэх
-                </Button>
-              </Link>
+              <div className="hidden md:flex items-center space-x-2">
+                <Link href="/register">
+                  <Button variant="outline" className="border-mtta-green text-mtta-green hover:bg-mtta-green hover:text-white">
+                    Бүртгүүлэх
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button className="mtta-green text-white hover:bg-mtta-green-dark">
+                    Нэвтрэх
+                  </Button>
+                </Link>
+              </div>
             )}
             
             {/* Mobile menu button */}
@@ -192,14 +199,24 @@ export default function Navigation() {
                 </button>
               </>
             ) : (
-              <Link href="/login">
-                <button
-                  onClick={() => setShowMobileMenu(false)}
-                  className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-white bg-mtta-green hover:bg-mtta-green-dark w-full"
-                >
-                  <span>Нэвтрэх</span>
-                </button>
-              </Link>
+              <div className="space-y-2">
+                <Link href="/register">
+                  <button
+                    onClick={() => setShowMobileMenu(false)}
+                    className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium border border-mtta-green text-mtta-green hover:bg-mtta-green hover:text-white w-full"
+                  >
+                    <span>Бүртгүүлэх</span>
+                  </button>
+                </Link>
+                <Link href="/login">
+                  <button
+                    onClick={() => setShowMobileMenu(false)}
+                    className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-white bg-mtta-green hover:bg-mtta-green-dark w-full"
+                  >
+                    <span>Нэвтрэх</span>
+                  </button>
+                </Link>
+              </div>
             )}
           </div>
         </div>
