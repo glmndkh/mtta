@@ -1013,14 +1013,15 @@ export default function AdminDashboard() {
                       console.log("Getting upload parameters...");
                       const response = await apiRequest("/api/objects/upload", {
                         method: "POST",
-                      }) as { uploadURL: string };
-                      console.log("Upload response:", response);
-                      if (!response || !response.uploadURL) {
+                      });
+                      const data = await response.json() as { uploadURL: string };
+                      console.log("Upload response:", data);
+                      if (!data || !data.uploadURL) {
                         throw new Error("No upload URL received");
                       }
                       return {
                         method: "PUT" as const,
-                        url: response.uploadURL,
+                        url: data.uploadURL,
                       };
                     } catch (error) {
                       console.error("Error getting upload parameters:", error);
@@ -1044,12 +1045,13 @@ export default function AdminDashboard() {
                           headers: {
                             'Content-Type': 'application/json',
                           },
-                        }) as { objectPath: string };
+                        });
+                        const aclData = await aclResponse.json() as { objectPath: string };
                         
                         // Update form with the normalized object path
                         setFormData({
                           ...formData, 
-                          imageUrl: aclResponse.objectPath
+                          imageUrl: aclData.objectPath
                         });
                         
                         toast({ title: "Зураг амжилттай хуулагдлаа" });
