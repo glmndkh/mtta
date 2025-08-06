@@ -1009,13 +1009,28 @@ export default function AdminDashboard() {
                   maxNumberOfFiles={1}
                   maxFileSize={5 * 1024 * 1024} // 5MB
                   onGetUploadParameters={async () => {
-                    const response = await apiRequest("/api/objects/upload", {
-                      method: "POST",
-                    });
-                    return {
-                      method: "PUT" as const,
-                      url: response.uploadURL,
-                    };
+                    try {
+                      console.log("Getting upload parameters...");
+                      const response = await apiRequest("/api/objects/upload", {
+                        method: "POST",
+                      });
+                      console.log("Upload response:", response);
+                      if (!response.uploadURL) {
+                        throw new Error("No upload URL received");
+                      }
+                      return {
+                        method: "PUT" as const,
+                        url: response.uploadURL,
+                      };
+                    } catch (error) {
+                      console.error("Error getting upload parameters:", error);
+                      toast({
+                        title: "Алдаа",
+                        description: "Файл хуулах URL авахад алдаа гарлаа",
+                        variant: "destructive"
+                      });
+                      throw error;
+                    }
                   }}
                   onComplete={async (result) => {
                     if (result.successful && result.successful.length > 0) {
