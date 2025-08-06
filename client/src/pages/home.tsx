@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
@@ -20,6 +20,20 @@ export default function Home() {
     queryKey: ['/api/sliders'],
     enabled: true,
   });
+
+  // State for current slider index
+  const [currentSlider, setCurrentSlider] = useState(0);
+
+  // Auto-rotate sliders every 3 seconds
+  useEffect(() => {
+    if (!sliders || sliders.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentSlider((prev) => (prev + 1) % sliders.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [sliders]);
 
   // Helper function to get image URL from object storage or external URL
   const getImageUrl = (imageUrl: string): string => {
@@ -66,44 +80,71 @@ export default function Home() {
       {!slidersLoading && sliders && sliders.length > 0 && (
         <div className="w-full">
           <div className="relative h-[600px] overflow-hidden bg-gradient-to-r from-mtta-green to-green-700">
-            <img 
-              src={getImageUrl(sliders[0].imageUrl)} 
-              alt={sliders[0].title}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                console.error('Image failed to load:', sliders[0].imageUrl);
-                console.log('Processed URL:', getImageUrl(sliders[0].imageUrl));
-                e.currentTarget.style.display = 'none';
-              }}
-            />
-            <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-              <div className="text-center text-white max-w-4xl px-6">
-                <h1 className="text-4xl md:text-6xl font-bold mb-4">
-                  {sliders[0].title}
-                </h1>
-                {sliders[0].subtitle && (
-                  <p className="text-xl md:text-2xl mb-6 opacity-90">
-                    {sliders[0].subtitle}
-                  </p>
-                )}
-                {sliders[0].description && (
-                  <p className="text-lg mb-8 opacity-80 max-w-2xl mx-auto">
-                    {sliders[0].description}
-                  </p>
-                )}
-                {sliders[0].linkUrl && sliders[0].buttonText && (
-                  <a 
-                    href={sliders[0].linkUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 mtta-green text-white px-8 py-3 rounded-lg hover:bg-opacity-90 transition-all duration-200 font-semibold"
-                  >
-                    {sliders[0].buttonText}
-                    <ExternalLink className="h-5 w-5" />
-                  </a>
-                )}
+            {sliders.map((slider: any, index: number) => (
+              <div
+                key={slider.id}
+                className={`absolute inset-0 transition-opacity duration-1000 ${
+                  index === currentSlider ? 'opacity-100' : 'opacity-0'
+                }`}
+              >
+                <img 
+                  src={getImageUrl(slider.imageUrl)} 
+                  alt={slider.title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    console.error('Image failed to load:', slider.imageUrl);
+                    console.log('Processed URL:', getImageUrl(slider.imageUrl));
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                  <div className="text-center text-white max-w-4xl px-6">
+                    <h1 className="text-4xl md:text-6xl font-bold mb-4">
+                      {slider.title}
+                    </h1>
+                    {slider.subtitle && (
+                      <p className="text-xl md:text-2xl mb-6 opacity-90">
+                        {slider.subtitle}
+                      </p>
+                    )}
+                    {slider.description && (
+                      <p className="text-lg mb-8 opacity-80 max-w-2xl mx-auto">
+                        {slider.description}
+                      </p>
+                    )}
+                    {slider.linkUrl && slider.buttonText && (
+                      <a 
+                        href={slider.linkUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 mtta-green text-white px-8 py-3 rounded-lg hover:bg-opacity-90 transition-all duration-200 font-semibold"
+                      >
+                        {slider.buttonText}
+                        <ExternalLink className="h-5 w-5" />
+                      </a>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
+            ))}
+            
+            {/* Slider Indicators */}
+            {sliders.length > 1 && (
+              <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                {sliders.map((_: any, index: number) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentSlider(index)}
+                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                      index === currentSlider 
+                        ? 'bg-white scale-125' 
+                        : 'bg-white bg-opacity-50 hover:bg-opacity-75'
+                    }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
