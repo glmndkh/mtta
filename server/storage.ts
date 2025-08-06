@@ -718,10 +718,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createHomepageSlider(sliderData: InsertHomepageSlider): Promise<HomepageSlider> {
-    const [slider] = await db.insert(homepageSliders).values({
-      ...sliderData,
-      updatedAt: new Date(),
-    }).returning();
+    // Ensure we don't pass id, createdAt, or updatedAt - let database handle defaults
+    const { id, createdAt, updatedAt, ...cleanData } = sliderData as any;
+    const [slider] = await db.insert(homepageSliders).values(cleanData).returning();
     return slider;
   }
 
