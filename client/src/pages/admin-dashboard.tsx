@@ -1013,9 +1013,9 @@ export default function AdminDashboard() {
                       console.log("Getting upload parameters...");
                       const response = await apiRequest("/api/objects/upload", {
                         method: "POST",
-                      });
+                      }) as { uploadURL: string };
                       console.log("Upload response:", response);
-                      if (!response.uploadURL) {
+                      if (!response || !response.uploadURL) {
                         throw new Error("No upload URL received");
                       }
                       return {
@@ -1040,8 +1040,11 @@ export default function AdminDashboard() {
                       try {
                         const aclResponse = await apiRequest("/api/objects/acl", {
                           method: "PUT",
-                          body: { imageURL: uploadURL },
-                        });
+                          body: JSON.stringify({ imageURL: uploadURL }),
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                        }) as { objectPath: string };
                         
                         // Update form with the normalized object path
                         setFormData({
