@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Users, Building, Trophy, Medal, Calendar, Award } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Home() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -131,21 +132,23 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <Button 
-                    className="w-full mtta-green text-white hover:bg-mtta-green-dark py-6 text-lg" 
-                    onClick={() => window.location.href = '/admin/generator'}
-                  >
-                    <Trophy className="mr-3 h-5 w-5" />
-                    Тэмцээн үүсгэх
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full border-mtta-green text-mtta-green hover:bg-mtta-green hover:text-white py-6 text-lg" 
-                    onClick={() => window.location.href = '/admin/tournament-results'}
-                  >
-                    <Award className="mr-3 h-5 w-5" />
-                    Тэмцээний үр дүн оруулах
-                  </Button>
+                  <Link href="/admin/generator">
+                    <Button 
+                      className="w-full mtta-green text-white hover:bg-mtta-green-dark py-6 text-lg" 
+                    >
+                      <Trophy className="mr-3 h-5 w-5" />
+                      Тэмцээн үүсгэх
+                    </Button>
+                  </Link>
+                  <Link href="/admin/tournament-results">
+                    <Button 
+                      variant="outline" 
+                      className="w-full border-mtta-green text-mtta-green hover:bg-mtta-green hover:text-white py-6 text-lg" 
+                    >
+                      <Award className="mr-3 h-5 w-5" />
+                      Тэмцээний үр дүн оруулах
+                    </Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>
@@ -228,14 +231,15 @@ export default function Home() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 gap-4">
-                      <Button 
-                        className="mtta-green text-white hover:bg-mtta-green-dark" 
-                        size="lg"
-                        onClick={() => window.location.href = '/dashboard'}
-                      >
-                        <Medal className="mr-2 h-4 w-4" />
-                        Миний статистик
-                      </Button>
+                      <Link href="/dashboard">
+                        <Button 
+                          className="mtta-green text-white hover:bg-mtta-green-dark" 
+                          size="lg"
+                        >
+                          <Medal className="mr-2 h-4 w-4" />
+                          Миний статистик
+                        </Button>
+                      </Link>
                       <Button variant="outline" size="lg">
                         <Trophy className="mr-2 h-4 w-4" />
                         Тэмцээнд бүртгүүлэх
@@ -363,14 +367,15 @@ export default function Home() {
                       user.role === 'admin' ? 'Админ' :
                       user.role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч'
                     }</p>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="mt-4"
-                      onClick={() => window.location.href = '/dashboard'}
-                    >
-                      Дэлгэрэнгүй профайл
-                    </Button>
+                    <Link href="/profile">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-4"
+                      >
+                        Дэлгэрэнгүй профайл
+                      </Button>
+                    </Link>
                   </div>
                 </CardContent>
               </Card>
