@@ -155,32 +155,10 @@ export class DatabaseStorage implements IStorage {
   async upsertUser(userData: UpsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
-      .values([userData])
+      .values(userData)
       .onConflictDoUpdate({
         target: users.id,
-        set: {
-          email: userData.email,
-          phone: userData.phone,
-          firstName: userData.firstName,
-          lastName: userData.lastName,
-          gender: userData.gender,
-          dateOfBirth: userData.dateOfBirth,
-          clubAffiliation: userData.clubAffiliation,
-          profileImageUrl: userData.profileImageUrl,
-          province: userData.province,
-          city: userData.city,
-          rubberTypes: userData.rubberTypes || [],
-          handedness: userData.handedness,
-          playingStyles: userData.playingStyles || [],
-          bio: userData.bio,
-          membershipType: userData.membershipType,
-          membershipStartDate: userData.membershipStartDate,
-          membershipEndDate: userData.membershipEndDate,
-          membershipActive: userData.membershipActive,
-          membershipAmount: userData.membershipAmount,
-          role: userData.role,
-          updatedAt: new Date(),
-        },
+        set: userData,
       })
       .returning();
     return user;
@@ -354,7 +332,7 @@ export class DatabaseStorage implements IStorage {
       const newPlayer = await this.createPlayer({
         userId: userId,
         dateOfBirth: new Date(), // Default date
-        rank: "3-р зэрэг" // Use valid enum value instead
+        rank: "Шинэ тоглогч"
       });
       
       // Return the player with user info
@@ -387,7 +365,7 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(players).where(eq(players.clubId, clubId));
   }
 
-  async updatePlayerRank(playerId: string, rank: "3-р зэрэг" | "2-р зэрэг" | "1-р зэрэг" | "дэд мастер" | "спортын мастер" | "олон улсын хэмжээний мастер"): Promise<boolean> {
+  async updatePlayerRank(playerId: string, rank: string): Promise<boolean> {
     try {
       const result = await db
         .update(players)
