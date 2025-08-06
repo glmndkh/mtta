@@ -9,6 +9,8 @@ import { Users, Building, Trophy, Medal, Calendar, Award, ExternalLink } from "l
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 
+
+
 export default function Home() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
@@ -18,6 +20,35 @@ export default function Home() {
     queryKey: ['/api/sliders'],
     enabled: true,
   });
+
+  // Helper function to convert Google Drive URLs to direct image URLs
+  const convertGoogleDriveUrl = (url: string): string => {
+    if (!url) return url;
+    
+    // Check if it's a Google Drive URL with different formats
+    if (url.includes('drive.google.com')) {
+      let fileId = '';
+      
+      // Handle /file/d/ID/view format
+      const fileIdMatch1 = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (fileIdMatch1 && fileIdMatch1[1]) {
+        fileId = fileIdMatch1[1];
+      }
+      
+      // Handle ?id=ID format
+      const fileIdMatch2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (fileIdMatch2 && fileIdMatch2[1]) {
+        fileId = fileIdMatch2[1];
+      }
+      
+      if (fileId) {
+        // Convert to direct image URL
+        return `https://drive.google.com/uc?export=view&id=${fileId}`;
+      }
+    }
+    
+    return url;
+  };
 
   // Remove the redirect effect - let both authenticated and non-authenticated users see the same page
 
@@ -41,11 +72,16 @@ export default function Home() {
       {/* Hero Slider Section */}
       {!slidersLoading && sliders && sliders.length > 0 && (
         <div className="w-full">
-          <div className="relative h-96 overflow-hidden">
+          <div className="relative h-96 overflow-hidden bg-gradient-to-r from-mtta-green to-green-700">
             <img 
-              src={sliders[0].imageUrl} 
+              src={convertGoogleDriveUrl(sliders[0].imageUrl)} 
               alt={sliders[0].title}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                console.error('Image failed to load:', sliders[0].imageUrl);
+                console.log('Converted URL:', convertGoogleDriveUrl(sliders[0].imageUrl));
+                e.currentTarget.style.display = 'none';
+              }}
             />
             <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
               <div className="text-center text-white max-w-4xl px-6">
