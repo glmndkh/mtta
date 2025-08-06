@@ -261,7 +261,7 @@ function TournamentRegistrationButton({ tournamentId }: { tournamentId: string }
     <Button 
       onClick={handleRegister}
       disabled={registerMutation.isPending}
-      className="bg-orange-500 hover:bg-orange-600"
+      className="bg-green-600 hover:bg-green-700"
     >
       {registerMutation.isPending ? "Бүртгэж байна..." : "Бүртгүүлэх"}
     </Button>
@@ -307,11 +307,11 @@ function PastTournamentHistory({ tournaments, results }: {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">Өнгөрсөн тэмцээний түүх</h2>
+        <h2 className="text-2xl font-bold text-white">Өнгөрсөн тэмцээний түүх</h2>
         <Button 
           variant="outline" 
           onClick={() => setLocation('/tournaments')}
-          className="text-orange-500 border-orange-500 hover:bg-orange-50"
+          className="text-green-400 border-green-400 hover:bg-green-50/10 bg-white/10 backdrop-blur-sm"
         >
           Бүгдийг харах
           <ExternalLink className="w-4 h-4 ml-2" />
@@ -328,7 +328,7 @@ function PastTournamentHistory({ tournaments, results }: {
           return (
             <Card 
               key={tournament.id} 
-              className="hover:shadow-lg transition-shadow cursor-pointer"
+              className="hover:shadow-lg transition-shadow cursor-pointer bg-white/20 backdrop-blur-md border-white/30"
               onClick={() => setLocation(`/tournament/${tournament.id}`)}
             >
               <CardHeader className="pb-3">
@@ -405,13 +405,13 @@ function CurrentTournaments({ tournaments }: { tournaments: Tournament[] }) {
 
   return (
     <div className="mb-12">
-      <h2 className="text-2xl font-bold mb-6">Одоо явагдаж буй тэмцээн</h2>
+      <h2 className="text-2xl font-bold mb-6 text-white">Одоо явагдаж буй тэмцээн</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {currentTournaments.map((tournament) => (
           <Card 
             key={tournament.id}
-            className="hover:shadow-lg transition-shadow cursor-pointer"
+            className="hover:shadow-lg transition-shadow cursor-pointer bg-white/20 backdrop-blur-md border-white/30"
             onClick={() => setLocation(`/tournament/${tournament.id}`)}
           >
             <CardHeader>
@@ -470,13 +470,13 @@ function UpcomingTournaments({ tournaments }: { tournaments: Tournament[] }) {
 
   return (
     <div className="mb-12">
-      <h2 className="text-2xl font-bold mb-6">Удахгүй болох тэмцээн</h2>
+      <h2 className="text-2xl font-bold mb-6 text-white">Удахгүй болох тэмцээн</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {upcomingTournaments.map((tournament) => (
           <Card 
             key={tournament.id}
-            className="hover:shadow-lg transition-shadow cursor-pointer"
+            className="hover:shadow-lg transition-shadow cursor-pointer bg-white/20 backdrop-blur-md border-white/30"
             onClick={() => setLocation(`/tournament/${tournament.id}`)}
           >
             <CardHeader>
@@ -568,9 +568,9 @@ export default function TournamentsNew() {
 
   if (tournamentsLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen">
         <Navigation />
-        <div className="container mx-auto px-4 py-8">
+        <div className="max-w-[95%] mx-auto px-4 py-8">
           <div className="text-center">Тэмцээнүүдийг ачааллаж байна...</div>
         </div>
       </div>
@@ -578,10 +578,10 @@ export default function TournamentsNew() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-[95%] mx-auto px-4 py-8">
         {/* Featured Tournament Slider */}
         {featuredTournaments.length > 0 && (
           <FeaturedTournamentSlider tournaments={featuredTournaments} />
