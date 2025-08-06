@@ -718,9 +718,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createHomepageSlider(sliderData: InsertHomepageSlider): Promise<HomepageSlider> {
-    // Ensure we don't pass id, createdAt, or updatedAt - let database handle defaults
-    const { id, createdAt, updatedAt, ...cleanData } = sliderData as any;
-    const [slider] = await db.insert(homepageSliders).values(cleanData).returning();
+    // Generate UUID manually since database default isn't working with Drizzle
+    const { randomUUID } = await import('crypto');
+    const now = new Date();
+    
+    const [slider] = await db.insert(homepageSliders).values({
+      ...sliderData,
+      id: randomUUID(),
+      createdAt: now,
+      updatedAt: now,
+    }).returning();
     return slider;
   }
 
