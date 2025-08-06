@@ -21,33 +21,26 @@ export default function Home() {
     enabled: true,
   });
 
-  // Helper function to convert Google Drive URLs to direct image URLs
-  const convertGoogleDriveUrl = (url: string): string => {
-    if (!url) return url;
+  // Helper function to get image URL from object storage or external URL
+  const getImageUrl = (imageUrl: string): string => {
+    if (!imageUrl) return '';
     
-    // Check if it's a Google Drive URL with different formats
-    if (url.includes('drive.google.com')) {
-      let fileId = '';
-      
-      // Handle /file/d/ID/view format
-      const fileIdMatch1 = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-      if (fileIdMatch1 && fileIdMatch1[1]) {
-        fileId = fileIdMatch1[1];
-      }
-      
-      // Handle ?id=ID format
-      const fileIdMatch2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-      if (fileIdMatch2 && fileIdMatch2[1]) {
-        fileId = fileIdMatch2[1];
-      }
-      
-      if (fileId) {
-        // Convert to direct image URL
-        return `https://drive.google.com/uc?export=view&id=${fileId}`;
-      }
+    // If it's an object storage path (starts with /objects/), use it directly
+    if (imageUrl.startsWith('/objects/')) {
+      return imageUrl;
     }
     
-    return url;
+    // If it's already a full URL, use it as is
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    
+    // If it's a relative path, assume it's in public objects
+    if (imageUrl.startsWith('/')) {
+      return `/public-objects${imageUrl}`;
+    }
+    
+    return `/public-objects/${imageUrl}`;
   };
 
   // Remove the redirect effect - let both authenticated and non-authenticated users see the same page
@@ -74,12 +67,12 @@ export default function Home() {
         <div className="w-full">
           <div className="relative h-96 overflow-hidden bg-gradient-to-r from-mtta-green to-green-700">
             <img 
-              src={convertGoogleDriveUrl(sliders[0].imageUrl)} 
+              src={getImageUrl(sliders[0].imageUrl)} 
               alt={sliders[0].title}
               className="w-full h-full object-cover"
               onError={(e) => {
                 console.error('Image failed to load:', sliders[0].imageUrl);
-                console.log('Converted URL:', convertGoogleDriveUrl(sliders[0].imageUrl));
+                console.log('Processed URL:', getImageUrl(sliders[0].imageUrl));
                 e.currentTarget.style.display = 'none';
               }}
             />
