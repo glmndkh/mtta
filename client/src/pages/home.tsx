@@ -158,12 +158,12 @@ export default function Home() {
       {/* News Ticker Section */}
       {!newsLoading && latestNews && latestNews.length > 0 && (
         <div className="w-full bg-white border-b shadow-md overflow-hidden">
-          <div className="relative h-32">
+          <div className="relative h-60">
             <div className="absolute inset-0 flex items-center">
-              <div className="flex animate-scroll-left space-x-16 w-max py-4">
+              <div className="flex animate-scroll-stepwise space-x-16 w-max py-6">
                 {/* Duplicate the news items for seamless loop */}
                 {[...latestNews, ...latestNews].map((news: any, index: number) => (
-                  <div key={`${news.id}-${index}`} className="flex items-center space-x-6 min-w-max px-8 bg-gray-50 rounded-lg py-4 shadow-sm border">
+                  <div key={`${news.id}-${index}`} className="flex items-center space-x-6 min-w-max px-8 bg-gray-50 rounded-lg py-6 shadow-sm border h-40">
                     {/* News Image */}
                     {news.imageUrl && (
                       <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-gray-200 shadow-md">
