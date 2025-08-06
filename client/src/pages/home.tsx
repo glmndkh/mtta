@@ -12,19 +12,7 @@ export default function Home() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Нэвтрэх шаардлагатай",
-        description: "Энэ хуудсыг үзэхийн тулд нэвтэрнэ үү...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
+  // Remove the redirect effect - let both authenticated and non-authenticated users see the same page
 
   if (isLoading) {
     return (
@@ -37,9 +25,7 @@ export default function Home() {
     );
   }
 
-  if (!isAuthenticated || !user) {
-    return null;
-  }
+  // Show content for both authenticated and non-authenticated users
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -48,17 +34,30 @@ export default function Home() {
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Сайн байна уу, {user.firstName} {user.lastName}!
-          </h1>
-          <p className="text-gray-600">
-            MTTA системд тавтай морилно уу. Таны эрх: {
-              user.role === 'player' ? 'Тоглогч' :
-              user.role === 'club_owner' ? 'Клубын эзэн' :
-              user.role === 'admin' ? 'Админ' :
-              user.role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч'
-            }
-          </p>
+          {isAuthenticated && user ? (
+            <>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Сайн байна уу, {user.firstName} {user.lastName}!
+              </h1>
+              <p className="text-gray-600">
+                MTTA системд тавтай морилно уу. Таны эрх: {
+                  user.role === 'player' ? 'Тоглогч' :
+                  user.role === 'club_owner' ? 'Клубын эзэн' :
+                  user.role === 'admin' ? 'Админ' :
+                  user.role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч'
+                }
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                MTTA системд тавтай морилно уу!
+              </h1>
+              <p className="text-gray-600">
+                Монголын Ширээний Теннисний Холбоо - Тоглогчид, тэмцээнүүд, үр дүнгүүд
+              </p>
+            </>
+          )}
         </div>
 
         {/* Quick Stats */}
@@ -120,8 +119,8 @@ export default function Home() {
           </Card>
         </div>
 
-        {/* Admin Interface - Clean and Focused */}
-        {user.role === 'admin' ? (
+        {/* User-specific content based on authentication and role */}
+        {isAuthenticated && user && user.role === 'admin' ? (
           <div className="max-w-2xl mx-auto">
             <Card>
               <CardHeader>
@@ -221,7 +220,7 @@ export default function Home() {
               </Card>
 
               {/* Player Actions */}
-              {user.role === 'player' && (
+              {isAuthenticated && user && user.role === 'player' && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
@@ -250,7 +249,7 @@ export default function Home() {
               )}
 
               {/* Club Owner Actions */}
-              {user.role === 'club_owner' && (
+              {isAuthenticated && user && user.role === 'club_owner' && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
@@ -274,7 +273,7 @@ export default function Home() {
               )}
 
               {/* Score Recorder Actions */}
-              {user.role === 'score_recorder' && (
+              {isAuthenticated && user && user.role === 'score_recorder' && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
@@ -340,45 +339,75 @@ export default function Home() {
                 </CardContent>
               </Card>
 
-              {/* User Profile Card */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Миний профайл</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center">
-                    {user.profileImageUrl ? (
-                      <img 
-                        src={user.profileImageUrl} 
-                        alt="Profile" 
-                        className="w-16 h-16 rounded-full mx-auto mb-4 object-cover"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 rounded-full bg-mtta-green text-white flex items-center justify-center mx-auto mb-4">
-                        <span className="text-xl font-bold">
-                          {user.firstName?.[0]}{user.lastName?.[0]}
-                        </span>
+              {/* User Profile Card - Only show for authenticated users */}
+              {isAuthenticated && user && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Миний профайл</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center">
+                      {user.profileImageUrl ? (
+                        <img 
+                          src={user.profileImageUrl} 
+                          alt="Profile" 
+                          className="w-16 h-16 rounded-full mx-auto mb-4 object-cover"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 rounded-full bg-mtta-green text-white flex items-center justify-center mx-auto mb-4">
+                          <span className="text-xl font-bold">
+                            {user.firstName?.[0]}{user.lastName?.[0]}
+                          </span>
+                        </div>
+                      )}
+                      <h3 className="font-bold text-lg">{user.firstName} {user.lastName}</h3>
+                      <p className="text-gray-600 capitalize">{
+                        user.role === 'player' ? 'Тоглогч' :
+                        user.role === 'club_owner' ? 'Клубын эзэн' :
+                        user.role === 'admin' ? 'Админ' :
+                        user.role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч'
+                      }</p>
+                      <Link href="/profile">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="mt-4"
+                        >
+                          Дэлгэрэнгүй профайл
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Guest Actions - Show for non-authenticated users */}
+              {!isAuthenticated && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Системд нэвтрэх</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center space-y-4">
+                      <p className="text-gray-600">
+                        Бүх боломжийг ашиглахын тулд нэвтэрнэ үү
+                      </p>
+                      <div className="space-y-2">
+                        <Link href="/login">
+                          <Button className="w-full mtta-green text-white hover:bg-mtta-green-dark">
+                            Нэвтрэх
+                          </Button>
+                        </Link>
+                        <Link href="/register">
+                          <Button variant="outline" className="w-full border-mtta-green text-mtta-green hover:bg-mtta-green hover:text-white">
+                            Бүртгүүлэх
+                          </Button>
+                        </Link>
                       </div>
-                    )}
-                    <h3 className="font-bold text-lg">{user.firstName} {user.lastName}</h3>
-                    <p className="text-gray-600 capitalize">{
-                      user.role === 'player' ? 'Тоглогч' :
-                      user.role === 'club_owner' ? 'Клубын эзэн' :
-                      user.role === 'admin' ? 'Админ' :
-                      user.role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч'
-                    }</p>
-                    <Link href="/profile">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="mt-4"
-                      >
-                        Дэлгэрэнгүй профайл
-                      </Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         )}
