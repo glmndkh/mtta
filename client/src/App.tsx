@@ -9,7 +9,7 @@ import Home from "@/pages/home";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import PlayerDashboard from "@/pages/player-dashboard";
-import Tournaments from "@/pages/tournaments";
+import TournamentsNew from "@/pages/tournaments-new";
 import Clubs from "@/pages/clubs";
 import Leagues from "@/pages/leagues";
 import LeagueDetails from "@/pages/league-details";
@@ -39,7 +39,7 @@ function Router() {
       <Route path="/tournament/:id" component={TournamentPage} />
       <Route path="/tournament/:id/results" component={TournamentResults} />
       <Route path="/player/:id" component={PlayerProfilePage} />
-      <Route path="/tournaments" component={Tournaments} />
+      <Route path="/tournaments" component={TournamentsNew} />
       <Route path="/clubs" component={Clubs} />
       <Route path="/leagues" component={Leagues} />
       <Route path="/leagues/:id" component={LeagueDetails} />

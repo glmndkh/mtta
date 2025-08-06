@@ -90,6 +90,7 @@ export interface IStorage {
   deleteTournament(id: string): Promise<boolean>;
   getTournamentsByOrganizer(organizerId: string): Promise<Tournament[]>;
   getActiveTournaments(): Promise<Tournament[]>;
+  getAllTournaments(): Promise<Tournament[]>;
   registerPlayerForTournament(tournamentId: string, playerId: string): Promise<void>;
   
   // Tournament registration operations
@@ -513,6 +514,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTournaments(): Promise<Tournament[]> {
+    return await db
+      .select()
+      .from(tournaments)
+      .orderBy(desc(tournaments.createdAt));
+  }
+
+  async getAllTournaments(): Promise<Tournament[]> {
     return await db
       .select()
       .from(tournaments)
