@@ -6,130 +6,42 @@
   0% {
     transform: translateX(100%);
   }
-  2% {
-    transform: translateX(calc(100% - 20px));
+  8% {
+    transform: translateX(calc(100% - 250px));
   }
-  5% {
-    transform: translateX(calc(100% - 20px));
+  18% {
+    transform: translateX(calc(100% - 250px));
   }
-  7% {
-    transform: translateX(calc(100% - 40px));
+  26% {
+    transform: translateX(calc(100% - 500px));
   }
-  10% {
-    transform: translateX(calc(100% - 40px));
+  36% {
+    transform: translateX(calc(100% - 500px));
   }
-  12% {
-    transform: translateX(calc(100% - 60px));
+  44% {
+    transform: translateX(calc(100% - 750px));
   }
-  15% {
-    transform: translateX(calc(100% - 60px));
-  }
-  17% {
-    transform: translateX(calc(100% - 80px));
-  }
-  20% {
-    transform: translateX(calc(100% - 80px));
-  }
-  22% {
-    transform: translateX(calc(100% - 100px));
-  }
-  25% {
-    transform: translateX(calc(100% - 100px));
-  }
-  27% {
-    transform: translateX(calc(100% - 120px));
-  }
-  30% {
-    transform: translateX(calc(100% - 120px));
-  }
-  32% {
-    transform: translateX(calc(100% - 140px));
-  }
-  35% {
-    transform: translateX(calc(100% - 140px));
-  }
-  37% {
-    transform: translateX(calc(100% - 160px));
-  }
-  40% {
-    transform: translateX(calc(100% - 160px));
-  }
-  42% {
-    transform: translateX(calc(100% - 180px));
-  }
-  45% {
-    transform: translateX(calc(100% - 180px));
-  }
-  47% {
-    transform: translateX(calc(100% - 200px));
-  }
-  50% {
-    transform: translateX(calc(100% - 200px));
-  }
-  52% {
-    transform: translateX(calc(100% - 220px));
-  }
-  55% {
-    transform: translateX(calc(100% - 220px));
-  }
-  57% {
-    transform: translateX(calc(100% - 240px));
-  }
-  60% {
-    transform: translateX(calc(100% - 240px));
+  54% {
+    transform: translateX(calc(100% - 750px));
   }
   62% {
-    transform: translateX(calc(100% - 260px));
-  }
-  65% {
-    transform: translateX(calc(100% - 260px));
-  }
-  67% {
-    transform: translateX(calc(100% - 280px));
-  }
-  70% {
-    transform: translateX(calc(100% - 280px));
+    transform: translateX(calc(100% - 1000px));
   }
   72% {
-    transform: translateX(calc(100% - 300px));
-  }
-  75% {
-    transform: translateX(calc(100% - 300px));
-  }
-  77% {
-    transform: translateX(calc(100% - 320px));
+    transform: translateX(calc(100% - 1000px));
   }
   80% {
-    transform: translateX(calc(100% - 320px));
-  }
-  82% {
-    transform: translateX(calc(100% - 340px));
-  }
-  85% {
-    transform: translateX(calc(100% - 340px));
-  }
-  87% {
-    transform: translateX(calc(100% - 360px));
+    transform: translateX(calc(100% - 1250px));
   }
   90% {
-    transform: translateX(calc(100% - 360px));
-  }
-  92% {
-    transform: translateX(calc(100% - 380px));
+    transform: translateX(calc(100% - 1250px));
   }
   95% {
-    transform: translateX(calc(100% - 380px));
-  }
-  97% {
     transform: translateX(-100%);
   }
   100% {
     transform: translateX(-100%);
   }
-}
-
-.animate-scroll-stepwise {
-  animation: scroll-stepwise 120s linear infinite;
 }
 
 /* Custom countdown animations */

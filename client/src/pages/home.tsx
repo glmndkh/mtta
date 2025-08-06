@@ -160,7 +160,12 @@ export default function Home() {
         <div className="w-full bg-white border-b shadow-md overflow-hidden">
           <div className="relative h-60">
             <div className="absolute inset-0 flex items-center">
-              <div className="flex animate-scroll-stepwise space-x-16 w-max py-6">
+              <div 
+                className="flex space-x-16 w-max py-6"
+                style={{
+                  animation: `scroll-stepwise ${Math.max(30, latestNews.length * 8)}s linear infinite`
+                }}
+              >
                 {/* Duplicate the news items for seamless loop */}
                 {[...latestNews, ...latestNews].map((news: any, index: number) => (
                   <div key={`${news.id}-${index}`} className="flex items-center space-x-6 min-w-max px-8 bg-gray-50 rounded-lg py-6 shadow-sm border h-40">
