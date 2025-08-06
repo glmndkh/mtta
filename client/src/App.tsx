@@ -14,6 +14,7 @@ import Clubs from "@/pages/clubs";
 import Leagues from "@/pages/leagues";
 import LeagueDetails from "@/pages/league-details";
 import News from "@/pages/news";
+import NewsDetail from "@/pages/news-detail";
 import AdminTournamentResults from "@/pages/admin-tournament-results";
 import AdminTournaments from "@/pages/admin-tournaments";
 import ExcelTournamentDemo from "@/pages/excel-tournament-demo";
@@ -44,6 +45,7 @@ function Router() {
       <Route path="/leagues" component={Leagues} />
       <Route path="/leagues/:id" component={LeagueDetails} />
       <Route path="/news" component={News} />
+      <Route path="/news/:id" component={NewsDetail} />
       <Route path="/" component={Home} />
       {!isLoading && isAuthenticated && (
         <>

@@ -711,6 +711,23 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(newsFeed.createdAt));
   }
 
+  async getLatestPublishedNews(limit: number = 5): Promise<News[]> {
+    return await db
+      .select()
+      .from(newsFeed)
+      .where(eq(newsFeed.published, true))
+      .orderBy(desc(newsFeed.publishedAt))
+      .limit(limit);
+  }
+
+  async getNewsById(id: string): Promise<News | undefined> {
+    const [news] = await db
+      .select()
+      .from(newsFeed)
+      .where(eq(newsFeed.id, id));
+    return news;
+  }
+
   // Homepage slider operations
   async getHomepageSlider(id: string): Promise<HomepageSlider | undefined> {
     const [slider] = await db.select().from(homepageSliders).where(eq(homepageSliders.id, id));
