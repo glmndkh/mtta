@@ -2103,7 +2103,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/admin/sliders/:id', requireAuth, isAdminRole, async (req, res) => {
     try {
-      const updateData = req.body;
+      // Parse and validate the update data, excluding auto-generated fields
+      const updateData = insertHomepageSliderSchema.partial().parse(req.body);
       const slider = await storage.updateHomepageSlider(req.params.id, updateData);
       if (!slider) {
         return res.status(404).json({ message: "Слайдер олдсонгүй" });
