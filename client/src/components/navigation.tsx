@@ -135,12 +135,15 @@ export default function Navigation() {
           zIndex: 9999,
           background: 'linear-gradient(135deg, rgba(15, 20, 25, 0.98) 0%, rgba(25, 30, 38, 0.96) 100%)',
           color: '#ffffff',
-          display: 'block'
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
         }}>
           <div className="mobile-menu-header" style={{
             background: 'rgba(26, 26, 26, 0.9)',
             borderBottom: '1px solid rgba(0, 200, 150, 0.3)',
-            padding: '1rem'
+            padding: '1rem',
+            flexShrink: 0
           }}>
             <div className="flex items-center justify-between">
               <img src={mttaLogo} alt="MTTA Logo" className="h-8 w-auto" />
@@ -155,7 +158,14 @@ export default function Navigation() {
               </Button>
             </div>
           </div>
-          <div className="px-0 py-0 space-y-0">
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-start',
+            padding: 0,
+            overflow: 'hidden'
+          }}>
             {navigationLinks.map((link) => {
               const Icon = link.icon;
               const isActive = location === link.href;
@@ -168,11 +178,13 @@ export default function Navigation() {
                     onClick={() => setShowMobileMenu(false)}
                     style={{
                       color: '#ffffff',
-                      padding: '1rem',
+                      padding: '1rem 1.5rem',
                       borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                       display: 'flex',
                       alignItems: 'center',
-                      minHeight: '60px'
+                      minHeight: '56px',
+                      fontSize: '1rem',
+                      fontWeight: '500'
                     }}
                   >
                     <Icon className="h-4 w-4" style={{ color: '#ffffff' }} />
@@ -182,74 +194,134 @@ export default function Navigation() {
               );
             })}
 
-            {isAuthenticated && user ? (
-              <>
-                {(user as any).role === 'player' && (
-                  <Link href="/dashboard">
-                    <div 
-                      className="mobile-menu-link flex items-center space-x-3 cursor-pointer"
-                      onClick={() => setShowMobileMenu(false)}
-                    >
-                      <User className="h-4 w-4" />
-                      <span>Миний профайл</span>
-                    </div>
-                  </Link>
-                )}
+            
+            {/* User menu section at bottom */}
+            <div style={{
+              marginTop: 'auto',
+              borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+              backgroundColor: 'rgba(26, 26, 26, 0.5)'
+            }}>
+              {isAuthenticated && user ? (
+                <>
+                  {(user as any).role === 'player' && (
+                    <Link href="/profile">
+                      <div 
+                        className="mobile-menu-link flex items-center space-x-3 cursor-pointer"
+                        onClick={() => setShowMobileMenu(false)}
+                        style={{
+                          color: '#ffffff',
+                          padding: '1rem 1.5rem',
+                          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          minHeight: '56px'
+                        }}
+                      >
+                        <User className="h-4 w-4" style={{ color: '#ffffff' }} />
+                        <span style={{ color: '#ffffff', marginLeft: '0.75rem' }}>Миний профайл</span>
+                      </div>
+                    </Link>
+                  )}
 
-                {/* Admin-only mobile menu items */}
-                {(user as any)?.role === 'admin' && (
-                  <>
-                    <Link href="/admin/generator">
-                      <div 
-                        className="mobile-menu-link flex items-center space-x-3 cursor-pointer"
-                        onClick={() => setShowMobileMenu(false)}
-                      >
-                        <Trophy className="h-4 w-4" />
-                        <span>Тэмцээн Үүсгэх</span>
-                      </div>
-                    </Link>
-                    <Link href="/admin/tournament-results">
-                      <div 
-                        className="mobile-menu-link flex items-center space-x-3 cursor-pointer"
-                        onClick={() => setShowMobileMenu(false)}
-                      >
-                        <Trophy className="h-4 w-4" />
-                        <span>Тэмцээний Үр Дүн</span>
-                      </div>
-                    </Link>
-                  </>
-                )}
-                <button
-                  onClick={() => {
-                    setShowMobileMenu(false);
-                    window.location.href = '/api/logout';
-                  }}
-                  className="mobile-logout-btn flex items-center space-x-3 w-full"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Гарах</span>
-                </button>
-              </>
-            ) : (
-              <div className="mobile-user-actions space-y-2">
-                <Link href="/register">
+                  {/* Admin-only mobile menu items */}
+                  {(user as any)?.role === 'admin' && (
+                    <>
+                      <Link href="/admin/dashboard">
+                        <div 
+                          className="mobile-menu-link flex items-center space-x-3 cursor-pointer"
+                          onClick={() => setShowMobileMenu(false)}
+                          style={{
+                            color: '#ffffff',
+                            padding: '1rem 1.5rem',
+                            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            minHeight: '56px'
+                          }}
+                        >
+                          <User className="h-4 w-4" style={{ color: '#ffffff' }} />
+                          <span style={{ color: '#ffffff', marginLeft: '0.75rem' }}>Админ самбар</span>
+                        </div>
+                      </Link>
+                      <Link href="/admin/generator">
+                        <div 
+                          className="mobile-menu-link flex items-center space-x-3 cursor-pointer"
+                          onClick={() => setShowMobileMenu(false)}
+                          style={{
+                            color: '#ffffff',
+                            padding: '1rem 1.5rem',
+                            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            minHeight: '56px'
+                          }}
+                        >
+                          <Trophy className="h-4 w-4" style={{ color: '#ffffff' }} />
+                          <span style={{ color: '#ffffff', marginLeft: '0.75rem' }}>Тэмцээн үүсгэх</span>
+                        </div>
+                      </Link>
+                    </>
+                  )}
                   <button
-                    onClick={() => setShowMobileMenu(false)}
-                    className="mobile-menu-link flex items-center justify-center w-full border border-mtta-green text-mtta-green hover:bg-mtta-green hover:text-white"
+                    onClick={() => {
+                      setShowMobileMenu(false);
+                      window.location.href = '/api/logout';
+                    }}
+                    style={{
+                      color: '#ff6b6b',
+                      background: 'rgba(255, 107, 107, 0.1)',
+                      border: '1px solid rgba(255, 107, 107, 0.3)',
+                      padding: '1rem 1.5rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      width: '100%',
+                      minHeight: '56px'
+                    }}
                   >
-                    <span>Бүртгүүлэх</span>
+                    <LogOut className="h-4 w-4" style={{ color: '#ff6b6b' }} />
+                    <span style={{ color: '#ff6b6b', marginLeft: '0.75rem' }}>Гарах</span>
                   </button>
-                </Link>
-                <Link href="/login">
-                  <button
-                    onClick={() => setShowMobileMenu(false)}
-                    className="mobile-menu-link flex items-center justify-center w-full text-white bg-mtta-green hover:bg-mtta-green-dark"
-                  >
-                    <span>Нэвтрэх</span>
-                  </button>
-                </Link>
-              </div>
-            )}
+                </>
+              ) : (
+                <div style={{ padding: '1rem' }}>
+                  <Link href="/register">
+                    <button
+                      onClick={() => setShowMobileMenu(false)}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem 1.5rem',
+                        marginBottom: '0.5rem',
+                        border: '1px solid #00c896',
+                        color: '#00c896',
+                        background: 'transparent',
+                        borderRadius: '0.5rem',
+                        fontSize: '1rem',
+                        fontWeight: '500'
+                      }}
+                    >
+                      Бүртгүүлэх
+                    </button>
+                  </Link>
+                  <Link href="/login">
+                    <button
+                      onClick={() => setShowMobileMenu(false)}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem 1.5rem',
+                        background: '#00c896',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '0.5rem',
+                        fontSize: '1rem',
+                        fontWeight: '500'
+                      }}
+                    >
+                      Нэвтрэх
+                    </button>
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
