@@ -48,6 +48,12 @@ export default function Home() {
     enabled: true,
   });
 
+  // Fetch active sponsors
+  const { data: sponsors = [], isLoading: sponsorsLoading } = useQuery<any[]>({
+    queryKey: ['/api/sponsors'],
+    enabled: true,
+  });
+
   // State for current slider index
   const [currentSlider, setCurrentSlider] = useState(0);
   
@@ -655,6 +661,55 @@ export default function Home() {
             </div>
           </div>
         )}
+
+        {/* Sponsors Section */}
+        <div className="bg-gray-50 py-12 mt-12">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">
+              Ивээн тэтгэгчид
+            </h2>
+            
+            {!sponsorsLoading && sponsors && sponsors.length > 0 && (
+              <div className="relative overflow-hidden">
+                <div className="flex gap-8 animate-scroll-horizontal">
+                  {/* Duplicate sponsors to create seamless loop */}
+                  {[...sponsors, ...sponsors].map((sponsor, index) => (
+                    <div
+                      key={`${sponsor.id}-${index}`}
+                      className="flex-shrink-0 bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+                    >
+                      <div className="flex items-center justify-center h-16 w-32">
+                        {sponsor.logoUrl ? (
+                          <img
+                            src={sponsor.logoUrl}
+                            alt={sponsor.name}
+                            className="max-h-full max-w-full object-contain"
+                          />
+                        ) : (
+                          <div className="text-gray-400 text-center">
+                            <span className="font-medium">{sponsor.name}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {sponsorsLoading && (
+              <div className="text-center text-gray-600">
+                Ивээн тэтгэгчдийн мэдээлэл ачааллаж байна...
+              </div>
+            )}
+            
+            {!sponsorsLoading && (!sponsors || sponsors.length === 0) && (
+              <div className="text-center text-gray-600">
+                Одоогоор ивээн тэтгэгч байхгүй байна
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertPlayerSchema, insertClubSchema, insertTournamentSchema, insertMatchSchema, insertNewsSchema, insertMembershipSchema, insertHomepageSliderSchema } from "@shared/schema";
+import { insertPlayerSchema, insertClubSchema, insertTournamentSchema, insertMatchSchema, insertNewsSchema, insertMembershipSchema, insertHomepageSliderSchema, insertSponsorSchema } from "@shared/schema";
 import { z } from "zod";
 
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
@@ -2178,6 +2178,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching active sliders:", error);
       res.status(500).json({ message: "Идэвхтэй слайдерууд авахад алдаа гарлаа" });
+    }
+  });
+
+  // Sponsor management routes (admin only)
+  app.get('/api/admin/sponsors', requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const sponsors = await storage.getAllSponsors();
+      res.json(sponsors);
+    } catch (error) {
+      console.error("Error fetching sponsors:", error);
+      res.status(500).json({ message: "Ивээн тэтгэгчид авахад алдаа гарлаа" });
+    }
+  });
+
+  app.post('/api/admin/sponsors', requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const sponsorData = insertSponsorSchema.parse(req.body);
+      const sponsor = await storage.createSponsor(sponsorData);
+      res.json(sponsor);
+    } catch (error) {
+      console.error("Error creating sponsor:", error);
+      res.status(400).json({ message: "Ивээн тэтгэгч үүсгэхэд алдаа гарлаа" });
+    }
+  });
+
+  app.put('/api/admin/sponsors/:id', requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const updateData = insertSponsorSchema.partial().parse(req.body);
+      const sponsor = await storage.updateSponsor(req.params.id, updateData);
+      if (!sponsor) {
+        return res.status(404).json({ message: "Ивээн тэтгэгч олдсонгүй" });
+      }
+      res.json(sponsor);
+    } catch (error) {
+      console.error("Error updating sponsor:", error);
+      res.status(400).json({ message: "Ивээн тэтгэгч засварлахад алдаа гарлаа" });
+    }
+  });
+
+  app.delete('/api/admin/sponsors/:id', requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const success = await storage.deleteSponsor(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Ивээн тэтгэгч олдсонгүй" });
+      }
+      res.json({ message: "Ивээн тэтгэгч амжилттай устгагдлаа" });
+    } catch (error) {
+      console.error("Error deleting sponsor:", error);
+      res.status(400).json({ message: "Ивээн тэтгэгч устгахад алдаа гарлаа" });
+    }
+  });
+
+  // Public endpoint for active sponsors
+  app.get('/api/sponsors', async (req, res) => {
+    try {
+      const sponsors = await storage.getAllSponsors();
+      // Filter only active sponsors for public use
+      const activeSponsors = sponsors.filter(sponsor => sponsor.isActive);
+      res.json(activeSponsors);
+    } catch (error) {
+      console.error("Error fetching active sponsors:", error);
+      res.status(500).json({ message: "Идэвхтэй ивээн тэтгэгчид авахад алдаа гарлаа" });
     }
   });
 
