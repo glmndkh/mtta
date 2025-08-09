@@ -133,7 +133,7 @@ export default function Home() {
   // Show content for both authenticated and non-authenticated users
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Navigation />
       
       {/* Hero Slider Section */}
