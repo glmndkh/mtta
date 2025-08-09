@@ -380,6 +380,68 @@ button {
   color: inherit;
 }
 
+/* Tab buttons should be green not grey */
+.tabs-list button, [role="tab"] {
+  background-color: rgba(0, 200, 150, 0.1) !important;
+  color: #00c896 !important;
+  border-color: rgba(0, 200, 150, 0.3) !important;
+}
+
+.tabs-list button[data-state="active"], [role="tab"][data-state="active"] {
+  background-color: #00c896 !important;
+  color: #ffffff !important;
+  border-color: #00c896 !important;
+}
+
+/* News and sponsorship card backgrounds should be transparent/dark instead of grey */
+.news-card, .sponsor-card {
+  background: rgba(26, 26, 26, 0.9) !important;
+  border: 1px solid rgba(0, 200, 150, 0.3) !important;
+}
+
+/* Ensure buttons in cards are visible */
+.card button, .card-content button {
+  color: #ffffff !important;
+}
+
+/* Additional tab styling to ensure all tabs are green */
+[data-radix-collection-item][role="tab"], 
+.tablist [role="tab"],
+.tabs-trigger,
+button[role="tab"] {
+  background-color: rgba(0, 200, 150, 0.1) !important;
+  color: #00c896 !important;
+  border: 1px solid rgba(0, 200, 150, 0.3) !important;
+}
+
+[data-radix-collection-item][role="tab"][data-state="active"],
+.tablist [role="tab"][data-state="active"],
+.tabs-trigger[data-state="active"],
+button[role="tab"][data-state="active"] {
+  background-color: #00c896 !important;
+  color: #ffffff !important;
+  border-color: #00c896 !important;
+  box-shadow: 0 0 0 2px rgba(0, 200, 150, 0.2) !important;
+}
+
+/* Secondary buttons should also be green themed */
+.secondary-tab, .tab-secondary {
+  background-color: rgba(0, 200, 150, 0.1) !important;
+  color: #00c896 !important;
+  border: 1px solid rgba(0, 200, 150, 0.3) !important;
+}
+
+.secondary-tab:hover, .tab-secondary:hover {
+  background-color: rgba(0, 200, 150, 0.2) !important;
+}
+
+/* Fix any remaining white card backgrounds in the main content */
+.main-content .card, .main-content .card-content {
+  background: rgba(26, 26, 26, 0.9) !important;
+  border: 1px solid rgba(0, 200, 150, 0.3) !important;
+  color: #ffffff !important;
+}
+
 /* Card titles and content */
 .card h3, .card h4, .card p {
   color: #ffffff !important;
