@@ -9,6 +9,27 @@ import { Users, Building, Trophy, Medal, Calendar, Award, ExternalLink } from "l
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 
+// Type definitions for API responses
+interface SliderItem {
+  id: string;
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  linkUrl?: string;
+  active: boolean;
+}
+
+interface NewsItem {
+  id: string;
+  title: string;
+  content: string;
+  summary?: string;
+  imageUrl?: string;
+  category?: string;
+  publishedAt: string;
+  authorId: string;
+}
+
 
 
 export default function Home() {
@@ -16,13 +37,13 @@ export default function Home() {
   const { toast } = useToast();
   
   // Fetch active sliders
-  const { data: sliders, isLoading: slidersLoading } = useQuery({
+  const { data: sliders = [], isLoading: slidersLoading } = useQuery<SliderItem[]>({
     queryKey: ['/api/sliders'],
     enabled: true,
   });
 
   // Fetch latest news for ticker
-  const { data: latestNews, isLoading: newsLoading } = useQuery({
+  const { data: latestNews = [], isLoading: newsLoading } = useQuery<NewsItem[]>({
     queryKey: ['/api/news/latest'],
     enabled: true,
   });
@@ -152,7 +173,7 @@ export default function Home() {
             {/* Slider Indicators */}
             {sliders.length > 1 && (
               <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                {sliders.map((_: any, index: number) => (
+                {sliders.map((_, index: number) => (
                   <button
                     key={index}
                     onClick={() => setCurrentSlider(index)}
@@ -176,7 +197,7 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4">
             {/* Section Header */}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900"СҮҮЛИЙН ҮЕИЙН МЭДЭЭ</h2>
+              <h2 className="text-2xl font-bold text-gray-900">СҮҮЛИЙН ҮЕИЙН МЭДЭЭ</h2>
               <button 
                 onClick={() => window.location.href = '/news'}
                 className="text-mtta-green hover:text-green-700 font-medium text-sm flex items-center"
@@ -201,7 +222,7 @@ export default function Home() {
                   currentSet.push(...additionalItems);
                 }
                 
-                return currentSet.map((news: any, index: number) => (
+                return currentSet.map((news: NewsItem, index: number) => (
                   <div 
                     key={`${news.id}-${currentNewsSet}-${index}`}
                     className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow animate-fade-in cursor-pointer"
