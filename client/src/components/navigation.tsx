@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Menu, X, Home, Trophy, Building, Users, Newspaper, User, LogOut } from "lucide-react";
-import mttaLogo from "@assets/logo_1753961933153.jpg";
+import mttaLogo from "@assets/new-mtta-logo.png";
 
 export default function Navigation() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
