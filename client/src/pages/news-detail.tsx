@@ -119,6 +119,13 @@ export default function NewsDetail() {
   const getImageUrl = (imageUrl: string) => {
     if (!imageUrl) return placeholderImageData;
     if (imageUrl.startsWith('http')) return imageUrl;
+    
+    // If it's already an objects path, use it directly (served from public directory)
+    if (imageUrl.startsWith('/objects/')) {
+      return imageUrl;
+    }
+    
+    // For other paths
     if (imageUrl.startsWith('/')) return `/public-objects${imageUrl}`;
     return `/public-objects/${imageUrl}`;
   };
@@ -187,6 +194,17 @@ export default function NewsDetail() {
                     src={getImageUrl(article.imageUrl)} 
                     alt={article.title}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      console.error('News detail image failed to load:', article.imageUrl);
+                      console.log('Processed URL:', getImageUrl(article.imageUrl));
+                      // Try alternative URL format
+                      if (!e.currentTarget.src.includes('/public-objects/')) {
+                        e.currentTarget.src = `/public-objects/${article.imageUrl.replace(/^\/+/, '')}`;
+                      }
+                    }}
+                    onLoad={() => {
+                      console.log('News detail image loaded successfully:', getImageUrl(article.imageUrl));
+                    }}
                   />
                 </div>
               )}

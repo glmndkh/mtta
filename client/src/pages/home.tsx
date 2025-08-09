@@ -94,13 +94,13 @@ export default function Home() {
   const getImageUrl = (imageUrl: string): string => {
     if (!imageUrl) return placeholderImageData;
     
-    // If it's an object storage path (starts with /objects/), use it directly
-    if (imageUrl.startsWith('/objects/')) {
+    // If it's already a full URL, use it as is
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
       return imageUrl;
     }
     
-    // If it's already a full URL, use it as is
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    // If it's an object storage path (starts with /objects/), use it directly (served from public directory)
+    if (imageUrl.startsWith('/objects/')) {
       return imageUrl;
     }
     
