@@ -671,13 +671,33 @@ export class DatabaseStorage implements IStorage {
     return news;
   }
 
-  async getPublishedNews(): Promise<News[]> {
+  async getPublishedNews(): Promise<any[]> {
     return await db
-      .select()
+      .select({
+        id: newsFeed.id,
+        title: newsFeed.title,
+        content: newsFeed.content,
+        excerpt: newsFeed.excerpt,
+        imageUrl: newsFeed.imageUrl,
+        category: newsFeed.category,
+        published: newsFeed.published,
+        publishedAt: newsFeed.publishedAt,
+        createdAt: newsFeed.createdAt,
+        updatedAt: newsFeed.updatedAt,
+        authorId: newsFeed.authorId,
+        author: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          profileImageUrl: users.profileImageUrl,
+        }
+      })
       .from(newsFeed)
+      .leftJoin(users, eq(newsFeed.authorId, users.id))
       .where(eq(newsFeed.published, true))
       .orderBy(desc(newsFeed.publishedAt))
-      .limit(20);
+      .limit(15);
   }
 
   async publishNews(id: string): Promise<void> {
@@ -711,19 +731,59 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(newsFeed.createdAt));
   }
 
-  async getLatestPublishedNews(limit: number = 5): Promise<News[]> {
+  async getLatestPublishedNews(limit: number = 5): Promise<any[]> {
     return await db
-      .select()
+      .select({
+        id: newsFeed.id,
+        title: newsFeed.title,
+        content: newsFeed.content,
+        excerpt: newsFeed.excerpt,
+        imageUrl: newsFeed.imageUrl,
+        category: newsFeed.category,
+        published: newsFeed.published,
+        publishedAt: newsFeed.publishedAt,
+        createdAt: newsFeed.createdAt,
+        updatedAt: newsFeed.updatedAt,
+        authorId: newsFeed.authorId,
+        author: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          profileImageUrl: users.profileImageUrl,
+        }
+      })
       .from(newsFeed)
+      .leftJoin(users, eq(newsFeed.authorId, users.id))
       .where(eq(newsFeed.published, true))
       .orderBy(desc(newsFeed.publishedAt))
       .limit(limit);
   }
 
-  async getNewsById(id: string): Promise<News | undefined> {
+  async getNewsById(id: string): Promise<any | undefined> {
     const [news] = await db
-      .select()
+      .select({
+        id: newsFeed.id,
+        title: newsFeed.title,
+        content: newsFeed.content,
+        excerpt: newsFeed.excerpt,
+        imageUrl: newsFeed.imageUrl,
+        category: newsFeed.category,
+        published: newsFeed.published,
+        publishedAt: newsFeed.publishedAt,
+        createdAt: newsFeed.createdAt,
+        updatedAt: newsFeed.updatedAt,
+        authorId: newsFeed.authorId,
+        author: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          profileImageUrl: users.profileImageUrl,
+        }
+      })
       .from(newsFeed)
+      .leftJoin(users, eq(newsFeed.authorId, users.id))
       .where(eq(newsFeed.id, id));
     return news;
   }
