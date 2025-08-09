@@ -142,8 +142,9 @@ export default function Navigation() {
           <div className="mobile-menu-header" style={{
             background: 'rgba(26, 26, 26, 0.9)',
             borderBottom: '1px solid rgba(0, 200, 150, 0.3)',
-            padding: '1rem',
-            flexShrink: 0
+            padding: '0.75rem 1rem',
+            flexShrink: 0,
+            minHeight: '60px'
           }}>
             <div className="flex items-center justify-between">
               <img src={mttaLogo} alt="MTTA Logo" className="h-8 w-auto" />
@@ -164,7 +165,8 @@ export default function Navigation() {
             flexDirection: 'column',
             justifyContent: 'flex-start',
             padding: 0,
-            overflow: 'hidden'
+            overflow: 'hidden',
+            maxHeight: 'calc(100vh - 120px)'
           }}>
             {navigationLinks.map((link) => {
               const Icon = link.icon;
@@ -178,12 +180,12 @@ export default function Navigation() {
                     onClick={() => setShowMobileMenu(false)}
                     style={{
                       color: '#ffffff',
-                      padding: '1rem 1.5rem',
+                      padding: '0.75rem 1.5rem',
                       borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                       display: 'flex',
                       alignItems: 'center',
-                      minHeight: '56px',
-                      fontSize: '1rem',
+                      minHeight: '48px',
+                      fontSize: '0.95rem',
                       fontWeight: '500'
                     }}
                   >
@@ -210,11 +212,11 @@ export default function Navigation() {
                         onClick={() => setShowMobileMenu(false)}
                         style={{
                           color: '#ffffff',
-                          padding: '1rem 1.5rem',
+                          padding: '0.75rem 1.5rem',
                           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                           display: 'flex',
                           alignItems: 'center',
-                          minHeight: '56px'
+                          minHeight: '48px'
                         }}
                       >
                         <User className="h-4 w-4" style={{ color: '#ffffff' }} />
@@ -232,11 +234,11 @@ export default function Navigation() {
                           onClick={() => setShowMobileMenu(false)}
                           style={{
                             color: '#ffffff',
-                            padding: '1rem 1.5rem',
+                            padding: '0.75rem 1.5rem',
                             borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                             display: 'flex',
                             alignItems: 'center',
-                            minHeight: '56px'
+                            minHeight: '48px'
                           }}
                         >
                           <User className="h-4 w-4" style={{ color: '#ffffff' }} />
@@ -249,11 +251,11 @@ export default function Navigation() {
                           onClick={() => setShowMobileMenu(false)}
                           style={{
                             color: '#ffffff',
-                            padding: '1rem 1.5rem',
+                            padding: '0.75rem 1.5rem',
                             borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                             display: 'flex',
                             alignItems: 'center',
-                            minHeight: '56px'
+                            minHeight: '48px'
                           }}
                         >
                           <Trophy className="h-4 w-4" style={{ color: '#ffffff' }} />
@@ -271,11 +273,11 @@ export default function Navigation() {
                       color: '#ff6b6b',
                       background: 'rgba(255, 107, 107, 0.1)',
                       border: '1px solid rgba(255, 107, 107, 0.3)',
-                      padding: '1rem 1.5rem',
+                      padding: '0.75rem 1.5rem',
                       display: 'flex',
                       alignItems: 'center',
                       width: '100%',
-                      minHeight: '56px'
+                      minHeight: '48px'
                     }}
                   >
                     <LogOut className="h-4 w-4" style={{ color: '#ff6b6b' }} />
@@ -283,20 +285,21 @@ export default function Navigation() {
                   </button>
                 </>
               ) : (
-                <div style={{ padding: '1rem' }}>
+                <div style={{ padding: '0.75rem 1rem' }}>
                   <Link href="/register">
                     <button
                       onClick={() => setShowMobileMenu(false)}
                       style={{
                         width: '100%',
-                        padding: '0.75rem 1.5rem',
+                        padding: '0.5rem 1.5rem',
                         marginBottom: '0.5rem',
                         border: '1px solid #00c896',
                         color: '#00c896',
                         background: 'transparent',
                         borderRadius: '0.5rem',
-                        fontSize: '1rem',
-                        fontWeight: '500'
+                        fontSize: '0.95rem',
+                        fontWeight: '500',
+                        minHeight: '44px'
                       }}
                     >
                       Бүртгүүлэх
@@ -307,13 +310,14 @@ export default function Navigation() {
                       onClick={() => setShowMobileMenu(false)}
                       style={{
                         width: '100%',
-                        padding: '0.75rem 1.5rem',
+                        padding: '0.5rem 1.5rem',
                         background: '#00c896',
                         color: '#ffffff',
                         border: 'none',
                         borderRadius: '0.5rem',
-                        fontSize: '1rem',
-                        fontWeight: '500'
+                        fontSize: '0.95rem',
+                        fontWeight: '500',
+                        minHeight: '44px'
                       }}
                     >
                       Нэвтрэх
