@@ -288,6 +288,7 @@ export default function News() {
   const getImageUrl = (imageUrl: string) => {
     if (!imageUrl) return placeholderImageData;
     if (imageUrl.startsWith('http')) return imageUrl;
+    if (imageUrl.startsWith('data:')) return imageUrl; // Handle base64 data URLs
     
     // If it's already an objects path, use it directly (served from public directory)
     if (imageUrl.startsWith('/objects/')) {
