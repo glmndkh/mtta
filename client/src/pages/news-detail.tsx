@@ -33,11 +33,14 @@ export default function NewsDetail() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // Fetch specific news article
+  // Optimized specific news article fetching
   const { data: article, isLoading: articleLoading } = useQuery({
     queryKey: ["/api/news", newsId],
     enabled: isAuthenticated && !!newsId,
     retry: false,
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnWindowFocus: false,
     meta: {
       onError: (error: Error) => {
         if (isUnauthorizedError(error)) {
@@ -55,11 +58,14 @@ export default function NewsDetail() {
     },
   });
 
-  // Fetch latest news for sidebar
+  // Optimized latest news fetching for sidebar
   const { data: latestNews = [] } = useQuery({
     queryKey: ["/api/news/latest"],
     enabled: isAuthenticated,
     retry: false,
+    staleTime: 3 * 60 * 1000, // Consider data fresh for 3 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnWindowFocus: false,
   });
 
   // Publish news mutation
@@ -107,8 +113,11 @@ export default function NewsDetail() {
     return <Badge className={cat.className}>{cat.label}</Badge>;
   };
 
+  // Static placeholder SVG to avoid API calls and improve performance
+  const placeholderImageData = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI0MCIgdmlld0JveD0iMCAwIDQwMCAyNDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNjAgMTAwSDI0MFYxNDBIMTYwVjEwMFoiIGZpbGw9IiNEMUQ1REIiLz4KPHBhdGggZD0iTTE3NSAxMTVIMjI1VjEyNUgxNzVWMTE1WiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K';
+
   const getImageUrl = (imageUrl: string) => {
-    if (!imageUrl) return null;
+    if (!imageUrl) return placeholderImageData;
     if (imageUrl.startsWith('http')) return imageUrl;
     if (imageUrl.startsWith('/')) return `/public-objects${imageUrl}`;
     return `/public-objects/${imageUrl}`;

@@ -46,11 +46,15 @@ export default function News() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // Fetch news
+  // Optimized news fetching with caching for better performance
   const { data: allNews = [], isLoading: newsLoading } = useQuery({
     queryKey: ["/api/news"],
     enabled: isAuthenticated,
     retry: false,
+    staleTime: 2 * 60 * 1000, // Consider data fresh for 2 minutes
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes  
+    refetchOnWindowFocus: false, // Don't refetch on window focus for better performance
+    refetchOnMount: false, // Don't refetch on component mount if data is fresh
     meta: {
       onError: (error: Error) => {
         if (isUnauthorizedError(error)) {
@@ -205,8 +209,11 @@ export default function News() {
     return <Badge className={cat.className}>{cat.label}</Badge>;
   };
 
+  // Static placeholder SVG to avoid API calls and improve performance
+  const placeholderImageData = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI0MCIgdmlld0JveD0iMCAwIDQwMCAyNDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNjAgMTAwSDI0MFYxNDBIMTYwVjEwMFoiIGZpbGw9IiNEMUQ1REIiLz4KPHBhdGggZD0iTTE3NSAxMTVIMjI1VjEyNUgxNzVWMTE1WiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K';
+
   const getImageUrl = (imageUrl: string) => {
-    if (!imageUrl) return null;
+    if (!imageUrl) return placeholderImageData;
     if (imageUrl.startsWith('http')) return imageUrl;
     if (imageUrl.startsWith('/')) return `/public-objects${imageUrl}`;
     return `/public-objects/${imageUrl}`;
@@ -223,12 +230,42 @@ export default function News() {
     });
   };
 
-  if (isLoading) {
+  // Loading skeleton for better UX
+  if (isLoading || newsLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mtta-green mx-auto mb-4"></div>
-          <p className="text-gray-600">Уншиж байна...</p>
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-6">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="bg-white rounded-lg shadow-sm border p-6">
+                  <div className="animate-pulse">
+                    <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
+                    <div className="h-6 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                    <div className="space-y-2">
+                      <div className="h-4 bg-gray-200 rounded"></div>
+                      <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <div className="animate-pulse">
+                  <div className="h-6 bg-gray-200 rounded mb-4"></div>
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="mb-4">
+                      <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-4/5"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

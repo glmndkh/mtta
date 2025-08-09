@@ -1193,6 +1193,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/news', async (req, res) => {
     try {
+      // Add caching headers for better performance
+      res.set({
+        'Cache-Control': 'public, max-age=300', // 5 minutes cache
+        'ETag': `news-${Date.now()}`
+      });
+      
       const news = await storage.getPublishedNews();
       res.json(news);
     } catch (error) {
@@ -1203,6 +1209,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/news/latest', async (req, res) => {
     try {
+      // Add caching headers for better performance
+      res.set({
+        'Cache-Control': 'public, max-age=180', // 3 minutes cache
+        'ETag': `latest-news-${Date.now()}`
+      });
+      
       const latestNews = await storage.getLatestPublishedNews(5);
       res.json(latestNews);
     } catch (error) {
@@ -1213,6 +1225,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/news/:id', async (req, res) => {
     try {
+      // Add caching headers for individual news articles
+      res.set({
+        'Cache-Control': 'public, max-age=600', // 10 minutes cache for individual articles
+        'ETag': `news-${req.params.id}-${Date.now()}`
+      });
+      
       const news = await storage.getNewsById(req.params.id);
       if (!news) {
         return res.status(404).json({ message: "Мэдээ олдсонгүй" });
