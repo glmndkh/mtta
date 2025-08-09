@@ -26,41 +26,12 @@ export default function Clubs() {
   const [selectedClub, setSelectedClub] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Нэвтрэх шаардлагатай",
-        description: "Энэ хуудсыг үзэхийн тулд нэвтэрнэ үү...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
+  // Remove authentication requirement - allow viewing for all users
 
-  // Fetch clubs
+  // Fetch clubs - allow for all users
   const { data: clubs = [], isLoading: clubsLoading } = useQuery({
     queryKey: ["/api/clubs"],
-    enabled: isAuthenticated,
     retry: false,
-    meta: {
-      onError: (error: Error) => {
-        if (isUnauthorizedError(error)) {
-          toast({
-            title: "Нэвтрэх шаардлагатай",
-            description: "Та дахин нэвтэрнэ үү...",
-            variant: "destructive",
-          });
-          setTimeout(() => {
-            window.location.href = "/api/login";
-          }, 500);
-          return;
-        }
-      },
-    },
   });
 
   // Fetch selected club details
@@ -133,9 +104,7 @@ export default function Clubs() {
     );
   }
 
-  if (!isAuthenticated || !user) {
-    return null;
-  }
+  // Remove authentication check - show content for all users
 
   return (
     <div className="min-h-screen">
@@ -149,7 +118,7 @@ export default function Clubs() {
             <p className="text-gray-600">Монголын ширээний теннисний клубуудын жагсаалт</p>
           </div>
           
-          {user.role === 'club_owner' && (
+          {user && (user as any)?.role === 'club_owner' && (
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
               <DialogTrigger asChild>
                 <Button className="mtta-green text-white hover:bg-mtta-green-dark">
@@ -297,7 +266,7 @@ export default function Clubs() {
             <Building className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Клуб байхгүй байна</h3>
             <p className="text-gray-600 mb-6">Одоогоор бүртгэгдсэн клуб байхгүй байна</p>
-            {user.role === 'club_owner' && (
+            {user && (user as any)?.role === 'club_owner' && (
               <Button 
                 className="mtta-green text-white hover:bg-mtta-green-dark"
                 onClick={() => setShowCreateDialog(true)}

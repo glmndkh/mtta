@@ -33,45 +33,16 @@ export default function News() {
   const [editingNews, setEditingNews] = useState<any>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Нэвтрэх шаардлагатай",
-        description: "Энэ хуудсыг үзэхийн тулд нэвтэрнэ үү...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
+  // Remove authentication requirement - allow viewing for all users
 
-  // Fetch news data - use regular endpoint that shows published news
+  // Fetch news data - allow for all users
   const { data: allNews = [], isLoading: newsLoading } = useQuery({
     queryKey: ['/api/news'],
-    enabled: isAuthenticated,
     retry: false,
     staleTime: 30 * 1000, // Reduced to 30 seconds for better real-time updates
     gcTime: 2 * 60 * 1000, // Keep in cache for 2 minutes  
     refetchOnWindowFocus: true, // Enable refetch to see updates
     refetchOnMount: true, // Enable refetch on mount
-    meta: {
-      onError: (error: Error) => {
-        if (isUnauthorizedError(error)) {
-          toast({
-            title: "Нэвтрэх шаардлагатай",
-            description: "Та дахин нэвтэрнэ үү...",
-            variant: "destructive",
-          });
-          setTimeout(() => {
-            window.location.href = "/api/login";
-          }, 500);
-          return;
-        }
-      },
-    },
   });
 
   // Filter news by category
@@ -351,9 +322,7 @@ export default function News() {
     );
   }
 
-  if (!isAuthenticated || !user) {
-    return null;
-  }
+  // Show content for all users, but only show admin functions if authenticated as admin
 
   return (
     <div className="min-h-screen">
@@ -382,7 +351,7 @@ export default function News() {
               </SelectContent>
             </Select>
 
-            {user.role === 'admin' && (
+            {user && (user as any)?.role === 'admin' && (
               <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                 <DialogTrigger asChild>
                   <Button className="mtta-green text-white hover:bg-mtta-green-dark">
@@ -525,7 +494,7 @@ export default function News() {
             )}
 
             {/* Edit News Dialog */}
-            {user.role === 'admin' && (
+            {user && (user as any)?.role === 'admin' && (
               <Dialog open={showEditDialog} onOpenChange={handleCloseEditDialog}>
                 <DialogContent className="max-w-3xl">
                   <DialogHeader>
@@ -697,7 +666,7 @@ export default function News() {
                 : "Энэ ангилалд мэдээ байхгүй байна"
               }
             </p>
-            {user.role === 'admin' && (
+            {user && (user as any)?.role === 'admin' && (
               <Button 
                 className="mtta-green text-white hover:bg-mtta-green-dark"
                 onClick={() => setShowCreateDialog(true)}
@@ -762,7 +731,7 @@ export default function News() {
                       </div>
                       
                       <div className="flex items-center space-x-2">
-                        {user.role === 'admin' && (
+                        {user && (user as any)?.role === 'admin' && (
                           <Button 
                             size="sm"
                             variant="outline"
@@ -772,7 +741,7 @@ export default function News() {
                             Засах
                           </Button>
                         )}
-                        {!article.published && user.role === 'admin' && (
+                        {!article.published && user && (user as any)?.role === 'admin' && (
                           <Button 
                             size="sm"
                             className="mtta-green text-white hover:bg-mtta-green-dark"
@@ -844,7 +813,7 @@ export default function News() {
                             </div>
                             
                             <div className="flex items-center space-x-2">
-                              {user.role === 'admin' && (
+                              {user && (user as any)?.role === 'admin' && (
                                 <Button 
                                   size="sm"
                                   variant="outline"
@@ -854,7 +823,7 @@ export default function News() {
                                   Засах
                                 </Button>
                               )}
-                              {!article.published && user.role === 'admin' && (
+                              {!article.published && user && (user as any)?.role === 'admin' && (
                                 <Button 
                                   size="sm"
                                   className="mtta-green text-white hover:bg-mtta-green-dark"

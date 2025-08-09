@@ -17,41 +17,12 @@ export default function Leagues() {
   const { toast } = useToast();
   const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Нэвтрэх шаардлагатай",
-        description: "Энэ хуудсыг үзэхийн тулд нэвтэрнэ үү...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
+  // Remove authentication requirement - allow viewing for all users
 
-  // Fetch leagues
+  // Fetch leagues - allow for all users
   const { data: leagues = [], isLoading: leaguesLoading } = useQuery({
     queryKey: ["/api/leagues"],
-    enabled: isAuthenticated,
     retry: false,
-    meta: {
-      onError: (error: Error) => {
-        if (isUnauthorizedError(error)) {
-          toast({
-            title: "Нэвтрэх шаардлагатай",
-            description: "Та дахин нэвтэрнэ үү...",
-            variant: "destructive",
-          });
-          setTimeout(() => {
-            window.location.href = "/api/login";
-          }, 500);
-          return;
-        }
-      },
-    },
   });
 
   // Fetch teams for selected league
@@ -72,9 +43,7 @@ export default function Leagues() {
     );
   }
 
-  if (!isAuthenticated || !user) {
-    return null;
-  }
+  // Remove authentication check - show content for all users
 
   const selectedLeagueData = leagues.find((league: any) => league.id === selectedLeague);
 
