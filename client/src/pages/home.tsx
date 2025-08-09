@@ -202,7 +202,7 @@ export default function Home() {
                 onClick={() => window.location.href = '/news'}
                 className="text-mtta-green hover:text-green-700 font-medium text-sm flex items-center"
               >
-                More News
+                Бүгдийг харах
                 <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
