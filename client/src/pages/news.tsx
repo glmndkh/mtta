@@ -20,6 +20,7 @@ import { insertNewsSchema } from "@shared/schema";
 import { z } from "zod";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import type { UploadResult } from "@uppy/core";
+import { Link } from "wouter";
 
 type CreateNewsForm = z.infer<typeof insertNewsSchema>;
 
@@ -572,10 +573,12 @@ export default function News() {
                                   Нийтлэх
                                 </Button>
                               )}
-                              <Button size="sm" variant="outline">
-                                <Eye className="mr-1 h-3 w-3" />
-                                Унших
-                              </Button>
+                              <Link href={`/news/${article.id}`}>
+                                <Button size="sm" variant="outline">
+                                  <Eye className="mr-1 h-3 w-3" />
+                                  Унших
+                                </Button>
+                              </Link>
                             </div>
                           </div>
                         </div>
@@ -603,10 +606,12 @@ export default function News() {
                         <div className="flex items-center mb-2">
                           {getCategoryBadge(article.category)}
                           <span className="text-gray-500 text-sm ml-2">
-                            {new Date(article.publishedAt || article.createdAt).toLocaleDateString('mn-MN')}
+                            {formatDate(article.publishedAt || article.createdAt)}
                           </span>
                         </div>
-                        <h4 className="font-bold text-gray-900 mb-1 text-sm line-clamp-2">{article.title}</h4>
+                        <Link href={`/news/${article.id}`}>
+                          <h4 className="font-bold text-gray-900 mb-1 text-sm line-clamp-2 hover:text-mtta-green cursor-pointer transition-colors">{article.title}</h4>
+                        </Link>
                         <p className="text-gray-600 text-xs line-clamp-2">{article.excerpt}</p>
                       </div>
                     ))}
