@@ -99,6 +99,11 @@ export default function Home() {
       return imageUrl;
     }
     
+    // Handle base64 data URLs
+    if (imageUrl.startsWith('data:')) {
+      return imageUrl;
+    }
+    
     // If it's an object storage path (starts with /objects/), use it directly (served from public directory)
     if (imageUrl.startsWith('/objects/')) {
       return imageUrl;

@@ -119,6 +119,7 @@ export default function NewsDetail() {
   const getImageUrl = (imageUrl: string) => {
     if (!imageUrl) return placeholderImageData;
     if (imageUrl.startsWith('http')) return imageUrl;
+    if (imageUrl.startsWith('data:')) return imageUrl; // Handle base64 data URLs
     
     // If it's already an objects path, use it directly (served from public directory)
     if (imageUrl.startsWith('/objects/')) {
@@ -246,6 +247,15 @@ export default function NewsDetail() {
                             src={getImageUrl(article.author.profileImageUrl)} 
                             alt={`${article.author.firstName} ${article.author.lastName}`}
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                              console.error('Author profile image failed to load:', article.author?.profileImageUrl);
+                              console.log('Processed author URL:', getImageUrl(article.author?.profileImageUrl || ''));
+                              // Fallback to user icon
+                              e.currentTarget.style.display = 'none';
+                            }}
+                            onLoad={() => {
+                              console.log('Author profile image loaded successfully:', getImageUrl(article.author?.profileImageUrl || ''));
+                            }}
                           />
                         ) : (
                           <User className="h-6 w-6 text-gray-400" />
