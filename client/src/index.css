@@ -442,6 +442,97 @@ button[role="tab"][data-state="active"] {
   color: #ffffff !important;
 }
 
+/* Mobile Menu Styling - Dark theme with green accents */
+.mobile-menu {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 50 !important;
+  background: linear-gradient(135deg, rgba(15, 20, 25, 0.98) 0%, rgba(25, 30, 38, 0.96) 100%) !important;
+  backdrop-filter: blur(10px) !important;
+  color: #ffffff !important;
+}
+
+/* Mobile menu header */
+.mobile-menu .mobile-menu-header {
+  background: rgba(26, 26, 26, 0.9) !important;
+  border-bottom: 1px solid rgba(0, 200, 150, 0.3) !important;
+  padding: 1rem !important;
+}
+
+/* Mobile menu links */
+.mobile-menu .mobile-menu-link {
+  color: #ffffff !important;
+  background: transparent !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding: 1rem !important;
+  transition: all 0.3s ease !important;
+}
+
+.mobile-menu .mobile-menu-link:hover {
+  background: rgba(0, 200, 150, 0.1) !important;
+  color: #00c896 !important;
+  border-color: rgba(0, 200, 150, 0.3) !important;
+}
+
+/* Mobile menu active link */
+.mobile-menu .mobile-menu-link.active {
+  background: rgba(0, 200, 150, 0.2) !important;
+  color: #00c896 !important;
+  border-color: #00c896 !important;
+}
+
+/* Mobile menu icons */
+.mobile-menu .mobile-menu-link svg {
+  color: inherit !important;
+}
+
+/* Mobile menu close button */
+.mobile-menu .mobile-close-btn {
+  color: #ffffff !important;
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  transition: all 0.3s ease !important;
+}
+
+.mobile-menu .mobile-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(0, 200, 150, 0.5) !important;
+  color: #00c896 !important;
+}
+
+/* Fix mobile menu user actions */
+.mobile-menu .mobile-user-actions {
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding: 1rem !important;
+  background: rgba(26, 26, 26, 0.5) !important;
+}
+
+.mobile-menu .mobile-user-actions .mobile-menu-link {
+  border-bottom: none !important;
+  padding: 0.75rem 1rem !important;
+  margin-bottom: 0.5rem !important;
+  border-radius: 0.5rem !important;
+}
+
+/* Mobile logout button */
+.mobile-menu .mobile-logout-btn {
+  color: #ff6b6b !important;
+  background: rgba(255, 107, 107, 0.1) !important;
+  border: 1px solid rgba(255, 107, 107, 0.3) !important;
+  transition: all 0.3s ease !important;
+  padding: 0.75rem 1rem !important;
+  border-radius: 0.5rem !important;
+  margin-top: 1rem !important;
+}
+
+.mobile-menu .mobile-logout-btn:hover {
+  background: rgba(255, 107, 107, 0.2) !important;
+  border-color: #ff6b6b !important;
+}
+
 /* Card titles and content */
 .card h3, .card h4, .card p {
   color: #ffffff !important;
