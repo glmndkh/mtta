@@ -13,11 +13,13 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Newspaper, Plus, Calendar, User, Eye, Edit, Share2, Megaphone } from "lucide-react";
+import { Newspaper, Plus, Calendar, User, Eye, Edit, Share2, Megaphone, Upload, Image } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertNewsSchema } from "@shared/schema";
 import { z } from "zod";
+import { ObjectUploader } from "@/components/ObjectUploader";
+import type { UploadResult } from "@uppy/core";
 
 type CreateNewsForm = z.infer<typeof insertNewsSchema>;
 
@@ -26,6 +28,7 @@ export default function News() {
   const { toast } = useToast();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [newsImageUrl, setNewsImageUrl] = useState<string>("");
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -78,6 +81,7 @@ export default function News() {
       excerpt: "",
       category: "news",
       published: false,
+      imageUrl: "",
     },
   });
 
@@ -150,7 +154,42 @@ export default function News() {
   });
 
   const onSubmit = (data: CreateNewsForm) => {
-    createNewsMutation.mutate(data);
+    // Use the uploaded image URL if available
+    const finalData = {
+      ...data,
+      imageUrl: newsImageUrl || data.imageUrl,
+    };
+    createNewsMutation.mutate(finalData);
+  };
+
+  // Handle image upload
+  const handleImageUpload = async () => {
+    const response = await fetch("/api/objects/upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    const { uploadURL } = await response.json();
+    return { method: "PUT" as const, url: uploadURL };
+  };
+
+  const handleImageUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    if (result.successful?.[0]?.uploadURL) {
+      const response = await fetch("/api/objects/finalize", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileURL: result.successful[0].uploadURL,
+          isPublic: true,
+        }),
+      });
+      const { objectPath } = await response.json();
+      setNewsImageUrl(objectPath);
+      form.setValue("imageUrl", objectPath);
+      toast({
+        title: "Амжилттай",
+        description: "Зураг амжилттай хуулагдлаа",
+      });
+    }
   };
 
   const getCategoryBadge = (category: string) => {
@@ -163,6 +202,24 @@ export default function News() {
     
     const cat = categories[category as keyof typeof categories] || { label: "Мэдээ", className: "bg-gray-500 text-white" };
     return <Badge className={cat.className}>{cat.label}</Badge>;
+  };
+
+  const getImageUrl = (imageUrl: string) => {
+    if (!imageUrl) return null;
+    if (imageUrl.startsWith('http')) return imageUrl;
+    if (imageUrl.startsWith('/')) return `/public-objects${imageUrl}`;
+    return `/public-objects/${imageUrl}`;
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('mn-MN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   if (isLoading) {
@@ -296,19 +353,35 @@ export default function News() {
                           )}
                         />
 
-                        <FormField
-                          control={form.control}
-                          name="imageUrl"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Зургийн линк</FormLabel>
-                              <FormControl>
-                                <Input placeholder="https://example.com/image.jpg" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Мэдээний зураг</label>
+                          <div className="flex items-center space-x-2">
+                            <ObjectUploader
+                              maxNumberOfFiles={1}
+                              maxFileSize={5242880} // 5MB
+                              onGetUploadParameters={handleImageUpload}
+                              onComplete={handleImageUploadComplete}
+                              buttonClassName="w-full"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Upload className="h-4 w-4" />
+                                <span>Зураг хуулах</span>
+                              </div>
+                            </ObjectUploader>
+                          </div>
+                          {newsImageUrl && (
+                            <div className="mt-2">
+                              <div className="relative w-32 h-24 overflow-hidden rounded-lg border">
+                                <img 
+                                  src={newsImageUrl.startsWith('/') ? `/public-objects${newsImageUrl}` : newsImageUrl}
+                                  alt="Preview"
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">Зураг амжилттай хуулагдлаа</p>
+                            </div>
                           )}
-                        />
+                        </div>
                       </div>
 
                       <div className="flex justify-end space-x-2 pt-4">
@@ -370,7 +443,7 @@ export default function News() {
                   {article.imageUrl && (
                     <div className="aspect-video overflow-hidden rounded-t-lg">
                       <img 
-                        src={article.imageUrl} 
+                        src={getImageUrl(article.imageUrl)} 
                         alt={article.title}
                         className="w-full h-full object-cover"
                       />
@@ -381,7 +454,7 @@ export default function News() {
                       {getCategoryBadge(article.category)}
                       <div className="flex items-center text-gray-500 text-sm">
                         <Calendar className="h-4 w-4 mr-1" />
-                        {new Date(article.publishedAt || article.createdAt).toLocaleDateString('mn-MN')}
+                        {formatDate(article.publishedAt || article.createdAt)}
                       </div>
                     </div>
                     <CardTitle className="text-2xl">{article.title}</CardTitle>
@@ -391,9 +464,28 @@ export default function News() {
                     <p className="text-gray-700 leading-relaxed mb-6">{article.content}</p>
                     
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center text-sm text-gray-500">
-                        <User className="h-4 w-4 mr-1" />
-                        {article.author?.firstName} {article.author?.lastName}
+                      <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                            {article.author?.profileImageUrl ? (
+                              <img 
+                                src={getImageUrl(article.author.profileImageUrl)} 
+                                alt={`${article.author.firstName} ${article.author.lastName}`}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <User className="h-4 w-4 text-gray-400" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {article.author?.firstName} {article.author?.lastName}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {formatDate(article.createdAt)}д нэмсэн
+                            </p>
+                          </div>
+                        </div>
                       </div>
                       
                       <div className="flex items-center space-x-2">
@@ -427,7 +519,7 @@ export default function News() {
                         {article.imageUrl && (
                           <div className="w-32 h-24 flex-shrink-0 overflow-hidden rounded-lg">
                             <img 
-                              src={article.imageUrl} 
+                              src={getImageUrl(article.imageUrl)} 
                               alt={article.title}
                               className="w-full h-full object-cover"
                             />
@@ -438,7 +530,7 @@ export default function News() {
                             {getCategoryBadge(article.category)}
                             <div className="flex items-center text-gray-500 text-sm">
                               <Calendar className="h-4 w-4 mr-1" />
-                              {new Date(article.publishedAt || article.createdAt).toLocaleDateString('mn-MN')}
+                              {formatDate(article.publishedAt || article.createdAt)}
                             </div>
                           </div>
                           
@@ -446,9 +538,26 @@ export default function News() {
                           <p className="text-gray-600 text-sm mb-3 line-clamp-2">{article.excerpt}</p>
                           
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center text-sm text-gray-500">
-                              <User className="h-4 w-4 mr-1" />
-                              {article.author?.firstName} {article.author?.lastName}
+                            <div className="flex items-center space-x-2">
+                              <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                                {article.author?.profileImageUrl ? (
+                                  <img 
+                                    src={getImageUrl(article.author.profileImageUrl)} 
+                                    alt={`${article.author.firstName} ${article.author.lastName}`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <User className="h-3 w-3 text-gray-400" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium text-gray-900">
+                                  {article.author?.firstName} {article.author?.lastName}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {formatDate(article.createdAt)}д нэмсэн
+                                </p>
+                              </div>
                             </div>
                             
                             <div className="flex items-center space-x-2">
