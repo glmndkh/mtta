@@ -13,6 +13,7 @@ import {
   achievements,
   tournamentResults,
   homepageSliders,
+  sponsors,
   tournamentTeams,
   tournamentTeamPlayers,
   leagueMatches,
@@ -40,6 +41,8 @@ import {
   type InsertTournamentResults,
   type HomepageSlider,
   type InsertHomepageSlider,
+  type Sponsor,
+  type InsertSponsor,
   type TournamentTeam,
   type InsertTournamentTeam,
   type TournamentTeamPlayer,
@@ -137,6 +140,18 @@ export interface IStorage {
   addPlayerToTournamentTeam(teamId: string, playerId: string, playerName: string): Promise<TournamentTeamPlayer>;
   getTournamentTeams(tournamentId: string): Promise<Array<TournamentTeam & { players: Array<TournamentTeamPlayer & { firstName: string; lastName: string; email: string }> }>>;
   deleteTournamentTeam(teamId: string): Promise<boolean>;
+
+  // Homepage slider operations
+  getAllHomepageSliders(): Promise<HomepageSlider[]>;
+  createHomepageSlider(slider: InsertHomepageSlider): Promise<HomepageSlider>;
+  updateHomepageSlider(id: string, slider: Partial<InsertHomepageSlider>): Promise<HomepageSlider | undefined>;
+  deleteHomepageSlider(id: string): Promise<boolean>;
+
+  // Sponsor operations
+  getAllSponsors(): Promise<Sponsor[]>;
+  createSponsor(sponsor: InsertSponsor): Promise<Sponsor>;
+  updateSponsor(id: string, sponsor: Partial<InsertSponsor>): Promise<Sponsor | undefined>;
+  deleteSponsor(id: string): Promise<boolean>;
 
   // Player tournament and match operations
   getPlayerTournamentRegistrations(playerId: string): Promise<any[]>;
@@ -838,6 +853,44 @@ export class DatabaseStorage implements IStorage {
       .from(homepageSliders)
       .where(eq(homepageSliders.isActive, true))
       .orderBy(homepageSliders.sortOrder);
+  }
+
+  // Sponsor operations
+  async getAllSponsors(): Promise<Sponsor[]> {
+    return await db
+      .select()
+      .from(sponsors)
+      .orderBy(sponsors.sortOrder);
+  }
+
+  async createSponsor(sponsorData: InsertSponsor): Promise<Sponsor> {
+    const { randomUUID } = await import('crypto');
+    const now = new Date();
+    
+    const [sponsor] = await db.insert(sponsors).values({
+      ...sponsorData,
+      id: randomUUID(),
+      createdAt: now,
+      updatedAt: now,
+    }).returning();
+    return sponsor;
+  }
+
+  async updateSponsor(id: string, sponsorData: Partial<InsertSponsor>): Promise<Sponsor | undefined> {
+    const [sponsor] = await db
+      .update(sponsors)
+      .set({
+        ...sponsorData,
+        updatedAt: new Date(),
+      })
+      .where(eq(sponsors.id, id))
+      .returning();
+    return sponsor;
+  }
+
+  async deleteSponsor(id: string): Promise<boolean> {
+    const result = await db.delete(sponsors).where(eq(sponsors.id, id));
+    return (result.rowCount || 0) > 0;
   }
 
   // Membership operations

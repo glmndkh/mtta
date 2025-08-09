@@ -80,6 +80,11 @@ export default function AdminDashboard() {
     enabled: selectedTab === 'sliders'
   });
 
+  const { data: sponsors, isLoading: sponsorsLoading } = useQuery({
+    queryKey: ['/api/admin/sponsors'],
+    enabled: selectedTab === 'sponsors'
+  });
+
   // Generic mutations
   const createMutation = useMutation({
     mutationFn: async ({ endpoint, data }: { endpoint: string; data: any }) => {
@@ -549,6 +554,70 @@ export default function AdminDashboard() {
                       <Pencil className="w-4 h-4" />
                     </Button>
                     <Button size="sm" variant="destructive" onClick={() => handleDelete(slider.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )) : null}
+          </TableBody>
+        </Table>
+      )}
+    </div>
+  );
+
+  const renderSponsorsTab = () => (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Ивээн тэтгэгчдийн удирдлага</h2>
+        <Button onClick={openCreateDialog}>
+          <Plus className="w-4 h-4 mr-2" />
+          Ивээн тэтгэгч нэмэх
+        </Button>
+      </div>
+      
+      {sponsorsLoading ? (
+        <div>Ачааллаж байна...</div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Нэр</TableHead>
+              <TableHead>Лого</TableHead>
+              <TableHead>Идэвхтэй</TableHead>
+              <TableHead>Эрэмбэ</TableHead>
+              <TableHead>Үйлдэл</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sponsors && Array.isArray(sponsors) ? sponsors.map((sponsor: any) => (
+              <TableRow key={sponsor.id}>
+                <TableCell>{sponsor.name}</TableCell>
+                <TableCell>
+                  {sponsor.logoUrl ? (
+                    <img 
+                      src={sponsor.logoUrl} 
+                      alt={sponsor.name} 
+                      className="w-12 h-12 object-contain rounded"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
+                      <Upload className="w-6 h-6 text-gray-400" />
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Badge variant={sponsor.isActive ? 'default' : 'secondary'}>
+                    {sponsor.isActive ? 'Идэвхтэй' : 'Идэвхгүй'}
+                  </Badge>
+                </TableCell>
+                <TableCell>{sponsor.sortOrder}</TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => openEditDialog(sponsor)}>
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(sponsor.id)}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
@@ -1169,6 +1238,121 @@ export default function AdminDashboard() {
           </>
         );
 
+      case 'sponsors':
+        return (
+          <>
+            <div>
+              <Label htmlFor="name">Ивээн тэтгэгчийн нэр</Label>
+              <Input
+                id="name"
+                value={formData.name || ''}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+              />
+            </div>
+            <div>
+              <Label className="flex items-center gap-2">
+                <Upload className="w-4 h-4" />
+                Ивээн тэтгэгчийн лого
+              </Label>
+              <div className="space-y-2">
+                <ObjectUploader
+                  maxNumberOfFiles={1}
+                  maxFileSize={5 * 1024 * 1024} // 5MB
+                  onGetUploadParameters={async () => {
+                    try {
+                      const response = await apiRequest("/api/objects/upload", {
+                        method: "POST",
+                      });
+                      const data = await response.json() as { uploadURL: string };
+                      if (!data || !data.uploadURL) {
+                        throw new Error("No upload URL received");
+                      }
+                      return {
+                        method: "PUT" as const,
+                        url: data.uploadURL,
+                      };
+                    } catch (error) {
+                      console.error("Error getting upload parameters:", error);
+                      toast({
+                        title: "Алдаа",
+                        description: "Файл хуулах URL авахад алдаа гарлаа",
+                        variant: "destructive"
+                      });
+                      throw error;
+                    }
+                  }}
+                  onComplete={async (result) => {
+                    if (result.successful && result.successful.length > 0) {
+                      const uploadURL = result.successful[0].uploadURL;
+                      
+                      // Set ACL policy for the uploaded logo
+                      try {
+                        const aclResponse = await apiRequest("/api/objects/acl", {
+                          method: "PUT",
+                          body: JSON.stringify({ imageURL: uploadURL }),
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                        });
+                        const aclData = await aclResponse.json() as { objectPath: string };
+                        
+                        // Update form with the normalized object path
+                        setFormData({
+                          ...formData, 
+                          logoUrl: aclData.objectPath
+                        });
+                        
+                        toast({ title: "Лого амжилттай хуулагдлаа" });
+                      } catch (error) {
+                        console.error("Error setting ACL:", error);
+                        toast({ 
+                          title: "Алдаа", 
+                          description: "Лого хуулагдсан боловч зөвшөөрөл тохируулахад алдаа гарлаа",
+                          variant: "destructive"
+                        });
+                      }
+                    }
+                  }}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Лого сонгох
+                </ObjectUploader>
+                {formData.logoUrl && (
+                  <div className="flex items-center gap-2">
+                    <img 
+                      src={formData.logoUrl} 
+                      alt="Sponsor Logo" 
+                      className="w-16 h-16 object-contain border rounded"
+                    />
+                    <div className="text-sm text-green-600">
+                      ✓ Лого хуулагдлаа
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="isActive"
+                  checked={formData.isActive || false}
+                  onCheckedChange={(checked) => setFormData({...formData, isActive: checked})}
+                />
+                <Label htmlFor="isActive">Идэвхтэй</Label>
+              </div>
+              <div>
+                <Label htmlFor="sortOrder">Эрэмбэ</Label>
+                <Input
+                  id="sortOrder"
+                  type="number"
+                  value={formData.sortOrder || 0}
+                  onChange={(e) => setFormData({...formData, sortOrder: parseInt(e.target.value)})}
+                />
+              </div>
+            </div>
+          </>
+        );
+
       default:
         return <div>Форм боломжгүй</div>;
     }
@@ -1192,7 +1376,7 @@ export default function AdminDashboard() {
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid w-full grid-cols-9">
+        <TabsList className="grid w-full grid-cols-10">
           <TabsTrigger value="stats" className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
             Статистик
@@ -1228,6 +1412,10 @@ export default function AdminDashboard() {
           <TabsTrigger value="sliders" className="flex items-center gap-2">
             <Images className="w-4 h-4" />
             Слайдер
+          </TabsTrigger>
+          <TabsTrigger value="sponsors" className="flex items-center gap-2">
+            <Zap className="w-4 h-4" />
+            Ивээн тэтгэгчид
           </TabsTrigger>
         </TabsList>
 
@@ -1275,6 +1463,18 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               {renderSlidersTab()}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="sponsors">
+          <Card>
+            <CardHeader>
+              <CardTitle>Ивээн тэтгэгчдийн удирдлага</CardTitle>
+              <CardDescription>Ивээн тэтгэгчдийн логог болон мэдээллийг удирдах</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {renderSponsorsTab()}
             </CardContent>
           </Card>
         </TabsContent>

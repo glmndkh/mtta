@@ -324,6 +324,19 @@ export const homepageSliders = pgTable("homepage_sliders", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Sponsors table
+export const sponsors = pgTable("sponsors", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  logoUrl: varchar("logo_url").notNull(), // Object storage path for sponsor logo
+  website: varchar("website"), // Optional sponsor website URL
+  description: text("description"), // Optional sponsor description
+  isActive: boolean("is_active").default(true),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   player: one(players, {
@@ -435,6 +448,12 @@ export const insertHomepageSliderSchema = createInsertSchema(homepageSliders).om
   updatedAt: true,
 });
 
+export const insertSponsorSchema = createInsertSchema(sponsors).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertMembershipSchema = createInsertSchema(memberships).omit({
   id: true,
   createdAt: true,
@@ -474,6 +493,8 @@ export type Team = typeof teams.$inferSelect;
 export type League = typeof leagues.$inferSelect;
 export type InsertHomepageSlider = z.infer<typeof insertHomepageSliderSchema>;
 export type HomepageSlider = typeof homepageSliders.$inferSelect;
+export type InsertSponsor = z.infer<typeof insertSponsorSchema>;
+export type Sponsor = typeof sponsors.$inferSelect;
 export type TournamentParticipant = typeof tournamentParticipants.$inferSelect;
 export type InsertTournamentParticipant = typeof tournamentParticipants.$inferInsert;
 export type TournamentResults = typeof tournamentResults.$inferSelect;
