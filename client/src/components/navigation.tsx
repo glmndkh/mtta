@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Menu, X, Home, Trophy, Building, Users, Newspaper, User, LogOut } from "lucide-react";
-import mttaLogo from "@assets/logo.svg";
+import mttaLogo from "@assets/logoweb_1754749015700.png";
 
 export default function Navigation() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -25,7 +25,7 @@ export default function Navigation() {
           {/* Logo */}
           <Link href="/">
             <div className="flex items-center cursor-pointer logo-glow">
-              <img src={mttaLogo} alt="MTTA Logo" className="h-12 w-auto" />
+              <img src={mttaLogo} alt="MTTA Logo" className="h-10 w-auto max-w-[120px]" />
             </div>
           </Link>
 
