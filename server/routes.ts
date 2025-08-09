@@ -1252,6 +1252,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update news endpoint
+  app.put('/api/news/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const newsData = insertNewsSchema.partial().parse(req.body);
+      
+      // Handle file upload for news image if present
+      if (req.body.imageUrl && req.body.imageUrl !== '') {
+        newsData.imageUrl = req.body.imageUrl;
+      }
+      
+      const updatedNews = await storage.updateNews(req.params.id, newsData);
+      if (!updatedNews) {
+        return res.status(404).json({ message: "Мэдээ олдсонгүй" });
+      }
+      res.json({ message: "Мэдээ амжилттай шинэчлэгдлээ", news: updatedNews });
+    } catch (error) {
+      console.error("Error updating news:", error);
+      res.status(400).json({ message: "Мэдээ шинэчлэхэд алдаа гарлаа" });
+    }
+  });
+
+  // Get all news for admin (including unpublished)
+  app.get('/api/admin/news', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Зөвхөн админ хэрэглэгч бүх мэдээг харж болно" });
+      }
+      
+      const allNews = await storage.getAllNews();
+      res.json(allNews);
+    } catch (error) {
+      console.error("Error fetching all news:", error);
+      res.status(500).json({ message: "Мэдээний жагсаалт авахад алдаа гарлаа" });
+    }
+  });
+
   // Membership routes
   app.post('/api/memberships', isAuthenticated, async (req: any, res) => {
     try {

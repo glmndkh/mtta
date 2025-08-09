@@ -30,6 +30,8 @@ export default function News() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [newsImageUrl, setNewsImageUrl] = useState<string>("");
+  const [editingNews, setEditingNews] = useState<any>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -46,15 +48,16 @@ export default function News() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // Optimized news fetching with caching for better performance
+  // Fetch news data based on user role - admin sees all, others see published only
+  const newsEndpoint = user?.role === 'admin' ? '/api/admin/news' : '/api/news';
   const { data: allNews = [], isLoading: newsLoading } = useQuery({
-    queryKey: ["/api/news"],
+    queryKey: [newsEndpoint],
     enabled: isAuthenticated,
     retry: false,
-    staleTime: 2 * 60 * 1000, // Consider data fresh for 2 minutes
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes  
-    refetchOnWindowFocus: false, // Don't refetch on window focus for better performance
-    refetchOnMount: false, // Don't refetch on component mount if data is fresh
+    staleTime: 30 * 1000, // Reduced to 30 seconds for better real-time updates
+    gcTime: 2 * 60 * 1000, // Keep in cache for 2 minutes  
+    refetchOnWindowFocus: true, // Enable refetch to see updates
+    refetchOnMount: true, // Enable refetch on mount
     meta: {
       onError: (error: Error) => {
         if (isUnauthorizedError(error)) {
@@ -104,6 +107,8 @@ export default function News() {
       setShowCreateDialog(false);
       form.reset();
       queryClient.invalidateQueries({ queryKey: ["/api/news"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/news"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/news/latest"] });
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
@@ -137,6 +142,8 @@ export default function News() {
         description: "Мэдээ амжилттай нийтлэгдлээ",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/news"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/news"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/news/latest"] });
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
@@ -158,13 +165,79 @@ export default function News() {
     },
   });
 
+  // Update news mutation
+  const updateNewsMutation = useMutation({
+    mutationFn: async (data: { id: string; newsData: Partial<CreateNewsForm> }) => {
+      const response = await apiRequest("PUT", `/api/news/${data.id}`, data.newsData);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Амжилттай",
+        description: "Мэдээ амжилттай шинэчлэгдлээ",
+      });
+      setShowEditDialog(false);
+      setEditingNews(null);
+      form.reset();
+      queryClient.invalidateQueries({ queryKey: ["/api/news"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/news"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/news/latest"] });
+    },
+    onError: (error: Error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Нэвтрэх шаардлагатай",
+          description: "Та дахин нэвтэрнэ үү...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Алдаа",
+        description: "Мэдээ шинэчлэхэд алдаа гарлаа",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: CreateNewsForm) => {
     // Use the uploaded image URL if available
     const finalData = {
       ...data,
       imageUrl: newsImageUrl || data.imageUrl,
     };
-    createNewsMutation.mutate(finalData);
+    
+    if (editingNews) {
+      updateNewsMutation.mutate({ id: editingNews.id, newsData: finalData });
+    } else {
+      createNewsMutation.mutate(finalData);
+    }
+  };
+
+  // Handle opening edit dialog
+  const handleEditNews = (newsItem: any) => {
+    setEditingNews(newsItem);
+    setNewsImageUrl(newsItem.imageUrl || "");
+    form.reset({
+      title: newsItem.title,
+      content: newsItem.content,
+      excerpt: newsItem.excerpt || "",
+      category: newsItem.category || "news",
+      published: newsItem.published,
+      imageUrl: newsItem.imageUrl || "",
+    });
+    setShowEditDialog(true);
+  };
+
+  // Handle closing edit dialog
+  const handleCloseEditDialog = () => {
+    setShowEditDialog(false);
+    setEditingNews(null);
+    setNewsImageUrl("");
+    form.reset();
   };
 
   // Handle image upload
@@ -443,6 +516,161 @@ export default function News() {
                 </DialogContent>
               </Dialog>
             )}
+
+            {/* Edit News Dialog */}
+            {user.role === 'admin' && (
+              <Dialog open={showEditDialog} onOpenChange={handleCloseEditDialog}>
+                <DialogContent className="max-w-3xl">
+                  <DialogHeader>
+                    <DialogTitle>Мэдээ засварлах</DialogTitle>
+                  </DialogHeader>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="title"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Гарчиг *</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Мэдээний гарчиг оруулна уу" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="excerpt"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Товч агуулга</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                {...field} 
+                                placeholder="Мэдээний товч агуулга (2-3 өгүүлбэр)"
+                                rows={2}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="content"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Мэдээний агуулга *</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                {...field} 
+                                placeholder="Мэдээний бүрэн агуулга оруулна уу"
+                                rows={6}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="category"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Ангилал</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Ангилал сонгоно уу" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="tournament">Тэмцээн</SelectItem>
+                                <SelectItem value="news">Мэдээ</SelectItem>
+                                <SelectItem value="training">Сургалт</SelectItem>
+                                <SelectItem value="urgent">Яаралтай</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="published"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Статус</FormLabel>
+                              <Select onValueChange={(value) => field.onChange(value === 'true')} value={field.value ? 'true' : 'false'}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="false">Ноорог</SelectItem>
+                                  <SelectItem value="true">Нийтлэгдсэн</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Зураг</label>
+                          <ObjectUploader
+                            onUploadComplete={handleImageUploadComplete}
+                            className="w-full"
+                            buttonClassName="w-full"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Upload className="h-4 w-4" />
+                              <span>Зураг хуулах</span>
+                            </div>
+                          </ObjectUploader>
+                          {newsImageUrl && (
+                            <div className="mt-2">
+                              <div className="relative w-32 h-24 overflow-hidden rounded-lg border">
+                                <img 
+                                  src={newsImageUrl.startsWith('/') ? `/public-objects${newsImageUrl}` : newsImageUrl}
+                                  alt="Preview"
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">Зураг амжилттай хуулагдлаа</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end space-x-2 pt-4">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={handleCloseEditDialog}
+                        >
+                          Цуцлах
+                        </Button>
+                        <Button 
+                          type="submit" 
+                          className="mtta-green text-white hover:bg-mtta-green-dark"
+                          disabled={updateNewsMutation.isPending}
+                        >
+                          {updateNewsMutation.isPending ? "Шинэчилж байна..." : "Мэдээ шинэчлэх"}
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </div>
 
@@ -527,6 +755,16 @@ export default function News() {
                       </div>
                       
                       <div className="flex items-center space-x-2">
+                        {user.role === 'admin' && (
+                          <Button 
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditNews(article)}
+                          >
+                            <Edit className="mr-1 h-3 w-3" />
+                            Засах
+                          </Button>
+                        )}
                         {!article.published && user.role === 'admin' && (
                           <Button 
                             size="sm"
@@ -599,6 +837,16 @@ export default function News() {
                             </div>
                             
                             <div className="flex items-center space-x-2">
+                              {user.role === 'admin' && (
+                                <Button 
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleEditNews(article)}
+                                >
+                                  <Edit className="mr-1 h-3 w-3" />
+                                  Засах
+                                </Button>
+                              )}
                               {!article.published && user.role === 'admin' && (
                                 <Button 
                                   size="sm"
