@@ -313,7 +313,7 @@ export default function News() {
   // Loading skeleton for better UX
   if (isLoading || newsLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen">
         <Navigation />
         <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -356,7 +356,7 @@ export default function News() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Navigation />
       
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">

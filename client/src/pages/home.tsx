@@ -211,7 +211,7 @@ export default function Home() {
       
       {/* Top Stories Section */}
       {!newsLoading && latestNews && latestNews.length > 0 && (
-        <div className="w-full bg-gray-50 py-8">
+        <div className="w-full py-8">
           <div className="max-w-7xl mx-auto px-4">
             {/* Section Header */}
             <div className="flex items-center justify-between mb-6">
@@ -243,7 +243,7 @@ export default function Home() {
                 return currentSet.map((news: NewsItem, index: number) => (
                   <div 
                     key={`${news.id}-${currentNewsSet}-${index}`}
-                    className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow animate-fade-in cursor-pointer"
+                    className="news-card rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow animate-fade-in cursor-pointer"
                     onClick={() => window.location.href = `/news/${news.id}`}
                   >
                     {/* News Image */}
@@ -292,7 +292,7 @@ export default function Home() {
 
       {/* Sponsors Section - Right after news */}
       {!sponsorsLoading && sponsors && sponsors.length > 0 && (
-        <div className="bg-gray-50 py-8">
+        <div className="py-8">
           <div className="container mx-auto px-4">
             <div className="relative overflow-hidden">
               <div className="flex gap-8 animate-scroll-horizontal">
@@ -300,7 +300,7 @@ export default function Home() {
                 {[...sponsors, ...sponsors].map((sponsor, index) => (
                   <div
                     key={`${sponsor.id}-${index}`}
-                    className="flex-shrink-0 bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+                    className="flex-shrink-0 sponsor-card rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
                   >
                     <div className="flex items-center justify-center h-16 w-32">
                       {sponsor.logoUrl ? (
