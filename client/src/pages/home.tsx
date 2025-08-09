@@ -46,9 +46,9 @@ export default function Home() {
 
   // Auto-rotate news sets every 3 seconds
   useEffect(() => {
-    if (!latestNews || latestNews.length <= 3) return;
+    if (!latestNews || latestNews.length <= 4) return;
 
-    const totalSets = Math.ceil(latestNews.length / 3);
+    const totalSets = Math.ceil(latestNews.length / 4);
     const interval = setInterval(() => {
       setCurrentNewsSet((prev) => (prev + 1) % totalSets);
     }, 3000);
@@ -170,66 +170,82 @@ export default function Home() {
         </div>
       )}
       
-      {/* News Ticker Section */}
+      {/* Top Stories Section */}
       {!newsLoading && latestNews && latestNews.length > 0 && (
-        <div className="w-full bg-white border-b shadow-md overflow-hidden">
-          <div className="relative h-60">
-            <div className="absolute inset-0 flex items-center justify-center px-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-7xl">
-                {(() => {
-                  const startIndex = currentNewsSet * 3;
-                  const currentSet = latestNews.slice(startIndex, startIndex + 3);
-                  
-                  // Ensure we always show 3 items by cycling back to beginning if needed
-                  while (currentSet.length < 3 && latestNews.length > 0) {
-                    const remainingNeeded = 3 - currentSet.length;
-                    const additionalItems = latestNews.slice(0, remainingNeeded);
-                    currentSet.push(...additionalItems);
-                  }
-                  
-                  return currentSet.map((news: any, index: number) => (
-                    <div 
-                      key={`${news.id}-${currentNewsSet}-${index}`} 
-                      className="flex items-center space-x-4 px-6 bg-gray-50 rounded-lg py-4 shadow-sm border h-40 animate-fade-in"
-                    >
-                      {/* News Image */}
-                      {news.imageUrl && (
-                        <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-gray-200 shadow-md">
-                          <img 
-                            src={getImageUrl(news.imageUrl)} 
-                            alt={news.title}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.src = '/api/placeholder-news-image';
-                            }}
-                          />
+        <div className="w-full bg-gray-50 py-8">
+          <div className="max-w-7xl mx-auto px-4">
+            {/* Section Header */}
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">TOP STORIES</h2>
+              <button 
+                onClick={() => window.location.href = '/news'}
+                className="text-mtta-green hover:text-green-700 font-medium text-sm flex items-center"
+              >
+                More News
+                <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+
+            {/* News Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {(() => {
+                const startIndex = currentNewsSet * 4;
+                const currentSet = latestNews.slice(startIndex, startIndex + 4);
+                
+                // Ensure we always show 4 items by cycling back to beginning if needed
+                while (currentSet.length < 4 && latestNews.length > 0) {
+                  const remainingNeeded = 4 - currentSet.length;
+                  const additionalItems = latestNews.slice(0, remainingNeeded);
+                  currentSet.push(...additionalItems);
+                }
+                
+                return currentSet.map((news: any, index: number) => (
+                  <div 
+                    key={`${news.id}-${currentNewsSet}-${index}`}
+                    className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow animate-fade-in cursor-pointer"
+                    onClick={() => window.location.href = `/news/${news.id}`}
+                  >
+                    {/* News Image */}
+                    <div className="relative aspect-video bg-gradient-to-br from-blue-600 to-blue-800 overflow-hidden">
+                      {news.imageUrl ? (
+                        <img 
+                          src={getImageUrl(news.imageUrl)} 
+                          alt={news.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = '/api/placeholder-news-image';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center">
+                          <svg className="w-16 h-16 text-white opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                          </svg>
                         </div>
                       )}
                       
-                      {/* News Content */}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-base font-semibold text-gray-900 mb-1 line-clamp-2">
-                          {news.title}
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-2 line-clamp-1">
-                          {news.summary || news.content?.substring(0, 60) + '...'}
-                        </p>
-                        
-                        {/* Read More Button */}
-                        <button 
-                          onClick={() => window.location.href = `/news/${news.id}`}
-                          className="inline-flex items-center px-3 py-1 bg-mtta-green text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
-                        >
-                          Унших
-                          <svg className="ml-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </button>
+                      {/* Category Badge */}
+                      <div className="absolute bottom-3 left-3">
+                        <span className="bg-mtta-green text-white text-xs font-medium px-2 py-1 rounded">
+                          ШУУДАН
+                        </span>
                       </div>
                     </div>
-                  ));
-                })()}
-              </div>
+
+                    {/* News Content */}
+                    <div className="p-4">
+                      <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-3 mb-2 hover:text-mtta-green transition-colors">
+                        {news.title}
+                      </h3>
+                      <p className="text-gray-600 text-xs leading-relaxed line-clamp-2">
+                        {news.summary || news.content?.substring(0, 100) + '...'}
+                      </p>
+                    </div>
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         </div>
