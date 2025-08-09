@@ -442,24 +442,29 @@ button[role="tab"][data-state="active"] {
   color: #ffffff !important;
 }
 
-/* Mobile Menu Sidebar Styling - Slide in from right */
-.mobile-menu-sidebar {
-  position: fixed !important;
-  top: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  width: 280px !important;
-  max-width: 85vw !important;
-  background: linear-gradient(135deg, rgba(15, 20, 25, 0.98) 0%, rgba(25, 30, 38, 0.96) 100%) !important;
-  backdrop-filter: blur(10px) !important;
-  color: #ffffff !important;
-  display: flex !important;
-  flex-direction: column !important;
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3) !important;
-  z-index: 10000 !important;
-  transform: translateX(0) !important;
-  visibility: visible !important;
-  opacity: 1 !important;
+/* Ensure mobile menu is always visible when shown */
+@media (max-width: 768px) {
+  .mobile-menu-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0, 0, 0, 0.75) !important;
+    z-index: 9999 !important;
+  }
+  
+  .mobile-menu-panel {
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    height: 100% !important;
+    width: 300px !important;
+    background: #1f2937 !important;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5) !important;
+    z-index: 10000 !important;
+    overflow-y: auto !important;
+  }
 }
 
 /* Mobile menu header */

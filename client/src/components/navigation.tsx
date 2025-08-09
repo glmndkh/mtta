@@ -124,88 +124,76 @@ export default function Navigation() {
         </div>
       </div>
 
-      {/* Mobile menu - Full screen overlay */}
+      {/* Mobile menu overlay */}
       {showMobileMenu && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 md:hidden"
-          onClick={() => setShowMobileMenu(false)}
-        >
-          {/* Sidebar */}
-          <div 
-            className="fixed top-0 right-0 bottom-0 w-80 max-w-[85vw] bg-gray-900 shadow-2xl z-[60]"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: 'linear-gradient(135deg, rgba(15, 20, 25, 0.98) 0%, rgba(25, 30, 38, 0.96) 100%)',
-              borderLeft: '1px solid rgba(0, 200, 150, 0.3)'
-            }}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-green-700 bg-gray-800">
-              <img src={mttaLogo} alt="MTTA Logo" className="h-8 w-auto" />
+        <div className="fixed inset-0 bg-black bg-opacity-75 z-50 md:hidden">
+          <div className="fixed top-0 right-0 h-full w-[300px] bg-gray-900 shadow-xl overflow-y-auto">
+            {/* Header with logo and close button */}
+            <div className="flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700">
+              <img src={mttaLogo} alt="MTTA" className="h-8" />
               <button
                 onClick={() => setShowMobileMenu(false)}
-                className="text-white hover:text-green-400 p-2"
+                className="text-white p-2 hover:bg-gray-700 rounded"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            {/* Navigation Links */}
-            <div className="flex-1 overflow-y-auto">
+            {/* Navigation menu items */}
+            <div className="py-4">
               {navigationLinks.map((link) => {
                 const Icon = link.icon;
                 const isActive = location === link.href;
                 return (
                   <Link key={link.href} href={link.href}>
-                    <div 
-                      className={`flex items-center px-6 py-4 text-white hover:bg-gray-800 hover:text-green-400 transition-colors border-b border-gray-700 ${
+                    <div
+                      onClick={() => setShowMobileMenu(false)}
+                      className={`flex items-center px-6 py-4 text-white border-b border-gray-800 hover:bg-gray-800 ${
                         isActive ? 'bg-green-900 text-green-400' : ''
                       }`}
-                      onClick={() => setShowMobileMenu(false)}
                     >
-                      <Icon className="h-5 w-5" />
-                      <span className="ml-3 text-base font-medium">{link.label}</span>
+                      <Icon className="h-5 w-5 mr-3" />
+                      <span className="text-base">{link.label}</span>
                     </div>
                   </Link>
                 );
               })}
             </div>
 
-            {/* User Authentication Section */}
-            <div className="mt-auto border-t border-gray-700 bg-gray-800 p-4">
+            {/* User section at bottom */}
+            <div className="mt-8 border-t border-gray-700 bg-gray-800">
               {isAuthenticated && user ? (
-                <div className="space-y-2">
+                <div className="p-4 space-y-3">
                   {(user as any).role === 'player' && (
                     <Link href="/profile">
-                      <div 
-                        className="flex items-center px-4 py-3 text-white hover:bg-gray-700 hover:text-green-400 transition-colors rounded"
+                      <div
                         onClick={() => setShowMobileMenu(false)}
+                        className="flex items-center text-white p-3 rounded hover:bg-gray-700"
                       >
-                        <User className="h-4 w-4" />
-                        <span className="ml-3">Миний профайл</span>
+                        <User className="h-4 w-4 mr-3" />
+                        <span>Миний профайл</span>
                       </div>
                     </Link>
                   )}
-
-                  {/* Admin-only items */}
+                  
                   {(user as any)?.role === 'admin' && (
                     <>
                       <Link href="/admin/dashboard">
-                        <div 
-                          className="flex items-center px-4 py-3 text-white hover:bg-gray-700 hover:text-green-400 transition-colors rounded"
+                        <div
                           onClick={() => setShowMobileMenu(false)}
+                          className="flex items-center text-white p-3 rounded hover:bg-gray-700"
                         >
-                          <User className="h-4 w-4" />
-                          <span className="ml-3">Админ самбар</span>
+                          <User className="h-4 w-4 mr-3" />
+                          <span>Админ самбар</span>
                         </div>
                       </Link>
                       <Link href="/admin/generator">
-                        <div 
-                          className="flex items-center px-4 py-3 text-white hover:bg-gray-700 hover:text-green-400 transition-colors rounded"
+                        <div
                           onClick={() => setShowMobileMenu(false)}
+                          className="flex items-center text-white p-3 rounded hover:bg-gray-700"
                         >
-                          <Trophy className="h-4 w-4" />
-                          <span className="ml-3">Тэмцээн үүсгэх</span>
+                          <Trophy className="h-4 w-4 mr-3" />
+                          <span>Тэмцээн үүсгэх</span>
                         </div>
                       </Link>
                     </>
@@ -216,18 +204,18 @@ export default function Navigation() {
                       setShowMobileMenu(false);
                       window.location.href = '/api/logout';
                     }}
-                    className="w-full flex items-center px-4 py-3 mt-4 text-red-400 bg-red-900 bg-opacity-20 hover:bg-opacity-30 transition-colors rounded border border-red-800"
+                    className="flex items-center text-red-400 p-3 rounded hover:bg-red-900 hover:bg-opacity-20 w-full"
                   >
-                    <LogOut className="h-4 w-4" />
-                    <span className="ml-3">Гарах</span>
+                    <LogOut className="h-4 w-4 mr-3" />
+                    <span>Гарах</span>
                   </button>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="p-4 space-y-3">
                   <Link href="/register">
                     <button
                       onClick={() => setShowMobileMenu(false)}
-                      className="w-full py-3 px-4 border border-green-400 text-green-400 bg-transparent hover:bg-green-400 hover:text-black transition-colors rounded font-medium"
+                      className="w-full py-3 text-green-400 border border-green-400 rounded hover:bg-green-400 hover:text-black"
                     >
                       Бүртгүүлэх
                     </button>
@@ -235,7 +223,7 @@ export default function Navigation() {
                   <Link href="/login">
                     <button
                       onClick={() => setShowMobileMenu(false)}
-                      className="w-full py-3 px-4 bg-green-400 text-black hover:bg-green-500 transition-colors rounded font-medium"
+                      className="w-full py-3 bg-green-400 text-black rounded hover:bg-green-500"
                     >
                       Нэвтрэх
                     </button>
