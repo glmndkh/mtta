@@ -1,57 +1,122 @@
-import { useRoute } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/navigation";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, User, Eye } from "lucide-react";
-import { Link } from "wouter";
-
-interface NewsArticle {
-  id: string;
-  title: string;
-  content: string;
-  excerpt?: string;
-  imageUrl?: string;
-  category?: string;
-  authorId: string;
-  published: boolean;
-  publishedAt?: string;
-  createdAt: string;
-}
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { ArrowLeft, Calendar, User, Megaphone, Share2, Clock, Eye } from "lucide-react";
+import { Link, useParams } from "wouter";
 
 export default function NewsDetail() {
-  const [, params] = useRoute("/news/:id");
-  const newsId = params?.id;
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const { toast } = useToast();
+  const params = useParams();
+  const newsId = params.id;
 
-  const { data: news, isLoading, error } = useQuery<NewsArticle>({
-    queryKey: ['/api/news', newsId],
-    enabled: !!newsId,
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      toast({
+        title: "Нэвтрэх шаардлагатай",
+        description: "Энэ хуудсыг үзэхийн тулд нэвтэрнэ үү...",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 500);
+      return;
+    }
+  }, [isAuthenticated, isLoading, toast]);
+
+  // Fetch specific news article
+  const { data: article, isLoading: articleLoading } = useQuery({
+    queryKey: ["/api/news", newsId],
+    enabled: isAuthenticated && !!newsId,
+    retry: false,
+    meta: {
+      onError: (error: Error) => {
+        if (isUnauthorizedError(error)) {
+          toast({
+            title: "Нэвтрэх шаардлагатай",
+            description: "Та дахин нэвтэрнэ үү...",
+            variant: "destructive",
+          });
+          setTimeout(() => {
+            window.location.href = "/api/login";
+          }, 500);
+          return;
+        }
+      },
+    },
   });
 
-  const getImageUrl = (imageUrl?: string): string => {
-    if (!imageUrl) return '';
+  // Fetch latest news for sidebar
+  const { data: latestNews = [] } = useQuery({
+    queryKey: ["/api/news/latest"],
+    enabled: isAuthenticated,
+    retry: false,
+  });
+
+  // Publish news mutation
+  const publishNewsMutation = useMutation({
+    mutationFn: async (newsId: string) => {
+      const response = await apiRequest("PUT", `/api/news/${newsId}/publish`);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Амжилттай",
+        description: "Мэдээ амжилттай нийтлэгдлээ",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/news", newsId] });
+    },
+    onError: (error: Error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Нэвтрэх шаардлагатай",
+          description: "Та дахин нэвтэрнэ үү...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Алдаа",
+        description: "Мэдээ нийтлэхэд алдаа гарлаа",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const getCategoryBadge = (category: string) => {
+    const categories = {
+      tournament: { label: "Тэмцээн", className: "bg-blue-500 text-white" },
+      news: { label: "Мэдээ", className: "bg-green-500 text-white" },
+      training: { label: "Сургалт", className: "bg-purple-500 text-white" },
+      urgent: { label: "Яаралтай", className: "bg-red-500 text-white" },
+    };
     
-    // If it's an object storage path (starts with /objects/), use it directly
-    if (imageUrl.startsWith('/objects/')) {
-      return imageUrl;
-    }
-    
-    // If it's already a full URL, use it as is
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      return imageUrl;
-    }
-    
-    // If it's a relative path, assume it's in public objects
-    if (imageUrl.startsWith('/')) {
-      return `/public-objects${imageUrl}`;
-    }
-    
+    const cat = categories[category as keyof typeof categories] || { label: "Мэдээ", className: "bg-gray-500 text-white" };
+    return <Badge className={cat.className}>{cat.label}</Badge>;
+  };
+
+  const getImageUrl = (imageUrl: string) => {
+    if (!imageUrl) return null;
+    if (imageUrl.startsWith('http')) return imageUrl;
+    if (imageUrl.startsWith('/')) return `/public-objects${imageUrl}`;
     return `/public-objects/${imageUrl}`;
   };
 
-  const formatDate = (dateString?: string): string => {
-    if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString('mn-MN', {
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('mn-MN', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -60,132 +125,214 @@ export default function NewsDetail() {
     });
   };
 
-  const getCategoryLabel = (category?: string): string => {
-    switch (category) {
-      case 'tournament': return 'Тэмцээн';
-      case 'news': return 'Мэдээ';
-      case 'training': return 'Сургалт';
-      case 'urgent': return 'Яаралтай';
-      default: return 'Мэдээ';
-    }
+  const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffHours < 1) return "1 цагийн өмнө";
+    if (diffHours < 24) return `${diffHours} цагийн өмнө`;
+    if (diffDays < 7) return `${diffDays} өдрийн өмнө`;
+    return date.toLocaleDateString('mn-MN');
   };
 
-  if (isLoading) {
+  if (isLoading || articleLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mtta-green mx-auto mb-4"></div>
-            <p className="text-gray-600">Мэдээ уншиж байна...</p>
-          </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mtta-green mx-auto mb-4"></div>
+          <p className="text-gray-600">Уншиж байна...</p>
         </div>
       </div>
     );
   }
 
-  if (error || !news) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <Card>
-            <CardContent className="p-8 text-center">
-              <h1 className="text-2xl font-bold text-gray-900 mb-4">Мэдээ олдсонгүй</h1>
-              <p className="text-gray-600 mb-6">Таны хайсан мэдээ олдсонгүй эсвэл устгагдсан байж болзошгүй.</p>
-              <Link href="/">
-                <Button>
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Нүүр хуудас руу буцах
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
+  if (!isAuthenticated || !user || !article) {
+    return null;
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back Button */}
         <div className="mb-6">
-          <Link href="/">
-            <Button variant="ghost" className="text-mtta-green hover:text-mtta-green-dark">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Нүүр хуудас руу буцах
+          <Link href="/news">
+            <Button variant="outline" className="mb-4">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Мэдээ рүү буцах
             </Button>
           </Link>
         </div>
 
-        <Card>
-          <CardContent className="p-0">
-            {/* News Image */}
-            {news.imageUrl && (
-              <div className="w-full h-64 md:h-96 overflow-hidden rounded-t-lg">
-                <img 
-                  src={getImageUrl(news.imageUrl)} 
-                  alt={news.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
-
-            <div className="p-6 md:p-8">
-              {/* Category & Date */}
-              <div className="flex flex-wrap items-center gap-4 mb-4 text-sm text-gray-600">
-                {news.category && (
-                  <span className="px-3 py-1 bg-mtta-green text-white rounded-full text-xs font-medium">
-                    {getCategoryLabel(news.category)}
-                  </span>
-                )}
-                {news.publishedAt && (
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    <span>{formatDate(news.publishedAt)}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Title */}
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight">
-                {news.title}
-              </h1>
-
-              {/* Excerpt */}
-              {news.excerpt && (
-                <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-                  {news.excerpt}
-                </p>
+        <div className="grid lg:grid-cols-4 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            <Card className="shadow-lg">
+              {article.imageUrl && (
+                <div className="aspect-video overflow-hidden rounded-t-lg">
+                  <img 
+                    src={getImageUrl(article.imageUrl)} 
+                    alt={article.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               )}
+              
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between mb-4">
+                  {getCategoryBadge(article.category)}
+                  <div className="flex items-center text-gray-500 text-sm">
+                    <Calendar className="h-4 w-4 mr-1" />
+                    {formatDate(article.publishedAt || article.createdAt)}
+                  </div>
+                </div>
+                
+                <CardTitle className="text-3xl font-bold text-gray-900 leading-tight">
+                  {article.title}
+                </CardTitle>
+                
+                {article.excerpt && (
+                  <p className="text-xl text-gray-600 mt-4">{article.excerpt}</p>
+                )}
+              </CardHeader>
+              
+              <CardContent>
+                <div className="prose max-w-none">
+                  <p className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap">
+                    {article.content}
+                  </p>
+                </div>
+                
+                <Separator className="my-8" />
+                
+                {/* Author Info and Actions */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                        {article.author?.profileImageUrl ? (
+                          <img 
+                            src={getImageUrl(article.author.profileImageUrl)} 
+                            alt={`${article.author.firstName} ${article.author.lastName}`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="h-6 w-6 text-gray-400" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">
+                          {article.author?.firstName} {article.author?.lastName}
+                        </p>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Clock className="h-3 w-3 mr-1" />
+                          {formatDate(article.createdAt)}д нэмсэн
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    {!article.published && user.role === 'admin' && (
+                      <Button 
+                        className="mtta-green text-white hover:bg-mtta-green-dark"
+                        onClick={() => publishNewsMutation.mutate(article.id)}
+                        disabled={publishNewsMutation.isPending}
+                      >
+                        <Megaphone className="mr-2 h-4 w-4" />
+                        Нийтлэх
+                      </Button>
+                    )}
+                    <Button variant="outline">
+                      <Share2 className="mr-2 h-4 w-4" />
+                      Хуваалцах
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-              {/* Content */}
-              <div className="prose prose-lg max-w-none text-gray-800 leading-relaxed">
-                {news.content.split('\n').map((paragraph, index) => (
-                  paragraph.trim() ? (
-                    <p key={index} className="mb-4">
-                      {paragraph}
-                    </p>
-                  ) : (
-                    <br key={index} />
-                  )
+          {/* Sidebar */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Latest News */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-semibold">Сүүлийн мэдээ</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {latestNews.slice(0, 5).map((news: any) => (
+                  <div key={news.id} className="border-b border-gray-100 last:border-b-0 pb-3 last:pb-0">
+                    <Link href={`/news/${news.id}`}>
+                      <div className="flex gap-3 hover:bg-gray-50 p-2 -m-2 rounded cursor-pointer transition-colors">
+                        {news.imageUrl && (
+                          <div className="w-16 h-12 flex-shrink-0 overflow-hidden rounded">
+                            <img 
+                              src={getImageUrl(news.imageUrl)} 
+                              alt={news.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <h4 className="font-medium text-sm text-gray-900 line-clamp-2 mb-1">
+                            {news.title}
+                          </h4>
+                          <div className="flex items-center text-xs text-gray-500">
+                            <Clock className="h-3 w-3 mr-1" />
+                            {formatRelativeTime(news.createdAt)}
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
                 ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        {/* Back to Home */}
-        <div className="mt-8 text-center">
-          <Link href="/">
-            <Button size="lg" className="bg-mtta-green text-white hover:bg-mtta-green-dark">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Нүүр хуудас руу буцах
-            </Button>
-          </Link>
+            {/* Categories */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-semibold">Ангиллууд</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Link href="/news?category=all">
+                  <Button variant="ghost" className="w-full justify-start text-left">
+                    <div className="w-3 h-3 rounded-full bg-gray-400 mr-3"></div>
+                    Бүгд
+                  </Button>
+                </Link>
+                <Link href="/news?category=tournament">
+                  <Button variant="ghost" className="w-full justify-start text-left">
+                    <div className="w-3 h-3 rounded-full bg-blue-500 mr-3"></div>
+                    Тэмцээн
+                  </Button>
+                </Link>
+                <Link href="/news?category=news">
+                  <Button variant="ghost" className="w-full justify-start text-left">
+                    <div className="w-3 h-3 rounded-full bg-green-500 mr-3"></div>
+                    Мэдээ
+                  </Button>
+                </Link>
+                <Link href="/news?category=training">
+                  <Button variant="ghost" className="w-full justify-start text-left">
+                    <div className="w-3 h-3 rounded-full bg-purple-500 mr-3"></div>
+                    Сургалт
+                  </Button>
+                </Link>
+                <Link href="/news?category=urgent">
+                  <Button variant="ghost" className="w-full justify-start text-left">
+                    <div className="w-3 h-3 rounded-full bg-red-500 mr-3"></div>
+                    Яаралтай
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

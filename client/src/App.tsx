@@ -44,8 +44,8 @@ function Router() {
       <Route path="/clubs" component={Clubs} />
       <Route path="/leagues" component={Leagues} />
       <Route path="/leagues/:id" component={LeagueDetails} />
-      <Route path="/news" component={News} />
       <Route path="/news/:id" component={NewsDetail} />
+      <Route path="/news" component={News} />
       <Route path="/" component={Home} />
       {!isLoading && isAuthenticated && (
         <>
