@@ -300,12 +300,13 @@ export const newsFeed = pgTable("news_feed", {
   title: varchar("title").notNull(),
   content: text("content").notNull(),
   excerpt: text("excerpt"),
-  imageUrl: varchar("image_url"),
+  imageUrl: varchar("image_url"), // Now stores object storage path instead of URL
   category: varchar("category"), // "tournament", "news", "training", "urgent"
   authorId: varchar("author_id").references(() => users.id).notNull(),
   published: boolean("published").default(false),
   publishedAt: timestamp("published_at"),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Homepage sliders table
@@ -425,6 +426,7 @@ export const insertNewsSchema = createInsertSchema(newsFeed).omit({
   id: true,
   createdAt: true,
   publishedAt: true,
+  updatedAt: true,
 });
 
 export const insertHomepageSliderSchema = createInsertSchema(homepageSliders).omit({
