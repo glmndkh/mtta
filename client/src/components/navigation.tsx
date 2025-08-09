@@ -115,7 +115,7 @@ export default function Navigation() {
             <Button
               variant="ghost"
               size="sm"
-              className="md:hidden text-gray-600"
+              className="md:hidden text-white hover:text-mtta-green"
               onClick={() => setShowMobileMenu(!showMobileMenu)}
             >
               {showMobileMenu ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -126,18 +126,29 @@ export default function Navigation() {
 
       {/* Mobile menu */}
       {showMobileMenu && (
-        <div className="md:hidden bg-white border-t">
-          <div className="px-4 py-3 space-y-2">
+        <div className="mobile-menu md:hidden">
+          <div className="mobile-menu-header">
+            <div className="flex items-center justify-between">
+              <img src={mttaLogo} alt="MTTA Logo" className="h-8 w-auto" />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mobile-close-btn"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                <X className="h-6 w-6" />
+              </Button>
+            </div>
+          </div>
+          <div className="px-0 py-0 space-y-0">
             {navigationLinks.map((link) => {
               const Icon = link.icon;
               const isActive = location === link.href;
               return (
                 <Link key={link.href} href={link.href}>
                   <div 
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
-                      isActive 
-                        ? 'text-mtta-green bg-green-50' 
-                        : 'text-gray-700 hover:text-mtta-green hover:bg-gray-50'
+                    className={`mobile-menu-link flex items-center space-x-3 cursor-pointer ${
+                      isActive ? 'active' : ''
                     }`}
                     onClick={() => setShowMobileMenu(false)}
                   >
@@ -153,7 +164,7 @@ export default function Navigation() {
                 {(user as any).role === 'player' && (
                   <Link href="/dashboard">
                     <div 
-                      className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-mtta-green hover:bg-gray-50 cursor-pointer"
+                      className="mobile-menu-link flex items-center space-x-3 cursor-pointer"
                       onClick={() => setShowMobileMenu(false)}
                     >
                       <User className="h-4 w-4" />
@@ -167,7 +178,7 @@ export default function Navigation() {
                   <>
                     <Link href="/admin/generator">
                       <div 
-                        className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-mtta-green hover:bg-gray-50 cursor-pointer"
+                        className="mobile-menu-link flex items-center space-x-3 cursor-pointer"
                         onClick={() => setShowMobileMenu(false)}
                       >
                         <Trophy className="h-4 w-4" />
@@ -176,7 +187,7 @@ export default function Navigation() {
                     </Link>
                     <Link href="/admin/tournament-results">
                       <div 
-                        className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-mtta-green hover:bg-gray-50 cursor-pointer"
+                        className="mobile-menu-link flex items-center space-x-3 cursor-pointer"
                         onClick={() => setShowMobileMenu(false)}
                       >
                         <Trophy className="h-4 w-4" />
@@ -190,18 +201,18 @@ export default function Navigation() {
                     setShowMobileMenu(false);
                     window.location.href = '/api/logout';
                   }}
-                  className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50 w-full"
+                  className="mobile-logout-btn flex items-center space-x-3 w-full"
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Гарах</span>
                 </button>
               </>
             ) : (
-              <div className="space-y-2">
+              <div className="mobile-user-actions space-y-2">
                 <Link href="/register">
                   <button
                     onClick={() => setShowMobileMenu(false)}
-                    className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium border border-mtta-green text-mtta-green hover:bg-mtta-green hover:text-white w-full"
+                    className="mobile-menu-link flex items-center justify-center w-full border border-mtta-green text-mtta-green hover:bg-mtta-green hover:text-white"
                   >
                     <span>Бүртгүүлэх</span>
                   </button>
@@ -209,7 +220,7 @@ export default function Navigation() {
                 <Link href="/login">
                   <button
                     onClick={() => setShowMobileMenu(false)}
-                    className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-white bg-mtta-green hover:bg-mtta-green-dark w-full"
+                    className="mobile-menu-link flex items-center justify-center w-full text-white bg-mtta-green hover:bg-mtta-green-dark"
                   >
                     <span>Нэвтрэх</span>
                   </button>
