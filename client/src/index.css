@@ -449,10 +449,12 @@ button[role="tab"][data-state="active"] {
   left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
-  z-index: 50 !important;
+  z-index: 9999 !important;
   background: linear-gradient(135deg, rgba(15, 20, 25, 0.98) 0%, rgba(25, 30, 38, 0.96) 100%) !important;
   backdrop-filter: blur(10px) !important;
   color: #ffffff !important;
+  display: block !important;
+  overflow-y: auto !important;
 }
 
 /* Mobile menu header */
@@ -469,6 +471,20 @@ button[role="tab"][data-state="active"] {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
   padding: 1rem !important;
   transition: all 0.3s ease !important;
+  display: flex !important;
+  width: 100% !important;
+  text-decoration: none !important;
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  min-height: 60px !important;
+  align-items: center !important;
+}
+
+/* Ensure mobile menu content is visible */
+.mobile-menu * {
+  color: #ffffff !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .mobile-menu .mobile-menu-link:hover {

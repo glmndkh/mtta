@@ -126,8 +126,22 @@ export default function Navigation() {
 
       {/* Mobile menu */}
       {showMobileMenu && (
-        <div className="mobile-menu md:hidden">
-          <div className="mobile-menu-header">
+        <div className="mobile-menu md:hidden" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 9999,
+          background: 'linear-gradient(135deg, rgba(15, 20, 25, 0.98) 0%, rgba(25, 30, 38, 0.96) 100%)',
+          color: '#ffffff',
+          display: 'block'
+        }}>
+          <div className="mobile-menu-header" style={{
+            background: 'rgba(26, 26, 26, 0.9)',
+            borderBottom: '1px solid rgba(0, 200, 150, 0.3)',
+            padding: '1rem'
+          }}>
             <div className="flex items-center justify-between">
               <img src={mttaLogo} alt="MTTA Logo" className="h-8 w-auto" />
               <Button
@@ -135,6 +149,7 @@ export default function Navigation() {
                 size="sm"
                 className="mobile-close-btn"
                 onClick={() => setShowMobileMenu(false)}
+                style={{ color: '#ffffff' }}
               >
                 <X className="h-6 w-6" />
               </Button>
@@ -151,9 +166,17 @@ export default function Navigation() {
                       isActive ? 'active' : ''
                     }`}
                     onClick={() => setShowMobileMenu(false)}
+                    style={{
+                      color: '#ffffff',
+                      padding: '1rem',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      minHeight: '60px'
+                    }}
                   >
-                    <Icon className="h-4 w-4" />
-                    <span>{link.label}</span>
+                    <Icon className="h-4 w-4" style={{ color: '#ffffff' }} />
+                    <span style={{ color: '#ffffff', marginLeft: '0.75rem' }}>{link.label}</span>
                   </div>
                 </Link>
               );
