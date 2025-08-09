@@ -165,7 +165,7 @@ export default function Navigation() {
             flexDirection: 'column',
             justifyContent: 'flex-start',
             padding: 0,
-            overflow: 'hidden',
+            overflowY: 'auto',
             maxHeight: 'calc(100vh - 120px)'
           }}>
             {navigationLinks.map((link) => {
