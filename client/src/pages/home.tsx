@@ -662,14 +662,10 @@ export default function Home() {
           </div>
         )}
 
-        {/* Sponsors Section */}
-        <div className="bg-gray-50 py-12 mt-12">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">
-              Ивээн тэтгэгчид
-            </h2>
-            
-            {!sponsorsLoading && sponsors && sponsors.length > 0 && (
+        {/* Sponsors Section - Right under news */}
+        {!sponsorsLoading && sponsors && sponsors.length > 0 && (
+          <div className="bg-gray-50 py-8 mt-8">
+            <div className="container mx-auto px-4">
               <div className="relative overflow-hidden">
                 <div className="flex gap-8 animate-scroll-horizontal">
                   {/* Duplicate sponsors to create seamless loop */}
@@ -695,21 +691,9 @@ export default function Home() {
                   ))}
                 </div>
               </div>
-            )}
-            
-            {sponsorsLoading && (
-              <div className="text-center text-gray-600">
-                Ивээн тэтгэгчдийн мэдээлэл ачааллаж байна...
-              </div>
-            )}
-            
-            {!sponsorsLoading && (!sponsors || sponsors.length === 0) && (
-              <div className="text-center text-gray-600">
-                Одоогоор ивээн тэтгэгч байхгүй байна
-              </div>
-            )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
