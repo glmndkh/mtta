@@ -2004,7 +2004,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/admin/news/:id', requireAuth, isAdminRole, async (req, res) => {
     try {
-      const updateData = req.body;
+      const updateData = { ...req.body };
+      
+      // Remove timestamp fields that shouldn't be manually updated
+      delete updateData.createdAt;
+      delete updateData.updatedAt;
+      delete updateData.publishedAt;
+      
+      // Add updatedAt timestamp
+      updateData.updatedAt = new Date();
+      
       const news = await storage.updateNews(req.params.id, updateData);
       if (!news) {
         return res.status(404).json({ message: "Мэдээ олдсонгүй" });

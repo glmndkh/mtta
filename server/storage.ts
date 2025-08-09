@@ -728,7 +728,10 @@ export class DatabaseStorage implements IStorage {
   async updateNews(id: string, newsData: Partial<InsertNews>): Promise<News | undefined> {
     const [news] = await db
       .update(newsFeed)
-      .set(newsData)
+      .set({
+        ...newsData,
+        updatedAt: new Date()
+      })
       .where(eq(newsFeed.id, id))
       .returning();
     return news;
