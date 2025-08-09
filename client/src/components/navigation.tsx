@@ -124,51 +124,69 @@ export default function Navigation() {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile menu overlay */}
       {showMobileMenu && (
-        <div className="mobile-menu md:hidden" style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 9999,
-          background: 'linear-gradient(135deg, rgba(15, 20, 25, 0.98) 0%, rgba(25, 30, 38, 0.96) 100%)',
-          color: '#ffffff',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden'
-        }}>
-          <div className="mobile-menu-header" style={{
-            background: 'rgba(26, 26, 26, 0.9)',
-            borderBottom: '1px solid rgba(0, 200, 150, 0.3)',
-            padding: '0.75rem 1rem',
-            flexShrink: 0,
-            minHeight: '60px'
-          }}>
-            <div className="flex items-center justify-between">
+        <div 
+          className="fixed inset-0 z-50 md:hidden"
+          onClick={() => setShowMobileMenu(false)}
+          style={{
+            background: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(4px)'
+          }}
+        >
+          {/* Mobile menu sidebar */}
+          <div 
+            className="mobile-menu-sidebar"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'fixed',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              width: '280px',
+              maxWidth: '85vw',
+              background: 'linear-gradient(135deg, rgba(15, 20, 25, 0.98) 0%, rgba(25, 30, 38, 0.96) 100%)',
+              backdropFilter: 'blur(10px)',
+              color: '#ffffff',
+              display: 'flex',
+              flexDirection: 'column',
+              transform: showMobileMenu ? 'translateX(0)' : 'translateX(100%)',
+              transition: 'transform 0.3s ease-in-out',
+              boxShadow: '-4px 0 20px rgba(0, 0, 0, 0.3)'
+            }}
+          >
+            {/* Header */}
+            <div style={{
+              background: 'rgba(26, 26, 26, 0.9)',
+              borderBottom: '1px solid rgba(0, 200, 150, 0.3)',
+              padding: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexShrink: 0
+            }}>
               <img src={mttaLogo} alt="MTTA Logo" className="h-8 w-auto" />
               <Button
                 variant="ghost"
                 size="sm"
-                className="mobile-close-btn"
                 onClick={() => setShowMobileMenu(false)}
-                style={{ color: '#ffffff' }}
+                style={{ 
+                  color: '#ffffff',
+                  padding: '0.5rem',
+                  minWidth: 'auto'
+                }}
               >
-                <X className="h-6 w-6" />
+                <X className="h-5 w-5" />
               </Button>
             </div>
-          </div>
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-start',
-            padding: 0,
-            overflowY: 'auto',
-            maxHeight: 'calc(100vh - 120px)'
-          }}>
-            {navigationLinks.map((link) => {
+
+            {/* Menu items container */}
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '0.5rem 0'
+            }}>
+              {navigationLinks.map((link) => {
               const Icon = link.icon;
               const isActive = location === link.href;
               return (
@@ -180,13 +198,15 @@ export default function Navigation() {
                     onClick={() => setShowMobileMenu(false)}
                     style={{
                       color: '#ffffff',
-                      padding: '0.75rem 1.5rem',
+                      padding: '1rem 1.5rem',
                       borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                       display: 'flex',
                       alignItems: 'center',
-                      minHeight: '48px',
-                      fontSize: '0.95rem',
-                      fontWeight: '500'
+                      minHeight: '52px',
+                      fontSize: '1rem',
+                      fontWeight: '500',
+                      transition: 'background-color 0.2s ease',
+                      cursor: 'pointer'
                     }}
                   >
                     <Icon className="h-4 w-4" style={{ color: '#ffffff' }} />
@@ -194,15 +214,15 @@ export default function Navigation() {
                   </div>
                 </Link>
               );
-            })}
-
+              })}
             
-            {/* User menu section at bottom */}
-            <div style={{
-              marginTop: 'auto',
-              borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-              backgroundColor: 'rgba(26, 26, 26, 0.5)'
-            }}>
+              {/* User menu section at bottom */}
+              <div style={{
+                marginTop: 'auto',
+                borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                backgroundColor: 'rgba(26, 26, 26, 0.5)',
+                padding: '1rem'
+              }}>
               {isAuthenticated && user ? (
                 <>
                   {(user as any).role === 'player' && (
@@ -212,11 +232,13 @@ export default function Navigation() {
                         onClick={() => setShowMobileMenu(false)}
                         style={{
                           color: '#ffffff',
-                          padding: '0.75rem 1.5rem',
-                          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                          padding: '0.75rem 1rem',
                           display: 'flex',
                           alignItems: 'center',
-                          minHeight: '48px'
+                          minHeight: '48px',
+                          marginBottom: '0.5rem',
+                          borderRadius: '0.5rem',
+                          transition: 'background-color 0.2s ease'
                         }}
                       >
                         <User className="h-4 w-4" style={{ color: '#ffffff' }} />
@@ -234,11 +256,13 @@ export default function Navigation() {
                           onClick={() => setShowMobileMenu(false)}
                           style={{
                             color: '#ffffff',
-                            padding: '0.75rem 1.5rem',
-                            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                            padding: '0.75rem 1rem',
                             display: 'flex',
                             alignItems: 'center',
-                            minHeight: '48px'
+                            minHeight: '48px',
+                            marginBottom: '0.5rem',
+                            borderRadius: '0.5rem',
+                            transition: 'background-color 0.2s ease'
                           }}
                         >
                           <User className="h-4 w-4" style={{ color: '#ffffff' }} />
@@ -251,11 +275,13 @@ export default function Navigation() {
                           onClick={() => setShowMobileMenu(false)}
                           style={{
                             color: '#ffffff',
-                            padding: '0.75rem 1.5rem',
-                            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                            padding: '0.75rem 1rem',
                             display: 'flex',
                             alignItems: 'center',
-                            minHeight: '48px'
+                            minHeight: '48px',
+                            marginBottom: '0.5rem',
+                            borderRadius: '0.5rem',
+                            transition: 'background-color 0.2s ease'
                           }}
                         >
                           <Trophy className="h-4 w-4" style={{ color: '#ffffff' }} />
@@ -273,11 +299,13 @@ export default function Navigation() {
                       color: '#ff6b6b',
                       background: 'rgba(255, 107, 107, 0.1)',
                       border: '1px solid rgba(255, 107, 107, 0.3)',
-                      padding: '0.75rem 1.5rem',
+                      padding: '0.75rem 1rem',
                       display: 'flex',
                       alignItems: 'center',
                       width: '100%',
-                      minHeight: '48px'
+                      minHeight: '48px',
+                      marginTop: '1rem',
+                      borderRadius: '0.5rem'
                     }}
                   >
                     <LogOut className="h-4 w-4" style={{ color: '#ff6b6b' }} />
@@ -285,21 +313,21 @@ export default function Navigation() {
                   </button>
                 </>
               ) : (
-                <div style={{ padding: '0.75rem 1rem' }}>
+                <>
                   <Link href="/register">
                     <button
                       onClick={() => setShowMobileMenu(false)}
                       style={{
                         width: '100%',
-                        padding: '0.5rem 1.5rem',
-                        marginBottom: '0.5rem',
+                        padding: '0.75rem 1rem',
+                        marginBottom: '0.75rem',
                         border: '1px solid #00c896',
                         color: '#00c896',
                         background: 'transparent',
                         borderRadius: '0.5rem',
-                        fontSize: '0.95rem',
+                        fontSize: '1rem',
                         fontWeight: '500',
-                        minHeight: '44px'
+                        minHeight: '48px'
                       }}
                     >
                       Бүртгүүлэх
@@ -310,21 +338,22 @@ export default function Navigation() {
                       onClick={() => setShowMobileMenu(false)}
                       style={{
                         width: '100%',
-                        padding: '0.5rem 1.5rem',
+                        padding: '0.75rem 1rem',
                         background: '#00c896',
                         color: '#ffffff',
                         border: 'none',
                         borderRadius: '0.5rem',
-                        fontSize: '0.95rem',
+                        fontSize: '1rem',
                         fontWeight: '500',
-                        minHeight: '44px'
+                        minHeight: '48px'
                       }}
                     >
                       Нэвтрэх
                     </button>
                   </Link>
-                </div>
+                </>
               )}
+              </div>
             </div>
           </div>
         </div>
