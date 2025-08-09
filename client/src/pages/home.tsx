@@ -280,6 +280,39 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Sponsors Section - Right after news */}
+      {!sponsorsLoading && sponsors && sponsors.length > 0 && (
+        <div className="bg-gray-50 py-8">
+          <div className="container mx-auto px-4">
+            <div className="relative overflow-hidden">
+              <div className="flex gap-8 animate-scroll-horizontal">
+                {/* Duplicate sponsors to create seamless loop */}
+                {[...sponsors, ...sponsors].map((sponsor, index) => (
+                  <div
+                    key={`${sponsor.id}-${index}`}
+                    className="flex-shrink-0 bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+                  >
+                    <div className="flex items-center justify-center h-16 w-32">
+                      {sponsor.logoUrl ? (
+                        <img
+                          src={sponsor.logoUrl}
+                          alt={sponsor.name}
+                          className="max-h-full max-w-full object-contain"
+                        />
+                      ) : (
+                        <div className="text-gray-400 text-center">
+                          <span className="font-medium">{sponsor.name}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
@@ -662,38 +695,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Sponsors Section - Right under news */}
-        {!sponsorsLoading && sponsors && sponsors.length > 0 && (
-          <div className="bg-gray-50 py-8 mt-8">
-            <div className="container mx-auto px-4">
-              <div className="relative overflow-hidden">
-                <div className="flex gap-8 animate-scroll-horizontal">
-                  {/* Duplicate sponsors to create seamless loop */}
-                  {[...sponsors, ...sponsors].map((sponsor, index) => (
-                    <div
-                      key={`${sponsor.id}-${index}`}
-                      className="flex-shrink-0 bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-                    >
-                      <div className="flex items-center justify-center h-16 w-32">
-                        {sponsor.logoUrl ? (
-                          <img
-                            src={sponsor.logoUrl}
-                            alt={sponsor.name}
-                            className="max-h-full max-w-full object-contain"
-                          />
-                        ) : (
-                          <div className="text-gray-400 text-center">
-                            <span className="font-medium">{sponsor.name}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+
       </div>
     </div>
   );
