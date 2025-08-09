@@ -746,7 +746,7 @@ export class DatabaseStorage implements IStorage {
       .from(newsFeed)
       .leftJoin(users, eq(newsFeed.authorId, users.id))
       .where(eq(newsFeed.published, true))
-      .orderBy(desc(newsFeed.publishedAt))
+      .orderBy(desc(newsFeed.updatedAt), desc(newsFeed.publishedAt))
       .limit(15);
   }
 
@@ -777,11 +777,31 @@ export class DatabaseStorage implements IStorage {
     return (result.rowCount || 0) > 0;
   }
 
-  async getAllNews(): Promise<News[]> {
+  async getAllNews(): Promise<any[]> {
     return await db
-      .select()
+      .select({
+        id: newsFeed.id,
+        title: newsFeed.title,
+        content: newsFeed.content,
+        excerpt: newsFeed.excerpt,
+        imageUrl: newsFeed.imageUrl,
+        category: newsFeed.category,
+        published: newsFeed.published,
+        publishedAt: newsFeed.publishedAt,
+        createdAt: newsFeed.createdAt,
+        updatedAt: newsFeed.updatedAt,
+        authorId: newsFeed.authorId,
+        author: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          profileImageUrl: users.profileImageUrl,
+        }
+      })
       .from(newsFeed)
-      .orderBy(desc(newsFeed.createdAt));
+      .leftJoin(users, eq(newsFeed.authorId, users.id))
+      .orderBy(desc(newsFeed.updatedAt), desc(newsFeed.createdAt));
   }
 
   async getLatestPublishedNews(limit: number = 5): Promise<any[]> {
@@ -809,7 +829,7 @@ export class DatabaseStorage implements IStorage {
       .from(newsFeed)
       .leftJoin(users, eq(newsFeed.authorId, users.id))
       .where(eq(newsFeed.published, true))
-      .orderBy(desc(newsFeed.publishedAt))
+      .orderBy(desc(newsFeed.updatedAt), desc(newsFeed.publishedAt))
       .limit(limit);
   }
 

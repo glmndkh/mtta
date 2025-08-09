@@ -46,6 +46,10 @@ export default function Home() {
   const { data: latestNews = [], isLoading: newsLoading } = useQuery<NewsItem[]>({
     queryKey: ['/api/news/latest'],
     enabled: true,
+    staleTime: 30 * 1000, // 30 seconds for real-time updates
+    gcTime: 2 * 60 * 1000, // 2 minutes in cache
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchOnMount: true, // Refetch on component mount
   });
 
   // Fetch active sponsors
