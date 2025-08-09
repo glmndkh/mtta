@@ -19,13 +19,13 @@ export default function Navigation() {
   ];
 
   return (
-    <nav className="bg-white shadow-lg border-b-2 border-mtta-green">
+    <nav className="nav-dark">
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/">
-            <div className="flex items-center cursor-pointer">
-              <img src={mttaLogo} alt="MTTA Logo" className="h-10 w-auto" />
+            <div className="flex items-center cursor-pointer logo-glow">
+              <img src={mttaLogo} alt="MTTA Logo" className="h-12 w-auto" />
             </div>
           </Link>
 
@@ -36,10 +36,8 @@ export default function Navigation() {
               const isActive = location === link.href;
               return (
                 <Link key={link.href} href={link.href}>
-                  <div className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
-                    isActive 
-                      ? 'text-mtta-green bg-green-50' 
-                      : 'text-gray-700 hover:text-mtta-green hover:bg-gray-50'
+                  <div className={`nav-link flex items-center space-x-1 px-3 py-2 cursor-pointer ${
+                    isActive ? 'active-nav-link' : ''
                   }`}>
                     <Icon className="h-4 w-4" />
                     <span>{link.label}</span>
@@ -56,7 +54,7 @@ export default function Navigation() {
                 {(user as any).role === 'player' ? (
                   <>
                     <Link href="/profile">
-                      <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-mtta-green hover:bg-mtta-green/5 cursor-pointer transition-all duration-300">
+                      <div className="nav-link flex items-center space-x-2 px-3 py-2 cursor-pointer">
                         <User className="h-4 w-4" />
                         <span>{(user as any).firstName}</span>
                       </div>
@@ -65,13 +63,13 @@ export default function Navigation() {
                 ) : (user as any).role === 'admin' ? (
                   <>
                     <Link href="/admin/dashboard">
-                      <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-mtta-green hover:bg-mtta-green/5 cursor-pointer transition-all duration-300">
+                      <div className="nav-link flex items-center space-x-2 px-3 py-2 cursor-pointer">
                         <User className="h-4 w-4" />
                         <span>Админ самбар</span>
                       </div>
                     </Link>
                     <Link href="/profile">
-                      <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-mtta-green hover:bg-mtta-green/5 cursor-pointer transition-all duration-300">
+                      <div className="nav-link flex items-center space-x-2 px-3 py-2 cursor-pointer">
                         <User className="h-4 w-4" />
                         <span>{(user as any).firstName} (Админ)</span>
                       </div>
@@ -79,7 +77,7 @@ export default function Navigation() {
                   </>
                 ) : (
                   <Link href="/profile">
-                    <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-mtta-green hover:bg-mtta-green/5 cursor-pointer transition-all duration-300">
+                    <div className="nav-link flex items-center space-x-2 px-3 py-2 cursor-pointer">
                       <User className="h-4 w-4" />
                       <span>{(user as any).firstName} ({
                         (user as any).role === 'club_owner' ? 'Клубын эзэн' :
@@ -92,7 +90,7 @@ export default function Navigation() {
                   variant="ghost"
                   size="sm"
                   onClick={() => window.location.href = '/api/logout'}
-                  className="text-gray-700 hover:text-red-600"
+                  className="nav-link hover:text-red-400"
                 >
                   <LogOut className="h-4 w-4 mr-1" />
                   Гарах
@@ -101,14 +99,14 @@ export default function Navigation() {
             ) : (
               <div className="hidden md:flex items-center space-x-2">
                 <Link href="/register">
-                  <Button variant="outline" className="border-mtta-green text-mtta-green hover:bg-mtta-green hover:text-white">
+                  <button className="btn-green">
                     Бүртгүүлэх
-                  </Button>
+                  </button>
                 </Link>
                 <Link href="/login">
-                  <Button className="mtta-green text-white hover:bg-mtta-green-dark">
+                  <button className="btn-green">
                     Нэвтрэх
-                  </Button>
+                  </button>
                 </Link>
               </div>
             )}
