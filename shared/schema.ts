@@ -43,6 +43,7 @@ export const genderEnum = pgEnum("gender", ["male", "female", "other"]);
 
 // Player rank enum
 export const playerRankEnum = pgEnum("player_rank", [
+  "Шинэ тоглогч",
   "3-р зэрэг", 
   "2-р зэрэг", 
   "1-р зэрэг", 

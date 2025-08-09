@@ -139,6 +139,7 @@ export interface IStorage {
   createTournamentTeam(tournamentId: string, teamData: { name: string; logoUrl?: string }): Promise<TournamentTeam>;
   addPlayerToTournamentTeam(teamId: string, playerId: string, playerName: string): Promise<TournamentTeamPlayer>;
   getTournamentTeams(tournamentId: string): Promise<Array<TournamentTeam & { players: Array<TournamentTeamPlayer & { firstName: string; lastName: string; email: string }> }>>;
+  getTournamentTeamById(teamId: string): Promise<TournamentTeam | undefined>;
   deleteTournamentTeam(teamId: string): Promise<boolean>;
 
   // Homepage slider operations
@@ -173,7 +174,30 @@ export class DatabaseStorage implements IStorage {
       .values(userData)
       .onConflictDoUpdate({
         target: users.id,
-        set: userData,
+        set: {
+          email: userData.email,
+          phone: userData.phone,
+          password: userData.password,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          gender: userData.gender,
+          dateOfBirth: userData.dateOfBirth,
+          clubAffiliation: userData.clubAffiliation,
+          profileImageUrl: userData.profileImageUrl,
+          province: userData.province,
+          city: userData.city,
+          rubberTypes: userData.rubberTypes ? userData.rubberTypes : [],
+          handedness: userData.handedness,
+          playingStyles: userData.playingStyles ? userData.playingStyles : [],
+          bio: userData.bio,
+          membershipType: userData.membershipType,
+          membershipStartDate: userData.membershipStartDate,
+          membershipEndDate: userData.membershipEndDate,
+          membershipActive: userData.membershipActive,
+          membershipAmount: userData.membershipAmount,
+          role: userData.role,
+          updatedAt: new Date(),
+        },
       })
       .returning();
     return user;
@@ -361,7 +385,11 @@ export class DatabaseStorage implements IStorage {
     const memberNumber = `TT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
     const [player] = await db
       .insert(players)
-      .values({ ...playerData, memberNumber })
+      .values({ 
+        ...playerData, 
+        memberNumber,
+        rank: playerData.rank || "Шинэ тоглогч"
+      })
       .returning();
     return player;
   }
@@ -382,9 +410,16 @@ export class DatabaseStorage implements IStorage {
 
   async updatePlayerRank(playerId: string, rank: string): Promise<boolean> {
     try {
+      // Validate rank value
+      const validRanks = ["Шинэ тоглогч", "3-р зэрэг", "2-р зэрэг", "1-р зэрэг", "дэд мастер", "спортын мастер", "олон улсын хэмжээний мастер"];
+      if (!validRanks.includes(rank)) {
+        console.error("Invalid rank value:", rank);
+        return false;
+      }
+      
       const result = await db
         .update(players)
-        .set({ rank })
+        .set({ rank: rank as any })
         .where(eq(players.id, playerId));
       return (result.rowCount ?? 0) > 0;
     } catch (error) {
@@ -1527,6 +1562,14 @@ export class DatabaseStorage implements IStorage {
     );
 
     return teamsWithPlayers;
+  }
+
+  async getTournamentTeamById(teamId: string): Promise<TournamentTeam | undefined> {
+    const [team] = await db
+      .select()
+      .from(tournamentTeams)
+      .where(eq(tournamentTeams.id, teamId));
+    return team;
   }
 
   async deleteTournamentTeam(teamId: string): Promise<boolean> {
