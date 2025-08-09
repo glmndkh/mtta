@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "wouter";
 import Navigation from "@/components/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -167,6 +168,7 @@ export default function Profile() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { navigate } = useRouter();
 
   const [profileData, setProfileData] = useState<UserProfile>({
     id: '',
@@ -976,7 +978,10 @@ export default function Profile() {
                               return (
                                 <div 
                                   key={match.id || index} 
-                                  className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                                  className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow ${
+                                    match.result === 'win' ? 'border-2 border-green-500' : 
+                                    match.result === 'loss' ? 'border-2 border-red-500' : 'border border-gray-200'
+                                  }`}
                                 >
                                   <div className="flex">
                                     {/* Red accent line */}
@@ -1001,9 +1006,12 @@ export default function Profile() {
                                       {/* Match result */}
                                       <div className="flex items-center justify-between">
                                         <div className="flex-1 text-right pr-4">
-                                          <span className="text-lg font-semibold text-gray-900">
+                                          <button
+                                            onClick={() => navigate(`/profile`)}
+                                            className="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                                          >
                                             {profile?.name}
-                                          </span>
+                                          </button>
                                         </div>
                                         
                                         {playerScore && opponentScore ? (
@@ -1017,9 +1025,18 @@ export default function Profile() {
                                         )}
                                         
                                         <div className="flex-1 text-left pl-4">
-                                          <span className="text-lg font-semibold text-gray-900">
-                                            {opponentName}
-                                          </span>
+                                          {typeof match.opponent === 'object' && match.opponent?.user ? (
+                                            <button
+                                              onClick={() => navigate(`/player-profile/${match.opponent.userId || match.opponent.user?.id}`)}
+                                              className="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                                            >
+                                              {opponentName}
+                                            </button>
+                                          ) : (
+                                            <span className="text-lg font-semibold text-gray-900">
+                                              {opponentName}
+                                            </span>
+                                          )}
                                         </div>
                                       </div>
                                     </div>

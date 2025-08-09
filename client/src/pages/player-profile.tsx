@@ -1,4 +1,4 @@
-import { useRoute, useLocation } from "wouter";
+import { useRoute, useLocation, useRouter } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import Navigation from "@/components/navigation";
 export default function PlayerProfilePage() {
   const [match, params] = useRoute("/player/:id");
   const [, setLocation] = useLocation();
+  const { navigate } = useRouter();
 
   // Fetch player data
   const { data: playerData, isLoading } = useQuery({
@@ -205,7 +206,15 @@ export default function PlayerProfilePage() {
                             return (
                               <div 
                                 key={`tournament-${index}`}
-                                className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                                className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow ${
+                                  hasResult
+                                    ? isWinner === true
+                                      ? 'border-2 border-green-500'
+                                      : isWinner === false
+                                      ? 'border-2 border-red-500'
+                                      : 'border border-gray-200'
+                                    : 'border border-gray-200'
+                                }`}
                               >
                                 <div className="flex">
                                   {/* Red accent line */}
@@ -215,22 +224,30 @@ export default function PlayerProfilePage() {
                                   <div className="flex-1 p-4">
                                     {/* Date and tournament info */}
                                     <div className="text-sm text-gray-600 mb-3">
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <span className="font-medium">
+                                          {match.tournament?.name || 'Тэмцээн'}
+                                        </span>
+                                        <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                                          {match.stage || 'Хэсгийн тоглолт'}
+                                        </span>
+                                      </div>
                                       {match.date && (
-                                        <span>
-                                          {new Date(match.date).toLocaleDateString('mn-MN')} • 
+                                        <span className="text-xs text-gray-500">
+                                          {new Date(match.date).toLocaleDateString('mn-MN')}
                                         </span>
                                       )}
-                                      <span className="ml-1">
-                                        {match.tournament?.name || 'Тэмцээн'} • {match.stage || 'Хэсгийн тоглолт'}
-                                      </span>
                                     </div>
                                     
                                     {/* Match result */}
                                     <div className="flex items-center justify-between">
                                       <div className="flex-1 text-right pr-4">
-                                        <span className="text-lg font-semibold text-gray-900">
+                                        <button
+                                          onClick={() => navigate(`/player-profile/${params?.id}`)}
+                                          className="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                                        >
                                           {player?.firstName} {player?.lastName}
-                                        </span>
+                                        </button>
                                       </div>
                                       
                                       {hasResult && playerScore && opponentScore ? (
@@ -244,9 +261,18 @@ export default function PlayerProfilePage() {
                                       )}
                                       
                                       <div className="flex-1 text-left pl-4">
-                                        <span className="text-lg font-semibold text-gray-900">
-                                          {opponentName}
-                                        </span>
+                                        {match.opponent?.user ? (
+                                          <button
+                                            onClick={() => navigate(`/player-profile/${match.opponent.userId || match.opponent.user?.id}`)}
+                                            className="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                                          >
+                                            {opponentName}
+                                          </button>
+                                        ) : (
+                                          <span className="text-lg font-semibold text-gray-900">
+                                            {opponentName}
+                                          </span>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
@@ -292,7 +318,13 @@ export default function PlayerProfilePage() {
                             return (
                               <div 
                                 key={match.id}
-                                className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                                className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow ${
+                                  match.status === 'completed'
+                                    ? isWinner 
+                                      ? 'border-2 border-green-500'
+                                      : 'border-2 border-red-500'
+                                    : 'border border-gray-200'
+                                }`}
                               >
                                 <div className="flex">
                                   {/* Red accent line */}
@@ -302,22 +334,30 @@ export default function PlayerProfilePage() {
                                   <div className="flex-1 p-4">
                                     {/* Date and match info */}
                                     <div className="text-sm text-gray-600 mb-3">
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <span className="font-medium">
+                                          Ердийн тоглолт
+                                        </span>
+                                        <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                                          {match.status === 'scheduled' ? 'Товлогдсон' : match.status === 'completed' ? 'Дууссан' : 'Хүлээгдэж буй'}
+                                        </span>
+                                      </div>
                                       {match.scheduledAt && (
-                                        <span>
-                                          {new Date(match.scheduledAt).toLocaleDateString('mn-MN')} • 
+                                        <span className="text-xs text-gray-500">
+                                          {new Date(match.scheduledAt).toLocaleDateString('mn-MN')}
                                         </span>
                                       )}
-                                      <span className="ml-1">
-                                        Ердийн тоглолт • {match.status === 'scheduled' ? 'Товлогдсон' : match.status === 'completed' ? 'Дууссан' : 'Хүлээгдэж буй'}
-                                      </span>
                                     </div>
                                     
                                     {/* Match result */}
                                     <div className="flex items-center justify-between">
                                       <div className="flex-1 text-right pr-4">
-                                        <span className="text-lg font-semibold text-gray-900">
+                                        <button
+                                          onClick={() => navigate(`/player-profile/${params?.id}`)}
+                                          className="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                                        >
                                           {player?.firstName} {player?.lastName}
-                                        </span>
+                                        </button>
                                       </div>
                                       
                                       {match.status === 'completed' && (playerTotalScore > 0 || opponentTotalScore > 0) ? (
@@ -331,9 +371,18 @@ export default function PlayerProfilePage() {
                                       )}
                                       
                                       <div className="flex-1 text-left pl-4">
-                                        <span className="text-lg font-semibold text-gray-900">
-                                          {opponentName}
-                                        </span>
+                                        {opponent?.user ? (
+                                          <button
+                                            onClick={() => navigate(`/player-profile/${opponent.userId || opponent.user?.id}`)}
+                                            className="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                                          >
+                                            {opponentName}
+                                          </button>
+                                        ) : (
+                                          <span className="text-lg font-semibold text-gray-900">
+                                            {opponentName}
+                                          </span>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
