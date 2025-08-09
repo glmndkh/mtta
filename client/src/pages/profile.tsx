@@ -951,46 +951,82 @@ export default function Profile() {
                       ).map(([tournamentName, tournamentMatches]) => (
                         <div key={tournamentName} className="border rounded-lg p-4">
                           <h3 className="font-medium mb-3">{tournamentName}</h3>
-                          <div className="space-y-2">
-                            {(tournamentMatches as any[]).map((match: any, index: number) => (
-                              <div key={match.id || index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border">
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-sm font-medium">
-                                      vs {typeof match.opponent === 'string' ? match.opponent : 
-                                          typeof match.opponent === 'object' ? match.opponent?.name || 'Тодорхойгүй' : 
-                                          'Тодорхойгүй'}
-                                    </span>
-                                    {match.matchType && match.matchType !== 'knockout' && (
-                                      <Badge variant="outline" className="text-xs">
-                                        {match.matchType}
-                                      </Badge>
-                                    )}
-                                    {match.stage === 'knockout' && (
-                                      <Badge variant="secondary" className="text-xs">
-                                        {match.matchType === 'Хүрэл медалийн тоглолт' ? 'Хүрэл медалийн тоглолт' : 'Шууд хасагдах'}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center gap-4 text-xs text-gray-500">
-                                    <span>
-                                      {match.date ? new Date(match.date).toLocaleDateString('mn-MN') : 'Огноо тодорхойгүй'}
-                                    </span>
-                                    {match.stage && (
-                                      <span className="capitalize">
-                                        {match.stage === 'group' ? 'Групийн шат' : 'Шууд хасагдах шат'}
-                                      </span>
-                                    )}
+                          <div className="space-y-3">
+                            {(tournamentMatches as any[]).map((match: any, index: number) => {
+                              const opponentName = typeof match.opponent === 'string' ? match.opponent : 
+                                                 typeof match.opponent === 'object' ? match.opponent?.name || 'Тодорхойгүй' : 
+                                                 'Тодорхойгүй';
+                              
+                              // Parse score from match.score (format like "3:2" or "2-1")
+                              let playerScore = '';
+                              let opponentScore = '';
+                              if (match.score && match.score !== 'N/A') {
+                                const scoreMatch = match.score.match(/(\d+)[-:](\d+)/);
+                                if (scoreMatch) {
+                                  if (match.result === 'win') {
+                                    playerScore = Math.max(parseInt(scoreMatch[1]), parseInt(scoreMatch[2])).toString();
+                                    opponentScore = Math.min(parseInt(scoreMatch[1]), parseInt(scoreMatch[2])).toString();
+                                  } else {
+                                    playerScore = Math.min(parseInt(scoreMatch[1]), parseInt(scoreMatch[2])).toString();
+                                    opponentScore = Math.max(parseInt(scoreMatch[1]), parseInt(scoreMatch[2])).toString();
+                                  }
+                                }
+                              }
+                              
+                              return (
+                                <div 
+                                  key={match.id || index} 
+                                  className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                                >
+                                  <div className="flex">
+                                    {/* Red accent line */}
+                                    <div className="w-1 bg-red-500 rounded-l-lg flex-shrink-0"></div>
+                                    
+                                    {/* Content */}
+                                    <div className="flex-1 p-4">
+                                      {/* Date and match info */}
+                                      <div className="text-sm text-gray-600 mb-3">
+                                        {match.date && (
+                                          <span>
+                                            {new Date(match.date).toLocaleDateString('mn-MN')} • 
+                                          </span>
+                                        )}
+                                        <span className="ml-1">
+                                          {tournamentName} • {match.stage === 'group' ? 'Групийн шат' : 
+                                           match.matchType === 'Хүрэл медалийн тоглолт' ? 'Хүрэл медалийн тоглолт' : 
+                                           'Шууд хасагдах шат'}
+                                        </span>
+                                      </div>
+                                      
+                                      {/* Match result */}
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex-1 text-right pr-4">
+                                          <span className="text-lg font-semibold text-gray-900">
+                                            {profile?.name}
+                                          </span>
+                                        </div>
+                                        
+                                        {playerScore && opponentScore ? (
+                                          <div className="text-xl font-bold text-gray-900 px-4">
+                                            {playerScore} : {opponentScore}
+                                          </div>
+                                        ) : (
+                                          <div className="text-gray-400 px-4">
+                                            - : -
+                                          </div>
+                                        )}
+                                        
+                                        <div className="flex-1 text-left pl-4">
+                                          <span className="text-lg font-semibold text-gray-900">
+                                            {opponentName}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                  <span className="text-sm font-bold">{match.score || 'N/A'}</span>
-                                  <Badge variant={match.result === 'win' ? 'default' : 'destructive'} className="min-w-[60px] justify-center">
-                                    {match.result === 'win' ? 'Ялалт' : 'Ялагдал'}
-                                  </Badge>
-                                </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       ))}
