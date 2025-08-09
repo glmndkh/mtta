@@ -48,10 +48,9 @@ export default function News() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // Fetch news data based on user role - admin sees all, others see published only
-  const newsEndpoint = user?.role === 'admin' ? '/api/admin/news' : '/api/news';
+  // Fetch news data - use regular endpoint that shows published news
   const { data: allNews = [], isLoading: newsLoading } = useQuery({
-    queryKey: [newsEndpoint],
+    queryKey: ['/api/news'],
     enabled: isAuthenticated,
     retry: false,
     staleTime: 30 * 1000, // Reduced to 30 seconds for better real-time updates
