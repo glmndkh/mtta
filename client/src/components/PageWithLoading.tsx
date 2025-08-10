@@ -4,14 +4,12 @@ import LoadingAnimation from '@/components/LoadingAnimation';
 
 interface PageWithLoadingProps {
   children: React.ReactNode;
-  minimumLoadTime?: number;
 }
 
 const PageWithLoading: React.FC<PageWithLoadingProps> = ({ 
-  children, 
-  minimumLoadTime = 2000 
+  children
 }) => {
-  const { isLoading } = usePageTransition({ minimumLoadTime });
+  const { isLoading } = usePageTransition();
 
   if (isLoading) {
     return (
