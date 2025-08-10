@@ -589,52 +589,57 @@ export default function Profile() {
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="name">Нэр</Label>
+                        <Label htmlFor="name" className="text-white">Нэр</Label>
                         <Input
                           id="name"
                           value={profileData.name || ''}
                           onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
                           placeholder="Таны нэрийг оруулна уу"
+                          className="input-dark"
                         />
                       </div>
                       <div>
-                        <Label htmlFor="dateOfBirth">Төрсөн огноо</Label>
+                        <Label htmlFor="dateOfBirth" className="text-white">Төрсөн огноо</Label>
                         <Input
                           id="dateOfBirth"
                           type="date"
                           value={profileData.dateOfBirth || ''}
                           onChange={(e) => setProfileData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+                          className="input-dark"
                         />
                       </div>
                       <div>
-                        <Label htmlFor="email">И-мэйл</Label>
+                        <Label htmlFor="email" className="text-white">И-мэйл</Label>
                         <Input
                           id="email"
                           type="email"
                           value={profileData.email || ''}
                           onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
                           placeholder="example@email.com"
+                          className="input-dark"
                         />
                       </div>
                       <div>
-                        <Label htmlFor="phone">Утасны дугаар</Label>
+                        <Label htmlFor="phone" className="text-white">Утасны дугаар</Label>
                         <Input
                           id="phone"
                           value={profileData.phone || ''}
                           onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
                           placeholder="99123456"
+                          className="input-dark"
                         />
                       </div>
                     </div>
                     
                     <div>
-                      <Label htmlFor="bio">Товч танилцуулга</Label>
+                      <Label htmlFor="bio" className="text-white">Товч танилцуулга</Label>
                       <Textarea
                         id="bio"
                         value={profileData.bio || ''}
                         onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
                         placeholder="Өөрийгөө товчхон танилцуулна уу..."
                         rows={3}
+                        className="input-dark"
                       />
                     </div>
                   </CardContent>
@@ -651,9 +656,9 @@ export default function Profile() {
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="province">Аймаг/Хот</Label>
+                        <Label htmlFor="province" className="text-white">Аймаг/Хот</Label>
                         <Select value={selectedProvince} onValueChange={handleProvinceChange}>
-                          <SelectTrigger>
+                          <SelectTrigger className="input-dark">
                             <SelectValue placeholder="Аймаг/Хот сонгоно уу" />
                           </SelectTrigger>
                           <SelectContent>
@@ -664,13 +669,13 @@ export default function Profile() {
                         </Select>
                       </div>
                       <div>
-                        <Label htmlFor="city">Сум/Дүүрэг</Label>
+                        <Label htmlFor="city" className="text-white">Сум/Дүүрэг</Label>
                         <Select 
                           value={profileData.city} 
                           onValueChange={(city) => setProfileData(prev => ({ ...prev, city }))}
                           disabled={!selectedProvince && !profileData.province}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger className="input-dark">
                             <SelectValue placeholder="Сум/Дүүрэг сонгоно уу" />
                           </SelectTrigger>
                           <SelectContent>
@@ -778,26 +783,26 @@ export default function Profile() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center justify-between p-4 border border-gray-600 rounded-lg bg-gray-800/50">
                     <div>
-                      <h3 className="font-medium">Одоогийн төлөв</h3>
-                      <p className="text-sm text-gray-600">
+                      <h3 className="font-medium text-white">Одоогийн төлөв</h3>
+                      <p className="text-sm text-gray-300">
                         {isActive ? 'Идэвхтэй гишүүн' : 'Идэвхгүй гишүүн'}
                       </p>
                       {membershipEndDate && (
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-400">
                           Дуусах огноо: {membershipEndDate.toLocaleDateString('mn-MN')}
                         </p>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
                       {isActive ? (
-                        <Badge className="bg-green-100 text-green-800">
+                        <Badge className="bg-green-700 text-green-100">
                           <CheckCircle className="w-3 h-3 mr-1" />
                           Идэвхтэй
                         </Badge>
                       ) : (
-                        <Badge variant="destructive">
+                        <Badge variant="destructive" className="bg-red-700 text-red-100">
                           <AlertCircle className="w-3 h-3 mr-1" />
                           Идэвхгүй
                         </Badge>
@@ -806,16 +811,16 @@ export default function Profile() {
                   </div>
 
                   {!isActive && (
-                    <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                      <h3 className="font-medium text-orange-800">Гишүүнчлэл худалдаж авах</h3>
-                      <p className="text-sm text-orange-700 mt-1">
+                    <div className="bg-orange-900/20 p-4 rounded-lg border border-orange-600">
+                      <h3 className="font-medium text-orange-300">Гишүүнчлэл худалдаж авах</h3>
+                      <p className="text-sm text-orange-400 mt-1">
                         Тэмцээнд оролцохын тулд идэвхтэй гишүүнчлэлтэй байх ёстой.
                       </p>
                       <div className="flex gap-3 mt-3">
                         <Button
                           onClick={() => buyMembershipMutation.mutate('adult')}
                           disabled={buyMembershipMutation.isPending}
-                          className="bg-orange-600 hover:bg-orange-700"
+                          className="bg-orange-600 hover:bg-orange-700 text-white"
                         >
                           Насанд хүрэгчдийн гишүүнчлэл худалдаж авах
                         </Button>
@@ -823,6 +828,7 @@ export default function Profile() {
                           variant="outline"
                           onClick={() => buyMembershipMutation.mutate('child')}
                           disabled={buyMembershipMutation.isPending}
+                          className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
                         >
                           Хүүхдийн гишүүнчлэл худалдаж авах
                         </Button>
@@ -832,17 +838,17 @@ export default function Profile() {
 
                   {profile?.membershipStartDate && (
                     <div>
-                      <h3 className="font-medium mb-2">Гишүүнчлэлийн түүх</h3>
-                      <div className="border rounded-lg p-3">
+                      <h3 className="font-medium mb-2 text-white">Гишүүнчлэлийн түүх</h3>
+                      <div className="border border-gray-600 rounded-lg p-3 bg-gray-800/50">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm">Төрөл: {profile.membershipType === 'adult' ? 'Насанд хүрэгч' : 'Хүүхэд'}</span>
-                          <span className="text-sm text-gray-500">
+                          <span className="text-sm text-gray-300">Төрөл: {profile.membershipType === 'adult' ? 'Насанд хүрэгч' : 'Хүүхэд'}</span>
+                          <span className="text-sm text-gray-400">
                             {new Date(profile.membershipStartDate).toLocaleDateString('mn-MN')} - 
                             {membershipEndDate?.toLocaleDateString('mn-MN')}
                           </span>
                         </div>
                         {profile.membershipAmount && (
-                          <p className="text-sm text-gray-600 mt-1">
+                          <p className="text-sm text-gray-300 mt-1">
                             Төлсөн дүн: {profile.membershipAmount.toLocaleString()} ₮
                           </p>
                         )}
@@ -855,10 +861,10 @@ export default function Profile() {
 
             {/* Tournaments Tab */}
             <TabsContent value="tournaments" className="space-y-6">
-              <Card>
+              <Card className="card-dark">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Trophy className="w-5 h-5" />
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <Trophy className="w-5 h-5 text-green-400" />
                     Бүртгүүлсэн тэмцээнүүд
                   </CardTitle>
                 </CardHeader>
@@ -866,12 +872,12 @@ export default function Profile() {
                   {tournaments.length > 0 ? (
                     <div className="space-y-3">
                       {tournaments.map((tournament: Tournament) => (
-                        <div key={tournament.id} className="border rounded-lg p-3">
+                        <div key={tournament.id} className="border border-gray-600 rounded-lg p-3 bg-gray-800/50">
                           <div className="flex justify-between items-start">
                             <div>
-                              <h3 className="font-medium">{tournament.name}</h3>
-                              <p className="text-sm text-gray-600">{tournament.location}</p>
-                              <p className="text-sm text-gray-500">
+                              <h3 className="font-medium text-white">{tournament.name}</h3>
+                              <p className="text-sm text-gray-300">{tournament.location}</p>
+                              <p className="text-sm text-gray-400">
                                 {new Date(tournament.startDate).toLocaleDateString('mn-MN')} - 
                                 {new Date(tournament.endDate).toLocaleDateString('mn-MN')}
                               </p>
@@ -888,17 +894,17 @@ export default function Profile() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-center text-gray-500 py-8">
+                    <p className="text-center text-gray-400 py-8">
                       Бүртгүүлсэн тэмцээн байхгүй байна
                     </p>
                   )}
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="card-dark">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="w-5 h-5" />
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <Users className="w-5 h-5 text-green-400" />
                     Багийн гишүүнчлэл
                   </CardTitle>
                 </CardHeader>
@@ -906,12 +912,12 @@ export default function Profile() {
                   {teams.length > 0 ? (
                     <div className="space-y-3">
                       {teams.map((team: Team) => (
-                        <div key={team.id} className="border rounded-lg p-3">
+                        <div key={team.id} className="border border-gray-600 rounded-lg p-3 bg-gray-800/50">
                           <div className="flex justify-between items-start">
                             <div>
-                              <h3 className="font-medium">{team.name}</h3>
-                              <p className="text-sm text-gray-600">{team.tournament}</p>
-                              <p className="text-sm text-gray-500">
+                              <h3 className="font-medium text-white">{team.name}</h3>
+                              <p className="text-sm text-gray-300">{team.tournament}</p>
+                              <p className="text-sm text-gray-400">
                                 Гишүүд: {team.members.join(', ')}
                               </p>
                             </div>
@@ -920,7 +926,7 @@ export default function Profile() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-center text-gray-500 py-8">
+                    <p className="text-center text-gray-400 py-8">
                       Багийн гишүүнчлэл байхгүй байна
                     </p>
                   )}
@@ -930,10 +936,10 @@ export default function Profile() {
 
             {/* History Tab */}
             <TabsContent value="history" className="space-y-6">
-              <Card>
+              <Card className="card-dark">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <History className="w-5 h-5" />
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <History className="w-5 h-5 text-green-400" />
                     Тэмцээний түүх
                   </CardTitle>
                 </CardHeader>
@@ -951,8 +957,8 @@ export default function Profile() {
                           return acc;
                         }, {})
                       ).map(([tournamentName, tournamentMatches]) => (
-                        <div key={tournamentName} className="border rounded-lg p-4">
-                          <h3 className="font-medium mb-3">{tournamentName}</h3>
+                        <div key={tournamentName} className="border border-gray-600 rounded-lg p-4 bg-gray-800/50">
+                          <h3 className="font-medium mb-3 text-white">{tournamentName}</h3>
                           <div className="space-y-3">
                             {(tournamentMatches as any[]).map((match: any, index: number) => {
                               const opponentName = typeof match.opponent === 'string' ? match.opponent : 
@@ -978,19 +984,22 @@ export default function Profile() {
                               return (
                                 <div 
                                   key={match.id || index} 
-                                  className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow ${
+                                  className={`bg-gray-800/70 rounded-lg shadow-sm hover:shadow-md transition-shadow ${
                                     match.result === 'win' ? 'border-2 border-green-500' : 
-                                    match.result === 'loss' ? 'border-2 border-red-500' : 'border border-gray-200'
+                                    match.result === 'loss' ? 'border-2 border-red-500' : 'border border-gray-600'
                                   }`}
                                 >
                                   <div className="flex">
-                                    {/* Red accent line */}
-                                    <div className="w-1 bg-red-500 rounded-l-lg flex-shrink-0"></div>
+                                    {/* Accent line */}
+                                    <div className={`w-1 rounded-l-lg flex-shrink-0 ${
+                                      match.result === 'win' ? 'bg-green-500' : 
+                                      match.result === 'loss' ? 'bg-red-500' : 'bg-gray-500'
+                                    }`}></div>
                                     
                                     {/* Content */}
                                     <div className="flex-1 p-4">
                                       {/* Date and match info */}
-                                      <div className="text-sm text-gray-600 mb-3">
+                                      <div className="text-sm text-gray-300 mb-3">
                                         {match.date && (
                                           <span>
                                             {new Date(match.date).toLocaleDateString('mn-MN')} • 
@@ -1008,14 +1017,14 @@ export default function Profile() {
                                         <div className="flex-1 text-right pr-4">
                                           <button
                                             onClick={() => navigate(`/profile`)}
-                                            className="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                                            className="text-lg font-semibold text-green-400 hover:text-green-300 hover:underline cursor-pointer"
                                           >
                                             {profile?.name}
                                           </button>
                                         </div>
                                         
                                         {playerScore && opponentScore ? (
-                                          <div className="text-xl font-bold text-gray-900 px-4">
+                                          <div className="text-xl font-bold text-white px-4">
                                             {playerScore} : {opponentScore}
                                           </div>
                                         ) : (
@@ -1028,12 +1037,12 @@ export default function Profile() {
                                           {typeof match.opponent === 'object' && match.opponent?.user ? (
                                             <button
                                               onClick={() => navigate(`/player-profile/${match.opponent.userId || match.opponent.user?.id}`)}
-                                              className="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                                              className="text-lg font-semibold text-green-400 hover:text-green-300 hover:underline cursor-pointer"
                                             >
                                               {opponentName}
                                             </button>
                                           ) : (
-                                            <span className="text-lg font-semibold text-gray-900">
+                                            <span className="text-lg font-semibold text-white">
                                               {opponentName}
                                             </span>
                                           )}
@@ -1049,7 +1058,7 @@ export default function Profile() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-center text-gray-500 py-8">
+                    <p className="text-center text-gray-400 py-8">
                       Тэмцээний түүх байхгүй байна
                     </p>
                   )}
