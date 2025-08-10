@@ -9,6 +9,7 @@ import { ArrowLeft, Trophy, Medal, Users, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { KnockoutBracket } from "@/components/KnockoutBracket";
+import PageWithLoading from "@/components/PageWithLoading";
 import type { Tournament, TournamentResults } from "@shared/schema";
 
 // Types for structured tournament results
@@ -75,57 +76,54 @@ export default function TournamentResultsPage() {
   });
 
   if (tournamentLoading || resultsLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Тэмцээний үр дүн ачаалж байна...</p>
-        </div>
-      </div>
-    );
+    return <PageWithLoading />;
   }
 
   if (!tournament) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2 text-gray-900">Тэмцээн олдсонгүй</h1>
-          <p className="text-gray-600 mb-4">Хүссэн тэмцээн байхгүй байна.</p>
-          <Button 
-            onClick={() => setLocation('/tournaments')}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Тэмцээний хуудас руу буцах
-          </Button>
+      <PageWithLoading>
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-2 text-white">Тэмцээн олдсонгүй</h1>
+            <p className="text-gray-300 mb-4">Хүссэн тэмцээн байхгүй байна.</p>
+            <Button 
+              onClick={() => setLocation('/tournaments')}
+              variant="outline"
+              className="flex items-center gap-2 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Тэмцээний хуудас руу буцах
+            </Button>
+          </div>
         </div>
-      </div>
+      </PageWithLoading>
     );
   }
 
   if (!results || !results.isPublished) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2 text-gray-900">Үр дүн хараахан бэлэн болоогүй</h1>
-          <p className="text-gray-600 mb-4">
-            {tournament.status === 'completed' 
-              ? 'Тэмцээний үр дүн тун удахгүй нийтлэгдэх болно.'
-              : 'Тэмцээн дууссаны дараа үр дүн нийтлэгдэх болно.'
-            }
-          </p>
-          <Button 
-            onClick={() => setLocation(`/tournament/${tournament.id}`)}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Тэмцээний мэдээлэл руу буцах
-          </Button>
+      <PageWithLoading>
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold mb-2 text-white">Үр дүн хараахан бэлэн болоогүй</h1>
+            <p className="text-gray-300 mb-4">
+              {tournament.status === 'completed' 
+                ? 'Тэмцээний үр дүн тун удахгүй нийтлэгдэх болно.'
+                : 'Тэмцээн дууссаны дараа үр дүн нийтлэгдэх болно.'
+              }
+            </p>
+            <Button 
+              onClick={() => setLocation(`/tournament/${tournament.id}`)}
+              variant="outline"
+              className="flex items-center gap-2 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Тэмцээний мэдээлэл руу буцах
+            </Button>
+          </div>
         </div>
-      </div>
+      </PageWithLoading>
     );
   }
 
@@ -139,53 +137,50 @@ export default function TournamentResultsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                onClick={() => setLocation(`/tournament/${tournament.id}`)}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Буцах
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">{tournament.name}</h1>
-                <p className="text-gray-600 flex items-center gap-2 mt-1">
-                  <Calendar className="w-4 h-4" />
-                  {format(new Date(tournament.startDate), 'yyyy-MM-dd')} - {format(new Date(tournament.endDate), 'yyyy-MM-dd')}
-                </p>
-              </div>
-            </div>
-            <Badge variant="secondary" className="flex items-center gap-1">
+    <PageWithLoading>
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-6">
+          <Button
+            variant="outline"
+            onClick={() => setLocation(`/tournament/${tournament.id}`)}
+            className="flex items-center gap-2 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Буцах
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-white">{tournament.name}</h1>
+            <p className="text-gray-300 flex items-center gap-2 mt-1">
+              <Calendar className="w-4 h-4" />
+              {format(new Date(tournament.startDate), 'yyyy-MM-dd')} - {format(new Date(tournament.endDate), 'yyyy-MM-dd')}
+            </p>
+          </div>
+          <div className="ml-auto">
+            <Badge variant="secondary" className="flex items-center gap-1 bg-green-700 text-green-100">
               <Trophy className="w-4 h-4" />
               Тэмцээний үр дүн
             </Badge>
           </div>
         </div>
-      </div>
 
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+        <div className="space-y-6">
         <Tabs defaultValue="finals" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="finals">Эцсийн байр</TabsTrigger>
-            <TabsTrigger value="knockout">Шигшээ тоглолт</TabsTrigger>
-            <TabsTrigger value="groups">Групп тулаан</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 bg-gray-800 border-gray-600">
+            <TabsTrigger value="finals" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300">Эцсийн байр</TabsTrigger>
+            <TabsTrigger value="knockout" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300">Шигшээ тоглолт</TabsTrigger>
+            <TabsTrigger value="groups" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300">Групп тулаан</TabsTrigger>
           </TabsList>
 
           {/* Final Rankings */}
           <TabsContent value="finals">
-            <Card>
+            <Card className="card-dark">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Medal className="w-5 h-5" />
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Medal className="w-5 h-5 text-green-400" />
                   Эцсийн байр
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-gray-300">
                   Тэмцээний эцсийн үр дүн ба байрлал
                 </CardDescription>
               </CardHeader>
@@ -195,7 +190,7 @@ export default function TournamentResultsPage() {
                     {finalRankings.map((ranking) => (
                       <div 
                         key={ranking.playerId}
-                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                        className="flex items-center justify-between p-4 bg-gray-800/50 border border-gray-600 rounded-lg"
                       >
                         <div className="flex items-center space-x-4">
                           <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold ${
@@ -207,19 +202,19 @@ export default function TournamentResultsPage() {
                           </div>
                           <button
                             onClick={() => navigateToProfile(ranking.playerId)}
-                            className="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+                            className="text-lg font-semibold text-green-400 hover:text-green-300 hover:underline"
                           >
                             {ranking.playerName}
                           </button>
                         </div>
                         {ranking.prize && (
-                          <Badge variant="outline">{ranking.prize}</Badge>
+                          <Badge variant="outline" className="border-gray-600 text-gray-300">{ranking.prize}</Badge>
                         )}
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-center py-8">Эцсийн байр тодорхойлогдоогүй байна</p>
+                  <p className="text-gray-400 text-center py-8">Эцсийн байр тодорхойлогдоогүй байна</p>
                 )}
               </CardContent>
             </Card>
@@ -229,13 +224,13 @@ export default function TournamentResultsPage() {
           <TabsContent value="knockout">
             <div className="space-y-6">
               {/* Qualified Players from Groups */}
-              <Card>
+              <Card className="card-dark">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="w-5 h-5" />
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <Users className="w-5 h-5 text-green-400" />
                     Группээс шалгарсан тоглогчид
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-gray-300">
                     Группийн тулаанаас шигшээ тоглолтод шалгарсан эхний 2 тоглогч
                   </CardDescription>
                 </CardHeader>
@@ -255,9 +250,9 @@ export default function TournamentResultsPage() {
                         });
 
                       return (
-                        <Card key={groupIndex} className="border-l-4 border-l-blue-500">
+                        <Card key={groupIndex} className="card-dark border-l-4 border-l-green-500">
                           <CardHeader className="pb-3">
-                            <CardTitle className="text-lg">{group.groupName}</CardTitle>
+                            <CardTitle className="text-lg text-white">{group.groupName}</CardTitle>
                           </CardHeader>
                           <CardContent>
                             <div className="space-y-2">
@@ -265,7 +260,7 @@ export default function TournamentResultsPage() {
                                 <div 
                                   key={player.id} 
                                   className={`flex items-center justify-between p-3 rounded-lg ${
-                                    playerIndex === 0 ? 'bg-yellow-50 border border-yellow-200' : 'bg-gray-50 border border-gray-200'
+                                    playerIndex === 0 ? 'bg-yellow-900/30 border border-yellow-500' : 'bg-gray-800/50 border border-gray-600'
                                   }`}
                                 >
                                   <div className="flex items-center space-x-3">
@@ -276,18 +271,18 @@ export default function TournamentResultsPage() {
                                     </div>
                                     <button
                                       onClick={() => navigateToProfile(player.id)}
-                                      className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                                      className="font-medium text-green-400 hover:text-green-300 hover:underline"
                                     >
                                       {player.name}
                                     </button>
                                   </div>
-                                  <div className="text-sm text-gray-600">
+                                  <div className="text-sm text-gray-300">
                                     {player.wins || '0/0'}
                                   </div>
                                 </div>
                               ))}
                               {qualifiedPlayers.length === 0 && (
-                                <p className="text-gray-500 text-sm text-center py-4">
+                                <p className="text-gray-400 text-sm text-center py-4">
                                   Шалгарсан тоглогч алга
                                 </p>
                               )}
@@ -302,7 +297,7 @@ export default function TournamentResultsPage() {
 
               {/* Winners Podium */}
               {finalRankings.length > 0 && (
-                <Card className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200">
+                <Card className="card-dark border-2 border-yellow-500 bg-gradient-to-r from-yellow-900/20 to-amber-900/20">
                   <CardHeader className="text-center">
                     <CardTitle className="flex items-center justify-center gap-2 text-2xl">
                       <Trophy className="w-8 h-8 text-yellow-600" />
@@ -323,7 +318,7 @@ export default function TournamentResultsPage() {
                           <div className="text-4xl mb-2">🥈</div>
                           <button
                             onClick={() => navigateToProfile(finalRankings.find(r => r.position === 2)!.playerId)}
-                            className="font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+                            className="font-semibold text-green-400 hover:text-green-300 hover:underline"
                           >
                             {finalRankings.find(r => r.position === 2)!.playerName}
                           </button>
@@ -339,11 +334,11 @@ export default function TournamentResultsPage() {
                           <div className="text-6xl mb-2">🥇</div>
                           <button
                             onClick={() => navigateToProfile(finalRankings.find(r => r.position === 1)!.playerId)}
-                            className="font-bold text-xl text-blue-600 hover:text-blue-800 hover:underline"
+                            className="font-bold text-xl text-green-400 hover:text-green-300 hover:underline"
                           >
                             {finalRankings.find(r => r.position === 1)!.playerName}
                           </button>
-                          <div className="text-yellow-600 font-semibold mt-1">АВАРГА</div>
+                          <div className="text-yellow-500 font-semibold mt-1">АВАРГА</div>
                         </div>
                       )}
                       
@@ -356,7 +351,7 @@ export default function TournamentResultsPage() {
                           <div className="text-4xl mb-2">🥉</div>
                           <button
                             onClick={() => navigateToProfile(finalRankings.find(r => r.position === 3)!.playerId)}
-                            className="font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+                            className="font-semibold text-green-400 hover:text-green-300 hover:underline"
                           >
                             {finalRankings.find(r => r.position === 3)!.playerName}
                           </button>
@@ -379,50 +374,50 @@ export default function TournamentResultsPage() {
                     
                     if (semifinals.length > 0) {
                       return (
-                        <Card className="border-l-4 border-l-orange-500">
+                        <Card className="card-dark border-l-4 border-l-orange-500">
                           <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-orange-700">
+                            <CardTitle className="flex items-center gap-2 text-orange-400">
                               <Trophy className="w-5 h-5" />
                               Хагас финал
-                              <Badge variant="secondary">{semifinals.length} тоглолт</Badge>
+                              <Badge variant="secondary" className="bg-gray-700 text-gray-300">{semifinals.length} тоглолт</Badge>
                             </CardTitle>
-                            <CardDescription>
+                            <CardDescription className="text-gray-300">
                               Финалд шалгарах төлөөх тоглолт
                             </CardDescription>
                           </CardHeader>
                           <CardContent>
                             <div className="grid gap-4 md:grid-cols-2">
                               {semifinals.map((match, index) => (
-                                <div key={match.id} className="bg-gray-50 rounded-lg p-4 border">
-                                  <div className="text-sm text-gray-600 mb-2">Тоглолт #{index + 1}</div>
+                                <div key={match.id} className="bg-gray-800/50 border border-gray-600 rounded-lg p-4">
+                                  <div className="text-sm text-gray-300 mb-2">Тоглолт #{index + 1}</div>
                                   <div className="space-y-2">
                                     <div className={`flex items-center justify-between p-2 rounded ${
-                                      match.winner?.id === match.player1?.id ? 'bg-green-100 border border-green-300' : 'bg-white'
+                                      match.winner?.id === match.player1?.id ? 'bg-green-900/30 border border-green-500' : 'bg-gray-700/50'
                                     }`}>
                                       <button
                                         onClick={() => match.player1 && navigateToProfile(match.player1.id)}
-                                        className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                                        className="font-medium text-green-400 hover:text-green-300 hover:underline"
                                       >
                                         {match.player1?.name || 'TBD'}
                                       </button>
                                       {match.winner?.id === match.player1?.id && (
-                                        <span className="text-green-600 font-bold">Ялагч</span>
+                                        <span className="text-green-400 font-bold">Ялагч</span>
                                       )}
                                     </div>
-                                    <div className="text-center text-lg font-bold text-gray-600">
+                                    <div className="text-center text-lg font-bold text-gray-300">
                                       {match.score || 'vs'}
                                     </div>
                                     <div className={`flex items-center justify-between p-2 rounded ${
-                                      match.winner?.id === match.player2?.id ? 'bg-green-100 border border-green-300' : 'bg-white'
+                                      match.winner?.id === match.player2?.id ? 'bg-green-900/30 border border-green-500' : 'bg-gray-700/50'
                                     }`}>
                                       <button
                                         onClick={() => match.player2 && navigateToProfile(match.player2.id)}
-                                        className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                                        className="font-medium text-green-400 hover:text-green-300 hover:underline"
                                       >
                                         {match.player2?.name || 'TBD'}
                                       </button>
                                       {match.winner?.id === match.player2?.id && (
-                                        <span className="text-green-600 font-bold">Ялагч</span>
+                                        <span className="text-green-400 font-bold">Ялагч</span>
                                       )}
                                     </div>
                                   </div>
@@ -444,56 +439,56 @@ export default function TournamentResultsPage() {
                     
                     if (finals.length > 0) {
                       return (
-                        <Card className="border-l-4 border-l-yellow-500 bg-yellow-50">
+                        <Card className="card-dark border-l-4 border-l-yellow-500 bg-gradient-to-r from-yellow-900/20 to-amber-900/20">
                           <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-yellow-700">
+                            <CardTitle className="flex items-center gap-2 text-yellow-400">
                               <Trophy className="w-6 h-6" />
                               Финал
-                              <Badge variant="outline" className="bg-yellow-100">Аварга шалгаруулах</Badge>
+                              <Badge variant="outline" className="bg-yellow-900/30 border-yellow-500 text-yellow-300">Аварга шалгаруулах</Badge>
                             </CardTitle>
-                            <CardDescription>
+                            <CardDescription className="text-gray-300">
                               Тэмцээний хамгийн чухал тоглолт
                             </CardDescription>
                           </CardHeader>
                           <CardContent>
                             {finals.map((match) => (
-                              <div key={match.id} className="bg-white rounded-lg p-6 border-2 border-yellow-200">
+                              <div key={match.id} className="bg-gray-800/50 border-2 border-yellow-500 rounded-lg p-6">
                                 <div className="text-center mb-4">
-                                  <h3 className="text-xl font-bold text-gray-900">ФИНАЛЫН ТОГЛОЛТ</h3>
+                                  <h3 className="text-xl font-bold text-white">ФИНАЛЫН ТОГЛОЛТ</h3>
                                 </div>
                                 <div className="space-y-3">
                                   <div className={`flex items-center justify-between p-4 rounded-lg ${
-                                    match.winner?.id === match.player1?.id ? 'bg-yellow-100 border-2 border-yellow-400' : 'bg-gray-50'
+                                    match.winner?.id === match.player1?.id ? 'bg-yellow-900/30 border-2 border-yellow-400' : 'bg-gray-700/50'
                                   }`}>
                                     <button
                                       onClick={() => match.player1 && navigateToProfile(match.player1.id)}
-                                      className="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+                                      className="text-lg font-semibold text-green-400 hover:text-green-300 hover:underline"
                                     >
                                       {match.player1?.name || 'TBD'}
                                     </button>
                                     {match.winner?.id === match.player1?.id && (
                                       <div className="flex items-center gap-2">
                                         <span className="text-2xl">🥇</span>
-                                        <span className="text-yellow-600 font-bold">АВАРГА</span>
+                                        <span className="text-yellow-400 font-bold">АВАРГА</span>
                                       </div>
                                     )}
                                   </div>
-                                  <div className="text-center text-2xl font-bold text-gray-800">
+                                  <div className="text-center text-2xl font-bold text-gray-300">
                                     {match.score || 'vs'}
                                   </div>
                                   <div className={`flex items-center justify-between p-4 rounded-lg ${
-                                    match.winner?.id === match.player2?.id ? 'bg-yellow-100 border-2 border-yellow-400' : 'bg-gray-50'
+                                    match.winner?.id === match.player2?.id ? 'bg-yellow-900/30 border-2 border-yellow-400' : 'bg-gray-700/50'
                                   }`}>
                                     <button
                                       onClick={() => match.player2 && navigateToProfile(match.player2.id)}
-                                      className="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+                                      className="text-lg font-semibold text-green-400 hover:text-green-300 hover:underline"
                                     >
                                       {match.player2?.name || 'TBD'}
                                     </button>
                                     {match.winner?.id === match.player2?.id && (
                                       <div className="flex items-center gap-2">
                                         <span className="text-2xl">🥇</span>
-                                        <span className="text-yellow-600 font-bold">АВАРГА</span>
+                                        <span className="text-yellow-400 font-bold">АВАРГА</span>
                                       </div>
                                     )}
                                   </div>
@@ -514,53 +509,53 @@ export default function TournamentResultsPage() {
                     
                     if (thirdPlace.length > 0) {
                       return (
-                        <Card className="border-l-4 border-l-amber-600">
+                        <Card className="card-dark border-l-4 border-l-amber-600">
                           <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-amber-700">
+                            <CardTitle className="flex items-center gap-2 text-amber-400">
                               <Medal className="w-5 h-5" />
                               3-р байрын тоглолт
-                              <Badge variant="outline" className="bg-amber-100">Хүрэл медаль</Badge>
+                              <Badge variant="outline" className="bg-amber-900/30 border-amber-500 text-amber-300">Хүрэл медаль</Badge>
                             </CardTitle>
-                            <CardDescription>
+                            <CardDescription className="text-gray-300">
                               Хагас финалд хожигдсон тоглогчдын хоорондох тоглолт
                             </CardDescription>
                           </CardHeader>
                           <CardContent>
                             {thirdPlace.map((match) => (
-                              <div key={match.id} className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                              <div key={match.id} className="bg-amber-900/20 border border-amber-500 rounded-lg p-4">
                                 <div className="space-y-2">
                                   <div className={`flex items-center justify-between p-3 rounded ${
-                                    match.winner?.id === match.player1?.id ? 'bg-amber-100 border border-amber-300' : 'bg-white'
+                                    match.winner?.id === match.player1?.id ? 'bg-amber-900/30 border border-amber-400' : 'bg-gray-700/50'
                                   }`}>
                                     <button
                                       onClick={() => match.player1 && navigateToProfile(match.player1.id)}
-                                      className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                                      className="font-medium text-green-400 hover:text-green-300 hover:underline"
                                     >
                                       {match.player1?.name || 'TBD'}
                                     </button>
                                     {match.winner?.id === match.player1?.id && (
                                       <div className="flex items-center gap-2">
                                         <span className="text-xl">🥉</span>
-                                        <span className="text-amber-600 font-bold">3-р байр</span>
+                                        <span className="text-amber-400 font-bold">3-р байр</span>
                                       </div>
                                     )}
                                   </div>
-                                  <div className="text-center text-lg font-bold text-gray-600">
+                                  <div className="text-center text-lg font-bold text-gray-300">
                                     {match.score || 'vs'}
                                   </div>
                                   <div className={`flex items-center justify-between p-3 rounded ${
-                                    match.winner?.id === match.player2?.id ? 'bg-amber-100 border border-amber-300' : 'bg-white'
+                                    match.winner?.id === match.player2?.id ? 'bg-amber-900/30 border border-amber-400' : 'bg-gray-700/50'
                                   }`}>
                                     <button
                                       onClick={() => match.player2 && navigateToProfile(match.player2.id)}
-                                      className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                                      className="font-medium text-green-400 hover:text-green-300 hover:underline"
                                     >
                                       {match.player2?.name || 'TBD'}
                                     </button>
                                     {match.winner?.id === match.player2?.id && (
                                       <div className="flex items-center gap-2">
                                         <span className="text-xl">🥉</span>
-                                        <span className="text-amber-600 font-bold">3-р байр</span>
+                                        <span className="text-amber-400 font-bold">3-р байр</span>
                                       </div>
                                     )}
                                   </div>
@@ -574,10 +569,10 @@ export default function TournamentResultsPage() {
                   })()}
                 </div>
               ) : (
-                <Card>
+                <Card className="card-dark">
                   <CardContent className="py-8">
-                    <div className="text-center text-gray-500">
-                      <Trophy className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                    <div className="text-center text-gray-400">
+                      <Trophy className="w-12 h-12 mx-auto mb-4 text-gray-400" />
                       <p>Шигшээ тоглолтын мэдээлэл хараахан бэлэн болоогүй байна</p>
                     </div>
                   </CardContent>
@@ -591,25 +586,25 @@ export default function TournamentResultsPage() {
             <div className="space-y-6">
               {groupStageResults.length > 0 ? (
                 groupStageResults.map((group, index) => (
-                  <Card key={index}>
+                  <Card key={index} className="card-dark">
                     <CardHeader>
-                      <CardTitle>{group.groupName}</CardTitle>
+                      <CardTitle className="text-white">{group.groupName}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       {/* Results Matrix Table */}
                       <div>
-                        <h4 className="font-semibold mb-3">Үр дүн хүснэгт</h4>
+                        <h4 className="font-semibold mb-3 text-white">Үр дүн хүснэгт</h4>
                         <div className="overflow-x-auto">
                           <table className="w-full border-collapse">
                             <thead>
-                              <tr>
-                                <th className="border p-2 text-left">№</th>
-                                <th className="border p-2 text-left">Нэр</th>
+                              <tr className="bg-gray-800">
+                                <th className="border border-gray-600 p-2 text-left text-gray-300">№</th>
+                                <th className="border border-gray-600 p-2 text-left text-gray-300">Нэр</th>
                                 {(group.players || []).map((_, colIndex) => (
-                                  <th key={colIndex} className="border p-2 text-center">{colIndex + 1}</th>
+                                  <th key={colIndex} className="border border-gray-600 p-2 text-center text-gray-300">{colIndex + 1}</th>
                                 ))}
-                                <th className="border p-2 text-center">Өгсөн</th>
-                                <th className="border p-2 text-center">Байр</th>
+                                <th className="border border-gray-600 p-2 text-center text-gray-300">Өгсөн</th>
+                                <th className="border border-gray-600 p-2 text-center text-gray-300">Байр</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -617,26 +612,26 @@ export default function TournamentResultsPage() {
                                 // Use the admin-entered wins value directly from the data structure
                                 const adminEnteredWins = player.wins || '0/0';
                                 return (
-                                  <tr key={player.id}>
-                                    <td className="border p-2">{rowIndex + 1}</td>
-                                    <td className="border p-2">
+                                  <tr key={player.id} className="hover:bg-gray-700/50">
+                                    <td className="border border-gray-600 p-2 text-gray-300">{rowIndex + 1}</td>
+                                    <td className="border border-gray-600 p-2">
                                       <button
                                         onClick={() => {
                                           console.log('Navigate to player profile:', player.id);
                                           navigateToProfile(player.id);
                                         }}
-                                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                                        className="text-green-400 hover:text-green-300 hover:underline"
                                       >
                                         {player.name}
                                       </button>
                                     </td>
                                     {(group.resultMatrix?.[rowIndex] || []).map((result, colIndex) => (
-                                      <td key={colIndex} className="border p-2 text-center text-sm">
+                                      <td key={colIndex} className="border border-gray-600 p-2 text-center text-sm text-gray-300">
                                         {rowIndex === colIndex ? '*****' : (result || '')}
                                       </td>
                                     ))}
-                                    <td className="border p-2 text-center">{adminEnteredWins}</td>
-                                    <td className="border p-2 text-center font-bold">
+                                    <td className="border border-gray-600 p-2 text-center text-gray-300">{adminEnteredWins}</td>
+                                    <td className="border border-gray-600 p-2 text-center font-bold text-white">
                                       {player.position || group.standings.find(s => s.playerId === player.id)?.position || ''}
                                     </td>
                                   </tr>
@@ -650,16 +645,17 @@ export default function TournamentResultsPage() {
                   </Card>
                 ))
               ) : (
-                <Card>
+                <Card className="card-dark">
                   <CardContent className="py-8">
-                    <p className="text-gray-500 text-center">Групп тулааны мэдээлэл алга байна</p>
+                    <p className="text-gray-400 text-center">Групп тулааны мэдээлэл алга байна</p>
                   </CardContent>
                 </Card>
               )}
             </div>
           </TabsContent>
         </Tabs>
+        </div>
       </div>
-    </div>
+    </PageWithLoading>
   );
 }
