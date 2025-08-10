@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trophy, Users, Calendar, Crown, Target, TrendingUp, Eye } from "lucide-react";
 import { Link } from "wouter";
+import PageWithLoading from "@/components/PageWithLoading";
 
 export default function Leagues() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -48,7 +49,8 @@ export default function Leagues() {
   const selectedLeagueData = leagues.find((league: any) => league.id === selectedLeague);
 
   return (
-    <div className="min-h-screen">
+    <PageWithLoading>
+      <div className="min-h-screen">
       <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -318,7 +320,8 @@ export default function Leagues() {
             </div>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </PageWithLoading>
   );
 }

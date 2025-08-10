@@ -17,6 +17,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertClubSchema } from "@shared/schema";
 import { z } from "zod";
+import PageWithLoading from "@/components/PageWithLoading";
 
 type CreateClubForm = z.infer<typeof insertClubSchema>;
 
@@ -107,7 +108,8 @@ export default function Clubs() {
   // Remove authentication check - show content for all users
 
   return (
-    <div className="min-h-screen">
+    <PageWithLoading>
+      <div className="min-h-screen">
       <Navigation />
       
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
@@ -457,7 +459,8 @@ export default function Clubs() {
             </div>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </PageWithLoading>
   );
 }
