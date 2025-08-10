@@ -26,6 +26,58 @@ const AboutPage = () => {
   return (
     <PageWithLoading>
       <div className="main-bg">
+        {/* Sticky Navigation Bar for About Page */}
+        <div className="sticky top-16 z-40 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-wrap justify-center md:justify-start items-center py-3 space-x-2 md:space-x-6">
+              <a 
+                href="#history" 
+                className="text-xs md:text-sm text-gray-300 hover:text-green-400 px-2 py-1 rounded transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleTabChange('history');
+                  document.getElementById('history')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                Танилцуулга
+              </a>
+              <a 
+                href="#goals" 
+                className="text-xs md:text-sm text-gray-300 hover:text-green-400 px-2 py-1 rounded transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleTabChange('goals');
+                  document.getElementById('goals')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                Бидний зорилго
+              </a>
+              <a 
+                href="#management" 
+                className="text-xs md:text-sm text-gray-300 hover:text-green-400 px-2 py-1 rounded transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleTabChange('management');
+                  document.getElementById('management')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                Түүхэн замнал
+              </a>
+              <a 
+                href="#leadership" 
+                className="text-xs md:text-sm text-gray-300 hover:text-green-400 px-2 py-1 rounded transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleTabChange('leadership');
+                  document.getElementById('leadership')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                Захирлуудын зөвлөл
+              </a>
+            </div>
+          </div>
+        </div>
+        
         <div className="container mx-auto px-4 py-8">
           {/* Page Header */}
           <div className="text-center mb-12">
@@ -43,31 +95,35 @@ const AboutPage = () => {
             <TabsList className="grid w-full grid-cols-4 mb-8 bg-gray-800 border-gray-700">
               <TabsTrigger 
                 value="history" 
-                className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300"
+                className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300 text-xs md:text-sm px-1 md:px-3"
               >
-                <History className="w-4 h-4 mr-2" />
-                Танилцуулга
+                <History className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Танилцуулга</span>
+                <span className="sm:hidden">Танил</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="goals" 
-                className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300"
+                className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300 text-xs md:text-sm px-1 md:px-3"
               >
-                <Target className="w-4 h-4 mr-2" />
-                Бидний зорилго
+                <Target className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Бидний зорилго</span>
+                <span className="sm:hidden">Зорилго</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="management" 
-                className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300"
+                className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300 text-xs md:text-sm px-1 md:px-3"
               >
-                <Users className="w-4 h-4 mr-2" />
-                Түүхэн замнал
+                <Users className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Түүхэн замнал</span>
+                <span className="sm:hidden">Түүх</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="leadership" 
-                className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300"
+                className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300 text-xs md:text-sm px-1 md:px-3"
               >
-                <Award className="w-4 h-4 mr-2" />
-                Захирлуудын зөвлөл
+                <Award className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Захирлуудын зөвлөл</span>
+                <span className="sm:hidden">Зөвлөл</span>
               </TabsTrigger>
             </TabsList>
 

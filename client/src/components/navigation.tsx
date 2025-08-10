@@ -35,11 +35,6 @@ export default function Navigation() {
   }, [showMobileMenu]);
 
   const navigationLinks = [
-    { href: "/", label: "Нүүр хуудас", icon: Home },
-    { href: "/tournaments", label: "Тэмцээн", icon: Trophy },
-    { href: "/clubs", label: "Клубууд", icon: Building },
-    { href: "/leagues", label: "Лиг", icon: Users },
-    { href: "/news", label: "Мэдээ", icon: Newspaper },
     { 
       href: "/about", 
       label: "Бидний тухай", 
@@ -51,6 +46,11 @@ export default function Navigation() {
         { href: "/about#leadership", label: "Захирлуудын зөвлөл" }
       ]
     },
+    { href: "/", label: "Нүүр хуудас", icon: Home },
+    { href: "/tournaments", label: "Тэмцээн", icon: Trophy },
+    { href: "/clubs", label: "Клубууд", icon: Building },
+    { href: "/leagues", label: "Лиг", icon: Users },
+    { href: "/news", label: "Мэдээ", icon: Newspaper },
   ];
 
   // Drawer animation classes
@@ -60,7 +60,7 @@ export default function Navigation() {
 
   return (
     <>
-      <nav className="nav-dark">
+      <nav className="nav-dark sticky top-0 z-50">
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
