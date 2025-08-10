@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { History, Target, Users, Award } from "lucide-react";
+import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 
 const AboutPage = () => {
@@ -25,6 +26,7 @@ const AboutPage = () => {
 
   return (
     <PageWithLoading>
+      <Navigation />
       <div className="main-bg">
 
         <div className="container mx-auto px-4 py-8">
