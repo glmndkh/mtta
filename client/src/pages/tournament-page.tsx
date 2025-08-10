@@ -14,6 +14,8 @@ import { ExternalLink, Download, ArrowLeft, Users, Calendar, MapPin, Trophy, Fil
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
+import Navigation from "@/components/navigation";
+import PageWithLoading from "@/components/PageWithLoading";
 
 interface Tournament {
   id: string;
@@ -244,12 +246,12 @@ function TournamentRegistrationButton({
       <div className="flex flex-col gap-2">
         <Button
           disabled
-          className="bg-red-600 text-white cursor-not-allowed w-full sm:w-auto"
+          className="bg-gray-600 text-white cursor-not-allowed w-full sm:w-auto"
           size="lg"
         >
           Бүртгүүлэх боломжгүй
         </Button>
-        <div className="flex items-center gap-2 text-red-600 text-sm">
+        <div className="flex items-center gap-2 text-red-400 text-sm">
           <AlertTriangle className="w-4 h-4" />
           <span>Та энэ тэмцээнд оролцох шаардлага хангахгүй байна</span>
         </div>
@@ -259,7 +261,7 @@ function TournamentRegistrationButton({
 
   return (
     <Button
-      className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
+      className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
       onClick={handleRegister}
       disabled={registerMutation.isPending}
       size="lg"
@@ -314,46 +316,46 @@ function TournamentParticipants({ tournamentId }: { tournamentId: string }) {
   };
 
   return (
-    <Card>
+    <Card className="card-dark">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="w-5 h-5" />
+        <CardTitle className="flex items-center gap-2 text-white">
+          <Users className="w-5 h-5 text-green-400" />
           Бүртгүүлсэн тоглогчид ({participants.length})
         </CardTitle>
         
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex items-center gap-2 flex-1">
-            <Search className="w-4 h-4 text-gray-500" />
+            <Search className="w-4 h-4 text-gray-400" />
             <Input
               placeholder="Нэр эсвэл клубээр хайх..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1"
+              className="flex-1 bg-gray-800 border-gray-700 text-white placeholder:text-gray-400"
             />
           </div>
           
           <div className="flex gap-2">
             <Select value={clubFilter} onValueChange={setClubFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px] bg-gray-800 border-gray-700 text-white">
                 <SelectValue placeholder="Клуб сонгох" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Бүх клуб</SelectItem>
+              <SelectContent className="bg-gray-800 border-gray-700">
+                <SelectItem value="all" className="text-white hover:bg-gray-700">Бүх клуб</SelectItem>
                 {uniqueClubs.map(club => (
-                  <SelectItem key={club} value={club}>{club}</SelectItem>
+                  <SelectItem key={club} value={club} className="text-white hover:bg-gray-700">{club}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
             <Select value={participationTypeFilter} onValueChange={setParticipationTypeFilter}>
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="w-[160px] bg-gray-800 border-gray-700 text-white">
                 <SelectValue placeholder="Төрөл сонгох" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Бүх төрөл</SelectItem>
+              <SelectContent className="bg-gray-800 border-gray-700">
+                <SelectItem value="all" className="text-white hover:bg-gray-700">Бүх төрөл</SelectItem>
                 {uniqueParticipationTypes.map(type => (
-                  <SelectItem key={type} value={type}>
+                  <SelectItem key={type} value={type} className="text-white hover:bg-gray-700">
                     {participationTypeLabels[type] || type}
                   </SelectItem>
                 ))}
@@ -365,26 +367,26 @@ function TournamentParticipants({ tournamentId }: { tournamentId: string }) {
       
       <CardContent>
         {filteredParticipants.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-400">
             {participants.length === 0 ? "Бүртгүүлсэн тоглогч байхгүй" : "Хайлтын үр дүн олдсонгүй"}
           </div>
         ) : (
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Овог нэр</TableHead>
-                <TableHead>Клуб</TableHead>
-                <TableHead>Оролцох төрөл</TableHead>
-                <TableHead>Зэрэг</TableHead>
-                <TableHead>Бүртгүүлсэн огноо</TableHead>
+              <TableRow className="hover:bg-gray-800 border-gray-700">
+                <TableHead className="text-gray-300">Овог нэр</TableHead>
+                <TableHead className="text-gray-300">Клуб</TableHead>
+                <TableHead className="text-gray-300">Оролцох төрөл</TableHead>
+                <TableHead className="text-gray-300">Зэрэг</TableHead>
+                <TableHead className="text-gray-300">Бүртгүүлсэн огноо</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredParticipants.map((participant) => (
-                <TableRow key={participant.id}>
+                <TableRow key={participant.id} className="hover:bg-gray-800 border-gray-700">
                   <TableCell>
                     <button 
-                      className="flex items-center gap-2 text-left hover:text-blue-600 transition-colors"
+                      className="flex items-center gap-2 text-left hover:text-green-400 transition-colors text-white"
                       onClick={() => {
                         console.log('Navigate to player profile:', participant.id);
                         setLocation(`/player/${participant.id}`);
@@ -394,14 +396,14 @@ function TournamentParticipants({ tournamentId }: { tournamentId: string }) {
                       {participant.firstName} {participant.lastName}
                     </button>
                   </TableCell>
-                  <TableCell>{participant.clubAffiliation || "Тодорхойгүй"}</TableCell>
+                  <TableCell className="text-gray-300">{participant.clubAffiliation || "Тодорхойгүй"}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">
+                    <Badge variant="outline" className="border-green-400 text-green-400">
                       {participationTypeLabels[participant.participationType] || participant.participationType}
                     </Badge>
                   </TableCell>
-                  <TableCell>{participant.rank || "Тодорхойгүй"}</TableCell>
-                  <TableCell>{format(new Date(participant.registeredAt), 'yyyy-MM-dd')}</TableCell>
+                  <TableCell className="text-gray-300">{participant.rank || "Тодорхойгүй"}</TableCell>
+                  <TableCell className="text-gray-300">{format(new Date(participant.registeredAt), 'yyyy-MM-dd')}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -490,9 +492,11 @@ export default function TournamentPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Section with Background Image */}
-      <div className="relative h-96 overflow-hidden">
+    <PageWithLoading>
+      <Navigation />
+      <div className="min-h-screen main-bg">
+        {/* Hero Section with Background Image */}
+        <div className="relative h-96 overflow-hidden">
         {/* Background Image */}
         {tournament.backgroundImageUrl ? (
           <div 
@@ -555,14 +559,14 @@ export default function TournamentPage() {
           <div className="lg:col-span-2 space-y-6">
             
             {/* Tournament Information Card */}
-            <Card>
+            <Card className="card-dark">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="w-5 h-5" />
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Trophy className="w-5 h-5 text-green-400" />
                   Тэмцээний мэдээлэл
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-gray-300">
                 <div>
                   <h3 className="font-semibold mb-2">Тайлбар</h3>
                   {tournament.richDescription ? (
@@ -571,42 +575,42 @@ export default function TournamentPage() {
                       dangerouslySetInnerHTML={{ __html: tournament.richDescription }}
                     />
                   ) : (
-                    <p className="text-gray-600">{tournament.description}</p>
+                    <p className="text-gray-300">{tournament.description}</p>
                   )}
                 </div>
 
-                <Separator />
+                <Separator className="bg-gray-700" />
 
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <h4 className="font-semibold mb-1">Эхлэх огноо</h4>
-                    <p className="text-gray-600">{formatDateTime(tournament.startDate)}</p>
+                    <h4 className="font-semibold mb-1 text-white">Эхлэх огноо</h4>
+                    <p className="text-gray-300">{formatDateTime(tournament.startDate)}</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold mb-1">Дуусах огноо</h4>
-                    <p className="text-gray-600">{formatDateTime(tournament.endDate)}</p>
+                    <h4 className="font-semibold mb-1 text-white">Дуусах огноо</h4>
+                    <p className="text-gray-300">{formatDateTime(tournament.endDate)}</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold mb-1">Бүртгэлийн эцсийн хугацаа</h4>
-                    <p className="text-gray-600">
+                    <h4 className="font-semibold mb-1 text-white">Бүртгэлийн эцсийн хугацаа</h4>
+                    <p className="text-gray-300">
                       {tournament.registrationDeadline ? formatDateTime(tournament.registrationDeadline) : "Тодорхойгүй"}
                     </p>
                   </div>
                   <div>
-                    <h4 className="font-semibold mb-1">Оролцогчдын тоо</h4>
-                    <p className="text-gray-600">
+                    <h4 className="font-semibold mb-1 text-white">Оролцогчдын тоо</h4>
+                    <p className="text-gray-300">
                       {tournament.maxParticipants ? `Дээд тал ${tournament.maxParticipants}` : "Хязгааргүй"}
                     </p>
                   </div>
                   <div>
-                    <h4 className="font-semibold mb-1">Оролцооны төлбөр</h4>
-                    <p className="text-gray-600">{tournament.entryFee} ₮</p>
+                    <h4 className="font-semibold mb-1 text-white">Оролцооны төлбөр</h4>
+                    <p className="text-gray-300">{tournament.entryFee} ₮</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold mb-1">Оролцох төрлүүд</h4>
+                    <h4 className="font-semibold mb-1 text-white">Оролцох төрлүүд</h4>
                     <div className="flex flex-wrap gap-1">
                       {tournament.participationTypes.map(type => (
-                        <Badge key={type} variant="outline">
+                        <Badge key={type} variant="outline" className="border-green-400 text-green-400">
                           {participationTypeLabels[type] || type}
                         </Badge>
                       ))}
@@ -616,20 +620,20 @@ export default function TournamentPage() {
 
                 {(tournament.minRating || tournament.maxRating) && (
                   <>
-                    <Separator />
+                    <Separator className="bg-gray-700" />
                     <div>
-                      <h4 className="font-semibold mb-2">Зэрэглэлийн шаардлага</h4>
+                      <h4 className="font-semibold mb-2 text-white">Зэрэглэлийн шаардлага</h4>
                       <div className="flex gap-4">
                         {tournament.minRating && (
                           <div>
-                            <span className="text-sm text-gray-600">Доод зэрэг: </span>
-                            <Badge>{tournament.minRating}</Badge>
+                            <span className="text-sm text-gray-300">Доод зэрэг: </span>
+                            <Badge className="bg-green-600 text-white">{tournament.minRating}</Badge>
                           </div>
                         )}
                         {tournament.maxRating && (
                           <div>
-                            <span className="text-sm text-gray-600">Дээд зэрэг: </span>
-                            <Badge>{tournament.maxRating}</Badge>
+                            <span className="text-sm text-gray-300">Дээд зэрэг: </span>
+                            <Badge className="bg-green-600 text-white">{tournament.maxRating}</Badge>
                           </div>
                         )}
                       </div>
@@ -639,52 +643,52 @@ export default function TournamentPage() {
 
                 {tournament.rules && (
                   <>
-                    <Separator />
+                    <Separator className="bg-gray-700" />
                     <div>
-                      <h4 className="font-semibold mb-2">Журам</h4>
-                      <p className="text-gray-600 whitespace-pre-wrap">{tournament.rules}</p>
+                      <h4 className="font-semibold mb-2 text-white">Журам</h4>
+                      <p className="text-gray-300 whitespace-pre-wrap">{tournament.rules}</p>
                     </div>
                   </>
                 )}
 
                 {tournament.prizes && (
                   <>
-                    <Separator />
+                    <Separator className="bg-gray-700" />
                     <div>
-                      <h4 className="font-semibold mb-2">Шагнал</h4>
-                      <p className="text-gray-600 whitespace-pre-wrap">{tournament.prizes}</p>
+                      <h4 className="font-semibold mb-2 text-white">Шагнал</h4>
+                      <p className="text-gray-300 whitespace-pre-wrap">{tournament.prizes}</p>
                     </div>
                   </>
                 )}
 
                 {tournament.requirements && (
                   <>
-                    <Separator />
+                    <Separator className="bg-gray-700" />
                     <div>
-                      <h4 className="font-semibold mb-2">Шаардлага</h4>
-                      <p className="text-gray-600 whitespace-pre-wrap">{tournament.requirements}</p>
+                      <h4 className="font-semibold mb-2 text-white">Шаардлага</h4>
+                      <p className="text-gray-300 whitespace-pre-wrap">{tournament.requirements}</p>
                     </div>
                   </>
                 )}
 
                 {tournament.contactInfo && (
                   <>
-                    <Separator />
+                    <Separator className="bg-gray-700" />
                     <div>
-                      <h4 className="font-semibold mb-2">Холбоо барих</h4>
-                      <p className="text-gray-600 whitespace-pre-wrap">{tournament.contactInfo}</p>
+                      <h4 className="font-semibold mb-2 text-white">Холбоо барих</h4>
+                      <p className="text-gray-300 whitespace-pre-wrap">{tournament.contactInfo}</p>
                     </div>
                   </>
                 )}
 
                 {tournament.regulationDocumentUrl && (
                   <>
-                    <Separator />
+                    <Separator className="bg-gray-700" />
                     <div>
-                      <h4 className="font-semibold mb-2">Журмын баримт</h4>
+                      <h4 className="font-semibold mb-2 text-white">Журмын баримт</h4>
                       <Button
                         variant="outline"
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white border-green-600"
                         onClick={() => window.open(tournament.regulationDocumentUrl, '_blank')}
                       >
                         <FileText className="w-4 h-4" />
@@ -703,9 +707,9 @@ export default function TournamentPage() {
 
           {/* Right Sidebar - Registration */}
           <div className="space-y-6">
-            <Card>
+            <Card className="card-dark">
               <CardHeader>
-                <CardTitle>Бүртгүүлэх</CardTitle>
+                <CardTitle className="text-white">Бүртгүүлэх</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <TournamentRegistrationButton 
@@ -714,7 +718,7 @@ export default function TournamentPage() {
                   canRegister={canRegister}
                 />
                 
-                <div className="text-sm text-gray-600 space-y-2">
+                <div className="text-sm text-gray-400 space-y-2">
                   <p>• Бүртгэлийн дараа буцаах боломжгүй</p>
                   <p>• Тэмцээнд оролцохоос өмнө төлбөр төлөх шаардлагатай</p>
                   <p>• Дэлгэрэнгүй мэдээлэл авахыг хүсвэл зохион байгуулагчтай холбогдоно уу</p>
@@ -723,26 +727,26 @@ export default function TournamentPage() {
             </Card>
 
             {/* Tournament Status */}
-            <Card>
+            <Card className="card-dark">
               <CardHeader>
-                <CardTitle>Статус</CardTitle>
+                <CardTitle className="text-white">Статус</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Статус:</span>
+                    <span className="text-gray-300">Статус:</span>
                     <Badge className={
-                      tournament.status === 'registration' ? 'bg-green-100 text-green-800' :
-                      tournament.status === 'ongoing' ? 'bg-blue-100 text-blue-800' :
-                      'bg-gray-100 text-gray-800'
+                      tournament.status === 'registration' ? 'bg-green-600 text-white' :
+                      tournament.status === 'ongoing' ? 'bg-blue-600 text-white' :
+                      'bg-gray-600 text-white'
                     }>
                       {tournament.status === 'registration' ? 'Бүртгэл' : 
                        tournament.status === 'ongoing' ? 'Болж байна' : 'Дууссан'}
                     </Badge>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Нийтлэгдсэн:</span>
-                    <Badge variant={tournament.isPublished ? 'default' : 'secondary'}>
+                    <span className="text-gray-300">Нийтлэгдсэн:</span>
+                    <Badge variant={tournament.isPublished ? 'default' : 'secondary'} className={tournament.isPublished ? 'bg-green-600 text-white' : 'bg-gray-600 text-white'}>
                       {tournament.isPublished ? 'Тийм' : 'Үгүй'}
                     </Badge>
                   </div>
@@ -753,7 +757,7 @@ export default function TournamentPage() {
                   <div className="mt-4 pt-4 border-t">
                     <Button 
                       onClick={() => setLocation(`/tournament/${tournament.id}/results`)}
-                      className="w-full flex items-center gap-2"
+                      className="w-full flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white border-none"
                       variant="outline"
                     >
                       <Trophy className="w-4 h-4" />
@@ -767,7 +771,7 @@ export default function TournamentPage() {
                   <div className={tournament.status === 'completed' ? 'mt-2' : 'mt-4 pt-4 border-t'}>
                     <Button 
                       onClick={() => setLocation(`/admin/tournament/${tournament.id}/results`)}
-                      className="w-full flex items-center gap-2"
+                      className="w-full flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
                       variant="secondary"
                     >
                       <FileText className="w-4 h-4" />
@@ -780,6 +784,7 @@ export default function TournamentPage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </PageWithLoading>
   );
 }
