@@ -17,8 +17,8 @@ const PageWithLoading: React.FC<PageWithLoadingProps> = ({
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
         <div className="text-center">
-          <LoadingAnimation size={300} />
-          <p className="text-white text-xl mt-6 opacity-75">
+          <LoadingAnimation size={120} />
+          <p className="text-white text-xl mt-8 opacity-75">
             Уншиж байна...
           </p>
         </div>
