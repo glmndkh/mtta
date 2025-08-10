@@ -26,67 +26,7 @@ const AboutPage = () => {
   return (
     <PageWithLoading>
       <div className="main-bg">
-        {/* Sticky Navigation Bar for About Page Sections */}
-        <div className="sticky top-16 z-40 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700">
-          <div className="container mx-auto px-4">
-            <div className="flex flex-wrap justify-center md:justify-start items-center py-3 space-x-2 md:space-x-6">
-              <span className="text-xs text-gray-500 mr-2 hidden md:inline">Хэсгүүд:</span>
-              <a 
-                href="#history" 
-                className={`text-xs md:text-sm px-2 py-1 rounded transition-colors ${
-                  activeTab === 'history' ? 'bg-green-600 text-white' : 'text-gray-300 hover:text-green-400'
-                }`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleTabChange('history');
-                  document.getElementById('history')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-              >
-                Танилцуулга
-              </a>
-              <a 
-                href="#goals" 
-                className={`text-xs md:text-sm px-2 py-1 rounded transition-colors ${
-                  activeTab === 'goals' ? 'bg-green-600 text-white' : 'text-gray-300 hover:text-green-400'
-                }`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleTabChange('goals');
-                  document.getElementById('goals')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-              >
-                Бидний зорилго
-              </a>
-              <a 
-                href="#management" 
-                className={`text-xs md:text-sm px-2 py-1 rounded transition-colors ${
-                  activeTab === 'management' ? 'bg-green-600 text-white' : 'text-gray-300 hover:text-green-400'
-                }`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleTabChange('management');
-                  document.getElementById('management')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-              >
-                Түүхэн замнал
-              </a>
-              <a 
-                href="#leadership" 
-                className={`text-xs md:text-sm px-2 py-1 rounded transition-colors ${
-                  activeTab === 'leadership' ? 'bg-green-600 text-white' : 'text-gray-300 hover:text-green-400'
-                }`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleTabChange('leadership');
-                  document.getElementById('leadership')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-              >
-                Захирлуудын зөвлөл
-              </a>
-            </div>
-          </div>
-        </div>
-        
+
         <div className="container mx-auto px-4 py-8">
           {/* Page Header */}
           <div className="text-center mb-12">
@@ -101,7 +41,7 @@ const AboutPage = () => {
 
           {/* Navigation Tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-8 bg-gray-800 border-gray-700">
+            <TabsList className="grid w-full grid-cols-4 mb-8 bg-gray-800 border-gray-700 sticky top-16 z-30">
               <TabsTrigger 
                 value="history" 
                 className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300 text-xs md:text-sm px-1 md:px-3"
