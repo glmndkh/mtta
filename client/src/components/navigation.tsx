@@ -42,7 +42,8 @@ export default function Navigation() {
   const drawerState = showMobileMenu ? "translate-x-0" : "translate-x-full";
 
   return (
-    <nav className="nav-dark">
+    <>
+      <nav className="nav-dark">
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -146,9 +147,10 @@ export default function Navigation() {
             </Button>
           </div>
         </div>
-      </div>
+        </div>
+      </nav>
 
-      {/* Mobile menu overlay */}
+      {/* Mobile menu overlay - moved outside nav to cover entire viewport */}
       {showMobileMenu && (
         <div
           className="fixed inset-0 bg-black/75 z-50 md:hidden"
@@ -268,6 +270,6 @@ export default function Navigation() {
           </div>
         </div>
       )}
-    </nav>
+    </>
   );
 }
