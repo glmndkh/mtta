@@ -1,0 +1,95 @@
+1) Одоогийн кодоо ЗАСАХ (минимал өөрчлөлт) — Prompt
+Goal: Mobile drawer зөв нээгдэж/хаагдаж, overlay дээр дархад хаагдаж, body scroll түгжигддэг байх. Active state /tournaments/123 дээр ч зөв идэвхжих.
+
+Do:
+
+src/components/Navigation.tsx файлыг нээгээд дараах өөрчлөлтүүдийг хий:
+
+useEffect хоёр ширхэг нэм:
+
+Esc дарахад хаах.
+
+showMobileMenu===true үед document.body.style.overflow='hidden', хаахад буцааж auto.
+
+Overlay (fixed inset-0 …) div дээр onClick={() => setShowMobileMenu(false)} нэм.
+
+Drawer (right panel) доторх хамгийн гадна div дээр onClick={(e)=>e.stopPropagation()} тавь.
+
+Drawer-д className="... z-[60] translate-x-0 transition-transform duration-200"; эхлэх байдалд translate-x-full-тай байхаар нөхцөл оруул.
+
+Active шалгалтыг const isActive = (href)=> href==='/' ? location==='/' : location.startsWith(href) болгон функцжуул; desktop ба mobile цэс дээр хоёуланд нь хэрэглэ.
+
+onClick-оор линк дарсны дараа үргэлж setShowMobileMenu(false) дуудагдаж байгааг баталгаажуул.
+
+QA (acceptance):
+
+iPhone 12 viewport (390×844) дээр Menu дарж drawer баруугаас зөөлөн орж ирнэ.
+
+Хар дэлгэц (overlay)-ийн хоосон хэсэгт дархад хаагдана.
+
+ESC дархад хаагдана.
+
+Нээгдэхэд body доош гулгахгүй.
+
+/tournaments/123 рүү ороход “Тэмцээн” item идэвхтэй харагдана.
+
+Code changes (snippet-ийг яг ингэж оруул):
+
+tsx
+Copy
+Edit
+// Navigation.tsx дээр нэм
+import { useEffect, useRef } from "react";
+
+const isActive = (current: string, href: string) =>
+  href === "/" ? current === "/" : current.startsWith(href);
+
+export default function Navigation() {
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [location] = useLocation();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showMobileMenu) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setShowMobileMenu(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showMobileMenu]);
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    if (showMobileMenu) document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [showMobileMenu]);
+
+  // Drawer нээгдэх/хаагдах үед ангийн шилжилт
+  const drawerBase =
+    "fixed top-0 right-0 h-full w-[300px] bg-gray-900 shadow-xl overflow-y-auto z-[60] transition-transform duration-200";
+  const drawerState = showMobileMenu ? "translate-x-0" : "translate-x-full";
+
+  // ... JSX дотор:
+  {/* Mobile menu button */}
+  <Button ref={triggerRef} /* үлдсэн пропсууд */ onClick={() => setShowMobileMenu((v)=>!v)} />
+
+  {/* Overlay + Drawer */}
+  {showMobileMenu && (
+    <div
+      className="fixed inset-0 bg-black/75 z-50 md:hidden"
+      onClick={() => setShowMobileMenu(false)}
+    >
+      <div
+        ref={drawerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Навигацийн цэс"
+        className={`${drawerBase} ${drawerState}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* items… доорх линк бүрийн onClick-т setShowMobileMenu(false) байгаа эсэхийг шалга */}
+      </div>
+    </div>
+  )}
+
+  {/* Desktop болон Mobile item-ууд дээр */}
+  const active = isActive(location, link.href);

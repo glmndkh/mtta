@@ -1,38 +1,31 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Menu, X, Home, Trophy, Building, Users, Newspaper, User, LogOut } from "lucide-react";
 import mttaLogo from "@assets/logoweb_1754749015700.png";
 
+const isActive = (current: string, href: string) =>
+  href === "/" ? current === "/" : current.startsWith(href);
+
 export default function Navigation() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [location] = useLocation();
   const { user, isAuthenticated } = useAuth();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
 
-  // Active state improvement
-  const isActive = (href: string) =>
-    href === "/" ? location === "/" : location.startsWith(href);
-
-  // Body scroll lock
-  useEffect(() => {
-    if (showMobileMenu) {
-      const prev = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => { 
-        document.body.style.overflow = prev; 
-      };
-    }
-  }, [showMobileMenu]);
-
-  // ESC key to close
   useEffect(() => {
     if (!showMobileMenu) return;
-    const onKey = (e: KeyboardEvent) => { 
-      if (e.key === "Escape") setShowMobileMenu(false); 
-    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setShowMobileMenu(false);
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+  }, [showMobileMenu]);
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    if (showMobileMenu) document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
   }, [showMobileMenu]);
 
   const navigationLinks = [
@@ -42,6 +35,11 @@ export default function Navigation() {
     { href: "/leagues", label: "Лиг", icon: Users },
     { href: "/news", label: "Мэдээ", icon: Newspaper },
   ];
+
+  // Drawer animation classes
+  const drawerBase =
+    "fixed top-0 right-0 h-full w-[300px] bg-gray-900 shadow-xl overflow-y-auto z-[60] transition-transform duration-200";
+  const drawerState = showMobileMenu ? "translate-x-0" : "translate-x-full";
 
   return (
     <nav className="nav-dark">
@@ -58,7 +56,7 @@ export default function Navigation() {
           <div className="hidden md:flex items-center space-x-6">
             {navigationLinks.map((link) => {
               const Icon = link.icon;
-              const active = isActive(link.href);
+              const active = isActive(location, link.href);
               return (
                 <Link key={link.href} href={link.href}>
                   <div className={`nav-link flex items-center space-x-1 px-3 py-2 cursor-pointer ${
@@ -138,10 +136,11 @@ export default function Navigation() {
 
             {/* Mobile menu button */}
             <Button
+              ref={triggerRef}
               variant="ghost"
               size="sm"
               className="md:hidden text-white hover:text-mtta-green"
-              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              onClick={() => setShowMobileMenu((v) => !v)}
             >
               {showMobileMenu ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
@@ -152,14 +151,15 @@ export default function Navigation() {
       {/* Mobile menu overlay */}
       {showMobileMenu && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-75 z-50 md:hidden"
+          className="fixed inset-0 bg-black/75 z-50 md:hidden"
           onClick={() => setShowMobileMenu(false)}
         >
           <div
-            className="fixed top-0 right-0 h-full w-[300px] bg-gray-900 shadow-xl overflow-y-auto z-[60]"
+            ref={drawerRef}
             role="dialog"
             aria-modal="true"
             aria-label="Навигацийн цэс"
+            className={`${drawerBase} ${drawerState}`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header with logo and close button */}
@@ -177,7 +177,7 @@ export default function Navigation() {
             <div className="py-4">
               {navigationLinks.map((link) => {
                 const Icon = link.icon;
-                const active = isActive(link.href);
+                const active = isActive(location, link.href);
                 return (
                   <Link key={link.href} href={link.href}>
                     <div
