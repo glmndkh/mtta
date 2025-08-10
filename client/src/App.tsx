@@ -27,6 +27,7 @@ import Profile from "@/pages/profile";
 import PlayerProfilePage from "@/pages/player-profile";
 import AdminDashboard from "@/pages/admin-dashboard";
 import TournamentManagement from "@/pages/tournament-management";
+import AboutPage from "@/pages/about";
 import { useAuth } from "@/hooks/useAuth";
 
 function Router() {
@@ -46,6 +47,7 @@ function Router() {
       <Route path="/leagues/:id" component={LeagueDetails} />
       <Route path="/news/:id" component={NewsDetail} />
       <Route path="/news" component={News} />
+      <Route path="/about" component={AboutPage} />
       <Route path="/" component={Home} />
       {!isLoading && isAuthenticated && (
         <>
