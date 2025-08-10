@@ -26,13 +26,16 @@ const AboutPage = () => {
   return (
     <PageWithLoading>
       <div className="main-bg">
-        {/* Sticky Navigation Bar for About Page */}
+        {/* Sticky Navigation Bar for About Page Sections */}
         <div className="sticky top-16 z-40 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700">
           <div className="container mx-auto px-4">
             <div className="flex flex-wrap justify-center md:justify-start items-center py-3 space-x-2 md:space-x-6">
+              <span className="text-xs text-gray-500 mr-2 hidden md:inline">Хэсгүүд:</span>
               <a 
                 href="#history" 
-                className="text-xs md:text-sm text-gray-300 hover:text-green-400 px-2 py-1 rounded transition-colors"
+                className={`text-xs md:text-sm px-2 py-1 rounded transition-colors ${
+                  activeTab === 'history' ? 'bg-green-600 text-white' : 'text-gray-300 hover:text-green-400'
+                }`}
                 onClick={(e) => {
                   e.preventDefault();
                   handleTabChange('history');
@@ -43,7 +46,9 @@ const AboutPage = () => {
               </a>
               <a 
                 href="#goals" 
-                className="text-xs md:text-sm text-gray-300 hover:text-green-400 px-2 py-1 rounded transition-colors"
+                className={`text-xs md:text-sm px-2 py-1 rounded transition-colors ${
+                  activeTab === 'goals' ? 'bg-green-600 text-white' : 'text-gray-300 hover:text-green-400'
+                }`}
                 onClick={(e) => {
                   e.preventDefault();
                   handleTabChange('goals');
@@ -54,7 +59,9 @@ const AboutPage = () => {
               </a>
               <a 
                 href="#management" 
-                className="text-xs md:text-sm text-gray-300 hover:text-green-400 px-2 py-1 rounded transition-colors"
+                className={`text-xs md:text-sm px-2 py-1 rounded transition-colors ${
+                  activeTab === 'management' ? 'bg-green-600 text-white' : 'text-gray-300 hover:text-green-400'
+                }`}
                 onClick={(e) => {
                   e.preventDefault();
                   handleTabChange('management');
@@ -65,7 +72,9 @@ const AboutPage = () => {
               </a>
               <a 
                 href="#leadership" 
-                className="text-xs md:text-sm text-gray-300 hover:text-green-400 px-2 py-1 rounded transition-colors"
+                className={`text-xs md:text-sm px-2 py-1 rounded transition-colors ${
+                  activeTab === 'leadership' ? 'bg-green-600 text-white' : 'text-gray-300 hover:text-green-400'
+                }`}
                 onClick={(e) => {
                   e.preventDefault();
                   handleTabChange('leadership');
