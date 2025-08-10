@@ -2,7 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { Menu, X, Home, Trophy, Building, Users, Newspaper, User, LogOut } from "lucide-react";
+import { Menu, X, Home, Trophy, Building, Users, Newspaper, User, LogOut, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import mttaLogo from "@assets/logoweb_1754749015700.png";
 
 const isActive = (current: string, href: string) =>
@@ -34,6 +40,17 @@ export default function Navigation() {
     { href: "/clubs", label: "Клубууд", icon: Building },
     { href: "/leagues", label: "Лиг", icon: Users },
     { href: "/news", label: "Мэдээ", icon: Newspaper },
+    { 
+      href: "/about", 
+      label: "Бидний тухай", 
+      icon: User,
+      dropdown: [
+        { href: "/about#history", label: "Танилцуулга" },
+        { href: "/about#goals", label: "Бидний зорилго" },
+        { href: "/about#management", label: "Түүхэн замнал" },
+        { href: "/about#leadership", label: "Захирлуудын зөвлөл" }
+      ]
+    },
   ];
 
   // Drawer animation classes
@@ -58,6 +75,34 @@ export default function Navigation() {
             {navigationLinks.map((link) => {
               const Icon = link.icon;
               const active = isActive(location, link.href);
+              
+              if (link.dropdown) {
+                return (
+                  <DropdownMenu key={link.href}>
+                    <DropdownMenuTrigger asChild>
+                      <div className={`nav-link flex items-center space-x-1 px-3 py-2 cursor-pointer ${
+                        active ? 'active-nav-link' : ''
+                      }`}>
+                        <Icon className="h-4 w-4" />
+                        <span>{link.label}</span>
+                        <ChevronDown className="h-3 w-3 ml-1" />
+                      </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="bg-gray-800 border-gray-700">
+                      {link.dropdown.map((subLink) => (
+                        <DropdownMenuItem key={subLink.href} asChild>
+                          <Link href={subLink.href}>
+                            <div className="text-white hover:text-green-400 w-full px-2 py-1">
+                              {subLink.label}
+                            </div>
+                          </Link>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                );
+              }
+              
               return (
                 <Link key={link.href} href={link.href}>
                   <div className={`nav-link flex items-center space-x-1 px-3 py-2 cursor-pointer ${
@@ -180,6 +225,38 @@ export default function Navigation() {
               {navigationLinks.map((link) => {
                 const Icon = link.icon;
                 const active = isActive(location, link.href);
+                
+                if (link.dropdown) {
+                  return (
+                    <div key={link.href}>
+                      <Link href={link.href}>
+                        <div
+                          onClick={() => setShowMobileMenu(false)}
+                          className={`flex items-center px-6 py-4 text-white border-b border-gray-800 hover:bg-gray-800 ${
+                            active ? 'bg-green-900 text-green-400' : ''
+                          }`}
+                        >
+                          <Icon className="h-5 w-5 mr-3" />
+                          <span className="text-base">{link.label}</span>
+                        </div>
+                      </Link>
+                      {/* Mobile submenu */}
+                      <div className="bg-gray-800">
+                        {link.dropdown.map((subLink) => (
+                          <Link key={subLink.href} href={subLink.href}>
+                            <div
+                              onClick={() => setShowMobileMenu(false)}
+                              className="flex items-center px-12 py-3 text-gray-300 hover:bg-gray-700 hover:text-white border-b border-gray-700"
+                            >
+                              <span className="text-sm">{subLink.label}</span>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+                
                 return (
                   <Link key={link.href} href={link.href}>
                     <div
