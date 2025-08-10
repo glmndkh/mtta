@@ -1,0 +1,93 @@
+Гол асуудлууд
+Active state: location === link.href гэж яг тэнцүү шалгахаар /tournaments/123 зэрэг дэд зам дээр идэвхжил алга болно.
+→ startsWith ашигла.
+
+Гадна дарж хаахгүй: Оверлей дээр дархад хаагдах эвент байхгүй.
+→ Оверлей дээр onClick нэмээд, баруун талын шургуур (drawer) дээр e.stopPropagation() хий.
+
+Body scroll түгжихгүй: Цэс нээгдэхэд арын хуудас гулгаж байна.
+→ document.body.style.overflow = 'hidden' (хаахад auto) эсвэл overflow-hidden класс нэмж/хас.
+
+Z-index давхцал: Оверлей z-50, drawer мөн z-50 → зарим дизайнд давхаргын асуудал.
+→ Drawer-д z-60 (эсвэл z-[60]) өгвөл илүү найдвартай.
+
+Accessibility: aria-*, Esc-ээр хаах, фокусын менежмент алга.
+→ role="dialog", aria-modal="true", onKeyDown дээр Esc-ийг сонс.
+
+Logout навигаци: window.location.href OK ч SPA навигаци тасалж, SSR орчинд эвгүй.
+→ API logout бол зүгээр; гэхдээ href линк эсвэл fetch + redirect илүү цэвэр.
+
+Залруулсан богино хувилбар (түлхүүр хэсгүүд)
+tsx
+Copy
+Edit
+export default function Navigation() {
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [location] = useLocation();
+
+  // 1) Active state сайжруулалт
+  const isActive = (href: string) =>
+    href === "/" ? location === "/" : location.startsWith(href);
+
+  // 3) Body scroll lock
+  useEffect(() => {
+    if (showMobileMenu) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = prev; };
+    }
+  }, [showMobileMenu]);
+
+  // 5) ESC-ээр хаах
+  useEffect(() => {
+    if (!showMobileMenu) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setShowMobileMenu(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showMobileMenu]);
+
+  /* ... */
+
+  {/* Mobile menu overlay */}
+  {showMobileMenu && (
+    // 2) Оверлей дээр дарвал хаах
+    <div
+      className="fixed inset-0 bg-black bg-opacity-75 z-50 md:hidden"
+      onClick={() => setShowMobileMenu(false)}
+    >
+      <div
+        className="fixed top-0 right-0 h-full w-[300px] bg-gray-900 shadow-xl overflow-y-auto z-[60]"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Навигацийн цэс"
+        // Drawer дотор дарсан эвент оверлей руу бүү дамж
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        {/* ... */}
+
+        {/* Навигаци — идэвхжил */}
+        <div className="py-4">
+          {navigationLinks.map((link) => {
+            const Icon = link.icon;
+            const active = isActive(link.href);
+            return (
+              <Link key={link.href} href={link.href}>
+                <div
+                  onClick={() => setShowMobileMenu(false)}
+                  className={`flex items-center px-6 py-4 text-white border-b border-gray-800 hover:bg-gray-800 ${
+                    active ? "bg-green-900 text-green-400" : ""
+                  }`}
+                >
+                  <Icon className="h-5 w-5 mr-3" />
+                  <span className="text-base">{link.label}</span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+        {/* ... */}
+      </div>
+    </div>
+  )}
+}
