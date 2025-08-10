@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,6 +9,31 @@ export default function Navigation() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [location] = useLocation();
   const { user, isAuthenticated } = useAuth();
+
+  // Active state improvement
+  const isActive = (href: string) =>
+    href === "/" ? location === "/" : location.startsWith(href);
+
+  // Body scroll lock
+  useEffect(() => {
+    if (showMobileMenu) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => { 
+        document.body.style.overflow = prev; 
+      };
+    }
+  }, [showMobileMenu]);
+
+  // ESC key to close
+  useEffect(() => {
+    if (!showMobileMenu) return;
+    const onKey = (e: KeyboardEvent) => { 
+      if (e.key === "Escape") setShowMobileMenu(false); 
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showMobileMenu]);
 
   const navigationLinks = [
     { href: "/", label: "Нүүр хуудас", icon: Home },
@@ -33,11 +58,11 @@ export default function Navigation() {
           <div className="hidden md:flex items-center space-x-6">
             {navigationLinks.map((link) => {
               const Icon = link.icon;
-              const isActive = location === link.href;
+              const active = isActive(link.href);
               return (
                 <Link key={link.href} href={link.href}>
                   <div className={`nav-link flex items-center space-x-1 px-3 py-2 cursor-pointer ${
-                    isActive ? 'active-nav-link' : ''
+                    active ? 'active-nav-link' : ''
                   }`}>
                     <Icon className="h-4 w-4" />
                     <span>{link.label}</span>
@@ -126,8 +151,17 @@ export default function Navigation() {
 
       {/* Mobile menu overlay */}
       {showMobileMenu && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 z-50 md:hidden">
-          <div className="fixed top-0 right-0 h-full w-[300px] bg-gray-900 shadow-xl overflow-y-auto">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 z-50 md:hidden"
+          onClick={() => setShowMobileMenu(false)}
+        >
+          <div
+            className="fixed top-0 right-0 h-full w-[300px] bg-gray-900 shadow-xl overflow-y-auto z-[60]"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Навигацийн цэс"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header with logo and close button */}
             <div className="flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700">
               <img src={mttaLogo} alt="MTTA" className="h-8" />
@@ -143,13 +177,13 @@ export default function Navigation() {
             <div className="py-4">
               {navigationLinks.map((link) => {
                 const Icon = link.icon;
-                const isActive = location === link.href;
+                const active = isActive(link.href);
                 return (
                   <Link key={link.href} href={link.href}>
                     <div
                       onClick={() => setShowMobileMenu(false)}
                       className={`flex items-center px-6 py-4 text-white border-b border-gray-800 hover:bg-gray-800 ${
-                        isActive ? 'bg-green-900 text-green-400' : ''
+                        active ? 'bg-green-900 text-green-400' : ''
                       }`}
                     >
                       <Icon className="h-5 w-5 mr-3" />
