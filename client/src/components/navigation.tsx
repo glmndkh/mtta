@@ -46,7 +46,6 @@ export default function Navigation() {
         { href: "/about#leadership", label: "Захирлуудын зөвлөл" }
       ]
     },
-    { href: "/", label: "Нүүр хуудас", icon: Home },
     { href: "/tournaments", label: "Тэмцээн", icon: Trophy },
     { href: "/clubs", label: "Клубууд", icon: Building },
     { href: "/leagues", label: "Лиг", icon: Users },
