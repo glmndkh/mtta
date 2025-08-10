@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Users, Building, Trophy, Medal, Calendar, Award, ExternalLink } from "lucide-react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import PageWithLoading from "@/components/PageWithLoading";
 
 // Type definitions for API responses
 interface SliderItem {
@@ -133,7 +134,8 @@ export default function Home() {
   // Show content for both authenticated and non-authenticated users
 
   return (
-    <div className="min-h-screen">
+    <PageWithLoading>
+      <div className="min-h-screen">
       <Navigation />
       
       {/* Hero Slider Section */}
@@ -705,7 +707,8 @@ export default function Home() {
         )}
 
 
+        </div>
       </div>
-    </div>
+    </PageWithLoading>
   );
 }

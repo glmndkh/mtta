@@ -10,6 +10,7 @@ import { Trophy, Calendar, MapPin, Clock, ExternalLink, Ticket, Users } from "lu
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import PageWithLoading from "@/components/PageWithLoading";
 
 interface TournamentData {
   id: string;
@@ -487,7 +488,8 @@ export default function Tournaments() {
   // Allow access to tournaments page without authentication
 
   return (
-    <div className="min-h-screen">
+    <PageWithLoading>
+      <div className="min-h-screen">
       <Navigation />
       
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
@@ -543,9 +545,10 @@ export default function Tournaments() {
               .map((tournament) => (
                 <TournamentCard key={tournament.id} tournament={tournament} />
               ))}
-          </div>
+            </div>
         )}
+        </div>
       </div>
-    </div>
+    </PageWithLoading>
   );
 }

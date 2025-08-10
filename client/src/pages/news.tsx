@@ -21,6 +21,7 @@ import { z } from "zod";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import type { UploadResult } from "@uppy/core";
 import { Link } from "wouter";
+import PageWithLoading from "@/components/PageWithLoading";
 
 type CreateNewsForm = z.infer<typeof insertNewsSchema>;
 
@@ -325,7 +326,8 @@ export default function News() {
   // Show content for all users, but only show admin functions if authenticated as admin
 
   return (
-    <div className="min-h-screen">
+    <PageWithLoading>
+      <div className="min-h-screen">
       <Navigation />
       
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
@@ -919,7 +921,8 @@ export default function News() {
             </div>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </PageWithLoading>
   );
 }
