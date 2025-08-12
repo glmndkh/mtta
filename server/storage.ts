@@ -171,9 +171,9 @@ export class DatabaseStorage implements IStorage {
   async upsertUser(userData: UpsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
-      .values(userData)
+      .values([userData])
       .onConflictDoUpdate({
-        target: users.id,
+        target: users.email,
         set: {
           email: userData.email,
           phone: userData.phone,
@@ -186,9 +186,9 @@ export class DatabaseStorage implements IStorage {
           profileImageUrl: userData.profileImageUrl,
           province: userData.province,
           city: userData.city,
-          rubberTypes: userData.rubberTypes ? userData.rubberTypes : [],
+          rubberTypes: userData.rubberTypes ? userData.rubberTypes as string[] : [],
           handedness: userData.handedness,
-          playingStyles: userData.playingStyles ? userData.playingStyles : [],
+          playingStyles: userData.playingStyles ? userData.playingStyles as string[] : [],
           bio: userData.bio,
           membershipType: userData.membershipType,
           membershipStartDate: userData.membershipStartDate,
