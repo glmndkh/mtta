@@ -13,6 +13,16 @@ A comprehensive web application for the Mongolian Table Tennis Association that 
 
 ## Recent Changes
 
+### Replit Environment Migration (August 2025)
+- **Successfully migrated from Replit Agent to standard Replit environment**
+- **Database setup completed** with PostgreSQL database provisioned and schema pushed
+- **Authentication system adapted** for Replit environment with flexible OAuth configuration
+- **Session management configured** with proper session secret and PostgreSQL session store
+- **All database tables created** including users, tournaments, matches, news, sponsors, and more
+- **Application running successfully** on port 5000 with all API endpoints functional
+
+## Recent Changes
+
 ### Tournament Results Management System (August 2025)
 - **Comprehensive tournament results system** with both admin input and user viewing capabilities
 - **Excel-style admin interface** for group stage and knockout bracket management with dynamic row/column controls
