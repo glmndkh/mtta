@@ -29,6 +29,8 @@ export default function AdminDashboard() {
   const [userFilter, setUserFilter] = useState("");
   const [playerFilter, setPlayerFilter] = useState("");
   const [clubFilter, setClubFilter] = useState("");
+  const [branchFilter, setBranchFilter] = useState("");
+  const [memberFilter, setMemberFilter] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -62,6 +64,16 @@ export default function AdminDashboard() {
   const { data: teams, isLoading: teamsLoading } = useQuery({
     queryKey: ['/api/admin/teams'],
     enabled: selectedTab === 'teams' || isTeamEnrollmentDialogOpen
+  });
+
+  const { data: branches, isLoading: branchesLoading } = useQuery({
+    queryKey: ['/api/admin/branches'],
+    enabled: selectedTab === 'branches'
+  });
+
+  const { data: federationMembers, isLoading: federationMembersLoading } = useQuery({
+    queryKey: ['/api/admin/federation-members'],
+    enabled: selectedTab === 'federation-members'
   });
 
   // Load all users for player selection dropdown
@@ -450,7 +462,7 @@ export default function AdminDashboard() {
   const renderClubsTab = () => {
     const filteredClubs = clubs && Array.isArray(clubs) ? clubs.filter((club: any) => {
       const searchText = clubFilter.toLowerCase();
-      return !searchText || 
+      return !searchText ||
              club.name?.toLowerCase().includes(searchText) ||
              club.description?.toLowerCase().includes(searchText) ||
              club.address?.toLowerCase().includes(searchText) ||
@@ -501,6 +513,135 @@ export default function AdminDashboard() {
                         <Pencil className="w-4 h-4" />
                       </Button>
                       <Button size="sm" variant="destructive" onClick={() => handleDelete(club.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
+    );
+  };
+
+  const renderBranchesTab = () => {
+    const filteredBranches = branches && Array.isArray(branches) ? branches.filter((branch: any) => {
+      const searchText = branchFilter.toLowerCase();
+      return !searchText ||
+             branch.name?.toLowerCase().includes(searchText) ||
+             branch.leader?.toLowerCase().includes(searchText) ||
+             branch.location?.toLowerCase().includes(searchText);
+    }) : [];
+
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center gap-4">
+          <h2 className="text-2xl font-bold">Салбар холбоод</h2>
+          <div className="flex-1 max-w-sm">
+            <Input
+              placeholder="Салбар холбоо хайх..."
+              value={branchFilter}
+              onChange={(e) => setBranchFilter(e.target.value)}
+            />
+          </div>
+          <Button onClick={openCreateDialog}>
+            <Plus className="w-4 h-4 mr-2" />
+            Салбар холбоо нэмэх
+          </Button>
+        </div>
+
+        {branchesLoading ? (
+          <div>Ачааллаж байна...</div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Нэр</TableHead>
+                <TableHead>Дарга</TableHead>
+                <TableHead>Байршил</TableHead>
+                <TableHead>Үйлдэл</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredBranches.map((branch: any) => (
+                <TableRow key={branch.id}>
+                  <TableCell>{branch.name}</TableCell>
+                  <TableCell>{branch.leader}</TableCell>
+                  <TableCell>{branch.location}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => openEditDialog(branch)}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleDelete(branch.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
+    );
+  };
+
+  const renderFederationMembersTab = () => {
+    const filteredMembers = federationMembers && Array.isArray(federationMembers) ? federationMembers.filter((member: any) => {
+      const searchText = memberFilter.toLowerCase();
+      return !searchText ||
+             member.name?.toLowerCase().includes(searchText) ||
+             member.position?.toLowerCase().includes(searchText);
+    }) : [];
+
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center gap-4">
+          <h2 className="text-2xl font-bold">Холбооны гишүүд</h2>
+          <div className="flex-1 max-w-sm">
+            <Input
+              placeholder="Гишүүн хайх..."
+              value={memberFilter}
+              onChange={(e) => setMemberFilter(e.target.value)}
+            />
+          </div>
+          <Button onClick={openCreateDialog}>
+            <Plus className="w-4 h-4 mr-2" />
+            Гишүүн нэмэх
+          </Button>
+        </div>
+
+        {federationMembersLoading ? (
+          <div>Ачааллаж байна...</div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Нэр</TableHead>
+                <TableHead>Албан тушаал</TableHead>
+                <TableHead>Зураг</TableHead>
+                <TableHead>Үйлдэл</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredMembers.map((member: any) => (
+                <TableRow key={member.id}>
+                  <TableCell>{member.name}</TableCell>
+                  <TableCell>{member.position}</TableCell>
+                  <TableCell>
+                    {member.imageUrl && (
+                      <img src={member.imageUrl} alt={member.name} className="w-10 h-10 rounded-full" />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => openEditDialog(member)}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleDelete(member.id)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
@@ -767,6 +908,98 @@ export default function AdminDashboard() {
                 onChange={(e) => setFormData({...formData, achievements: e.target.value})}
                 placeholder="Тоглогчийн амжилтууд..."
                 rows={4}
+              />
+            </div>
+          </>
+        );
+
+      case 'branches':
+        return (
+          <>
+            <div>
+              <Label htmlFor="name">Нэр</Label>
+              <Input
+                id="name"
+                value={formData.name || ''}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="leader">Дарга</Label>
+              <Input
+                id="leader"
+                value={formData.leader || ''}
+                onChange={(e) => setFormData({ ...formData, leader: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="leadershipMembers">Удирдлагын гишүүд</Label>
+              <Textarea
+                id="leadershipMembers"
+                value={formData.leadershipMembers || ''}
+                onChange={(e) => setFormData({ ...formData, leadershipMembers: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="address">Хаяг</Label>
+              <Textarea
+                id="address"
+                value={formData.address || ''}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="location">Байршил</Label>
+              <Input
+                id="location"
+                value={formData.location || ''}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="activities">Үйл ажиллагаа</Label>
+              <Textarea
+                id="activities"
+                value={formData.activities || ''}
+                onChange={(e) => setFormData({ ...formData, activities: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="imageUrl">Зураг URL</Label>
+              <Input
+                id="imageUrl"
+                value={formData.imageUrl || ''}
+                onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+              />
+            </div>
+          </>
+        );
+
+      case 'federation-members':
+        return (
+          <>
+            <div>
+              <Label htmlFor="name">Нэр</Label>
+              <Input
+                id="name"
+                value={formData.name || ''}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="position">Албан тушаал</Label>
+              <Input
+                id="position"
+                value={formData.position || ''}
+                onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="imageUrl">Зураг URL</Label>
+              <Input
+                id="imageUrl"
+                value={formData.imageUrl || ''}
+                onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
               />
             </div>
           </>
@@ -1435,7 +1668,7 @@ export default function AdminDashboard() {
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid w-full grid-cols-10">
+        <TabsList className="grid w-full grid-cols-12">
           <TabsTrigger value="stats" className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
             Статистик
@@ -1463,6 +1696,14 @@ export default function AdminDashboard() {
           <TabsTrigger value="teams" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             Багууд
+          </TabsTrigger>
+          <TabsTrigger value="branches" className="flex items-center gap-2">
+            <LinkIcon className="w-4 h-4" />
+            Салбар холбоод
+          </TabsTrigger>
+          <TabsTrigger value="federation-members" className="flex items-center gap-2">
+            <UserPlus className="w-4 h-4" />
+            Холбооны гишүүд
           </TabsTrigger>
           <TabsTrigger value="news" className="flex items-center gap-2">
             <Newspaper className="w-4 h-4" />
@@ -1866,6 +2107,30 @@ export default function AdminDashboard() {
                   </Table>
                 )}
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="branches">
+          <Card>
+            <CardHeader>
+              <CardTitle>Салбар холбоодын удирдлага</CardTitle>
+              <CardDescription>Салбар холбоо нэмэх, засах, устгах</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {renderBranchesTab()}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="federation-members">
+          <Card>
+            <CardHeader>
+              <CardTitle>Холбооны гишүүдийн удирдлага</CardTitle>
+              <CardDescription>Холбооны гишүүдийг нэмэх, засах, устгах</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {renderFederationMembersTab()}
             </CardContent>
           </Card>
         </TabsContent>
