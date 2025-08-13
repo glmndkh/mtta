@@ -8,6 +8,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import mttaLogo from "@assets/logoweb_1754749015700.png";
 
@@ -35,16 +38,23 @@ export default function Navigation() {
   }, [showMobileMenu]);
 
   const navigationLinks = [
-    { 
-      href: "/about", 
-      label: "Бидний тухай", 
+    {
+      href: "/about",
+      label: "Бидний тухай",
       icon: User,
       dropdown: [
-        { href: "/about#history", label: "Танилцуулга" },
-        { href: "/about#goals", label: "Бидний зорилго" },
-        { href: "/about#management", label: "Түүхэн замнал" },
-        { href: "/about#leadership", label: "Захирлуудын зөвлөл" }
-      ]
+        {
+          label: "Холбоо",
+          sublinks: [
+            { href: "/about#history", label: "Танилцуулга" },
+            { href: "/about#goals", label: "Бидний зорилго" },
+            { href: "/about#management", label: "Түүхэн замнал" },
+            { href: "/about#leadership", label: "Захирлуудын зөвлөл" },
+          ],
+        },
+        { href: "/branches", label: "Салбар холбоод" },
+        { href: "/national-team", label: "Үндэсний шигшээ" },
+      ],
     },
     { href: "/tournaments", label: "Тэмцээн", icon: Trophy },
     { href: "/clubs", label: "Клубууд", icon: Building },
@@ -89,13 +99,32 @@ export default function Navigation() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="bg-gray-800 border-gray-700">
                       {link.dropdown.map((subLink) => (
-                        <DropdownMenuItem key={subLink.href} asChild>
-                          <Link href={subLink.href}>
-                            <div className="text-white hover:text-green-400 w-full px-2 py-1">
+                        subLink.sublinks ? (
+                          <DropdownMenuSub key={subLink.label}>
+                            <DropdownMenuSubTrigger className="text-white hover:text-green-400 px-2 py-1">
                               {subLink.label}
-                            </div>
-                          </Link>
-                        </DropdownMenuItem>
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent className="bg-gray-800 border-gray-700">
+                              {subLink.sublinks.map((item) => (
+                                <DropdownMenuItem key={item.href} asChild>
+                                  <Link href={item.href}>
+                                    <div className="text-white hover:text-green-400 w-full px-2 py-1">
+                                      {item.label}
+                                    </div>
+                                  </Link>
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
+                        ) : (
+                          <DropdownMenuItem key={subLink.href} asChild>
+                            <Link href={subLink.href}>
+                              <div className="text-white hover:text-green-400 w-full px-2 py-1">
+                                {subLink.label}
+                              </div>
+                            </Link>
+                          </DropdownMenuItem>
+                        )
                       ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -242,14 +271,34 @@ export default function Navigation() {
                       {/* Mobile submenu */}
                       <div className="bg-gray-800">
                         {link.dropdown.map((subLink) => (
-                          <Link key={subLink.href} href={subLink.href}>
-                            <div
-                              onClick={() => setShowMobileMenu(false)}
-                              className="flex items-center px-12 py-3 text-gray-300 hover:bg-gray-700 hover:text-white border-b border-gray-700"
-                            >
-                              <span className="text-sm">{subLink.label}</span>
+                          subLink.sublinks ? (
+                            <div key={subLink.label} className="border-b border-gray-700">
+                              <div className="flex items-center px-12 py-3 text-gray-300">
+                                <span className="text-sm">{subLink.label}</span>
+                              </div>
+                              <div className="bg-gray-700">
+                                {subLink.sublinks.map((item) => (
+                                  <Link key={item.href} href={item.href}>
+                                    <div
+                                      onClick={() => setShowMobileMenu(false)}
+                                      className="flex items-center px-16 py-3 text-gray-300 hover:bg-gray-600 hover:text-white border-t border-gray-600"
+                                    >
+                                      <span className="text-sm">{item.label}</span>
+                                    </div>
+                                  </Link>
+                                ))}
+                              </div>
                             </div>
-                          </Link>
+                          ) : (
+                            <Link key={subLink.href} href={subLink.href}>
+                              <div
+                                onClick={() => setShowMobileMenu(false)}
+                                className="flex items-center px-12 py-3 text-gray-300 hover:bg-gray-700 hover:text-white border-b border-gray-700"
+                              >
+                                <span className="text-sm">{subLink.label}</span>
+                              </div>
+                            </Link>
+                          )
                         ))}
                       </div>
                     </div>
