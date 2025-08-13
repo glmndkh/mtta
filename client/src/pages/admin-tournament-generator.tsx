@@ -111,7 +111,7 @@ export default function AdminTournamentGenerator() {
       regulationDocumentUrl: "",
       minRating: "none",
       maxRating: "none",
-      isPublished: false,
+      isPublished: true,
     }
   });
 
