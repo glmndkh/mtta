@@ -6,9 +6,11 @@ import { Separator } from "@/components/ui/separator";
 import { History, Target, Users, Award } from "lucide-react";
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
+import { useQuery } from "@tanstack/react-query";
 
 const AboutPage = () => {
   const [activeTab, setActiveTab] = useState("history");
+  const { data: members = [] } = useQuery<any[]>({ queryKey: ["/api/federation-members"] });
 
   // Handle URL hash changes to switch tabs
   useEffect(() => {
@@ -73,8 +75,8 @@ const AboutPage = () => {
                 className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300 text-xs md:text-sm px-1 md:px-3"
               >
                 <Award className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                <span className="hidden sm:inline">Захирлуудын зөвлөл</span>
-                <span className="sm:hidden">Зөвлөл</span>
+                <span className="hidden sm:inline">Холбооны гишүүд</span>
+                <span className="sm:hidden">Гишүүд</span>
               </TabsTrigger>
             </TabsList>
 
@@ -204,66 +206,18 @@ const AboutPage = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="text-gray-300">
-                  <div className="space-y-8">
-                    <div className="relative pl-8 border-l-2 border-green-400">
-                      <div className="absolute w-4 h-4 bg-green-400 rounded-full -left-2 top-0"></div>
-                      <div className="bg-gray-800 p-6 rounded-lg">
-                        <h3 className="text-xl font-semibold text-white mb-2">1965 он</h3>
-                        <h4 className="text-lg text-green-400 mb-3">Холбооны байгуулалт</h4>
-                        <p className="leading-relaxed">
-                          Монголын ширээний теннисний холбоо албан ёсоор байгуулагдаж, 
-                          тэр үеийн спортын төлөөлөгчдөөр анхны удирдлага байгуулагдсан.
-                        </p>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {members.map((member) => (
+                      <div key={member.id} className="bg-gray-800 p-6 rounded-lg">
+                        <div className="text-center mb-4">
+                          {member.imageUrl && (
+                            <img src={member.imageUrl} alt={member.name} className="w-20 h-20 rounded-full mx-auto mb-3 object-cover" />
+                          )}
+                          <h3 className="text-xl font-semibold text-white">{member.name}</h3>
+                          <p className="text-green-400">{member.position}</p>
+                        </div>
                       </div>
-                    </div>
-
-                    <div className="relative pl-8 border-l-2 border-green-400">
-                      <div className="absolute w-4 h-4 bg-green-400 rounded-full -left-2 top-0"></div>
-                      <div className="bg-gray-800 p-6 rounded-lg">
-                        <h3 className="text-xl font-semibold text-white mb-2">1970-аад он</h3>
-                        <h4 className="text-lg text-green-400 mb-3">Анхны олон улсын тэмцээн</h4>
-                        <p className="leading-relaxed">
-                          Монголын тамирчид анх удаа олон улсын тэмцээнд оролцож, 
-                          ITTF-ийн гишүүнчлэлд элссэн түүхэн үе.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="relative pl-8 border-l-2 border-green-400">
-                      <div className="absolute w-4 h-4 bg-green-400 rounded-full -left-2 top-0"></div>
-                      <div className="bg-gray-800 p-6 rounded-lg">
-                        <h3 className="text-xl font-semibold text-white mb-2">1990-ээд он</h3>
-                        <h4 className="text-lg text-green-400 mb-3">Спортын шинэчлэл</h4>
-                        <p className="leading-relaxed">
-                          Ардчилсан засаглалын үед холбооны үйл ажиллагаа шинэчлэгдэж, 
-                          орчин үеийн менежментийн систем нэвтэрсэн.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="relative pl-8 border-l-2 border-green-400">
-                      <div className="absolute w-4 h-4 bg-green-400 rounded-full -left-2 top-0"></div>
-                      <div className="bg-gray-800 p-6 rounded-lg">
-                        <h3 className="text-xl font-semibold text-white mb-2">2000-аад он</h3>
-                        <h4 className="text-lg text-green-400 mb-3">Дижитал шилжилт</h4>
-                        <p className="leading-relaxed">
-                          Орчин үеийн технологийг ашиглан холбооны үйл ажиллагааг 
-                          цахимжуулж, олон нийтэд ойртох үйл ажиллагаа эхэлсэн.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="relative pl-8">
-                      <div className="absolute w-4 h-4 bg-green-400 rounded-full -left-2 top-0"></div>
-                      <div className="bg-gray-800 p-6 rounded-lg">
-                        <h3 className="text-xl font-semibold text-white mb-2">2020-оод он</h3>
-                        <h4 className="text-lg text-green-400 mb-3">Шинэ эрин үе</h4>
-                        <p className="leading-relaxed">
-                          Цахим платформ ашиглан тэмцээн зохион байгуулах, 
-                          онлайн бүртгэл, статистик хөтлөх шинэ систем нэвтрүүлсэн.
-                        </p>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
@@ -275,103 +229,25 @@ const AboutPage = () => {
                 <CardHeader>
                   <CardTitle className="text-2xl text-white flex items-center">
                     <Award className="w-6 h-6 mr-3 text-green-400" />
-                    Захирлуудын зөвлөл
+                    Холбооны гишүүд
                   </CardTitle>
                   <CardDescription className="text-gray-300">
-                    Холбооны удирдлагын бүрэлдэхүүн болон үүрэг хариуцлага
+                    Холбооны гишүүдийн бүрэлдэхүүн болон үүрэг хариуцлага
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="text-gray-300">
                   <div className="grid md:grid-cols-2 gap-6">
-                    <div className="bg-gray-800 p-6 rounded-lg">
-                      <div className="text-center mb-4">
-                        <div className="w-20 h-20 bg-green-600 rounded-full mx-auto mb-3 flex items-center justify-center">
-                          <Users className="w-8 h-8 text-white" />
+                    {members.map((member) => (
+                      <div key={member.id} className="bg-gray-800 p-6 rounded-lg">
+                        <div className="text-center mb-4">
+                          {member.imageUrl && (
+                            <img src={member.imageUrl} alt={member.name} className="w-20 h-20 rounded-full mx-auto mb-3 object-cover" />
+                          )}
+                          <h3 className="text-xl font-semibold text-white">{member.name}</h3>
+                          <p className="text-green-400">{member.position}</p>
                         </div>
-                        <h3 className="text-xl font-semibold text-white">Б.Болдбаатар</h3>
-                        <p className="text-green-400">Ерөнхий дарга</p>
                       </div>
-                      <ul className="space-y-2 text-sm">
-                        <li>• Холбооны ерөнхий удирдлага</li>
-                        <li>• Стратегийн чиглэл тодорхойлолт</li>
-                        <li>• Олон улсын харилцаа</li>
-                      </ul>
-                    </div>
-
-                    <div className="bg-gray-800 p-6 rounded-lg">
-                      <div className="text-center mb-4">
-                        <div className="w-20 h-20 bg-green-600 rounded-full mx-auto mb-3 flex items-center justify-center">
-                          <Target className="w-8 h-8 text-white" />
-                        </div>
-                        <h3 className="text-xl font-semibold text-white">Г.Ганбаатар</h3>
-                        <p className="text-green-400">Гүйцэтгэх захирал</p>
-                      </div>
-                      <ul className="space-y-2 text-sm">
-                        <li>• Өдөр тутмын үйл ажиллагаа</li>
-                        <li>• Тэмцээн зохион байгуулалт</li>
-                        <li>• Клубуудтай хамтын ажиллагаа</li>
-                      </ul>
-                    </div>
-
-                    <div className="bg-gray-800 p-6 rounded-lg">
-                      <div className="text-center mb-4">
-                        <div className="w-20 h-20 bg-green-600 rounded-full mx-auto mb-3 flex items-center justify-center">
-                          <History className="w-8 h-8 text-white" />
-                        </div>
-                        <h3 className="text-xl font-semibold text-white">С.Сайханбилэг</h3>
-                        <p className="text-green-400">Дэд дарга</p>
-                      </div>
-                      <ul className="space-y-2 text-sm">
-                        <li>• Тамирчдын хөгжлийн хөтөлбөр</li>
-                        <li>• Дасгалжуулагчдын сургалт</li>
-                        <li>• Техникийн дэмжлэг</li>
-                      </ul>
-                    </div>
-
-                    <div className="bg-gray-800 p-6 rounded-lg">
-                      <div className="text-center mb-4">
-                        <div className="w-20 h-20 bg-green-600 rounded-full mx-auto mb-3 flex items-center justify-center">
-                          <Award className="w-8 h-8 text-white" />
-                        </div>
-                        <h3 className="text-xl font-semibold text-white">Д.Долгорсүрэн</h3>
-                        <p className="text-green-400">Нарийн бичгийн дарга</p>
-                      </div>
-                      <ul className="space-y-2 text-sm">
-                        <li>• Холбооны албан бичиг</li>
-                        <li>• Гишүүдийн бүртгэл</li>
-                        <li>• Мэдээллийн удирдлага</li>
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div className="mt-8 bg-gray-800 p-6 rounded-lg">
-                    <h3 className="text-xl font-semibold text-white mb-4">Зөвлөлийн гишүүд</h3>
-                    <div className="grid md:grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <h4 className="font-semibold text-green-400 mb-2">Техникийн хэсэг</h4>
-                        <ul className="space-y-1">
-                          <li>• Б.Мөнхбат - Ахлах дасгалжуулагч</li>
-                          <li>• Т.Түмэнжаргал - Шүүгч</li>
-                          <li>• Ө.Одгэрэл - Техникийн зөвлөх</li>
-                        </ul>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-green-400 mb-2">Удирдлагын хэсэг</h4>
-                        <ul className="space-y-1">
-                          <li>• Ж.Жавхлан - Санхүүгийн захирал</li>
-                          <li>• Р.Равданжав - Хууль зүйч</li>
-                          <li>• Н.Нарантуяа - Хөгжлийн захирал</li>
-                        </ul>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-green-400 mb-2">Клубын төлөөлөл</h4>
-                        <ul className="space-y-1">
-                          <li>• П.Пүрэвсүрэн - УБ клуб</li>
-                          <li>• Ч.Чимэддорж - Дархан клуб</li>
-                          <li>• Б.Батбаяр - Эрдэнэт клуб</li>
-                        </ul>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>

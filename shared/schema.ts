@@ -338,6 +338,28 @@ export const sponsors = pgTable("sponsors", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Branches table
+export const branches = pgTable("branches", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  leader: varchar("leader"),
+  leadershipMembers: text("leadership_members"),
+  address: text("address"),
+  location: varchar("location"),
+  activities: text("activities"),
+  imageUrl: varchar("image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Federation members table
+export const federationMembers = pgTable("federation_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  position: varchar("position"),
+  imageUrl: varchar("image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   player: one(players, {
@@ -455,6 +477,16 @@ export const insertSponsorSchema = createInsertSchema(sponsors).omit({
   updatedAt: true,
 });
 
+export const insertBranchSchema = createInsertSchema(branches).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertFederationMemberSchema = createInsertSchema(federationMembers).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertMembershipSchema = createInsertSchema(memberships).omit({
   id: true,
   createdAt: true,
@@ -496,6 +528,10 @@ export type InsertHomepageSlider = z.infer<typeof insertHomepageSliderSchema>;
 export type HomepageSlider = typeof homepageSliders.$inferSelect;
 export type InsertSponsor = z.infer<typeof insertSponsorSchema>;
 export type Sponsor = typeof sponsors.$inferSelect;
+export type InsertBranch = z.infer<typeof insertBranchSchema>;
+export type Branch = typeof branches.$inferSelect;
+export type InsertFederationMember = z.infer<typeof insertFederationMemberSchema>;
+export type FederationMember = typeof federationMembers.$inferSelect;
 export type TournamentParticipant = typeof tournamentParticipants.$inferSelect;
 export type InsertTournamentParticipant = typeof tournamentParticipants.$inferInsert;
 export type TournamentResults = typeof tournamentResults.$inferSelect;

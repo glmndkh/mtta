@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertPlayerSchema, insertClubSchema, insertTournamentSchema, insertMatchSchema, insertNewsSchema, insertMembershipSchema, insertHomepageSliderSchema, insertSponsorSchema } from "@shared/schema";
+import { insertPlayerSchema, insertClubSchema, insertTournamentSchema, insertMatchSchema, insertNewsSchema, insertMembershipSchema, insertHomepageSliderSchema, insertSponsorSchema, insertBranchSchema, insertFederationMemberSchema } from "@shared/schema";
 import { z } from "zod";
 
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
@@ -1051,6 +1051,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching club:", error);
       res.status(500).json({ message: "Клубын мэдээлэл авахад алдаа гарлаа" });
+    }
+  });
+
+  // Branch routes
+  app.get('/api/branches', async (req, res) => {
+    try {
+      const branches = await storage.getAllBranches();
+      res.json(branches);
+    } catch (error) {
+      console.error("Error fetching branches:", error);
+      res.status(500).json({ message: "Салбар холбоод авахад алдаа гарлаа" });
+    }
+  });
+
+  app.get('/api/branches/:id', async (req, res) => {
+    try {
+      const branch = await storage.getBranch(req.params.id);
+      if (!branch) {
+        return res.status(404).json({ message: "Салбар холбоо олдсонгүй" });
+      }
+      res.json(branch);
+    } catch (error) {
+      console.error("Error fetching branch:", error);
+      res.status(500).json({ message: "Салбар холбооны мэдээлэл авахад алдаа гарлаа" });
+    }
+  });
+
+  // Federation members public route
+  app.get('/api/federation-members', async (req, res) => {
+    try {
+      const members = await storage.getAllFederationMembers();
+      res.json(members);
+    } catch (error) {
+      console.error("Error fetching federation members:", error);
+      res.status(500).json({ message: "Холбооны гишүүдийн мэдээлэл авахад алдаа гарлаа" });
     }
   });
 
@@ -2273,6 +2308,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting sponsor:", error);
       res.status(400).json({ message: "Ивээн тэтгэгч устгахад алдаа гарлаа" });
+    }
+  });
+
+  // Admin branch routes
+  app.get('/api/admin/branches', requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const branches = await storage.getAllBranches();
+      res.json(branches);
+    } catch (error) {
+      console.error("Error fetching branches:", error);
+      res.status(500).json({ message: "Салбар холбоод авахад алдаа гарлаа" });
+    }
+  });
+
+  app.post('/api/admin/branches', requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const data = insertBranchSchema.parse(req.body);
+      const branch = await storage.createBranch(data);
+      res.json(branch);
+    } catch (error) {
+      console.error("Error creating branch:", error);
+      res.status(400).json({ message: "Салбар холбоо үүсгэхэд алдаа гарлаа" });
+    }
+  });
+
+  app.put('/api/admin/branches/:id', requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const branch = await storage.updateBranch(req.params.id, req.body);
+      if (!branch) {
+        return res.status(404).json({ message: "Салбар холбоо олдсонгүй" });
+      }
+      res.json(branch);
+    } catch (error) {
+      console.error("Error updating branch:", error);
+      res.status(400).json({ message: "Салбар холбоо засварлахад алдаа гарлаа" });
+    }
+  });
+
+  app.delete('/api/admin/branches/:id', requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const success = await storage.deleteBranch(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Салбар холбоо олдсонгүй" });
+      }
+      res.json({ message: "Салбар холбоо амжилттай устгагдлаа" });
+    } catch (error) {
+      console.error("Error deleting branch:", error);
+      res.status(400).json({ message: "Салбар холбоо устгахад алдаа гарлаа" });
+    }
+  });
+
+  // Admin federation member routes
+  app.get('/api/admin/federation-members', requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const members = await storage.getAllFederationMembers();
+      res.json(members);
+    } catch (error) {
+      console.error("Error fetching federation members:", error);
+      res.status(500).json({ message: "Холбооны гишүүд авахад алдаа гарлаа" });
+    }
+  });
+
+  app.post('/api/admin/federation-members', requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const data = insertFederationMemberSchema.parse(req.body);
+      const member = await storage.createFederationMember(data);
+      res.json(member);
+    } catch (error) {
+      console.error("Error creating federation member:", error);
+      res.status(400).json({ message: "Гишүүн нэмэхэд алдаа гарлаа" });
+    }
+  });
+
+  app.put('/api/admin/federation-members/:id', requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const member = await storage.updateFederationMember(req.params.id, req.body);
+      if (!member) {
+        return res.status(404).json({ message: "Гишүүн олдсонгүй" });
+      }
+      res.json(member);
+    } catch (error) {
+      console.error("Error updating federation member:", error);
+      res.status(400).json({ message: "Гишүүн засварлахад алдаа гарлаа" });
+    }
+  });
+
+  app.delete('/api/admin/federation-members/:id', requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const success = await storage.deleteFederationMember(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Гишүүн олдсонгүй" });
+      }
+      res.json({ message: "Гишүүн амжилттай устгагдлаа" });
+    } catch (error) {
+      console.error("Error deleting federation member:", error);
+      res.status(400).json({ message: "Гишүүн устгахад алдаа гарлаа" });
     }
   });
 

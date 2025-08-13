@@ -14,6 +14,8 @@ import {
   tournamentResults,
   homepageSliders,
   sponsors,
+  branches,
+  federationMembers,
   tournamentTeams,
   tournamentTeamPlayers,
   leagueMatches,
@@ -43,6 +45,10 @@ import {
   type InsertHomepageSlider,
   type Sponsor,
   type InsertSponsor,
+  type Branch,
+  type InsertBranch,
+  type FederationMember,
+  type InsertFederationMember,
   type TournamentTeam,
   type InsertTournamentTeam,
   type TournamentTeamPlayer,
@@ -85,6 +91,13 @@ export interface IStorage {
   createClub(club: InsertClub): Promise<Club>;
   getClubsByOwner(ownerId: string): Promise<Club[]>;
   getAllClubs(): Promise<Club[]>;
+
+  // Branch operations
+  getBranch(id: string): Promise<Branch | undefined>;
+  createBranch(branch: InsertBranch): Promise<Branch>;
+  updateBranch(id: string, branch: Partial<InsertBranch>): Promise<Branch | undefined>;
+  deleteBranch(id: string): Promise<boolean>;
+  getAllBranches(): Promise<Branch[]>;
 
   // Tournament operations
   getTournament(id: string): Promise<Tournament | undefined>;
@@ -153,6 +166,12 @@ export interface IStorage {
   createSponsor(sponsor: InsertSponsor): Promise<Sponsor>;
   updateSponsor(id: string, sponsor: Partial<InsertSponsor>): Promise<Sponsor | undefined>;
   deleteSponsor(id: string): Promise<boolean>;
+
+  // Federation member operations
+  getAllFederationMembers(): Promise<FederationMember[]>;
+  createFederationMember(member: InsertFederationMember): Promise<FederationMember>;
+  updateFederationMember(id: string, member: Partial<InsertFederationMember>): Promise<FederationMember | undefined>;
+  deleteFederationMember(id: string): Promise<boolean>;
 
   // Player tournament and match operations
   getPlayerTournamentRegistrations(playerId: string): Promise<any[]>;
@@ -527,6 +546,43 @@ export class DatabaseStorage implements IStorage {
   async deleteClub(id: string): Promise<boolean> {
     const result = await db.delete(clubs).where(eq(clubs.id, id));
     return (result.rowCount || 0) > 0;
+  }
+
+  // Branch operations
+  async getBranch(id: string): Promise<Branch | undefined> {
+    const [branch] = await db.select().from(branches).where(eq(branches.id, id));
+    return branch;
+  }
+
+  async createBranch(branchData: InsertBranch): Promise<Branch> {
+    const { randomUUID } = await import('crypto');
+    const [branch] = await db
+      .insert(branches)
+      .values({
+        ...branchData,
+        id: randomUUID(),
+        createdAt: new Date(),
+      })
+      .returning();
+    return branch;
+  }
+
+  async updateBranch(id: string, branchData: Partial<InsertBranch>): Promise<Branch | undefined> {
+    const [branch] = await db
+      .update(branches)
+      .set(branchData)
+      .where(eq(branches.id, id))
+      .returning();
+    return branch;
+  }
+
+  async deleteBranch(id: string): Promise<boolean> {
+    const result = await db.delete(branches).where(eq(branches.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getAllBranches(): Promise<Branch[]> {
+    return await db.select().from(branches).orderBy(branches.name);
   }
 
   // Tournament operations
@@ -948,6 +1004,39 @@ export class DatabaseStorage implements IStorage {
 
   async deleteSponsor(id: string): Promise<boolean> {
     const result = await db.delete(sponsors).where(eq(sponsors.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  // Federation member operations
+  async getAllFederationMembers(): Promise<FederationMember[]> {
+    return await db.select().from(federationMembers).orderBy(federationMembers.createdAt);
+  }
+
+  async createFederationMember(memberData: InsertFederationMember): Promise<FederationMember> {
+    const { randomUUID } = await import('crypto');
+    const now = new Date();
+    const [member] = await db
+      .insert(federationMembers)
+      .values({
+        ...memberData,
+        id: randomUUID(),
+        createdAt: now,
+      })
+      .returning();
+    return member;
+  }
+
+  async updateFederationMember(id: string, memberData: Partial<InsertFederationMember>): Promise<FederationMember | undefined> {
+    const [member] = await db
+      .update(federationMembers)
+      .set(memberData)
+      .where(eq(federationMembers.id, id))
+      .returning();
+    return member;
+  }
+
+  async deleteFederationMember(id: string): Promise<boolean> {
+    const result = await db.delete(federationMembers).where(eq(federationMembers.id, id));
     return (result.rowCount || 0) > 0;
   }
 
