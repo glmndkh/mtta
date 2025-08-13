@@ -15,6 +15,9 @@ import Leagues from "@/pages/leagues";
 import LeagueDetails from "@/pages/league-details";
 import News from "@/pages/news";
 import NewsDetail from "@/pages/news-detail";
+import Branches from "@/pages/branches";
+import BranchDetails from "@/pages/branch-details";
+import PastChampions from "@/pages/past-champions";
 import AdminTournamentResults from "@/pages/admin-tournament-results";
 import AdminTournaments from "@/pages/admin-tournaments";
 import ExcelTournamentDemo from "@/pages/excel-tournament-demo";
@@ -45,6 +48,9 @@ function Router() {
       <Route path="/clubs" component={Clubs} />
       <Route path="/leagues" component={Leagues} />
       <Route path="/leagues/:id" component={LeagueDetails} />
+      <Route path="/branches" component={Branches} />
+      <Route path="/branches/:id" component={BranchDetails} />
+      <Route path="/past-champions" component={PastChampions} />
       <Route path="/news/:id" component={NewsDetail} />
       <Route path="/news" component={News} />
       <Route path="/about" component={AboutPage} />
