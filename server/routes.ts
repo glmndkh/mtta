@@ -1638,7 +1638,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const results = await storage.getTournamentResults(tournamentId);
       
       if (!results) {
-        return res.status(404).json({ message: "Tournament results not found" });
+        // Return empty results structure instead of 404
+        return res.json({
+          tournamentId,
+          groupStageResults: {},
+          knockoutResults: {},
+          finalRankings: {},
+          isPublished: false
+        });
       }
       
       res.json(results);
