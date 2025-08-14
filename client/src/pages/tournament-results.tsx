@@ -188,7 +188,10 @@ export default function TournamentResultsPage() {
           <>
           <Tabs
             value={activeType}
-            onValueChange={(val) => setLocation(`/tournament/${tournamentId}/results/${val}`)}
+            onValueChange={(val) => {
+              setActiveType(val);
+              setLocation(`/tournament/${tournamentId}/results/${val}`);
+            }}
             className="mb-6"
           >
             <TabsList className="w-full flex flex-wrap bg-gray-800 border-gray-600">
