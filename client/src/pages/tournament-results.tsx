@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Trophy, Medal, Users, Calendar } from "lucide-react";
 import { format } from "date-fns";
-import { KnockoutBracket } from "@/components/KnockoutBracket";
 import PageWithLoading from "@/components/PageWithLoading";
 import type { Tournament, TournamentResults } from "@shared/schema";
 
@@ -58,7 +57,7 @@ interface FinalRanking {
 }
 
 export default function TournamentResultsPage() {
-  const [match, params] = useRoute("/tournament/:id/results/:type?");
+  const [, params] = useRoute("/tournament/:id/results/:type?");
   const [, setLocation] = useLocation();
 
   const tournamentId = params?.id;
@@ -187,30 +186,40 @@ export default function TournamentResultsPage() {
 
         {tournament.participationTypes && tournament.participationTypes.length > 0 ? (
           <>
-        <Tabs
-          value={activeType}
-          onValueChange={(val) => setLocation(`/tournament/${tournamentId}/results/${val}`)}
-          className="mb-6"
-        >
-          <TabsList className="w-full flex flex-wrap bg-gray-800 border-gray-600">
-            {tournament.participationTypes.map((type) => (
-              <TabsTrigger key={type} value={type} className="capitalize data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300">
-                {type.replace('_', ' ')}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+          <Tabs
+            value={activeType}
+            onValueChange={(val) => setLocation(`/tournament/${tournamentId}/results/${val}`)}
+            className="mb-6"
+          >
+            <TabsList className="w-full flex flex-wrap bg-gray-800 border-gray-600">
+              {tournament.participationTypes.map((type) => (
+                <TabsTrigger
+                  key={type}
+                  value={type}
+                  className="capitalize data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300"
+                >
+                  {type.replace('_', ' ')}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
 
-        <div className="space-y-6">
-        <Tabs defaultValue="finals" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-gray-800 border-gray-600">
-            <TabsTrigger value="finals" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300">Эцсийн байр</TabsTrigger>
-            <TabsTrigger value="knockout" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300">Шигшээ тоглолт</TabsTrigger>
-            <TabsTrigger value="groups" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300">Групп тулаан</TabsTrigger>
-          </TabsList>
+          <div className="space-y-6">
+            <Tabs defaultValue="finals" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-3 bg-gray-800 border-gray-600">
+                <TabsTrigger value="finals" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300">
+                  Эцсийн байр
+                </TabsTrigger>
+                <TabsTrigger value="knockout" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300">
+                  Шигшээ тоглолт
+                </TabsTrigger>
+                <TabsTrigger value="groups" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300">
+                  Групп тулаан
+                </TabsTrigger>
+              </TabsList>
 
-          {/* Final Rankings */}
-          <TabsContent value="finals">
+              {/* Final Rankings */}
+              <TabsContent value="finals">
             <Card className="card-dark">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-white">
@@ -257,8 +266,8 @@ export default function TournamentResultsPage() {
             </Card>
           </TabsContent>
 
-          {/* Knockout Bracket */}
-          <TabsContent value="knockout">
+              {/* Knockout Bracket */}
+              <TabsContent value="knockout">
             <div className="space-y-6">
               {/* Qualified Players from Groups */}
               <Card className="card-dark">
@@ -618,8 +627,8 @@ export default function TournamentResultsPage() {
             </div>
           </TabsContent>
 
-          {/* Group Stage */}
-          <TabsContent value="groups">
+              {/* Group Stage */}
+              <TabsContent value="groups">
             <div className="space-y-6">
               {groupStageResults.length > 0 ? (
                 groupStageResults.map((group, index) => (
@@ -689,13 +698,13 @@ export default function TournamentResultsPage() {
                 </Card>
               )}
             </div>
-          </TabsContent>
-        </Tabs>
-        </div>
+              </TabsContent>
+            </Tabs>
+          </div>
         </>
-        ) : (
-          <div className="text-center text-gray-300">Тэмцээнд төрөл байхгүй байна.</div>
-        )}
+      ) : (
+        <div className="text-center text-gray-300">Тэмцээнд төрөл байхгүй байна.</div>
+      )}
       </div>
     </PageWithLoading>
   );
