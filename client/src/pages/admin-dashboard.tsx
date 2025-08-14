@@ -323,7 +323,7 @@ export default function AdminDashboard() {
 
     return (
       <div className="space-y-4">
-        <div className="flex justify-between items-center gap-4">
+        <div className="flex flex-wrap justify-between items-center gap-4">
           <h2 className="text-2xl font-bold">Хэрэглэгчид</h2>
           <div className="flex-1 max-w-sm">
             <Input
@@ -390,7 +390,7 @@ export default function AdminDashboard() {
 
     return (
       <div className="space-y-4">
-        <div className="flex justify-between items-center gap-4">
+        <div className="flex flex-wrap justify-between items-center gap-4">
           <h2 className="text-2xl font-bold">Клубууд</h2>
           <div className="flex-1 max-w-sm">
             <Input
@@ -455,7 +455,7 @@ export default function AdminDashboard() {
 
     return (
       <div className="space-y-4">
-        <div className="flex justify-between items-center gap-4">
+        <div className="flex flex-wrap justify-between items-center gap-4">
           <h2 className="text-2xl font-bold">Салбар холбоод</h2>
           <div className="flex-1 max-w-sm">
             <Input
@@ -517,7 +517,7 @@ export default function AdminDashboard() {
 
     return (
       <div className="space-y-4">
-        <div className="flex justify-between items-center gap-4">
+        <div className="flex flex-wrap justify-between items-center gap-4">
           <h2 className="text-2xl font-bold">Холбооны гишүүд</h2>
           <div className="flex-1 max-w-sm">
             <Input
@@ -576,7 +576,7 @@ export default function AdminDashboard() {
   const renderJudgesTab = () => {
     return (
       <div className="space-y-4">
-        <div className="flex justify-between items-center gap-4">
+        <div className="flex flex-wrap justify-between items-center gap-4">
           <h2 className="text-2xl font-bold">Шүүгчид</h2>
           <Button onClick={openCreateDialog}>
             <Plus className="w-4 h-4 mr-2" />
@@ -622,7 +622,7 @@ export default function AdminDashboard() {
 
   const renderSlidersTab = () => (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap justify-between items-center gap-4">
         <h2 className="text-2xl font-bold">Нүүр хуудасны слайдер</h2>
         <Button onClick={openCreateDialog}>
           <Plus className="w-4 h-4 mr-2" />
@@ -674,7 +674,7 @@ export default function AdminDashboard() {
 
   const renderSponsorsTab = () => (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap justify-between items-center gap-4">
         <h2 className="text-2xl font-bold">Ивээн тэтгэгчдийн удирдлага</h2>
         <Button onClick={openCreateDialog}>
           <Plus className="w-4 h-4 mr-2" />
@@ -738,7 +738,7 @@ export default function AdminDashboard() {
 
   const renderChampionsTab = () => (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap justify-between items-center gap-4">
         <h2 className="text-2xl font-bold">Үе үеийн аваргууд</h2>
         <Button onClick={openCreateDialog}>
           <Plus className="w-4 h-4 mr-2" />
@@ -1791,7 +1791,7 @@ export default function AdminDashboard() {
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="flex flex-wrap gap-2">
+        <TabsList className="flex flex-wrap gap-2 h-auto items-start w-full">
           <TabsTrigger value="stats" className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
             Статистик
@@ -1917,7 +1917,7 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-wrap justify-between items-center gap-4">
                   <h2 className="text-2xl font-bold">Тэмцээнүүд</h2>
                   <div className="flex gap-2">
                     <Button
@@ -2018,7 +2018,7 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-wrap justify-between items-center gap-4">
                   <h2 className="text-2xl font-bold">Лигүүд</h2>
                   <Button onClick={openCreateDialog}>
                     <Plus className="w-4 h-4 mr-2" />
@@ -2104,7 +2104,7 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-wrap justify-between items-center gap-4">
                   <h2 className="text-2xl font-bold">Мэдээ нийтлэлүүд</h2>
                   <Button onClick={openCreateDialog}>
                     <Plus className="w-4 h-4 mr-2" />
@@ -2164,7 +2164,7 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-wrap justify-between items-center gap-4">
                   <h2 className="text-2xl font-bold">Лигийн багууд</h2>
                   <Button onClick={openCreateDialog}>
                     <Plus className="w-4 h-4 mr-2" />
