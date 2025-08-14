@@ -947,7 +947,7 @@ export default function AdminDashboard() {
                   <SelectItem value="3-р зэрэг">3-р зэрэг</SelectItem>
                   <SelectItem value="2-р зэрэг">2-р зэрэг</SelectItem>
                   <SelectItem value="1-р зэрэг">1-р зэрэг</SelectItem>
-                  <SelectItem value="дэд мастер">дэд мастер</SelectItem>
+                  <SelectItem value="спортын дэд мастер">спортын дэд мастер</SelectItem>
                   <SelectItem value="спортын мастер">спортын мастер</SelectItem>
                   <SelectItem value="олон улсын хэмжээний мастер">олон улсын хэмжээний мастер</SelectItem>
                 </SelectContent>

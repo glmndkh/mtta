@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -27,6 +28,14 @@ const registerSchema = z.object({
   role: z.enum(["player", "club_owner"], {
     required_error: "Төрлөө сонгоно уу",
   }),
+  rank: z.enum([
+    "3-р зэрэг",
+    "2-р зэрэг",
+    "1-р зэрэг",
+    "спортын дэд мастер",
+    "спортын мастер",
+    "олон улсын хэмжээний мастер",
+  ]).optional(),
 }).refine(
   (data) => data.password === data.confirmPassword,
   {
@@ -39,7 +48,7 @@ type RegisterForm = z.infer<typeof registerSchema>;
 
 export default function Register() {
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [, setRankProof] = useState<File | null>(null);
 
   const form = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
@@ -54,12 +63,16 @@ export default function Register() {
       password: "",
       confirmPassword: "",
       role: "player",
+      rank: undefined,
     },
   });
 
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterForm) => {
-      const response = await apiRequest("POST", "/api/auth/register", data);
+      const response = await apiRequest("/api/auth/register", {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Бүртгэлд алдаа гарлаа");
@@ -211,6 +224,46 @@ export default function Register() {
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="rank"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Зэрэг <span className="text-gray-500 text-sm">(заавал биш)</span></FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Зэрэг сонгоно уу" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="3-р зэрэг">3-р зэрэг</SelectItem>
+                        <SelectItem value="2-р зэрэг">2-р зэрэг</SelectItem>
+                        <SelectItem value="1-р зэрэг">1-р зэрэг</SelectItem>
+                        <SelectItem value="спортын дэд мастер">спортын дэд мастер</SelectItem>
+                        <SelectItem value="спортын мастер">спортын мастер</SelectItem>
+                        <SelectItem value="олон улсын хэмжээний мастер">олон улсын хэмжээний мастер</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="space-y-2">
+                <Label htmlFor="rank-proof">Зэргийн үнэмлэхний зураг <span className="text-gray-500 text-sm">(заавал биш)</span></Label>
+                <Input
+                  id="rank-proof"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setRankProof(e.target.files?.[0] || null)}
+                />
+                <p className="text-sm text-gray-500">
+                  Зэргийн үнэмлэхний зургаа оруулж зэргээ батална уу! (Заавал биш. Таныг зэргээ батлах хүртэл таны оруулсан
+                  зэргийг хүчингүйд тооцохыг анхаарна уу)
+                </p>
+              </div>
 
               <FormField
                 control={form.control}
