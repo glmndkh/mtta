@@ -439,7 +439,7 @@ export class DatabaseStorage implements IStorage {
   async updatePlayerRank(playerId: string, rank: string): Promise<boolean> {
     try {
       // Validate rank value
-      const validRanks = ["Шинэ тоглогч", "3-р зэрэг", "2-р зэрэг", "1-р зэрэг", "дэд мастер", "спортын мастер", "олон улсын хэмжээний мастер"];
+      const validRanks = ["Шинэ тоглогч", "3-р зэрэг", "2-р зэрэг", "1-р зэрэг", "спортын дэд мастер", "спортын мастер", "олон улсын хэмжээний мастер"];
       if (!validRanks.includes(rank)) {
         console.error("Invalid rank value:", rank);
         return false;

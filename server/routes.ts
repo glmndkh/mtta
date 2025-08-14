@@ -24,16 +24,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Simple auth routes (replacement for Replit OAuth)
   app.post('/api/auth/register', async (req, res) => {
     try {
-      const { 
-        firstName, 
-        lastName, 
-        gender, 
-        dateOfBirth, 
-        phone, 
-        email, 
-        clubAffiliation, 
-        password, 
-        role 
+      const {
+        firstName,
+        lastName,
+        gender,
+        dateOfBirth,
+        phone,
+        email,
+        clubAffiliation,
+        password,
+        role,
+        rank
       } = req.body;
       
       // Validate required fields
@@ -71,6 +72,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Зөв төрөл сонгоно уу" });
       }
 
+      const validRanks = ['3-р зэрэг', '2-р зэрэг', '1-р зэрэг', 'спортын дэд мастер', 'спортын мастер', 'олон улсын хэмжээний мастер'];
+      if (rank && !validRanks.includes(rank)) {
+        return res.status(400).json({ message: "Буруу зэрэг" });
+      }
+
       // Check for duplicate email and phone numbers
       const existingUserByEmail = await storage.getUserByEmail(email);
       if (existingUserByEmail) {
@@ -102,7 +108,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Creating user with data:", userData);
       
       const user = await storage.createSimpleUser(userData);
-      
+
+      await storage.createPlayer({
+        userId: user.id,
+        dateOfBirth: new Date(dateOfBirth),
+        rank: rank || 'Шинэ тоглогч'
+      });
+
       // Remove password from response
       const { password: _, ...userResponse } = user;
       res.json({ message: "Амжилттай бүртгэгдлээ", user: userResponse });
@@ -1766,7 +1778,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { rank, points, achievements } = req.body;
 
       // Validate rank if provided
-      const validRanks = ['3-р зэрэг', '2-р зэрэг', '1-р зэрэг', 'дэд мастер', 'спортын мастер', 'олон улсын хэмжээний мастер'];
+      const validRanks = ['3-р зэрэг', '2-р зэрэг', '1-р зэрэг', 'спортын дэд мастер', 'спортын мастер', 'олон улсын хэмжээний мастер'];
       if (rank && !validRanks.includes(rank)) {
         return res.status(400).json({ message: "Буруу зэрэглэл" });
       }
