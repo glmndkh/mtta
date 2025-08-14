@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertPlayerSchema, insertClubSchema, insertTournamentSchema, insertMatchSchema, insertNewsSchema, insertMembershipSchema, insertHomepageSliderSchema, insertSponsorSchema, insertBranchSchema, insertFederationMemberSchema, insertChampionSchema } from "@shared/schema";
+import { insertPlayerSchema, insertClubSchema, insertTournamentSchema, insertMatchSchema, insertNewsSchema, insertMembershipSchema, insertHomepageSliderSchema, insertSponsorSchema, insertBranchSchema, insertFederationMemberSchema, insertJudgeSchema, insertChampionSchema } from "@shared/schema";
 import { z } from "zod";
 
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
@@ -228,12 +228,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('No player data found for user:', user.id);
         }
       }
-      
+
+      // Get judge data
+      const judge = await storage.getJudgeByUserId(user.id);
+
       // Format the response to match the profile interface
       const profileData = {
         id: user.id,
         email: user.email,
         phone: user.phone,
+        firstName: user.firstName,
+        lastName: user.lastName,
         name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
         gender: user.gender,
         dateOfBirth: user.dateOfBirth ? user.dateOfBirth.toISOString().split('T')[0] : undefined,
@@ -250,6 +255,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         membershipEndDate: user.membershipEndDate,
         membershipActive: user.membershipActive,
         membershipAmount: user.membershipAmount,
+        isJudge: !!judge,
+        judgeType: judge?.judgeType,
         // Add player statistics
         playerStats: playerStats ? {
           rank: playerStats.rank,
@@ -1098,6 +1105,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching federation members:", error);
       res.status(500).json({ message: "Холбооны гишүүдийн мэдээлэл авахад алдаа гарлаа" });
+    }
+  });
+
+  // Judges public route
+  app.get('/api/judges', async (req, res) => {
+    try {
+      const { type } = req.query;
+      const judges = await storage.getAllJudges(type as string | undefined);
+      res.json(judges);
+    } catch (error) {
+      console.error("Error fetching judges:", error);
+      res.status(500).json({ message: "Шүүгчдийн мэдээлэл авахад алдаа гарлаа" });
     }
   });
 
@@ -2475,6 +2494,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting federation member:", error);
       res.status(400).json({ message: "Гишүүн устгахад алдаа гарлаа" });
+    }
+  });
+
+  // Admin judges routes
+  app.get('/api/admin/judges', requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const judges = await storage.getAllJudges();
+      res.json(judges);
+    } catch (error) {
+      console.error("Error fetching judges:", error);
+      res.status(500).json({ message: "Шүүгчид авахад алдаа гарлаа" });
+    }
+  });
+
+  app.post('/api/admin/judges', requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const data = insertJudgeSchema.parse(req.body);
+      const judge = await storage.createJudge(data);
+      res.json(judge);
+    } catch (error) {
+      console.error("Error creating judge:", error);
+      res.status(400).json({ message: "Шүүгч нэмэхэд алдаа гарлаа" });
+    }
+  });
+
+  app.delete('/api/admin/judges/:id', requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const success = await storage.deleteJudge(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Шүүгч олдсонгүй" });
+      }
+      res.json({ message: "Шүүгч амжилттай устгагдлаа" });
+    } catch (error) {
+      console.error("Error deleting judge:", error);
+      res.status(400).json({ message: "Шүүгч устгахад алдаа гарлаа" });
     }
   });
 

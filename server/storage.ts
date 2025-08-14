@@ -16,6 +16,7 @@ import {
   sponsors,
   branches,
   federationMembers,
+  judges,
   pastChampions,
   tournamentTeams,
   tournamentTeamPlayers,
@@ -52,6 +53,8 @@ import {
   type InsertBranch,
   type FederationMember,
   type InsertFederationMember,
+  type Judge,
+  type InsertJudge,
   type TournamentTeam,
   type InsertTournamentTeam,
   type TournamentTeamPlayer,
@@ -181,6 +184,12 @@ export interface IStorage {
   createFederationMember(member: InsertFederationMember): Promise<FederationMember>;
   updateFederationMember(id: string, member: Partial<InsertFederationMember>): Promise<FederationMember | undefined>;
   deleteFederationMember(id: string): Promise<boolean>;
+
+  // Judge operations
+  getAllJudges(type?: string): Promise<Judge[]>;
+  createJudge(judge: InsertJudge): Promise<Judge>;
+  deleteJudge(id: string): Promise<boolean>;
+  getJudgeByUserId(userId: string): Promise<Judge | undefined>;
 
   // Player tournament and match operations
   getPlayerTournamentRegistrations(playerId: string): Promise<any[]>;
@@ -1082,6 +1091,33 @@ export class DatabaseStorage implements IStorage {
   async deleteFederationMember(id: string): Promise<boolean> {
     const result = await db.delete(federationMembers).where(eq(federationMembers.id, id));
     return (result.rowCount || 0) > 0;
+  }
+
+  // Judge operations
+  async getAllJudges(type?: string): Promise<Judge[]> {
+    if (type) {
+      return await db.select().from(judges).where(eq(judges.judgeType, type as any));
+    }
+    return await db.select().from(judges);
+  }
+
+  async createJudge(judgeData: InsertJudge): Promise<Judge> {
+    const { randomUUID } = await import('crypto');
+    const [judge] = await db
+      .insert(judges)
+      .values({ id: randomUUID(), ...judgeData })
+      .returning();
+    return judge;
+  }
+
+  async deleteJudge(id: string): Promise<boolean> {
+    const result = await db.delete(judges).where(eq(judges.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getJudgeByUserId(userId: string): Promise<Judge | undefined> {
+    const [judge] = await db.select().from(judges).where(eq(judges.userId, userId));
+    return judge;
   }
 
   // Membership operations

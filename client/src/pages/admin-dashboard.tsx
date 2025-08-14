@@ -76,10 +76,15 @@ export default function AdminDashboard() {
     enabled: selectedTab === 'federation-members'
   });
 
+  const { data: judges, isLoading: judgesLoading } = useQuery({
+    queryKey: ['/api/admin/judges'],
+    enabled: selectedTab === 'judges'
+  });
+
   // Load all users for player selection dropdown
   const { data: allUsers } = useQuery({
     queryKey: ['/api/admin/users'],
-    enabled: selectedTab === 'teams' && (isCreateDialogOpen || !!editingItem)
+    enabled: (selectedTab === 'teams' || selectedTab === 'judges') && (isCreateDialogOpen || !!editingItem)
   });
 
   const { data: news, isLoading: newsLoading } = useQuery({
@@ -660,6 +665,53 @@ export default function AdminDashboard() {
     );
   };
 
+  const renderJudgesTab = () => {
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center gap-4">
+          <h2 className="text-2xl font-bold">Шүүгчид</h2>
+          <Button onClick={openCreateDialog}>
+            <Plus className="w-4 h-4 mr-2" />
+            Шүүгч нэмэх
+          </Button>
+        </div>
+
+        {judgesLoading ? (
+          <div>Ачааллаж байна...</div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Нэр</TableHead>
+                <TableHead>Төрөл</TableHead>
+                <TableHead>Зураг</TableHead>
+                <TableHead>Үйлдэл</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {judges && Array.isArray(judges) && judges.map((judge: any) => (
+                <TableRow key={judge.id}>
+                  <TableCell>{judge.firstName} {judge.lastName}</TableCell>
+                  <TableCell>{judge.judgeType === 'international' ? 'Олон улсын' : 'Дотоодын'}</TableCell>
+                  <TableCell>
+                    {judge.imageUrl && (
+                      <img src={judge.imageUrl} alt={judge.firstName} className="w-10 h-10 rounded-full" />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(judge.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
+    );
+  };
+
   const renderSlidersTab = () => (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -1064,6 +1116,64 @@ export default function AdminDashboard() {
                 value={formData.imageUrl || ''}
                 onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
               />
+            </div>
+          </>
+        );
+
+      case 'judges':
+        return (
+          <>
+            <div>
+              <Label htmlFor="userId">Хэрэглэгч</Label>
+              <Select onValueChange={(userId) => {
+                const user = allUsers?.find((u: any) => u.id === userId);
+                setFormData({ ...formData, userId, firstName: user?.firstName, lastName: user?.lastName });
+              }}>
+                <SelectTrigger id="userId">
+                  <SelectValue placeholder="Хэрэглэгч сонгох" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allUsers?.map((u: any) => (
+                    <SelectItem key={u.id} value={u.id}>{u.firstName} {u.lastName}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="firstName">Нэр</Label>
+              <Input
+                id="firstName"
+                value={formData.firstName || ''}
+                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="lastName">Овог</Label>
+              <Input
+                id="lastName"
+                value={formData.lastName || ''}
+                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="imageUrl">Зураг URL</Label>
+              <Input
+                id="imageUrl"
+                value={formData.imageUrl || ''}
+                onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="judgeType">Төрөл</Label>
+              <Select value={formData.judgeType || ''} onValueChange={(v) => setFormData({ ...formData, judgeType: v })}>
+                <SelectTrigger id="judgeType">
+                  <SelectValue placeholder="Сонгох" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="domestic">Дотоодын шүүгч</SelectItem>
+                  <SelectItem value="international">Олон улсын шүүгч</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </>
         );
@@ -1856,6 +1966,10 @@ export default function AdminDashboard() {
             <UserPlus className="w-4 h-4" />
             Холбооны гишүүд
           </TabsTrigger>
+          <TabsTrigger value="judges" className="flex items-center gap-2">
+            <Shield className="w-4 h-4" />
+            Шүүгчид
+          </TabsTrigger>
           <TabsTrigger value="news" className="flex items-center gap-2">
             <Newspaper className="w-4 h-4" />
             Мэдээ
@@ -2298,6 +2412,18 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               {renderFederationMembersTab()}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="judges">
+          <Card>
+            <CardHeader>
+              <CardTitle>Шүүгчдийн удирдлага</CardTitle>
+              <CardDescription>Шүүгчийг нэмэх, устгах</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {renderJudgesTab()}
             </CardContent>
           </Card>
         </TabsContent>

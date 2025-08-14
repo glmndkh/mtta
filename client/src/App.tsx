@@ -18,6 +18,7 @@ import NewsDetail from "@/pages/news-detail";
 import Branches from "@/pages/branches";
 import BranchDetails from "@/pages/branch-details";
 import PastChampions from "@/pages/past-champions";
+import JudgesPage from "@/pages/judges";
 import AdminTournamentResults from "@/pages/admin-tournament-results";
 import AdminTournaments from "@/pages/admin-tournaments";
 import ExcelTournamentDemo from "@/pages/excel-tournament-demo";
@@ -51,6 +52,7 @@ function Router() {
       <Route path="/branches" component={Branches} />
       <Route path="/branches/:id" component={BranchDetails} />
       <Route path="/past-champions" component={PastChampions} />
+      <Route path="/judges" component={JudgesPage} />
       <Route path="/news/:id" component={NewsDetail} />
       <Route path="/news" component={News} />
       <Route path="/about" component={AboutPage} />
