@@ -854,7 +854,7 @@ export default function TournamentManagement() {
                                                       <div>
                                                         <div className="font-medium">{fullName}</div>
                                                         <div className="text-xs text-gray-500">
-                                                          {user.email} • {user.role === 'admin' ? 'Админ' : user.role === 'club_owner' ? 'Клубын эзэн' : 'Тоглогч'}
+                                                          {user.email} • {user.role === 'admin' ? 'Админ' : user.role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч'}
                                                         </div>
                                                       </div>
                                                       {player.playerId === user.id && (
@@ -1137,7 +1137,7 @@ export default function TournamentManagement() {
                                                         {fullName}
                                                       </div>
                                                       <div className="text-xs text-gray-500">
-                                                        {user.email} • {user.role === 'admin' ? 'Админ' : user.role === 'club_owner' ? 'Клубын эзэн' : 'Тоглогч'}
+                                                        {user.email} • {user.role === 'admin' ? 'Админ' : user.role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч'}
                                                       </div>
                                                     </div>
                                                   </CommandItem>

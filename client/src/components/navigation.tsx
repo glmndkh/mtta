@@ -179,7 +179,6 @@ export default function Navigation() {
                     <div className="nav-link flex items-center space-x-2 px-3 py-2 cursor-pointer">
                       <User className="h-4 w-4" />
                       <span>{(user as any).firstName} ({
-                        (user as any).role === 'club_owner' ? 'Клубын эзэн' :
                         (user as any).role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч'
                       })</span>
                     </div>

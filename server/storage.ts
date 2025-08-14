@@ -1647,9 +1647,8 @@ export class DatabaseStorage implements IStorage {
           news: newsCount.count || 0
         },
         roleDistribution: roleDistribution.map(r => ({
-          name: r.role === 'admin' ? 'Админ' : 
-                r.role === 'player' ? 'Тоглогч' :
-                r.role === 'club_owner' ? 'Клубын эзэн' : 'Хэрэглэгч',
+          name: r.role === 'admin' ? 'Админ' :
+                r.role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч',
           value: r.count,
           role: r.role
         })),

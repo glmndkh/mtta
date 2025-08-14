@@ -27,7 +27,6 @@ export default function AdminDashboard() {
   const [selectedLeague, setSelectedLeague] = useState<any>(null);
   const [formData, setFormData] = useState<any>({});
   const [userFilter, setUserFilter] = useState("");
-  const [playerFilter, setPlayerFilter] = useState("");
   const [clubFilter, setClubFilter] = useState("");
   const [branchFilter, setBranchFilter] = useState("");
   const [memberFilter, setMemberFilter] = useState("");
@@ -41,10 +40,6 @@ export default function AdminDashboard() {
     enabled: selectedTab === 'users'
   });
 
-  const { data: players, isLoading: playersLoading } = useQuery({
-    queryKey: ['/api/admin/players'],
-    enabled: selectedTab === 'players'
-  });
 
   const { data: clubs, isLoading: clubsLoading } = useQuery({
     queryKey: ['/api/admin/clubs'],
@@ -167,10 +162,8 @@ export default function AdminDashboard() {
   };
 
   const handleUpdate = () => {
-    const endpoint = selectedTab === 'players' 
-      ? `/api/admin/players/${editingItem.id}`
-      : `/api/admin/${selectedTab}/${editingItem.id}`;
-    
+    const endpoint = `/api/admin/${selectedTab}/${editingItem.id}`;
+
     updateMutation.mutate({
       endpoint,
       data: formData
@@ -265,16 +258,6 @@ export default function AdminDashboard() {
     }
     
     setFormData(formattedItem);
-  };
-
-  const openEditPlayerDialog = (player: any) => {
-    setEditingItem(player.players);
-    setFormData({
-      id: player.players?.id,
-      rank: player.players?.rank || '',
-      points: player.players?.points || 0,
-      achievements: player.players?.achievements || ''
-    });
   };
 
   const openCreateDialog = () => {
@@ -393,81 +376,6 @@ export default function AdminDashboard() {
     );
   };
 
-  const renderPlayersTab = () => {
-    const filteredPlayers = players && Array.isArray(players) ? players.filter((player: any) => {
-      const searchText = playerFilter.toLowerCase();
-      return !searchText || 
-             player.users?.firstName?.toLowerCase().includes(searchText) ||
-             player.users?.lastName?.toLowerCase().includes(searchText) ||
-             player.players?.memberNumber?.toString().includes(searchText) ||
-             player.players?.rank?.toLowerCase().includes(searchText);
-    }) : [];
-
-    return (
-      <div className="space-y-4">
-        <div className="flex justify-between items-center gap-4">
-          <h2 className="text-2xl font-bold">Тоглогчид</h2>
-          <div className="flex-1 max-w-sm">
-            <Input
-              placeholder="Тоглогч хайх..."
-              value={playerFilter}
-              onChange={(e) => setPlayerFilter(e.target.value)}
-            />
-          </div>
-        </div>
-        
-        {playersLoading ? (
-          <div>Ачааллаж байна...</div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Гишүүний дугаар</TableHead>
-                <TableHead>Нэр</TableHead>
-                <TableHead>Зэрэглэл</TableHead>
-                <TableHead>Оноо</TableHead>
-                <TableHead>Амжилт</TableHead>
-                <TableHead>Гишүүнчлэл</TableHead>
-                <TableHead>Хожил/Ялагдал</TableHead>
-                <TableHead>Үйлдэл</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredPlayers.map((player: any) => (
-                <TableRow key={player.players?.id}>
-                  <TableCell>{player.players?.memberNumber}</TableCell>
-                  <TableCell>{player.users?.firstName} {player.users?.lastName}</TableCell>
-                  <TableCell>{player.players?.rank || 'Тодорхойгүй'}</TableCell>
-                  <TableCell>{player.players?.points || 0}</TableCell>
-                  <TableCell>
-                    <div className="max-w-32 truncate" title={player.players?.achievements}>
-                      {player.players?.achievements || 'Байхгүй'}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={player.users?.membershipActive ? 'default' : 'destructive'}>
-                      {player.users?.membershipActive ? 'Идэвхтэй' : 'Идэвхгүй'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{player.players?.wins}/{player.players?.losses}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => openEditPlayerDialog(player)}>
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => handleDelete(player.players?.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </div>
-    );
-  };
 
   const renderClubsTab = () => {
     const filteredClubs = clubs && Array.isArray(clubs) ? clubs.filter((club: any) => {
@@ -925,8 +833,7 @@ export default function AdminDashboard() {
                   <SelectValue placeholder="Роль сонгох" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="player">Тоглогч</SelectItem>
-                  <SelectItem value="club_owner">Клубын эзэн</SelectItem>
+                  <SelectItem value="player">Хэрэглэгч</SelectItem>
                   <SelectItem value="admin">Админ</SelectItem>
                 </SelectContent>
               </Select>
@@ -979,51 +886,6 @@ export default function AdminDashboard() {
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                 />
               </div>
-            </div>
-          </>
-        );
-
-      case 'players':
-        return (
-          <>
-            <div>
-              <Label htmlFor="rank">Зэрэглэл</Label>
-              <Select 
-                value={formData.rank || ''} 
-                onValueChange={(value) => setFormData({...formData, rank: value})}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Зэрэглэл сонгоно уу" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="3-р зэрэг">3-р зэрэг</SelectItem>
-                  <SelectItem value="2-р зэрэг">2-р зэрэг</SelectItem>
-                  <SelectItem value="1-р зэрэг">1-р зэрэг</SelectItem>
-                  <SelectItem value="спортын дэд мастер">спортын дэд мастер</SelectItem>
-                  <SelectItem value="спортын мастер">спортын мастер</SelectItem>
-                  <SelectItem value="олон улсын хэмжээний мастер">олон улсын хэмжээний мастер</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="points">Оноо</Label>
-              <Input
-                id="points"
-                type="number"
-                value={formData.points || 0}
-                onChange={(e) => setFormData({...formData, points: parseInt(e.target.value) || 0})}
-                placeholder="Тоглогчийн оноо"
-              />
-            </div>
-            <div>
-              <Label htmlFor="achievements">Амжилт</Label>
-              <Textarea
-                id="achievements"
-                value={formData.achievements || ''}
-                onChange={(e) => setFormData({...formData, achievements: e.target.value})}
-                placeholder="Тоглогчийн амжилтууд..."
-                rows={4}
-              />
             </div>
           </>
         );
@@ -1929,35 +1791,12 @@ export default function AdminDashboard() {
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid w-full grid-cols-13">
+        <TabsList className="flex flex-wrap gap-2">
           <TabsTrigger value="stats" className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
             Статистик
           </TabsTrigger>
-          <TabsTrigger value="users" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Хэрэглэгчид
-          </TabsTrigger>
-          <TabsTrigger value="players" className="flex items-center gap-2">
-            <Shield className="w-4 h-4" />
-            Тоглогчид
-          </TabsTrigger>
-          <TabsTrigger value="clubs" className="flex items-center gap-2">
-            <Building className="w-4 h-4" />
-            Клубууд
-          </TabsTrigger>
-          <TabsTrigger value="tournaments" className="flex items-center gap-2">
-            <Trophy className="w-4 h-4" />
-            Тэмцээн
-          </TabsTrigger>
-          <TabsTrigger value="leagues" className="flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
-            Лиг
-          </TabsTrigger>
-          <TabsTrigger value="teams" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Багууд
-          </TabsTrigger>
+          <div className="w-full font-semibold mt-2">Холбоо</div>
           <TabsTrigger value="branches" className="flex items-center gap-2">
             <LinkIcon className="w-4 h-4" />
             Салбар холбоод
@@ -1970,6 +1809,32 @@ export default function AdminDashboard() {
             <Shield className="w-4 h-4" />
             Шүүгчид
           </TabsTrigger>
+          <TabsTrigger value="champions" className="flex items-center gap-2">
+            <Crown className="w-4 h-4" />
+            Аваргууд
+          </TabsTrigger>
+          <TabsTrigger value="clubs" className="flex items-center gap-2">
+            <Building className="w-4 h-4" />
+            Клубууд
+          </TabsTrigger>
+          <TabsTrigger value="users" className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            Хэрэглэгчид
+          </TabsTrigger>
+          <div className="w-full font-semibold mt-2">Тэмцээн</div>
+          <TabsTrigger value="tournaments" className="flex items-center gap-2">
+            <Trophy className="w-4 h-4" />
+            Тэмцээн
+          </TabsTrigger>
+          <TabsTrigger value="leagues" className="flex items-center gap-2">
+            <Calendar className="w-4 h-4" />
+            Лиг
+          </TabsTrigger>
+          <TabsTrigger value="teams" className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            Багууд
+          </TabsTrigger>
+          <div className="w-full font-semibold mt-2">Мэдээ</div>
           <TabsTrigger value="news" className="flex items-center gap-2">
             <Newspaper className="w-4 h-4" />
             Мэдээ
@@ -1982,10 +1847,6 @@ export default function AdminDashboard() {
             <Zap className="w-4 h-4" />
             Ивээн тэтгэгчид
           </TabsTrigger>
-          <TabsTrigger value="champions" className="flex items-center gap-2">
-            <Crown className="w-4 h-4" />
-            Аваргууд
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="users">
@@ -1996,18 +1857,6 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               {renderUsersTab()}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="players">
-          <Card>
-            <CardHeader>
-              <CardTitle>Тоглогчдын удирдлага</CardTitle>
-              <CardDescription>Тоглогчдын мэдээлэл, статистик</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {renderPlayersTab()}
             </CardContent>
           </Card>
         </TabsContent>

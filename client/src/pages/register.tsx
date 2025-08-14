@@ -25,9 +25,6 @@ const registerSchema = z.object({
   clubAffiliation: z.string().min(1, "Клубын мэдээлэл эсвэл тоглодог газрын нэрийг оруулна уу"),
   password: z.string().min(6, "Нууц үг дор хаяж 6 тэмдэгт байх ёстой"),
   confirmPassword: z.string().min(1, "Нууц үгээ баталгаажуулна уу"),
-  role: z.enum(["player", "club_owner"], {
-    required_error: "Төрлөө сонгоно уу",
-  }),
   rank: z.enum([
     "3-р зэрэг",
     "2-р зэрэг",
@@ -62,7 +59,6 @@ export default function Register() {
       clubAffiliation: "",
       password: "",
       confirmPassword: "",
-      role: "player",
       rank: undefined,
     },
   });
@@ -293,30 +289,8 @@ export default function Register() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Төрөл</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Төрлөө сонгоно уу" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="player">Тоглогч</SelectItem>
-                        <SelectItem value="club_owner">Клубын эзэн</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="w-full mtta-green text-white hover:bg-mtta-green-dark"
                 disabled={registerMutation.isPending}
               >
