@@ -360,6 +360,15 @@ export const federationMembers = pgTable("federation_members", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Past champions table
+export const pastChampions = pgTable("past_champions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  year: integer("year").notNull(),
+  imageUrl: varchar("image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   player: one(players, {
@@ -487,6 +496,11 @@ export const insertFederationMemberSchema = createInsertSchema(federationMembers
   createdAt: true,
 });
 
+export const insertChampionSchema = createInsertSchema(pastChampions).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertMembershipSchema = createInsertSchema(memberships).omit({
   id: true,
   createdAt: true,
@@ -532,6 +546,8 @@ export type InsertBranch = z.infer<typeof insertBranchSchema>;
 export type Branch = typeof branches.$inferSelect;
 export type InsertFederationMember = z.infer<typeof insertFederationMemberSchema>;
 export type FederationMember = typeof federationMembers.$inferSelect;
+export type InsertChampion = z.infer<typeof insertChampionSchema>;
+export type Champion = typeof pastChampions.$inferSelect;
 export type TournamentParticipant = typeof tournamentParticipants.$inferSelect;
 export type InsertTournamentParticipant = typeof tournamentParticipants.$inferInsert;
 export type TournamentResults = typeof tournamentResults.$inferSelect;
