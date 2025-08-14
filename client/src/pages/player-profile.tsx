@@ -1,4 +1,4 @@
-import { useRoute, useLocation, useRouter } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,34 +6,83 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, User, Trophy, Calendar, MapPin, Phone, Mail } from "lucide-react";
 import Navigation from "@/components/navigation";
 
+interface Achievement {
+  id: string;
+  title: string;
+  description?: string;
+  achievedAt?: string | null;
+  category?: string;
+}
+
+interface PlayerProfileData {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  memberNumber?: string;
+  rank?: string;
+  wins?: number;
+  losses?: number;
+  email?: string;
+  phone?: string;
+  clubAffiliation?: string;
+  profileImageUrl?: string;
+}
+
+interface TournamentMatch {
+  id: string;
+  isWinner?: boolean;
+  result?: string;
+  opponent?: {
+    name?: string;
+    user?: { firstName?: string; lastName?: string };
+  };
+}
+
+interface RegularMatch {
+  id: string;
+  player1Id: string;
+  winnerId?: string;
+  player1?: { user?: { firstName?: string; lastName?: string } };
+  player2?: { user?: { firstName?: string; lastName?: string } };
+  sets?: Array<{ player1Score: number; player2Score: number }>;
+}
+
 export default function PlayerProfilePage() {
   const [match, params] = useRoute("/player/:id");
-  const [, setLocation] = useLocation();
-  const { navigate } = useRouter();
+  const [, navigate] = useLocation();
 
   // Fetch player data
-  const { data: playerData, isLoading } = useQuery({
+  const { data: playerData, isLoading } = useQuery<PlayerProfileData>({
     queryKey: ["/api/players", params?.id],
     enabled: !!params?.id,
     retry: false,
   });
 
   // Fetch player matches
-  const { data: matches = [], isLoading: matchesLoading } = useQuery({
+  const {
+    data: matches = [],
+    isLoading: matchesLoading,
+  } = useQuery<RegularMatch[]>({
     queryKey: ["/api/players", params?.id, "matches"],
     enabled: !!params?.id,
     retry: false,
   });
 
   // Fetch tournament match history
-  const { data: tournamentMatches = [], isLoading: tournamentMatchesLoading } = useQuery({
+  const {
+    data: tournamentMatches = [],
+    isLoading: tournamentMatchesLoading,
+  } = useQuery<TournamentMatch[]>({
     queryKey: ["/api/players", params?.id, "tournament-matches"],
     enabled: !!params?.id,
     retry: false,
   });
 
   // Fetch achievements
-  const { data: achievements = [], isLoading: achievementsLoading } = useQuery({
+  const {
+    data: achievements = [],
+    isLoading: achievementsLoading,
+  } = useQuery<Achievement[]>({
     queryKey: ["/api/players", params?.id, "achievements"],
     enabled: !!params?.id,
     retry: false,
@@ -57,7 +106,7 @@ export default function PlayerProfilePage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Тоглогч олдсонгүй</h1>
-            <Button onClick={() => setLocation("/")}>
+            <Button onClick={() => navigate("/")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Буцах
             </Button>
@@ -79,7 +128,7 @@ export default function PlayerProfilePage() {
         <div className="mb-8">
           <Button 
             variant="outline" 
-            onClick={() => setLocation("/")}
+            onClick={() => navigate("/")}
             className="mb-4"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -409,7 +458,7 @@ export default function PlayerProfilePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {achievements.map((achievement: any) => (
+                    {achievements.map((achievement: Achievement) => (
                       <div 
                         key={achievement.id}
                         className="flex items-center p-3 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg"

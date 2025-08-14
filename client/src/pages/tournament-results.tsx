@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { useRoute, useLocation } from "wouter";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Trophy, Medal, Users, Calendar } from "lucide-react";
 import { format } from "date-fns";
-import { useAuth } from "@/hooks/useAuth";
 import { KnockoutBracket } from "@/components/KnockoutBracket";
 import PageWithLoading from "@/components/PageWithLoading";
 import type { Tournament, TournamentResults } from "@shared/schema";
@@ -59,24 +58,42 @@ interface FinalRanking {
 }
 
 export default function TournamentResultsPage() {
-  const [match, params] = useRoute("/tournament/:id/results");
+  const [match, params] = useRoute("/tournament/:id/results/:type?");
   const [, setLocation] = useLocation();
-  const { isAuthenticated, user } = useAuth();
+
+  const tournamentId = params?.id;
+  const participationType = params?.type as string | undefined;
 
   // Fetch tournament data
   const { data: tournament, isLoading: tournamentLoading } = useQuery<Tournament>({
-    queryKey: ['/api/tournaments', params?.id],
-    enabled: !!params?.id,
+    queryKey: ['/api/tournaments', tournamentId],
+    enabled: !!tournamentId,
   });
 
   // Fetch tournament results
   const { data: results, isLoading: resultsLoading } = useQuery<TournamentResults>({
-    queryKey: ['/api/tournaments', params?.id, 'results'],
-    enabled: !!params?.id,
+    queryKey: ['/api/tournaments', tournamentId, 'results'],
+    enabled: !!tournamentId,
   });
 
+  const [activeType, setActiveType] = useState<string>(participationType || "");
+
+  useEffect(() => {
+    if (participationType) {
+      setActiveType(participationType);
+    }
+  }, [participationType]);
+
+  // Redirect to first participation type if none specified
+  useEffect(() => {
+    if (tournament && !participationType && tournament.participationTypes?.length) {
+      const firstType = tournament.participationTypes[0];
+      setLocation(`/tournament/${tournamentId}/results/${firstType}`, { replace: true });
+    }
+  }, [tournament, participationType, tournamentId, setLocation]);
+
   if (tournamentLoading || resultsLoading) {
-    return <PageWithLoading />;
+    return <PageWithLoading>{null}</PageWithLoading>;
   }
 
   if (!tournament) {
@@ -127,9 +144,13 @@ export default function TournamentResultsPage() {
     );
   }
 
-  const groupStageResults: GroupStageGroup[] = results.groupStageResults as GroupStageGroup[] || [];
-  const knockoutResults: KnockoutMatch[] = results.knockoutResults as KnockoutMatch[] || [];
-  const finalRankings: FinalRanking[] = results.finalRankings as FinalRanking[] || [];
+  const groupStageResultsByType = (results.groupStageResults as Record<string, GroupStageGroup[]> || {});
+  const knockoutResultsByType = (results.knockoutResults as Record<string, KnockoutMatch[]> || {});
+  const finalRankingsByType = (results.finalRankings as Record<string, FinalRanking[]> || {});
+
+  const groupStageResults: GroupStageGroup[] = groupStageResultsByType[activeType] || [];
+  const knockoutResults: KnockoutMatch[] = knockoutResultsByType[activeType] || [];
+  const finalRankings: FinalRanking[] = finalRankingsByType[activeType] || [];
 
   const navigateToProfile = (playerId: string) => {
     console.log('Navigating to player profile:', playerId);
@@ -163,6 +184,22 @@ export default function TournamentResultsPage() {
             </Badge>
           </div>
         </div>
+
+        {tournament.participationTypes && tournament.participationTypes.length > 0 ? (
+          <>
+        <Tabs
+          value={activeType}
+          onValueChange={(val) => setLocation(`/tournament/${tournamentId}/results/${val}`)}
+          className="mb-6"
+        >
+          <TabsList className="w-full flex flex-wrap bg-gray-800 border-gray-600">
+            {tournament.participationTypes.map((type) => (
+              <TabsTrigger key={type} value={type} className="capitalize data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300">
+                {type.replace('_', ' ')}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
 
         <div className="space-y-6">
         <Tabs defaultValue="finals" className="space-y-6">
@@ -655,6 +692,10 @@ export default function TournamentResultsPage() {
           </TabsContent>
         </Tabs>
         </div>
+        </>
+        ) : (
+          <div className="text-center text-gray-300">Тэмцээнд төрөл байхгүй байна.</div>
+        )}
       </div>
     </PageWithLoading>
   );

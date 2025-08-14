@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "wouter";
+import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -96,6 +96,14 @@ interface Team {
   members: string[];
 }
 
+interface Medal {
+  tournamentId: string;
+  tournamentName: string;
+  medalType: 'gold' | 'silver' | 'bronze' | string;
+  position: number;
+  medal?: string;
+}
+
 // Mongolia provinces (aimags) and major cities
 const MONGOLIA_PROVINCES = [
   'Улаанбаатар',
@@ -122,7 +130,7 @@ const MONGOLIA_PROVINCES = [
   'Хэнтий'
 ];
 
-const MONGOLIA_CITIES = {
+const MONGOLIA_CITIES: Record<string, string[]> = {
   'Улаанбаатар': ['Баянгол дүүрэг', 'Баянзүрх дүүрэг', 'Чингэлтэй дүүрэг', 'Хан-Уул дүүрэг', 'Сонгинохайрхан дүүрэг', 'Сүхбаатар дүүрэг'],
   'Дархан-Уул': ['Дархан', 'Хонгор', 'Орхон'],
   'Орхон': ['Эрдэнэт', 'Баян-Өндөр'],
@@ -172,7 +180,7 @@ export default function Profile() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { navigate } = useRouter();
+  const [, navigate] = useLocation();
 
   const [profileData, setProfileData] = useState<UserProfile>({
     id: '',
@@ -186,7 +194,7 @@ export default function Profile() {
   
   // Get available cities based on selected province OR the profile's province (for initial load)
   const province = selectedProvince || profileData.province;
-  const availableCities = province ? (MONGOLIA_CITIES as any)[province] || [] : [];
+  const availableCities: string[] = province ? MONGOLIA_CITIES[province] || [] : [];
 
   const calculateAge = (dob: string) => {
     const birth = new Date(dob);
@@ -222,7 +230,7 @@ export default function Profile() {
     enabled: !!profile,
   });
 
-  const { data: medals = [] } = useQuery({
+  const { data: medals = [] } = useQuery<Medal[]>({
     queryKey: ['/api/user/medals'],
     enabled: !!profile,
   });
@@ -413,7 +421,7 @@ export default function Profile() {
                   <div className="flex items-center gap-3 flex-wrap">
                     <h1 className="text-3xl font-bold text-gray-900">{profile?.firstName} {profile?.lastName}</h1>
                     {/* Tournament Medals */}
-                    {medals && medals.map((medal: any) => (
+                    {medals && medals.map((medal: Medal) => (
                       <div key={`${medal.tournamentId}-${medal.medalType}`} className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                         medal.medalType === 'gold' ? 'bg-yellow-100 text-yellow-800' :
                         medal.medalType === 'silver' ? 'bg-gray-100 text-gray-800' :

@@ -43,7 +43,7 @@ function Router() {
       <Route path="/register" component={Register} />
       <Route path="/tournament-landing" component={TournamentLanding} />
       <Route path="/tournament/:id" component={TournamentPage} />
-      <Route path="/tournament/:id/results" component={TournamentResults} />
+      <Route path="/tournament/:id/results/:type?" component={TournamentResults} />
       <Route path="/player/:id" component={PlayerProfilePage} />
       <Route path="/tournaments" component={Tournaments} />
       <Route path="/clubs" component={Clubs} />
@@ -66,7 +66,7 @@ function Router() {
           <Route path="/admin" component={AdminDashboard} />
           <Route path="/admin/generator" component={AdminTournamentGenerator} />
           <Route path="/admin/tournaments" component={AdminTournaments} />
-          <Route path="/admin/tournament/:id/results" component={AdminTournamentResults} />
+          <Route path="/admin/tournament/:id/results/:type?" component={AdminTournamentResults} />
           <Route path="/admin/tournament-results" component={AdminTournamentResults} />
           <Route path="/admin/tournament-create" component={AdminTournamentGenerator} />
           <Route path="/admin/tournament/:id/manage" component={TournamentManagement} />

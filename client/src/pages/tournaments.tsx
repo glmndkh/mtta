@@ -515,9 +515,9 @@ export default function Tournaments() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   // Fetch tournaments from database
-  const { data: tournaments = [], isLoading: tournamentsLoading } = useQuery({
+  const { data: tournaments = [], isLoading: tournamentsLoading } = useQuery<TournamentData[]>({
     queryKey: ['/api/tournaments'],
-    queryFn: async () => {
+    queryFn: async (): Promise<TournamentData[]> => {
       const response = await fetch('/api/tournaments');
       if (!response.ok) {
         throw new Error('Failed to fetch tournaments');

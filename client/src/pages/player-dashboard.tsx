@@ -11,8 +11,77 @@ import { Separator } from "@/components/ui/separator";
 import { User, Trophy, Calendar, CreditCard, BarChart3, Target, TrendingUp, Award, Star } from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 
+interface TournamentMatch {
+  id: string;
+  tournament?: { name?: string };
+  stage?: string;
+  groupName?: string;
+  date?: string;
+  isWinner?: boolean;
+  result?: string;
+  opponent?: {
+    name?: string;
+    user?: { firstName?: string; lastName?: string };
+  };
+  playerWins?: number;
+  playerPosition?: number;
+  status?: string;
+  scheduledDate?: string;
+  tournamentName?: string;
+}
+
+interface MembershipInfo {
+  type: 'adult' | 'child';
+  amount?: number;
+  startDate?: string;
+  endDate?: string;
+  paid?: boolean;
+  paidAt?: string;
+}
+
+interface Achievement {
+  id: string;
+  title: string;
+  description?: string;
+  achievedAt?: string;
+  category?: string;
+}
+
+interface RegularMatch {
+  id: string;
+  player1Id: string;
+  winnerId?: string;
+  player1?: { user?: { firstName?: string; lastName?: string } };
+  player2?: { user?: { firstName?: string; lastName?: string } };
+  status?: string;
+  scheduledAt?: string;
+  sets?: Array<{ player1Score: number; player2Score: number }>;
+}
+
+interface PlayerDataResponse {
+  player?: {
+    id: string;
+    profileImageUrl?: string;
+    firstName?: string;
+    lastName?: string;
+    club?: { name?: string };
+    wins?: number;
+    losses?: number;
+    winPercentage?: number;
+    rankingOwnAge?: number;
+    rankingAllAges?: number;
+    memberNumber?: string;
+    rank?: string;
+  };
+}
+
 export default function PlayerDashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
+  interface AuthUser {
+    profileImageUrl?: string;
+    firstName?: string;
+    lastName?: string;
+  }
   const { toast } = useToast();
 
   // Redirect if not authenticated
@@ -31,14 +100,14 @@ export default function PlayerDashboard() {
   }, [isAuthenticated, isLoading, toast]);
 
   // Fetch player data
-  const { data: playerData, isLoading: playerLoading } = useQuery({
+  const { data: playerData, isLoading: playerLoading } = useQuery<PlayerDataResponse>({
     queryKey: ["/api/auth/user"],
     enabled: isAuthenticated,
     retry: false,
   });
 
   // Fetch player matches
-  const { data: matches = [], isLoading: matchesLoading } = useQuery({
+  const { data: matches = [], isLoading: matchesLoading } = useQuery<RegularMatch[]>({
     queryKey: ["/api/players", playerData?.player?.id, "matches"],
     enabled: !!playerData?.player?.id,
     retry: false,
@@ -65,21 +134,27 @@ export default function PlayerDashboard() {
   });
 
   // Fetch tournament match history
-  const { data: tournamentMatches = [], isLoading: tournamentMatchesLoading } = useQuery({
+  const {
+    data: tournamentMatches = [],
+    isLoading: tournamentMatchesLoading,
+  } = useQuery<TournamentMatch[]>({
     queryKey: ["/api/players", playerData?.player?.id, "tournament-matches"],
     enabled: !!playerData?.player?.id,
     retry: false,
   });
 
   // Fetch membership info
-  const { data: membership } = useQuery({
+  const { data: membership } = useQuery<MembershipInfo>({
     queryKey: ["/api/players", playerData?.player?.id, "membership"],
     enabled: !!playerData?.player?.id,
     retry: false,
   });
 
   // Fetch achievements
-  const { data: achievements = [], isLoading: achievementsLoading } = useQuery({
+  const {
+    data: achievements = [],
+    isLoading: achievementsLoading,
+  } = useQuery<Achievement[]>({
     queryKey: ["/api/players", playerData?.player?.id, "achievements"],
     enabled: !!playerData?.player?.id,
     retry: false,
@@ -99,7 +174,7 @@ export default function PlayerDashboard() {
   if (!isAuthenticated || !user) {
     return null;
   }
-
+  const authUser = user as AuthUser;
   const player = playerData?.player;
 
   return (
@@ -119,9 +194,9 @@ export default function PlayerDashboard() {
             <Card className="bg-gradient-to-br from-mtta-green to-mtta-green-dark text-white">
               <CardContent className="p-6 text-[#000000]">
                 <div className="flex items-center mb-4">
-                  {user.profileImageUrl ? (
-                    <img 
-                      src={user.profileImageUrl} 
+                    {authUser.profileImageUrl ? (
+                      <img
+                        src={authUser.profileImageUrl}
                       alt="Player profile" 
                       className="w-16 h-16 rounded-full object-cover mr-4"
                     />
@@ -130,8 +205,8 @@ export default function PlayerDashboard() {
                       <User className="h-8 w-8" />
                     </div>
                   )}
-                  <div>
-                    <h3 className="text-xl font-bold">{user.firstName} {user.lastName}</h3>
+                    <div>
+                      <h3 className="text-xl font-bold">{authUser.firstName} {authUser.lastName}</h3>
                     <p className="opacity-80">Тоглогч</p>
                     {player?.memberNumber && (
                       <p className="text-sm opacity-70">Гишүүн №: {player.memberNumber}</p>
@@ -240,7 +315,7 @@ export default function PlayerDashboard() {
                   </div>
                 ) : (
                   <div className="grid gap-3">
-                    {achievements.slice(0, 6).map((achievement: any) => (
+                    {achievements.slice(0, 6).map((achievement: Achievement) => (
                       <div 
                         key={achievement.id}
                         className="flex items-center p-3 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg"
@@ -300,7 +375,7 @@ export default function PlayerDashboard() {
                           Тэмцээний тоглолтууд
                         </h4>
                         <div className="space-y-3">
-                          {tournamentMatches.slice(0, 3).map((match: any, index: number) => {
+                          {tournamentMatches.slice(0, 3).map((match: TournamentMatch, index: number) => {
                             const isWinner = match.isWinner;
                             const hasResult = match.result && match.result.trim() !== '';
                             
@@ -386,7 +461,7 @@ export default function PlayerDashboard() {
                           Ердийн тоглолтууд
                         </h4>
                         <div className="space-y-3">
-                          {matches.slice(0, 3).map((match: any) => {
+                          {matches.slice(0, 3).map((match: RegularMatch) => {
                             const isPlayer1 = match.player1Id === player?.id;
                             const isWinner = match.winnerId === player?.id;
                             const opponent = isPlayer1 ? match.player2 : match.player1;
@@ -423,7 +498,7 @@ export default function PlayerDashboard() {
                                         {isWinner ? 'Ялалт' : 'Хожил'}
                                       </Badge>
                                       <p className="text-xs text-gray-500">
-                                        {match.sets?.map((set: any) => `${set.player1Score}-${set.player2Score}`).join(', ')}
+                                        {match.sets?.map((set) => `${set.player1Score}-${set.player2Score}`).join(', ')}
                                       </p>
                                     </>
                                   ) : (

@@ -1662,17 +1662,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const { tournamentId, groupStageResults, knockoutResults, finalRankings, isPublished } = req.body;
+      const { tournamentId, participationType, groupStageResults, knockoutResults, finalRankings, isPublished } = req.body;
 
-      if (!tournamentId) {
-        return res.status(400).json({ message: "Tournament ID is required" });
+      if (!tournamentId || !participationType) {
+        return res.status(400).json({ message: "Tournament ID and participation type are required" });
       }
+
+      const existing = await storage.getTournamentResults(tournamentId);
+      const mergedGroup = { ...(existing?.groupStageResults as any || {}), [participationType]: groupStageResults || [] };
+      const mergedKnockout = { ...(existing?.knockoutResults as any || {}), [participationType]: knockoutResults || [] };
+      const mergedFinal = { ...(existing?.finalRankings as any || {}), [participationType]: finalRankings || [] };
 
       const resultsData = {
         tournamentId,
-        groupStageResults: groupStageResults || null,
-        knockoutResults: knockoutResults || null,
-        finalRankings: finalRankings || null,
+        groupStageResults: mergedGroup,
+        knockoutResults: mergedKnockout,
+        finalRankings: mergedFinal,
         isPublished: isPublished || false,
       };
 

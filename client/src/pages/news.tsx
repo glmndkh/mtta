@@ -34,22 +34,36 @@ export default function News() {
   const [editingNews, setEditingNews] = useState<any>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
 
+  const authUser = user as { role?: string } | null;
+
   // Remove authentication requirement - allow viewing for all users
 
+  interface NewsArticle {
+    id: string;
+    category: string;
+    publishedAt?: string | null;
+    createdAt: string;
+    title: string;
+    excerpt?: string;
+    imageUrl?: string;
+    author?: { firstName?: string; lastName?: string; profileImageUrl?: string };
+    published?: boolean;
+  }
+
   // Fetch news data - allow for all users
-  const { data: allNews = [], isLoading: newsLoading } = useQuery({
+  const { data: allNews = [], isLoading: newsLoading } = useQuery<NewsArticle[]>({
     queryKey: ['/api/news'],
     retry: false,
     staleTime: 30 * 1000, // Reduced to 30 seconds for better real-time updates
-    gcTime: 2 * 60 * 1000, // Keep in cache for 2 minutes  
+    gcTime: 2 * 60 * 1000, // Keep in cache for 2 minutes
     refetchOnWindowFocus: true, // Enable refetch to see updates
     refetchOnMount: true, // Enable refetch on mount
   });
 
   // Filter news by category
-  const news = selectedCategory === "all" 
-    ? allNews 
-    : allNews.filter((item: any) => item.category === selectedCategory);
+  const news = selectedCategory === "all"
+    ? allNews
+    : allNews.filter((item: NewsArticle) => item.category === selectedCategory);
 
   // Create news form
   const form = useForm<CreateNewsForm>({
@@ -189,7 +203,7 @@ export default function News() {
   };
 
   // Handle opening edit dialog
-  const handleEditNews = (newsItem: any) => {
+  const handleEditNews = (newsItem: NewsArticle) => {
     setEditingNews(newsItem);
     setNewsImageUrl(newsItem.imageUrl || "");
     form.reset({
@@ -353,7 +367,7 @@ export default function News() {
               </SelectContent>
             </Select>
 
-            {user && (user as any)?.role === 'admin' && (
+            {authUser?.role === 'admin' && (
               <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                 <DialogTrigger asChild>
                   <Button className="mtta-green text-white hover:bg-mtta-green-dark">
@@ -496,7 +510,7 @@ export default function News() {
             )}
 
             {/* Edit News Dialog */}
-            {user && (user as any)?.role === 'admin' && (
+            {authUser?.role === 'admin' && (
               <Dialog open={showEditDialog} onOpenChange={handleCloseEditDialog}>
                 <DialogContent className="max-w-3xl">
                   <DialogHeader>
@@ -668,7 +682,7 @@ export default function News() {
                 : "Энэ ангилалд мэдээ байхгүй байна"
               }
             </p>
-            {user && (user as any)?.role === 'admin' && (
+            {authUser?.role === 'admin' && (
               <Button 
                 className="mtta-green text-white hover:bg-mtta-green-dark"
                 onClick={() => setShowCreateDialog(true)}
@@ -682,7 +696,7 @@ export default function News() {
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Featured News */}
             <div className="lg:col-span-2">
-              {news.slice(0, 1).map((article: any) => (
+              {news.slice(0, 1).map((article: NewsArticle) => (
                 <Card key={article.id} className="shadow-lg mb-8">
                   {article.imageUrl && (
                     <div className="aspect-video overflow-hidden rounded-t-lg">
@@ -733,7 +747,7 @@ export default function News() {
                       </div>
                       
                       <div className="flex items-center space-x-2">
-                        {user && (user as any)?.role === 'admin' && (
+                        {authUser?.role === 'admin' && (
                           <Button 
                             size="sm"
                             variant="outline"
@@ -743,7 +757,7 @@ export default function News() {
                             Засах
                           </Button>
                         )}
-                        {!article.published && user && (user as any)?.role === 'admin' && (
+                        {!article.published && authUser?.role === 'admin' && (
                           <Button 
                             size="sm"
                             className="mtta-green text-white hover:bg-mtta-green-dark"
@@ -766,7 +780,7 @@ export default function News() {
 
               {/* Regular News List */}
               <div className="space-y-6">
-                {news.slice(1).map((article: any) => (
+                {news.slice(1).map((article: NewsArticle) => (
                   <Card key={article.id} className="shadow-md hover:shadow-lg transition-shadow">
                     <CardContent className="p-6">
                       <div className="flex gap-4">
@@ -815,7 +829,7 @@ export default function News() {
                             </div>
                             
                             <div className="flex items-center space-x-2">
-                              {user && (user as any)?.role === 'admin' && (
+                              {authUser?.role === 'admin' && (
                                 <Button 
                                   size="sm"
                                   variant="outline"
@@ -825,7 +839,7 @@ export default function News() {
                                   Засах
                                 </Button>
                               )}
-                              {!article.published && user && (user as any)?.role === 'admin' && (
+                              {!article.published && authUser?.role === 'admin' && (
                                 <Button 
                                   size="sm"
                                   className="mtta-green text-white hover:bg-mtta-green-dark"
@@ -864,7 +878,7 @@ export default function News() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {allNews.slice(0, 5).map((article: any) => (
+                    {allNews.slice(0, 5).map((article: NewsArticle) => (
                       <div key={article.id} className="border-l-4 border-mtta-green pl-4">
                         <div className="flex items-center mb-2">
                           {getCategoryBadge(article.category)}
@@ -891,10 +905,10 @@ export default function News() {
                   <div className="space-y-2">
                     {[
                       { value: "all", label: "Бүгд", count: allNews.length },
-                      { value: "tournament", label: "Тэмцээн", count: allNews.filter((n: any) => n.category === "tournament").length },
-                      { value: "news", label: "Мэдээ", count: allNews.filter((n: any) => n.category === "news").length },
-                      { value: "training", label: "Сургалт", count: allNews.filter((n: any) => n.category === "training").length },
-                      { value: "urgent", label: "Яаралтай", count: allNews.filter((n: any) => n.category === "urgent").length },
+                      { value: "tournament", label: "Тэмцээн", count: allNews.filter((n: NewsArticle) => n.category === "tournament").length },
+                      { value: "news", label: "Мэдээ", count: allNews.filter((n: NewsArticle) => n.category === "news").length },
+                      { value: "training", label: "Сургалт", count: allNews.filter((n: NewsArticle) => n.category === "training").length },
+                      { value: "urgent", label: "Яаралтай", count: allNews.filter((n: NewsArticle) => n.category === "urgent").length },
                     ].map((category) => (
                       <button
                         key={category.value}

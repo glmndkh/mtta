@@ -206,33 +206,39 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
+    const insertData: typeof users.$inferInsert = {
+      ...userData,
+      rubberTypes: userData.rubberTypes ? [...userData.rubberTypes] : [],
+      playingStyles: userData.playingStyles ? [...userData.playingStyles] : [],
+    };
+
     const [user] = await db
       .insert(users)
-      .values(userData)
+      .values(insertData)
       .onConflictDoUpdate({
         target: users.email,
         set: {
-          email: userData.email,
-          phone: userData.phone,
-          password: userData.password,
-          firstName: userData.firstName,
-          lastName: userData.lastName,
-          gender: userData.gender,
-          dateOfBirth: userData.dateOfBirth,
-          clubAffiliation: userData.clubAffiliation,
-          profileImageUrl: userData.profileImageUrl,
-          province: userData.province,
-          city: userData.city,
-          rubberTypes: userData.rubberTypes ? userData.rubberTypes as string[] : [],
-          handedness: userData.handedness,
-          playingStyles: userData.playingStyles ? userData.playingStyles as string[] : [],
-          bio: userData.bio,
-          membershipType: userData.membershipType,
-          membershipStartDate: userData.membershipStartDate,
-          membershipEndDate: userData.membershipEndDate,
-          membershipActive: userData.membershipActive,
-          membershipAmount: userData.membershipAmount,
-          role: userData.role,
+          email: insertData.email,
+          phone: insertData.phone,
+          password: insertData.password,
+          firstName: insertData.firstName,
+          lastName: insertData.lastName,
+          gender: insertData.gender,
+          dateOfBirth: insertData.dateOfBirth,
+          clubAffiliation: insertData.clubAffiliation,
+          profileImageUrl: insertData.profileImageUrl,
+          province: insertData.province,
+          city: insertData.city,
+          rubberTypes: insertData.rubberTypes,
+          handedness: insertData.handedness,
+          playingStyles: insertData.playingStyles,
+          bio: insertData.bio,
+          membershipType: insertData.membershipType,
+          membershipStartDate: insertData.membershipStartDate,
+          membershipEndDate: insertData.membershipEndDate,
+          membershipActive: insertData.membershipActive,
+          membershipAmount: insertData.membershipAmount,
+          role: insertData.role,
           updatedAt: new Date(),
         },
       })
