@@ -1461,34 +1461,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/tournaments/:tournamentId/register', requireAuth, async (req: any, res) => {
     try {
       const { tournamentId } = req.params;
-      const { participationType } = req.body;
-      const userId = req.session.userId;
+      const { participationType, playerId: bodyPlayerId } = req.body;
 
-      // Get or create player profile for the user
-      let player = await storage.getPlayerByUserId(userId);
-      if (!player) {
-        // Auto-create a basic player profile for the user
-        const user = await storage.getUser(userId);
-        if (!user) {
-          return res.status(400).json({ message: "Хэрэглэгч олдсонгүй" });
+      let playerId = bodyPlayerId;
+
+      if (!playerId) {
+        const userId = req.session.userId;
+
+        // Get or create player profile for the current user
+        let player = await storage.getPlayerByUserId(userId);
+        if (!player) {
+          const user = await storage.getUser(userId);
+          if (!user) {
+            return res.status(400).json({ message: "Хэрэглэгч олдсонгүй" });
+          }
+
+          player = await storage.createPlayer({
+            userId: userId,
+            dateOfBirth: new Date(), // Default date, user can update later
+            rank: "Шинэ тоглогч"
+          });
         }
-        
-        player = await storage.createPlayer({
-          userId: userId,
-          dateOfBirth: new Date(), // Default date, user can update later
-          rank: "Шинэ тоглогч"
-        });
+
+        playerId = player.id;
+      } else {
+        // Ensure the provided player exists
+        const player = await storage.getPlayer(playerId);
+        if (!player) {
+          return res.status(400).json({ message: "Тоглогч олдсонгүй" });
+        }
       }
 
       // Check if already registered
-      const existingRegistration = await storage.getTournamentRegistration(tournamentId, player.id);
+      const existingRegistration = await storage.getTournamentRegistration(tournamentId, playerId);
       if (existingRegistration) {
         return res.status(400).json({ message: "Тэмцээнд аль хэдийн бүртгүүлсэн байна" });
       }
 
       const registration = await storage.registerForTournament({
         tournamentId,
-        playerId: player.id,
+        playerId,
         participationType: participationType || "singles"
       });
 

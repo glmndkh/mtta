@@ -7,6 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Calendar, MapPin, Clock, ExternalLink, Ticket, Users } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import { UserAutocomplete } from "@/components/UserAutocomplete";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -79,13 +81,32 @@ function TournamentRegistrationButton({ tournamentId }: { tournamentId: string }
     enabled: isAuthenticated,
   });
 
+  const { data: players = [] } = useQuery<any[]>({
+    queryKey: ['/api/players'],
+    enabled: isAuthenticated,
+  });
+
+  const playerOptions = players.map(p => ({
+    id: p.players.id,
+    firstName: p.users?.firstName || '',
+    lastName: p.users?.lastName || '',
+    email: p.users?.email || '',
+    clubAffiliation: p.clubs?.name || '',
+  }));
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<any | null>(null);
+
   const registerMutation = useMutation({
-    mutationFn: async (participationType: string) => {
+    mutationFn: async ({ participationType, playerId }: { participationType: string; playerId?: string }) => {
       if (!isAuthenticated) {
         window.location.href = "/login";
         return;
       }
-      return apiRequest('POST', `/api/tournaments/${tournamentId}/register`, { participationType });
+      return apiRequest(`/api/tournaments/${tournamentId}/register`, {
+        method: 'POST',
+        body: JSON.stringify({ participationType, playerId })
+      });
     },
     onSuccess: () => {
       toast({
@@ -93,6 +114,7 @@ function TournamentRegistrationButton({ tournamentId }: { tournamentId: string }
         description: "Тэмцээнд амжилттай бүртгүүллээ.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/tournaments', tournamentId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', tournamentId, 'registration-stats'] });
     },
     onError: (error: any) => {
       toast({
@@ -116,7 +138,17 @@ function TournamentRegistrationButton({ tournamentId }: { tournamentId: string }
       }, 1000);
       return;
     }
-    registerMutation.mutate("singles"); // Default to singles
+    registerMutation.mutate({ participationType: "singles" });
+  };
+
+  const handleRegisterOther = () => {
+    if (!selectedPlayer) return;
+    registerMutation.mutate({ participationType: "singles", playerId: selectedPlayer.id }, {
+      onSuccess: () => {
+        setDialogOpen(false);
+        setSelectedPlayer(null);
+      }
+    });
   };
 
   if (userRegistration?.registered) {
@@ -132,13 +164,35 @@ function TournamentRegistrationButton({ tournamentId }: { tournamentId: string }
   }
 
   return (
-    <Button
-      className="bg-blue-600 hover:bg-blue-700 text-white"
-      onClick={handleRegister}
-      disabled={registerMutation.isPending}
-    >
-      {registerMutation.isPending ? "Бүртгүүлж байна..." : "Бүртгүүлэх"}
-    </Button>
+    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+      <Button
+        className="bg-blue-600 hover:bg-blue-700 text-white"
+        onClick={handleRegister}
+        disabled={registerMutation.isPending}
+      >
+        {registerMutation.isPending ? "Бүртгүүлж байна..." : "Бүртгүүлэх"}
+      </Button>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" onClick={(e) => e.stopPropagation()}>Бусдыг бүртгүүлэх</Button>
+        </DialogTrigger>
+        <DialogContent onClick={(e) => e.stopPropagation()}>
+          <DialogHeader>
+            <DialogTitle>Өөр хүн бүртгүүлэх</DialogTitle>
+          </DialogHeader>
+          <UserAutocomplete
+            users={playerOptions}
+            value={selectedPlayer?.id}
+            onSelect={(user) => setSelectedPlayer(user)}
+          />
+          <DialogFooter>
+            <Button onClick={handleRegisterOther} disabled={!selectedPlayer || registerMutation.isPending}>
+              {registerMutation.isPending ? "Бүртгүүлж байна..." : "Бүртгүүлэх"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 
