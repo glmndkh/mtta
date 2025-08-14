@@ -16,6 +16,7 @@ import {
   sponsors,
   branches,
   federationMembers,
+  pastChampions,
   tournamentTeams,
   tournamentTeamPlayers,
   leagueMatches,
@@ -45,6 +46,8 @@ import {
   type InsertHomepageSlider,
   type Sponsor,
   type InsertSponsor,
+  type Champion,
+  type InsertChampion,
   type Branch,
   type InsertBranch,
   type FederationMember,
@@ -166,6 +169,12 @@ export interface IStorage {
   createSponsor(sponsor: InsertSponsor): Promise<Sponsor>;
   updateSponsor(id: string, sponsor: Partial<InsertSponsor>): Promise<Sponsor | undefined>;
   deleteSponsor(id: string): Promise<boolean>;
+
+  // Champion operations
+  getAllChampions(): Promise<Champion[]>;
+  createChampion(champion: InsertChampion): Promise<Champion>;
+  updateChampion(id: string, champion: Partial<InsertChampion>): Promise<Champion | undefined>;
+  deleteChampion(id: string): Promise<boolean>;
 
   // Federation member operations
   getAllFederationMembers(): Promise<FederationMember[]>;
@@ -1004,6 +1013,41 @@ export class DatabaseStorage implements IStorage {
 
   async deleteSponsor(id: string): Promise<boolean> {
     const result = await db.delete(sponsors).where(eq(sponsors.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  // Champion operations
+  async getAllChampions(): Promise<Champion[]> {
+    return await db
+      .select()
+      .from(pastChampions)
+      .orderBy(desc(pastChampions.year));
+  }
+
+  async createChampion(championData: InsertChampion): Promise<Champion> {
+    const { randomUUID } = await import('crypto');
+    const [champion] = await db
+      .insert(pastChampions)
+      .values({
+        ...championData,
+        id: randomUUID(),
+        createdAt: new Date(),
+      })
+      .returning();
+    return champion;
+  }
+
+  async updateChampion(id: string, championData: Partial<InsertChampion>): Promise<Champion | undefined> {
+    const [champion] = await db
+      .update(pastChampions)
+      .set(championData)
+      .where(eq(pastChampions.id, id))
+      .returning();
+    return champion;
+  }
+
+  async deleteChampion(id: string): Promise<boolean> {
+    const result = await db.delete(pastChampions).where(eq(pastChampions.id, id));
     return (result.rowCount || 0) > 0;
   }
 

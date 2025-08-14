@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertPlayerSchema, insertClubSchema, insertTournamentSchema, insertMatchSchema, insertNewsSchema, insertMembershipSchema, insertHomepageSliderSchema, insertSponsorSchema, insertBranchSchema, insertFederationMemberSchema } from "@shared/schema";
+import { insertPlayerSchema, insertClubSchema, insertTournamentSchema, insertMatchSchema, insertNewsSchema, insertMembershipSchema, insertHomepageSliderSchema, insertSponsorSchema, insertBranchSchema, insertFederationMemberSchema, insertChampionSchema } from "@shared/schema";
 import { z } from "zod";
 
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
@@ -2308,6 +2308,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting sponsor:", error);
       res.status(400).json({ message: "Ивээн тэтгэгч устгахад алдаа гарлаа" });
+    }
+  });
+
+  // Past champions routes
+  app.get('/api/champions', async (req, res) => {
+    try {
+      const champions = await storage.getAllChampions();
+      res.json(champions);
+    } catch (error) {
+      console.error("Error fetching champions:", error);
+      res.status(500).json({ message: "Аваргууд авахад алдаа гарлаа" });
+    }
+  });
+
+  app.get('/api/admin/champions', requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const champions = await storage.getAllChampions();
+      res.json(champions);
+    } catch (error) {
+      console.error("Error fetching champions:", error);
+      res.status(500).json({ message: "Аваргууд авахад алдаа гарлаа" });
+    }
+  });
+
+  app.post('/api/admin/champions', requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const data = insertChampionSchema.parse(req.body);
+      const champion = await storage.createChampion(data);
+      res.json(champion);
+    } catch (error) {
+      console.error("Error creating champion:", error);
+      res.status(400).json({ message: "Аварга үүсгэхэд алдаа гарлаа" });
+    }
+  });
+
+  app.put('/api/admin/champions/:id', requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const updateData = insertChampionSchema.partial().parse(req.body);
+      const champion = await storage.updateChampion(req.params.id, updateData);
+      if (!champion) {
+        return res.status(404).json({ message: "Аварга олдсонгүй" });
+      }
+      res.json(champion);
+    } catch (error) {
+      console.error("Error updating champion:", error);
+      res.status(400).json({ message: "Аварга засварлахад алдаа гарлаа" });
+    }
+  });
+
+  app.delete('/api/admin/champions/:id', requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const success = await storage.deleteChampion(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Аварга олдсонгүй" });
+      }
+      res.json({ message: "Аварга амжилттай устгагдлаа" });
+    } catch (error) {
+      console.error("Error deleting champion:", error);
+      res.status(400).json({ message: "Аварга устгахад алдаа гарлаа" });
     }
   });
 

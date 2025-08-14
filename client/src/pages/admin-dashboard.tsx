@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Trash2, Plus, Users, Shield, Building, Trophy, Calendar, Newspaper, Images, TrendingUp, Upload, Link as LinkIcon, ArrowLeft, Settings, UserPlus, Play, Zap, X } from "lucide-react";
+import { Pencil, Trash2, Plus, Users, Shield, Building, Trophy, Calendar, Newspaper, Images, TrendingUp, Upload, Link as LinkIcon, ArrowLeft, Settings, UserPlus, Play, Zap, X, Crown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import AdminStatsDashboard from "@/components/admin-stats-dashboard";
@@ -95,6 +95,11 @@ export default function AdminDashboard() {
   const { data: sponsors, isLoading: sponsorsLoading } = useQuery({
     queryKey: ['/api/admin/sponsors'],
     enabled: selectedTab === 'sponsors'
+  });
+
+  const { data: champions, isLoading: championsLoading } = useQuery({
+    queryKey: ['/api/admin/champions'],
+    enabled: selectedTab === 'champions'
   });
 
   // Generic mutations
@@ -759,6 +764,64 @@ export default function AdminDashboard() {
                       <Pencil className="w-4 h-4" />
                     </Button>
                     <Button size="sm" variant="destructive" onClick={() => handleDelete(sponsor.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )) : null}
+          </TableBody>
+        </Table>
+      )}
+    </div>
+  );
+
+  const renderChampionsTab = () => (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Үе үеийн аваргууд</h2>
+        <Button onClick={openCreateDialog}>
+          <Plus className="w-4 h-4 mr-2" />
+          Аварга нэмэх
+        </Button>
+      </div>
+
+      {championsLoading ? (
+        <div>Ачааллаж байна...</div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Нэр</TableHead>
+              <TableHead>Он</TableHead>
+              <TableHead>Зураг</TableHead>
+              <TableHead>Үйлдэл</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {champions && Array.isArray(champions) ? champions.map((champ: any) => (
+              <TableRow key={champ.id}>
+                <TableCell>{champ.name}</TableCell>
+                <TableCell>{champ.year}</TableCell>
+                <TableCell>
+                  {champ.imageUrl ? (
+                    <img
+                      src={champ.imageUrl}
+                      alt={champ.name}
+                      className="w-12 h-12 object-cover rounded"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
+                      <Upload className="w-6 h-6 text-gray-400" />
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => openEditDialog(champ)}>
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(champ.id)}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
@@ -1645,6 +1708,94 @@ export default function AdminDashboard() {
           </>
         );
 
+      case 'champions':
+        return (
+          <>
+            <div>
+              <Label htmlFor="name">Нэр</Label>
+              <Input
+                id="name"
+                value={formData.name || ''}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="year">Он</Label>
+              <Input
+                id="year"
+                type="number"
+                value={formData.year || ''}
+                onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
+              />
+            </div>
+            <div>
+              <Label className="flex items-center gap-2">
+                <Upload className="w-4 h-4" />
+                Зураг
+              </Label>
+              <div className="space-y-2">
+                <ObjectUploader
+                  maxNumberOfFiles={1}
+                  maxFileSize={5 * 1024 * 1024}
+                  onGetUploadParameters={async () => {
+                    try {
+                      const response = await apiRequest("/api/objects/upload", { method: "POST" });
+                      const data = await response.json() as { uploadURL: string };
+                      if (!data || !data.uploadURL) {
+                        throw new Error("No upload URL received");
+                      }
+                      return { method: 'PUT' as const, url: data.uploadURL };
+                    } catch (error) {
+                      console.error("Error getting upload parameters:", error);
+                      toast({
+                        title: "Алдаа",
+                        description: "Файл хуулах URL авахад алдаа гарлаа",
+                        variant: "destructive",
+                      });
+                      throw error;
+                    }
+                  }}
+                  onComplete={async (result) => {
+                    if (result.successful && result.successful.length > 0) {
+                      const uploadURL = result.successful[0].uploadURL;
+                      try {
+                        const aclResponse = await apiRequest("/api/objects/acl", {
+                          method: "PUT",
+                          body: JSON.stringify({ imageURL: uploadURL }),
+                          headers: { 'Content-Type': 'application/json' },
+                        });
+                        const aclData = await aclResponse.json() as { objectPath: string };
+                        setFormData({ ...formData, imageUrl: aclData.objectPath });
+                        toast({ title: "Зураг амжилттай хуулагдлаа" });
+                      } catch (error) {
+                        console.error("Error setting ACL:", error);
+                        toast({
+                          title: "Алдаа",
+                          description: "Зураг хуулагдсан боловч зөвшөөрөл тохируулахад алдаа гарлаа",
+                          variant: "destructive",
+                        });
+                      }
+                    }
+                  }}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Зураг сонгох
+                </ObjectUploader>
+                {formData.imageUrl && (
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={formData.imageUrl}
+                      alt="Champion"
+                      className="w-16 h-16 object-cover border rounded"
+                    />
+                    <div className="text-sm text-green-600">✓ Зураг хуулагдлаа</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        );
+
       default:
         return <div>Форм боломжгүй</div>;
     }
@@ -1668,7 +1819,7 @@ export default function AdminDashboard() {
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid w-full grid-cols-12">
+        <TabsList className="grid w-full grid-cols-13">
           <TabsTrigger value="stats" className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
             Статистик
@@ -1716,6 +1867,10 @@ export default function AdminDashboard() {
           <TabsTrigger value="sponsors" className="flex items-center gap-2">
             <Zap className="w-4 h-4" />
             Ивээн тэтгэгчид
+          </TabsTrigger>
+          <TabsTrigger value="champions" className="flex items-center gap-2">
+            <Crown className="w-4 h-4" />
+            Аваргууд
           </TabsTrigger>
         </TabsList>
 
@@ -1775,6 +1930,18 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               {renderSponsorsTab()}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="champions">
+          <Card>
+            <CardHeader>
+              <CardTitle>Үе үеийн аваргууд</CardTitle>
+              <CardDescription>Аваргуудын жагсаалтыг удирдах</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {renderChampionsTab()}
             </CardContent>
           </Card>
         </TabsContent>
