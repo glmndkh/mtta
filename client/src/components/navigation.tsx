@@ -54,6 +54,7 @@ export default function Navigation() {
         },
         { href: "/branches", label: "Салбар холбоод" },
         { href: "/national-team", label: "Үндэсний шигшээ" },
+        { href: "/judges", label: "Шүүгчид" },
         { href: "/past-champions", label: "Үе үеийн аваргууд" },
       ],
     },

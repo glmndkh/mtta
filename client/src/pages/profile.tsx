@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, CheckCircle, Clock, User, Camera, MapPin, Phone, Mail, Calendar, Trophy, Target, CreditCard, Users, History } from "lucide-react";
+import { AlertCircle, CheckCircle, Clock, User, Camera, MapPin, Phone, Mail, Calendar, Trophy, Target, CreditCard, Users, History, Shield } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -32,6 +32,8 @@ interface UserProfile {
   email: string;
   phone?: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   gender?: string;
   dateOfBirth?: string;
   clubName?: string;
@@ -47,6 +49,8 @@ interface UserProfile {
   membershipEndDate?: string;
   membershipActive?: boolean;
   membershipAmount?: number;
+  isJudge?: boolean;
+  judgeType?: string;
   playerStats?: PlayerStats;
 }
 
@@ -184,8 +188,14 @@ export default function Profile() {
   const province = selectedProvince || profileData.province;
   const availableCities = province ? (MONGOLIA_CITIES as any)[province] || [] : [];
 
+  const calculateAge = (dob: string) => {
+    const birth = new Date(dob);
+    const diff = Date.now() - birth.getTime();
+    return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+  };
+
   // Fetch user profile
-  const { data: profile, isLoading } = useQuery({
+  const { data: profile, isLoading } = useQuery<UserProfile>({
     queryKey: ['/api/user/profile'],
     enabled: isAuthenticated
   });
@@ -197,17 +207,17 @@ export default function Profile() {
   });
 
   // Mock data for tournaments and matches (to be replaced with real API calls)
-  const { data: tournaments = [] } = useQuery({
+  const { data: tournaments = [] } = useQuery<Tournament[]>({
     queryKey: ['/api/user/tournaments'],
     enabled: !!profile,
   });
 
-  const { data: matches = [] } = useQuery({
+  const { data: matches = [] } = useQuery<Match[]>({
     queryKey: ['/api/user/matches'],
     enabled: !!profile,
   });
 
-  const { data: teams = [] } = useQuery({
+  const { data: teams = [] } = useQuery<Team[]>({
     queryKey: ['/api/user/teams'],
     enabled: !!profile,
   });
@@ -393,15 +403,15 @@ export default function Profile() {
               <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                 <div className="relative">
                   <Avatar className="w-24 h-24">
-                    <AvatarImage src={profile?.profilePicture} alt={profile?.name} />
+                    <AvatarImage src={profile?.profilePicture} alt={profile?.firstName} />
                     <AvatarFallback className="text-2xl">
-                      {profile?.name?.split(' ').map(n => n[0]).join('').toUpperCase()}
+                      {(profile?.firstName?.[0] || '') + (profile?.lastName?.[0] || '')}
                     </AvatarFallback>
                   </Avatar>
                 </div>
                 <div className="text-center md:text-left flex-1">
                   <div className="flex items-center gap-3 flex-wrap">
-                    <h1 className="text-3xl font-bold text-gray-900">{profile?.name}</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">{profile?.firstName} {profile?.lastName}</h1>
                     {/* Tournament Medals */}
                     {medals && medals.map((medal: any) => (
                       <div key={`${medal.tournamentId}-${medal.medalType}`} className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
@@ -439,6 +449,24 @@ export default function Profile() {
                         <span>{profile.province}{profile?.city && `, ${profile.city}`}</span>
                       </div>
                     )}
+                    {profile?.gender && (
+                      <div className="flex items-center gap-1">
+                        <User className="w-4 h-4" />
+                        <span>{profile.gender === 'male' ? 'Эрэгтэй' : profile.gender === 'female' ? 'Эмэгтэй' : 'Бусад'}</span>
+                      </div>
+                    )}
+                    {profile?.dateOfBirth && (
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        <span>{calculateAge(profile.dateOfBirth)} нас</span>
+                      </div>
+                    )}
+                    {profile?.playerStats?.rank && (
+                      <div className="flex items-center gap-1">
+                        <Trophy className="w-4 h-4" />
+                        <span>{profile.playerStats.rank}</span>
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 mt-3">
                     {isActive ? (
@@ -456,6 +484,18 @@ export default function Profile() {
                       <Badge variant="outline" className="text-orange-600 border-orange-300">
                         <Clock className="w-3 h-3 mr-1" />
                         Удахгүй дуусах
+                      </Badge>
+                    )}
+                    {profile?.playerStats && (
+                      <Badge variant="secondary">
+                        <User className="w-3 h-3 mr-1" />
+                        Тоглогч
+                      </Badge>
+                    )}
+                    {profile?.isJudge && (
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                        <Shield className="w-3 h-3 mr-1" />
+                        Шүүгч
                       </Badge>
                     )}
                   </div>
@@ -940,7 +980,7 @@ export default function Profile() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-white">
                     <History className="w-5 h-5 text-green-400" />
-                    Тэмцээний түүх
+                    Тоглолтын түүх
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -1059,7 +1099,7 @@ export default function Profile() {
                     </div>
                   ) : (
                     <p className="text-center text-gray-400 py-8">
-                      Тэмцээний түүх байхгүй байна
+                      Тоглолтын түүх байхгүй байна
                     </p>
                   )}
                 </CardContent>
