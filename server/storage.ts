@@ -630,7 +630,11 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(tournaments)
       .where(and(
-        eq(tournaments.status, "ongoing"),
+        eq(tournaments.isPublished, true),
+        or(
+          eq(tournaments.status, "ongoing"),
+          eq(tournaments.status, "registration")
+        ),
         sql`${tournaments.endDate} >= NOW()`
       ))
       .orderBy(tournaments.startDate);
