@@ -75,8 +75,16 @@ export default function TournamentResultsPage() {
     enabled: !!params?.id,
   });
 
+  const [activeType, setActiveType] = useState<string>("");
+
+  useEffect(() => {
+    if (tournament && tournament.participationTypes?.length && !activeType) {
+      setActiveType(tournament.participationTypes[0]);
+    }
+  }, [tournament, activeType]);
+
   if (tournamentLoading || resultsLoading) {
-    return <PageWithLoading />;
+    return <PageWithLoading>{null}</PageWithLoading>;
   }
 
   if (!tournament) {
@@ -127,9 +135,13 @@ export default function TournamentResultsPage() {
     );
   }
 
-  const groupStageResults: GroupStageGroup[] = results.groupStageResults as GroupStageGroup[] || [];
-  const knockoutResults: KnockoutMatch[] = results.knockoutResults as KnockoutMatch[] || [];
-  const finalRankings: FinalRanking[] = results.finalRankings as FinalRanking[] || [];
+  const groupStageResultsByType = (results.groupStageResults as Record<string, GroupStageGroup[]> || {});
+  const knockoutResultsByType = (results.knockoutResults as Record<string, KnockoutMatch[]> || {});
+  const finalRankingsByType = (results.finalRankings as Record<string, FinalRanking[]> || {});
+
+  const groupStageResults: GroupStageGroup[] = groupStageResultsByType[activeType] || [];
+  const knockoutResults: KnockoutMatch[] = knockoutResultsByType[activeType] || [];
+  const finalRankings: FinalRanking[] = finalRankingsByType[activeType] || [];
 
   const navigateToProfile = (playerId: string) => {
     console.log('Navigating to player profile:', playerId);
@@ -163,6 +175,18 @@ export default function TournamentResultsPage() {
             </Badge>
           </div>
         </div>
+
+        {tournament.participationTypes && tournament.participationTypes.length > 0 ? (
+          <>
+        <Tabs value={activeType} onValueChange={setActiveType} className="mb-6">
+          <TabsList className="w-full flex flex-wrap bg-gray-800 border-gray-600">
+            {tournament.participationTypes.map((type) => (
+              <TabsTrigger key={type} value={type} className="capitalize data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300">
+                {type.replace('_', ' ')}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
 
         <div className="space-y-6">
         <Tabs defaultValue="finals" className="space-y-6">
@@ -655,6 +679,10 @@ export default function TournamentResultsPage() {
           </TabsContent>
         </Tabs>
         </div>
+        </>
+        ) : (
+          <div className="text-center text-gray-300">Тэмцээнд төрөл байхгүй байна.</div>
+        )}
       </div>
     </PageWithLoading>
   );

@@ -76,7 +76,7 @@ interface TournamentResultsData {
 }
 
 export default function AdminTournamentResultsPage() {
-  const [match, params] = useRoute("/admin/tournament/:id/results");
+  const [match, params] = useRoute("/admin/tournament/:id/results/:type?");
   const [fallbackMatch] = useRoute("/admin/tournament-results");
   const [, setLocation] = useLocation();
   const { isAuthenticated, user } = useAuth();
@@ -91,6 +91,7 @@ export default function AdminTournamentResultsPage() {
 
   // Check if we have a tournament ID, if not show tournament selection
   const tournamentId = params?.id;
+  const participationType = params?.type as string | undefined;
   const isOnFallbackRoute = fallbackMatch && !tournamentId;
 
   // Fetch all tournaments for selection page
@@ -106,10 +107,13 @@ export default function AdminTournamentResultsPage() {
   });
 
   // Fetch tournament participants
-  const { data: participants = [] } = useQuery<TournamentParticipant[]>({
+  const { data: participantsData = [] } = useQuery<TournamentParticipant[]>({
     queryKey: ['/api/tournaments', tournamentId, 'participants'],
     enabled: !!tournamentId,
   });
+  const participants = participationType
+    ? participantsData.filter(p => p.participationType === participationType)
+    : participantsData;
 
   // Fetch existing results
   const { data: existingResults } = useQuery<TournamentResults>({
@@ -123,19 +127,29 @@ export default function AdminTournamentResultsPage() {
     enabled: !!tournamentId && user?.role === 'admin',
   });
 
+  // Redirect to first participation type if none specified
+  useEffect(() => {
+    if (tournament && !participationType && tournament.participationTypes?.length) {
+      const firstType = tournament.participationTypes[0];
+      setLocation(`/admin/tournament/${tournamentId}/results/${firstType}`, { replace: true });
+    }
+  }, [tournament, participationType, tournamentId, setLocation]);
+
   // Load existing results into state
   useEffect(() => {
-    if (existingResults) {
-      setGroupStageTables((existingResults.groupStageResults as GroupStageTable[]) || []);
-      setKnockoutMatches((existingResults.knockoutResults as KnockoutMatch[]) || []);
-      
+    if (existingResults && participationType) {
+      const groupResults = (existingResults.groupStageResults as Record<string, GroupStageTable[]> || {})[participationType] || [];
+      setGroupStageTables(groupResults);
+      const knockoutResultsByType = (existingResults.knockoutResults as Record<string, KnockoutMatch[]> || {})[participationType] || [];
+      setKnockoutMatches(knockoutResultsByType);
+
       // Load final rankings or calculate from knockout matches if missing
-      const savedRankings = (existingResults.finalRankings as FinalRanking[]) || [];
+      const savedRankings = (existingResults.finalRankings as Record<string, FinalRanking[]> || {})[participationType] || [];
       if (savedRankings.length > 0) {
         setFinalRankings(savedRankings);
       } else {
         // Calculate from knockout matches if no rankings saved
-        const knockoutResults = (existingResults.knockoutResults as KnockoutMatch[]) || [];
+        const knockoutResults = knockoutResultsByType;
         const calculatedRankings: FinalRanking[] = [];
         
         console.log('Loading existing knockout results:', knockoutResults);
@@ -202,14 +216,15 @@ export default function AdminTournamentResultsPage() {
       
       setIsPublished(existingResults.isPublished || false);
     }
-  }, [existingResults]);
+  }, [existingResults, participationType]);
 
   // Save results mutation
   const saveResultsMutation = useMutation({
     mutationFn: async () => {
-      if (!tournamentId) return;
+      if (!tournamentId || !participationType) return;
       const resultsData = {
         tournamentId: tournamentId,
+        participationType,
         groupStageResults: groupStageTables,
         knockoutResults: knockoutMatches,
         finalRankings: finalRankings,
@@ -235,7 +250,7 @@ export default function AdminTournamentResultsPage() {
         title: "Амжилттай хадгалагдлаа",
         description: "Тэмцээний үр дүн амжилттай шинэчлэгдлээ",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', params?.id, 'results'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', tournamentId, 'results'] });
     },
     onError: () => {
       toast({
@@ -722,15 +737,31 @@ export default function AdminTournamentResultsPage() {
         </div>
       </div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs defaultValue="knockout" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="knockout">Шигшээ тоглолт</TabsTrigger>
-            <TabsTrigger value="groups">Хэсгийн тоглолт</TabsTrigger>
-          </TabsList>
+        {tournament.participationTypes && tournament.participationTypes.length > 0 ? (
+          <>
+            <Tabs
+              value={participationType}
+              onValueChange={(val) => setLocation(`/admin/tournament/${tournamentId}/results/${val}`)}
+              className="mb-6"
+            >
+              <TabsList className="w-full flex flex-wrap">
+                {tournament.participationTypes.map((type) => (
+                  <TabsTrigger key={type} value={type} className="capitalize">
+                    {type.replace('_', ' ')}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+
+            <Tabs defaultValue="knockout" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="knockout">Шигшээ тоглолт</TabsTrigger>
+                <TabsTrigger value="groups">Хэсгийн тоглолт</TabsTrigger>
+              </TabsList>
 
 
 
-          {/* Knockout Editor */}
+              {/* Knockout Editor */}
           <TabsContent value="knockout">
             <Card>
               <CardHeader>
@@ -1248,6 +1279,12 @@ export default function AdminTournamentResultsPage() {
             </Card>
           </TabsContent>
         </Tabs>
+          </>
+        ) : (
+          <div className="text-center text-gray-600">
+            Тэмцээнд төрөл нэмээгүй байна. <a href="/admin/generator" className="text-blue-500 underline">Төрөл нэмэх</a>
+          </div>
+        )}
       </div>
     </div>
   );
