@@ -335,8 +335,6 @@ export default function Home() {
               </h1>
               <p className="text-gray-600">
                 MTTA системд тавтай морилно уу. Таны эрх: {
-                  user.role === 'player' ? 'Тоглогч' :
-                  user.role === 'club_owner' ? 'Клубын эзэн' :
                   user.role === 'admin' ? 'Админ' :
                   user.role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч'
                 }
@@ -656,8 +654,6 @@ export default function Home() {
                       )}
                       <h3 className="font-bold text-lg">{user.firstName} {user.lastName}</h3>
                       <p className="text-gray-600 capitalize">{
-                        user.role === 'player' ? 'Тоглогч' :
-                        user.role === 'club_owner' ? 'Клубын эзэн' :
                         user.role === 'admin' ? 'Админ' :
                         user.role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч'
                       }</p>

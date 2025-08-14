@@ -33,7 +33,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email,
         clubAffiliation,
         password,
-        role,
         rank
       } = req.body;
       
@@ -68,10 +67,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (password.length < 6) {
         return res.status(400).json({ message: "Нууц үг дор хаяж 6 тэмдэгт байх ёстой" });
       }
-      if (!role || !['player', 'club_owner'].includes(role)) {
-        return res.status(400).json({ message: "Зөв төрөл сонгоно уу" });
-      }
-
       const validRanks = ['3-р зэрэг', '2-р зэрэг', '1-р зэрэг', 'спортын дэд мастер', 'спортын мастер', 'олон улсын хэмжээний мастер'];
       if (rank && !validRanks.includes(rank)) {
         return res.status(400).json({ message: "Буруу зэрэг" });
@@ -93,6 +88,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Store password in plain text (as requested by user)
       // Create user with all required fields
+      const role = 'player';
       const userData = {
         email,
         phone,
