@@ -733,16 +733,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Зөвхөн админ хэрэглэгч тэмцээн үүсгэх боломжтой" });
       }
 
-      const tournamentData = insertTournamentSchema.parse({
-        ...req.body,
-        organizerId: req.session.userId,
+      // Parse and validate the data
+      const tournamentData = {
+        name: req.body.name,
+        description: req.body.description || null,
+        richDescription: req.body.richDescription || null,
         startDate: new Date(req.body.startDate),
         endDate: new Date(req.body.endDate),
         registrationDeadline: req.body.registrationDeadline ? new Date(req.body.registrationDeadline) : null,
+        location: req.body.location,
+        organizer: req.body.organizer || null,
+        maxParticipants: parseInt(req.body.maxParticipants) || 32,
         entryFee: req.body.entryFee ? req.body.entryFee.toString() : "0",
-        maxParticipants: req.body.maxParticipants || 32,
+        status: "registration" as any,
+        participationTypes: req.body.participationTypes || [],
+        rules: req.body.rules || null,
+        prizes: req.body.prizes || null,
+        contactInfo: req.body.contactInfo || null,
+        schedule: req.body.schedule || null,
+        requirements: req.body.requirements || null,
         isPublished: req.body.isPublished || false,
-      });
+        organizerId: req.session.userId,
+        clubId: null,
+        backgroundImageUrl: req.body.backgroundImageUrl || null,
+        regulationDocumentUrl: req.body.regulationDocumentUrl || null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
       
       console.log("Parsed tournament data:", tournamentData);
       
@@ -1130,27 +1147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
-  // Tournament routes - allow both admin and club owners to create tournaments
-  app.post('/api/tournaments', requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.session.userId;
-      const user = await storage.getUser(userId);
-      
-      // Check if user is admin or club owner
-      if (user?.role !== 'admin' && user?.role !== 'club_owner') {
-        return res.status(403).json({ message: "Зөвхөн админ болон клубын эзэд тэмцээн үүсгэх боломжтой" });
-      }
-      
-      const tournamentData = insertTournamentSchema.parse({ ...req.body, organizerId: userId });
-      console.log("Creating tournament with data:", tournamentData);
-      const tournament = await storage.createTournament(tournamentData);
-      console.log("Tournament created successfully:", tournament);
-      res.json(tournament);
-    } catch (error) {
-      console.error("Error creating tournament:", error);
-      res.status(400).json({ message: "Тэмцээн үүсгэхэд алдаа гарлаа", error: error instanceof Error ? error.message : String(error) });
-    }
-  });
+  
 
   app.get('/api/tournaments', async (req, res) => {
     try {
