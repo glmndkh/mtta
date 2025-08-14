@@ -66,6 +66,7 @@ function Router() {
           <Route path="/admin" component={AdminDashboard} />
           <Route path="/admin/generator" component={AdminTournamentGenerator} />
           <Route path="/admin/tournaments" component={AdminTournaments} />
+          <Route path="/admin/tournament/:id/results/:type" component={AdminTournamentResults} />
           <Route path="/admin/tournament/:id/results" component={AdminTournamentResults} />
           <Route path="/admin/tournament-results" component={AdminTournamentResults} />
           <Route path="/admin/tournament-create" component={AdminTournamentGenerator} />
