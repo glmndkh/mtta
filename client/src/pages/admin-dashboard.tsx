@@ -228,8 +228,13 @@ export default function AdminDashboard() {
   };
 
   const openEditDialog = (item: any) => {
+    if (selectedTab === 'tournaments') {
+      setLocation(`/admin/generator?id=${item.id}`);
+      return;
+    }
+
     setEditingItem(item);
-    
+
     // Format dates for HTML date inputs (YYYY-MM-DD format)
     const formattedItem = { ...item };
     if (item.startDate) {
@@ -256,12 +261,12 @@ export default function AdminDashboard() {
         formattedItem.dateOfBirth = dob.toISOString().split('T')[0];
       }
     }
-    
+
     // Extract player IDs for teams
     if (selectedTab === 'teams' && item.players && Array.isArray(item.players)) {
       formattedItem.playerIds = item.players.map((player: any) => player.playerId);
     }
-    
+
     setFormData(formattedItem);
   };
 

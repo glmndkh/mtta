@@ -57,8 +57,12 @@ export default function AdminTournamentGenerator() {
   const { user, isAuthenticated, isLoading } = useAuth() as any;
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [, setLocation] = useLocation();
-  
+  const [location, setLocation] = useLocation();
+
+  const params = new URLSearchParams(location.split('?')[1] || '');
+  const editingId = params.get('id');
+  const isEditing = !!editingId;
+
   const [customParticipationTypes, setCustomParticipationTypes] = useState<string[]>([]);
   const [newParticipationType, setNewParticipationType] = useState("");
   const [richDescription, setRichDescription] = useState("");
@@ -115,6 +119,61 @@ export default function AdminTournamentGenerator() {
     }
   });
 
+  // Load existing tournament when editing
+  useEffect(() => {
+    if (isEditing && editingId) {
+      (async () => {
+        try {
+          const res = await apiRequest(`/api/tournaments/${editingId}`);
+          const data = await res.json();
+          const defaultTypes = defaultParticipationTypes.map(t => t.id);
+
+          const formatDateTimeLocal = (value?: string) => {
+            if (!value) return '';
+            const d = new Date(value);
+            const pad = (n: number) => n.toString().padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+          };
+
+          setCustomParticipationTypes(
+            (data.participationTypes || []).filter((t: string) => !defaultTypes.includes(t))
+          );
+          form.reset({
+            name: data.name || '',
+            description: data.description || '',
+            richDescription: data.richDescription || '',
+            startDate: formatDateTimeLocal(data.startDate),
+            endDate: formatDateTimeLocal(data.endDate),
+            registrationDeadline: formatDateTimeLocal(data.registrationDeadline),
+            location: data.location || '',
+            organizer: data.organizer || '',
+            maxParticipants: data.maxParticipants !== undefined ? Number(data.maxParticipants) : 32,
+            entryFee: data.entryFee !== undefined ? Number(data.entryFee) : 0,
+            participationTypes: (data.participationTypes || []).filter((t: string) => defaultTypes.includes(t)),
+            rules: data.rules || '',
+            prizes: data.prizes || '',
+            contactInfo: data.contactInfo || '',
+            schedule: data.schedule || '',
+            requirements: data.requirements || '',
+            backgroundImageUrl: data.backgroundImageUrl || '',
+            regulationDocumentUrl: data.regulationDocumentUrl || '',
+            minRating: data.minRating ? String(data.minRating) : 'none',
+            maxRating: data.maxRating ? String(data.maxRating) : 'none',
+            isPublished: data.isPublished ?? true,
+          });
+          setRichDescription(data.richDescription || '');
+        } catch (error) {
+          console.error('Failed to load tournament:', error);
+          toast({
+            title: 'Алдаа гарлаа',
+            description: 'Тэмцээний мэдээлэл ачаалахад алдаа гарлаа',
+            variant: 'destructive',
+          });
+        }
+      })();
+    }
+  }, [isEditing, editingId, form, toast]);
+
   // Participation type management
 
   const addCustomParticipationType = () => {
@@ -130,20 +189,20 @@ export default function AdminTournamentGenerator() {
     form.setValue("participationTypes", currentTypes.filter(type => type !== typeToRemove));
   };
 
-  const createTournament = useMutation({
+  const saveTournament = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest('/api/tournaments', {
-        method: 'POST',
+      return apiRequest(isEditing ? `/api/tournaments/${editingId}` : '/api/tournaments', {
+        method: isEditing ? 'PUT' : 'POST',
         body: JSON.stringify(data)
       });
     },
     onSuccess: () => {
       toast({
-        title: "Амжилттай үүсгэлээ!",
-        description: "Тэмцээн амжилттай бүртгэгдлээ",
+        title: isEditing ? "Амжилттай шинэчлэгдлээ!" : "Амжилттай үүсгэлээ!",
+        description: isEditing ? "Тэмцээн амжилттай шинэчлэгдлээ" : "Тэмцээн амжилттай бүртгэгдлээ",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/tournaments'] });
-      setLocation('/tournaments');
+      setLocation(isEditing ? '/admin-dashboard' : '/tournaments');
     },
     onError: (error: any) => {
       if (isUnauthorizedError(error)) {
@@ -159,7 +218,7 @@ export default function AdminTournamentGenerator() {
       }
       toast({
         title: "Алдаа гарлаа",
-        description: error.message || "Тэмцээн үүсгэхэд алдаа гарлаа",
+        description: error.message || (isEditing ? "Тэмцээн шинэчлэхэд алдаа гарлаа" : "Тэмцээн үүсгэхэд алдаа гарлаа"),
         variant: "destructive",
       });
     },
@@ -174,7 +233,7 @@ export default function AdminTournamentGenerator() {
       maxRating: data.maxRating === "none" ? null : parseInt(data.maxRating) || null,
     };
     
-    createTournament.mutate(finalData);
+    saveTournament.mutate(finalData);
   };
 
   if (isLoading) {
@@ -202,11 +261,13 @@ export default function AdminTournamentGenerator() {
           <div className="flex items-center justify-center mb-4">
             <Trophy className="h-12 w-12 text-mtta-green mr-4" />
             <h1 className="text-4xl font-bold text-gray-900">
-              Тэмцээн үүсгэх
+              {isEditing ? 'Тэмцээн засварлах' : 'Тэмцээн үүсгэх'}
             </h1>
           </div>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Шинэ тэмцээн үүсгэн зохион байгуулж, оролцогчдыг бүртгүүлэх боломжтой
+            {isEditing
+              ? 'Тэмцээний мэдээллийг шинэчлэнэ үү'
+              : 'Шинэ тэмцээн үүсгэн зохион байгуулж, оролцогчдыг бүртгүүлэх боломжтой'}
           </p>
         </div>
 
@@ -676,27 +737,27 @@ export default function AdminTournamentGenerator() {
 
             {/* Submit Buttons */}
             <div className="flex gap-4 justify-end">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setLocation('/tournaments')}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setLocation(isEditing ? '/admin-dashboard' : '/tournaments')}
               >
                 Цуцлах
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="mtta-green text-white hover:bg-mtta-green-dark"
-                disabled={createTournament.isPending}
+                disabled={saveTournament.isPending}
               >
-                {createTournament.isPending ? (
+                {saveTournament.isPending ? (
                   <div className="flex items-center">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Үүсгэж байна...
+                    {isEditing ? 'Шинэчлэж байна...' : 'Үүсгэж байна...'}
                   </div>
                 ) : (
                   <div className="flex items-center">
                     <Save className="h-4 w-4 mr-2" />
-                    Тэмцээн үүсгэх
+                    {isEditing ? 'Тэмцээн шинэчлэх' : 'Тэмцээн үүсгэх'}
                   </div>
                 )}
               </Button>
