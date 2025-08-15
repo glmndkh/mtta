@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Trash2, Plus, Users, Shield, Building, Trophy, Calendar, Newspaper, Images, TrendingUp, Upload, Link as LinkIcon, ArrowLeft, Settings, UserPlus, Play, Zap, X, Crown } from "lucide-react";
+import { Pencil, Trash2, Plus, Users, Shield, Building, Trophy, Calendar, Newspaper, Images, TrendingUp, Upload, Link as LinkIcon, ArrowLeft, Settings, UserPlus, Play, Zap, X, Crown, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import AdminStatsDashboard from "@/components/admin-stats-dashboard";
@@ -183,8 +183,13 @@ export default function AdminDashboard() {
       return;
     }
     if (action === 'manage-league') {
-      // Navigate to league management page  
+      // Navigate to league management page
       setLocation(`/admin/league/${tournamentId}/manage`);
+      return;
+    }
+    if (action === 'results') {
+      // Navigate to tournament results entry page
+      setLocation(`/admin/tournament/${tournamentId}/results`);
       return;
     }
     
@@ -1992,6 +1997,10 @@ export default function AdminDashboard() {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuItem onClick={() => handleTournamentManagement(tournament.id, 'results')}>
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    Үр дүн оруулах
+                                  </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleTournamentManagement(tournament.id, 'manage-tournament')}>
                                     <Settings className="w-4 h-4 mr-2" />
                                     Удирдлагын самбар нээх

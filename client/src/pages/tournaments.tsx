@@ -300,9 +300,9 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
   };
 
   return (
-    <div 
+    <div
       className="relative overflow-hidden cursor-pointer hover:shadow-2xl transition-shadow duration-300 rounded-xl mb-8"
-      onClick={() => setLocation(`/tournament/${tournament.id}`)}
+      onClick={() => setLocation(`/tournament/${tournament.id}/full`)}
     >
       <div className="relative h-64 lg:h-80">
         {/* Background Image */}
