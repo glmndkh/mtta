@@ -27,6 +27,7 @@ import AdminTournamentGenerator from "@/pages/admin-tournament-generator";
 import TournamentLanding from "@/pages/tournament-landing";
 import TournamentPage from "@/pages/tournament-page";
 import TournamentResults from "@/pages/tournament-results";
+import TournamentFullInfo from "@/pages/tournament-full-info";
 import Profile from "@/pages/profile";
 import PlayerProfilePage from "@/pages/player-profile";
 import AdminDashboard from "@/pages/admin-dashboard";
@@ -44,6 +45,7 @@ function Router() {
       <Route path="/tournament-landing" component={TournamentLanding} />
       <Route path="/tournament/:id" component={TournamentPage} />
       <Route path="/tournament/:id/results" component={TournamentResults} />
+      <Route path="/tournament/:id/full" component={TournamentFullInfo} />
       <Route path="/player/:id" component={PlayerProfilePage} />
       <Route path="/tournaments" component={Tournaments} />
       <Route path="/clubs" component={Clubs} />
