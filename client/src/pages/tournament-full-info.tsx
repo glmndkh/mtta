@@ -1,5 +1,5 @@
 import { useRoute, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
@@ -9,6 +9,9 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { KnockoutBracket } from "@/components/KnockoutBracket";
 import { ArrowLeft } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import type { Tournament, TournamentResults, TournamentParticipant } from "@shared/schema";
 
 interface GroupStageGroup {
@@ -37,6 +40,9 @@ interface FinalRanking {
 export default function TournamentFullInfo() {
   const [match, params] = useRoute("/tournament/:id/full");
   const [, setLocation] = useLocation();
+  const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: tournament, isLoading } = useQuery<Tournament>({
     queryKey: ['/api/tournaments', params?.id],
@@ -51,6 +57,39 @@ export default function TournamentFullInfo() {
   const { data: participants = [] } = useQuery<TournamentParticipant[]>({
     queryKey: ['/api/tournaments', params?.id, 'participants'],
     enabled: !!params?.id,
+  });
+
+  const { data: userRegistration } = useQuery<{ registered: boolean }>({
+    queryKey: ['/api/tournaments', params?.id, 'user-registration'],
+    enabled: !!params?.id,
+  });
+
+  const registerMutation = useMutation({
+    mutationFn: async () => {
+      if (!isAuthenticated) {
+        window.location.href = '/login';
+        return;
+      }
+      return apiRequest(`/api/tournaments/${params?.id}/register`, {
+        method: 'POST',
+        body: JSON.stringify({ participationType: 'singles' })
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Амжилттай бүртгүүллээ!',
+        description: 'Тэмцээнд амжилттай бүртгүүллээ.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', params?.id] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', params?.id, 'participants'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Алдаа гарлаа',
+        description: error.message || 'Бүртгүүлэхэд алдаа гарлаа',
+        variant: 'destructive',
+      });
+    },
   });
 
   if (isLoading) {
@@ -108,7 +147,19 @@ export default function TournamentFullInfo() {
               <span>{tournament.location}</span>
             </div>
             <div className="actions">
-              <Button className="bg-blue-600 hover:bg-blue-700">Бүртгүүлэх</Button>
+              {userRegistration?.registered ? (
+                <Button disabled className="bg-green-600 text-white cursor-not-allowed">
+                  Бүртгүүлсэн
+                </Button>
+              ) : (
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={() => registerMutation.mutate()}
+                  disabled={registerMutation.isPending}
+                >
+                  {registerMutation.isPending ? 'Бүртгүүлж байна...' : 'Бүртгүүлэх'}
+                </Button>
+              )}
             </div>
           </div>
         </div>
