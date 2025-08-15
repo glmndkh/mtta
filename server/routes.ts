@@ -207,6 +207,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
 
+  // Middleware to ensure the user has admin role
+  const isAdminRole = async (req: any, res: any, next: any) => {
+    try {
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Нэвтрэх шаардлагатай" });
+      }
+
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Админ эрх шаардлагатай" });
+      }
+
+      next();
+    } catch (error) {
+      console.error("Admin check error:", error);
+      res.status(500).json({ message: "Эрх шалгахад алдаа гарлаа" });
+    }
+  };
+
   // Profile routes
   app.get('/api/user/profile', requireAuth, async (req: any, res) => {
     try {
@@ -783,10 +802,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/tournaments/:id', requireAuth, async (req: any, res) => {
+  app.put('/api/tournaments/:id', requireAuth, isAdminRole, async (req: any, res) => {
     try {
-      const tournamentData = insertTournamentSchema.partial().parse(req.body);
-      const tournament = await storage.updateTournament(req.params.id, tournamentData);
+      const {
+        startDate,
+        endDate,
+        registrationDeadline,
+        maxParticipants,
+        entryFee,
+        ...rest
+      } = req.body;
+
+      const tournamentData = insertTournamentSchema.partial().parse({
+        ...rest,
+        ...(startDate ? { startDate: new Date(startDate) } : {}),
+        ...(endDate ? { endDate: new Date(endDate) } : {}),
+        ...(registrationDeadline
+          ? { registrationDeadline: new Date(registrationDeadline) }
+          : {}),
+        ...(maxParticipants !== undefined
+          ? { maxParticipants: parseInt(maxParticipants) }
+          : {}),
+        ...(entryFee !== undefined ? { entryFee: entryFee.toString() } : {}),
+      });
+
+      const tournament = await storage.updateTournament(
+        req.params.id,
+        tournamentData
+      );
       if (!tournament) {
         return res.status(404).json({ message: "Тэмцээн олдсонгүй" });
       }
@@ -797,7 +840,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/tournaments/:id', requireAuth, async (req: any, res) => {
+  app.delete('/api/tournaments/:id', requireAuth, isAdminRole, async (req: any, res) => {
     try {
       const success = await storage.deleteTournament(req.params.id);
       if (!success) {
@@ -1173,34 +1216,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin-only tournament update route
-  app.put('/api/tournaments/:id', isAuthenticated, isAdmin, async (req: any, res) => {
-    try {
-      const updateData = insertTournamentSchema.partial().parse(req.body);
-      const tournament = await storage.updateTournament(req.params.id, updateData);
-      if (!tournament) {
-        return res.status(404).json({ message: "Тэмцээн олдсонгүй" });
-      }
-      res.json(tournament);
-    } catch (error) {
-      console.error("Error updating tournament:", error);
-      res.status(400).json({ message: "Тэмцээн засварлахад алдаа гарлаа" });
-    }
-  });
-
-  // Admin-only tournament delete route
-  app.delete('/api/tournaments/:id', requireAuth, isAdmin, async (req: any, res) => {
-    try {
-      const success = await storage.deleteTournament(req.params.id);
-      if (!success) {
-        return res.status(404).json({ message: "Тэмцээн олдсонгүй" });
-      }
-      res.json({ message: "Тэмцээн амжилттай устгагдлаа" });
-    } catch (error) {
-      console.error("Error deleting tournament:", error);
-      res.status(400).json({ message: "Тэмцээн устгахад алдаа гарлаа" });
-    }
-  });
 
 
 
@@ -1731,31 +1746,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ================================
   // ADMIN ROUTES FOR CRUD OPERATIONS
   // ================================
-  
-  // Admin middleware to check if user is admin
-  const isAdminRole = async (req: any, res: any, next: any) => {
-    try {
-      console.log("Admin middleware - Session:", req.session?.userId);
-      if (!req.session?.userId) {
-        console.log("No session userId found in admin middleware");
-        return res.status(401).json({ message: "Нэвтрэх шаардлагатай" });
-      }
-      
-      const user = await storage.getUser(req.session.userId);
-      console.log("Admin middleware - User found:", user?.email, "Role:", user?.role);
-      
-      if (!user || user.role !== 'admin') {
-        console.log("User is not admin, role:", user?.role);
-        return res.status(403).json({ message: "Админ эрх шаардлагатай" });
-      }
-      
-      console.log("Admin middleware - Access granted");
-      next();
-    } catch (error) {
-      console.error("Admin check error:", error);
-      res.status(500).json({ message: "Эрх шалгахад алдаа гарлаа" });
-    }
-  };
 
   // Admin statistics endpoint
   app.get('/api/admin/stats', requireAuth, isAdminRole, async (req, res) => {
