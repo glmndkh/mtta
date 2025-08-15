@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Улаанбаатар хотын аварга шалгаруулах тэмцээн</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --text:#eaf2ff;
+      --muted:#a7b2c3;
+      --accent:#178cff;
+      --accent-contrast:#fff;
+      --tab:#d6e3ff1a;
+      --tab-active:#d6e3ff33;
+      --glass: rgba(0,0,0,.35);
+      --max: 1200px;
+    }
+    *,*::before,*::after{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:var(--bg); color:var(--text); font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .hero{
+      position:relative; min-height:100vh; display:flex; flex-direction:column; justify-content:flex-end; overflow:hidden;
+    }
+    /* Background image */
+    .hero::before{
+      content:""; position:absolute; inset:0; z-index:0;
+      background-image:url('https://images.unsplash.com/photo-1565715151245-6419bc8bfeae?q=80&w=2060&auto=format&fit=crop');
+      background-size:cover; background-position:center;
+      filter:contrast(1.05) saturate(1.05);
+      transform:scale(1.02);
+    }
+    /* Gradient overlay */
+    .hero::after{
+      content:""; position:absolute; inset:0; z-index:1;
+      background:linear-gradient(180deg, rgba(2,7,18,0.15) 0%, rgba(2,7,18,0.45) 30%, rgba(2,7,18,0.75) 65%, rgba(2,7,18,0.95) 100%);
+      backdrop-filter:saturate(1.1) blur(.2px);
+    }
+
+    .content{ position:relative; z-index:2; width:100%; max-width:var(--max); margin:0 auto; padding:64px 28px 0; }
+
+    /* Back button */
+    .back{
+      position:absolute; left:20px; top:20px; z-index:3;
+      width:48px; height:48px; border-radius:12px; display:grid; place-items:center;
+      background:var(--glass); border:1px solid #ffffff22; color:var(--text);
+      backdrop-filter: blur(6px);
+      cursor:pointer; text-decoration:none;
+    }
+    .back svg{width:22px;height:22px}
+
+    /* Date */
+    .date{ font-weight:600; letter-spacing:.02em; color:#dbe6ff; opacity:.9; margin-bottom:10px; }
+
+    /* Title */
+    .title{ font-family:Oswald, Inter, sans-serif; font-size:clamp(28px, 4.5vw, 56px); line-height:1.05; font-weight:700; margin:0 0 8px; text-shadow:0 1px 0 rgba(0,0,0,.4); }
+
+    /* Subtitle ("тэмцээн") */
+    .subtitle{ font-family:Oswald, Inter, sans-serif; font-size:clamp(22px, 3.2vw, 36px); margin:0 0 16px; font-weight:600; opacity:.98; }
+
+    /* Meta row */
+    .meta{ display:flex; gap:18px; align-items:center; color:var(--muted); font-weight:600; margin:8px 0 26px; flex-wrap:wrap; }
+    .dot{ width:6px; height:6px; background:#94a3b8; border-radius:50%; opacity:.7 }
+
+    /* CTA */
+    .actions{ display:flex; gap:12px; align-items:center; margin:10px 0 48px }
+    .btn{
+      background:var(--accent); color:var(--accent-contrast); border:none; font-weight:700; letter-spacing:.02em;
+      padding:14px 22px; border-radius:14px; cursor:pointer; font-size:18px; box-shadow:0 8px 24px rgba(23,140,255,.32);
+      transition:transform .08s ease, box-shadow .2s ease, filter .2s ease;
+    }
+    .btn:hover{ transform:translateY(-1px); box-shadow:0 10px 28px rgba(23,140,255,.4) }
+    .btn:active{ transform:translateY(0) scale(.98) }
+
+    /* Tabs bar */
+    .tabs-wrap{ position:relative; z-index:2; width:100%; background:linear-gradient(180deg, rgba(2,7,18,0) 0%, rgba(2,7,18,.85) 40%, rgba(2,7,18,1) 100%); }
+    .tabs{
+      max-width:var(--max); margin:0 auto; display:flex; gap:10px; padding:12px 12px; border-top:2px solid #163354; 
+      overflow:auto; scrollbar-width:thin; 
+    }
+    .tab{
+      white-space:nowrap; padding:14px 18px; border-radius:12px; background:var(--tab); border:1px solid #ffffff1a; color:#e2edff;
+      font-weight:700; letter-spacing:.01em; flex:0 0 auto; user-select:none; transition:background .2s ease, color .2s ease, border .2s ease;
+    }
+    .tab:hover{ background:var(--tab-active) }
+    .tab.active{ background:#ffffff10; border-color:#ffffff33 }
+
+    /* Layout breathing space below */
+    .below{ height:38vh; background:linear-gradient(180deg, #020a15 0%, #050b14 100%); }
+
+    @media (min-width:900px){
+      .actions{ margin-bottom:64px }
+    }
+  </style>
+</head>
+<body>
+  <a href="#" class="back" aria-label="Буцах">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </a>
+
+  <header class="hero">
+    <div class="content">
+      <div class="date">2025.08.03–2025.08.04</div>
+      <h1 class="title">Улаанбаатар хотын аварга шалгаруулах</h1>
+      <h2 class="subtitle">тэмцээн</h2>
+
+      <div class="meta">
+        <span>Оч Клуб</span>
+      </div>
+
+      <div class="actions">
+        <button class="btn">Бүртгүүлэх</button>
+      </div>
+    </div>
+
+    <div class="tabs-wrap">
+      <nav class="tabs" role="tablist">
+        <div class="tab active" role="tab">Тойм</div>
+        <div class="tab" role="tab">Хэсгийн тоглолтууд</div>
+        <div class="tab" role="tab">Нугалаа</div>
+        <div class="tab" role="tab">Баг тамирчид</div>
+        <div class="tab" role="tab">Альбом</div>
+        <div class="tab" role="tab">Тэмцээний дэлгэрэнгүй</div>
+      </nav>
+    </div>
+  </header>
+
+  <main class="below"></main>
+</body>
+</html>
