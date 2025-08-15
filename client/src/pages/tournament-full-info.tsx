@@ -1,0 +1,263 @@
+import { useRoute, useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
+import Navigation from "@/components/navigation";
+import PageWithLoading from "@/components/PageWithLoading";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { KnockoutBracket } from "@/components/KnockoutBracket";
+import { ArrowLeft } from "lucide-react";
+import type { Tournament, TournamentResults, TournamentParticipant } from "@shared/schema";
+
+interface GroupStageGroup {
+  groupName: string;
+  players: Array<{ id: string; name: string; club?: string }>; 
+  matches?: Array<{ id: string; player1: string; player2: string; score: string }>;
+}
+
+interface KnockoutMatch {
+  id: string;
+  round: string;
+  player1?: { id: string; name: string };
+  player2?: { id: string; name: string };
+  score?: string;
+  winner?: { id: string; name: string };
+  position: { x: number; y: number };
+}
+
+interface FinalRanking {
+  position: number;
+  playerId: string;
+  playerName: string;
+  prize?: string;
+}
+
+export default function TournamentFullInfo() {
+  const [match, params] = useRoute("/tournament/:id/full");
+  const [, setLocation] = useLocation();
+
+  const { data: tournament, isLoading } = useQuery<Tournament>({
+    queryKey: ['/api/tournaments', params?.id],
+    enabled: !!params?.id,
+  });
+
+  const { data: results } = useQuery<TournamentResults>({
+    queryKey: ['/api/tournaments', params?.id, 'results'],
+    enabled: !!params?.id,
+  });
+
+  const { data: participants = [] } = useQuery<TournamentParticipant[]>({
+    queryKey: ['/api/tournaments', params?.id, 'participants'],
+    enabled: !!params?.id,
+  });
+
+  if (isLoading) {
+    return <PageWithLoading>{null}</PageWithLoading>;
+  }
+
+  if (!tournament) {
+    return (
+      <PageWithLoading>
+        <div className="container mx-auto px-4 py-8 text-center text-white">
+          <p>Тэмцээн олдсонгүй</p>
+          <Button onClick={() => setLocation('/tournaments')} className="mt-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Буцах
+          </Button>
+        </div>
+      </PageWithLoading>
+    );
+  }
+
+  const groupStageResults: GroupStageGroup[] = (results?.groupStageResults as any) || [];
+  const knockoutResults: KnockoutMatch[] = (results?.knockoutResults as any) || [];
+  const finalRankings: FinalRanking[] = (results?.finalRankings as any) || [];
+
+  const formatDate = (d: Date) => format(d, 'yyyy-MM-dd');
+
+  return (
+    <PageWithLoading>
+      <Navigation />
+      <div className="min-h-screen main-bg text-white">
+        {/* Hero */}
+        <div className="relative h-[60vh] flex flex-col justify-end">
+          {tournament.backgroundImageUrl ? (
+            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${tournament.backgroundImageUrl})` }} />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600" />
+          )}
+          <div className="absolute inset-0 bg-black/60" />
+          <div className="absolute top-6 left-6 z-20">
+            <Button
+              onClick={() => setLocation('/tournaments')}
+              variant="outline"
+              className="bg-white/10 border-white/30 text-white backdrop-blur-sm hover:bg-white/20 flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Буцах
+            </Button>
+          </div>
+          <div className="relative z-10 p-6 max-w-5xl mx-auto w-full">
+            <div className="date text-sm mb-2">
+              {formatDate(tournament.startDate)} - {formatDate(tournament.endDate)}
+            </div>
+            <h1 className="text-4xl font-bold mb-2">{tournament.name}</h1>
+            <div className="flex items-center gap-2 text-gray-300 mb-4">
+              <span>{tournament.location}</span>
+            </div>
+            <div className="actions">
+              <Button className="bg-blue-600 hover:bg-blue-700">Бүртгүүлэх</Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="max-w-5xl mx-auto mt-6 px-4 pb-10">
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 bg-gray-800 mb-4">
+              <TabsTrigger value="overview">Тойм</TabsTrigger>
+              <TabsTrigger value="groups">Хэсгийн тоглолтууд</TabsTrigger>
+              <TabsTrigger value="knockout">Нугалаа</TabsTrigger>
+              <TabsTrigger value="participants">Баг тамирчид</TabsTrigger>
+              <TabsTrigger value="album">Альбом</TabsTrigger>
+              <TabsTrigger value="details">Тэмцээний дэлгэрэнгүй</TabsTrigger>
+            </TabsList>
+
+            {/* Overview */}
+            <TabsContent value="overview">
+              {results?.isPublished && finalRankings.length > 0 ? (
+                <Card className="mb-6">
+                  <CardHeader>
+                    <CardTitle>Тэмцээний үр дүн</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Байр</TableHead>
+                          <TableHead>Тоглогч</TableHead>
+                          <TableHead>Шагнал</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {finalRankings.map((r) => (
+                          <TableRow key={r.playerId}>
+                            <TableCell>{r.position}</TableCell>
+                            <TableCell>{r.playerName}</TableCell>
+                            <TableCell>{r.prize || '-'}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="text-center text-gray-400 py-8">Үр дүн оруулаагүй байна.</div>
+              )}
+            </TabsContent>
+
+            {/* Group Stage */}
+            <TabsContent value="groups">
+              {groupStageResults.length > 0 ? (
+                <div className="space-y-6">
+                  {groupStageResults.map((group) => (
+                    <Card key={group.groupName}>
+                      <CardHeader>
+                        <CardTitle>{group.groupName}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Тоглогч</TableHead>
+                              <TableHead>Клуб</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {group.players.map((p) => (
+                              <TableRow key={p.id}>
+                                <TableCell>{p.name}</TableCell>
+                                <TableCell>{p.club || '-'}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-gray-400 py-8">Хэсгийн тоглолт оруулаагүй байна.</div>
+              )}
+            </TabsContent>
+
+            {/* Knockout */}
+            <TabsContent value="knockout">
+              {knockoutResults.length > 0 ? (
+                <KnockoutBracket matches={knockoutResults} />
+              ) : (
+                <div className="text-center text-gray-400 py-8">Нугалааны мэдээлэл алга.</div>
+              )}
+            </TabsContent>
+
+            {/* Participants */}
+            <TabsContent value="participants">
+              {participants.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Нэр</TableHead>
+                      <TableHead>Оролцох төрөл</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {participants.map((p) => (
+                      <TableRow key={p.id}>
+                        <TableCell>{p.playerId}</TableCell>
+                        <TableCell>{p.participationType}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center text-gray-400 py-8">Тамирчдын мэдээлэл алга.</div>
+              )}
+            </TabsContent>
+
+            {/* Album */}
+            <TabsContent value="album">
+              <div className="text-center text-gray-400 py-8">
+                Альбомын зураг оруулаагүй байна.
+              </div>
+            </TabsContent>
+
+            {/* Details */}
+            <TabsContent value="details">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Тэмцээний дэлгэрэнгүй</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                    <dt className="font-semibold">Эхлэх огноо:</dt>
+                    <dd>{formatDate(tournament.startDate)}</dd>
+                    <dt className="font-semibold">Дуусах огноо:</dt>
+                    <dd>{formatDate(tournament.endDate)}</dd>
+                    <dt className="font-semibold">Байршил:</dt>
+                    <dd>{tournament.location || '-'}</dd>
+                    <dt className="font-semibold">Зохион байгуулагч:</dt>
+                    <dd>{tournament.organizer || '-'}</dd>
+                    <dt className="font-semibold">Тайлбар:</dt>
+                    <dd>{tournament.description || '-'}</dd>
+                  </dl>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </PageWithLoading>
+  );
+}
