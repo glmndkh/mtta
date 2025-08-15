@@ -28,15 +28,36 @@ const roundClassNames = ["one", "two", "three", "four", "five", "six"]; // suppo
 
 function getRoundNumber(match: BracketMatch): number {
   if (typeof match.round === "number") return match.round;
+
+  // Normalize round string to handle different languages/cases
+  const key = (match.round || "")
+    .toString()
+    .toLowerCase();
+
+  // Map various round names (English & Mongolian) to an ordered number
+  // The larger the number, the further to the right the column appears
   const map: Record<string, number> = {
-    "Финал": 1,
-    "Хагас финал": 2,
-    "Дөрөвийн финал": 3,
-    "1/8 финал": 4,
-    "1/16 финал": 5,
-    "1/32 финал": 6,
+    // Early rounds
+    "1/32 финал": 1,
+    "round of 64": 1,
+    "1/16 финал": 2,
+    "round of 32": 2,
+    "1/8 финал": 3,
+    "round of 16": 3,
+    // Quarterfinals
+    "дөрөвийн финал": 4,
+    "quarterfinal": 4,
+    // Semifinals
+    "хагас финал": 5,
+    "semifinal": 5,
+    // Finals and similar end-stage matches
+    "финал": 6,
+    "final": 6,
+    "third_place_playoff": 6,
+    "3-р байрын тоглолт": 6,
   };
-  return map[match.round as string] ?? 99;
+
+  return map[key] ?? 99;
 }
 
 export function KnockoutBracket({ matches, onPlayerClick }: KnockoutBracketProps) {
