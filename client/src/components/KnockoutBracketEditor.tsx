@@ -483,9 +483,8 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
           y1={y1}
           x2={x2}
           y2={y2}
-          stroke="var(--border)"
+          stroke="#03d9ce"
           strokeWidth="2"
-          strokeDasharray="5,5"
         />
       );
     });
@@ -562,10 +561,10 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
       {/* Bracket Visualization */}
       <div className="relative">
         {matches.length > 0 ? (
-          <div 
+          <div
             ref={containerRef}
-            className="relative bg-white border rounded-lg p-3 md:p-6 overflow-auto"
-            style={{ 
+            className="relative bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border border-gray-700 rounded-lg p-3 md:p-6 overflow-auto text-gray-100"
+            style={{
               minHeight: '800px',
               minWidth: '1200px'
             }}
@@ -583,7 +582,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
             {matches.map(match => (
               <div
                 key={match.id}
-                className="absolute bg-white border-2 border-gray-300 rounded-lg p-3 w-64 md:w-72 min-h-[180px] shadow-md hover:shadow-lg transition-shadow"
+                className="absolute bg-gray-800 border-2 border-gray-600 rounded-lg p-3 w-64 md:w-72 min-h-[180px] shadow-lg hover:shadow-xl transition-shadow text-gray-100"
                 style={{
                   left: match.position.x,
                   top: match.position.y,
@@ -609,9 +608,9 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                 <div className="mb-2 flex gap-2 items-center">
                   <select
                     className={`flex-1 p-1 border rounded text-xs ${
-                      match.player1Score && match.player2Score && 
-                      parseInt(match.player1Score) > parseInt(match.player2Score) ? 
-                      'bg-green-100 border-green-400' : 'bg-blue-50'
+                      match.player1Score && match.player2Score &&
+                      parseInt(match.player1Score) > parseInt(match.player2Score) ?
+                      'bg-green-600 border-green-400 text-white' : 'bg-gray-700 border-gray-600 text-gray-200'
                     }`}
                     value={match.player1?.id || ''}
                     onChange={(e) => handlePlayerSelect(match.id, 'player1', e.target.value)}
@@ -634,7 +633,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                     placeholder="0"
                     value={match.player1Score || ''}
                     onChange={(e) => handleScoreChange(match.id, 'player1Score', e.target.value)}
-                    className="w-12 text-center text-sm h-7"
+                    className="w-12 text-center text-sm h-7 bg-gray-900 border-gray-600 text-gray-100"
                     type="number"
                     min="0"
                     max="9"
@@ -648,9 +647,9 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                 <div className="mb-2 flex gap-2 items-center">
                   <select
                     className={`flex-1 p-1 border rounded text-xs ${
-                      match.player1Score && match.player2Score && 
-                      parseInt(match.player2Score) > parseInt(match.player1Score) ? 
-                      'bg-green-100 border-green-400' : 'bg-red-50'
+                      match.player1Score && match.player2Score &&
+                      parseInt(match.player2Score) > parseInt(match.player1Score) ?
+                      'bg-green-600 border-green-400 text-white' : 'bg-gray-700 border-gray-600 text-gray-200'
                     }`}
                     value={match.player2?.id || ''}
                     onChange={(e) => handlePlayerSelect(match.id, 'player2', e.target.value)}
@@ -673,7 +672,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                     placeholder="0"
                     value={match.player2Score || ''}
                     onChange={(e) => handleScoreChange(match.id, 'player2Score', e.target.value)}
-                    className="w-12 text-center text-sm h-7"
+                    className="w-12 text-center text-sm h-7 bg-gray-900 border-gray-600 text-gray-100"
                     type="number"
                     min="0"
                     max="9"
@@ -682,8 +681,8 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
 
                 {/* Compact Score Display */}
                 {(match.player1Score && match.player2Score) && (
-                  <div className="text-center mt-2 pt-2 border-t border-gray-200">
-                    <div className="text-sm font-medium text-gray-800">
+                  <div className="text-center mt-2 pt-2 border-t border-gray-600">
+                    <div className="text-sm font-medium text-gray-100">
                       {match.player1Score} - {match.player2Score}
                     </div>
                   </div>
@@ -692,9 +691,9 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 bg-gray-50 rounded-lg">
+          <div className="text-center py-12 bg-gray-800 rounded-lg text-gray-200">
             <h3 className="text-lg font-semibold mb-2">Шигшээ тоглолт үүсгэх</h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-400 mb-4">
               Дээрх "Хоосон шигшээ үүсгэх" товчийг дарж эхлэнэ үү
             </p>
             {qualifiedPlayers.length >= 4 && (
