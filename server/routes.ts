@@ -1173,8 +1173,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin-only route to get all tournaments
+  app.get('/api/admin/tournaments', requireAuth, isAdmin, async (req: any, res) => {
+    try {
+      const tournaments = await storage.getTournaments(); // Get all tournaments, not just active ones
+      res.json(tournaments);
+    } catch (error) {
+      console.error("Error fetching admin tournaments:", error);
+      res.status(500).json({ message: "Тэмцээний жагсаалт авахад алдаа гарлаа" });
+    }
+  });
+
   // Admin-only tournament update route
-  app.put('/api/tournaments/:id', isAuthenticated, isAdmin, async (req: any, res) => {
+  app.put('/api/admin/tournaments/:id', requireAuth, isAdmin, async (req: any, res) => {
     try {
       const updateData = insertTournamentSchema.partial().parse(req.body);
       const tournament = await storage.updateTournament(req.params.id, updateData);
@@ -1189,7 +1200,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin-only tournament delete route
-  app.delete('/api/tournaments/:id', requireAuth, isAdmin, async (req: any, res) => {
+  app.delete('/api/admin/tournaments/:id', requireAuth, isAdmin, async (req: any, res) => {
     try {
       const success = await storage.deleteTournament(req.params.id);
       if (!success) {

@@ -1690,6 +1690,98 @@ export default function AdminDashboard() {
           </>
         );
 
+      case 'tournaments':
+        return (
+          <>
+            <div>
+              <Label htmlFor="name">Тэмцээний нэр</Label>
+              <Input
+                id="name"
+                value={formData.name || ''}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="description">Тайлбар</Label>
+              <Textarea
+                id="description"
+                value={formData.description || ''}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="startDate">Эхлэх огноо</Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={formData.startDate || ''}
+                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="endDate">Дуусах огноо</Label>
+                <Input
+                  id="endDate"
+                  type="date"
+                  value={formData.endDate || ''}
+                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="location">Байршил</Label>
+                <Input
+                  id="location"
+                  value={formData.location || ''}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="maxParticipants">Хамгийн их оролцогчид</Label>
+                <Input
+                  id="maxParticipants"
+                  type="number"
+                  value={formData.maxParticipants || ''}
+                  onChange={(e) => setFormData({ ...formData, maxParticipants: parseInt(e.target.value) })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="entryFee">Оролцооны төлбөр</Label>
+                <Input
+                  id="entryFee"
+                  value={formData.entryFee || ''}
+                  onChange={(e) => setFormData({ ...formData, entryFee: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="status">Төлөв</Label>
+                <Select value={formData.status || ''} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Төлөв сонгох" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="registration">Бүртгэл</SelectItem>
+                    <SelectItem value="ongoing">Явагдаж байгаа</SelectItem>
+                    <SelectItem value="completed">Дууссан</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="isPublished"
+                checked={formData.isPublished || false}
+                onCheckedChange={(checked) => setFormData({ ...formData, isPublished: checked })}
+              />
+              <Label htmlFor="isPublished">Нийтлэгдсэн</Label>
+            </div>
+          </>
+        );
+
       case 'champions':
         return (
           <>
