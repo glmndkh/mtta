@@ -26,6 +26,13 @@ A comprehensive web application for the Mongolian Table Tennis Association that 
 
 ## Recent Changes
 
+### Tournament Creation Bug Fix (August 2025)
+- **Critical tournament creation issue resolved** - fixed incorrect API call format in admin tournament generator
+- **Frontend API call corrected** from `apiRequest('POST', '/api/tournaments', data)` to proper format with method and body parameters
+- **Enhanced tournament creation logging** added to backend for better debugging and monitoring
+- **Tournament filtering verification** confirmed published tournaments with "registration" status now display correctly
+- **Tournament creation fully functional** - admin can now successfully create tournaments that appear in tournaments list
+
 ### Tournament Results Management System (August 2025)
 - **Comprehensive tournament results system** with both admin input and user viewing capabilities
 - **Excel-style admin interface** for group stage and knockout bracket management with dynamic row/column controls
