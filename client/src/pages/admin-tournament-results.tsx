@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, Plus, Trash2, Save, Users, Trophy, Target, Download, Upload, FileSpreadsheet } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -88,6 +89,9 @@ export default function AdminTournamentResultsPage() {
   const [knockoutMatches, setKnockoutMatches] = useState<KnockoutMatch[]>([]);
   const [finalRankings, setFinalRankings] = useState<FinalRanking[]>([]);
   const [isPublished, setIsPublished] = useState(false);
+  const [customParticipationTypes, setCustomParticipationTypes] = useState<string[]>([]);
+  const [addCategoryOpen, setAddCategoryOpen] = useState(false);
+  const [newCategory, setNewCategory] = useState("");
 
   // Check if we have a tournament ID, if not show tournament selection
   const tournamentId = params?.id;
@@ -114,6 +118,7 @@ export default function AdminTournamentResultsPage() {
   const participants = participationType
     ? participantsData.filter(p => p.participationType === participationType)
     : participantsData;
+  const allParticipationTypes = [...(tournament?.participationTypes || []), ...customParticipationTypes];
 
   // Fetch existing results
   const { data: existingResults } = useQuery<TournamentResults>({
@@ -126,6 +131,51 @@ export default function AdminTournamentResultsPage() {
     queryKey: ['/api/admin/users'],
     enabled: !!tournamentId && user?.role === 'admin',
   });
+
+  const handleAddCategory = () => {
+    const category = newCategory.trim();
+    if (!category) return;
+    if (allParticipationTypes.includes(category)) {
+      toast({
+        title: "Ангилал давхцаж байна",
+        description: "Энэ ангилал аль хэдийн нэмэгдсэн байна",
+        variant: "destructive",
+      });
+      return;
+    }
+    const players = participantsData
+      .filter(p => p.participationType === category)
+      .map(p => ({
+        id: p.id,
+        name: `${(p as any).firstName || ''} ${(p as any).lastName || ''}`.trim(),
+        club: (p as any).club || '',
+      }));
+    const groupTable: GroupStageTable = {
+      groupName: 'Групп 1',
+      players,
+      resultMatrix: Array(players.length)
+        .fill(null)
+        .map(() => Array(players.length).fill('')),
+      standings: [],
+    };
+    const knockout: KnockoutMatch[] = [];
+    for (let i = 0; i < players.length; i += 2) {
+      knockout.push({
+        id: `match_${i / 2 + 1}`,
+        round: 'quarterfinal',
+        player1: players[i],
+        player2: players[i + 1],
+        position: { x: 0, y: i / 2 },
+      });
+    }
+    setGroupStageTables([groupTable]);
+    setKnockoutMatches(knockout);
+    setFinalRankings([]);
+    setCustomParticipationTypes(prev => [...prev, category]);
+    setLocation(`/admin/tournament/${tournamentId}/results/${category}`);
+    setAddCategoryOpen(false);
+    setNewCategory('');
+  };
 
   // Redirect to first participation type if none specified
   useEffect(() => {
@@ -737,21 +787,31 @@ export default function AdminTournamentResultsPage() {
         </div>
       </div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {tournament.participationTypes && tournament.participationTypes.length > 0 ? (
+        {allParticipationTypes.length > 0 ? (
           <>
-            <Tabs
-              value={participationType}
-              onValueChange={(val) => setLocation(`/admin/tournament/${tournamentId}/results/${val}`)}
-              className="mb-6"
-            >
-              <TabsList className="w-full flex flex-wrap">
-                {tournament.participationTypes.map((type) => (
-                  <TabsTrigger key={type} value={type} className="capitalize">
-                    {type.replace('_', ' ')}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
+            <div className="flex items-center mb-6">
+              <Tabs
+                value={participationType}
+                onValueChange={(val) => setLocation(`/admin/tournament/${tournamentId}/results/${val}`)}
+                className="flex-1"
+              >
+                <TabsList className="w-full flex flex-wrap">
+                  {allParticipationTypes.map((type) => (
+                    <TabsTrigger key={type} value={type} className="capitalize">
+                      {type.replace('_', ' ')}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+              <Button
+                variant="outline"
+                size="icon"
+                className="ml-2"
+                onClick={() => setAddCategoryOpen(true)}
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
 
             <Tabs defaultValue="knockout" className="space-y-6">
               <TabsList className="grid w-full grid-cols-2">
@@ -1049,7 +1109,7 @@ export default function AdminTournamentResultsPage() {
               <CardContent>
                 <div className="space-y-6">
                   {groupStageTables.map((group, groupIndex) => (
-                    <div key={groupIndex} className="border rounded-lg p-4">
+                    <div key={groupIndex} className="border rounded-lg p-4 bg-white shadow-sm">
                       <div className="flex items-center justify-between mb-4">
                         <Input
                           value={group.groupName}
@@ -1073,7 +1133,7 @@ export default function AdminTournamentResultsPage() {
                         <div className="overflow-x-auto">
                           <table className="w-full border-collapse border border-gray-300">
                             <thead>
-                              <tr className="bg-yellow-100">
+                              <tr className="bg-yellow-100 text-gray-800">
                                 <th className="border border-gray-300 p-2 text-sm font-bold">№</th>
                                 <th className="border border-gray-300 p-2 text-sm font-bold">Нэрс</th>
                                 <th className="border border-gray-300 p-2 text-sm font-bold">Клуб</th>
@@ -1088,7 +1148,7 @@ export default function AdminTournamentResultsPage() {
                             </thead>
                             <tbody>
                               {group.players.map((player, playerIndex) => (
-                                <tr key={playerIndex} className="hover:bg-gray-50">
+                                <tr key={playerIndex} className="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
                                   <td className="border border-gray-300 p-2 text-center font-medium">
                                     {playerIndex + 1}
                                   </td>
@@ -1286,6 +1346,26 @@ export default function AdminTournamentResultsPage() {
           </div>
         )}
       </div>
+
+      <Dialog open={addCategoryOpen} onOpenChange={setAddCategoryOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Шинэ ангилал нэмэх</DialogTitle>
+          </DialogHeader>
+          <Input
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value)}
+            placeholder="Жишээ: 40-49 эр"
+          />
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setAddCategoryOpen(false)}>
+              Болих
+            </Button>
+            <Button onClick={handleAddCategory}>Нэмэх</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
