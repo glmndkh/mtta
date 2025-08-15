@@ -203,7 +203,7 @@ export default function Leagues() {
                             <div className="text-center">
                               <div 
                                 className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-3"
-                                style={{ backgroundColor: teams[0].colorTheme || '#22C55E' }}
+                                style={{ backgroundColor: teams[0].colorTheme || 'var(--success)' }}
                               >
                                 {teams[0].name.charAt(0)}
                               </div>
@@ -231,7 +231,7 @@ export default function Leagues() {
                             <div className="text-center">
                               <div 
                                 className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-3"
-                                style={{ backgroundColor: teams.sort((a: any, b: any) => b.wins - a.wins)[0].colorTheme || '#22C55E' }}
+                                style={{ backgroundColor: teams.sort((a: any, b: any) => b.wins - a.wins)[0].colorTheme || 'var(--success)' }}
                               >
                                 {teams.sort((a: any, b: any) => b.wins - a.wins)[0].name.charAt(0)}
                               </div>
@@ -263,7 +263,7 @@ export default function Leagues() {
                                   const aRatio = a.wins / (a.wins + a.losses || 1);
                                   const bRatio = b.wins / (b.wins + b.losses || 1);
                                   return bRatio - aRatio;
-                                })[0].colorTheme || '#22C55E' }}
+                                })[0].colorTheme || 'var(--success)' }}
                               >
                                 {teams.sort((a: any, b: any) => {
                                   const aRatio = a.wins / (a.wins + a.losses || 1);

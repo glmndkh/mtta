@@ -122,7 +122,7 @@ export const clubs = pgTable("clubs", {
   phone: varchar("phone"),
   email: varchar("email"),
   logoUrl: varchar("logo_url"),
-  colorTheme: varchar("color_theme").default("#22C55E"),
+  colorTheme: varchar("color_theme").default("var(--success)"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -236,7 +236,7 @@ export const teams = pgTable("teams", {
   clubId: varchar("club_id").references(() => clubs.id).notNull(),
   leagueId: varchar("league_id").references(() => leagues.id).notNull(),
   logoUrl: varchar("logo_url"),
-  colorTheme: varchar("color_theme").default("#22C55E"),
+  colorTheme: varchar("color_theme").default("var(--success)"),
   sponsor: varchar("sponsor"),
   points: integer("points").default(0),
   wins: integer("wins").default(0),

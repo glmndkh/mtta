@@ -1417,7 +1417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         wins: 0, // Will be calculated from matches  
         losses: 0, // Will be calculated from matches
         matchesPlayed: 0, // Will be calculated from matches
-        colorTheme: '#22C55E', // Default color
+        colorTheme: 'var(--success)', // Default color
         players: team.players,
       }));
       

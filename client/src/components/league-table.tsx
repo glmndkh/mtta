@@ -143,7 +143,7 @@ export default function LeagueTable({ teams }: LeagueTableProps) {
                       <div className="flex items-center space-x-3">
                         <div 
                           className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm"
-                          style={{ backgroundColor: team.colorTheme || '#22C55E' }}
+                          style={{ backgroundColor: team.colorTheme || 'var(--success)' }}
                         >
                           {team.name.charAt(0)}
                         </div>

@@ -483,7 +483,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
           y1={y1}
           x2={x2}
           y2={y2}
-          stroke="#9CA3AF"
+          stroke="var(--border)"
           strokeWidth="2"
           strokeDasharray="5,5"
         />

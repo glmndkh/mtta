@@ -51,7 +51,7 @@ export default function Clubs() {
       address: "",
       phone: "",
       email: "",
-      colorTheme: "#22C55E",
+      colorTheme: "var(--success)",
     },
   });
 
@@ -222,7 +222,7 @@ export default function Clubs() {
                                 />
                                 <Input 
                                   type="text" 
-                                  placeholder="#22C55E"
+                                  placeholder="var(--success)"
                                   className="flex-1"
                                   {...field}
                                 />
@@ -293,7 +293,7 @@ export default function Clubs() {
                       <div className="flex items-center space-x-3">
                         <div 
                           className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
-                          style={{ backgroundColor: club.colorTheme || '#22C55E' }}
+                          style={{ backgroundColor: club.colorTheme || 'var(--success)' }}
                         >
                           {club.logoUrl ? (
                             <img src={club.logoUrl} alt={club.name} className="w-10 h-10 rounded-full object-cover" />
@@ -343,7 +343,7 @@ export default function Clubs() {
                         </div>
                         <Badge 
                           variant="outline"
-                          style={{ borderColor: club.colorTheme || '#22C55E', color: club.colorTheme || '#22C55E' }}
+                          style={{ borderColor: club.colorTheme || 'var(--success)', color: club.colorTheme || 'var(--success)' }}
                         >
                           Идэвхтэй
                         </Badge>
@@ -362,7 +362,7 @@ export default function Clubs() {
                     <div className="flex items-center space-x-3">
                       <div 
                         className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl"
-                        style={{ backgroundColor: clubDetails.colorTheme || '#22C55E' }}
+                        style={{ backgroundColor: clubDetails.colorTheme || 'var(--success)' }}
                       >
                         {clubDetails.logoUrl ? (
                           <img src={clubDetails.logoUrl} alt={clubDetails.name} className="w-14 h-14 rounded-full object-cover" />

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { Users, Shield, Building, Trophy, Calendar, Newspaper, TrendingUp, Award } from "lucide-react";
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+const COLORS = ['var(--link)', 'var(--success)', 'var(--warning)', 'var(--error)', 'var(--link)'];
 
 export default function AdminStatsDashboard() {
   const { data: stats, isLoading, error } = useQuery({
@@ -143,7 +143,7 @@ export default function AdminStatsDashboard() {
                   labelLine={false}
                   label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   outerRadius={80}
-                  fill="#8884d8"
+                  fill="var(--link)"
                 >
                   {(stats?.roleDistribution || []).map((entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -171,7 +171,7 @@ export default function AdminStatsDashboard() {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="value" fill="#0088FE" />
+                <Bar dataKey="value" fill="var(--link)" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -193,12 +193,12 @@ export default function AdminStatsDashboard() {
                 <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip />
-                <Line 
-                  type="monotone" 
-                  dataKey="count" 
-                  stroke="#00C49F" 
+                <Line
+                  type="monotone"
+                  dataKey="count"
+                  stroke="var(--success)"
                   strokeWidth={2}
-                  dot={{ fill: '#00C49F', strokeWidth: 2, r: 4 }}
+                  dot={{ fill: 'var(--success)', strokeWidth: 2, r: 4 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -221,7 +221,7 @@ export default function AdminStatsDashboard() {
                 <XAxis type="number" />
                 <YAxis dataKey="name" type="category" width={80} />
                 <Tooltip />
-                <Bar dataKey="value" fill="#FFBB28" />
+                <Bar dataKey="value" fill="var(--warning)" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -251,8 +251,8 @@ export default function AdminStatsDashboard() {
               <YAxis />
               <Tooltip />
               <Legend />
-              <Bar dataKey="wins" fill="#00C49F" name="Хожил" />
-              <Bar dataKey="losses" fill="#FF8042" name="Ялагдал" />
+              <Bar dataKey="wins" fill="var(--success)" name="Хожил" />
+              <Bar dataKey="losses" fill="var(--error)" name="Ялагдал" />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
