@@ -132,7 +132,10 @@ export default function AdminTournamentGenerator() {
 
   const createTournament = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest('POST', '/api/tournaments', data);
+      return apiRequest('/api/tournaments', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
     },
     onSuccess: () => {
       toast({

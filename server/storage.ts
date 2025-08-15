@@ -610,10 +610,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTournament(tournamentData: InsertTournament): Promise<Tournament> {
-    const [tournament] = await db.insert(tournaments).values({
+    console.log("Creating tournament with data:", tournamentData);
+    
+    // Ensure required fields have proper values
+    const insertData = {
       ...tournamentData,
       updatedAt: new Date(),
-    }).returning();
+      // Ensure proper defaults for required fields
+      status: tournamentData.status || "registration",
+      isPublished: tournamentData.isPublished ?? false,
+      participationTypes: Array.isArray(tournamentData.participationTypes) 
+        ? tournamentData.participationTypes 
+        : ["individual"],
+    };
+    
+    console.log("Processed insert data:", insertData);
+    
+    const [tournament] = await db.insert(tournaments).values(insertData).returning();
+    
+    console.log("Tournament created successfully:", tournament);
     return tournament;
   }
 
