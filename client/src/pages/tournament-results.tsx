@@ -247,6 +247,25 @@ export default function TournamentResultsPage() {
           {/* Knockout Bracket */}
           <TabsContent value="knockout">
             <div className="space-y-6">
+              {knockoutResults.length > 0 && (
+                <Card className="card-dark">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-white">
+                      <Trophy className="w-5 h-5 text-green-400" />
+                      Шигшээ шатны хүснэгт
+                    </CardTitle>
+                    <CardDescription className="text-gray-300">
+                      Шигшээ шатны тоглолтын bracket диаграм
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <KnockoutBracket
+                      matches={knockoutResults}
+                      onPlayerClick={navigateToProfile}
+                    />
+                  </CardContent>
+                </Card>
+              )}
               {/* Qualified Players from Groups */}
               <Card className="card-dark">
                 <CardHeader>
