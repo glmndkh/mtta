@@ -92,7 +92,7 @@ export default function PlayerProfilePage() {
           {/* Player Profile Card */}
           <div className="lg:col-span-1">
             <Card className="bg-gradient-to-br from-mtta-green to-mtta-green-dark text-white">
-              <CardContent className="p-6 text-[#000000]">
+            <CardContent className="p-6 text-text-primary">
                 <div className="text-center mb-6">
                   {user?.profileImageUrl ? (
                     <img 

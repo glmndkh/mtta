@@ -85,10 +85,10 @@ export default function Landing() {
       </nav>
       {/* Hero Section */}
       <section className="relative text-white py-20" style={{
-        background: 'linear-gradient(135deg, #45A851 0%, #ffffff 100%)',
+        background: 'linear-gradient(135deg, var(--success) 0%, var(--text-primary) 100%)',
         minHeight: '80vh'
       }}>
-        <div className="absolute inset-0 opacity-10 bg-[#45A851]"></div>
+        <div className="absolute inset-0 opacity-10 bg-success"></div>
         <div className="relative w-full px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 text-gray-800">Монголын Ширээний Теннисний Холбоо</h1>
           <p className="text-xl md:text-2xl mb-8 text-gray-700">
@@ -152,7 +152,7 @@ export default function Landing() {
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <Card className="shadow-lg border-2 border-mtta-green">
-              <CardHeader className="flex flex-col space-y-1.5 p-6 from-mtta-green to-mtta-green-dark text-white text-center bg-[#22c35d]">
+            <CardHeader className="flex flex-col space-y-1.5 p-6 from-success to-link text-white text-center bg-success">
                 <CardTitle className="text-2xl">Насанд хүрэгч</CardTitle>
                 <p className="text-3xl font-bold">₮50,000</p>
                 <p className="opacity-80">жилийн</p>

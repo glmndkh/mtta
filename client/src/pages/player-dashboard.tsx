@@ -117,7 +117,7 @@ export default function PlayerDashboard() {
           <div className="lg:col-span-2 space-y-6">
             {/* Player Profile Card */}
             <Card className="bg-gradient-to-br from-mtta-green to-mtta-green-dark text-white">
-              <CardContent className="p-6 text-[#000000]">
+            <CardContent className="p-6 text-text-primary">
                 <div className="flex items-center mb-4">
                   {user.profileImageUrl ? (
                     <img 
