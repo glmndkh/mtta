@@ -740,6 +740,8 @@ export class DatabaseStorage implements IStorage {
         registeredAt: tournamentParticipants.registeredAt,
         firstName: users.firstName,
         lastName: users.lastName,
+        gender: users.gender,
+        dateOfBirth: users.dateOfBirth,
         clubAffiliation: users.clubAffiliation,
         email: users.email,
         phone: users.phone,

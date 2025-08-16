@@ -12,7 +12,7 @@ import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { Tournament, TournamentResults, TournamentParticipant } from "@shared/schema";
+import type { Tournament, TournamentResults } from "@shared/schema";
 
 interface GroupStageGroup {
   groupName: string;
@@ -54,10 +54,27 @@ export default function TournamentFullInfo() {
     enabled: !!params?.id,
   });
 
-  const { data: participants = [] } = useQuery<TournamentParticipant[]>({
+interface Participant {
+  id: string;
+  participationType: string;
+  registeredAt: string;
+  firstName: string;
+  lastName: string;
+  gender: string | null;
+  dateOfBirth: string | null;
+}
+
+  const { data: participants = [] } = useQuery<Participant[]>({
     queryKey: ['/api/tournaments', params?.id, 'participants'],
     enabled: !!params?.id,
   });
+
+  const calculateAge = (dob: string | null) => {
+    if (!dob) return '-';
+    const birth = new Date(dob);
+    const diff = Date.now() - birth.getTime();
+    return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+  };
 
   const { data: userRegistration } = useQuery<{ registered: boolean }>({
     queryKey: ['/api/tournaments', params?.id, 'user-registration'],
@@ -260,13 +277,23 @@ export default function TournamentFullInfo() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Нэр</TableHead>
+                      <TableHead>Нас</TableHead>
+                      <TableHead>Хүйс</TableHead>
                       <TableHead>Оролцох төрөл</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {participants.map((p) => (
                       <TableRow key={p.id}>
-                        <TableCell>{p.playerId}</TableCell>
+                        <TableCell>{`${p.lastName} ${p.firstName}`}</TableCell>
+                        <TableCell>{calculateAge(p.dateOfBirth)}</TableCell>
+                        <TableCell>
+                          {p.gender === 'male'
+                            ? 'Эрэгтэй'
+                            : p.gender === 'female'
+                            ? 'Эмэгтэй'
+                            : 'Бусад'}
+                        </TableCell>
                         <TableCell>{p.participationType}</TableCell>
                       </TableRow>
                     ))}
