@@ -57,9 +57,10 @@ export default function AdminTournamentGenerator() {
   const { user, isAuthenticated, isLoading } = useAuth() as any;
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
 
-  const params = new URLSearchParams(location.split('?')[1] || '');
+  // Parse query parameters from the current URL to determine if we're editing
+  const params = new URLSearchParams(window.location.search);
   const editingId = params.get('id');
   const isEditing = !!editingId;
 
