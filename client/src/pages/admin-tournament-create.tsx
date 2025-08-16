@@ -45,20 +45,14 @@ const tournamentSchema = z.object({
   isPublished: z.boolean().default(false),
 });
 
-const defaultParticipationTypes = [
-  { id: "singles", label: "Дан бие" },
-  { id: "doubles", label: "Хос" },
-  { id: "mixed_doubles", label: "Холимог хос" },
-  { id: "team", label: "Баг" },
-];
-
 export default function AdminTournamentCreate() {
   const { user, isAuthenticated, isLoading } = useAuth() as any;
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const [customParticipationTypes, setCustomParticipationTypes] = useState<string[]>([]);
-  const [newParticipationType, setNewParticipationType] = useState("");
+  const [ageCategory, setAgeCategory] = useState("");
+  const [gender, setGender] = useState("male");
+  const [participationCategories, setParticipationCategories] = useState<string[]>([]);
   const [richDescription, setRichDescription] = useState("");
   const [previewMode, setPreviewMode] = useState(false);
   const [backgroundImageUrl, setBackgroundImageUrl] = useState("");
@@ -113,6 +107,10 @@ export default function AdminTournamentCreate() {
       isPublished: false,
     }
   });
+
+  useEffect(() => {
+    form.setValue("participationTypes", participationCategories);
+  }, [participationCategories, form]);
 
   // File upload handlers
   const handleBackgroundImageUpload = async () => {
@@ -219,21 +217,20 @@ export default function AdminTournamentCreate() {
     createTournamentMutation.mutate(data);
   };
 
-  const addCustomParticipationType = () => {
-    if (newParticipationType.trim() && !customParticipationTypes.includes(newParticipationType.trim())) {
-      setCustomParticipationTypes([...customParticipationTypes, newParticipationType.trim()]);
-      setNewParticipationType("");
+  const addParticipationCategory = () => {
+    if (!ageCategory.trim()) return;
+    const label = `${ageCategory.trim()} ${
+      gender === "male" ? "эрэгтэй" : gender === "female" ? "эмэгтэй" : "бусад"
+    }`;
+    if (!participationCategories.includes(label)) {
+      setParticipationCategories([...participationCategories, label]);
     }
+    setAgeCategory("");
   };
 
-  const removeCustomParticipationType = (type: string) => {
-    setCustomParticipationTypes(customParticipationTypes.filter(t => t !== type));
+  const removeParticipationCategory = (label: string) => {
+    setParticipationCategories(participationCategories.filter((t) => t !== label));
   };
-
-  const allParticipationTypes = [
-    ...defaultParticipationTypes,
-    ...customParticipationTypes.map(type => ({ id: type, label: type }))
-  ];
 
   if (isLoading) {
     return (
@@ -328,8 +325,11 @@ export default function AdminTournamentCreate() {
                     <h3 className="font-medium mb-2">Оролцооны төрлүүд:</h3>
                     <div className="flex flex-wrap gap-2">
                       {form.getValues('participationTypes').map((type: string) => (
-                        <span key={type} className="px-3 py-1 bg-mtta-green text-white rounded-full text-sm">
-                          {allParticipationTypes.find(t => t.id === type)?.label || type}
+                        <span
+                          key={type}
+                          className="px-3 py-1 bg-mtta-green text-white rounded-full text-sm"
+                        >
+                          {type}
                         </span>
                       ))}
                     </div>
@@ -754,48 +754,36 @@ export default function AdminTournamentCreate() {
                     </CardContent>
                   </Card>
 
-                  {/* Participation Types */}
+                  {/* Participation Categories */}
                   <Card>
                     <CardHeader>
-                      <CardTitle>Оролцооны төрлүүд</CardTitle>
+                      <CardTitle>Нас, хүйсийн ангилал</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <FormField
                         control={form.control}
                         name="participationTypes"
-                        render={({ field }) => (
+                        render={() => (
                           <FormItem>
-                            <FormLabel>Сонгох *</FormLabel>
+                            <FormLabel>Ангиллууд *</FormLabel>
                             <div className="space-y-2">
-                              {allParticipationTypes.map((type) => (
-                                <div key={type.id} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id={type.id}
-                                    checked={field.value?.includes(type.id)}
-                                    onCheckedChange={(checked) => {
-                                      if (checked) {
-                                        field.onChange([...(field.value || []), type.id]);
-                                      } else {
-                                        field.onChange(field.value?.filter((val: string) => val !== type.id));
-                                      }
-                                    }}
-                                  />
-                                  <label htmlFor={type.id} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                    {type.label}
-                                  </label>
-                                  {customParticipationTypes.includes(type.id) && (
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => removeCustomParticipationType(type.id)}
-                                      className="h-4 w-4 p-0 text-red-500 hover:text-red-700"
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </Button>
-                                  )}
+                              {participationCategories.map((type) => (
+                                <div key={type} className="flex items-center space-x-2">
+                                  <span className="text-sm">{type}</span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeParticipationCategory(type)}
+                                    className="h-4 w-4 p-0 text-red-500 hover:text-red-700"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
                                 </div>
                               ))}
+                              {participationCategories.length === 0 && (
+                                <p className="text-sm text-gray-500">Ангилал нэмээгүй байна</p>
+                              )}
                             </div>
                             <FormMessage />
                           </FormItem>
@@ -804,25 +792,35 @@ export default function AdminTournamentCreate() {
 
                       <Separator />
 
-                      <div>
-                        <Label>Шинэ төрөл нэмэх</Label>
-                        <div className="flex space-x-2 mt-2">
-                          <Input
-                            value={newParticipationType}
-                            onChange={(e) => setNewParticipationType(e.target.value)}
-                            placeholder="Жишээ: Ахмад настнуудын хос"
-                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomParticipationType())}
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={addCustomParticipationType}
-                            disabled={!newParticipationType.trim()}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </div>
+                      <div className="flex space-x-2">
+                        <Input
+                          value={ageCategory}
+                          onChange={(e) => setAgeCategory(e.target.value)}
+                          placeholder="Жишээ: 8-аас доош"
+                          onKeyPress={(e) =>
+                            e.key === "Enter" &&
+                            (e.preventDefault(), addParticipationCategory())
+                          }
+                        />
+                        <Select value={gender} onValueChange={setGender}>
+                          <SelectTrigger className="w-[120px]">
+                            <SelectValue placeholder="Хүйс" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="male">Эрэгтэй</SelectItem>
+                            <SelectItem value="female">Эмэгтэй</SelectItem>
+                            <SelectItem value="other">Бусад</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={addParticipationCategory}
+                          disabled={!ageCategory.trim()}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>

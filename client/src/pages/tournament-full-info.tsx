@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -7,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { KnockoutBracket } from "@/components/KnockoutBracket";
 import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -81,6 +83,20 @@ interface Participant {
     enabled: !!params?.id,
   });
 
+  const [registrationType, setRegistrationType] = useState<string>("");
+  const [filterType, setFilterType] = useState<string>("all");
+
+  useEffect(() => {
+    if (tournament?.participationTypes?.length && !registrationType) {
+      setRegistrationType(tournament.participationTypes[0]);
+    }
+  }, [tournament, registrationType]);
+
+  const filteredParticipants =
+    filterType === "all"
+      ? participants
+      : participants.filter((p) => p.participationType === filterType);
+
   const registerMutation = useMutation({
     mutationFn: async () => {
       if (!isAuthenticated) {
@@ -89,7 +105,7 @@ interface Participant {
       }
       return apiRequest(`/api/tournaments/${params?.id}/register`, {
         method: 'POST',
-        body: JSON.stringify({ participationType: 'singles' })
+        body: JSON.stringify({ participationType: registrationType })
       });
     },
     onSuccess: () => {
@@ -131,7 +147,7 @@ interface Participant {
   const knockoutResults: KnockoutMatch[] = (results?.knockoutResults as any) || [];
   const finalRankings: FinalRanking[] = (results?.finalRankings as any) || [];
 
-  const formatDate = (d: Date) => format(d, 'yyyy-MM-dd');
+  const formatDate = (d: string | Date) => format(new Date(d), 'yyyy-MM-dd');
 
   return (
     <PageWithLoading>
@@ -169,13 +185,30 @@ interface Participant {
                   Бүртгүүлсэн
                 </Button>
               ) : (
-                <Button
-                  className="bg-blue-600 hover:bg-blue-700"
-                  onClick={() => registerMutation.mutate()}
-                  disabled={registerMutation.isPending}
-                >
-                  {registerMutation.isPending ? 'Бүртгүүлж байна...' : 'Бүртгүүлэх'}
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Select
+                    value={registrationType}
+                    onValueChange={setRegistrationType}
+                  >
+                    <SelectTrigger className="w-full sm:w-48">
+                      <SelectValue placeholder="Ангилал" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {tournament?.participationTypes?.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={() => registerMutation.mutate()}
+                    disabled={registerMutation.isPending || !registrationType}
+                  >
+                    {registerMutation.isPending ? "Бүртгүүлж байна..." : "Бүртгүүлэх"}
+                  </Button>
+                </div>
               )}
             </div>
           </div>
@@ -273,32 +306,49 @@ interface Participant {
             {/* Participants */}
             <TabsContent value="participants">
               {participants.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Нэр</TableHead>
-                      <TableHead>Нас</TableHead>
-                      <TableHead>Хүйс</TableHead>
-                      <TableHead>Оролцох төрөл</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {participants.map((p) => (
-                      <TableRow key={p.id}>
-                        <TableCell>{`${p.lastName} ${p.firstName}`}</TableCell>
-                        <TableCell>{calculateAge(p.dateOfBirth)}</TableCell>
-                        <TableCell>
-                          {p.gender === 'male'
-                            ? 'Эрэгтэй'
-                            : p.gender === 'female'
-                            ? 'Эмэгтэй'
-                            : 'Бусад'}
-                        </TableCell>
-                        <TableCell>{p.participationType}</TableCell>
+                <div className="space-y-4">
+                  <div className="flex justify-end">
+                    <Select value={filterType} onValueChange={setFilterType}>
+                      <SelectTrigger className="w-64">
+                        <SelectValue placeholder="Ангилал шүүх" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Бүх ангилал</SelectItem>
+                        {tournament?.participationTypes?.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Нэр</TableHead>
+                        <TableHead>Нас</TableHead>
+                        <TableHead>Хүйс</TableHead>
+                        <TableHead>Оролцох төрөл</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredParticipants.map((p) => (
+                        <TableRow key={p.id}>
+                          <TableCell>{`${p.lastName} ${p.firstName}`}</TableCell>
+                          <TableCell>{calculateAge(p.dateOfBirth)}</TableCell>
+                          <TableCell>
+                            {p.gender === "male"
+                              ? "Эрэгтэй"
+                              : p.gender === "female"
+                              ? "Эмэгтэй"
+                              : "Бусад"}
+                          </TableCell>
+                          <TableCell>{p.participationType}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               ) : (
                 <div className="text-center text-gray-400 py-8">Тамирчдын мэдээлэл алга.</div>
               )}
