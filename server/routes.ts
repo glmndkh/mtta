@@ -1922,6 +1922,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put('/api/admin/tournaments/:id', requireAuth, isAdminRole, async (req: any, res) => {
+    try {
+      const updateData = insertTournamentSchema.partial().parse(req.body);
+      const tournament = await storage.updateTournament(req.params.id, updateData);
+      if (!tournament) {
+        return res.status(404).json({ message: "Тэмцээн олдсонгүй" });
+      }
+      res.json(tournament);
+    } catch (error) {
+      console.error("Error updating tournament:", error);
+      res.status(400).json({ message: "Тэмцээн засварлахад алдаа гарлаа" });
+    }
+  });
+
+  app.delete('/api/admin/tournaments/:id', requireAuth, isAdminRole, async (req: any, res) => {
+    try {
+      const success = await storage.deleteTournament(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Тэмцээн олдсонгүй" });
+      }
+      res.json({ message: "Тэмцээн амжилттай устгагдлаа" });
+    } catch (error) {
+      console.error("Error deleting tournament:", error);
+      res.status(400).json({ message: "Тэмцээн устгахад алдаа гарлаа" });
+    }
+  });
+
   // ===================
   // ADMIN LEAGUES CRUD
   // ===================
