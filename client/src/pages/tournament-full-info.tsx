@@ -40,18 +40,59 @@ interface FinalRanking {
   prize?: string;
 }
 
-interface ParticipationCategory { age: string; gender: string }
+interface ParticipationCategory {
+  minAge: number | null;
+  maxAge: number | null;
+  gender: string;
+}
 
 const parseParticipationType = (value: string): ParticipationCategory => {
   try {
-    return JSON.parse(value);
+    const obj = JSON.parse(value);
+    if ("minAge" in obj || "maxAge" in obj) {
+      return {
+        minAge: obj.minAge ?? null,
+        maxAge: obj.maxAge ?? null,
+        gender: obj.gender || "male",
+      };
+    }
+    if ("age" in obj) {
+      const ageStr = String(obj.age);
+      const nums = ageStr.match(/\d+/g)?.map(Number) || [];
+      let min: number | null = null;
+      let max: number | null = null;
+      if (nums.length === 1) {
+        if (/хүртэл/i.test(ageStr)) max = nums[0];
+        else min = nums[0];
+      } else if (nums.length >= 2) {
+        [min, max] = nums;
+      }
+      return { minAge: min, maxAge: max, gender: obj.gender || "male" };
+    }
+    return { minAge: null, maxAge: null, gender: obj.gender || "male" };
   } catch {
-    return { age: value, gender: "male" };
+    const ageStr = value;
+    const nums = ageStr.match(/\d+/g)?.map(Number) || [];
+    let min: number | null = null;
+    let max: number | null = null;
+    if (nums.length === 1) {
+      if (/хүртэл/i.test(ageStr)) max = nums[0];
+      else min = nums[0];
+    } else if (nums.length >= 2) {
+      [min, max] = nums;
+    }
+    return { minAge: min, maxAge: max, gender: "male" };
   }
 };
 
-const formatParticipationType = (cat: ParticipationCategory) =>
-  `${cat.age} ${cat.gender === 'male' ? 'эрэгтэй' : 'эмэгтэй'}`;
+const formatParticipationType = (cat: ParticipationCategory) => {
+  let range = "";
+  if (cat.minAge !== null && cat.maxAge !== null) range = `${cat.minAge}-${cat.maxAge} нас`;
+  else if (cat.minAge !== null) range = `${cat.minAge}+ нас`;
+  else if (cat.maxAge !== null) range = `${cat.maxAge}-аас доош нас`;
+  else range = "Нас хязгааргүй";
+  return `${range} ${cat.gender === 'male' ? 'эрэгтэй' : 'эмэгтэй'}`;
+};
 
 export default function TournamentFullInfo() {
   const [match, params] = useRoute("/tournament/:id/full");
@@ -452,7 +493,15 @@ interface Participant {
                               <TableCell>
                                 {cat.gender === 'male' ? 'Эрэгтэй' : 'Эмэгтэй'}
                               </TableCell>
-                              <TableCell>{cat.age}</TableCell>
+                              <TableCell>
+                                {cat.minAge !== null && cat.maxAge !== null
+                                  ? `${cat.minAge}-${cat.maxAge}`
+                                  : cat.minAge !== null
+                                  ? `${cat.minAge}+`
+                                  : cat.maxAge !== null
+                                  ? `${cat.maxAge}-аас доош`
+                                  : "Нас хязгааргүй"}
+                              </TableCell>
                               {user?.role === 'admin' && (
                                 <TableCell>
                                   <Button

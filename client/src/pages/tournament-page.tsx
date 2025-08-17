@@ -74,6 +74,57 @@ interface TournamentResults {
   updatedAt: string;
 }
 
+interface ParticipationCategory {
+  minAge: number | null;
+  maxAge: number | null;
+  gender: string;
+}
+
+const parseParticipation = (value: string): ParticipationCategory => {
+  try {
+    const obj = JSON.parse(value);
+    if ("minAge" in obj || "maxAge" in obj) {
+      return {
+        minAge: obj.minAge ?? null,
+        maxAge: obj.maxAge ?? null,
+        gender: obj.gender || "male",
+      };
+    }
+    const ageStr = String(obj.age || "");
+    const nums = ageStr.match(/\d+/g)?.map(Number) || [];
+    let min: number | null = null;
+    let max: number | null = null;
+    if (nums.length === 1) {
+      if (/хүртэл/i.test(ageStr)) max = nums[0];
+      else min = nums[0];
+    } else if (nums.length >= 2) {
+      [min, max] = nums;
+    }
+    return { minAge: min, maxAge: max, gender: obj.gender || "male" };
+  } catch {
+    const ageStr = value;
+    const nums = ageStr.match(/\d+/g)?.map(Number) || [];
+    let min: number | null = null;
+    let max: number | null = null;
+    if (nums.length === 1) {
+      if (/хүртэл/i.test(ageStr)) max = nums[0];
+      else min = nums[0];
+    } else if (nums.length >= 2) {
+      [min, max] = nums;
+    }
+    return { minAge: min, maxAge: max, gender: "male" };
+  }
+};
+
+const formatParticipation = (cat: ParticipationCategory) => {
+  let label = "";
+  if (cat.minAge !== null && cat.maxAge !== null) label = `${cat.minAge}-${cat.maxAge}`;
+  else if (cat.minAge !== null) label = `${cat.minAge}+`;
+  else if (cat.maxAge !== null) label = `${cat.maxAge}-аас доош`;
+  else label = "Нас хязгааргүй";
+  return `${label} ${cat.gender === "male" ? "эрэгтэй" : "эмэгтэй"}`;
+};
+
 // Medal Winners Component
 function MedalWinnersSection({ 
   tournamentResults 
@@ -356,7 +407,7 @@ function TournamentParticipants({ tournamentId }: { tournamentId: string }) {
                 <SelectItem value="all" className="text-white hover:bg-gray-700">Бүх төрөл</SelectItem>
                 {uniqueParticipationTypes.map(type => (
                   <SelectItem key={type} value={type} className="text-white hover:bg-gray-700">
-                    {participationTypeLabels[type] || type}
+                    {participationTypeLabels[type] || formatParticipation(parseParticipation(type))}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -399,7 +450,7 @@ function TournamentParticipants({ tournamentId }: { tournamentId: string }) {
                   <TableCell className="text-gray-300">{participant.clubAffiliation || "Тодорхойгүй"}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="border-green-400 text-green-400">
-                      {participationTypeLabels[participant.participationType] || participant.participationType}
+                      {participationTypeLabels[participant.participationType] || formatParticipation(parseParticipation(participant.participationType))}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-gray-300">{participant.rank || "Тодорхойгүй"}</TableCell>
@@ -611,7 +662,7 @@ export default function TournamentPage() {
                     <div className="flex flex-wrap gap-1">
                       {tournament.participationTypes.map(type => (
                         <Badge key={type} variant="outline" className="border-green-400 text-green-400">
-                          {participationTypeLabels[type] || type}
+                          {participationTypeLabels[type] || formatParticipation(parseParticipation(type))}
                         </Badge>
                       ))}
                     </div>

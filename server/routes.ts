@@ -74,16 +74,24 @@ async function validateTournamentEligibility(
     }
     if (cat.gender && cat.gender !== user.gender)
       throw new Error("Хүйс тохирохгүй");
-    const ageStr = String(cat.age || "");
-    const nums = ageStr.match(/\d+/g)?.map(Number) || [];
+
     let minAgeCat: number | undefined;
     let maxAgeCat: number | undefined;
-    if (nums.length === 1) {
-      if (/хүртэл/i.test(ageStr)) maxAgeCat = nums[0];
-      else minAgeCat = nums[0];
-    } else if (nums.length >= 2) {
-      [minAgeCat, maxAgeCat] = nums;
+
+    if (cat.minAge !== undefined || cat.maxAge !== undefined) {
+      if (typeof cat.minAge === "number") minAgeCat = cat.minAge;
+      if (typeof cat.maxAge === "number") maxAgeCat = cat.maxAge;
+    } else {
+      const ageStr = String(cat.age || "");
+      const nums = ageStr.match(/\d+/g)?.map(Number) || [];
+      if (nums.length === 1) {
+        if (/хүртэл/i.test(ageStr)) maxAgeCat = nums[0];
+        else minAgeCat = nums[0];
+      } else if (nums.length >= 2) {
+        [minAgeCat, maxAgeCat] = nums;
+      }
     }
+
     if (minAgeCat !== undefined && age < minAgeCat)
       throw new Error("Нас шаардлага хангахгүй байна");
     if (maxAgeCat !== undefined && age > maxAgeCat)
