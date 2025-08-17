@@ -36,6 +36,7 @@ function calculateAge(dateOfBirth: Date | null | undefined) {
 async function validateTournamentEligibility(
   tournamentId: string,
   playerId: string,
+  participationType?: string,
 ) {
   const tournament = await storage.getTournament(tournamentId);
   if (!tournament) throw new Error("Тэмцээн олдсонгүй");
@@ -58,6 +59,36 @@ async function validateTournamentEligibility(
     throw new Error("Нас шаардлага хангахгүй байна");
   if (requirements.gender && requirements.gender !== user.gender)
     throw new Error("Хүйс тохирохгүй");
+
+  if (participationType) {
+    if (
+      tournament.participationTypes &&
+      !tournament.participationTypes.includes(participationType)
+    )
+      throw new Error("Буруу ангилал");
+    let cat: any = {};
+    try {
+      cat = JSON.parse(participationType);
+    } catch {
+      cat = { age: participationType, gender: "male" };
+    }
+    if (cat.gender && cat.gender !== user.gender)
+      throw new Error("Хүйс тохирохгүй");
+    const ageStr = String(cat.age || "");
+    const nums = ageStr.match(/\d+/g)?.map(Number) || [];
+    let minAgeCat: number | undefined;
+    let maxAgeCat: number | undefined;
+    if (nums.length === 1) {
+      if (/хүртэл/i.test(ageStr)) maxAgeCat = nums[0];
+      else minAgeCat = nums[0];
+    } else if (nums.length >= 2) {
+      [minAgeCat, maxAgeCat] = nums;
+    }
+    if (minAgeCat !== undefined && age < minAgeCat)
+      throw new Error("Нас шаардлага хангахгүй байна");
+    if (maxAgeCat !== undefined && age > maxAgeCat)
+      throw new Error("Нас шаардлага хангахгүй байна");
+  }
 }
 
 // Extend session type to include userId
@@ -830,6 +861,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { tournamentId } = req.params;
         const { participationType, playerId: bodyPlayerId } = req.body;
 
+        if (!participationType)
+          return res.status(400).json({ message: "participationType is required" });
+
         let playerId = bodyPlayerId;
         if (!playerId) {
           const userId = req.session.userId;
@@ -852,7 +886,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         try {
-          await validateTournamentEligibility(tournamentId, playerId);
+          await validateTournamentEligibility(
+            tournamentId,
+            playerId,
+            participationType,
+          );
         } catch (err: any) {
           const status = err.message === "Тэмцээн олдсонгүй" ? 404 : 400;
           return res.status(status).json({ message: err.message });
@@ -938,9 +976,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { playerId, participationType } = req.body;
         if (!playerId)
           return res.status(400).json({ message: "playerId is required" });
+        if (!participationType)
+          return res
+            .status(400)
+            .json({ message: "participationType is required" });
 
         try {
-          await validateTournamentEligibility(tournamentId, playerId);
+          await validateTournamentEligibility(
+            tournamentId,
+            playerId,
+            participationType,
+          );
         } catch (err: any) {
           return res.status(400).json({ message: err.message });
         }
