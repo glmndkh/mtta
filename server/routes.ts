@@ -22,6 +22,44 @@ import {
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
 
+function calculateAge(dateOfBirth: Date | null | undefined) {
+  if (!dateOfBirth) return 0;
+  const today = new Date();
+  let age = today.getFullYear() - dateOfBirth.getFullYear();
+  const m = today.getMonth() - dateOfBirth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dateOfBirth.getDate())) {
+    age--;
+  }
+  return age;
+}
+
+async function validateTournamentEligibility(
+  tournamentId: string,
+  playerId: string,
+) {
+  const tournament = await storage.getTournament(tournamentId);
+  if (!tournament) throw new Error("Тэмцээн олдсонгүй");
+  const player = await storage.getPlayer(playerId);
+  if (!player) throw new Error("Тоглогч олдсонгүй");
+  const user = await storage.getUser(player.userId);
+  if (!user) throw new Error("Хэрэглэгч олдсонгүй");
+
+  const age = calculateAge(user.dateOfBirth || player.dateOfBirth);
+  let requirements: any = {};
+  if (tournament.requirements) {
+    try {
+      requirements = JSON.parse(tournament.requirements);
+    } catch {}
+  }
+
+  if (requirements.minAge && age < requirements.minAge)
+    throw new Error("Нас шаардлага хангахгүй байна");
+  if (requirements.maxAge && age > requirements.maxAge)
+    throw new Error("Нас шаардлага хангахгүй байна");
+  if (requirements.gender && requirements.gender !== user.gender)
+    throw new Error("Хүйс тохирохгүй");
+}
+
 // Extend session type to include userId
 declare module "express-session" {
   interface SessionData {
@@ -802,7 +840,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               return res.status(400).json({ message: "Хэрэглэгч олдсонгүй" });
             player = await storage.createPlayer({
               userId,
-              dateOfBirth: new Date(),
+              dateOfBirth: user.dateOfBirth || new Date(),
               rank: "Шинэ тоглогч",
             });
           }
@@ -811,6 +849,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const player = await storage.getPlayer(playerId);
           if (!player)
             return res.status(400).json({ message: "Тоглогч олдсонгүй" });
+        }
+
+        try {
+          await validateTournamentEligibility(tournamentId, playerId);
+        } catch (err: any) {
+          const status = err.message === "Тэмцээн олдсонгүй" ? 404 : 400;
+          return res.status(status).json({ message: err.message });
         }
 
         const existing = await storage.getTournamentRegistration(
@@ -882,6 +927,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch participants" });
     }
   });
+
+  app.post(
+    "/api/admin/tournaments/:tournamentId/participants",
+    requireAuth,
+    isAdminRole,
+    async (req: any, res) => {
+      try {
+        const { tournamentId } = req.params;
+        const { playerId, participationType } = req.body;
+        if (!playerId)
+          return res.status(400).json({ message: "playerId is required" });
+
+        try {
+          await validateTournamentEligibility(tournamentId, playerId);
+        } catch (err: any) {
+          return res.status(400).json({ message: err.message });
+        }
+
+        const existing = await storage.getTournamentRegistration(
+          tournamentId,
+          playerId,
+        );
+        if (existing)
+          return res
+            .status(400)
+            .json({ message: "Тэмцээнд аль хэдийн бүртгүүлсэн байна" });
+
+        const registration = await storage.registerForTournament({
+          tournamentId,
+          playerId,
+          participationType: participationType || "singles",
+        });
+        res.json({ message: "Participant added", registration });
+      } catch (e) {
+        console.error("Admin add participant error:", e);
+        res.status(500).json({ message: "Failed to add participant" });
+      }
+    },
+  );
+
+  app.delete(
+    "/api/admin/tournaments/:tournamentId/participants/:playerId",
+    requireAuth,
+    isAdminRole,
+    async (req, res) => {
+      try {
+        const success = await storage.removeTournamentParticipant(
+          req.params.tournamentId,
+          req.params.playerId,
+        );
+        if (!success)
+          return res.status(404).json({ message: "Participant not found" });
+        res.json({ message: "Participant removed" });
+      } catch (e) {
+        console.error("Admin remove participant error:", e);
+        res.status(500).json({ message: "Failed to remove participant" });
+      }
+    },
+  );
 
   // Matches
   app.post("/api/matches", requireAuth, async (req: any, res) => {

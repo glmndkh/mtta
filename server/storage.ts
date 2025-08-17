@@ -119,6 +119,7 @@ export interface IStorage {
   getTournamentRegistration(tournamentId: string, playerId: string): Promise<any>;
   getTournamentRegistrationStats(tournamentId: string): Promise<{ registered: number; maxParticipants?: number; registrationRate: number }>;
   getTournamentParticipants(tournamentId: string): Promise<any[]>;
+  removeTournamentParticipant(tournamentId: string, playerId: string): Promise<boolean>;
 
   // Match operations
   getMatch(id: string): Promise<Match | undefined>;
@@ -754,6 +755,21 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(tournamentParticipants.registeredAt));
 
     return result;
+  }
+
+  async removeTournamentParticipant(
+    tournamentId: string,
+    playerId: string,
+  ): Promise<boolean> {
+    const result = await db
+      .delete(tournamentParticipants)
+      .where(
+        and(
+          eq(tournamentParticipants.tournamentId, tournamentId),
+          eq(tournamentParticipants.playerId, playerId),
+        ),
+      );
+    return (result.rowCount || 0) > 0;
   }
 
   // Match operations
