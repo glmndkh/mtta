@@ -57,9 +57,12 @@ export default function AdminTournamentGenerator() {
   const editingId = params.get('id');
   const isEditing = !!editingId;
 
-  const [ageCategory, setAgeCategory] = useState("");
+  const [minAge, setMinAge] = useState("");
+  const [maxAge, setMaxAge] = useState("");
   const [gender, setGender] = useState("male");
-  const [participationCategories, setParticipationCategories] = useState<Array<{ age: string; gender: string }>>([]);
+  const [participationCategories, setParticipationCategories] = useState<
+    Array<{ minAge: number | null; maxAge: number | null; gender: string }>
+  >([]);
   const [richDescription, setRichDescription] = useState("");
   const [previewMode, setPreviewMode] = useState(false);
   const [backgroundImageUrl, setBackgroundImageUrl] = useState("");
@@ -129,9 +132,40 @@ export default function AdminTournamentGenerator() {
           const data = await res.json();
           const parsedCats = (data.participationTypes || []).map((t: string) => {
             try {
-              return JSON.parse(t);
+              const obj = JSON.parse(t);
+              if ("minAge" in obj || "maxAge" in obj) {
+                return {
+                  minAge: obj.minAge ?? null,
+                  maxAge: obj.maxAge ?? null,
+                  gender: obj.gender || "male",
+                };
+              }
+              if ("age" in obj) {
+                const ageStr = String(obj.age);
+                const nums = ageStr.match(/\d+/g)?.map(Number) || [];
+                let min: number | null = null;
+                let max: number | null = null;
+                if (nums.length === 1) {
+                  if (/хүртэл/i.test(ageStr)) max = nums[0];
+                  else min = nums[0];
+                } else if (nums.length >= 2) {
+                  [min, max] = nums;
+                }
+                return { minAge: min, maxAge: max, gender: obj.gender || "male" };
+              }
+              return { minAge: null, maxAge: null, gender: obj.gender || "male" };
             } catch {
-              return { age: t, gender: "male" };
+              const ageStr = t;
+              const nums = ageStr.match(/\d+/g)?.map(Number) || [];
+              let min: number | null = null;
+              let max: number | null = null;
+              if (nums.length === 1) {
+                if (/хүртэл/i.test(ageStr)) max = nums[0];
+                else min = nums[0];
+              } else if (nums.length >= 2) {
+                [min, max] = nums;
+              }
+              return { minAge: min, maxAge: max, gender: "male" };
             }
           });
           setParticipationCategories(parsedCats);
@@ -176,10 +210,15 @@ export default function AdminTournamentGenerator() {
   // Participation type management
 
   const addParticipationCategory = () => {
-    if (!ageCategory.trim()) return;
-    const cat = { age: ageCategory.trim(), gender };
+    if (minAge === "" && maxAge === "") return;
+    const cat = {
+      minAge: minAge === "" ? null : parseInt(minAge, 10),
+      maxAge: maxAge === "" ? null : parseInt(maxAge, 10),
+      gender,
+    };
     setParticipationCategories([...participationCategories, cat]);
-    setAgeCategory("");
+    setMinAge("");
+    setMaxAge("");
   };
 
   const removeParticipationCategory = (index: number) => {
@@ -629,10 +668,18 @@ export default function AdminTournamentGenerator() {
                   <div className="space-y-2">
                     <div className="flex gap-2">
                       <Input
-                        value={ageCategory}
-                        onChange={(e) => setAgeCategory(e.target.value)}
-                        placeholder="Насны ангилал (ж: 8-аас доош)"
-                        className="flex-1"
+                        type="number"
+                        value={minAge}
+                        onChange={(e) => setMinAge(e.target.value)}
+                        placeholder="Доод нас"
+                        className="w-24"
+                      />
+                      <Input
+                        type="number"
+                        value={maxAge}
+                        onChange={(e) => setMaxAge(e.target.value)}
+                        placeholder="Дээд нас"
+                        className="w-24"
                       />
                       <Select value={gender} onValueChange={setGender}>
                         <SelectTrigger className="w-[140px]">
@@ -649,18 +696,26 @@ export default function AdminTournamentGenerator() {
                     </div>
                     {participationCategories.length > 0 && (
                       <div className="flex flex-wrap gap-2">
-                        {participationCategories.map((cat, idx) => (
-                          <div key={idx} className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-                            {`${cat.age} ${cat.gender === 'male' ? 'эрэгтэй' : 'эмэгтэй'}`}
-                            <button
-                              type="button"
-                              onClick={() => removeParticipationCategory(idx)}
-                              className="ml-2 text-blue-600 hover:text-blue-800"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </div>
-                        ))}
+                        {participationCategories.map((cat, idx) => {
+                          let label = "";
+                          if (cat.minAge !== null && cat.maxAge !== null)
+                            label = `${cat.minAge}-${cat.maxAge}`;
+                          else if (cat.minAge !== null) label = `${cat.minAge}+`;
+                          else if (cat.maxAge !== null) label = `${cat.maxAge}-аас доош`;
+                          else label = "Нас хязгааргүй";
+                          return (
+                            <div key={idx} className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                              {`${label} ${cat.gender === 'male' ? 'эрэгтэй' : 'эмэгтэй'}`}
+                              <button
+                                type="button"
+                                onClick={() => removeParticipationCategory(idx)}
+                                className="ml-2 text-blue-600 hover:text-blue-800"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>

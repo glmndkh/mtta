@@ -54,13 +54,64 @@ interface CountdownTime {
 
 const CATEGORY_LABELS: Record<string, string> = {
   "men_singles": "Эрэгтэй ганцаарчилсан",
-  "women_singles": "Эмэгтэй ганцаарчилсан", 
+  "women_singles": "Эмэгтэй ганцаарчилсан",
   "men_doubles": "Эрэгтэй хосоор",
   "women_doubles": "Эмэгтэй хосоор",
   "mixed_doubles": "Холимог хосоор",
   "team": "Багийн төрөл",
   "singles": "Ганцаарчилсан",
   "doubles": "Хосоор"
+};
+
+interface ParticipationCategory {
+  minAge: number | null;
+  maxAge: number | null;
+  gender: string;
+}
+
+const parseParticipation = (value: string): ParticipationCategory => {
+  try {
+    const obj = JSON.parse(value);
+    if ("minAge" in obj || "maxAge" in obj) {
+      return {
+        minAge: obj.minAge ?? null,
+        maxAge: obj.maxAge ?? null,
+        gender: obj.gender || "male",
+      };
+    }
+    const ageStr = String(obj.age || "");
+    const nums = ageStr.match(/\d+/g)?.map(Number) || [];
+    let min: number | null = null;
+    let max: number | null = null;
+    if (nums.length === 1) {
+      if (/хүртэл/i.test(ageStr)) max = nums[0];
+      else min = nums[0];
+    } else if (nums.length >= 2) {
+      [min, max] = nums;
+    }
+    return { minAge: min, maxAge: max, gender: obj.gender || "male" };
+  } catch {
+    const ageStr = value;
+    const nums = ageStr.match(/\d+/g)?.map(Number) || [];
+    let min: number | null = null;
+    let max: number | null = null;
+    if (nums.length === 1) {
+      if (/хүртэл/i.test(ageStr)) max = nums[0];
+      else min = nums[0];
+    } else if (nums.length >= 2) {
+      [min, max] = nums;
+    }
+    return { minAge: min, maxAge: max, gender: "male" };
+  }
+};
+
+const formatParticipation = (cat: ParticipationCategory) => {
+  let label = "";
+  if (cat.minAge !== null && cat.maxAge !== null) label = `${cat.minAge}-${cat.maxAge}`;
+  else if (cat.minAge !== null) label = `${cat.minAge}+`;
+  else if (cat.maxAge !== null) label = `${cat.maxAge}-аас доош`;
+  else label = "Нас хязгааргүй";
+  return `${label} ${cat.gender === "male" ? "эрэгтэй" : "эмэгтэй"}`;
 };
 
 // Helper function to extract image URL from rich description
@@ -407,12 +458,15 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
               <div className="space-y-1">
                 <div className="text-white/90 text-sm font-medium">Тэмцээний төрөл:</div>
                 <div className="flex flex-wrap gap-2">
-                  {(tournament.categories || tournament.participationTypes || []).map((category) => (
-                    <Badge key={category} variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
-                      {CATEGORY_LABELS[category] || category}
-                    </Badge>
-                  ))}
-                  {(!tournament.categories || tournament.categories.length === 0) && 
+                  {(tournament.categories || tournament.participationTypes || []).map((category) => {
+                    const label = CATEGORY_LABELS[category] || formatParticipation(parseParticipation(category));
+                    return (
+                      <Badge key={category} variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
+                        {label}
+                      </Badge>
+                    );
+                  })}
+                  {(!tournament.categories || tournament.categories.length === 0) &&
                    (!tournament.participationTypes || tournament.participationTypes.length === 0) && (
                     <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
                       Ганцаарчилсан
