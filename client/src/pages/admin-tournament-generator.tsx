@@ -11,16 +11,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
-import { Trophy, Calendar, Users, MapPin, DollarSign, Plus, X, Save, Eye, Upload, FileText, Award } from "lucide-react";
+import { Trophy, Calendar, Users, MapPin, DollarSign, Plus, X, Save, Eye, Upload } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { isUnauthorizedError } from "@/lib/authUtils";
-// Object uploader will be added later when needed
+import { ObjectUploader } from "@/components/ObjectUploader";
 
 const tournamentSchema = z.object({
   name: z.string().min(1, "Тэмцээний нэр заавал байх ёстой"),
@@ -46,13 +45,6 @@ const tournamentSchema = z.object({
   isPublished: z.boolean().default(false),
 });
 
-const defaultParticipationTypes = [
-  { id: "singles", label: "Дан бие" },
-  { id: "doubles", label: "Хос" },
-  { id: "mixed_doubles", label: "Холимог хос" },
-  { id: "team", label: "Баг" },
-];
-
 export default function AdminTournamentGenerator() {
   const { user, isAuthenticated, isLoading } = useAuth() as any;
   const { toast } = useToast();
@@ -64,10 +56,13 @@ export default function AdminTournamentGenerator() {
   const editingId = params.get('id');
   const isEditing = !!editingId;
 
-  const [customParticipationTypes, setCustomParticipationTypes] = useState<string[]>([]);
-  const [newParticipationType, setNewParticipationType] = useState("");
+  const [ageCategory, setAgeCategory] = useState("");
+  const [gender, setGender] = useState("male");
+  const [participationCategories, setParticipationCategories] = useState<Array<{ age: string; gender: string }>>([]);
   const [richDescription, setRichDescription] = useState("");
   const [previewMode, setPreviewMode] = useState(false);
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState("");
+  const [regulationDocumentUrl, setRegulationDocumentUrl] = useState("");
 
   // Redirect if not admin
   useEffect(() => {
@@ -120,6 +115,10 @@ export default function AdminTournamentGenerator() {
     }
   });
 
+  useEffect(() => {
+    form.setValue("participationTypes", participationCategories.map(c => JSON.stringify(c)));
+  }, [participationCategories, form]);
+
   // Load existing tournament when editing
   useEffect(() => {
     if (isEditing && editingId) {
@@ -127,10 +126,14 @@ export default function AdminTournamentGenerator() {
         try {
           const res = await apiRequest(`/api/tournaments/${editingId}`);
           const data = await res.json();
-          const defaultTypes = defaultParticipationTypes.map(t => t.id);
-          setCustomParticipationTypes(
-            (data.participationTypes || []).filter((t: string) => !defaultTypes.includes(t))
-          );
+          const parsedCats = (data.participationTypes || []).map((t: string) => {
+            try {
+              return JSON.parse(t);
+            } catch {
+              return { age: t, gender: "male" };
+            }
+          });
+          setParticipationCategories(parsedCats);
           form.reset({
             name: data.name || '',
             description: data.description || '',
@@ -142,7 +145,7 @@ export default function AdminTournamentGenerator() {
             organizer: data.organizer || '',
             maxParticipants: data.maxParticipants || 32,
             entryFee: data.entryFee || 0,
-            participationTypes: (data.participationTypes || []).filter((t: string) => defaultTypes.includes(t)),
+            participationTypes: data.participationTypes || [],
             rules: data.rules || '',
             prizes: data.prizes || '',
             contactInfo: data.contactInfo || '',
@@ -155,6 +158,8 @@ export default function AdminTournamentGenerator() {
             isPublished: data.isPublished ?? true,
           });
           setRichDescription(data.richDescription || '');
+          setBackgroundImageUrl(data.backgroundImageUrl || '');
+          setRegulationDocumentUrl(data.regulationDocumentUrl || '');
         } catch (error) {
           console.error('Failed to load tournament:', error);
           toast({
@@ -169,24 +174,72 @@ export default function AdminTournamentGenerator() {
 
   // Participation type management
 
-  const addCustomParticipationType = () => {
-    if (newParticipationType.trim() && !customParticipationTypes.includes(newParticipationType.trim())) {
-      setCustomParticipationTypes([...customParticipationTypes, newParticipationType.trim()]);
-      setNewParticipationType("");
+  const addParticipationCategory = () => {
+    if (!ageCategory.trim()) return;
+    const cat = { age: ageCategory.trim(), gender };
+    setParticipationCategories([...participationCategories, cat]);
+    setAgeCategory("");
+  };
+
+  const removeParticipationCategory = (index: number) => {
+    setParticipationCategories(participationCategories.filter((_, i) => i !== index));
+  };
+
+  // File upload handlers
+  const handleBackgroundImageUpload = async () => {
+    const response = await fetch("/api/objects/upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    const { uploadURL } = await response.json();
+    return { method: "PUT" as const, url: uploadURL };
+  };
+
+  const handleBackgroundComplete = async (result: any) => {
+    if (result.successful?.[0]?.uploadURL) {
+      const response = await fetch("/api/objects/finalize", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileURL: result.successful[0].uploadURL, isPublic: true }),
+      });
+      const { objectPath } = await response.json();
+      setBackgroundImageUrl(objectPath);
+      form.setValue("backgroundImageUrl", objectPath);
     }
   };
 
-  const removeCustomParticipationType = (typeToRemove: string) => {
-    setCustomParticipationTypes(customParticipationTypes.filter(type => type !== typeToRemove));
-    const currentTypes = form.getValues("participationTypes");
-    form.setValue("participationTypes", currentTypes.filter(type => type !== typeToRemove));
+  const handleRegulationUpload = async () => {
+    const response = await fetch("/api/objects/upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    const { uploadURL } = await response.json();
+    return { method: "PUT" as const, url: uploadURL };
+  };
+
+  const handleRegulationComplete = async (result: any) => {
+    if (result.successful?.[0]?.uploadURL) {
+      const response = await fetch("/api/objects/finalize", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileURL: result.successful[0].uploadURL, isPublic: false }),
+      });
+      const { objectPath } = await response.json();
+      setRegulationDocumentUrl(objectPath);
+      form.setValue("regulationDocumentUrl", objectPath);
+    }
   };
 
   const saveTournament = useMutation({
     mutationFn: async (data: any) => {
       return apiRequest(isEditing ? `/api/tournaments/${editingId}` : '/api/tournaments', {
         method: isEditing ? 'PUT' : 'POST',
-        body: JSON.stringify(data)
+        body: JSON.stringify({
+          ...data,
+          participationTypes: participationCategories.map(c => JSON.stringify(c)),
+          backgroundImageUrl,
+          regulationDocumentUrl,
+        })
       });
     },
     onSuccess: () => {
@@ -220,12 +273,12 @@ export default function AdminTournamentGenerator() {
   const onSubmit = (data: any) => {
     const finalData = {
       ...data,
-      richDescription: richDescription,
-      participationTypes: [...data.participationTypes, ...customParticipationTypes],
+      richDescription,
+      participationTypes: participationCategories.map(c => JSON.stringify(c)),
       minRating: data.minRating === "none" ? null : parseInt(data.minRating) || null,
       maxRating: data.maxRating === "none" ? null : parseInt(data.maxRating) || null,
     };
-    
+
     saveTournament.mutate(finalData);
   };
 
@@ -418,11 +471,20 @@ export default function AdminTournamentGenerator() {
                     name="backgroundImageUrl"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Арын зургийн URL</FormLabel>
-                        <FormControl>
-                          <Input placeholder="https://example.com/background.jpg" {...field} />
-                        </FormControl>
-                        <p className="text-sm text-gray-500">💡 Object storage-д зураг хуулж URL-г энд оруулна уу</p>
+                        <FormLabel>Арын зураг</FormLabel>
+                        {backgroundImageUrl && (
+                          <img
+                            src={backgroundImageUrl.startsWith('/') ? `/public-objects${backgroundImageUrl}` : backgroundImageUrl}
+                            alt="background"
+                            className="w-full h-40 object-cover mb-2 rounded"
+                          />
+                        )}
+                        <ObjectUploader
+                          onGetUploadParameters={handleBackgroundImageUpload}
+                          onComplete={handleBackgroundComplete}
+                        >
+                          Зураг хуулах
+                        </ObjectUploader>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -433,11 +495,22 @@ export default function AdminTournamentGenerator() {
                     name="regulationDocumentUrl"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Дүрмийн баримт бичгийн URL</FormLabel>
-                        <FormControl>
-                          <Input placeholder="https://example.com/regulations.pdf" {...field} />
-                        </FormControl>
-                        <p className="text-sm text-gray-500">💡 Object storage-д баримт хуулж URL-г энд оруулна уу</p>
+                        <FormLabel>Дүрмийн баримт бичиг</FormLabel>
+                        {regulationDocumentUrl && (
+                          <a
+                            href={regulationDocumentUrl.startsWith('/') ? `/public-objects${regulationDocumentUrl}` : regulationDocumentUrl}
+                            target="_blank"
+                            className="text-blue-600 underline block mb-2"
+                          >
+                            Татаж авах
+                          </a>
+                        )}
+                        <ObjectUploader
+                          onGetUploadParameters={handleRegulationUpload}
+                          onComplete={handleRegulationComplete}
+                        >
+                          Файл хуулах
+                        </ObjectUploader>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -552,56 +625,35 @@ export default function AdminTournamentGenerator() {
                 {/* Participation Types */}
                 <div>
                   <Label className="text-sm font-medium mb-4 block">Оролцооны төрөл *</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                    {defaultParticipationTypes.map((type) => (
-                      <FormField
-                        key={type.id}
-                        control={form.control}
-                        name="participationTypes"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(type.id) || false}
-                                onCheckedChange={(checked) => {
-                                  const currentValue = field.value || [];
-                                  return checked
-                                    ? field.onChange([...currentValue, type.id])
-                                    : field.onChange(currentValue.filter((value: string) => value !== type.id))
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="text-sm font-normal">
-                              {type.label}
-                            </FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                    ))}
-                  </div>
-                  
-                  {/* Custom Participation Types */}
                   <div className="space-y-2">
                     <div className="flex gap-2">
                       <Input
-                        value={newParticipationType}
-                        onChange={(e) => setNewParticipationType(e.target.value)}
-                        placeholder="Шинэ төрөл нэмэх..."
+                        value={ageCategory}
+                        onChange={(e) => setAgeCategory(e.target.value)}
+                        placeholder="Насны ангилал (ж: 8-аас доош)"
                         className="flex-1"
                       />
-                      <Button type="button" onClick={addCustomParticipationType} size="sm">
+                      <Select value={gender} onValueChange={setGender}>
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue placeholder="Хүйс" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="male">Эрэгтэй</SelectItem>
+                          <SelectItem value="female">Эмэгтэй</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button type="button" onClick={addParticipationCategory} size="sm">
                         <Plus className="h-4 w-4" />
                       </Button>
                     </div>
-                    
-                    {customParticipationTypes.length > 0 && (
+                    {participationCategories.length > 0 && (
                       <div className="flex flex-wrap gap-2">
-                        {customParticipationTypes.map((type) => (
-                          <div key={type} className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-                            {type}
+                        {participationCategories.map((cat, idx) => (
+                          <div key={idx} className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                            {`${cat.age} ${cat.gender === 'male' ? 'эрэгтэй' : 'эмэгтэй'}`}
                             <button
                               type="button"
-                              onClick={() => removeCustomParticipationType(type)}
+                              onClick={() => removeParticipationCategory(idx)}
                               className="ml-2 text-blue-600 hover:text-blue-800"
                             >
                               <X className="h-3 w-3" />

@@ -39,6 +39,19 @@ interface FinalRanking {
   prize?: string;
 }
 
+interface ParticipationCategory { age: string; gender: string }
+
+const parseParticipationType = (value: string): ParticipationCategory => {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return { age: value, gender: "male" };
+  }
+};
+
+const formatParticipationType = (cat: ParticipationCategory) =>
+  `${cat.age} ${cat.gender === 'male' ? 'эрэгтэй' : 'эмэгтэй'}`;
+
 export default function TournamentFullInfo() {
   const [match, params] = useRoute("/tournament/:id/full");
   const [, setLocation] = useLocation();
@@ -194,11 +207,14 @@ interface Participant {
                       <SelectValue placeholder="Ангилал" />
                     </SelectTrigger>
                     <SelectContent>
-                      {tournament?.participationTypes?.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
+                      {tournament?.participationTypes?.map((type) => {
+                        const cat = parseParticipationType(type);
+                        return (
+                          <SelectItem key={type} value={type}>
+                            {formatParticipationType(cat)}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                   <Button
@@ -314,11 +330,14 @@ interface Participant {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Бүх ангилал</SelectItem>
-                        {tournament?.participationTypes?.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
-                          </SelectItem>
-                        ))}
+                        {tournament?.participationTypes?.map((type) => {
+                          const cat = parseParticipationType(type);
+                          return (
+                            <SelectItem key={type} value={type}>
+                              {formatParticipationType(cat)}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                   </div>
@@ -328,24 +347,21 @@ interface Participant {
                         <TableHead>Нэр</TableHead>
                         <TableHead>Нас</TableHead>
                         <TableHead>Хүйс</TableHead>
-                        <TableHead>Оролцох төрөл</TableHead>
+                        <TableHead>Насны ангилал</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredParticipants.map((p) => (
-                        <TableRow key={p.id}>
-                          <TableCell>{`${p.lastName} ${p.firstName}`}</TableCell>
-                          <TableCell>{calculateAge(p.dateOfBirth)}</TableCell>
-                          <TableCell>
-                            {p.gender === "male"
-                              ? "Эрэгтэй"
-                              : p.gender === "female"
-                              ? "Эмэгтэй"
-                              : "Бусад"}
-                          </TableCell>
-                          <TableCell>{p.participationType}</TableCell>
-                        </TableRow>
-                      ))}
+                      {filteredParticipants.map((p) => {
+                        const cat = parseParticipationType(p.participationType);
+                        return (
+                          <TableRow key={p.id}>
+                            <TableCell>{`${p.lastName} ${p.firstName}`}</TableCell>
+                            <TableCell>{calculateAge(p.dateOfBirth)}</TableCell>
+                            <TableCell>{cat.gender === 'male' ? 'Эрэгтэй' : 'Эмэгтэй'}</TableCell>
+                            <TableCell>{cat.age}</TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </div>
