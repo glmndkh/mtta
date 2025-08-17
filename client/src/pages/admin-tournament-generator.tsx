@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Trophy, Calendar, Users, MapPin, DollarSign, Plus, X, Save, Eye, Upload } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -101,7 +102,7 @@ export default function AdminTournamentGenerator() {
       organizer: "",
       maxParticipants: 32,
       entryFee: 0,
-      participationTypes: [],
+      participationTypes: [] as string[],
       rules: "",
       prizes: "",
       contactInfo: "",
