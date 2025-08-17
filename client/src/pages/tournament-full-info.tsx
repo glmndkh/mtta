@@ -9,6 +9,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { KnockoutBracket } from "@/components/KnockoutBracket";
 import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -55,7 +56,8 @@ const formatParticipationType = (cat: ParticipationCategory) =>
 export default function TournamentFullInfo() {
   const [match, params] = useRoute("/tournament/:id/full");
   const [, setLocation] = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user: authUser } = useAuth();
+  const user: any = authUser;
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -98,6 +100,8 @@ interface Participant {
 
   const [registrationType, setRegistrationType] = useState<string>("");
   const [filterType, setFilterType] = useState<string>("all");
+  const [newPlayerId, setNewPlayerId] = useState("");
+  const [newParticipation, setNewParticipation] = useState("");
 
   useEffect(() => {
     if (tournament?.participationTypes?.length && !registrationType) {
@@ -133,6 +137,53 @@ interface Participant {
       toast({
         title: 'Алдаа гарлаа',
         description: error.message || 'Бүртгүүлэхэд алдаа гарлаа',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const addParticipantMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest(
+        `/api/admin/tournaments/${params?.id}/participants`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            playerId: newPlayerId,
+            participationType: newParticipation,
+          }),
+        },
+      );
+    },
+    onSuccess: () => {
+      toast({ title: 'Тамирчин нэмэгдлээ' });
+      setNewPlayerId('');
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', params?.id, 'participants'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Алдаа гарлаа',
+        description: error.message || 'Тамирчин нэмэхэд алдаа гарлаа',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const removeParticipantMutation = useMutation({
+    mutationFn: async (playerId: string) => {
+      return apiRequest(
+        `/api/admin/tournaments/${params?.id}/participants/${playerId}`,
+        { method: 'DELETE' },
+      );
+    },
+    onSuccess: () => {
+      toast({ title: 'Тамирчин хасагдлаа' });
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', params?.id, 'participants'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Алдаа гарлаа',
+        description: error.message || 'Тамирчин хасахад алдаа гарлаа',
         variant: 'destructive',
       });
     },
@@ -321,15 +372,23 @@ interface Participant {
 
             {/* Participants */}
             <TabsContent value="participants">
-              {participants.length > 0 ? (
-                <div className="space-y-4">
-                  <div className="flex justify-end">
-                    <Select value={filterType} onValueChange={setFilterType}>
-                      <SelectTrigger className="w-64">
-                        <SelectValue placeholder="Ангилал шүүх" />
+              <div className="space-y-4">
+                {user?.role === 'admin' && (
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input
+                      placeholder="Player ID"
+                      value={newPlayerId}
+                      onChange={(e) => setNewPlayerId(e.target.value)}
+                      className="sm:w-1/3"
+                    />
+                    <Select
+                      value={newParticipation}
+                      onValueChange={setNewParticipation}
+                    >
+                      <SelectTrigger className="sm:w-1/3">
+                        <SelectValue placeholder="Ангилал" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Бүх ангилал</SelectItem>
                         {tournament?.participationTypes?.map((type) => {
                           const cat = parseParticipationType(type);
                           return (
@@ -340,34 +399,85 @@ interface Participant {
                         })}
                       </SelectContent>
                     </Select>
+                    <Button
+                      onClick={() => addParticipantMutation.mutate()}
+                      disabled={
+                        addParticipantMutation.isPending ||
+                        !newPlayerId ||
+                        !newParticipation
+                      }
+                    >
+                      Нэмэх
+                    </Button>
                   </div>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Нэр</TableHead>
-                        <TableHead>Нас</TableHead>
-                        <TableHead>Хүйс</TableHead>
-                        <TableHead>Насны ангилал</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredParticipants.map((p) => {
-                        const cat = parseParticipationType(p.participationType);
-                        return (
-                          <TableRow key={p.id}>
-                            <TableCell>{`${p.lastName} ${p.firstName}`}</TableCell>
-                            <TableCell>{calculateAge(p.dateOfBirth)}</TableCell>
-                            <TableCell>{cat.gender === 'male' ? 'Эрэгтэй' : 'Эмэгтэй'}</TableCell>
-                            <TableCell>{cat.age}</TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="text-center text-gray-400 py-8">Тамирчдын мэдээлэл алга.</div>
-              )}
+                )}
+
+                {participants.length > 0 ? (
+                  <div className="space-y-4">
+                    <div className="flex justify-end">
+                      <Select value={filterType} onValueChange={setFilterType}>
+                        <SelectTrigger className="w-64">
+                          <SelectValue placeholder="Ангилал шүүх" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Бүх ангилал</SelectItem>
+                          {tournament?.participationTypes?.map((type) => {
+                            const cat = parseParticipationType(type);
+                            return (
+                              <SelectItem key={type} value={type}>
+                                {formatParticipationType(cat)}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Нэр</TableHead>
+                          <TableHead>Нас</TableHead>
+                          <TableHead>Хүйс</TableHead>
+                          <TableHead>Насны ангилал</TableHead>
+                          {user?.role === 'admin' && <TableHead></TableHead>}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredParticipants.map((p) => {
+                          const cat = parseParticipationType(p.participationType);
+                          return (
+                            <TableRow key={p.id}>
+                              <TableCell>{`${p.lastName} ${p.firstName}`}</TableCell>
+                              <TableCell>{calculateAge(p.dateOfBirth)}</TableCell>
+                              <TableCell>
+                                {cat.gender === 'male' ? 'Эрэгтэй' : 'Эмэгтэй'}
+                              </TableCell>
+                              <TableCell>{cat.age}</TableCell>
+                              {user?.role === 'admin' && (
+                                <TableCell>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() =>
+                                      removeParticipantMutation.mutate(p.id)
+                                    }
+                                  >
+                                    Хасах
+                                  </Button>
+                                </TableCell>
+                              )}
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-400 py-8">
+                    Тамирчдын мэдээлэл алга.
+                  </div>
+                )}
+              </div>
             </TabsContent>
 
             {/* Album */}
