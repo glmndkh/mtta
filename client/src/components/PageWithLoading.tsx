@@ -13,7 +13,7 @@ const PageWithLoading: React.FC<PageWithLoadingProps> = ({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
+      <div className="min-h-screen main-bg flex items-center justify-center">
         <div className="text-center">
           <LoadingAnimation size={120} />
           <p className="text-white text-xl mt-8 opacity-75">
@@ -24,7 +24,7 @@ const PageWithLoading: React.FC<PageWithLoadingProps> = ({
     );
   }
 
-  return <>{children}</>;
+  return <div className="min-h-screen main-bg">{children}</div>;
 };
 
 export default PageWithLoading;
