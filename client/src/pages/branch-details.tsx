@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import Navigation from "@/components/navigation";
+import PageLayout from "@/components/PageLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import PageWithLoading from "@/components/PageWithLoading";
@@ -53,8 +53,7 @@ export default function BranchDetails() {
   if (!branch) {
     return (
       <PageWithLoading>
-        <Navigation />
-        <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+        <PageLayout>
           <Link href="/branches">
             <Button variant="ghost" className="mb-4">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -62,22 +61,21 @@ export default function BranchDetails() {
             </Button>
           </Link>
           <p>Салбар холбоо олдсонгүй</p>
-        </div>
+        </PageLayout>
       </PageWithLoading>
     );
   }
 
   return (
     <PageWithLoading>
-      <Navigation />
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+      <PageLayout className="max-w-3xl">
         <Link href="/branches">
           <Button variant="ghost" className="mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Буцах
           </Button>
         </Link>
-        <Card className="max-w-3xl">
+        <Card>
           <CardHeader>
             <CardTitle>{branch.name}</CardTitle>
           </CardHeader>
@@ -96,7 +94,7 @@ export default function BranchDetails() {
             {branch.activities && <p><strong>Үйл ажиллагаа:</strong> {branch.activities}</p>}
           </CardContent>
         </Card>
-      </div>
+      </PageLayout>
     </PageWithLoading>
   );
 }
