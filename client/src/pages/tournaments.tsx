@@ -2,11 +2,9 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
-import TournamentTimeDisplay from "@/components/tournament-time-display";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Calendar, MapPin, Clock, ExternalLink, Ticket, Users } from "lucide-react";
+import { Trophy, Calendar, MapPin, Clock, ExternalLink, Ticket, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { UserAutocomplete } from "@/components/UserAutocomplete";
 import { useLocation } from "wouter";
@@ -248,37 +246,6 @@ function TournamentRegistrationButton({ tournamentId }: { tournamentId: string }
 }
 
 // Tournament Registration Stats Component
-function TournamentRegistrationStats({ tournamentId }: { tournamentId: string }) {
-  const { data: stats } = useQuery<{ registered: number; maxParticipants?: number; registrationRate: number }>({
-    queryKey: ['/api/tournaments', tournamentId, 'registration-stats'],
-  });
-
-  if (!stats) return null;
-
-  return (
-    <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3 flex items-center gap-4">
-      <div className="flex items-center gap-2">
-        <Users className="w-4 h-4 text-blue-600" />
-        <span className="text-sm font-medium text-gray-900">
-          Бүртгүүлсэн: {stats.registered}
-          {stats.maxParticipants && ` / ${stats.maxParticipants}`}
-        </span>
-      </div>
-      {stats.registrationRate > 0 && (
-        <div className="flex items-center gap-2">
-          <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-blue-600 transition-all duration-300"
-              style={{ width: `${Math.min(stats.registrationRate, 100)}%` }}
-            />
-          </div>
-          <span className="text-xs text-gray-600">{stats.registrationRate}%</span>
-        </div>
-      )}
-    </div>
-  );
-}
-
 function TournamentCard({ tournament }: { tournament: TournamentData }) {
   const [, setLocation] = useLocation();
   const [countdown, setCountdown] = useState<CountdownTime>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -405,32 +372,28 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
         {/* Content Overlay */}
         <div className="relative z-10 h-full">
           <div className="h-full flex flex-col p-6 lg:p-8 gap-6">
-            {/* Top Section - Countdown Timer and Registration Stats */}
-            <div className="flex items-start justify-between mb-4 mt-2">
-              {/* Countdown Timer - Visible and Compact */}
-              <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 text-white mt-2">
-                {countdown.days > 0 ? (
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">{countdown.days}</div>
-                    <div className="text-xs text-gray-300">ӨДӨР</div>
-                    <div className="text-sm">{countdown.hours}ц {countdown.minutes}м</div>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <div className="text-lg font-bold">
-                      {countdown.hours}:{countdown.minutes.toString().padStart(2, '0')}:{countdown.seconds.toString().padStart(2, '0')}
-                    </div>
-                    <div className="text-xs text-gray-300">ЦАГ:МИН:СЕК</div>
-                  </div>
-                )}
+            {/* Top Countdown */}
+            <div className="flex justify-center lg:justify-end gap-2 mt-2">
+              <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 text-white text-center">
+                <div className="text-xl font-bold">{countdown.days.toString().padStart(2, '0')}</div>
+                <div className="text-xs text-gray-300">Days</div>
               </div>
-              
-              {/* Registration Stats */}
-              <TournamentRegistrationStats tournamentId={tournament.id} />
+              <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 text-white text-center">
+                <div className="text-xl font-bold">{countdown.hours.toString().padStart(2, '0')}</div>
+                <div className="text-xs text-gray-300">Hours</div>
+              </div>
+              <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 text-white text-center">
+                <div className="text-xl font-bold">{countdown.minutes.toString().padStart(2, '0')}</div>
+                <div className="text-xs text-gray-300">Minutes</div>
+              </div>
+              <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 text-white text-center">
+                <div className="text-xl font-bold">{countdown.seconds.toString().padStart(2, '0')}</div>
+                <div className="text-xs text-gray-300">Seconds</div>
+              </div>
             </div>
 
             {/* Main Content Section */}
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 flex-1">
+            <div className="flex flex-col lg:flex-row items-start justify-between gap-4 flex-1">
               {/* Left Section - Tournament Info */}
               <div className="flex-1 space-y-3">
                 {/* Date Badge */}
@@ -442,59 +405,38 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
                     {formatDateRange()}
                   </span>
                 </div>
-              
-              {/* Tournament Name */}
-              <h2 className="text-3xl lg:text-4xl font-bold text-white leading-tight">
-                {tournament.name}
-              </h2>
-              
-              {/* Location */}
-              <div className="flex items-center text-white/90 text-lg">
-                <MapPin className="w-5 h-5 mr-2" />
-                {tournament.location}
-              </div>
 
-              {/* Tournament Types & Categories - Moved Higher */}
-              <div className="space-y-1">
-                <div className="text-white/90 text-sm font-medium">Тэмцээний төрөл:</div>
-                <div className="flex flex-wrap gap-2">
-                  {(tournament.categories || tournament.participationTypes || []).map((category) => {
-                    const label = CATEGORY_LABELS[category] || formatParticipation(parseParticipation(category));
-                    return (
-                      <Badge key={category} variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
-                        {label}
-                      </Badge>
-                    );
-                  })}
-                  {(!tournament.categories || tournament.categories.length === 0) &&
-                   (!tournament.participationTypes || tournament.participationTypes.length === 0) && (
-                    <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-                      Ганцаарчилсан
-                    </Badge>
-                  )}
-                </div>
-              </div>
+                {/* Tournament Name */}
+                <h2 className="text-3xl lg:text-4xl font-bold text-white leading-tight">
+                  {tournament.name}
+                </h2>
 
-              {/* Prize Money */}
-              {(tournament.prizeMoney || tournament.prizes) && (
-                <div className="text-white text-lg font-medium">
-                  Шагналын сан: <span className="font-bold">{tournament.prizeMoney || tournament.prizes}</span>
+                {/* Location */}
+                <div className="flex items-center text-white/90 text-lg">
+                  <MapPin className="w-5 h-5 mr-2" />
+                  {tournament.location}
                 </div>
-              )}
 
-              {/* Entry Fee */}
-              {tournament.entryFee && parseFloat(tournament.entryFee) > 0 && (
-                <div className="text-white text-lg font-medium">
-                  Бүртгэлийн хураамж: <span className="font-bold">{parseFloat(tournament.entryFee).toLocaleString()}₮</span>
-                </div>
-              )}
+                {/* Prize Money */}
+                {(tournament.prizeMoney || tournament.prizes) && (
+                  <div className="text-white text-lg font-medium">
+                    Шагналын сан: <span className="font-bold">{tournament.prizeMoney || tournament.prizes}</span>
+                  </div>
+                )}
+
+                {/* Entry Fee */}
+                {tournament.entryFee && parseFloat(tournament.entryFee) > 0 && (
+                  <div className="text-white text-lg font-medium">
+                    Бүртгэлийн хураамж: <span className="font-bold">{parseFloat(tournament.entryFee).toLocaleString()}₮</span>
+                  </div>
+                )}
 
                 {/* Action Buttons */}
                 <div className="flex flex-wrap gap-3">
                   <TournamentRegistrationButton tournamentId={tournament.id} />
                   {tournament.eventInfoUrl && (
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="border-white text-white hover:bg-white hover:text-black"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -505,7 +447,7 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
                     </Button>
                   )}
                   {tournament.ticketUrl && (
-                    <Button 
+                    <Button
                       className="bg-white text-black hover:bg-gray-100"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -518,44 +460,27 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
                 </div>
               </div>
 
-              {/* Right Section - Countdown Timer */}
-              <div className="flex-shrink-0">
-                <div className="bg-gray-900/90 backdrop-blur-sm rounded-2xl p-6 min-w-[320px] border border-gray-700/50">
-                  <div className="grid grid-cols-4 gap-1 text-center">
-                    <div className="bg-gray-800/80 rounded-lg py-4 px-2 transition-all duration-300 hover:bg-gray-700/80">
-                      <div className={`text-4xl lg:text-5xl font-bold text-white leading-none mb-2 transition-all duration-500 transform ${isFlipping.days ? 'countdown-flip' : ''}`}>
-                        <span className="inline-block">
-                          {countdown.days.toString().padStart(2, '0')}
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-300 font-medium uppercase tracking-wider">Days</div>
+              {/* Right Section - Categories */}
+              <div className="w-full lg:w-64 space-y-2">
+                {(tournament.categories || tournament.participationTypes || []).map((category) => {
+                  const label = CATEGORY_LABELS[category] || formatParticipation(parseParticipation(category));
+                  return (
+                    <div
+                      key={category}
+                      className="flex items-center justify-between bg-white/90 backdrop-blur-sm rounded px-3 py-2 text-sm font-medium text-gray-900"
+                    >
+                      <span>{label}</span>
+                      <ChevronRight className="w-4 h-4" />
                     </div>
-                    <div className="bg-gray-800/80 rounded-lg py-4 px-2 transition-all duration-300 hover:bg-gray-700/80">
-                      <div className={`text-4xl lg:text-5xl font-bold text-white leading-none mb-2 transition-all duration-500 transform ${isFlipping.hours ? 'countdown-flip' : ''}`}>
-                        <span className="inline-block">
-                          {countdown.hours.toString().padStart(2, '0')}
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-300 font-medium uppercase tracking-wider">Hours</div>
-                    </div>
-                    <div className="bg-gray-800/80 rounded-lg py-4 px-2 transition-all duration-300 hover:bg-gray-700/80">
-                      <div className={`text-4xl lg:text-5xl font-bold text-white leading-none mb-2 transition-all duration-500 transform ${isFlipping.minutes ? 'countdown-flip' : ''}`}>
-                        <span className="inline-block">
-                          {countdown.minutes.toString().padStart(2, '0')}
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-300 font-medium uppercase tracking-wider">Minutes</div>
-                    </div>
-                    <div className="bg-gray-800/80 rounded-lg py-4 px-2 transition-all duration-300 hover:bg-gray-700/80">
-                      <div className={`text-4xl lg:text-5xl font-bold text-white leading-none mb-2 transition-all duration-500 transform ${isFlipping.seconds ? 'countdown-flip' : 'countdown-tick'}`}>
-                        <span className="inline-block countdown-glow">
-                          {countdown.seconds.toString().padStart(2, '0')}
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-300 font-medium uppercase tracking-wider">Seconds</div>
-                    </div>
+                  );
+                })}
+                {(!tournament.categories || tournament.categories.length === 0) &&
+                 (!tournament.participationTypes || tournament.participationTypes.length === 0) && (
+                  <div className="flex items-center justify-between bg-white/90 backdrop-blur-sm rounded px-3 py-2 text-sm font-medium text-gray-900">
+                    <span>Ганцаарчилсан</span>
+                    <ChevronRight className="w-4 h-4" />
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
@@ -649,8 +574,8 @@ export default function Tournaments() {
         ) : (
           <div className="space-y-6">
             {tournaments
-              .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
-              .map((tournament) => (
+              .sort((a: TournamentData, b: TournamentData) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
+              .map((tournament: TournamentData) => (
                 <TournamentCard key={tournament.id} tournament={tournament} />
               ))}
             </div>
