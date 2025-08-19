@@ -1798,11 +1798,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const data = insertBranchSchema.parse(req.body);
         const branch = await storage.createBranch(data);
-        res.json(branch);
+        res.status(201).json(branch);
       } catch (e) {
         console.error("Error creating branch:", e);
+        if (e instanceof z.ZodError) {
+          return res.status(400).json({ message: e.issues.map((i) => i.message).join(", ") });
+        }
         res
-          .status(400)
+          .status(500)
           .json({ message: "Салбар холбоо үүсгэхэд алдаа гарлаа" });
       }
     },
