@@ -105,10 +105,9 @@ export default function AdminDashboard() {
   // Generic mutations
   const createMutation = useMutation({
     mutationFn: async ({ endpoint, data }: { endpoint: string; data: any }) => {
-      return fetch(endpoint, {
+      return apiRequest(endpoint, {
         method: 'POST',
-        body: JSON.stringify(data),
-        headers: { 'Content-Type': 'application/json' }
+        body: JSON.stringify(data)
       });
     },
     onSuccess: () => {
@@ -124,10 +123,9 @@ export default function AdminDashboard() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ endpoint, data }: { endpoint: string; data: any }) => {
-      return fetch(endpoint, {
+      return apiRequest(endpoint, {
         method: 'PUT',
-        body: JSON.stringify(data),
-        headers: { 'Content-Type': 'application/json' }
+        body: JSON.stringify(data)
       });
     },
     onSuccess: () => {
@@ -143,7 +141,7 @@ export default function AdminDashboard() {
 
   const deleteMutation = useMutation({
     mutationFn: async (endpoint: string) => {
-      return fetch(endpoint, { method: 'DELETE' });
+      return apiRequest(endpoint, { method: 'DELETE' });
     },
     onSuccess: () => {
       toast({ title: "Амжилттай устгагдлаа" });
