@@ -4,9 +4,13 @@
 @tailwind components;
 @tailwind utilities;
 
-body * { color: var(--text-primary); }
-h1, h2, h3, h4, h5, h6 { color: var(--text-primary) !important; }
-p, span, div, a, label, button { color: var(--text-primary); }
+body {
+  background-color: var(--background);
+  color: var(--text-primary);
+}
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+}
 nav a { color: var(--text-secondary); }
 nav a:hover { color: var(--link); }
 a:hover { color: var(--link); }
