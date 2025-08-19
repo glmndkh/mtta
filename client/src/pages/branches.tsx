@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import Navigation from "@/components/navigation";
+import PageLayout from "@/components/PageLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PageWithLoading from "@/components/PageWithLoading";
 
@@ -29,9 +29,8 @@ export default function Branches() {
 
   return (
     <PageWithLoading>
-      <Navigation />
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold mb-8 text-gray-900">Салбар холбоод</h1>
+      <PageLayout>
+        <h1 className="text-3xl font-bold mb-8">Салбар холбоод</h1>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {branches.map((branch) => (
             <Link key={branch.id} href={`/branches/${branch.id}`}>
@@ -41,17 +40,17 @@ export default function Branches() {
                 </CardHeader>
                 <CardContent>
                   {branch.location && (
-                    <p className="text-sm text-gray-600">{branch.location}</p>
+                    <p className="text-sm text-gray-400">{branch.location}</p>
                   )}
                   {branch.leader && (
-                    <p className="text-sm text-gray-600">Тэргүүлэгч: {branch.leader}</p>
+                    <p className="text-sm text-gray-400">Тэргүүлэгч: {branch.leader}</p>
                   )}
                 </CardContent>
               </Card>
             </Link>
           ))}
         </div>
-      </div>
+      </PageLayout>
     </PageWithLoading>
   );
 }
