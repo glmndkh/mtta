@@ -453,13 +453,17 @@ export default function AdminDashboard() {
   };
 
   const renderBranchesTab = () => {
-    const filteredBranches = branches && Array.isArray(branches) ? branches.filter((branch: any) => {
-      const searchText = branchFilter.toLowerCase();
-      return !searchText ||
-             branch.name?.toLowerCase().includes(searchText) ||
-             branch.leader?.toLowerCase().includes(searchText) ||
-             branch.location?.toLowerCase().includes(searchText);
-    }) : [];
+    const filteredBranches = branches && Array.isArray(branches)
+      ? branches.filter((branch: any) => {
+          const searchText = branchFilter.toLowerCase();
+          return (
+            !searchText ||
+            String(branch.name ?? "").toLowerCase().includes(searchText) ||
+            String(branch.leader ?? "").toLowerCase().includes(searchText) ||
+            String(branch.location ?? "").toLowerCase().includes(searchText)
+          );
+        })
+      : [];
 
     return (
       <div className="space-y-4">
