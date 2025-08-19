@@ -152,19 +152,25 @@ export default function AdminDashboard() {
     }
   });
 
+  const sanitizeFormData = (data: any) =>
+    Object.fromEntries(
+      Object.entries(data).filter(
+        ([, value]) => value !== "" && value !== undefined && value !== null,
+      ),
+    );
+
   const handleCreate = () => {
     createMutation.mutate({
       endpoint: `/api/admin/${selectedTab}`,
-      data: formData
+      data: sanitizeFormData(formData),
     });
   };
 
   const handleUpdate = () => {
     const endpoint = `/api/admin/${selectedTab}/${editingItem.id}`;
-
     updateMutation.mutate({
       endpoint,
-      data: formData
+      data: sanitizeFormData(formData),
     });
   };
 
