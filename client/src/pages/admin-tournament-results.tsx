@@ -314,10 +314,10 @@ export default function AdminTournamentResultsPage() {
   // Check if user is admin
   if (!isAuthenticated || (user as any)?.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2 text-gray-900">Хандах эрхгүй</h1>
-          <p className="text-gray-600 mb-4">Зөвхөн админ хэрэглэгч энэ хуудсыг харах боломжтой.</p>
+          <h1 className="text-2xl font-bold mb-2 text-text-primary">Хандах эрхгүй</h1>
+          <p className="text-text-secondary mb-4">Зөвхөн админ хэрэглэгч энэ хуудсыг харах боломжтой.</p>
           <Button 
             onClick={() => setLocation('/tournaments')}
             variant="outline"
@@ -332,8 +332,8 @@ export default function AdminTournamentResultsPage() {
   // Show tournament selection when no tournament ID is provided
   if (isOnFallbackRoute) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="bg-white border-b">
+      <div className="min-h-screen bg-background">
+        <div className="bg-card border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
@@ -346,8 +346,8 @@ export default function AdminTournamentResultsPage() {
                   Буцах
                 </Button>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Тэмцээний үр дүн оруулах</h1>
-                  <p className="text-sm text-gray-600">Тэмцээн сонгоод үр дүн оруулна уу</p>
+                  <h1 className="text-2xl font-bold text-text-primary">Тэмцээний үр дүн оруулах</h1>
+                  <p className="text-sm text-text-secondary">Тэмцээн сонгоод үр дүн оруулна уу</p>
                 </div>
               </div>
             </div>
@@ -366,22 +366,22 @@ export default function AdminTournamentResultsPage() {
                 <CardContent>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Статус:</span>
+                      <span className="text-text-secondary">Статус:</span>
                       <Badge className={
                         tournament.status === 'registration' ? 'bg-green-100 text-green-800' :
                         tournament.status === 'ongoing' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
+                        'bg-secondary text-text-primary'
                       }>
                         {tournament.status === 'registration' ? 'Бүртгэл' : 
                          tournament.status === 'ongoing' ? 'Болж байна' : 'Дууссан'}
                       </Badge>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Байршил:</span>
+                      <span className="text-text-secondary">Байршил:</span>
                       <span>{tournament.location}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Огноо:</span>
+                      <span className="text-text-secondary">Огноо:</span>
                       <span>{new Date(tournament.startDate).toLocaleDateString('mn-MN')}</span>
                     </div>
                   </div>
@@ -396,10 +396,10 @@ export default function AdminTournamentResultsPage() {
 
   if (tournamentLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Тэмцээний мэдээлэл ачаалж байна...</p>
+          <p className="text-text-secondary">Тэмцээний мэдээлэл ачаалж байна...</p>
         </div>
       </div>
     );
@@ -407,9 +407,9 @@ export default function AdminTournamentResultsPage() {
 
   if (!tournament) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2 text-gray-900">Тэмцээн олдсонгүй</h1>
+          <h1 className="text-2xl font-bold mb-2 text-text-primary">Тэмцээн олдсонгүй</h1>
           <Button 
             onClick={() => setLocation('/admin/tournaments')}
             variant="outline"
@@ -738,9 +738,9 @@ export default function AdminTournamentResultsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="bg-card border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -753,10 +753,10 @@ export default function AdminTournamentResultsPage() {
                 Буцах
               </Button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
+                <h1 className="text-2xl font-bold text-text-primary">
                   {tournament.name} - Үр дүн оруулах
                 </h1>
-                <p className="text-gray-600">
+                <p className="text-text-secondary">
                   Тэмцээний үр дүнг оруулж, нийтлэх
                 </p>
               </div>
@@ -861,15 +861,15 @@ export default function AdminTournamentResultsPage() {
                           key={index} 
                           className={`p-4 rounded-lg border-2 text-center ${
                             ranking.position === 1 ? 'bg-yellow-100 border-yellow-400' :
-                            ranking.position === 2 ? 'bg-gray-100 border-gray-400' :
+                            ranking.position === 2 ? 'bg-secondary border-border' :
                             'bg-orange-100 border-orange-400'
                           }`}
                         >
                           <div className="text-3xl mb-2">
                             {ranking.position === 1 ? '🥇' : ranking.position === 2 ? '🥈' : '🥉'}
                           </div>
-                          <div className="text-lg font-bold text-gray-800">{ranking.position}-р байр</div>
-                          <div className="font-medium text-gray-900">{ranking.playerName}</div>
+                          <div className="text-lg font-bold text-text-primary">{ranking.position}-р байр</div>
+                          <div className="font-medium text-text-primary">{ranking.playerName}</div>
                         </div>
                       ))}
                     </div>
@@ -897,7 +897,7 @@ export default function AdminTournamentResultsPage() {
                       </span>
                       <div className="flex gap-1">
                         {getQualifiedPlayers().map((player, index) => (
-                          <span key={index} className="text-xs bg-white px-2 py-1 rounded border text-gray-700">
+                          <span key={index} className="text-xs bg-card px-2 py-1 rounded border text-text-secondary">
                             {player.name}
                           </span>
                         ))}
@@ -1109,7 +1109,7 @@ export default function AdminTournamentResultsPage() {
               <CardContent>
                 <div className="space-y-6">
                   {groupStageTables.map((group, groupIndex) => (
-                    <div key={groupIndex} className="border rounded-lg p-4 bg-white shadow-sm">
+                    <div key={groupIndex} className="border rounded-lg p-4 bg-card shadow-sm">
                       <div className="flex items-center justify-between mb-4">
                         <Input
                           value={group.groupName}
@@ -1131,31 +1131,31 @@ export default function AdminTournamentResultsPage() {
                       {/* Excel-style Result Matrix Table */}
                       {group.players.length > 0 && (
                         <div className="overflow-x-auto">
-                          <table className="w-full border-collapse border border-gray-300">
+                          <table className="w-full border-collapse border border-border">
                             <thead>
-                              <tr className="bg-yellow-100 text-gray-800">
-                                <th className="border border-gray-300 p-2 text-sm font-bold">№</th>
-                                <th className="border border-gray-300 p-2 text-sm font-bold">Нэрс</th>
-                                <th className="border border-gray-300 p-2 text-sm font-bold">Клуб</th>
+                              <tr className="bg-yellow-100 text-text-primary">
+                                <th className="border border-border p-2 text-sm font-bold">№</th>
+                                <th className="border border-border p-2 text-sm font-bold">Нэрс</th>
+                                <th className="border border-border p-2 text-sm font-bold">Клуб</th>
                                 {group.players.map((player, index) => (
-                                  <th key={index} className="border border-gray-300 p-2 text-sm font-bold w-16">
+                                  <th key={index} className="border border-border p-2 text-sm font-bold w-16">
                                     {index + 1}
                                   </th>
                                 ))}
-                                <th className="border border-gray-300 p-2 text-sm font-bold">Өгсөн</th>
-                                <th className="border border-gray-300 p-2 text-sm font-bold">Байр</th>
+                                <th className="border border-border p-2 text-sm font-bold">Өгсөн</th>
+                                <th className="border border-border p-2 text-sm font-bold">Байр</th>
                               </tr>
                             </thead>
                             <tbody>
                               {group.players.map((player, playerIndex) => (
-                                <tr key={playerIndex} className="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
-                                  <td className="border border-gray-300 p-2 text-center font-medium">
+                                <tr key={playerIndex} className="odd:bg-card even:bg-secondary hover:bg-accent">
+                                  <td className="border border-border p-2 text-center font-medium">
                                     {playerIndex + 1}
                                   </td>
-                                  <td className="border border-gray-300 p-2">
+                                  <td className="border border-border p-2">
                                     <div className="flex items-center justify-between">
                                       <button 
-                                        className="text-blue-600 hover:underline cursor-pointer flex-1 text-left"
+                                        className="text-link hover:underline cursor-pointer flex-1 text-left"
                                         onClick={() => setLocation(`/profile/${player.id}`)}
                                       >
                                         {player.name}
@@ -1170,13 +1170,13 @@ export default function AdminTournamentResultsPage() {
                                       </Button>
                                     </div>
                                   </td>
-                                  <td className="border border-gray-300 p-2 text-sm text-gray-600">
+                                  <td className="border border-border p-2 text-sm text-text-secondary">
                                     {player.club}
                                   </td>
                                   {group.players.map((opponent, opponentIndex) => (
-                                    <td key={opponentIndex} className="border border-gray-300 p-1">
+                                    <td key={opponentIndex} className="border border-border p-1">
                                       {playerIndex === opponentIndex ? (
-                                        <div className="w-full h-8 bg-gray-200 flex items-center justify-center text-xs">
+                                        <div className="w-full h-8 bg-secondary flex items-center justify-center text-xs">
                                           *****
                                         </div>
                                       ) : (
@@ -1189,7 +1189,7 @@ export default function AdminTournamentResultsPage() {
                                       )}
                                     </td>
                                   ))}
-                                  <td className="border border-gray-300 p-2">
+                                  <td className="border border-border p-2">
                                     <Input
                                       value={player.wins || ''}
                                       onChange={(e) => {
@@ -1201,7 +1201,7 @@ export default function AdminTournamentResultsPage() {
                                       className="w-full h-8 text-center text-xs"
                                     />
                                   </td>
-                                  <td className="border border-gray-300 p-2">
+                                  <td className="border border-border p-2">
                                     <Input
                                       value={player.position || ''}
                                       onChange={(e) => {
@@ -1227,10 +1227,10 @@ export default function AdminTournamentResultsPage() {
                       )}
                       
                       {/* Player Selection Section */}
-                      <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+                      <div className="mt-4 p-4 bg-secondary rounded-lg border">
                         <div className="flex items-center justify-between mb-3">
-                          <h4 className="text-sm font-medium text-gray-700">Тоглогч нэмэх</h4>
-                          <div className="text-xs text-gray-500">
+                          <h4 className="text-sm font-medium text-text-secondary">Тоглогч нэмэх</h4>
+                          <div className="text-xs text-text-secondary">
                             {(() => {
                               const totalRegistered = participants.length;
                               const totalInGroups = groupStageTables.reduce((total, group) => total + group.players.length, 0);
@@ -1271,8 +1271,8 @@ export default function AdminTournamentResultsPage() {
                             }
                             
                             return (
-                              <div className="text-center py-3 border-2 border-dashed border-gray-300 rounded-lg bg-white">
-                                <p className="text-sm text-gray-600 mb-1">
+                              <div className="text-center py-3 border-2 border-dashed border-border rounded-lg bg-card">
+                                <p className="text-sm text-text-secondary mb-1">
                                   {totalRegistered === 0 
                                     ? "Тэмцээнд бүртгүүлсэн тоглогч байхгүй байна"
                                     : totalInGroups === totalRegistered
@@ -1280,10 +1280,10 @@ export default function AdminTournamentResultsPage() {
                                     : "Энэ группд нэмэх боломжтой тоглогч байхгүй байна"
                                   }
                                 </p>
-                                <p className="text-xs text-gray-400">
+                                <p className="text-xs text-text-secondary">
                                   {totalInGroups > 0 && totalInGroups < totalRegistered && "Бусад группаас тоглогч хасаж энэ группд нэмэх боломжтой"}
                                 </p>
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-xs text-text-secondary mt-1">
                                   Бүртгэлтэй: {totalRegistered}, Группд орсон: {totalInGroups}, Боломжтой: {totalRegistered - totalInGroups}
                                 </p>
                               </div>
@@ -1318,11 +1318,11 @@ export default function AdminTournamentResultsPage() {
                       
                       {group.players.length === 0 && (
                         <div className="text-center py-8">
-                          <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                          <p className="text-gray-500 mb-2">
+                          <Users className="w-12 h-12 mx-auto mb-4 text-text-secondary" />
+                          <p className="text-text-secondary mb-2">
                             Дээрх сонголтоос тоглогч сонгож нэмнэ үү
                           </p>
-                          <p className="text-sm text-gray-400">
+                          <p className="text-sm text-text-secondary">
                             Зөвхөн тэмцээнд бүртгүүлсэн, өөр группд ороогүй тоглогчдыг сонгох боломжтой
                           </p>
                         </div>
@@ -1330,7 +1330,7 @@ export default function AdminTournamentResultsPage() {
                     </div>
                   ))}
                   {groupStageTables.length === 0 && (
-                    <p className="text-gray-500 text-center py-8">
+                    <p className="text-text-secondary text-center py-8">
                       "Групп нэмэх" товчийг дарж группийн тулаан үүсгэнэ үү
                     </p>
                   )}
@@ -1341,7 +1341,7 @@ export default function AdminTournamentResultsPage() {
         </Tabs>
           </>
         ) : (
-          <div className="text-center text-gray-600">
+          <div className="text-center text-text-secondary">
             Тэмцээнд төрөл нэмээгүй байна. <a href="/admin/generator" className="text-blue-500 underline">Төрөл нэмэх</a>
           </div>
         )}
