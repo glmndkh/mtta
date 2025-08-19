@@ -17,6 +17,20 @@ interface Branch {
   imageUrl?: string;
 }
 
+function getImageUrl(imageUrl?: string): string {
+  if (!imageUrl) return "";
+  if (
+    imageUrl.startsWith("http://") ||
+    imageUrl.startsWith("https://") ||
+    imageUrl.startsWith("data:")
+  ) {
+    return imageUrl;
+  }
+  if (imageUrl.startsWith("/objects/")) return imageUrl;
+  if (imageUrl.startsWith("/")) return `/public-objects${imageUrl}`;
+  return `/public-objects/${imageUrl}`;
+}
+
 export default function BranchDetails() {
   const [match, params] = useRoute("/branches/:id");
   const branchId = params?.id;
@@ -69,7 +83,11 @@ export default function BranchDetails() {
           </CardHeader>
           <CardContent className="space-y-4">
             {branch.imageUrl && (
-              <img src={branch.imageUrl} alt={branch.name} className="w-full h-64 object-cover rounded" />
+              <img
+                src={getImageUrl(branch.imageUrl)}
+                alt={branch.name}
+                className="w-full h-64 object-cover rounded"
+              />
             )}
             {branch.leader && <p><strong>Тэргүүлэгч:</strong> {branch.leader}</p>}
             {branch.leadershipMembers && <p><strong>Тэргүүлэгч гишүүд:</strong> {branch.leadershipMembers}</p>}
