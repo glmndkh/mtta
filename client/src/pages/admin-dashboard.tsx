@@ -725,8 +725,8 @@ export default function AdminDashboard() {
                       className="w-12 h-12 object-contain rounded"
                     />
                   ) : (
-                    <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
-                      <Upload className="w-6 h-6 text-gray-400" />
+                    <div className="w-12 h-12 bg-secondary rounded flex items-center justify-center">
+                      <Upload className="w-6 h-6 text-text-secondary" />
                     </div>
                   )}
                 </TableCell>
@@ -789,8 +789,8 @@ export default function AdminDashboard() {
                       className="w-12 h-12 object-cover rounded"
                     />
                   ) : (
-                    <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
-                      <Upload className="w-6 h-6 text-gray-400" />
+                    <div className="w-12 h-12 bg-secondary rounded flex items-center justify-center">
+                      <Upload className="w-6 h-6 text-text-secondary" />
                     </div>
                   )}
                 </TableCell>
@@ -1114,7 +1114,7 @@ export default function AdminDashboard() {
               </ObjectUploader>
               {formData.imageUrl && (
                 <div className="mt-2">
-                  <p className="text-sm text-gray-600">Зураг хуулагдсан: {formData.imageUrl}</p>
+                  <p className="text-sm text-text-secondary">Зураг хуулагдсан: {formData.imageUrl}</p>
                 </div>
               )}
             </div>
@@ -1320,7 +1320,7 @@ export default function AdminDashboard() {
               </ObjectUploader>
               {formData.imageUrl && (
                 <div className="mt-2">
-                  <p className="text-sm text-gray-600">Зураг хуулагдсан: {formData.imageUrl}</p>
+                  <p className="text-sm text-text-secondary">Зураг хуулагдсан: {formData.imageUrl}</p>
                 </div>
               )}
             </div>
@@ -1658,7 +1658,7 @@ export default function AdminDashboard() {
                   </SelectContent>
                 </Select>
                 {formData.selectedNewsId && (
-                  <div className="text-sm text-gray-600 mt-1">
+                  <div className="text-sm text-text-secondary mt-1">
                     Холбоос: /news/{formData.selectedNewsId}
                   </div>
                 )}
@@ -2010,7 +2010,7 @@ export default function AdminDashboard() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">Админ удирдлагын самбар</h1>
-            <p className="text-gray-600">Системийн бүх мэдээллийг энд удирдана уу</p>
+            <p className="text-text-secondary">Системийн бүх мэдээллийг энд удирдана уу</p>
           </div>
           <Link href="/">
             <Button variant="outline" className="flex items-center gap-2">
