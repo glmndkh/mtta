@@ -583,6 +583,7 @@ export class DatabaseStorage implements IStorage {
       .select({
         id: clubCoaches.id,
         userId: clubCoaches.userId,
+        name: clubCoaches.name,
         firstName: users.firstName,
         lastName: users.lastName,
       })
@@ -597,6 +598,7 @@ export class DatabaseStorage implements IStorage {
         id: clubCoaches.id,
         clubId: clubCoaches.clubId,
         userId: clubCoaches.userId,
+        name: clubCoaches.name,
         firstName: users.firstName,
         lastName: users.lastName,
         clubName: clubs.name,

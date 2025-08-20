@@ -382,7 +382,8 @@ export const judges = pgTable("judges", {
 export const clubCoaches = pgTable("club_coaches", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   clubId: varchar("club_id").references(() => clubs.id).notNull(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
+  userId: varchar("user_id").references(() => users.id),
+  name: varchar("name"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -542,6 +543,9 @@ export const insertJudgeSchema = createInsertSchema(judges).omit({
 export const insertClubCoachSchema = createInsertSchema(clubCoaches).omit({
   id: true,
   createdAt: true,
+}).refine(data => data.userId || data.name, {
+  message: "userId or name is required",
+  path: ["userId"],
 });
 
 export const insertChampionSchema = createInsertSchema(pastChampions).omit({
