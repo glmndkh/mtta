@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, CheckCircle, Clock, User, Camera, MapPin, Phone, Mail, Calendar, Trophy, Target, CreditCard, Users, History, Shield } from "lucide-react";
+import { AlertCircle, CheckCircle, Clock, User, Camera, MapPin, Phone, Mail, Calendar, Trophy, Target, CreditCard, Users, History, Shield, UserCog } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -51,6 +51,7 @@ interface UserProfile {
   membershipAmount?: number;
   isJudge?: boolean;
   judgeType?: string;
+  isCoach?: boolean;
   playerStats?: PlayerStats;
 }
 
@@ -496,6 +497,12 @@ export default function Profile() {
                       <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                         <Shield className="w-3 h-3 mr-1" />
                         Шүүгч
+                      </Badge>
+                    )}
+                    {profile?.isCoach && (
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        <UserCog className="w-3 h-3 mr-1" />
+                        Дасгалжуулагч
                       </Badge>
                     )}
                   </div>

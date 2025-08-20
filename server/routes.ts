@@ -16,6 +16,7 @@ import {
   insertBranchSchema,
   insertFederationMemberSchema,
   insertJudgeSchema,
+  insertClubCoachSchema,
   insertChampionSchema,
 } from "@shared/schema";
 
@@ -303,6 +304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Хэрэглэгч олдсонгүй" });
 
       const judge = await storage.getJudgeByUserId(user.id);
+      const coach = await storage.getClubCoachByUserId(user.id);
       const playerStats =
         user.role === "player"
           ? await storage.getPlayerByUserId(user.id)
@@ -334,6 +336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         membershipAmount: user.membershipAmount,
         isJudge: !!judge,
         judgeType: judge?.judgeType,
+        isCoach: !!coach,
         playerStats: playerStats
           ? {
               rank: playerStats.rank,
@@ -665,7 +668,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const club = await storage.getClub(req.params.id);
       if (!club) return res.status(404).json({ message: "Клуб олдсонгүй" });
       const players = await storage.getPlayersByClub(req.params.id);
-      res.json({ ...club, players });
+      const coaches = await storage.getClubCoachesByClub(req.params.id);
+      const owner = await storage.getUser(club.ownerId);
+      res.json({ ...club, players, coaches, owner });
     } catch (e) {
       console.error("Error fetching club:", e);
       res.status(500).json({ message: "Клубын мэдээлэл авахад алдаа гарлаа" });
@@ -1916,6 +1921,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (e) {
         console.error("Error deleting federation member:", e);
         res.status(400).json({ message: "Гишүүн устгахад алдаа гарлаа" });
+      }
+    },
+  );
+
+  // Club coaches (admin)
+  app.get(
+    "/api/admin/coaches",
+    requireAuth,
+    isAdminRole,
+    async (_req, res) => {
+      try {
+        const coaches = await storage.getAllClubCoaches();
+        res.json(coaches);
+      } catch (e) {
+        console.error("Error fetching coaches:", e);
+        res.status(500).json({ message: "Дасгалжуулагчид авахад алдаа гарлаа" });
+      }
+    },
+  );
+
+  app.post(
+    "/api/admin/coaches",
+    requireAuth,
+    isAdminRole,
+    async (req, res) => {
+      try {
+        const data = insertClubCoachSchema.parse(req.body);
+        const coach = await storage.createClubCoach(data);
+        res.json(coach);
+      } catch (e) {
+        console.error("Error creating coach:", e);
+        res.status(400).json({ message: "Дасгалжуулагч нэмэхэд алдаа гарлаа" });
+      }
+    },
+  );
+
+  app.delete(
+    "/api/admin/coaches/:id",
+    requireAuth,
+    isAdminRole,
+    async (req, res) => {
+      try {
+        const success = await storage.deleteClubCoach(req.params.id);
+        if (!success)
+          return res.status(404).json({ message: "Дасгалжуулагч олдсонгүй" });
+        res.json({ message: "Дасгалжуулагч амжилттай устгагдлаа" });
+      } catch (e) {
+        console.error("Error deleting coach:", e);
+        res.status(400).json({ message: "Дасгалжуулагч устгахад алдаа гарлаа" });
       }
     },
   );
