@@ -1157,12 +1157,77 @@ export default function AdminDashboard() {
               />
             </div>
             <div>
-              <Label htmlFor="imageUrl">Зураг URL</Label>
-              <Input
-                id="imageUrl"
-                value={formData.imageUrl || ''}
-                onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-              />
+              <Label className="flex items-center gap-2">
+                <Upload className="w-4 h-4" />
+                Шүүгчийн зураг
+              </Label>
+              <ObjectUploader
+                maxNumberOfFiles={1}
+                maxFileSize={5 * 1024 * 1024}
+                onGetUploadParameters={async () => {
+                  try {
+                    const response = await apiRequest("/api/objects/upload", {
+                      method: "POST",
+                    });
+                    const data = (await response.json()) as { uploadURL: string };
+                    if (!data || !data.uploadURL) {
+                      throw new Error("No upload URL received");
+                    }
+                    return {
+                      method: "PUT" as const,
+                      url: data.uploadURL,
+                    };
+                  } catch (error) {
+                    console.error("Error getting upload parameters:", error);
+                    toast({
+                      title: "Алдаа",
+                      description: "Файл хуулах URL авахад алдаа гарлаа",
+                      variant: "destructive",
+                    });
+                    throw error;
+                  }
+                }}
+                onComplete={async (result) => {
+                  if (result.successful && result.successful.length > 0) {
+                    const uploadURL = result.successful[0].uploadURL;
+                    try {
+                      const aclResponse = await apiRequest("/api/objects/acl", {
+                        method: "PUT",
+                        body: JSON.stringify({ imageURL: uploadURL }),
+                      });
+                      const aclData = (await aclResponse.json()) as {
+                        objectPath: string;
+                      };
+                      setFormData({
+                        ...formData,
+                        imageUrl: aclData.objectPath,
+                      });
+                      toast({ title: "Зураг амжилттай хуулагдлаа" });
+                    } catch (error) {
+                      console.error("Error setting ACL:", error);
+                      toast({
+                        title: "Алдаа",
+                        description:
+                          "Зураг хуулагдсан боловч зөвшөөрөл тохируулахад алдаа гарлаа",
+                        variant: "destructive",
+                      });
+                    }
+                  }
+                }}
+                buttonClassName="w-full"
+              >
+                <div className="flex items-center gap-2">
+                  <Upload className="w-4 h-4" />
+                  <span>Зураг файл сонгох</span>
+                </div>
+              </ObjectUploader>
+              {formData.imageUrl && (
+                <div className="mt-2">
+                  <p className="text-sm text-text-secondary">
+                    Зураг хуулагдсан: {formData.imageUrl}
+                  </p>
+                </div>
+              )}
             </div>
             <div>
               <Label htmlFor="judgeType">Төрөл</Label>
