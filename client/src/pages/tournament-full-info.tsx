@@ -9,7 +9,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { KnockoutBracket } from "@/components/KnockoutBracket";
 import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -125,6 +124,11 @@ interface Participant {
   const { data: participants = [] } = useQuery<Participant[]>({
     queryKey: ['/api/tournaments', params?.id, 'participants'],
     enabled: !!params?.id,
+  });
+
+  const { data: allPlayers = [] } = useQuery<any[]>({
+    queryKey: ['/api/players'],
+    enabled: user?.role === 'admin',
   });
 
   const calculateAge = (dob: string | null) => {
@@ -416,12 +420,20 @@ interface Participant {
               <div className="space-y-4">
                 {user?.role === 'admin' && (
                   <div className="flex flex-col sm:flex-row gap-2">
-                    <Input
-                      placeholder="Player ID"
-                      value={newPlayerId}
-                      onChange={(e) => setNewPlayerId(e.target.value)}
-                      className="sm:w-1/3"
-                    />
+                    <Select value={newPlayerId} onValueChange={setNewPlayerId}>
+                      <SelectTrigger className="sm:w-1/3">
+                        <SelectValue placeholder="Player ID" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allPlayers.map((p: any) => (
+                          <SelectItem key={p.players.id} value={p.players.id}>
+                            {p.players.memberNumber
+                              ? `${p.players.memberNumber}: ${p.users?.firstName} ${p.users?.lastName}`
+                              : `${p.users?.firstName} ${p.users?.lastName}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <Select
                       value={newParticipation}
                       onValueChange={setNewParticipation}
