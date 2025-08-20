@@ -2768,17 +2768,17 @@ export default function AdminDashboard() {
 
       {/* Create Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>Шинэ зүйл нэмэх</DialogTitle>
             <DialogDescription>
               Доорх талбаруудыг бөглөнө үү
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto flex-1 pr-2">
             {renderFormFields()}
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-shrink-0 pt-4 border-t">
             <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
               Цуцлах
             </Button>
