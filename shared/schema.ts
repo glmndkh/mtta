@@ -117,7 +117,8 @@ export const clubs = pgTable("clubs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name").notNull(),
   description: text("description"),
-  ownerId: varchar("owner_id").references(() => users.id).notNull(),
+  ownerId: varchar("owner_id").references(() => users.id),
+  ownerName: varchar("owner_name"),
   address: text("address"),
   phone: varchar("phone"),
   email: varchar("email"),
@@ -490,10 +491,15 @@ export const insertPlayerSchema = createInsertSchema(players).omit({
   winPercentage: true,
 });
 
-export const insertClubSchema = createInsertSchema(clubs).omit({
-  id: true,
-  createdAt: true,
-});
+export const insertClubSchema = createInsertSchema(clubs)
+  .omit({
+    id: true,
+    createdAt: true,
+  })
+  .refine((data) => data.ownerId || data.ownerName, {
+    message: "ownerId or ownerName is required",
+    path: ["ownerId"],
+  });
 
 export const insertTournamentSchema = createInsertSchema(tournaments).omit({
   id: true,
