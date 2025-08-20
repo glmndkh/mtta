@@ -705,8 +705,9 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
   position: relative;
 }
 
+/* Dropdown content is now always visible to avoid hover-only text */
 .dropdown-content {
-  display: none;
+  display: block;
   position: absolute;
   top: 110%;
   left: 0;
@@ -736,9 +737,7 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
   color: var(--link);
 }
 
-.dropdown:hover .dropdown-content {
-  display: block;
-}
+
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
