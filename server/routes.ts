@@ -986,27 +986,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req: any, res) => {
       try {
         const { tournamentId } = req.params;
-        const { playerId, participationType } = req.body;
-        if (!playerId)
-          return res.status(400).json({ message: "playerId is required" });
+        const { playerId, playerName, participationType } = req.body;
+
+        if (!playerId && !playerName)
+          return res
+            .status(400)
+            .json({ message: "playerId or playerName is required" });
         if (!participationType)
           return res
             .status(400)
             .json({ message: "participationType is required" });
 
-        try {
-          await validateTournamentEligibility(
-            tournamentId,
-            playerId,
-            participationType,
-          );
-        } catch (err: any) {
-          return res.status(400).json({ message: err.message });
+        let finalPlayerId = playerId;
+        if (!finalPlayerId && playerName) {
+          const [firstName, ...rest] = String(playerName).split(" ");
+          const lastName = rest.join(" ");
+          const newUser = await storage.createSimpleUser({
+            email: null,
+            phone: null,
+            firstName,
+            lastName,
+            gender: null,
+            dateOfBirth: null,
+            clubAffiliation: null,
+            password: null,
+            role: "player",
+          });
+          const newPlayer = await storage.createPlayer({
+            userId: newUser.id,
+          });
+          finalPlayerId = newPlayer.id;
+        }
+
+        if (playerId) {
+          try {
+            await validateTournamentEligibility(
+              tournamentId,
+              finalPlayerId,
+              participationType,
+            );
+          } catch (err: any) {
+            return res.status(400).json({ message: err.message });
+          }
         }
 
         const existing = await storage.getTournamentRegistration(
           tournamentId,
-          playerId,
+          finalPlayerId,
         );
         if (existing)
           return res
@@ -1015,7 +1041,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const registration = await storage.registerForTournament({
           tournamentId,
-          playerId,
+          playerId: finalPlayerId,
           participationType: participationType || "singles",
         });
         res.json({ message: "Participant added", registration });

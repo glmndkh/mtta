@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { Tournament, TournamentResults } from "@shared/schema";
+import { UserAutocomplete } from "@/components/UserAutocomplete";
 
 interface GroupStageGroup {
   groupName: string;
@@ -131,6 +132,18 @@ interface Participant {
     enabled: user?.role === 'admin',
   });
 
+  const availablePlayers = useMemo(
+    () =>
+      allPlayers.map((p: any) => ({
+        id: p.players.id,
+        firstName: p.users?.firstName || '',
+        lastName: p.users?.lastName || '',
+        email: p.users?.email || '',
+        clubAffiliation: p.clubs?.name || '',
+      })),
+    [allPlayers],
+  );
+
   const calculateAge = (dob: string | null) => {
     if (!dob) return '-';
     const birth = new Date(dob);
@@ -146,6 +159,7 @@ interface Participant {
   const [registrationType, setRegistrationType] = useState<string>("");
   const [filterType, setFilterType] = useState<string>("all");
   const [newPlayerId, setNewPlayerId] = useState("");
+  const [newPlayerName, setNewPlayerName] = useState("");
   const [newParticipation, setNewParticipation] = useState("");
 
   useEffect(() => {
@@ -194,7 +208,8 @@ interface Participant {
         {
           method: 'POST',
           body: JSON.stringify({
-            playerId: newPlayerId,
+            playerId: newPlayerId || undefined,
+            playerName: newPlayerName || undefined,
             participationType: newParticipation,
           }),
         },
@@ -203,6 +218,7 @@ interface Participant {
     onSuccess: () => {
       toast({ title: 'Тамирчин нэмэгдлээ' });
       setNewPlayerId('');
+      setNewPlayerName('');
       queryClient.invalidateQueries({ queryKey: ['/api/tournaments', params?.id, 'participants'] });
     },
     onError: (error: any) => {
@@ -420,20 +436,23 @@ interface Participant {
               <div className="space-y-4">
                 {user?.role === 'admin' && (
                   <div className="flex flex-col sm:flex-row gap-2">
-                    <Select value={newPlayerId} onValueChange={setNewPlayerId}>
-                      <SelectTrigger className="sm:w-1/3">
-                        <SelectValue placeholder="Player ID" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {allPlayers.map((p: any) => (
-                          <SelectItem key={p.players.id} value={p.players.id}>
-                            {p.players.memberNumber
-                              ? `${p.players.memberNumber}: ${p.users?.firstName} ${p.users?.lastName}`
-                              : `${p.users?.firstName} ${p.users?.lastName}`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="sm:w-1/3">
+                      <UserAutocomplete
+                        users={availablePlayers}
+                        value={newPlayerId}
+                        onSelect={(u) => {
+                          setNewPlayerId(u ? u.id : '');
+                          if (u) setNewPlayerName('');
+                        }}
+                        placeholder="Тоглогч хайх..."
+                        allowCustomName
+                        customNameValue={newPlayerName}
+                        onCustomNameChange={(name) => {
+                          setNewPlayerName(name);
+                          setNewPlayerId('');
+                        }}
+                      />
+                    </div>
                     <Select
                       value={newParticipation}
                       onValueChange={setNewParticipation}
@@ -456,7 +475,7 @@ interface Participant {
                       onClick={() => addParticipantMutation.mutate()}
                       disabled={
                         addParticipantMutation.isPending ||
-                        !newPlayerId ||
+                        (!newPlayerId && !newPlayerName) ||
                         !newParticipation
                       }
                     >
