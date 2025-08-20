@@ -945,6 +945,26 @@ export default function AdminDashboard() {
               />
             </div>
             <div>
+              <Label>Клубын багш дасгалжуулагч</Label>
+              <UserAutocomplete
+                users={allUsers || []}
+                value={formData.coachUserId}
+                onSelect={(u) =>
+                  setFormData({
+                    ...formData,
+                    coachUserId: u ? u.id : '',
+                    coachName: u ? '' : formData.coachName,
+                  })
+                }
+                placeholder="Дасгалжуулагч хайх..."
+                allowCustomName
+                customNameValue={formData.coachName || ''}
+                onCustomNameChange={(name) =>
+                  setFormData({ ...formData, coachName: name, coachUserId: '' })
+                }
+              />
+            </div>
+            <div>
               <Label htmlFor="description">Тайлбар</Label>
               <Textarea
                 id="description"
