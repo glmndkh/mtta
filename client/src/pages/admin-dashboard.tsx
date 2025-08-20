@@ -965,6 +965,82 @@ export default function AdminDashboard() {
               />
             </div>
             <div>
+              <Label className="flex items-center gap-2">
+                <Upload className="w-4 h-4" />
+                Клубын лого
+              </Label>
+              <div className="space-y-2">
+                <ObjectUploader
+                  maxNumberOfFiles={1}
+                  maxFileSize={5 * 1024 * 1024}
+                  onGetUploadParameters={async () => {
+                    try {
+                      const response = await apiRequest("/api/objects/upload", {
+                        method: "POST",
+                      });
+                      const data = (await response.json()) as { uploadURL: string };
+                      if (!data || !data.uploadURL) {
+                        throw new Error("No upload URL received");
+                      }
+                      return {
+                        method: "PUT" as const,
+                        url: data.uploadURL,
+                      };
+                    } catch (error) {
+                      console.error("Error getting upload parameters:", error);
+                      toast({
+                        title: "Алдаа",
+                        description: "Файл хуулах URL авахад алдаа гарлаа",
+                        variant: "destructive",
+                      });
+                      throw error;
+                    }
+                  }}
+                  onComplete={async (result) => {
+                    if (result.successful && result.successful.length > 0) {
+                      const uploadURL = result.successful[0].uploadURL;
+                      try {
+                        const aclResponse = await apiRequest("/api/objects/acl", {
+                          method: "PUT",
+                          body: JSON.stringify({ imageURL: uploadURL }),
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
+                        });
+                        const aclData = (await aclResponse.json()) as { objectPath: string };
+                        setFormData({
+                          ...formData,
+                          logoUrl: aclData.objectPath,
+                        });
+                        toast({ title: "Лого амжилттай хуулагдлаа" });
+                      } catch (error) {
+                        console.error("Error setting ACL:", error);
+                        toast({
+                          title: "Алдаа",
+                          description: "Лого хуулагдсан боловч зөвшөөрөл тохируулахад алдаа гарлаа",
+                          variant: "destructive",
+                        });
+                      }
+                    }
+                  }}
+                  buttonClassName="w-full"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Лого сонгох
+                </ObjectUploader>
+                {formData.logoUrl && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <img
+                      src={formData.logoUrl}
+                      alt="Club Logo"
+                      className="w-16 h-16 object-contain border rounded"
+                    />
+                    <div className="text-sm text-green-600">✓ Лого хуулагдлаа</div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div>
               <Label htmlFor="description">Тайлбар</Label>
               <Textarea
                 id="description"
