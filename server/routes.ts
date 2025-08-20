@@ -2206,19 +2206,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .json({
               message: "Tournament ID and participation type are required",
             });
+        const ensureParticipant = async (player: any) => {
+          if (!player) return;
+          if (player.playerId || player.id) return player.playerId || player.id;
+          const name = player.playerName || player.name;
+          if (!name) throw new Error("playerName is required");
+          const [firstName, ...rest] = String(name).split(" ");
+          const lastName = rest.join(" ");
+          const newUser = await storage.createSimpleUser({
+            email: null,
+            phone: null,
+            firstName,
+            lastName,
+            gender: null,
+            dateOfBirth: null,
+            clubAffiliation: null,
+            password: null,
+            role: "player",
+          });
+          const newPlayer = await storage.createPlayer({ userId: newUser.id });
+          await storage.registerForTournament({
+            tournamentId,
+            playerId: newPlayer.id,
+            participationType,
+          });
+          player.playerId = newPlayer.id;
+          player.id = newPlayer.id;
+          player.playerName = name;
+          return newPlayer.id;
+        };
+
+        const processedGroup = [] as any[];
+        for (const group of groupStageResults || []) {
+          const newGroup = { ...group };
+          newGroup.players = [];
+          for (const p of group.players || []) {
+            await ensureParticipant(p);
+            newGroup.players.push(p);
+          }
+          processedGroup.push(newGroup);
+        }
+
+        const processedKnockout = [] as any[];
+        for (const match of knockoutResults || []) {
+          const newMatch = { ...match };
+          if (newMatch.player1) await ensureParticipant(newMatch.player1);
+          if (newMatch.player2) await ensureParticipant(newMatch.player2);
+          if (newMatch.winner) await ensureParticipant(newMatch.winner);
+          processedKnockout.push(newMatch);
+        }
+
+        const processedFinal = [] as any[];
+        for (const ranking of finalRankings || []) {
+          await ensureParticipant(ranking);
+          processedFinal.push(ranking);
+        }
 
         const existing = await storage.getTournamentResults(tournamentId);
         const mergedGroup = {
           ...((existing?.groupStageResults as any) || {}),
-          [participationType]: groupStageResults || [],
+          [participationType]: processedGroup,
         };
         const mergedKnockout = {
           ...((existing?.knockoutResults as any) || {}),
-          [participationType]: knockoutResults || [],
+          [participationType]: processedKnockout,
         };
         const mergedFinal = {
           ...((existing?.finalRankings as any) || {}),
-          [participationType]: finalRankings || [],
+          [participationType]: processedFinal,
         };
 
         const resultsData = {
