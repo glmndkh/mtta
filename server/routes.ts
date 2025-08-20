@@ -1478,8 +1478,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/clubs", requireAuth, isAdminRole, async (req, res) => {
     try {
-      const clubData = insertClubSchema.parse(req.body);
+      const { coachUserId, coachName, ...clubBody } = req.body as any;
+      const clubData = insertClubSchema.parse(clubBody);
       const club = await storage.createClub(clubData);
+
+      if (coachUserId || coachName) {
+        const coachData = insertClubCoachSchema.parse({
+          clubId: club.id,
+          userId: coachUserId || undefined,
+          name: coachUserId ? undefined : coachName,
+        });
+        await storage.createClubCoach(coachData);
+      }
+
       res.json(club);
     } catch (e) {
       console.error("Error creating club:", e);
@@ -1493,8 +1504,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     isAdminRole,
     async (req, res) => {
       try {
-        const club = await storage.updateClub(req.params.id, req.body);
+        const { coachUserId, coachName, ...clubBody } = req.body as any;
+        const club = await storage.updateClub(req.params.id, clubBody);
         if (!club) return res.status(404).json({ message: "Клуб олдсонгүй" });
+
+        if (coachUserId || coachName) {
+          const existingCoaches = await storage.getClubCoachesByClub(req.params.id);
+          for (const c of existingCoaches) {
+            await storage.deleteClubCoach(c.id);
+          }
+          const coachData = insertClubCoachSchema.parse({
+            clubId: req.params.id,
+            userId: coachUserId || undefined,
+            name: coachUserId ? undefined : coachName,
+          });
+          await storage.createClubCoach(coachData);
+        }
+
         res.json(club);
       } catch (e) {
         console.error("Error updating club:", e);
