@@ -305,7 +305,7 @@ export default function Clubs() {
                           <CardTitle className="text-lg">{club.name}</CardTitle>
                           <p className="text-sm text-gray-600 flex items-center">
                             <Crown className="h-3 w-3 mr-1" />
-                            {club.owner?.firstName} {club.owner?.lastName}
+                            {club.owner ? `${club.owner.firstName} ${club.owner.lastName}` : club.ownerName}
                           </p>
                         </div>
                       </div>
@@ -374,7 +374,7 @@ export default function Clubs() {
                         <CardTitle className="text-xl">{clubDetails.name}</CardTitle>
                         <p className="text-gray-600 flex items-center">
                           <Crown className="h-4 w-4 mr-1" />
-                          Эзэн: {clubDetails.owner?.firstName} {clubDetails.owner?.lastName}
+                          Эзэн: {clubDetails.owner ? `${clubDetails.owner.firstName} ${clubDetails.owner.lastName}` : clubDetails.ownerName}
                         </p>
                       </div>
                     </div>

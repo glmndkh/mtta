@@ -669,7 +669,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!club) return res.status(404).json({ message: "Клуб олдсонгүй" });
       const players = await storage.getPlayersByClub(req.params.id);
       const coaches = await storage.getClubCoachesByClub(req.params.id);
-      const owner = await storage.getUser(club.ownerId);
+      const owner = club.ownerId ? await storage.getUser(club.ownerId) : null;
       res.json({ ...club, players, coaches, owner });
     } catch (e) {
       console.error("Error fetching club:", e);

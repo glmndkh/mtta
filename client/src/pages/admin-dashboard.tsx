@@ -925,17 +925,24 @@ export default function AdminDashboard() {
               />
             </div>
             <div>
-              <Label htmlFor="ownerId">Клубын эзэн</Label>
-              <Select value={formData.ownerId || ''} onValueChange={(v) => setFormData({ ...formData, ownerId: v })}>
-                <SelectTrigger id="ownerId">
-                  <SelectValue placeholder="Эзэн сонгох" />
-                </SelectTrigger>
-                <SelectContent>
-                  {allUsers?.filter((u: any) => u.role === 'club_owner').map((u: any) => (
-                    <SelectItem key={u.id} value={u.id}>{u.firstName} {u.lastName}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Клубын эзэн</Label>
+              <UserAutocomplete
+                users={(allUsers || []).filter((u: any) => u.role === 'club_owner')}
+                value={formData.ownerId}
+                onSelect={(u) =>
+                  setFormData({
+                    ...formData,
+                    ownerId: u ? u.id : '',
+                    ownerName: u ? '' : formData.ownerName,
+                  })
+                }
+                placeholder="Эзэн хайх..."
+                allowCustomName
+                customNameValue={formData.ownerName || ''}
+                onCustomNameChange={(name) =>
+                  setFormData({ ...formData, ownerName: name, ownerId: '' })
+                }
+              />
             </div>
             <div>
               <Label htmlFor="description">Тайлбар</Label>
@@ -1283,35 +1290,30 @@ export default function AdminDashboard() {
         return (
           <>
             <div>
-              <Label htmlFor="userId">Хэрэглэгч</Label>
-              <Select onValueChange={(userId) => {
-                const user = allUsers?.find((u: any) => u.id === userId);
-                setFormData({ ...formData, userId, firstName: user?.firstName, lastName: user?.lastName });
-              }}>
-                <SelectTrigger id="userId">
-                  <SelectValue placeholder="Хэрэглэгч сонгох" />
-                </SelectTrigger>
-                <SelectContent>
-                  {allUsers?.map((u: any) => (
-                    <SelectItem key={u.id} value={u.id}>{u.firstName} {u.lastName}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="firstName">Нэр</Label>
-              <Input
-                id="firstName"
-                value={formData.firstName || ''}
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="lastName">Овог</Label>
-              <Input
-                id="lastName"
-                value={formData.lastName || ''}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+              <Label>Хэрэглэгч эсвэл нэр</Label>
+              <UserAutocomplete
+                users={allUsers || []}
+                value={formData.userId}
+                onSelect={(u) =>
+                  setFormData({
+                    ...formData,
+                    userId: u ? u.id : '',
+                    firstName: u?.firstName || '',
+                    lastName: u?.lastName || '',
+                  })
+                }
+                placeholder="Шүүгч хайх..."
+                allowCustomName
+                customNameValue={`${formData.firstName || ''} ${formData.lastName || ''}`.trim()}
+                onCustomNameChange={(name) => {
+                  const [first, ...rest] = name.split(' ');
+                  setFormData({
+                    ...formData,
+                    userId: '',
+                    firstName: first,
+                    lastName: rest.join(' '),
+                  });
+                }}
               />
             </div>
             <div>
