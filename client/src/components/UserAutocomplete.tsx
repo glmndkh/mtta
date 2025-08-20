@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Command,
   CommandEmpty,
@@ -44,10 +46,17 @@ export function UserAutocomplete({
 }: UserAutocompleteProps) {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isCustom, setIsCustom] = useState(false);
+
+  useEffect(() => {
+    if (customNameValue && !value) {
+      setIsCustom(true);
+    }
+  }, [customNameValue, value]);
 
   const selectedUser = users.find(user => user.id === value);
-  const displayValue = selectedUser 
-    ? `${selectedUser.firstName} ${selectedUser.lastName}` 
+  const displayValue = selectedUser
+    ? `${selectedUser.firstName} ${selectedUser.lastName}`
     : customNameValue || placeholder;
 
   // Filter users based on search term
@@ -68,16 +77,7 @@ export function UserAutocomplete({
     setSearchTerm("");
   };
 
-  const handleCustomNameSelect = () => {
-    if (allowCustomName && searchTerm.trim()) {
-      onCustomNameChange?.(searchTerm.trim());
-      onSelect(null); // No user selected, using custom name
-      setOpen(false);
-      setSearchTerm("");
-    }
-  };
-
-  return (
+  const content = (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
@@ -92,25 +92,14 @@ export function UserAutocomplete({
       </PopoverTrigger>
       <PopoverContent className="w-full p-0">
         <Command>
-          <CommandInput 
-            placeholder="Тоглогчийн нэрээр хайх..." 
+          <CommandInput
+            placeholder="Тоглогчийн нэрээр хайх..."
             value={searchTerm}
             onValueChange={setSearchTerm}
           />
           <CommandEmpty>
             <div className="py-2 text-center text-sm">
-              {allowCustomName && searchTerm.trim() ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCustomNameSelect}
-                  className="w-full"
-                >
-                  "{searchTerm}" гэсэн нэрийг ашиглах
-                </Button>
-              ) : (
-                "Тоглогч олдсонгүй"
-              )}
+              {"Тоглогч олдсонгүй"}
             </div>
           </CommandEmpty>
           <CommandGroup className="max-h-64 overflow-y-auto">
@@ -142,5 +131,42 @@ export function UserAutocomplete({
         </Command>
       </PopoverContent>
     </Popover>
+  );
+
+  return (
+    <div className="space-y-2">
+      {isCustom ? (
+        <Input
+          value={customNameValue}
+          onChange={(e) => {
+            onCustomNameChange?.(e.target.value);
+            onSelect(null);
+          }}
+          placeholder={placeholder}
+        />
+      ) : (
+        content
+      )}
+      {allowCustomName && (
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="non-system-user"
+            checked={isCustom}
+            onCheckedChange={(checked) => {
+              const c = Boolean(checked);
+              setIsCustom(c);
+              if (!c) {
+                onCustomNameChange?.("");
+              } else {
+                onSelect(null);
+              }
+            }}
+          />
+          <label htmlFor="non-system-user" className="text-sm">
+            Системийн хэрэглэгч биш
+          </label>
+        </div>
+      )}
+    </div>
   );
 }

@@ -674,7 +674,9 @@ export default function AdminDashboard() {
             <TableBody>
               {coaches && Array.isArray(coaches) && coaches.map((coach: any) => (
                 <TableRow key={coach.id}>
-                  <TableCell>{coach.firstName} {coach.lastName}</TableCell>
+                  <TableCell>
+                    {coach.name || `${coach.firstName || ''} ${coach.lastName || ''}`}
+                  </TableCell>
                   <TableCell>{coach.clubName}</TableCell>
                   <TableCell>
                     <Button size="sm" variant="destructive" onClick={() => handleDelete(coach.id)}>
@@ -1050,12 +1052,15 @@ export default function AdminDashboard() {
               </Select>
             </div>
             <div>
-              <Label>Хэрэглэгч</Label>
+              <Label>Хэрэглэгч эсвэл нэр</Label>
               <UserAutocomplete
                 users={allUsers || []}
                 value={formData.userId}
-                onSelect={(u) => setFormData({ ...formData, userId: u ? u.id : '' })}
+                onSelect={(u) => setFormData({ ...formData, userId: u ? u.id : '', name: '' })}
                 placeholder="Хэрэглэгч хайх..."
+                allowCustomName
+                customNameValue={formData.name || ''}
+                onCustomNameChange={(name) => setFormData({ ...formData, name, userId: '' })}
               />
             </div>
           </>
