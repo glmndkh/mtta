@@ -988,17 +988,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { tournamentId } = req.params;
         const { playerId, playerName, participationType } = req.body;
 
-        if (!playerId && !playerName)
-          return res
-            .status(400)
-            .json({ message: "playerId or playerName is required" });
         if (!participationType)
           return res
             .status(400)
             .json({ message: "participationType is required" });
 
         let finalPlayerId = playerId;
-        if (!finalPlayerId && playerName) {
+
+        // If no playerId is provided, create a basic user and player record
+        if (!finalPlayerId) {
+          if (!playerName)
+            return res
+              .status(400)
+              .json({ message: "playerName is required" });
+
           const [firstName, ...rest] = String(playerName).split(" ");
           const lastName = rest.join(" ");
           const newUser = await storage.createSimpleUser({
@@ -1016,9 +1019,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userId: newUser.id,
           });
           finalPlayerId = newPlayer.id;
-        }
-
-        if (playerId) {
+        } else {
           try {
             await validateTournamentEligibility(
               tournamentId,
