@@ -123,6 +123,10 @@ export const clubs = pgTable("clubs", {
   email: varchar("email"),
   logoUrl: varchar("logo_url"),
   colorTheme: varchar("color_theme").default("var(--success)"),
+  schedule: text("schedule"),
+  website: varchar("website"),
+  trainingInfo: text("training_info"),
+  extraData: jsonb("extra_data"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -374,6 +378,14 @@ export const judges = pgTable("judges", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Club coaches table
+export const clubCoaches = pgTable("club_coaches", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clubId: varchar("club_id").references(() => clubs.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Past champions table
 export const pastChampions = pgTable("past_champions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -415,8 +427,20 @@ export const clubsRelations = relations(clubs, ({ one, many }) => ({
     references: [users.id],
   }),
   players: many(players),
+  coaches: many(clubCoaches),
   teams: many(teams),
   tournaments: many(tournaments),
+}));
+
+export const clubCoachesRelations = relations(clubCoaches, ({ one }) => ({
+  club: one(clubs, {
+    fields: [clubCoaches.clubId],
+    references: [clubs.id],
+  }),
+  user: one(users, {
+    fields: [clubCoaches.userId],
+    references: [users.id],
+  }),
 }));
 
 export const matchesRelations = relations(matches, ({ one, many }) => ({
@@ -515,6 +539,11 @@ export const insertJudgeSchema = createInsertSchema(judges).omit({
   createdAt: true,
 });
 
+export const insertClubCoachSchema = createInsertSchema(clubCoaches).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertChampionSchema = createInsertSchema(pastChampions).omit({
   id: true,
   createdAt: true,
@@ -567,6 +596,8 @@ export type InsertFederationMember = z.infer<typeof insertFederationMemberSchema
 export type FederationMember = typeof federationMembers.$inferSelect;
 export type InsertJudge = z.infer<typeof insertJudgeSchema>;
 export type Judge = typeof judges.$inferSelect;
+export type InsertClubCoach = z.infer<typeof insertClubCoachSchema>;
+export type ClubCoach = typeof clubCoaches.$inferSelect;
 export type InsertChampion = z.infer<typeof insertChampionSchema>;
 export type Champion = typeof pastChampions.$inferSelect;
 export type TournamentParticipant = typeof tournamentParticipants.$inferSelect;

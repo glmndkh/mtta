@@ -13,11 +13,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Trash2, Plus, Users, Shield, Building, Trophy, Calendar, Newspaper, Images, TrendingUp, Upload, Link as LinkIcon, ArrowLeft, Settings, UserPlus, Play, Zap, X, Crown, FileText } from "lucide-react";
+import { Pencil, Trash2, Plus, Users, Shield, Building, Trophy, Calendar, Newspaper, Images, TrendingUp, Upload, Link as LinkIcon, ArrowLeft, Settings, UserPlus, Play, Zap, X, Crown, FileText, UserCog } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import AdminStatsDashboard from "@/components/admin-stats-dashboard";
 import { ObjectUploader } from "@/components/ObjectUploader";
+import { UserAutocomplete } from "@/components/UserAutocomplete";
 
 export default function AdminDashboard() {
   const [selectedTab, setSelectedTab] = useState("stats");
@@ -43,7 +44,7 @@ export default function AdminDashboard() {
 
   const { data: clubs, isLoading: clubsLoading } = useQuery({
     queryKey: ['/api/admin/clubs'],
-    enabled: selectedTab === 'clubs'
+    enabled: selectedTab === 'clubs' || selectedTab === 'coaches'
   });
 
   const { data: tournaments, isLoading: tournamentsLoading } = useQuery({
@@ -76,10 +77,20 @@ export default function AdminDashboard() {
     enabled: selectedTab === 'judges'
   });
 
+  const { data: coaches, isLoading: coachesLoading } = useQuery({
+    queryKey: ['/api/admin/coaches'],
+    enabled: selectedTab === 'coaches'
+  });
+
   // Load all users for player selection dropdown
   const { data: allUsers } = useQuery({
     queryKey: ['/api/admin/users'],
-    enabled: (selectedTab === 'teams' || selectedTab === 'judges') && (isCreateDialogOpen || !!editingItem)
+    enabled:
+      (selectedTab === 'teams' ||
+        selectedTab === 'judges' ||
+        selectedTab === 'clubs' ||
+        selectedTab === 'coaches') &&
+      (isCreateDialogOpen || !!editingItem)
   });
 
   const { data: news, isLoading: newsLoading } = useQuery({
@@ -638,6 +649,47 @@ export default function AdminDashboard() {
     );
   };
 
+  const renderCoachesTab = () => {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-wrap justify-between items-center gap-4">
+          <h2 className="text-2xl font-bold">Дасгалжуулагчид</h2>
+          <Button onClick={openCreateDialog}>
+            <Plus className="w-4 h-4 mr-2" />
+            Дасгалжуулагч нэмэх
+          </Button>
+        </div>
+
+        {coachesLoading ? (
+          <div>Ачааллаж байна...</div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Нэр</TableHead>
+                <TableHead>Клуб</TableHead>
+                <TableHead>Үйлдэл</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {coaches && Array.isArray(coaches) && coaches.map((coach: any) => (
+                <TableRow key={coach.id}>
+                  <TableCell>{coach.firstName} {coach.lastName}</TableCell>
+                  <TableCell>{coach.clubName}</TableCell>
+                  <TableCell>
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(coach.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
+    );
+  };
+
   const renderSlidersTab = () => (
     <div className="space-y-4">
       <div className="flex flex-wrap justify-between items-center gap-4">
@@ -871,6 +923,19 @@ export default function AdminDashboard() {
               />
             </div>
             <div>
+              <Label htmlFor="ownerId">Клубын эзэн</Label>
+              <Select value={formData.ownerId || ''} onValueChange={(v) => setFormData({ ...formData, ownerId: v })}>
+                <SelectTrigger id="ownerId">
+                  <SelectValue placeholder="Эзэн сонгох" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allUsers?.filter((u: any) => u.role === 'club_owner').map((u: any) => (
+                    <SelectItem key={u.id} value={u.id}>{u.firstName} {u.lastName}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label htmlFor="description">Тайлбар</Label>
               <Textarea
                 id="description"
@@ -904,6 +969,94 @@ export default function AdminDashboard() {
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                 />
               </div>
+            </div>
+            <div>
+              <Label htmlFor="schedule">Цагийн хуваарь</Label>
+              <Textarea
+                id="schedule"
+                value={formData.schedule || ''}
+                onChange={(e) => setFormData({ ...formData, schedule: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="website">Холбоос</Label>
+              <Input
+                id="website"
+                value={formData.website || ''}
+                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="trainingInfo">Сургалтын мэдээлэл</Label>
+              <Textarea
+                id="trainingInfo"
+                value={formData.trainingInfo || ''}
+                onChange={(e) => setFormData({ ...formData, trainingInfo: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label className="flex items-center justify-between">Нэмэлт мэдээлэл
+                <Button type="button" variant="outline" size="sm" onClick={() => setFormData({ ...formData, extraData: [...(formData.extraData || []), { key: '', value: '' }] })}>
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </Label>
+              {(formData.extraData || []).map((field: any, idx: number) => (
+                <div key={idx} className="flex items-center gap-2 mt-2">
+                  <Input
+                    placeholder="Түлхүүр"
+                    value={field.key}
+                    onChange={(e) => {
+                      const extra = [...(formData.extraData || [])];
+                      extra[idx] = { ...extra[idx], key: e.target.value };
+                      setFormData({ ...formData, extraData: extra });
+                    }}
+                  />
+                  <Input
+                    placeholder="Утга"
+                    value={field.value}
+                    onChange={(e) => {
+                      const extra = [...(formData.extraData || [])];
+                      extra[idx] = { ...extra[idx], value: e.target.value };
+                      setFormData({ ...formData, extraData: extra });
+                    }}
+                  />
+                  <Button type="button" variant="ghost" onClick={() => {
+                    const extra = [...(formData.extraData || [])];
+                    extra.splice(idx, 1);
+                    setFormData({ ...formData, extraData: extra });
+                  }}>
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </>
+        );
+
+      case 'coaches':
+        return (
+          <>
+            <div>
+              <Label htmlFor="clubId">Клуб</Label>
+              <Select value={formData.clubId || ''} onValueChange={(v) => setFormData({ ...formData, clubId: v })}>
+                <SelectTrigger id="clubId">
+                  <SelectValue placeholder="Клуб сонгох" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clubs?.map((c: any) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Хэрэглэгч</Label>
+              <UserAutocomplete
+                users={allUsers || []}
+                value={formData.userId}
+                onSelect={(u) => setFormData({ ...formData, userId: u ? u.id : '' })}
+                placeholder="Хэрэглэгч хайх..."
+              />
             </div>
           </>
         );
@@ -2105,6 +2258,10 @@ export default function AdminDashboard() {
             <Shield className="w-4 h-4" />
             Шүүгчид
           </TabsTrigger>
+          <TabsTrigger value="coaches" className="flex items-center gap-2">
+            <UserCog className="w-4 h-4" />
+            Дасгалжуулагчид
+          </TabsTrigger>
           <TabsTrigger value="champions" className="flex items-center gap-2">
             <Crown className="w-4 h-4" />
             Аваргууд
@@ -2573,6 +2730,18 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               {renderJudgesTab()}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="coaches">
+          <Card>
+            <CardHeader>
+              <CardTitle>Дасгалжуулагчдын удирдлага</CardTitle>
+              <CardDescription>Клубын дасгалжуулагчдыг нэмэх, устгах</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {renderCoachesTab()}
             </CardContent>
           </Card>
         </TabsContent>

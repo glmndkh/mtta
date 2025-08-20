@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Building, Plus, Users, MapPin, Phone, Mail, Settings, User, Crown } from "lucide-react";
+import { Building, Plus, Users, MapPin, Phone, Mail, Settings, User, Crown, Clock, Link as LinkIcon, UserCog } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertClubSchema } from "@shared/schema";
@@ -407,7 +407,44 @@ export default function Clubs() {
                               <span className="text-gray-600">{clubDetails.email}</span>
                             </div>
                           )}
+                          {clubDetails.schedule && (
+                            <div className="flex items-start">
+                              <Clock className="h-4 w-4 mr-2 text-mtta-green mt-0.5" />
+                              <span className="text-gray-600">{clubDetails.schedule}</span>
+                            </div>
+                          )}
+                          {clubDetails.website && (
+                            <div className="flex items-center">
+                              <LinkIcon className="h-4 w-4 mr-2 text-mtta-green" />
+                              <a href={clubDetails.website} target="_blank" rel="noopener noreferrer" className="text-blue-600">
+                                {clubDetails.website}
+                              </a>
+                            </div>
+                          )}
                         </div>
+                      </div>
+
+                      {clubDetails.trainingInfo && (
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-2">Сургалтын мэдээлэл</h4>
+                          <p className="text-gray-600 text-sm">{clubDetails.trainingInfo}</p>
+                        </div>
+                      )}
+
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-3">Дасгалжуулагчид ({clubDetails.coaches?.length || 0})</h4>
+                        {clubDetails.coaches && clubDetails.coaches.length > 0 ? (
+                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {clubDetails.coaches.map((coach: any) => (
+                              <div key={coach.id} className="flex items-center space-x-2 p-2 bg-gray-50 rounded">
+                                <UserCog className="h-4 w-4 text-gray-400" />
+                                <span className="text-sm">{coach.firstName} {coach.lastName}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-gray-500 text-sm">Одоогоор дасгалжуулагч байхгүй</p>
+                        )}
                       </div>
 
                       <div>

@@ -17,6 +17,7 @@ import {
   branches,
   federationMembers,
   judges,
+  clubCoaches,
   pastChampions,
   tournamentTeams,
   tournamentTeamPlayers,
@@ -55,6 +56,8 @@ import {
   type InsertFederationMember,
   type Judge,
   type InsertJudge,
+  type ClubCoach,
+  type InsertClubCoach,
   type TournamentTeam,
   type InsertTournamentTeam,
   type TournamentTeamPlayer,
@@ -97,6 +100,13 @@ export interface IStorage {
   createClub(club: InsertClub): Promise<Club>;
   getClubsByOwner(ownerId: string): Promise<Club[]>;
   getAllClubs(): Promise<Club[]>;
+
+  // Club coach operations
+  getClubCoachesByClub(clubId: string): Promise<any[]>;
+  getAllClubCoaches(): Promise<any[]>;
+  createClubCoach(coach: InsertClubCoach): Promise<ClubCoach>;
+  deleteClubCoach(id: string): Promise<boolean>;
+  getClubCoachByUserId(userId: string): Promise<ClubCoach | undefined>;
 
   // Branch operations
   getBranch(id: string): Promise<Branch | undefined>;
@@ -565,6 +575,53 @@ export class DatabaseStorage implements IStorage {
   async deleteClub(id: string): Promise<boolean> {
     const result = await db.delete(clubs).where(eq(clubs.id, id));
     return (result.rowCount || 0) > 0;
+  }
+
+  // Club coach operations
+  async getClubCoachesByClub(clubId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: clubCoaches.id,
+        userId: clubCoaches.userId,
+        firstName: users.firstName,
+        lastName: users.lastName,
+      })
+      .from(clubCoaches)
+      .leftJoin(users, eq(clubCoaches.userId, users.id))
+      .where(eq(clubCoaches.clubId, clubId));
+  }
+
+  async getAllClubCoaches(): Promise<any[]> {
+    return await db
+      .select({
+        id: clubCoaches.id,
+        clubId: clubCoaches.clubId,
+        userId: clubCoaches.userId,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        clubName: clubs.name,
+      })
+      .from(clubCoaches)
+      .leftJoin(users, eq(clubCoaches.userId, users.id))
+      .leftJoin(clubs, eq(clubCoaches.clubId, clubs.id));
+  }
+
+  async createClubCoach(data: InsertClubCoach): Promise<ClubCoach> {
+    const [coach] = await db.insert(clubCoaches).values(data).returning();
+    return coach;
+  }
+
+  async deleteClubCoach(id: string): Promise<boolean> {
+    const result = await db.delete(clubCoaches).where(eq(clubCoaches.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getClubCoachByUserId(userId: string): Promise<ClubCoach | undefined> {
+    const [coach] = await db
+      .select()
+      .from(clubCoaches)
+      .where(eq(clubCoaches.userId, userId));
+    return coach;
   }
 
   // Branch operations
