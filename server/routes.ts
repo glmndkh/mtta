@@ -188,11 +188,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res
           .status(400)
           .json({ message: "И-мэйл хаяг заавал оруулна уу" });
-      if (!clubAffiliation && !noClub)
+      if (!clubId && !noClub && !clubAffiliation)
         return res
           .status(400)
           .json({
-            message: "Клуб эсвэл тоглодог газрын мэдээлэл заавал оруулна уу",
+            message: "Клуб сонгох эсвэл 'Клубгүй' гэдгийг тэмдэглэх эсвэл тоглодог газрын мэдээлэл заавал оруулна уу",
           });
       if (!password)
         return res.status(400).json({ message: "Нууц үг заавал оруулна уу" });
