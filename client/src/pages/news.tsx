@@ -49,8 +49,8 @@ export default function News() {
 
   // Filter news by category
   const news = selectedCategory === "all" 
-    ? allNews 
-    : allNews.filter((item: any) => item.category === selectedCategory);
+    ? (allNews as any[]) 
+    : (allNews as any[]).filter((item: any) => item.category === selectedCategory);
 
   // Create news form
   const form = useForm<CreateNewsForm>({
@@ -400,7 +400,8 @@ export default function News() {
                               <Textarea 
                                 placeholder="Мэдээний товч агуулга..." 
                                 rows={2}
-                                {...field} 
+                                {...field}
+                                value={field.value || ""}
                               />
                             </FormControl>
                             <FormMessage />
@@ -535,7 +536,8 @@ export default function News() {
                             <FormLabel>Товч агуулга</FormLabel>
                             <FormControl>
                               <Textarea 
-                                {...field} 
+                                {...field}
+                                value={field.value || ""}
                                 placeholder="Мэдээний товч агуулга (2-3 өгүүлбэр)"
                                 rows={2}
                               />
@@ -553,7 +555,7 @@ export default function News() {
                             <FormLabel>Мэдээний агуулга *</FormLabel>
                             <FormControl>
                               <RichTextEditor
-                                content={field.value}
+                                content={field.value || ""}
                                 onChange={field.onChange}
                                 placeholder="Мэдээний бүрэн агуулга оруулна уу"
                               />
@@ -569,7 +571,7 @@ export default function News() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Ангилал</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value || "news"}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Ангилал сонгоно уу" />
@@ -613,7 +615,8 @@ export default function News() {
                         <div className="space-y-2">
                           <label className="text-sm font-medium">Зураг</label>
                           <ObjectUploader
-                            onUploadComplete={handleImageUploadComplete}
+                            onUpload={handleImageUpload}
+                            onSuccess={handleImageUploadComplete}
                             className="w-full"
                             buttonClassName="w-full"
                           >
@@ -878,7 +881,7 @@ export default function News() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {allNews.slice(0, 5).map((article: any) => (
+                    {(allNews as any[]).slice(0, 5).map((article: any) => (
                       <div key={article.id} className="border-l-4 border-mtta-green pl-4">
                         <div className="flex items-center mb-2">
                           {getCategoryBadge(article.category)}
@@ -904,11 +907,11 @@ export default function News() {
                 <CardContent>
                   <div className="space-y-2">
                     {[
-                      { value: "all", label: "Бүгд", count: allNews.length },
-                      { value: "tournament", label: "Тэмцээн", count: allNews.filter((n: any) => n.category === "tournament").length },
-                      { value: "news", label: "Мэдээ", count: allNews.filter((n: any) => n.category === "news").length },
-                      { value: "training", label: "Сургалт", count: allNews.filter((n: any) => n.category === "training").length },
-                      { value: "urgent", label: "Яаралтай", count: allNews.filter((n: any) => n.category === "urgent").length },
+                      { value: "all", label: "Бүгд", count: (allNews as any[]).length },
+                      { value: "tournament", label: "Тэмцээн", count: (allNews as any[]).filter((n: any) => n.category === "tournament").length },
+                      { value: "news", label: "Мэдээ", count: (allNews as any[]).filter((n: any) => n.category === "news").length },
+                      { value: "training", label: "Сургалт", count: (allNews as any[]).filter((n: any) => n.category === "training").length },
+                      { value: "urgent", label: "Яаралтай", count: (allNews as any[]).filter((n: any) => n.category === "urgent").length },
                     ].map((category) => (
                       <button
                         key={category.value}
