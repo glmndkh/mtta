@@ -7,22 +7,41 @@
 /* Theme Variables */
 :root {
   /* Light theme colors */
-  --bg-primary: theme('colors.white');
-  --bg-secondary: theme('colors.gray.50');
-  --bg-gradient: linear-gradient(135deg, theme('colors.green.50'), theme('colors.white'));
-  --text-primary: theme('colors.gray.900');
-  --text-secondary: theme('colors.gray.600');
-  --border-color: theme('colors.gray.200');
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-gradient: linear-gradient(135deg, #f0fdf4, #ffffff);
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --border-color: #e5e7eb;
 }
 
 [data-theme="dark"] {
   /* Dark theme colors */
-  --bg-primary: theme('colors.gray.900');
-  --bg-secondary: theme('colors.gray.800');
-  --bg-gradient: linear-gradient(135deg, theme('colors.green.400'), theme('colors.green.500'), theme('colors.green.600'));
-  --text-primary: theme('colors.white');
-  --text-secondary: theme('colors.gray.300');
-  --border-color: theme('colors.gray.700');
+  --bg-primary: #111827;
+  --bg-secondary: #1f2937;
+  --bg-gradient: linear-gradient(135deg, #4ade80, #22c55e, #16a34a);
+  --text-primary: #ffffff;
+  --text-secondary: #d1d5db;
+  --border-color: #374151;
+}
+
+/* Apply theme styles */
+.theme-bg {
+  background: var(--bg-gradient);
+}
+
+.theme-card {
+  background-color: var(--bg-primary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.theme-text {
+  color: var(--text-primary);
+}
+
+.theme-text-secondary {
+  color: var(--text-secondary);
 }
 
 body {

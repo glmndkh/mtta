@@ -15,19 +15,26 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Load theme from localStorage on mount
     const savedTheme = localStorage.getItem('mtta-theme') as Theme;
-    if (savedTheme) {
+    if (savedTheme && (savedTheme === 'dark' || savedTheme === 'light')) {
       setTheme(savedTheme);
     }
+    // Apply initial theme
+    document.documentElement.setAttribute('data-theme', savedTheme || 'dark');
   }, []);
 
   useEffect(() => {
     // Save theme to localStorage and apply to document
+    console.log('Setting theme to:', theme);
     localStorage.setItem('mtta-theme', theme);
     document.documentElement.setAttribute('data-theme', theme);
+    // Force CSS re-evaluation
+    document.documentElement.style.setProperty('--theme-debug', theme);
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    console.log('Toggling theme from', theme, 'to', newTheme);
+    setTheme(newTheme);
   };
 
   return (
