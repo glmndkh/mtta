@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Newspaper, Plus, Calendar, User, Eye, Edit, Share2, Megaphone, Upload, Image } from "lucide-react";
+import { Newspaper, Plus, Calendar, User, Edit, Megaphone, Upload, Image } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertNewsSchema } from "@shared/schema";
@@ -822,49 +822,49 @@ export default function News() {
             )}
           </div>
         ) : (
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Featured News */}
-            <div className="lg:col-span-2">
-              {news.slice(0, 1).map((article: any) => (
-                <Card key={article.id} className="shadow-lg mb-8">
-                  {article.imageUrl && (
-                    <div className="aspect-video overflow-hidden rounded-t-lg">
-                      <img 
-                        src={getImageUrl(article.imageUrl)} 
-                        alt={article.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <CardHeader>
-                    <div className="flex items-center justify-between mb-4">
-                      {getCategoryBadge(article.category)}
-                      <div className="flex items-center text-gray-500 text-sm">
-                        <Calendar className="h-4 w-4 mr-1" />
-                        {formatDate(article.publishedAt || article.createdAt)}
+          <div className="space-y-6">
+            {news.map((article: any) => (
+              <Card key={article.id} className="shadow-md hover:shadow-lg transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex gap-4">
+                    {article.imageUrl && (
+                      <div className="w-40 h-28 md:w-48 md:h-32 flex-shrink-0 overflow-hidden rounded-lg">
+                        <img
+                          src={getImageUrl(article.imageUrl)}
+                          alt={article.title}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                    </div>
-                    <CardTitle className="text-2xl">{article.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-600 mb-4 line-clamp-3">{article.excerpt}</p>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
+                    )}
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        {getCategoryBadge(article.category)}
+                        <div className="flex items-center text-gray-500 text-sm">
+                          <Calendar className="h-4 w-4 mr-1" />
+                          {formatDate(article.publishedAt || article.createdAt)}
+                        </div>
+                      </div>
+                      <Link href={`/news/${article.id}`}>
+                        <h3 className="font-bold text-xl text-gray-900 mb-2 hover:text-mtta-green transition-colors">
+                          {article.title}
+                        </h3>
+                      </Link>
+                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">{article.excerpt}</p>
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
-                          <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                          <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
                             {article.author?.profileImageUrl ? (
                               <img
-                                src={getImageUrl(article.author.profileImageUrl)} 
+                                src={getImageUrl(article.author.profileImageUrl)}
                                 alt={`${article.author.firstName} ${article.author.lastName}`}
                                 className="w-full h-full object-cover"
                               />
                             ) : (
-                              <User className="h-4 w-4 text-gray-400" />
+                              <User className="h-3 w-3 text-gray-400" />
                             )}
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-900">
+                            <p className="text-xs font-medium text-gray-900">
                               {article.author?.firstName} {article.author?.lastName}
                             </p>
                             <p className="text-xs text-gray-500">
@@ -872,201 +872,35 @@ export default function News() {
                             </p>
                           </div>
                         </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        {user && (user as any)?.role === 'admin' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleEditNews(article)}
-                          >
-                            <Edit className="mr-1 h-3 w-3" />
-                            Засах
-                          </Button>
-                        )}
-                        {!article.published && user && (user as any)?.role === 'admin' && (
-                          <Button
-                            size="sm"
-                            className="mtta-green text-white hover:bg-mtta-green-dark"
-                            onClick={() => publishNewsMutation.mutate(article.id)}
-                            disabled={publishNewsMutation.isPending}
-                          >
-                            <Megaphone className="mr-1 h-3 w-3" />
-                            Нийтлэх
-                          </Button>
-                        )}
-                        <Link href={`/news/${article.id}`}>
-                          <Button size="sm" variant="outline">
-                            <Eye className="mr-1 h-3 w-3" />
-                            Унших
-                          </Button>
-                        </Link>
-                        <Button size="sm" variant="outline">
-                          <Share2 className="mr-1 h-3 w-3" />
-                          Хуваалцах
-                        </Button>
+                        <div className="flex items-center space-x-2">
+                          {user && (user as any)?.role === 'admin' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEditNews(article)}
+                            >
+                              <Edit className="mr-1 h-3 w-3" />
+                              Засах
+                            </Button>
+                          )}
+                          {!article.published && user && (user as any)?.role === 'admin' && (
+                            <Button
+                              size="sm"
+                              className="mtta-green text-white hover:bg-mtta-green-dark"
+                              onClick={() => publishNewsMutation.mutate(article.id)}
+                              disabled={publishNewsMutation.isPending}
+                            >
+                              <Megaphone className="mr-1 h-3 w-3" />
+                              Нийтлэх
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-
-              {/* Regular News List */}
-              <div className="space-y-6">
-                {news.slice(1).map((article: any) => (
-                  <Card key={article.id} className="shadow-md hover:shadow-lg transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="flex gap-4">
-                        {article.imageUrl && (
-                          <div className="w-32 h-24 flex-shrink-0 overflow-hidden rounded-lg">
-                            <img 
-                              src={getImageUrl(article.imageUrl)} 
-                              alt={article.title}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        )}
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-2">
-                            {getCategoryBadge(article.category)}
-                            <div className="flex items-center text-gray-500 text-sm">
-                              <Calendar className="h-4 w-4 mr-1" />
-                              {formatDate(article.publishedAt || article.createdAt)}
-                            </div>
-                          </div>
-                          
-                          <h3 className="font-bold text-lg text-gray-900 mb-2">{article.title}</h3>
-                          <p className="text-gray-600 text-sm mb-3 line-clamp-2">{article.excerpt}</p>
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                              <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-                                {article.author?.profileImageUrl ? (
-                                  <img 
-                                    src={getImageUrl(article.author.profileImageUrl)} 
-                                    alt={`${article.author.firstName} ${article.author.lastName}`}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <User className="h-3 w-3 text-gray-400" />
-                                )}
-                              </div>
-                              <div>
-                                <p className="text-xs font-medium text-gray-900">
-                                  {article.author?.firstName} {article.author?.lastName}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {formatDate(article.createdAt)}д нэмсэн
-                                </p>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center space-x-2">
-                              {user && (user as any)?.role === 'admin' && (
-                                <Button 
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleEditNews(article)}
-                                >
-                                  <Edit className="mr-1 h-3 w-3" />
-                                  Засах
-                                </Button>
-                              )}
-                              {!article.published && user && (user as any)?.role === 'admin' && (
-                                <Button 
-                                  size="sm"
-                                  className="mtta-green text-white hover:bg-mtta-green-dark"
-                                  onClick={() => publishNewsMutation.mutate(article.id)}
-                                  disabled={publishNewsMutation.isPending}
-                                >
-                                  <Megaphone className="mr-1 h-3 w-3" />
-                                  Нийтлэх
-                                </Button>
-                              )}
-                              <Link href={`/news/${article.id}`}>
-                                <Button size="sm" variant="outline">
-                                  <Eye className="mr-1 h-3 w-3" />
-                                  Унших
-                                </Button>
-                              </Link>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Recent News */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Newspaper className="mr-2 h-5 w-5 text-mtta-green" />
-                    Сүүлийн мэдээ
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {(allNews as any[]).slice(0, 5).map((article: any) => (
-                      <div key={article.id} className="border-l-4 border-mtta-green pl-4">
-                        <div className="flex items-center mb-2">
-                          {getCategoryBadge(article.category)}
-                          <span className="text-gray-500 text-sm ml-2">
-                            {formatDate(article.publishedAt || article.createdAt)}
-                          </span>
-                        </div>
-                        <Link href={`/news/${article.id}`}>
-                          <h4 className="font-bold text-gray-900 mb-1 text-sm line-clamp-2 hover:text-mtta-green cursor-pointer transition-colors">{article.title}</h4>
-                        </Link>
-                        <p className="text-gray-600 text-xs line-clamp-2">{article.excerpt}</p>
-                      </div>
-                    ))}
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Categories */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Ангиллууд</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {[
-                      { value: "all", label: "Бүгд", count: (allNews as any[]).length },
-                      { value: "tournament", label: "Тэмцээн", count: (allNews as any[]).filter((n: any) => n.category === "tournament").length },
-                      { value: "news", label: "Мэдээ", count: (allNews as any[]).filter((n: any) => n.category === "news").length },
-                      { value: "training", label: "Сургалт", count: (allNews as any[]).filter((n: any) => n.category === "training").length },
-                      { value: "urgent", label: "Яаралтай", count: (allNews as any[]).filter((n: any) => n.category === "urgent").length },
-                    ].map((category) => (
-                      <button
-                        key={category.value}
-                        onClick={() => setSelectedCategory(category.value)}
-                        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                          selectedCategory === category.value
-                            ? 'bg-mtta-green text-white'
-                            : 'hover:bg-gray-100'
-                        }`}
-                      >
-                        <div className="flex justify-between items-center">
-                          <span>{category.label}</span>
-                          <span className={`text-xs ${
-                            selectedCategory === category.value ? 'text-white' : 'text-gray-500'
-                          }`}>
-                            {category.count}
-                          </span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            ))}
           </div>
         )}
         </div>
