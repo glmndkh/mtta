@@ -358,7 +358,7 @@ export default function Profile() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-white">
         <Navigation />
         <div className="container mx-auto px-4 py-8">
           <Card className="max-w-md mx-auto text-center">
@@ -379,7 +379,7 @@ export default function Profile() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-white">
         <Navigation />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">Ачааллаж байна...</div>
@@ -393,7 +393,7 @@ export default function Profile() {
   const isExpiringSoon = membershipEndDate && membershipEndDate <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-white">
       <Navigation />
       
       <main className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -578,11 +578,11 @@ export default function Profile() {
 
           {/* Main Content Tabs */}
           <Tabs defaultValue="profile" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="profile">Хувийн мэдээлэл</TabsTrigger>
-              <TabsTrigger value="membership">Гишүүнчлэл</TabsTrigger>
-              <TabsTrigger value="tournaments">Тэмцээн</TabsTrigger>
-              <TabsTrigger value="history">Түүх</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-4 bg-gray-900">
+              <TabsTrigger value="profile" className="text-white font-bold text-base data-[state=active]:text-black data-[state=active]:bg-white">Хувийн мэдээлэл</TabsTrigger>
+              <TabsTrigger value="membership" className="text-white font-bold text-base data-[state=active]:text-black data-[state=active]:bg-white">Гишүүнчлэл</TabsTrigger>
+              <TabsTrigger value="tournaments" className="text-white font-bold text-base data-[state=active]:text-black data-[state=active]:bg-white">Тэмцээн</TabsTrigger>
+              <TabsTrigger value="history" className="text-white font-bold text-base data-[state=active]:text-black data-[state=active]:bg-white">Түүх</TabsTrigger>
             </TabsList>
 
             {/* Profile Tab */}
