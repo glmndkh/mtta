@@ -38,15 +38,6 @@ export default function NewsDetail() {
     },
   });
 
-  // Optimized latest news fetching for sidebar
-  const { data: latestNews = [] } = useQuery({
-    queryKey: ["/api/news/latest"],
-    retry: false,
-    staleTime: 3 * 60 * 1000, // Consider data fresh for 3 minutes
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
-    refetchOnWindowFocus: false,
-  });
-
   // Publish news mutation
   const publishNewsMutation = useMutation({
     mutationFn: async (newsId: string) => {
@@ -121,19 +112,6 @@ export default function NewsDetail() {
     });
   };
 
-  const formatRelativeTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffHours / 24);
-    
-    if (diffHours < 1) return "1 цагийн өмнө";
-    if (diffHours < 24) return `${diffHours} цагийн өмнө`;
-    if (diffDays < 7) return `${diffDays} өдрийн өмнө`;
-    return date.toLocaleDateString('mn-MN');
-  };
-
   if (isLoading || articleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -164,10 +142,8 @@ export default function NewsDetail() {
           </Link>
         </div>
 
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-3">
-            <Card className="shadow-lg">
+        <div className="max-w-3xl mx-auto">
+          <Card className="shadow-lg">
               {article.imageUrl && (
                 <div className="aspect-video overflow-hidden rounded-t-lg">
                   <img 
@@ -268,86 +244,8 @@ export default function NewsDetail() {
                     </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Latest News */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-semibold">Сүүлийн мэдээ</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {latestNews.slice(0, 5).map((news: any) => (
-                  <div key={news.id} className="border-b border-gray-100 last:border-b-0 pb-3 last:pb-0">
-                    <Link href={`/news/${news.id}`}>
-                      <div className="flex gap-3 hover:bg-gray-50 p-2 -m-2 rounded cursor-pointer transition-colors">
-                        {news.imageUrl && (
-                          <div className="w-16 h-12 flex-shrink-0 overflow-hidden rounded">
-                            <img 
-                              src={getImageUrl(news.imageUrl)} 
-                              alt={news.title}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        )}
-                        <div className="flex-1">
-                          <h4 className="font-medium text-sm text-gray-900 line-clamp-2 mb-1">
-                            {news.title}
-                          </h4>
-                          <div className="flex items-center text-xs text-gray-500">
-                            <Clock className="h-3 w-3 mr-1" />
-                            {formatRelativeTime(news.createdAt)}
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Categories */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-semibold">Ангиллууд</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Link href="/news?category=all">
-                  <Button variant="ghost" className="w-full justify-start text-left">
-                    <div className="w-3 h-3 rounded-full bg-gray-400 mr-3"></div>
-                    Бүгд
-                  </Button>
-                </Link>
-                <Link href="/news?category=tournament">
-                  <Button variant="ghost" className="w-full justify-start text-left">
-                    <div className="w-3 h-3 rounded-full bg-blue-500 mr-3"></div>
-                    Тэмцээн
-                  </Button>
-                </Link>
-                <Link href="/news?category=news">
-                  <Button variant="ghost" className="w-full justify-start text-left">
-                    <div className="w-3 h-3 rounded-full bg-green-500 mr-3"></div>
-                    Мэдээ
-                  </Button>
-                </Link>
-                <Link href="/news?category=training">
-                  <Button variant="ghost" className="w-full justify-start text-left">
-                    <div className="w-3 h-3 rounded-full bg-purple-500 mr-3"></div>
-                    Сургалт
-                  </Button>
-                </Link>
-                <Link href="/news?category=urgent">
-                  <Button variant="ghost" className="w-full justify-start text-left">
-                    <div className="w-3 h-3 rounded-full bg-red-500 mr-3"></div>
-                    Яаралтай
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
+          </CardContent>
+          </Card>
         </div>
       </div>
     </div>
