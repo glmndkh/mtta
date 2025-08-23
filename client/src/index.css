@@ -61,6 +61,31 @@
   background-color: #374151 !important;
 }
 
+/* Tab text styling for visibility */
+.theme-tab-trigger {
+  color: #374151;
+  font-weight: normal;
+  transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .theme-tab-trigger,
+.dark .theme-tab-trigger {
+  color: #ffffff !important;
+}
+
+/* Active tab styling */
+.theme-tab-trigger[data-state="active"] {
+  font-weight: bold !important;
+  background-color: #16a34a !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .theme-tab-trigger[data-state="active"],
+.dark .theme-tab-trigger[data-state="active"] {
+  background-color: #16a34a !important;
+  color: #ffffff !important;
+}
+
 body {
   background-color: var(--background);
   color: var(--text-primary);

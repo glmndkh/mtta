@@ -581,10 +581,10 @@ export default function Profile() {
           {/* Main Content Tabs */}
           <Tabs defaultValue="profile" className="w-full">
             <TabsList className="grid w-full grid-cols-4 theme-tabs">
-              <TabsTrigger value="profile" className={`text-base ${theme === 'dark' ? 'text-white data-[state=active]:text-black' : 'text-gray-700 data-[state=active]:text-white'} data-[state=active]:bg-green-600 data-[state=active]:font-bold`}>Хувийн мэдээлэл</TabsTrigger>
-              <TabsTrigger value="membership" className={`text-base ${theme === 'dark' ? 'text-white data-[state=active]:text-black' : 'text-gray-700 data-[state=active]:text-white'} data-[state=active]:bg-green-600 data-[state=active]:font-bold`}>Гишүүнчлэл</TabsTrigger>
-              <TabsTrigger value="tournaments" className={`text-base ${theme === 'dark' ? 'text-white data-[state=active]:text-black' : 'text-gray-700 data-[state=active]:text-white'} data-[state=active]:bg-green-600 data-[state=active]:font-bold`}>Тэмцээн</TabsTrigger>
-              <TabsTrigger value="history" className={`text-base ${theme === 'dark' ? 'text-white data-[state=active]:text-black' : 'text-gray-700 data-[state=active]:text-white'} data-[state=active]:bg-green-600 data-[state=active]:font-bold`}>Түүх</TabsTrigger>
+              <TabsTrigger value="profile" className="text-base theme-tab-trigger">Хувийн мэдээлэл</TabsTrigger>
+              <TabsTrigger value="membership" className="text-base theme-tab-trigger">Гишүүнчлэл</TabsTrigger>
+              <TabsTrigger value="tournaments" className="text-base theme-tab-trigger">Тэмцээн</TabsTrigger>
+              <TabsTrigger value="history" className="text-base theme-tab-trigger">Түүх</TabsTrigger>
             </TabsList>
 
             {/* Profile Tab */}
