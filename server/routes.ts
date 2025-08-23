@@ -1113,9 +1113,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ----------------
   // News
   // ----------------
-  app.post("/api/news", isAuthenticated, async (req: any, res) => {
+  app.post("/api/news", requireAuth, async (req: any, res) => {
     try {
-      const authorId = req.user.claims.sub;
+      const authorId = req.session.userId;
       const newsData = insertNewsSchema.parse({ ...req.body, authorId });
       const news = await storage.createNews(newsData);
       res.json(news);
@@ -1172,7 +1172,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/news/:id/publish", isAuthenticated, async (req, res) => {
+  app.put("/api/news/:id/publish", requireAuth, async (req, res) => {
     try {
       await storage.publishNews(req.params.id);
       res.json({ message: "Мэдээ амжилттай нийтлэгдлээ" });
@@ -1182,7 +1182,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/news/:id", isAuthenticated, async (req: any, res) => {
+  app.put("/api/news/:id", requireAuth, async (req: any, res) => {
     try {
       const newsData = insertNewsSchema.partial().parse(req.body);
       if (req.body.imageUrl && req.body.imageUrl !== "")

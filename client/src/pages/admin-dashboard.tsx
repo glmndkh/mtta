@@ -19,6 +19,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import AdminStatsDashboard from "@/components/admin-stats-dashboard";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { UserAutocomplete } from "@/components/UserAutocomplete";
+import RichTextEditor from "@/components/rich-text-editor";
 
 export default function AdminDashboard() {
   const [selectedTab, setSelectedTab] = useState("stats");
@@ -1563,11 +1564,10 @@ export default function AdminDashboard() {
             </div>
             <div>
               <Label htmlFor="content">Агуулга</Label>
-              <Textarea
-                id="content"
-                value={formData.content || ''}
-                onChange={(e) => setFormData({...formData, content: e.target.value})}
-                rows={5}
+              <RichTextEditor
+                content={formData.content || ''}
+                onChange={(value) => setFormData({ ...formData, content: value })}
+                placeholder="Мэдээний агуулга..."
               />
             </div>
             <div>
@@ -1641,7 +1641,11 @@ export default function AdminDashboard() {
               </ObjectUploader>
               {formData.imageUrl && (
                 <div className="mt-2">
-                  <p className="text-sm text-text-secondary">Зураг хуулагдсан: {formData.imageUrl}</p>
+                  <img
+                    src={formData.imageUrl.startsWith('/') ? `/public-objects${formData.imageUrl}` : formData.imageUrl}
+                    alt="Мэдээний зураг"
+                    className="w-32 h-24 object-cover rounded"
+                  />
                 </div>
               )}
             </div>

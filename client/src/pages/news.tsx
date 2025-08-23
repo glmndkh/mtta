@@ -60,7 +60,7 @@ export default function News() {
       content: "",
       excerpt: "",
       category: "news",
-      published: false,
+      published: true,
       imageUrl: "",
     },
   });
