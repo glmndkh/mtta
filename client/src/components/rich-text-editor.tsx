@@ -268,6 +268,16 @@ export default function RichTextEditor({ content, onChange, placeholder, classNa
                     <span>Зураг хуулах</span>
                   </div>
                 </ObjectUploader>
+                <div className="mt-4">
+                  <Label htmlFor="imageUrlInput">Зурагны URL (заавал биш)</Label>
+                  <Input
+                    id="imageUrlInput"
+                    type="text"
+                    value={imageUrl}
+                    onChange={(e) => setImageUrl(e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </div>
                 {imageUrl && (
                   <div className="mt-2">
                     <div className="relative w-full h-40 overflow-hidden rounded-lg border">
