@@ -1215,9 +1215,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     isAdminRole,
     async (req: any, res) => {
       try {
+        console.log("Raw request body:", req.body);
+        console.log("Session user ID:", req.session.userId);
+        
         const authorId = req.session.userId;
-        const newsData = insertNewsSchema.parse({ ...req.body, authorId });
+        const dataToValidate = { ...req.body, authorId };
+        console.log("Data to validate:", dataToValidate);
+        
+        const newsData = insertNewsSchema.parse(dataToValidate);
+        console.log("Validated news data:", newsData);
+        
         const news = await storage.createNews(newsData);
+        console.log("Created news:", news);
         res.json(news);
       } catch (e) {
         console.error("Error creating news:", e);

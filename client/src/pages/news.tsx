@@ -71,13 +71,15 @@ export default function News() {
   // Create news mutation
   const createNewsMutation = useMutation<any, Error, CreateNewsForm & { authorId: string }>({
     mutationFn: async (data) => {
-      const response = await apiRequest("/api/news", {
+      console.log("Creating news with data:", data);
+      const response = await apiRequest("/api/admin/news", {
         method: "POST",
         body: JSON.stringify(data),
       });
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      console.log("News created successfully:", result);
       toast({
         title: "Амжилттай",
         description: "Мэдээ амжилттай үүсгэгдлээ",
@@ -89,6 +91,7 @@ export default function News() {
       queryClient.invalidateQueries({ queryKey: ["/api/news/latest"] });
     },
     onError: (error: Error) => {
+      console.error("News creation error:", error);
       if (isUnauthorizedError(error)) {
         toast({
           title: "Нэвтрэх шаардлагатай",
@@ -102,7 +105,7 @@ export default function News() {
       }
       toast({
         title: "Алдаа",
-        description: "Мэдээ үүсгэхэд алдаа гарлаа",
+        description: "Мэдээ үүсгэхэд алдаа гарлаа. Консол лог шалгана уу.",
         variant: "destructive",
       });
     },
@@ -191,13 +194,31 @@ export default function News() {
     console.log("Form errors:", form.formState.errors);
     console.log("Current user:", user);
     console.log("Form values:", form.getValues());
+    console.log("Form is valid:", form.formState.isValid);
     
     // Get all form values directly
     const formValues = form.getValues();
     console.log("Direct form values:", formValues);
     
+    // Use form values as primary source since data might be stale
+    const titleValue = formValues.title || data.title;
+    const contentValue = formValues.content || data.content; 
+    const excerptValue = formValues.excerpt || data.excerpt;
+    const categoryValue = formValues.category || data.category;
+    const publishedValue = formValues.published !== undefined ? formValues.published : data.published;
+    const imageUrlValue = formValues.imageUrl || data.imageUrl;
+    
+    console.log("Extracted values:", {
+      title: titleValue,
+      content: contentValue,
+      excerpt: excerptValue,
+      category: categoryValue,
+      published: publishedValue,
+      imageUrl: imageUrlValue
+    });
+    
     // Validate that required fields are present
-    if (!data.title?.trim()) {
+    if (!titleValue?.trim()) {
       toast({
         title: "Алдаа",
         description: "Гарчиг заавал бөглөх ёстой",
@@ -205,10 +226,6 @@ export default function News() {
       });
       return;
     }
-    
-    // Check content from form values if data.content is undefined
-    const contentValue = data.content || formValues.content;
-    console.log("Content value:", contentValue);
     
     if (!contentValue?.trim()) {
       toast({
@@ -231,12 +248,12 @@ export default function News() {
     
     // Use the uploaded image URL if available and add authorId
     const finalData = {
-      title: data.title?.trim() || '',
-      content: contentValue?.trim() || '',
-      excerpt: data.excerpt?.trim() || '',
-      category: data.category || 'news',
-      published: data.published || false,
-      imageUrl: newsImageUrl || data.imageUrl || '',
+      title: titleValue.trim(),
+      content: contentValue.trim(),
+      excerpt: excerptValue?.trim() || '',
+      category: categoryValue || 'news',
+      published: publishedValue !== undefined ? publishedValue : true,
+      imageUrl: newsImageUrl || imageUrlValue || '',
       authorId: user.id, // Add the required authorId field
     };
     
