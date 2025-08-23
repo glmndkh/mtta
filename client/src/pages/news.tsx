@@ -184,11 +184,28 @@ export default function News() {
   });
 
   const onSubmit = (data: CreateNewsForm) => {
-    // Use the uploaded image URL if available
+    console.log("Form submitted with data:", data);
+    console.log("Form errors:", form.formState.errors);
+    console.log("Current user:", user);
+    
+    // Check if user is authenticated for creating news
+    if (!user?.id) {
+      toast({
+        title: "Алдаа",
+        description: "Мэдээ үүсгэхийн тулд нэвтэрсэн байх ёстой",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Use the uploaded image URL if available and add authorId
     const finalData = {
       ...data,
       imageUrl: newsImageUrl || data.imageUrl,
+      authorId: user.id, // Add the required authorId field
     };
+    
+    console.log("Final data to submit:", finalData);
     
     if (editingNews) {
       updateNewsMutation.mutate({ id: editingNews.id, newsData: finalData });
