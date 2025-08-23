@@ -45,7 +45,7 @@ export default function JudgesPage() {
               <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {judges && Array.isArray(judges) ?
                   judges.filter(judge => judge.judgeType === 'domestic').map(judge => (
-                    <Card key={judge.id} className="bg-gray-800 text-white hover:bg-gray-700 transition-colors aspect-[4/3] flex flex-col">
+                    <Card key={judge.id} className="bg-gray-800 text-white hover:bg-gray-700 transition-colors aspect-[3/4] flex flex-col">
                       <CardContent className="flex flex-col items-center justify-center p-6 h-full text-center">
                         <Avatar className="w-20 h-20 mb-4">
                           <AvatarImage src={judge.imageUrl} alt={judge.firstName} />
@@ -75,7 +75,7 @@ export default function JudgesPage() {
               <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {judges && Array.isArray(judges) ?
                   judges.filter(judge => judge.judgeType === 'international').map(judge => (
-                    <Card key={judge.id} className="bg-gray-800 text-white hover:bg-gray-700 transition-colors aspect-[4/3] flex flex-col">
+                    <Card key={judge.id} className="bg-gray-800 text-white hover:bg-gray-700 transition-colors aspect-[3/4] flex flex-col">
                       <CardContent className="flex flex-col items-center justify-center p-6 h-full text-center">
                         <Avatar className="w-20 h-20 mb-4">
                           <AvatarImage src={judge.imageUrl} alt={judge.firstName} />
