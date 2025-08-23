@@ -68,7 +68,10 @@ export default function News() {
   // Create news mutation
   const createNewsMutation = useMutation({
     mutationFn: async (data: CreateNewsForm) => {
-      const response = await apiRequest("POST", "/api/news", data);
+      const response = await apiRequest("/api/news", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
       return response.json();
     },
     onSuccess: () => {
@@ -105,7 +108,9 @@ export default function News() {
   // Publish news mutation
   const publishNewsMutation = useMutation({
     mutationFn: async (newsId: string) => {
-      const response = await apiRequest("PUT", `/api/news/${newsId}/publish`);
+      const response = await apiRequest(`/api/news/${newsId}/publish`, {
+        method: "PUT",
+      });
       return response.json();
     },
     onSuccess: () => {
@@ -140,7 +145,10 @@ export default function News() {
   // Update news mutation
   const updateNewsMutation = useMutation({
     mutationFn: async (data: { id: string; newsData: Partial<CreateNewsForm> }) => {
-      const response = await apiRequest("PUT", `/api/news/${data.id}`, data.newsData);
+      const response = await apiRequest(`/api/news/${data.id}`, {
+        method: "PUT",
+        body: JSON.stringify(data.newsData),
+      });
       return response.json();
     },
     onSuccess: () => {
