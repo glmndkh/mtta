@@ -47,8 +47,8 @@
 
 [data-theme="dark"] .theme-card,
 .dark .theme-card {
-  background-color: #ffffff !important;
-  color: #111827 !important;
+  background-color: var(--card) !important;
+  color: var(--text-primary) !important;
 }
 
 .theme-tabs {
