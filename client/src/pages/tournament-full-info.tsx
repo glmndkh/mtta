@@ -10,12 +10,13 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { KnockoutBracket } from "@/components/KnockoutBracket";
-import { ArrowLeft, User } from "lucide-react";
+import { ArrowLeft, User, Upload } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { Tournament, TournamentResults } from "@shared/schema";
 import { UserAutocomplete } from "@/components/UserAutocomplete";
+import { ObjectUploader } from "@/components/ObjectUploader";
 
 interface GroupStageGroup {
   groupName: string;
@@ -162,6 +163,7 @@ interface Participant {
   const [newPlayerId, setNewPlayerId] = useState("");
   const [newPlayerName, setNewPlayerName] = useState("");
   const [newParticipation, setNewParticipation] = useState("");
+  const [albumImages, setAlbumImages] = useState<string[]>([]);
 
   useEffect(() => {
     if (tournament?.participationTypes?.length && !registrationType) {
@@ -575,8 +577,75 @@ interface Participant {
 
             {/* Album */}
             <TabsContent value="album">
-              <div className="text-center text-gray-400 py-8">
-                Альбомын зураг оруулаагүй байна.
+              <div className="space-y-4">
+                {user?.role === 'admin' && (
+                  <ObjectUploader
+                    maxNumberOfFiles={10}
+                    maxFileSize={5 * 1024 * 1024}
+                    onGetUploadParameters={async () => {
+                      try {
+                        const response = await apiRequest('/api/objects/upload', {
+                          method: 'POST',
+                        });
+                        const data = (await response.json()) as { uploadURL: string };
+                        if (!data || !data.uploadURL) {
+                          throw new Error('No upload URL received');
+                        }
+                        return { method: 'PUT' as const, url: data.uploadURL };
+                      } catch (error) {
+                        console.error('Error getting upload parameters:', error);
+                        toast({
+                          title: 'Алдаа',
+                          description: 'Зураг хуулах URL авахад алдаа гарлаа',
+                          variant: 'destructive',
+                        });
+                        throw error;
+                      }
+                    }}
+                    onComplete={async (result) => {
+                      const successful = result.successful ?? [];
+                      for (const file of successful) {
+                        try {
+                          const aclResponse = await apiRequest('/api/objects/acl', {
+                            method: 'PUT',
+                            body: JSON.stringify({ imageURL: file.uploadURL }),
+                          });
+                          const aclData = (await aclResponse.json()) as { objectPath: string };
+                          setAlbumImages((prev) => [...prev, aclData.objectPath]);
+                        } catch (error) {
+                          console.error('Error setting ACL:', error);
+                          toast({
+                            title: 'Алдаа',
+                            description: 'Зураг нийтлэхэд алдаа гарлаа',
+                            variant: 'destructive',
+                          });
+                        }
+                      }
+                      if (successful.length > 0) {
+                        toast({ title: 'Зураг амжилттай хуулагдлаа' });
+                      }
+                    }}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Зураг нэмэх
+                  </ObjectUploader>
+                )}
+                {albumImages.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {albumImages.map((url, idx) => (
+                      <img
+                        key={idx}
+                        src={url}
+                        alt={`Tournament photo ${idx + 1}`}
+                        className="w-full h-40 object-cover rounded"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-400 py-8">
+                    Альбомын зураг оруулаагүй байна.
+                  </div>
+                )}
               </div>
             </TabsContent>
 
