@@ -26,6 +26,12 @@ A comprehensive web application for the Mongolian Table Tennis Association that 
 
 ## Recent Changes
 
+### Profile Page Styling Enhancement (August 2025)
+- **Fixed profile page background** to match MTTA brand with dark green gradient (from-green-400 via-green-500 to-green-600)
+- **Enhanced tab text visibility** with white text for inactive tabs, maintaining readability at all times
+- **Improved tab interaction design** where only active tabs become bold while inactive tabs remain clearly visible
+- **Consistent styling across all page states** including loading and unauthenticated views
+
 ### Tournament Creation Bug Fix (August 2025)
 - **Critical tournament creation issue resolved** - fixed incorrect API call format in admin tournament generator
 - **Frontend API call corrected** from `apiRequest('POST', '/api/tournaments', data)` to proper format with method and body parameters
