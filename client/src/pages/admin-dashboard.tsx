@@ -184,6 +184,10 @@ export default function AdminDashboard() {
     );
 
   const handleCreate = () => {
+    if (!validateForm()) {
+      toast({ title: "Алдаа", description: "Шаардлагатай талбаруудыг бөглөнө үү", variant: "destructive" });
+      return;
+    }
     createMutation.mutate({
       endpoint: `/api/admin/${selectedTab}`,
       data: sanitizeFormData(formData),
@@ -191,6 +195,10 @@ export default function AdminDashboard() {
   };
 
   const handleUpdate = () => {
+    if (!validateForm()) {
+      toast({ title: "Алдаа", description: "Шаардлагатай талбаруудыг бөглөнө үү", variant: "destructive" });
+      return;
+    }
     const endpoint = `/api/admin/${selectedTab}/${editingItem.id}`;
     updateMutation.mutate({
       endpoint,
@@ -220,7 +228,7 @@ export default function AdminDashboard() {
       setLocation(`/admin/tournament/${tournamentId}/results`);
       return;
     }
-    
+
     switch(action) {
       case 'add-team':
         toast({
@@ -325,6 +333,12 @@ export default function AdminDashboard() {
         category: 'news',
         published: true
       };
+    } else if (selectedTab === 'champions') {
+      defaultData = {
+        name: '',
+        year: new Date().getFullYear(), // Default to current year
+        imageUrl: '',
+      };
     }
 
     setFormData(defaultData);
@@ -338,14 +352,14 @@ export default function AdminDashboard() {
 
   const enrollTeamInLeague = async (teamId: string) => {
     if (!selectedLeague) return;
-    
+
     try {
       const response = await fetch(`/api/admin/leagues/${selectedLeague.id}/teams`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ teamId })
       });
-      
+
       if (response.ok) {
         toast({ title: "Амжилттай", description: "Баг лигт нэмэгдлээ" });
         queryClient.invalidateQueries({ queryKey: ['/api/admin/leagues'] });
@@ -381,7 +395,7 @@ export default function AdminDashboard() {
             />
           </div>
         </div>
-        
+
         {usersLoading ? (
           <div>Ачааллаж байна...</div>
         ) : (
@@ -452,7 +466,7 @@ export default function AdminDashboard() {
             Клуб нэмэх
           </Button>
         </div>
-        
+
         {clubsLoading ? (
           <div>Ачааллаж байна...</div>
         ) : (
@@ -724,7 +738,7 @@ export default function AdminDashboard() {
           Слайдер нэмэх
         </Button>
       </div>
-      
+
       {slidersLoading ? (
         <div>Ачааллаж байна...</div>
       ) : (
@@ -776,7 +790,7 @@ export default function AdminDashboard() {
           Ивээн тэтгэгч нэмэх
         </Button>
       </div>
-      
+
       {sponsorsLoading ? (
         <div>Ачааллаж байна...</div>
       ) : (
@@ -935,7 +949,7 @@ export default function AdminDashboard() {
             </div>
           </>
         );
-      
+
       case 'clubs':
         return (
           <>
@@ -1123,7 +1137,7 @@ export default function AdminDashboard() {
               />
             </div>
             <div>
-              <Label className="flex items-center justify-between">Нэмэлт мэдээлэл
+              <Label className="flex items-center gap-2">Нэмэлт мэдээлэл
                 <Button type="button" variant="outline" size="sm" onClick={() => setFormData({ ...formData, extraData: [...(formData.extraData || []), { key: '', value: '' }] })}>
                   <Plus className="w-4 h-4" />
                 </Button>
@@ -1624,7 +1638,7 @@ export default function AdminDashboard() {
                 onComplete={async (result) => {
                   if (result.successful && result.successful.length > 0) {
                     const uploadedFileUrl = result.successful[0].uploadURL;
-                    
+
                     // Update ACL policy and get normalized path
                     try {
                       const response = await fetch('/api/objects/finalize', {
@@ -1638,7 +1652,7 @@ export default function AdminDashboard() {
                         })
                       });
                       const data = await response.json();
-                      
+
                       setFormData({...formData, imageUrl: data.objectPath});
                       toast({
                         title: "Амжилттай",
@@ -1749,7 +1763,7 @@ export default function AdminDashboard() {
                 onComplete={async (result) => {
                   if (result.successful && result.successful.length > 0) {
                     const uploadedFileUrl = result.successful[0].uploadURL;
-                    
+
                     // Update ACL policy and get normalized path
                     try {
                       const response = await fetch('/api/sponsor-logos', {
@@ -1762,7 +1776,7 @@ export default function AdminDashboard() {
                         })
                       });
                       const data = await response.json();
-                      
+
                       setFormData({...formData, sponsorLogo: data.objectPath});
                       toast({
                         title: "Амжилттай",
@@ -1918,7 +1932,7 @@ export default function AdminDashboard() {
                   onComplete={async (result) => {
                     if (result.successful && result.successful.length > 0) {
                       const uploadURL = result.successful[0].uploadURL;
-                      
+
                       // Set ACL policy for the uploaded image
                       try {
                         const aclResponse = await apiRequest("/api/objects/acl", {
@@ -1929,13 +1943,13 @@ export default function AdminDashboard() {
                           },
                         });
                         const aclData = await aclResponse.json() as { objectPath: string };
-                        
+
                         // Update form with the normalized object path
                         setFormData({
                           ...formData, 
                           imageUrl: aclData.objectPath
                         });
-                        
+
                         toast({ title: "Зураг амжилттай хуулагдлаа" });
                       } catch (error) {
                         console.error("Error setting ACL:", error);
@@ -2097,7 +2111,7 @@ export default function AdminDashboard() {
                   onComplete={async (result) => {
                     if (result.successful && result.successful.length > 0) {
                       const uploadURL = result.successful[0].uploadURL;
-                      
+
                       // Set ACL policy for the uploaded logo
                       try {
                         const aclResponse = await apiRequest("/api/objects/acl", {
@@ -2108,13 +2122,13 @@ export default function AdminDashboard() {
                           },
                         });
                         const aclData = await aclResponse.json() as { objectPath: string };
-                        
+
                         // Update form with the normalized object path
                         setFormData({
                           ...formData, 
                           logoUrl: aclData.objectPath
                         });
-                        
+
                         toast({ title: "Лого амжилттай хуулагдлаа" });
                       } catch (error) {
                         console.error("Error setting ACL:", error);
@@ -2351,6 +2365,33 @@ export default function AdminDashboard() {
     }
   };
 
+  const validateForm = () => {
+    switch (selectedTab) {
+      case 'news':
+        return formData.title && formData.content;
+      case 'tournaments':
+        return formData.name && formData.startDate && formData.endDate && formData.location;
+      case 'sponsors':
+        return formData.name && formData.logoUrl;
+      case 'sliders':
+        return formData.title && formData.imageUrl;
+      case 'clubs':
+        return formData.name;
+      case 'branches':
+        return formData.name;
+      case 'federation-members':
+        return formData.name;
+      case 'judges':
+        return formData.firstName && formData.lastName && formData.judgeType;
+      case 'coaches':
+        return formData.clubId && (formData.userId || formData.name);
+      case 'champions':
+        return formData.name && formData.year;
+      default:
+        return true;
+    }
+  };
+
   return (
     <div className="container mx-auto p-6">
       <div className="mb-8">
@@ -2527,7 +2568,7 @@ export default function AdminDashboard() {
                     </Button>
                   </div>
                 </div>
-                
+
                 {tournamentsLoading ? (
                   <div>Ачааллаж байна...</div>
                 ) : (
@@ -2611,7 +2652,7 @@ export default function AdminDashboard() {
                     Лиг нэмэх
                   </Button>
                 </div>
-                
+
                 {leaguesLoading ? (
                   <div>Ачааллаж байна...</div>
                 ) : (
@@ -2697,7 +2738,7 @@ export default function AdminDashboard() {
                     Мэдээ нэмэх
                   </Button>
                 </div>
-                
+
                 {newsLoading ? (
                   <div>Ачааллаж байна...</div>
                 ) : (
@@ -2757,7 +2798,7 @@ export default function AdminDashboard() {
                     Баг нэмэх
                   </Button>
                 </div>
-                
+
                 {teamsLoading ? (
                   <div>Ачааллаж байна...</div>
                 ) : (
