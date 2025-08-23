@@ -10,7 +10,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { KnockoutBracket } from "@/components/KnockoutBracket";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -120,6 +120,7 @@ interface Participant {
   lastName: string;
   gender: string | null;
   dateOfBirth: string | null;
+  email: string | null;
 }
 
   const { data: participants = [] } = useQuery<Participant[]>({
@@ -519,7 +520,19 @@ interface Participant {
                           const cat = parseParticipationType(p.participationType);
                           return (
                             <TableRow key={p.id}>
-                              <TableCell>{`${p.lastName} ${p.firstName}`}</TableCell>
+                              <TableCell>
+                                {p.email ? (
+                                  <button
+                                    className="flex items-center gap-1 text-left hover:text-mtta-green"
+                                    onClick={() => setLocation(`/player/${p.id}`)}
+                                  >
+                                    <User className="w-4 h-4" />
+                                    {`${p.lastName} ${p.firstName}`}
+                                  </button>
+                                ) : (
+                                  `${p.lastName} ${p.firstName}`
+                                )}
+                              </TableCell>
                               <TableCell>{calculateAge(p.dateOfBirth)}</TableCell>
                               <TableCell>
                                 {cat.gender === 'male' ? 'Эрэгтэй' : 'Эмэгтэй'}
