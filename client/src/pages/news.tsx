@@ -190,6 +190,11 @@ export default function News() {
     console.log("Form submitted with data:", data);
     console.log("Form errors:", form.formState.errors);
     console.log("Current user:", user);
+    console.log("Form values:", form.getValues());
+    
+    // Get all form values directly
+    const formValues = form.getValues();
+    console.log("Direct form values:", formValues);
     
     // Validate that required fields are present
     if (!data.title?.trim()) {
@@ -201,7 +206,11 @@ export default function News() {
       return;
     }
     
-    if (!data.content?.trim()) {
+    // Check content from form values if data.content is undefined
+    const contentValue = data.content || formValues.content;
+    console.log("Content value:", contentValue);
+    
+    if (!contentValue?.trim()) {
       toast({
         title: "Алдаа", 
         description: "Агуулга заавал бөглөх ёстой",
@@ -223,7 +232,7 @@ export default function News() {
     // Use the uploaded image URL if available and add authorId
     const finalData = {
       title: data.title?.trim() || '',
-      content: data.content?.trim() || '',
+      content: contentValue?.trim() || '',
       excerpt: data.excerpt?.trim() || '',
       category: data.category || 'news',
       published: data.published || false,
@@ -610,7 +619,11 @@ export default function News() {
                             <FormControl>
                               <RichTextEditor
                                 content={field.value || ""}
-                                onChange={field.onChange}
+                                onChange={(content) => {
+                                  console.log("RichTextEditor onChange called with:", content);
+                                  field.onChange(content);
+                                  form.setValue("content", content);
+                                }}
                                 placeholder="Мэдээний бүрэн агуулга оруулна уу"
                               />
                             </FormControl>
