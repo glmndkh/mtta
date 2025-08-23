@@ -971,7 +971,7 @@ export default function AdminDashboard() {
             <div>
               <Label>Клубын эзэн</Label>
               <UserAutocomplete
-                users={(allUsers as any[] || []).filter((u: any) => u.role === 'club_owner')}
+                users={allUsers as any[] || []}
                 value={formData.ownerId}
                 onSelect={(u) =>
                   setFormData({
