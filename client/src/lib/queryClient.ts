@@ -12,13 +12,17 @@ export async function apiRequest(
   options: {
     method?: string;
     body?: string;
+    headers?: Record<string, string>;
   } = {}
 ): Promise<Response> {
-  const { method = 'GET', body } = options;
+  const { method = 'GET', body, headers = {} } = options;
+  
+  const defaultHeaders: Record<string, string> = body ? { "Content-Type": "application/json" } : {};
+  const finalHeaders = { ...defaultHeaders, ...headers };
   
   const res = await fetch(url, {
     method,
-    headers: body ? { "Content-Type": "application/json" } : {},
+    headers: finalHeaders,
     body: body,
     credentials: "include",
   });

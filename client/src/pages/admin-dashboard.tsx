@@ -306,6 +306,11 @@ export default function AdminDashboard() {
     setFormData(formattedItem);
   };
 
+  const openTeamEnrollmentDialog = (league: any) => {
+    setSelectedLeague(league);
+    setIsTeamEnrollmentDialogOpen(true);
+  };
+
   const openCreateDialog = () => {
     // Initialize with appropriate default values based on selected tab
     let defaultData = {};
@@ -702,7 +707,7 @@ export default function AdminDashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {judges && Array.isArray(judges) && judges.map((judge: any) => (
+              {judges && Array.isArray(judges) ? judges.map((judge: any) => (
                 <TableRow key={judge.id}>
                   <TableCell>{judge.firstName} {judge.lastName}</TableCell>
                   <TableCell>{judge.judgeType === 'international' ? 'Олон улсын' : 'Дотоодын'}</TableCell>
@@ -717,7 +722,7 @@ export default function AdminDashboard() {
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))}
+              )) : null}
             </TableBody>
           </Table>
         )}
@@ -748,7 +753,7 @@ export default function AdminDashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {coaches && Array.isArray(coaches) && coaches.map((coach: any) => (
+              {coaches && Array.isArray(coaches) ? coaches.map((coach: any) => (
                 <TableRow key={coach.id}>
                   <TableCell>
                     {coach.name || `${coach.firstName || ''} ${coach.lastName || ''}`}
@@ -760,7 +765,7 @@ export default function AdminDashboard() {
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))}
+              )) : null}
             </TableBody>
           </Table>
         )}
@@ -1241,9 +1246,9 @@ export default function AdminDashboard() {
                   <SelectValue placeholder="Клуб сонгох" />
                 </SelectTrigger>
                 <SelectContent>
-                  {clubs?.map((c: any) => (
+                  {clubs && Array.isArray(clubs) ? clubs.map((c: any) => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
+                  )) : null}
                 </SelectContent>
               </Select>
             </div>

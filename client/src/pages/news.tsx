@@ -510,7 +510,7 @@ export default function News() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Ангилал</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Ангилал сонгоно уу" />
