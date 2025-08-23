@@ -756,6 +756,26 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
   border: 1px solid var(--border);
 }
 
+/* Admin Dashboard Tab Text Colors */
+.admin-tab-trigger {
+  color: #64748b !important; /* Default tab text color - slate gray */
+  font-weight: 500;
+}
+
+.admin-tab-trigger[data-state="active"] {
+  color: #ffffff !important; /* Active tab text color - white */
+  font-weight: 600;
+}
+
+/* Dark theme overrides for admin tabs */
+[data-theme="dark"] .admin-tab-trigger {
+  color: #94a3b8 !important; /* Lighter gray for dark theme */
+}
+
+[data-theme="dark"] .admin-tab-trigger[data-state="active"] {
+  color: #ffffff !important; /* Keep white for active state */
+}
+
 .tab {
   padding: 10px 20px;
   border-radius: 6px;
