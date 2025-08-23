@@ -926,10 +926,10 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
 
 
 
-/* Enhanced Checkbox Styling - Maximum Visibility */
+/* EXTREME Checkbox Styling - Maximum Visual Impact */
 .checkbox-enhanced {
   position: relative;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   min-width: 24px;
   min-height: 24px;
 }
@@ -941,54 +941,72 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05) !important;
 }
 
-/* Checked state - very prominent and obvious */
+/* Checked state - EXTREME VISUAL IMPACT */
 .checkbox-enhanced[data-state="checked"] {
-  background: #16a34a !important;  /* Strong green */
-  border: 2px solid #16a34a !important;
-  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
-  transform: scale(1.05);
+  background: linear-gradient(135deg, #16a34a, #22c55e) !important;
+  border: 3px solid #16a34a !important;
+  box-shadow: 
+    0 0 0 4px rgba(22, 163, 74, 0.2),
+    0 8px 25px rgba(22, 163, 74, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  transform: scale(1.2) !important;
+  animation: checkboxPulse 0.6s ease-out, checkboxGlow 2s ease-in-out infinite alternate !important;
 }
 
 /* Hover states */
 .checkbox-enhanced:hover {
   border-color: #16a34a !important;
-  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.1) !important;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15) !important;
+  transform: scale(1.05) !important;
 }
 
 .checkbox-enhanced[data-state="checked"]:hover {
-  background: #15803d !important;
+  background: linear-gradient(135deg, #15803d, #16a34a) !important;
   border-color: #15803d !important;
-  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 
+    0 0 0 6px rgba(22, 163, 74, 0.3),
+    0 12px 35px rgba(22, 163, 74, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  transform: scale(1.25) !important;
 }
 
 /* Dark theme specific checkbox styles */
 [data-theme="dark"] .checkbox-enhanced[data-state="unchecked"],
 .dark .checkbox-enhanced[data-state="unchecked"] {
-  background: #374151 !important;  /* Dark gray background */
-  border: 2px solid #6b7280 !important;  /* Medium gray border */
+  background: #374151 !important;
+  border: 2px solid #6b7280 !important;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3) !important;
 }
 
 [data-theme="dark"] .checkbox-enhanced[data-state="checked"],
 .dark .checkbox-enhanced[data-state="checked"] {
-  background: #22c55e !important;  /* Bright green for dark theme */
-  border: 2px solid #22c55e !important;
-  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  background: linear-gradient(135deg, #22c55e, #10b981) !important;
+  border: 3px solid #22c55e !important;
+  box-shadow: 
+    0 0 0 4px rgba(34, 197, 94, 0.25),
+    0 8px 25px rgba(34, 197, 94, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
   color: #ffffff !important;
-  transform: scale(1.05);
+  transform: scale(1.2) !important;
+  animation: checkboxPulse 0.6s ease-out, checkboxGlowDark 2s ease-in-out infinite alternate !important;
 }
 
 [data-theme="dark"] .checkbox-enhanced:hover,
 .dark .checkbox-enhanced:hover {
   border-color: #22c55e !important;
-  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2) !important;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2) !important;
+  transform: scale(1.05) !important;
 }
 
 [data-theme="dark"] .checkbox-enhanced[data-state="checked"]:hover,
 .dark .checkbox-enhanced[data-state="checked"]:hover {
-  background: #16a34a !important;
+  background: linear-gradient(135deg, #16a34a, #22c55e) !important;
   border-color: #16a34a !important;
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 
+    0 0 0 6px rgba(34, 197, 94, 0.35),
+    0 12px 35px rgba(34, 197, 94, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+  transform: scale(1.25) !important;
 }
 
 /* Light theme specific checkbox styles */
@@ -1001,24 +1019,29 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
 
 [data-theme="light"] .checkbox-enhanced[data-state="checked"],
 .light .checkbox-enhanced[data-state="checked"] {
-  background: #16a34a !important;  /* Strong green */
-  border: 2px solid #16a34a !important;
-  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  background: linear-gradient(135deg, #16a34a, #22c55e) !important;
+  border: 3px solid #16a34a !important;
+  box-shadow: 
+    0 0 0 4px rgba(22, 163, 74, 0.2),
+    0 8px 25px rgba(22, 163, 74, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
   color: #ffffff !important;
-  transform: scale(1.05);
+  transform: scale(1.2) !important;
+  animation: checkboxPulse 0.6s ease-out, checkboxGlow 2s ease-in-out infinite alternate !important;
 }
 
-/* Make checkmarks extra visible */
+/* Make checkmarks EXTREMELY visible with effects */
 .checkbox-enhanced[data-state="checked"] svg {
   color: #ffffff !important;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
-  stroke-width: 3px !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+  stroke-width: 4px !important;
+  animation: checkmarkBounce 0.5s ease-out 0.2s both !important;
 }
 
 /* Additional focus states for accessibility */
 .checkbox-enhanced:focus-visible {
-  outline: 2px solid #3b82f6 !important;
-  outline-offset: 2px !important;
+  outline: 3px solid #3b82f6 !important;
+  outline-offset: 3px !important;
 }
 
 /* Ensure checkbox labels are visible */
@@ -1027,6 +1050,64 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
   font-weight: 500;
   cursor: pointer;
   margin-left: 8px;
+}
+
+/* Extreme Animation Effects */
+@keyframes checkboxPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1.2);
+  }
+}
+
+@keyframes checkboxGlow {
+  0% {
+    box-shadow: 
+      0 0 0 4px rgba(22, 163, 74, 0.2),
+      0 8px 25px rgba(22, 163, 74, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+  100% {
+    box-shadow: 
+      0 0 0 6px rgba(22, 163, 74, 0.4),
+      0 12px 35px rgba(22, 163, 74, 0.8),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+}
+
+@keyframes checkboxGlowDark {
+  0% {
+    box-shadow: 
+      0 0 0 4px rgba(34, 197, 94, 0.25),
+      0 8px 25px rgba(34, 197, 94, 0.7),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+  100% {
+    box-shadow: 
+      0 0 0 6px rgba(34, 197, 94, 0.45),
+      0 12px 35px rgba(34, 197, 94, 0.9),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+}
+
+@keyframes checkmarkBounce {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.3) rotate(10deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
 }
 
 /* Scrollbar styling */
