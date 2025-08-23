@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -8,8 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import logoPath from "@assets/logo.svg";
 
@@ -22,7 +23,9 @@ const registerSchema = z.object({
   dateOfBirth: z.string().min(1, "Төрсөн огноогоо оруулна уу"),
   phone: z.string().optional(),
   email: z.string().email("И-мэйл хаягаа зөв оруулна уу"),
-  clubAffiliation: z.string().min(1, "Клубын мэдээлэл эсвэл тоглодог газрын нэрийг оруулна уу"),
+  clubId: z.string().optional(),
+  noClub: z.boolean().default(false),
+  clubAffiliation: z.string().optional(),
   password: z.string().min(6, "Нууц үг дор хаяж 6 тэмдэгт байх ёстой"),
   confirmPassword: z.string().min(1, "Нууц үгээ баталгаажуулна уу"),
   rank: z.enum([
@@ -39,6 +42,12 @@ const registerSchema = z.object({
     message: "Нууц үг таарахгүй байна",
     path: ["confirmPassword"],
   }
+).refine(
+  (data) => data.noClub || data.clubId || data.clubAffiliation,
+  {
+    message: "Клуб сонгоно уу эсвэл 'Клубгүй' гэдгийг тэмдэглэнэ үү",
+    path: ["clubId"],
+  }
 );
 
 type RegisterForm = z.infer<typeof registerSchema>;
@@ -46,6 +55,25 @@ type RegisterForm = z.infer<typeof registerSchema>;
 export default function Register() {
   const { toast } = useToast();
   const [, setRankProof] = useState<File | null>(null);
+  const [clubSearch, setClubSearch] = useState("");
+  const [selectedClub, setSelectedClub] = useState<any>(null);
+
+  // Fetch clubs
+  const { data: clubs = [] } = useQuery({
+    queryKey: ['clubs'],
+    queryFn: async () => {
+      const response = await apiRequest('/api/clubs');
+      if (!response.ok) throw new Error('Failed to fetch clubs');
+      return response.json();
+    },
+  });
+
+  // Filter clubs based on search
+  const filteredClubs = clubs.filter((club: any) => 
+    club.name.toLowerCase().includes(clubSearch.toLowerCase()) ||
+    (club.province && club.province.toLowerCase().includes(clubSearch.toLowerCase())) ||
+    (club.city && club.city.toLowerCase().includes(clubSearch.toLowerCase()))
+  );
 
   const form = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
@@ -56,6 +84,8 @@ export default function Register() {
       dateOfBirth: "",
       phone: "",
       email: "",
+      clubId: "",
+      noClub: false,
       clubAffiliation: "",
       password: "",
       confirmPassword: "",
@@ -207,19 +237,105 @@ export default function Register() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="clubAffiliation"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Клуб эсвэл тоглодог газар</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Их сургуулийн спорт заал, Оч клуб г.м" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+              {/* Club Selection */}
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="noClub"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={(checked) => {
+                            field.onChange(checked);
+                            if (checked) {
+                              form.setValue("clubId", "");
+                              setSelectedClub(null);
+                              setClubSearch("");
+                            }
+                          }}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          Клубгүй тоглогч
+                        </FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                {!form.watch("noClub") && (
+                  <div className="space-y-2">
+                    <Label>Клуб сонгох</Label>
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="Клубын нэр эсвэл байршлаар хайх..."
+                        value={clubSearch}
+                        onChange={(e) => setClubSearch(e.target.value)}
+                      />
+                      {clubSearch && filteredClubs.length > 0 && (
+                        <div className="border rounded-md max-h-40 overflow-y-auto bg-white">
+                          {filteredClubs.slice(0, 10).map((club: any) => (
+                            <div
+                              key={club.id}
+                              className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                              onClick={() => {
+                                setSelectedClub(club);
+                                form.setValue("clubId", club.id);
+                                setClubSearch(club.name);
+                              }}
+                            >
+                              <div className="font-medium">{club.name}</div>
+                              {(club.province || club.city) && (
+                                <div className="text-sm text-gray-500">
+                                  {[club.province, club.city].filter(Boolean).join(", ")}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {selectedClub && (
+                      <div className="p-2 bg-green-50 border border-green-200 rounded-md">
+                        <div className="font-medium text-green-800">{selectedClub.name}</div>
+                        {(selectedClub.province || selectedClub.city) && (
+                          <div className="text-sm text-green-600">
+                            {[selectedClub.province, selectedClub.city].filter(Boolean).join(", ")}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <FormField
+                      control={form.control}
+                      name="clubId"
+                      render={() => (
+                        <FormItem>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 )}
-              />
+
+                {form.watch("noClub") && (
+                  <FormField
+                    control={form.control}
+                    name="clubAffiliation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Тоглодог газар <span className="text-gray-500 text-sm">(заавал биш)</span></FormLabel>
+                        <FormControl>
+                          <Input placeholder="Их сургуулийн спорт заал, хувийн дасгалжуулагч г.м" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
 
               <FormField
                 control={form.control}

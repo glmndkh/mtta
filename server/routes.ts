@@ -23,6 +23,30 @@ import {
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
 
+// Import clubMemberships table
+import {
+  users,
+  players,
+  clubs,
+  tournaments,
+  tournamentParticipants,
+  tournamentResults,
+  news,
+  sliders,
+  sponsors,
+  judgeAssignments,
+  judges,
+  clubMemberships,
+  coaches,
+  playerStats,
+  memberships,
+  branches,
+  leagues,
+  leagueParticipants,
+  leagueResults,
+  knockoutBrackets,
+} from "../shared/schema";
+
 function calculateAge(dateOfBirth: Date | null | undefined) {
   if (!dateOfBirth) return 0;
   const today = new Date();
@@ -150,6 +174,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clubAffiliation,
         password,
         rank,
+        clubId, // Added clubId
+        noClub, // Added noClub flag
       } = req.body;
 
       if (!firstName || !lastName)
@@ -168,7 +194,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res
           .status(400)
           .json({ message: "И-мэйл хаяг заавал оруулна уу" });
-      if (!clubAffiliation)
+      if (!clubAffiliation && !noClub)
         return res
           .status(400)
           .json({
@@ -213,16 +239,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastName,
         gender,
         dateOfBirth: new Date(dateOfBirth),
-        clubAffiliation,
+        clubAffiliation: noClub ? clubAffiliation : null, // Use clubAffiliation if noClub is true
         role: "player",
         password, // NOTE: plaintext as requested
       });
 
-      await storage.createPlayer({
-        userId: user.id,
-        dateOfBirth: new Date(dateOfBirth),
-        rank: rank || "Шинэ тоглогч",
-      });
+      // Create player record
+      const [player] = await storage.db
+        .insert(players)
+        .values({
+          userId: user.id,
+          gender: gender as "male" | "female" | "other",
+          dateOfBirth: new Date(dateOfBirth),
+          phone,
+          rank,
+          clubAffiliation: noClub ? clubAffiliation : null,
+        })
+        .returning();
+
+      // Create club membership if club is selected
+      if (clubId && !noClub) {
+        await storage.db.insert(clubMemberships).values({
+          playerId: player.id,
+          clubId: clubId,
+          membershipType: "member",
+          joinDate: new Date(),
+        });
+      }
 
       const { password: _pw, ...userResponse } = user;
       res.json({ message: "Амжилттай бүртгэгдлээ", user: userResponse });
@@ -871,7 +914,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json({ message: "Тэмцээн амжилттай устгагдлаа" });
       } catch (e) {
         console.error("Error deleting tournament:", e);
-        res.status(500).json({ message: "Тэмцээн устгахад алдаа гарлаа" });
+        res.status(400).json({ message: "Тэмцээн устгахад алдаа гарлаа" });
       }
     },
   );
@@ -1228,14 +1271,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         console.log("Raw request body:", req.body);
         console.log("Session user ID:", req.session.userId);
-        
+
         const authorId = req.session.userId;
         const dataToValidate = { ...req.body, authorId };
         console.log("Data to validate:", dataToValidate);
-        
+
         const newsData = insertNewsSchema.parse(dataToValidate);
         console.log("Validated news data:", newsData);
-        
+
         const news = await storage.createNews(newsData);
         console.log("Created news:", news);
         res.json(news);
