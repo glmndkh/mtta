@@ -389,7 +389,7 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
     overflow-x: hidden;
     color: var(--text-primary);
   }
-  
+
   #root {
     width: 100%;
     margin: 0;
@@ -469,7 +469,7 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
     background: rgba(0, 0, 0, 0.75) !important;
     z-index: 9999 !important;
   }
-  
+
   .mobile-menu-panel {
     position: fixed !important;
     top: 0 !important;

@@ -189,7 +189,7 @@ export default function Navigation() {
                   variant="ghost"
                   size="sm"
                   onClick={() => window.location.href = '/api/logout'}
-                  className="nav-link hover:text-red-400"
+                  className="nav-link hover:text-red-400 text-sm px-2 py-1"
                 >
                   <LogOut className="h-4 w-4 mr-1" />
                   Гарах
