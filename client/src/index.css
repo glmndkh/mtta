@@ -4,7 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Theme-based styling using data-theme attribute */
+/* Theme-based styling using both data-theme attribute and dark class for broad compatibility */
 .profile-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #f0fdf4, #ffffff);
@@ -12,7 +12,9 @@
   transition: all 0.3s ease;
 }
 
-[data-theme="dark"] .profile-container {
+/* Support both data-theme attribute and dark class */
+[data-theme="dark"] .profile-container,
+.dark .profile-container {
   background: linear-gradient(135deg, #4ade80, #22c55e, #16a34a) !important;
   color: #ffffff !important;
 }
@@ -22,7 +24,8 @@
   transition: color 0.3s ease;
 }
 
-[data-theme="dark"] .theme-text {
+[data-theme="dark"] .theme-text,
+.dark .theme-text {
   color: #ffffff !important;
 }
 
@@ -31,7 +34,8 @@
   transition: color 0.3s ease;
 }
 
-[data-theme="dark"] .theme-text-secondary {
+[data-theme="dark"] .theme-text-secondary,
+.dark .theme-text-secondary {
   color: #d1d5db !important;
 }
 
@@ -41,7 +45,8 @@
   transition: all 0.3s ease;
 }
 
-[data-theme="dark"] .theme-card {
+[data-theme="dark"] .theme-card,
+.dark .theme-card {
   background-color: #ffffff !important;
   color: #111827 !important;
 }
@@ -51,7 +56,8 @@
   transition: background-color 0.3s ease;
 }
 
-[data-theme="dark"] .theme-tabs {
+[data-theme="dark"] .theme-tabs,
+.dark .theme-tabs {
   background-color: #374151 !important;
 }
 

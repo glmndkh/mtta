@@ -5,20 +5,11 @@ import { Sun, Moon } from 'lucide-react';
 export function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
 
-  const handleToggle = () => {
-    console.log('Theme toggle clicked, current theme:', theme);
-    console.log('Document data-theme before:', document.documentElement.getAttribute('data-theme'));
-    toggleTheme();
-    setTimeout(() => {
-      console.log('Document data-theme after:', document.documentElement.getAttribute('data-theme'));
-    }, 100);
-  };
-
   return (
     <Button
       variant="ghost"
       size="icon"
-      onClick={handleToggle}
+      onClick={toggleTheme}
       className="h-9 w-9 text-white hover:text-green-300"
       data-testid="theme-toggle"
       title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}

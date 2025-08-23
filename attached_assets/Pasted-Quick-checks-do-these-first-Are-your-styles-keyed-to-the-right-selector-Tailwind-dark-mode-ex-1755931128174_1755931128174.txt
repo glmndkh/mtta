@@ -1,3 +1,32 @@
+Quick checks (do these first)
+
+Are your styles keyed to the right selector?
+
+Tailwind “dark mode” expects the dark class on <html> (or media mode), not a data-theme attribute.
+
+DaisyUI expects data-theme="dark"/"light" on <html> (or on a container).
+If your CSS is looking for .dark but you only set data-theme, nothing will change.
+
+Is <ThemeProvider> actually wrapping your app?
+If not, useTheme() works but nothing writes to <html> on mount.
+
+Check the DOM live:
+In DevTools console, run:
+
+document.documentElement.getAttribute('data-theme');
+document.documentElement.classList.contains('dark');
+localStorage.getItem('mtta-theme');
+
+
+Ensure these reflect what you expect after toggling.
+
+Iframe/localStorage quirks:
+Some sandboxes/iframes can block or isolate localStorage. If localStorage errors in dev tools, remove it temporarily and see if toggling begins to work.
+
+A hardened, drop-in version (supports Tailwind “dark” and DaisyUI)
+
+This writes both the data-theme attribute and the dark class on <html>, handles SSR/iframe quirks, and avoids FOUC flicker:
+
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 type Theme = 'dark' | 'light';
@@ -24,7 +53,6 @@ function applyThemeToDocument(t: Theme) {
   const el = document.documentElement;
   el.setAttribute('data-theme', t);          // DaisyUI, custom CSS vars
   el.classList.toggle('dark', t === 'dark'); // Tailwind dark mode (class strategy)
-  console.log('Applied theme to document:', t, 'data-theme:', el.getAttribute('data-theme'), 'has dark class:', el.classList.contains('dark'));
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -51,10 +79,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     document?.documentElement.style.setProperty('--theme-debug', theme);
   }, [theme]);
 
-  const toggleTheme = () => {
-    console.log('Theme toggle clicked, current theme:', theme);
-    setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
-  };
+  const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
   const value = useMemo(() => ({ theme, toggleTheme, setTheme }), [theme]);
 
@@ -66,3 +91,40 @@ export function useTheme() {
   if (!ctx) throw new Error('useTheme must be used within a ThemeProvider');
   return ctx;
 }
+
+How to wire it up
+
+Wrap your app root:
+
+import { ThemeProvider } from './ThemeProvider';
+export default function App() {
+  return (
+    <ThemeProvider>
+      <RootRoutes />
+    </ThemeProvider>
+  );
+}
+
+
+Example toggle button:
+
+import { useTheme } from './ThemeProvider';
+
+export function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme();
+  return <button onClick={toggleTheme}>Skin: {theme}</button>;
+}
+
+If it’s still “not changing”
+
+Your CSS may not be targeting correctly.
+
+Tailwind config: darkMode: 'class' and rely on .dark.
+
+DaisyUI: ensure themes include "dark" and "light", and your components actually react to data-theme.
+
+Scoped attribute issue: If you put data-theme on <div id="root">, but your components/styles look at <html>, move it to document.documentElement (as above).
+
+Third-party UI libs: Some read theme once at mount. Ensure you apply the attribute/class before first paint (the code above does this).
+
+You’re building fast—this makes the switch bulletproof. If you paste this provider in and your CSS is pointed at either [data-theme="dark"] or .dark, the skin will flip reliably.
