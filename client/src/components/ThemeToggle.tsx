@@ -7,7 +7,11 @@ export function ThemeToggle() {
 
   const handleToggle = () => {
     console.log('Theme toggle clicked, current theme:', theme);
+    console.log('Document data-theme before:', document.documentElement.getAttribute('data-theme'));
     toggleTheme();
+    setTimeout(() => {
+      console.log('Document data-theme after:', document.documentElement.getAttribute('data-theme'));
+    }, 100);
   };
 
   return (

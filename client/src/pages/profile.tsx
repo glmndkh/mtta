@@ -359,12 +359,20 @@ export default function Profile() {
   };
 
   if (!isAuthenticated) {
-    const backgroundStyle = theme === 'dark' 
-      ? { background: 'linear-gradient(135deg, #4ade80, #22c55e, #16a34a)' }
-      : { background: 'linear-gradient(135deg, #f0fdf4, #ffffff)' };
+    const containerStyle = theme === 'dark' 
+      ? { 
+          background: 'linear-gradient(135deg, #4ade80, #22c55e, #16a34a)',
+          color: '#ffffff',
+          transition: 'all 0.3s ease'
+        }
+      : { 
+          background: 'linear-gradient(135deg, #f0fdf4, #ffffff)',
+          color: '#111827',
+          transition: 'all 0.3s ease'
+        };
       
     return (
-      <div className="min-h-screen" style={backgroundStyle}>
+      <div className="min-h-screen" style={containerStyle}>
         <Navigation />
         <div className="container mx-auto px-4 py-8">
           <Card className="max-w-md mx-auto text-center">
@@ -384,12 +392,20 @@ export default function Profile() {
   }
 
   if (isLoading) {
-    const backgroundStyle = theme === 'dark' 
-      ? { background: 'linear-gradient(135deg, #4ade80, #22c55e, #16a34a)' }
-      : { background: 'linear-gradient(135deg, #f0fdf4, #ffffff)' };
+    const containerStyle = theme === 'dark' 
+      ? { 
+          background: 'linear-gradient(135deg, #4ade80, #22c55e, #16a34a)',
+          color: '#ffffff',
+          transition: 'all 0.3s ease'
+        }
+      : { 
+          background: 'linear-gradient(135deg, #f0fdf4, #ffffff)',
+          color: '#111827',
+          transition: 'all 0.3s ease'
+        };
       
     return (
-      <div className="min-h-screen" style={backgroundStyle}>
+      <div className="min-h-screen" style={containerStyle}>
         <Navigation />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">Ачааллаж байна...</div>
@@ -402,18 +418,26 @@ export default function Profile() {
   const membershipEndDate = profile?.membershipEndDate ? new Date(profile.membershipEndDate) : null;
   const isExpiringSoon = membershipEndDate && membershipEndDate <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
 
-  const backgroundStyle = theme === 'dark' 
-    ? { background: 'linear-gradient(135deg, #4ade80, #22c55e, #16a34a)' }
-    : { background: 'linear-gradient(135deg, #f0fdf4, #ffffff)' };
+  const containerStyle = theme === 'dark' 
+    ? { 
+        background: 'linear-gradient(135deg, #4ade80, #22c55e, #16a34a)',
+        color: '#ffffff',
+        transition: 'all 0.3s ease'
+      }
+    : { 
+        background: 'linear-gradient(135deg, #f0fdf4, #ffffff)',
+        color: '#111827',
+        transition: 'all 0.3s ease'
+      };
 
   return (
-    <div className="min-h-screen" style={backgroundStyle}>
+    <div className="min-h-screen" style={containerStyle}>
       <Navigation />
       
       <main className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="space-y-8">
           {/* Profile Header */}
-          <Card>
+          <Card style={{ backgroundColor: theme === 'dark' ? '#ffffff' : '#ffffff', color: theme === 'dark' ? '#111827' : '#111827' }}>
             <CardContent className="pt-6">
               <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                 <div className="relative">
@@ -426,7 +450,7 @@ export default function Profile() {
                 </div>
                 <div className="text-center md:text-left flex-1">
                   <div className="flex items-center gap-3 flex-wrap">
-                    <h1 className="text-3xl font-bold text-gray-900">{profile?.firstName} {profile?.lastName}</h1>
+                    <h1 className="text-3xl font-bold" style={{ color: theme === 'dark' ? '#ffffff' : '#111827' }}>{profile?.firstName} {profile?.lastName}</h1>
                     {/* Tournament Medals */}
                     {medals && medals.map((medal: any) => (
                       <div key={`${medal.tournamentId}-${medal.medalType}`} className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
@@ -445,7 +469,7 @@ export default function Profile() {
                       </div>
                     ))}
                   </div>
-                  <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-600">
+                  <div className="flex flex-wrap items-center gap-4 mt-2 text-sm" style={{ color: theme === 'dark' ? '#d1d5db' : '#6b7280' }}>
                     {profile?.email && (
                       <div className="flex items-center gap-1">
                         <Mail className="w-4 h-4" />
@@ -592,7 +616,10 @@ export default function Profile() {
 
           {/* Main Content Tabs */}
           <Tabs defaultValue="profile" className="w-full">
-            <TabsList className={`grid w-full grid-cols-4 ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-200'}`}>
+            <TabsList 
+              className="grid w-full grid-cols-4" 
+              style={{ backgroundColor: theme === 'dark' ? '#374151' : '#f3f4f6' }}
+            >
               <TabsTrigger value="profile" className={`text-base ${theme === 'dark' ? 'text-white data-[state=active]:text-black' : 'text-gray-700 data-[state=active]:text-white'} data-[state=active]:bg-green-600 data-[state=active]:font-bold`}>Хувийн мэдээлэл</TabsTrigger>
               <TabsTrigger value="membership" className={`text-base ${theme === 'dark' ? 'text-white data-[state=active]:text-black' : 'text-gray-700 data-[state=active]:text-white'} data-[state=active]:bg-green-600 data-[state=active]:font-bold`}>Гишүүнчлэл</TabsTrigger>
               <TabsTrigger value="tournaments" className={`text-base ${theme === 'dark' ? 'text-white data-[state=active]:text-black' : 'text-gray-700 data-[state=active]:text-white'} data-[state=active]:bg-green-600 data-[state=active]:font-bold`}>Тэмцээн</TabsTrigger>
