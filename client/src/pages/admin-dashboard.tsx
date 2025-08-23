@@ -447,6 +447,10 @@ export default function AdminDashboard() {
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => setLocation(`/admin/player/${user.id}`)}>
+                      <User className="w-4 h-4 mr-1" />
+                      Details
+                    </Button>
                     <Button size="sm" variant="outline" onClick={() => openEditDialog(user)}>
                       <Pencil className="w-4 h-4" />
                     </Button>

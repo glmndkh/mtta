@@ -35,6 +35,7 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import TournamentManagement from "@/pages/tournament-management";
 import AboutPage from "@/pages/about";
 import { useAuth } from "@/hooks/useAuth";
+import AdminPlayerDetailsPage from "@/pages/admin-player-details"; // Import the new page
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -67,14 +68,13 @@ function Router() {
           <Route path="/admin/dashboard" component={AdminDashboard} />
           <Route path="/admin-dashboard" component={AdminDashboard} />
           <Route path="/admin" component={AdminDashboard} />
-          <Route path="/admin/generator" component={AdminTournamentGenerator} />
-          <Route path="/admin/tournaments" component={AdminTournaments} />
-          <Route path="/admin/tournament/:id/results/:type" component={AdminTournamentResults} />
-          <Route path="/admin/tournament/:id/results" component={AdminTournamentResults} />
-          <Route path="/admin/tournament-results" component={AdminTournamentResults} />
-          <Route path="/admin/tournament-create" component={AdminTournamentGenerator} />
+          <Route path="/admin/player/:id" component={AdminPlayerDetailsPage} />
           <Route path="/admin/tournament/:id/manage" component={TournamentManagement} />
+          <Route path="/admin/tournament/:id/results" component={AdminTournamentResults} />
+          <Route path="/admin/tournaments" component={AdminTournaments} />
           <Route path="/admin/league/:id/manage" component={TournamentManagement} />
+          <Route path="/admin/generator" component={AdminTournamentGenerator} />
+          <Route path="/admin/tournament-create" component={AdminTournamentGenerator} />
           <Route path="/excel-tournament-demo" component={ExcelTournamentDemo} />
         </>
       )}
