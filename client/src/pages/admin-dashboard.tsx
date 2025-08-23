@@ -91,7 +91,7 @@ export default function AdminDashboard() {
         selectedTab === 'judges' ||
         selectedTab === 'clubs' ||
         selectedTab === 'coaches') &&
-      (isCreateDialogOpen || !!editingItem)
+      (isCreateDialogOpen || !!editingItem || selectedTab === 'clubs')
   });
 
   const { data: news, isLoading: newsLoading } = useQuery({
