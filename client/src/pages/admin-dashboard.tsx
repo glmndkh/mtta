@@ -20,6 +20,9 @@ import AdminStatsDashboard from "@/components/admin-stats-dashboard";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { UserAutocomplete } from "@/components/UserAutocomplete";
 import RichTextEditor from "@/components/rich-text-editor";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 export default function AdminDashboard() {
   const [selectedTab, setSelectedTab] = useState("stats");
@@ -35,11 +38,32 @@ export default function AdminDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  const [showDialog, setShowDialog] = useState(false); // State to control dialog visibility
+
+  // Form schema and initialization for judges
+  const judgeSchema = z.object({
+    firstName: z.string().min(1, "Нэр заавал оруулна уу"),
+    lastName: z.string().min(1, "Овог заавал оруулна уу"),
+    userId: z.string().optional(),
+    judgeType: z.enum(["domestic", "international"]),
+    imageUrl: z.string().optional(),
+  });
+  const form = useForm<z.infer<typeof judgeSchema>>({
+    resolver: zodResolver(judgeSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      userId: "",
+      judgeType: "domestic",
+      imageUrl: "",
+    },
+  });
+  const currentTab = selectedTab; // Use selectedTab for currentTab
 
   // Data queries
   const { data: users, isLoading: usersLoading } = useQuery({
     queryKey: ['/api/admin/users'],
-    enabled: selectedTab === 'users'
+    enabled: selectedTab === 'users' || selectedTab === 'clubs' || selectedTab === 'judges' || selectedTab === 'teams' || selectedTab === 'coaches'
   });
 
 
@@ -264,46 +288,46 @@ export default function AdminDashboard() {
   };
 
   const openEditDialog = (item: any) => {
-    if (selectedTab === 'tournaments') {
-      setLocation(`/admin/generator?id=${item.id}`);
-      return;
-    }
-
     setEditingItem(item);
-
-    // Format dates for HTML date inputs (YYYY-MM-DD format)
-    const formattedItem = { ...item };
-    if (item.startDate) {
-      const startDate = new Date(item.startDate);
-      if (!isNaN(startDate.getTime())) {
-        formattedItem.startDate = startDate.toISOString().split('T')[0];
-      }
+    if (selectedTab === "users") {
+      form.reset({
+        firstName: item.firstName || "",
+        lastName: item.lastName || "",
+        email: item.email || "",
+        phone: item.phone || "",
+        gender: item.gender || "male",
+        dateOfBirth: item.dateOfBirth ? item.dateOfBirth.split('T')[0] : "",
+        clubAffiliation: item.clubAffiliation || "",
+        role: item.role || "player",
+      });
+    } else if (selectedTab === "clubs") {
+      form.reset({
+        name: item.name || "",
+        description: item.description || "",
+        address: item.address || "",
+        country: item.country || "",
+        province: item.province || "",
+        city: item.city || "",
+        phone: item.phone || "",
+        email: item.email || "",
+        website: item.website || "",
+        logoUrl: item.logoUrl || "",
+        colorTheme: item.colorTheme || "var(--success)",
+        schedule: item.schedule || "",
+        trainingInfo: item.trainingInfo || "",
+        ownerId: item.ownerId || "",
+        ownerName: item.ownerName || "",
+      });
+    } else if (selectedTab === "judges") {
+      form.reset({
+        firstName: item.firstName || "",
+        lastName: item.lastName || "",
+        userId: item.userId || "",
+        judgeType: item.judgeType || "domestic",
+        imageUrl: item.imageUrl || "",
+      });
     }
-    if (item.endDate) {
-      const endDate = new Date(item.endDate);
-      if (!isNaN(endDate.getTime())) {
-        formattedItem.endDate = endDate.toISOString().split('T')[0];
-      }
-    }
-    if (item.registrationDeadline) {
-      const regDeadline = new Date(item.registrationDeadline);
-      if (!isNaN(regDeadline.getTime())) {
-        formattedItem.registrationDeadline = regDeadline.toISOString().split('T')[0];
-      }
-    }
-    if (item.dateOfBirth) {
-      const dob = new Date(item.dateOfBirth);
-      if (!isNaN(dob.getTime())) {
-        formattedItem.dateOfBirth = dob.toISOString().split('T')[0];
-      }
-    }
-
-    // Extract player IDs for teams
-    if (selectedTab === 'teams' && item.players && Array.isArray(item.players)) {
-      formattedItem.playerIds = item.players.map((player: any) => player.playerId);
-    }
-
-    setFormData(formattedItem);
+    setShowDialog(true); // Show the dialog
   };
 
   const openTeamEnrollmentDialog = (league: any) => {
@@ -1487,105 +1511,140 @@ export default function AdminDashboard() {
       case 'judges':
         return (
           <>
-            <div>
-              <Label>Хэрэглэгч эсвэл нэр</Label>
-              <UserAutocomplete
-                users={allUsers || []}
-                value={formData.userId}
-                onSelect={(u) =>
-                  setFormData({
-                    ...formData,
-                    userId: u ? u.id : '',
-                    firstName: u?.firstName || '',
-                    lastName: u?.lastName || '',
-                  })
-                }
-                placeholder="Шүүгч хайх..."
-                allowCustomName
-                customNameValue={`${formData.firstName || ''} ${formData.lastName || ''}`.trim()}
-                onCustomNameChange={(name) => {
-                  const [first, ...rest] = name.split(' ');
-                  setFormData({
-                    ...formData,
-                    userId: '',
-                    firstName: first,
-                    lastName: rest.join(' '),
-                  });
-                }}
+            <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      Нэр
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder="Шүүгчийн нэр" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      Овог
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder="Шүүгчийн овог" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="userId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      Хэрэглэгч (заавал биш)
+                    </FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ""}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Хэрэглэгч сонгоно уу (заавал биш)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">Хэрэглэгчгүй</SelectItem>
+                        {users && Array.isArray(users) ? users.map((user: any) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.firstName} {user.lastName}
+                          </SelectItem>
+                        )) : null}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             <div>
               <Label className="flex items-center gap-2">
                 <Upload className="w-4 h-4" />
                 Шүүгчийн зураг
               </Label>
-              <ObjectUploader
-                maxNumberOfFiles={1}
-                maxFileSize={5 * 1024 * 1024}
-                onGetUploadParameters={async () => {
-                  try {
-                    const response = await apiRequest("/api/objects/upload", {
-                      method: "POST",
-                    });
-                    const data = (await response.json()) as { uploadURL: string };
-                    if (!data || !data.uploadURL) {
-                      throw new Error("No upload URL received");
-                    }
-                    return {
-                      method: "PUT" as const,
-                      url: data.uploadURL,
-                    };
-                  } catch (error) {
-                    console.error("Error getting upload parameters:", error);
-                    toast({
-                      title: "Алдаа",
-                      description: "Файл хуулах URL авахад алдаа гарлаа",
-                      variant: "destructive",
-                    });
-                    throw error;
-                  }
-                }}
-                onComplete={async (result) => {
-                  if (result.successful && result.successful.length > 0) {
-                    const uploadURL = result.successful[0].uploadURL;
+              <div className="space-y-2">
+                <ObjectUploader
+                  maxNumberOfFiles={1}
+                  maxFileSize={5 * 1024 * 1024}
+                  onGetUploadParameters={async () => {
                     try {
-                      const aclResponse = await apiRequest("/api/objects/acl", {
-                        method: "PUT",
-                        body: JSON.stringify({ imageURL: uploadURL }),
+                      const response = await apiRequest("/api/objects/upload", {
+                        method: "POST",
                       });
-                      const aclData = (await aclResponse.json()) as {
-                        objectPath: string;
+                      const data = (await response.json()) as { uploadURL: string };
+                      if (!data || !data.uploadURL) {
+                        throw new Error("No upload URL received");
+                      }
+                      return {
+                        method: "PUT" as const,
+                        url: data.uploadURL,
                       };
-                      setFormData({
-                        ...formData,
-                        imageUrl: aclData.objectPath,
-                      });
-                      toast({ title: "Зураг амжилттай хуулагдлаа" });
                     } catch (error) {
-                      console.error("Error setting ACL:", error);
+                      console.error("Error getting upload parameters:", error);
                       toast({
                         title: "Алдаа",
-                        description:
-                          "Зураг хуулагдсан боловч зөвшөөрөл тохируулахад алдаа гарлаа",
+                        description: "Файл хуулах URL авахад алдаа гарлаа",
                         variant: "destructive",
                       });
+                      throw error;
                     }
-                  }
-                }}
-                buttonClassName="w-full"
-              >
-                <div className="flex items-center gap-2">
-                  <Upload className="w-4 h-4" />
-                  <span>Зураг файл сонгох</span>
-                </div>
-              </ObjectUploader>
-              {formData.imageUrl && (
-                <div className="mt-2">
-                  <p className="text-sm text-text-secondary">
-                    Зураг хуулагдсан: {formData.imageUrl}
-                  </p>
-                </div>
-              )}
+                  }}
+                  onComplete={async (result) => {
+                    if (result.successful && result.successful.length > 0) {
+                      const uploadURL = result.successful[0].uploadURL;
+                      try {
+                        const aclResponse = await apiRequest("/api/objects/acl", {
+                          method: "PUT",
+                          body: JSON.stringify({ imageURL: uploadURL }),
+                        });
+                        const aclData = (await aclResponse.json()) as {
+                          objectPath: string;
+                        };
+                        setFormData({
+                          ...formData,
+                          imageUrl: aclData.objectPath,
+                        });
+                        toast({ title: "Зураг амжилттай хуулагдлаа" });
+                      } catch (error) {
+                        console.error("Error setting ACL:", error);
+                        toast({
+                          title: "Алдаа",
+                          description:
+                            "Зураг хуулагдсан боловч зөвшөөрөл тохируулахад алдаа гарлаа",
+                          variant: "destructive",
+                        });
+                      }
+                    }
+                  }}
+                  buttonClassName="w-full"
+                >
+                  <div className="flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    <span>Зураг файл сонгох</span>
+                  </div>
+                </ObjectUploader>
+                {formData.imageUrl && (
+                  <div className="mt-2">
+                    <p className="text-sm text-text-secondary">
+                      Зураг хуулагдсан: {formData.imageUrl}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
             <div>
               <Label htmlFor="judgeType">Төрөл</Label>
@@ -2448,7 +2507,8 @@ export default function AdminDashboard() {
       case 'federation-members':
         return formData.name;
       case 'judges':
-        return formData.firstName && formData.lastName && formData.judgeType;
+        // Use form validation for judges
+        return form.formState.isValid;
       case 'coaches':
         return formData.clubId && (formData.userId || formData.name);
       case 'champions':
@@ -2459,33 +2519,40 @@ export default function AdminDashboard() {
   };
 
   const handleCreateJudge = async () => {
+    const validatedForm = await form.trigger(); // Trigger validation
+    if (!validatedForm) {
+      toast({ title: "Алдаа", description: "Шүүгчийн мэдээллийг зөв оруулна уу", variant: "destructive" });
+      return;
+    }
+
+    const judgeData = form.getValues();
+    const { firstName, lastName, userId, judgeType, imageUrl } = judgeData;
+
     try {
-      if (selectedTab === "judges") { // Use selectedTab instead of activeTab
-        const judgeData = {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          imageUrl: formData.imageUrl,
-          judgeType: formData.judgeType,
-        };
-        const response = await fetch('/api/admin/judges', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(judgeData)
-        });
+      const response = await fetch('/api/admin/judges', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          userId: userId || undefined, // Send userId only if it exists
+          judgeType,
+          imageUrl,
+        })
+      });
 
-        if (!response.ok) {
-          throw new Error('Failed to create judge');
-        }
-
-        await judgesRefetch();
-        setIsCreateDialogOpen(false); // Use setIsCreateDialogOpen
-        setFormData({ firstName: '', lastName: '', imageUrl: '', judgeType: 'domestic' }); // Reset form data
-
-        toast({
-          title: "Амжилттай",
-          description: "Шүүгч амжилттай үүсгэлээ"
-        });
+      if (!response.ok) {
+        throw new Error('Failed to create judge');
       }
+
+      toast({
+        title: "Амжилттай",
+        description: "Шүүгч амжилттай үүсгэлээ"
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/judges'] }); // Invalidate judges query
+      form.reset(); // Reset the form
+      setIsCreateDialogOpen(false); // Close the dialog
+
     } catch (error) {
       console.error('Error creating judge:', error);
       toast({
@@ -3059,21 +3126,41 @@ export default function AdminDashboard() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 overflow-y-auto flex-1 pr-2">
-            {renderFormFields()}
+            {selectedTab === 'judges' ? (
+              <form onSubmit={form.handleSubmit(handleCreateJudge)}>
+                {renderFormFields()}
+                <DialogFooter className="flex-shrink-0 pt-4 border-t">
+                  <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                    Цуцлах
+                  </Button>
+                  <Button type="submit" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting ? "Үүсгэж байна..." : "Үүсгэх"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            ) : (
+              <>
+                {renderFormFields()}
+                <DialogFooter className="flex-shrink-0 pt-4 border-t">
+                  <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                    Цуцлах
+                  </Button>
+                  <Button onClick={handleCreate} disabled={createMutation.isPending}>
+                    {createMutation.isPending ? "Үүсгэж байна..." : "Үүсгэх"}
+                  </Button>
+                </DialogFooter>
+              </>
+            )}
           </div>
-          <DialogFooter className="flex-shrink-0 pt-4 border-t">
-            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-              Цуцлах
-            </Button>
-            <Button onClick={handleCreate} disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Үүсгэж байна..." : "Үүсгэх"}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Edit Dialog */}
-      <Dialog open={!!editingItem} onOpenChange={() => setEditingItem(null)}>
+      <Dialog open={showDialog} onOpenChange={() => {
+        setShowDialog(false);
+        setEditingItem(null);
+        form.reset(); // Reset form on close
+      }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>Засварлах</DialogTitle>
@@ -3082,16 +3169,39 @@ export default function AdminDashboard() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 overflow-y-auto flex-1 pr-2">
-            {renderFormFields()}
+            {selectedTab === 'judges' ? (
+              <form onSubmit={form.handleSubmit(handleUpdate)}>
+                {renderFormFields()}
+                <DialogFooter className="flex-shrink-0 pt-4 border-t">
+                  <Button variant="outline" onClick={() => {
+                    setShowDialog(false);
+                    setEditingItem(null);
+                    form.reset();
+                  }}>
+                    Цуцлах
+                  </Button>
+                  <Button type="submit" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting ? "Шинэчилж байна..." : "Шинэчлэх"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            ) : (
+              <>
+                {renderFormFields()}
+                <DialogFooter className="flex-shrink-0 pt-4 border-t">
+                  <Button variant="outline" onClick={() => {
+                    setEditingItem(null);
+                    setShowDialog(false);
+                  }}>
+                    Цуцлах
+                  </Button>
+                  <Button onClick={handleUpdate} disabled={updateMutation.isPending}>
+                    {updateMutation.isPending ? "Шинэчилж байна..." : "Шинэчлэх"}
+                  </Button>
+                </DialogFooter>
+              </>
+            )}
           </div>
-          <DialogFooter className="flex-shrink-0 pt-4 border-t">
-            <Button variant="outline" onClick={() => setEditingItem(null)}>
-              Цуцлах
-            </Button>
-            <Button onClick={handleUpdate} disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? "Шинэчилж байна..." : "Шинэчлэх"}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 

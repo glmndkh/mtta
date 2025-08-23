@@ -547,6 +547,9 @@ export const insertFederationMemberSchema = createInsertSchema(federationMembers
 export const insertJudgeSchema = createInsertSchema(judges).omit({
   id: true,
   createdAt: true,
+}).refine(data => data.userId || (data.firstName && data.lastName), {
+  message: "userId эсвэл firstName болон lastName заавал байх ёстой",
+  path: ["userId"],
 });
 
 export const insertClubCoachSchema = createInsertSchema(clubCoaches).omit({

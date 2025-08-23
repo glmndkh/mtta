@@ -42,17 +42,17 @@ export default function JudgesPage() {
               <TabsTrigger value="international" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">Олон улсын шүүгчид</TabsTrigger>
             </TabsList>
             <TabsContent value={"domestic"}>
-              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+              <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {judges && Array.isArray(judges) ?
                   judges.filter(judge => judge.judgeType === 'domestic').map(judge => (
-                    <Card key={judge.id} className="bg-gray-800 text-white">
-                      <CardContent className="flex items-center gap-4 p-4">
-                        <Avatar className="w-16 h-16">
+                    <Card key={judge.id} className="bg-gray-800 text-white hover:bg-gray-700 transition-colors aspect-[4/3] flex flex-col">
+                      <CardContent className="flex flex-col items-center justify-center p-6 h-full text-center">
+                        <Avatar className="w-20 h-20 mb-4">
                           <AvatarImage src={judge.imageUrl} alt={judge.firstName} />
-                          <AvatarFallback>{judge.firstName?.[0]}{judge.lastName?.[0]}</AvatarFallback>
+                          <AvatarFallback className="text-lg">{judge.firstName?.[0]}{judge.lastName?.[0]}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="font-semibold">{judge.firstName} {judge.lastName}</div>
+                          <div className="font-semibold text-lg mb-1">{judge.firstName} {judge.lastName}</div>
                           <div className="text-sm text-gray-400">Дотоодын шүүгч</div>
                         </div>
                       </CardContent>
@@ -72,17 +72,17 @@ export default function JudgesPage() {
               </div>
             </TabsContent>
             <TabsContent value={"international"}>
-              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+              <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {judges && Array.isArray(judges) ?
                   judges.filter(judge => judge.judgeType === 'international').map(judge => (
-                    <Card key={judge.id} className="bg-gray-800 text-white">
-                      <CardContent className="flex items-center gap-4 p-4">
-                        <Avatar className="w-16 h-16">
+                    <Card key={judge.id} className="bg-gray-800 text-white hover:bg-gray-700 transition-colors aspect-[4/3] flex flex-col">
+                      <CardContent className="flex flex-col items-center justify-center p-6 h-full text-center">
+                        <Avatar className="w-20 h-20 mb-4">
                           <AvatarImage src={judge.imageUrl} alt={judge.firstName} />
-                          <AvatarFallback>{judge.firstName?.[0]}{judge.lastName?.[0]}</AvatarFallback>
+                          <AvatarFallback className="text-lg">{judge.firstName?.[0]}{judge.lastName?.[0]}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="font-semibold">{judge.firstName} {judge.lastName}</div>
+                          <div className="font-semibold text-lg mb-1">{judge.firstName} {judge.lastName}</div>
                           <div className="text-sm text-gray-400">Олон улсын шүүгч</div>
                         </div>
                       </CardContent>
