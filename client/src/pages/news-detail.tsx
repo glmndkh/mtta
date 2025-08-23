@@ -229,12 +229,11 @@ export default function NewsDetail() {
               </CardHeader>
               
               <CardContent>
-                <div className="prose max-w-none">
-                  <p className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap">
-                    {article.content}
-                  </p>
-                </div>
-                
+                <div
+                  className="prose max-w-none text-gray-700 text-lg leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: article.content }}
+                />
+
                 <Separator className="my-8" />
                 
                 {/* Author Info and Actions */}
