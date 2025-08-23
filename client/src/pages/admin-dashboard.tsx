@@ -346,15 +346,26 @@ export default function AdminDashboard() {
         imageUrl: '',
         judgeType: 'domestic' // Default to domestic
       };
+    } else if (selectedTab === 'clubs') {
+      // Default values for clubs, including location fields
+      defaultData = {
+        name: '',
+        description: '',
+        address: '',
+        country: '',
+        province: '',
+        city: '',
+        phone: '',
+        email: '',
+        schedule: '',
+        website: '',
+        trainingInfo: '',
+        extraData: [],
+      };
     }
 
     setFormData(defaultData);
     setIsCreateDialogOpen(true);
-  };
-
-  const openTeamEnrollmentDialog = (league: any) => {
-    setSelectedLeague(league);
-    setIsTeamEnrollmentDialogOpen(true);
   };
 
   const enrollTeamInLeague = async (teamId: string) => {
@@ -457,6 +468,16 @@ export default function AdminDashboard() {
              club.email?.toLowerCase().includes(searchText);
     }) : [];
 
+    // Group clubs by province
+    const groupedClubs: { [key: string]: any[] } = {};
+    filteredClubs.forEach(club => {
+      const province = club.province || 'Unknown Province';
+      if (!groupedClubs[province]) {
+        groupedClubs[province] = [];
+      }
+      groupedClubs[province].push(club);
+    });
+
     return (
       <div className="space-y-4">
         <div className="flex flex-wrap justify-between items-center gap-4">
@@ -477,37 +498,48 @@ export default function AdminDashboard() {
         {clubsLoading ? (
           <div>Ачааллаж байна...</div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Нэр</TableHead>
-                <TableHead>Тайлбар</TableHead>
-                <TableHead>Хаяг</TableHead>
-                <TableHead>Холбоо барих</TableHead>
-                <TableHead>Үйлдэл</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredClubs.map((club: any) => (
-                <TableRow key={club.id}>
-                  <TableCell>{club.name}</TableCell>
-                  <TableCell>{club.description}</TableCell>
-                  <TableCell>{club.address}</TableCell>
-                  <TableCell>{club.phone} / {club.email}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => openEditDialog(club)}>
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => handleDelete(club.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          Object.keys(groupedClubs).length > 0 ? (
+            Object.entries(groupedClubs).map(([province, clubList]) => (
+              <div key={province} className="border p-4 rounded-lg shadow-sm">
+                <h3 className="text-xl font-semibold mb-3 text-green-700">{province}</h3>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Нэр</TableHead>
+                      <TableHead>Тайлбар</TableHead>
+                      <TableHead>Хаяг</TableHead>
+                      <TableHead>Холбоо барих</TableHead>
+                      <TableHead>Үйлдэл</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {clubList.map((club: any) => (
+                      <TableRow key={club.id}>
+                        <TableCell>{club.name}</TableCell>
+                        <TableCell>{club.description}</TableCell>
+                        <TableCell>{club.country}, {club.province}, {club.city}</TableCell>
+                        <TableCell>{club.phone} / {club.email}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" onClick={() => openEditDialog(club)}>
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button size="sm" variant="destructive" onClick={() => handleDelete(club.id)}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              Клуб олдсонгүй
+            </div>
+          )
         )}
       </div>
     );
@@ -1094,8 +1126,25 @@ export default function AdminDashboard() {
             </div>
             <div>
               <Label htmlFor="address">Хаяг</Label>
-              <Textarea
-                id="address"
+              <div className="grid grid-cols-3 gap-2">
+                <Input
+                  placeholder="Улс"
+                  value={formData.country || ''}
+                  onChange={(e) => setFormData({...formData, country: e.target.value})}
+                />
+                <Input
+                  placeholder="Аймаг/Хот"
+                  value={formData.province || ''}
+                  onChange={(e) => setFormData({...formData, province: e.target.value})}
+                />
+                <Input
+                  placeholder="Дүүрэг/Сум"
+                  value={formData.city || ''}
+                  onChange={(e) => setFormData({...formData, city: e.target.value})}
+                />
+              </div>
+              <Input
+                placeholder="Дэлгэрэнгүй хаяг"
                 value={formData.address || ''}
                 onChange={(e) => setFormData({...formData, address: e.target.value})}
               />
@@ -2383,7 +2432,8 @@ export default function AdminDashboard() {
       case 'sliders':
         return formData.title && formData.imageUrl;
       case 'clubs':
-        return formData.name;
+        // Add validation for location fields
+        return formData.name && formData.country && formData.province && formData.city;
       case 'branches':
         return formData.name;
       case 'federation-members':

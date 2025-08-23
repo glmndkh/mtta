@@ -49,6 +49,9 @@ export default function Clubs() {
       name: "",
       description: "",
       address: "",
+      country: "Монгол Улс",
+      province: "",
+      city: "",
       phone: "",
       email: "",
       colorTheme: "var(--success)",
@@ -162,15 +165,15 @@ export default function Clubs() {
                       )}
                     />
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                       <FormField
                         control={form.control}
-                        name="address"
+                        name="country"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Хаяг</FormLabel>
+                            <FormLabel>Улс</FormLabel>
                             <FormControl>
-                              <Input placeholder="Улаанбаатар хот..." {...field} />
+                              <Input placeholder="Монгол Улс" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -179,18 +182,60 @@ export default function Clubs() {
 
                       <FormField
                         control={form.control}
-                        name="phone"
+                        name="province"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Утасны дугаар</FormLabel>
+                            <FormLabel>Аймаг/Хот</FormLabel>
                             <FormControl>
-                              <Input placeholder="+976 xxxxxxxx" {...field} />
+                              <Input placeholder="Улаанбаатар хот" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="city"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Дүүрэг/Сум</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Сүхбаатар дүүрэг" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                     </div>
+
+                    <FormField
+                      control={form.control}
+                      name="address"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Дэлгэрэнгүй хаяг</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Гудамж, байр, тоот..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Утасны дугаар</FormLabel>
+                          <FormControl>
+                            <Input placeholder="+976 xxxxxxxx" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
@@ -280,78 +325,109 @@ export default function Clubs() {
           </div>
         ) : (
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Club Cards */}
-            <div className="lg:col-span-2 grid md:grid-cols-2 gap-6">
-              {clubs.map((club: any) => (
-                <Card 
-                  key={club.id} 
-                  className="shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
-                  onClick={() => setSelectedClub(club.id)}
-                >
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-center space-x-3">
-                        <div 
-                          className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
-                          style={{ backgroundColor: club.colorTheme || 'var(--success)' }}
-                        >
-                          {club.logoUrl ? (
-                            <img src={club.logoUrl} alt={club.name} className="w-10 h-10 rounded-full object-cover" />
-                          ) : (
-                            club.name.charAt(0)
-                          )}
-                        </div>
-                        <div>
-                          <CardTitle className="text-lg">{club.name}</CardTitle>
-                          <p className="text-sm text-gray-600 flex items-center">
-                            <Crown className="h-3 w-3 mr-1" />
-                            {club.owner ? `${club.owner.firstName} ${club.owner.lastName}` : club.ownerName}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-600 mb-4 line-clamp-2">{club.description}</p>
-                    
-                    <div className="space-y-2 text-sm">
-                      {club.address && (
-                        <div className="flex items-center text-gray-600">
-                          <MapPin className="h-4 w-4 mr-2 text-mtta-green" />
-                          <span>{club.address}</span>
-                        </div>
-                      )}
-                      {club.phone && (
-                        <div className="flex items-center text-gray-600">
-                          <Phone className="h-4 w-4 mr-2 text-mtta-green" />
-                          <span>{club.phone}</span>
-                        </div>
-                      )}
-                      {club.email && (
-                        <div className="flex items-center text-gray-600">
-                          <Mail className="h-4 w-4 mr-2 text-mtta-green" />
-                          <span>{club.email}</span>
-                        </div>
-                      )}
-                    </div>
+            {/* Club Cards Grouped by Province */}
+            <div className="lg:col-span-2">
+              {(() => {
+                // Group clubs by province
+                const clubsByProvince = clubs.reduce((acc: any, club: any) => {
+                  const province = club.province || 'Бусад';
+                  if (!acc[province]) {
+                    acc[province] = [];
+                  }
+                  acc[province].push(club);
+                  return acc;
+                }, {});
 
-                    <div className="mt-4 pt-4 border-t">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Users className="h-4 w-4 mr-1 text-mtta-green" />
-                          <span>{club.players?.length || 0} тоглогч</span>
-                        </div>
-                        <Badge 
-                          variant="outline"
-                          style={{ borderColor: club.colorTheme || 'var(--success)', color: club.colorTheme || 'var(--success)' }}
+                return Object.entries(clubsByProvince).map(([province, provinceClubs]: [string, any]) => (
+                  <div key={province} className="mb-8">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                      <MapPin className="h-5 w-5 mr-2 text-mtta-green" />
+                      {province}
+                      <span className="ml-2 text-sm text-gray-500">({provinceClubs.length} клуб)</span>
+                    </h3>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {provinceClubs.map((club: any) => (
+                        <Card 
+                          key={club.id} 
+                          className="shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
+                          onClick={() => setSelectedClub(club.id)}
                         >
-                          Идэвхтэй
-                        </Badge>
-                      </div>
+                          <CardHeader>
+                            <div className="flex justify-between items-start">
+                              <div className="flex items-center space-x-3">
+                                <div 
+                                  className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
+                                  style={{ backgroundColor: club.colorTheme || 'var(--success)' }}
+                                >
+                                  {club.logoUrl ? (
+                                    <img src={club.logoUrl} alt={club.name} className="w-10 h-10 rounded-full object-cover" />
+                                  ) : (
+                                    club.name.charAt(0)
+                                  )}
+                                </div>
+                                <div>
+                                  <CardTitle className="text-lg">{club.name}</CardTitle>
+                                  <p className="text-sm text-gray-600 flex items-center">
+                                    <Crown className="h-3 w-3 mr-1" />
+                                    {club.owner ? `${club.owner.firstName} ${club.owner.lastName}` : club.ownerName}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-gray-600 mb-4 line-clamp-2">{club.description}</p>
+                            
+                            <div className="space-y-2 text-sm">
+                              {(club.city || club.province || club.country) && (
+                                <div className="flex items-center text-gray-600">
+                                  <MapPin className="h-4 w-4 mr-2 text-mtta-green" />
+                                  <span>
+                                    {[club.city, club.province, club.country].filter(Boolean).join(', ')}
+                                  </span>
+                                </div>
+                              )}
+                              {club.address && (
+                                <div className="flex items-start text-gray-600">
+                                  <Building className="h-4 w-4 mr-2 text-mtta-green mt-0.5" />
+                                  <span>{club.address}</span>
+                                </div>
+                              )}
+                              {club.phone && (
+                                <div className="flex items-center text-gray-600">
+                                  <Phone className="h-4 w-4 mr-2 text-mtta-green" />
+                                  <span>{club.phone}</span>
+                                </div>
+                              )}
+                              {club.email && (
+                                <div className="flex items-center text-gray-600">
+                                  <Mail className="h-4 w-4 mr-2 text-mtta-green" />
+                                  <span>{club.email}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="mt-4 pt-4 border-t">
+                              <div className="flex justify-between items-center">
+                                <div className="flex items-center text-sm text-gray-600">
+                                  <Users className="h-4 w-4 mr-1 text-mtta-green" />
+                                  <span>{club.players?.length || 0} тоглогч</span>
+                                </div>
+                                <Badge 
+                                  variant="outline"
+                                  style={{ borderColor: club.colorTheme || 'var(--success)', color: club.colorTheme || 'var(--success)' }}
+                                >
+                                  Идэвхтэй
+                                </Badge>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+                  </div>
+                ));
+              })()}
             </div>
 
             {/* Club Details Sidebar */}
@@ -387,14 +463,28 @@ export default function Clubs() {
                       </div>
 
                       <div>
-                        <h4 className="font-semibold text-gray-900 mb-2">Холбоо барих</h4>
+                        <h4 className="font-semibold text-gray-900 mb-2">Байршил</h4>
                         <div className="space-y-2 text-sm">
-                          {clubDetails.address && (
+                          {(clubDetails.city || clubDetails.province || clubDetails.country) && (
                             <div className="flex items-start">
                               <MapPin className="h-4 w-4 mr-2 text-mtta-green mt-0.5" />
+                              <span className="text-gray-600">
+                                {[clubDetails.city, clubDetails.province, clubDetails.country].filter(Boolean).join(', ')}
+                              </span>
+                            </div>
+                          )}
+                          {clubDetails.address && (
+                            <div className="flex items-start">
+                              <Building className="h-4 w-4 mr-2 text-mtta-green mt-0.5" />
                               <span className="text-gray-600">{clubDetails.address}</span>
                             </div>
                           )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-2">Холбоо барих</h4>
+                        <div className="space-y-2 text-sm">
                           {clubDetails.phone && (
                             <div className="flex items-center">
                               <Phone className="h-4 w-4 mr-2 text-mtta-green" />
