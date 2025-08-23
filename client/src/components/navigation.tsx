@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Menu, X, Home, Trophy, Building, Users, Newspaper, User, LogOut, ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
@@ -208,6 +209,9 @@ export default function Navigation() {
                 </Link>
               </div>
             )}
+
+            {/* Theme Toggle */}
+            <ThemeToggle />
 
             {/* Mobile menu button */}
             <Button

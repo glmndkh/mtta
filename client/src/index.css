@@ -4,6 +4,27 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Theme Variables */
+:root {
+  /* Light theme colors */
+  --bg-primary: theme('colors.white');
+  --bg-secondary: theme('colors.gray.50');
+  --bg-gradient: linear-gradient(135deg, theme('colors.green.50'), theme('colors.white'));
+  --text-primary: theme('colors.gray.900');
+  --text-secondary: theme('colors.gray.600');
+  --border-color: theme('colors.gray.200');
+}
+
+[data-theme="dark"] {
+  /* Dark theme colors */
+  --bg-primary: theme('colors.gray.900');
+  --bg-secondary: theme('colors.gray.800');
+  --bg-gradient: linear-gradient(135deg, theme('colors.green.400'), theme('colors.green.500'), theme('colors.green.600'));
+  --text-primary: theme('colors.white');
+  --text-secondary: theme('colors.gray.300');
+  --border-color: theme('colors.gray.700');
+}
+
 body {
   background-color: var(--background);
   color: var(--text-primary);

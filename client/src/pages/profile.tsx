@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "wouter";
+import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle, CheckCircle, Clock, User, Camera, MapPin, Phone, Mail, Calendar, Trophy, Target, CreditCard, Users, History, Shield, UserCog } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface PlayerStats {
   rank?: string;
@@ -173,7 +174,8 @@ export default function Profile() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { navigate } = useRouter();
+  const [, setLocation] = useLocation();
+  const { theme } = useTheme();
 
   const [profileData, setProfileData] = useState<UserProfile>({
     id: '',
@@ -357,8 +359,12 @@ export default function Profile() {
   };
 
   if (!isAuthenticated) {
+    const backgroundClass = theme === 'dark' 
+      ? "min-h-screen bg-gradient-to-br from-green-400 via-green-500 to-green-600"
+      : "min-h-screen bg-gradient-to-br from-green-50 to-white";
+      
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-400 via-green-500 to-green-600">
+      <div className={backgroundClass}>
         <Navigation />
         <div className="container mx-auto px-4 py-8">
           <Card className="max-w-md mx-auto text-center">
@@ -378,8 +384,12 @@ export default function Profile() {
   }
 
   if (isLoading) {
+    const backgroundClass = theme === 'dark' 
+      ? "min-h-screen bg-gradient-to-br from-green-400 via-green-500 to-green-600"
+      : "min-h-screen bg-gradient-to-br from-green-50 to-white";
+      
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-400 via-green-500 to-green-600">
+      <div className={backgroundClass}>
         <Navigation />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">Ачааллаж байна...</div>
@@ -392,8 +402,12 @@ export default function Profile() {
   const membershipEndDate = profile?.membershipEndDate ? new Date(profile.membershipEndDate) : null;
   const isExpiringSoon = membershipEndDate && membershipEndDate <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
 
+  const backgroundClass = theme === 'dark' 
+    ? "min-h-screen bg-gradient-to-br from-green-400 via-green-500 to-green-600"
+    : "min-h-screen bg-gradient-to-br from-green-50 to-white";
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-400 via-green-500 to-green-600">
+    <div className={backgroundClass}>
       <Navigation />
       
       <main className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -578,11 +592,11 @@ export default function Profile() {
 
           {/* Main Content Tabs */}
           <Tabs defaultValue="profile" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-gray-900">
-              <TabsTrigger value="profile" className="text-white text-base data-[state=active]:text-black data-[state=active]:bg-white data-[state=active]:font-bold">Хувийн мэдээлэл</TabsTrigger>
-              <TabsTrigger value="membership" className="text-white text-base data-[state=active]:text-black data-[state=active]:bg-white data-[state=active]:font-bold">Гишүүнчлэл</TabsTrigger>
-              <TabsTrigger value="tournaments" className="text-white text-base data-[state=active]:text-black data-[state=active]:bg-white data-[state=active]:font-bold">Тэмцээн</TabsTrigger>
-              <TabsTrigger value="history" className="text-white text-base data-[state=active]:text-black data-[state=active]:bg-white data-[state=active]:font-bold">Түүх</TabsTrigger>
+            <TabsList className={`grid w-full grid-cols-4 ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-200'}`}>
+              <TabsTrigger value="profile" className={`text-base ${theme === 'dark' ? 'text-white data-[state=active]:text-black' : 'text-gray-700 data-[state=active]:text-white'} data-[state=active]:bg-green-600 data-[state=active]:font-bold`}>Хувийн мэдээлэл</TabsTrigger>
+              <TabsTrigger value="membership" className={`text-base ${theme === 'dark' ? 'text-white data-[state=active]:text-black' : 'text-gray-700 data-[state=active]:text-white'} data-[state=active]:bg-green-600 data-[state=active]:font-bold`}>Гишүүнчлэл</TabsTrigger>
+              <TabsTrigger value="tournaments" className={`text-base ${theme === 'dark' ? 'text-white data-[state=active]:text-black' : 'text-gray-700 data-[state=active]:text-white'} data-[state=active]:bg-green-600 data-[state=active]:font-bold`}>Тэмцээн</TabsTrigger>
+              <TabsTrigger value="history" className={`text-base ${theme === 'dark' ? 'text-white data-[state=active]:text-black' : 'text-gray-700 data-[state=active]:text-white'} data-[state=active]:bg-green-600 data-[state=active]:font-bold`}>Түүх</TabsTrigger>
             </TabsList>
 
             {/* Profile Tab */}
