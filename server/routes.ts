@@ -2047,6 +2047,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
+  // Judges (admin)
+  app.get(
+    "/api/admin/judges",
+    requireAuth,
+    isAdminRole,
+    async (_req, res) => {
+      try {
+        const judges = await storage.getAllJudges();
+        res.json(judges);
+      } catch (e) {
+        console.error("Error fetching judges:", e);
+        res.status(500).json({ message: "Шүүгчид авахад алдаа гарлаа" });
+      }
+    },
+  );
+
+  app.post(
+    "/api/admin/judges",
+    requireAuth,
+    isAdminRole,
+    async (req, res) => {
+      try {
+        const data = insertJudgeSchema.parse(req.body);
+        const judge = await storage.createJudge(data);
+        res.json(judge);
+      } catch (e) {
+        console.error("Error creating judge:", e);
+        res.status(400).json({ message: "Шүүгч нэмэхэд алдаа гарлаа" });
+      }
+    },
+  );
+
+  app.delete(
+    "/api/admin/judges/:id",
+    requireAuth,
+    isAdminRole,
+    async (req, res) => {
+      try {
+        const success = await storage.deleteJudge(req.params.id);
+        if (!success)
+          return res.status(404).json({ message: "Шүүгч олдсонгүй" });
+        res.json({ message: "Шүүгч амжилттай устгагдлаа" });
+      } catch (e) {
+        console.error("Error deleting judge:", e);
+        res.status(400).json({ message: "Шүүгч устгахад алдаа гарлаа" });
+      }
+    },
+  );
+
   // ----------------
   // Leagues & Teams
   // ----------------

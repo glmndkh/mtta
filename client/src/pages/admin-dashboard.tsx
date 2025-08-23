@@ -73,7 +73,7 @@ export default function AdminDashboard() {
     enabled: selectedTab === 'federation-members'
   });
 
-  const { data: judges, isLoading: judgesLoading } = useQuery({
+  const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQuery({
     queryKey: ['/api/admin/judges'],
     enabled: selectedTab === 'judges'
   });
@@ -338,6 +338,13 @@ export default function AdminDashboard() {
         name: '',
         year: new Date().getFullYear(), // Default to current year
         imageUrl: '',
+      };
+    } else if (selectedTab === 'judges') {
+      defaultData = {
+        firstName: '',
+        lastName: '',
+        imageUrl: '',
+        judgeType: 'domestic' // Default to domestic
       };
     }
 
@@ -2389,6 +2396,60 @@ export default function AdminDashboard() {
         return formData.name && formData.year;
       default:
         return true;
+    }
+  };
+
+  const handleCreateJudge = async () => {
+    try {
+      if (selectedTab === "judges") { // Use selectedTab instead of activeTab
+        const judgeData = {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          imageUrl: formData.imageUrl,
+          judgeType: formData.judgeType,
+        };
+        const response = await fetch('/api/admin/judges', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(judgeData)
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to create judge');
+        }
+
+        await judgesRefetch();
+        setIsCreateDialogOpen(false); // Use setIsCreateDialogOpen
+        setFormData({ firstName: '', lastName: '', imageUrl: '', judgeType: 'domestic' }); // Reset form data
+
+        toast({
+          title: "Амжилттай",
+          description: "Шүүгч амжилттай үүсгэлээ"
+        });
+      }
+    } catch (error) {
+      console.error('Error creating judge:', error);
+      toast({
+        title: "Алдаа",
+        description: "Шүүгч үүсгэхэд алдаа гарлаа",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleCreate = () => {
+    if (!validateForm()) {
+      toast({ title: "Алдаа", description: "Шаардлагатай талбаруудыг бөглөнө үү", variant: "destructive" });
+      return;
+    }
+
+    if (selectedTab === 'judges') {
+      handleCreateJudge();
+    } else {
+      createMutation.mutate({
+        endpoint: `/api/admin/${selectedTab}`,
+        data: sanitizeFormData(formData),
+      });
     }
   };
 
