@@ -2369,63 +2369,63 @@ export default function AdminDashboard() {
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="flex flex-wrap gap-2 h-auto items-start w-full">
-          <TabsTrigger value="stats" className="flex items-center gap-2">
+        <TabsList className="flex flex-wrap gap-2 h-auto items-start w-full bg-background border border-border">
+          <TabsTrigger value="stats" className="flex items-center gap-2 text-foreground data-[state=active]:bg-green-600 data-[state=active]:text-white font-semibold text-base">
             <TrendingUp className="w-4 h-4" />
             Статистик
           </TabsTrigger>
-          <div className="w-full font-semibold mt-2">Холбоо</div>
-          <TabsTrigger value="branches" className="flex items-center gap-2">
+          <div className="w-full font-bold mt-2 text-foreground text-lg">Холбоо</div>
+          <TabsTrigger value="branches" className="flex items-center gap-2 text-foreground data-[state=active]:bg-green-600 data-[state=active]:text-white font-semibold text-base">
             <LinkIcon className="w-4 h-4" />
             Салбар холбоод
           </TabsTrigger>
-          <TabsTrigger value="federation-members" className="flex items-center gap-2">
+          <TabsTrigger value="federation-members" className="flex items-center gap-2 text-foreground data-[state=active]:bg-green-600 data-[state=active]:text-white font-semibold text-base">
             <UserPlus className="w-4 h-4" />
             Холбооны гишүүд
           </TabsTrigger>
-          <TabsTrigger value="judges" className="flex items-center gap-2">
+          <TabsTrigger value="judges" className="flex items-center gap-2 text-foreground data-[state=active]:bg-green-600 data-[state=active]:text-white font-semibold text-base">
             <Shield className="w-4 h-4" />
             Шүүгчид
           </TabsTrigger>
-          <TabsTrigger value="coaches" className="flex items-center gap-2">
+          <TabsTrigger value="coaches" className="flex items-center gap-2 text-foreground data-[state=active]:bg-green-600 data-[state=active]:text-white font-semibold text-base">
             <UserCog className="w-4 h-4" />
             Дасгалжуулагчид
           </TabsTrigger>
-          <TabsTrigger value="champions" className="flex items-center gap-2">
+          <TabsTrigger value="champions" className="flex items-center gap-2 text-foreground data-[state=active]:bg-green-600 data-[state=active]:text-white font-semibold text-base">
             <Crown className="w-4 h-4" />
             Аваргууд
           </TabsTrigger>
-          <TabsTrigger value="clubs" className="flex items-center gap-2">
+          <TabsTrigger value="clubs" className="flex items-center gap-2 text-foreground data-[state=active]:bg-green-600 data-[state=active]:text-white font-semibold text-base">
             <Building className="w-4 h-4" />
             Клубууд
           </TabsTrigger>
-          <TabsTrigger value="users" className="flex items-center gap-2">
+          <TabsTrigger value="users" className="flex items-center gap-2 text-foreground data-[state=active]:bg-green-600 data-[state=active]:text-white font-semibold text-base">
             <Users className="w-4 h-4" />
             Хэрэглэгчид
           </TabsTrigger>
-          <div className="w-full font-semibold mt-2">Тэмцээн</div>
-          <TabsTrigger value="tournaments" className="flex items-center gap-2">
+          <div className="w-full font-bold mt-2 text-foreground text-lg">Тэмцээн</div>
+          <TabsTrigger value="tournaments" className="flex items-center gap-2 text-foreground data-[state=active]:bg-green-600 data-[state=active]:text-white font-semibold text-base">
             <Trophy className="w-4 h-4" />
             Тэмцээн
           </TabsTrigger>
-          <TabsTrigger value="leagues" className="flex items-center gap-2">
+          <TabsTrigger value="leagues" className="flex items-center gap-2 text-foreground data-[state=active]:bg-green-600 data-[state=active]:text-white font-semibold text-base">
             <Calendar className="w-4 h-4" />
             Лиг
           </TabsTrigger>
-          <TabsTrigger value="teams" className="flex items-center gap-2">
+          <TabsTrigger value="teams" className="flex items-center gap-2 text-foreground data-[state=active]:bg-green-600 data-[state=active]:text-white font-semibold text-base">
             <Users className="w-4 h-4" />
             Багууд
           </TabsTrigger>
-          <div className="w-full font-semibold mt-2">Мэдээ</div>
-          <TabsTrigger value="news" className="flex items-center gap-2">
+          <div className="w-full font-bold mt-2 text-foreground text-lg">Мэдээ</div>
+          <TabsTrigger value="news" className="flex items-center gap-2 text-foreground data-[state=active]:bg-green-600 data-[state=active]:text-white font-semibold text-base">
             <Newspaper className="w-4 h-4" />
             Мэдээ
           </TabsTrigger>
-          <TabsTrigger value="sliders" className="flex items-center gap-2">
+          <TabsTrigger value="sliders" className="flex items-center gap-2 text-foreground data-[state=active]:bg-green-600 data-[state=active]:text-white font-semibold text-base">
             <Images className="w-4 h-4" />
             Слайдер
           </TabsTrigger>
-          <TabsTrigger value="sponsors" className="flex items-center gap-2">
+          <TabsTrigger value="sponsors" className="flex items-center gap-2 text-foreground data-[state=active]:bg-green-600 data-[state=active]:text-white font-semibold text-base">
             <Zap className="w-4 h-4" />
             Ивээн тэтгэгчид
           </TabsTrigger>
