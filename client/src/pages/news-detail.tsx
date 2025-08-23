@@ -11,6 +11,138 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Calendar, User, Megaphone, Share2, Clock } from "lucide-react";
 import { Link, useParams } from "wouter";
 
+// Latest News Sidebar Component
+function LatestNewsSidebar({ currentNewsId }: { currentNewsId: string | undefined }) {
+  const { data: latestNews = [], isLoading: latestNewsLoading } = useQuery({
+    queryKey: ["/api/news/latest"],
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  // Static placeholder SVG
+  const placeholderImageData = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI0MCIgdmlld0JveD0iMCAwIDQwMCAyNDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNjAgMTAwSDI0MFYxNDBIMTYwVjEwMFoiIGZpbGw9IiNEMUQ1REIiLz4KPHBhdGggZD0iTTE3NSAxMTVIMjI1VjEyNUgxNzVWMTE1WiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K';
+
+  const getImageUrl = (imageUrl: string) => {
+    if (!imageUrl) return placeholderImageData;
+    if (imageUrl.startsWith('http')) return imageUrl;
+    if (imageUrl.startsWith('data:')) return imageUrl;
+    
+    if (imageUrl.startsWith('/objects/')) {
+      return imageUrl;
+    }
+    
+    if (imageUrl.startsWith('/')) return `/public-objects${imageUrl}`;
+    return `/public-objects/${imageUrl}`;
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('mn-MN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const getCategoryBadge = (category: string) => {
+    const categories = {
+      tournament: { label: "Тэмцээн", className: "bg-blue-500 text-white" },
+      news: { label: "Мэдээ", className: "bg-green-500 text-white" },
+      training: { label: "Сургалт", className: "bg-purple-500 text-white" },
+      urgent: { label: "Яаралтай", className: "bg-red-500 text-white" },
+    };
+    
+    const cat = categories[category as keyof typeof categories] || { label: "Мэдээ", className: "bg-gray-500 text-white" };
+    return <Badge className={`${cat.className} text-xs`}>{cat.label}</Badge>;
+  };
+
+  // Filter out current article
+  const filteredNews = latestNews.filter((news: any) => news.id !== currentNewsId);
+
+  if (latestNewsLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center text-lg">
+            <Calendar className="mr-2 h-5 w-5 text-mtta-green" />
+            Сүүлийн мэдээ
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="h-16 bg-gray-200 rounded mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded mb-1"></div>
+                <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center text-lg">
+          <Calendar className="mr-2 h-5 w-5 text-mtta-green" />
+          Сүүлийн мэдээ
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {filteredNews.length === 0 ? (
+          <p className="text-gray-500 text-sm">Өөр мэдээ байхгүй байна.</p>
+        ) : (
+          <div className="space-y-4">
+            {filteredNews.slice(0, 5).map((news: any) => (
+              <Link key={news.id} href={`/news/${news.id}`}>
+                <div className="group cursor-pointer">
+                  <div className="flex gap-3">
+                    {/* Image */}
+                    <div className="w-16 h-12 flex-shrink-0 overflow-hidden rounded">
+                      <img
+                        src={getImageUrl(news.imageUrl)}
+                        alt={news.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                      />
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="mb-1">
+                        {getCategoryBadge(news.category)}
+                      </div>
+                      <h3 className="font-medium text-sm text-gray-900 line-clamp-2 group-hover:text-mtta-green transition-colors mb-1">
+                        {news.title}
+                      </h3>
+                      <div className="flex items-center text-xs text-gray-500">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        {formatDate(news.publishedAt || news.createdAt)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+        
+        <div className="mt-6 pt-4 border-t">
+          <Link href="/news">
+            <Button variant="outline" size="sm" className="w-full">
+              Бүх мэдээг харах
+            </Button>
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function NewsDetail() {
   const { user, isLoading } = useAuth();
   const { toast } = useToast();
@@ -142,8 +274,10 @@ export default function NewsDetail() {
           </Link>
         </div>
 
-        <div className="max-w-3xl mx-auto">
-          <Card className="shadow-lg">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2">
+            <Card className="shadow-lg">
               {article.imageUrl && (
                 <div className="aspect-video overflow-hidden rounded-t-lg">
                   <img 
@@ -245,7 +379,13 @@ export default function NewsDetail() {
                   </div>
                 </div>
           </CardContent>
-          </Card>
+            </Card>
+          </div>
+
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <LatestNewsSidebar currentNewsId={newsId} />
+          </div>
         </div>
       </div>
     </div>
