@@ -807,6 +807,55 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
   opacity: 0.9 !important;
 }
 
+/* Tournament Details Tab Styling - Ensure white text always */
+.tabs-list [role="tab"],
+.tablist [role="tab"],
+[data-radix-collection-item][role="tab"],
+.tabs-trigger {
+  color: #ffffff !important; /* Always white text for all tabs */
+  font-weight: 500 !important;
+  opacity: 1 !important;
+}
+
+.tabs-list [role="tab"][data-state="active"],
+.tablist [role="tab"][data-state="active"],
+[data-radix-collection-item][role="tab"][data-state="active"],
+.tabs-trigger[data-state="active"] {
+  color: #ffffff !important; /* Active tab text always white */
+  font-weight: 600 !important;
+  opacity: 1 !important;
+}
+
+.tabs-list [role="tab"][data-state="inactive"],
+.tablist [role="tab"][data-state="inactive"],
+[data-radix-collection-item][role="tab"][data-state="inactive"],
+.tabs-trigger[data-state="inactive"] {
+  color: #ffffff !important; /* Inactive tab text always white */
+  font-weight: 500 !important;
+  opacity: 0.9 !important;
+}
+
+/* Tournament page specific tab styling */
+.tournament-tabs [role="tab"],
+.tournament-details-tabs [role="tab"] {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+.tournament-tabs [role="tab"][data-state="active"],
+.tournament-details-tabs [role="tab"][data-state="active"] {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+}
+
+.tournament-tabs [role="tab"][data-state="inactive"],
+.tournament-details-tabs [role="tab"][data-state="inactive"] {
+  color: #ffffff !important;
+  font-weight: 500 !important;
+  opacity: 0.9 !important;
+}
+
 .tab {
   padding: 10px 20px;
   border-radius: 6px;
