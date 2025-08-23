@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -35,6 +36,7 @@ export default function News() {
   const [newsImageUrl, setNewsImageUrl] = useState<string>("");
   const [editingNews, setEditingNews] = useState<any>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showImageDialog, setShowImageDialog] = useState(false);
 
   // Remove authentication requirement - allow viewing for all users
 
@@ -268,6 +270,13 @@ export default function News() {
     }
   };
 
+  const handleConfirmImage = () => {
+    if (newsImageUrl) {
+      form.setValue("imageUrl", newsImageUrl);
+      setShowImageDialog(false);
+    }
+  };
+
   const getCategoryBadge = (category: string) => {
     const categories = {
       tournament: { label: "Тэмцээн", className: "bg-blue-500 text-white" },
@@ -472,24 +481,28 @@ export default function News() {
 
                         <div className="space-y-2">
                           <label className="text-sm font-medium">Мэдээний зураг</label>
-                          <div className="flex items-center space-x-2">
-                            <ObjectUploader
-                              maxNumberOfFiles={1}
-                              maxFileSize={5242880} // 5MB
-                              onGetUploadParameters={handleImageUpload}
-                              onComplete={handleImageUploadComplete}
-                              buttonClassName="w-full"
-                            >
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => setShowImageDialog(true)}
+                          >
+                            {newsImageUrl ? (
+                              <div className="flex items-center gap-2">
+                                <Image className="h-4 w-4" />
+                                <span>Зураг засах</span>
+                              </div>
+                            ) : (
                               <div className="flex items-center gap-2">
                                 <Upload className="h-4 w-4" />
-                                <span>Зураг хуулах</span>
+                                <span>Зураг нэмэх</span>
                               </div>
-                            </ObjectUploader>
-                          </div>
+                            )}
+                          </Button>
                           {newsImageUrl && (
                             <div className="mt-2">
                               <div className="relative w-32 h-24 overflow-hidden rounded-lg border">
-                                <img 
+                                <img
                                   src={newsImageUrl.startsWith('/') ? `/public-objects${newsImageUrl}` : newsImageUrl}
                                   alt="Preview"
                                   className="w-full h-full object-cover"
@@ -632,21 +645,28 @@ export default function News() {
 
                         <div className="space-y-2">
                           <label className="text-sm font-medium">Зураг</label>
-                          <ObjectUploader
-                            onUpload={handleImageUpload}
-                            onSuccess={handleImageUploadComplete}
+                          <Button
+                            type="button"
+                            variant="outline"
                             className="w-full"
-                            buttonClassName="w-full"
+                            onClick={() => setShowImageDialog(true)}
                           >
-                            <div className="flex items-center gap-2">
-                              <Upload className="h-4 w-4" />
-                              <span>Зураг хуулах</span>
-                            </div>
-                          </ObjectUploader>
+                            {newsImageUrl ? (
+                              <div className="flex items-center gap-2">
+                                <Image className="h-4 w-4" />
+                                <span>Зураг засах</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <Upload className="h-4 w-4" />
+                                <span>Зураг нэмэх</span>
+                              </div>
+                            )}
+                          </Button>
                           {newsImageUrl && (
                             <div className="mt-2">
                               <div className="relative w-32 h-24 overflow-hidden rounded-lg border">
-                                <img 
+                                <img
                                   src={newsImageUrl.startsWith('/') ? `/public-objects${newsImageUrl}` : newsImageUrl}
                                   alt="Preview"
                                   className="w-full h-full object-cover"
@@ -681,6 +701,63 @@ export default function News() {
             )}
           </div>
         </div>
+
+        {showImageDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg w-96">
+              <h3 className="text-lg font-semibold mb-4">Зураг нэмэх</h3>
+              <div className="space-y-4">
+                <ObjectUploader
+                  maxNumberOfFiles={1}
+                  maxFileSize={5242880}
+                  onGetUploadParameters={handleImageUpload}
+                  onComplete={handleImageUploadComplete}
+                  buttonClassName="w-full"
+                >
+                  <div className="flex items-center gap-2">
+                    <Upload className="h-4 w-4" />
+                    <span>Зураг хуулах</span>
+                  </div>
+                </ObjectUploader>
+                <div className="mt-4">
+                  <Label htmlFor="newsImageUrlInput">Зурагны URL (заавал биш)</Label>
+                  <Input
+                    id="newsImageUrlInput"
+                    type="text"
+                    value={newsImageUrl}
+                    onChange={(e) => setNewsImageUrl(e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </div>
+                {newsImageUrl && (
+                  <div className="mt-2">
+                    <div className="relative w-full h-40 overflow-hidden rounded-lg border">
+                      <img
+                        src={newsImageUrl.startsWith('/') ? `/public-objects${newsImageUrl}` : newsImageUrl}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Зураг амжилттай хуулагдлаа</p>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-end space-x-2 mt-4">
+                <Button type="button" variant="outline" onClick={() => setShowImageDialog(false)}>
+                  Цуцлах
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleConfirmImage}
+                  className="mtta-green text-white hover:bg-mtta-green-dark"
+                  disabled={!newsImageUrl}
+                >
+                  Оруулах
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* News List */}
         {newsLoading ? (
