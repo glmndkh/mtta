@@ -17,17 +17,21 @@ interface Judge {
 export default function JudgesPage() {
   const [tab, setTab] = useState("domestic");
 
-  const { data: judges = [] } = useQuery<Judge[]>({
+  const { data: judges, isLoading: judgesLoading, error: judgesError } = useQuery<Judge[]>({
     queryKey: ["/api/judges", tab],
     queryFn: async () => {
       const res = await fetch(`/api/judges?type=${tab}`);
       const data = await res.json();
       return Array.isArray(data) ? data : [];
-    }
+    },
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
+  console.log('Judges data:', { judges, judgesLoading, judgesError });
+
   return (
-    <PageWithLoading>
+    <PageWithLoading isLoading={judgesLoading} error={judgesError}>
       <Navigation />
       <div className="main-bg">
         <div className="container mx-auto px-4 py-8">
@@ -39,46 +43,60 @@ export default function JudgesPage() {
             </TabsList>
             <TabsContent value={"domestic"}>
               <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-                {judges.filter(judge => judge.judgeType === 'domestic').map(judge => (
-                  <Card key={judge.id} className="bg-gray-800 text-white">
-                    <CardContent className="flex items-center gap-4 p-4">
-                      <Avatar className="w-16 h-16">
-                        <AvatarImage src={judge.imageUrl} alt={judge.firstName} />
-                        <AvatarFallback>{judge.firstName[0]}{judge.lastName[0]}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-semibold">{judge.firstName} {judge.lastName}</div>
-                        <div className="text-sm text-gray-400">Дотоодын шүүгч</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-                {judges.filter(judge => judge.judgeType === 'domestic').length === 0 && (
+                {judges && Array.isArray(judges) ?
+                  judges.filter(judge => judge.judgeType === 'domestic').map(judge => (
+                    <Card key={judge.id} className="bg-gray-800 text-white">
+                      <CardContent className="flex items-center gap-4 p-4">
+                        <Avatar className="w-16 h-16">
+                          <AvatarImage src={judge.imageUrl} alt={judge.firstName} />
+                          <AvatarFallback>{judge.firstName?.[0]}{judge.lastName?.[0]}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-semibold">{judge.firstName} {judge.lastName}</div>
+                          <div className="text-sm text-gray-400">Дотоодын шүүгч</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )) : null
+                }
+                {judges && Array.isArray(judges) && judges.filter(judge => judge.judgeType === 'domestic').length === 0 && (
                   <div className="col-span-full text-center text-gray-400 py-8">
                     Дотоодын шүүгч байхгүй байна
+                  </div>
+                )}
+                {!judges && (
+                  <div className="col-span-full text-center text-gray-400 py-8">
+                    Ачааллаж байна...
                   </div>
                 )}
               </div>
             </TabsContent>
             <TabsContent value={"international"}>
               <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-                {judges.filter(judge => judge.judgeType === 'international').map(judge => (
-                  <Card key={judge.id} className="bg-gray-800 text-white">
-                    <CardContent className="flex items-center gap-4 p-4">
-                      <Avatar className="w-16 h-16">
-                        <AvatarImage src={judge.imageUrl} alt={judge.firstName} />
-                        <AvatarFallback>{judge.firstName[0]}{judge.lastName[0]}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-semibold">{judge.firstName} {judge.lastName}</div>
-                        <div className="text-sm text-gray-400">Олон улсын шүүгч</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-                {judges.filter(judge => judge.judgeType === 'international').length === 0 && (
+                {judges && Array.isArray(judges) ?
+                  judges.filter(judge => judge.judgeType === 'international').map(judge => (
+                    <Card key={judge.id} className="bg-gray-800 text-white">
+                      <CardContent className="flex items-center gap-4 p-4">
+                        <Avatar className="w-16 h-16">
+                          <AvatarImage src={judge.imageUrl} alt={judge.firstName} />
+                          <AvatarFallback>{judge.firstName?.[0]}{judge.lastName?.[0]}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-semibold">{judge.firstName} {judge.lastName}</div>
+                          <div className="text-sm text-gray-400">Олон улсын шүүгч</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )) : null
+                }
+                {judges && Array.isArray(judges) && judges.filter(judge => judge.judgeType === 'international').length === 0 && (
                   <div className="col-span-full text-center text-gray-400 py-8">
                     Олон улсын шүүгч байхгүй байна
+                  </div>
+                )}
+                {!judges && (
+                  <div className="col-span-full text-center text-gray-400 py-8">
+                    Ачааллаж байна...
                   </div>
                 )}
               </div>
@@ -89,4 +107,3 @@ export default function JudgesPage() {
     </PageWithLoading>
   );
 }
-
