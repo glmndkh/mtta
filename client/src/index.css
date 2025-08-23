@@ -4,45 +4,55 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Theme Variables */
-:root {
-  /* Light theme colors */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f9fafb;
-  --bg-gradient: linear-gradient(135deg, #f0fdf4, #ffffff);
-  --text-primary: #111827;
-  --text-secondary: #4b5563;
-  --border-color: #e5e7eb;
+/* Theme-based styling using data-theme attribute */
+.profile-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0fdf4, #ffffff);
+  color: #111827;
+  transition: all 0.3s ease;
 }
 
-[data-theme="dark"] {
-  /* Dark theme colors */
-  --bg-primary: #111827;
-  --bg-secondary: #1f2937;
-  --bg-gradient: linear-gradient(135deg, #4ade80, #22c55e, #16a34a);
-  --text-primary: #ffffff;
-  --text-secondary: #d1d5db;
-  --border-color: #374151;
-}
-
-/* Apply theme styles */
-.theme-bg {
-  background: var(--bg-gradient) !important;
-  transition: background 0.3s ease;
-}
-
-.theme-card {
-  background-color: var(--bg-primary) !important;
-  border-color: var(--border-color) !important;
-  color: var(--text-primary) !important;
+[data-theme="dark"] .profile-container {
+  background: linear-gradient(135deg, #4ade80, #22c55e, #16a34a) !important;
+  color: #ffffff !important;
 }
 
 .theme-text {
-  color: var(--text-primary) !important;
+  color: #111827;
+  transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .theme-text {
+  color: #ffffff !important;
 }
 
 .theme-text-secondary {
-  color: var(--text-secondary) !important;
+  color: #6b7280;
+  transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .theme-text-secondary {
+  color: #d1d5db !important;
+}
+
+.theme-card {
+  background-color: #ffffff;
+  color: #111827;
+  transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .theme-card {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+}
+
+.theme-tabs {
+  background-color: #f3f4f6;
+  transition: background-color 0.3s ease;
+}
+
+[data-theme="dark"] .theme-tabs {
+  background-color: #374151 !important;
 }
 
 body {
