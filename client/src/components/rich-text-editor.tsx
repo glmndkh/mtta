@@ -7,6 +7,8 @@ import FileHandler from '@tiptap/extension-file-handler'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ObjectUploader } from '@/components/ObjectUploader'
+import type { UploadResult } from '@uppy/core'
 import {
   Bold,
   Italic,
@@ -18,6 +20,7 @@ import {
   Link as LinkIcon,
   Youtube as YoutubeIcon,
   Paperclip,
+  Upload,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -104,6 +107,35 @@ export default function RichTextEditor({ content, onChange, placeholder, classNa
 
   if (!editor) {
     return null
+  }
+
+  const handleImageUpload = async () => {
+    const response = await fetch('/api/objects/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const { uploadURL } = await response.json()
+    return { method: 'PUT' as const, url: uploadURL }
+  }
+
+  const handleImageUploadComplete = async (
+    result: UploadResult<Record<string, unknown>, Record<string, unknown>>
+  ) => {
+    if (result.successful?.[0]?.uploadURL) {
+      const response = await fetch('/api/objects/finalize', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileURL: result.successful[0].uploadURL,
+          isPublic: true,
+        }),
+      })
+      const { objectPath } = await response.json()
+      const publicUrl = objectPath.startsWith('/')
+        ? `/public-objects${objectPath}`
+        : objectPath
+      setImageUrl(publicUrl)
+    }
   }
 
   const addImage = () => {
@@ -224,14 +256,32 @@ export default function RichTextEditor({ content, onChange, placeholder, classNa
             <h3 className="text-lg font-semibold mb-4">Зураг нэмэх</h3>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="imageUrl">Зургийн URL</Label>
-                <Input
-                  id="imageUrl"
-                  type="text"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="https://example.com/image.jpg"
-                />
+                <ObjectUploader
+                  maxNumberOfFiles={1}
+                  maxFileSize={5242880}
+                  onGetUploadParameters={handleImageUpload}
+                  onComplete={handleImageUploadComplete}
+                  buttonClassName="w-full"
+                >
+                  <div className="flex items-center gap-2">
+                    <Upload className="h-4 w-4" />
+                    <span>Зураг хуулах</span>
+                  </div>
+                </ObjectUploader>
+                {imageUrl && (
+                  <div className="mt-2">
+                    <div className="relative w-full h-40 overflow-hidden rounded-lg border">
+                      <img
+                        src={imageUrl}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Зураг амжилттай хуулагдлаа
+                    </p>
+                  </div>
+                )}
               </div>
               <div className="flex justify-end space-x-2">
                 <Button
@@ -245,6 +295,7 @@ export default function RichTextEditor({ content, onChange, placeholder, classNa
                   type="button"
                   onClick={addImage}
                   className="mtta-green text-white hover:bg-mtta-green-dark"
+                  disabled={!imageUrl}
                 >
                   Нэмэх
                 </Button>
