@@ -27,21 +27,22 @@
 
 /* Apply theme styles */
 .theme-bg {
-  background: var(--bg-gradient);
+  background: var(--bg-gradient) !important;
+  transition: background 0.3s ease;
 }
 
 .theme-card {
-  background-color: var(--bg-primary);
-  border-color: var(--border-color);
-  color: var(--text-primary);
+  background-color: var(--bg-primary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
 }
 
 .theme-text {
-  color: var(--text-primary);
+  color: var(--text-primary) !important;
 }
 
 .theme-text-secondary {
-  color: var(--text-secondary);
+  color: var(--text-secondary) !important;
 }
 
 body {

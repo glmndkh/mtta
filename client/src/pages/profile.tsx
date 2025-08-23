@@ -359,8 +359,12 @@ export default function Profile() {
   };
 
   if (!isAuthenticated) {
+    const backgroundStyle = theme === 'dark' 
+      ? { background: 'linear-gradient(135deg, #4ade80, #22c55e, #16a34a)' }
+      : { background: 'linear-gradient(135deg, #f0fdf4, #ffffff)' };
+      
     return (
-      <div className="min-h-screen theme-bg">
+      <div className="min-h-screen" style={backgroundStyle}>
         <Navigation />
         <div className="container mx-auto px-4 py-8">
           <Card className="max-w-md mx-auto text-center">
@@ -380,8 +384,12 @@ export default function Profile() {
   }
 
   if (isLoading) {
+    const backgroundStyle = theme === 'dark' 
+      ? { background: 'linear-gradient(135deg, #4ade80, #22c55e, #16a34a)' }
+      : { background: 'linear-gradient(135deg, #f0fdf4, #ffffff)' };
+      
     return (
-      <div className="min-h-screen theme-bg">
+      <div className="min-h-screen" style={backgroundStyle}>
         <Navigation />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">Ачааллаж байна...</div>
@@ -394,8 +402,12 @@ export default function Profile() {
   const membershipEndDate = profile?.membershipEndDate ? new Date(profile.membershipEndDate) : null;
   const isExpiringSoon = membershipEndDate && membershipEndDate <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
 
+  const backgroundStyle = theme === 'dark' 
+    ? { background: 'linear-gradient(135deg, #4ade80, #22c55e, #16a34a)' }
+    : { background: 'linear-gradient(135deg, #f0fdf4, #ffffff)' };
+
   return (
-    <div className="min-h-screen theme-bg">
+    <div className="min-h-screen" style={backgroundStyle}>
       <Navigation />
       
       <main className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
