@@ -756,24 +756,55 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
   border: 1px solid var(--border);
 }
 
-/* Admin Dashboard Tab Text Colors */
+/* Admin Dashboard Tab Text Colors - Always white for visibility */
 .admin-tab-trigger {
   color: #ffffff !important; /* Always white text */
   font-weight: 500;
+  opacity: 1 !important; /* Ensure full opacity */
 }
 
 .admin-tab-trigger[data-state="active"] {
   color: #ffffff !important; /* Active tab text color - white */
   font-weight: 600;
+  opacity: 1 !important; /* Ensure full opacity */
+}
+
+.admin-tab-trigger[data-state="inactive"] {
+  color: #ffffff !important; /* Inactive tab text also white */
+  font-weight: 500;
+  opacity: 0.9 !important; /* Slightly less opacity for inactive state */
 }
 
 /* Dark theme overrides for admin tabs */
 [data-theme="dark"] .admin-tab-trigger {
   color: #ffffff !important; /* Always white for dark theme */
+  opacity: 1 !important;
 }
 
 [data-theme="dark"] .admin-tab-trigger[data-state="active"] {
   color: #ffffff !important; /* Keep white for active state */
+  opacity: 1 !important;
+}
+
+[data-theme="dark"] .admin-tab-trigger[data-state="inactive"] {
+  color: #ffffff !important; /* Keep white for inactive state */
+  opacity: 0.9 !important;
+}
+
+/* Light theme overrides for admin tabs */
+[data-theme="light"] .admin-tab-trigger {
+  color: #ffffff !important; /* Always white even in light theme */
+  opacity: 1 !important;
+}
+
+[data-theme="light"] .admin-tab-trigger[data-state="active"] {
+  color: #ffffff !important; /* Keep white for active state */
+  opacity: 1 !important;
+}
+
+[data-theme="light"] .admin-tab-trigger[data-state="inactive"] {
+  color: #ffffff !important; /* Keep white for inactive state */
+  opacity: 0.9 !important;
 }
 
 .tab {
