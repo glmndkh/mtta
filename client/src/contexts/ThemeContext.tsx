@@ -22,8 +22,24 @@ function safeSet(key: string, val: string) {
 function applyThemeToDocument(t: Theme) {
   if (typeof document === 'undefined') return;
   const el = document.documentElement;
-  el.setAttribute('data-theme', t);          // DaisyUI, custom CSS vars
-  el.classList.toggle('dark', t === 'dark'); // Tailwind dark mode (class strategy)
+  
+  console.log('Document data-theme before:', el.getAttribute('data-theme'));
+  
+  // Remove existing theme classes and attributes
+  el.classList.remove('light', 'dark');
+  
+  // Set new theme
+  el.setAttribute('data-theme', t);
+  el.classList.add(t);
+  
+  // Also set the class for Tailwind compatibility
+  if (t === 'dark') {
+    el.classList.add('dark');
+  } else {
+    el.classList.remove('dark');
+  }
+  
+  console.log('Document data-theme after:', el.getAttribute('data-theme'));
   console.log('Applied theme to document:', t, 'data-theme:', el.getAttribute('data-theme'), 'has dark class:', el.classList.contains('dark'));
 }
 
@@ -45,15 +61,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // 3) Whenever theme changes: persist + apply
   useEffect(() => {
+    console.log('Setting theme to:', theme);
     safeSet('mtta-theme', theme);
     applyThemeToDocument(theme);
     // Nudge CSS var if you rely on it for debugging/forcing recompute
     document?.documentElement.style.setProperty('--theme-debug', theme);
+    // Force a reflow to ensure styles are applied
+    document?.documentElement.offsetHeight;
   }, [theme]);
 
   const toggleTheme = () => {
     console.log('Theme toggle clicked, current theme:', theme);
-    setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    console.log('Toggling theme from', theme, 'to', newTheme);
+    setTheme(newTheme);
   };
 
   const value = useMemo(() => ({ theme, toggleTheme, setTheme }), [theme]);
