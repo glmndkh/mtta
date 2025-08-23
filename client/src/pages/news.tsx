@@ -22,6 +22,7 @@ import { ObjectUploader } from "@/components/ObjectUploader";
 import type { UploadResult } from "@uppy/core";
 import { Link } from "wouter";
 import PageWithLoading from "@/components/PageWithLoading";
+import RichTextEditor from "@/components/rich-text-editor";
 
 type CreateNewsForm = z.infer<typeof insertNewsSchema>;
 
@@ -406,10 +407,10 @@ export default function News() {
                           <FormItem>
                             <FormLabel>Дэлгэрэнгүй агуулга</FormLabel>
                             <FormControl>
-                              <Textarea 
-                                placeholder="Мэдээний дэлгэрэнгүй агуулга..." 
-                                rows={8}
-                                {...field} 
+                              <RichTextEditor
+                                content={field.value}
+                                onChange={field.onChange}
+                                placeholder="Мэдээний дэлгэрэнгүй агуулга..."
                               />
                             </FormControl>
                             <FormMessage />
@@ -543,10 +544,10 @@ export default function News() {
                           <FormItem>
                             <FormLabel>Мэдээний агуулга *</FormLabel>
                             <FormControl>
-                              <Textarea 
-                                {...field} 
+                              <RichTextEditor
+                                content={field.value}
+                                onChange={field.onChange}
                                 placeholder="Мэдээний бүрэн агуулга оруулна уу"
-                                rows={6}
                               />
                             </FormControl>
                             <FormMessage />
@@ -705,7 +706,10 @@ export default function News() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-gray-600 mb-4">{article.excerpt}</p>
-                    <p className="text-gray-700 leading-relaxed mb-6">{article.content}</p>
+                    <div
+                      className="text-gray-700 leading-relaxed mb-6 prose max-w-none"
+                      dangerouslySetInnerHTML={{ __html: article.content }}
+                    />
                     
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
