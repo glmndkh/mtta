@@ -125,6 +125,10 @@ export default function AdminDashboard() {
     onSuccess: () => {
       toast({ title: "Амжилттай үүслээ" });
       queryClient.invalidateQueries({ queryKey: [`/api/admin/${selectedTab}`] });
+      if (selectedTab === 'news') {
+        queryClient.invalidateQueries({ queryKey: ['/api/news'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/news/latest'] });
+      }
       setIsCreateDialogOpen(false);
       setFormData({});
     },
@@ -143,6 +147,10 @@ export default function AdminDashboard() {
     onSuccess: () => {
       toast({ title: "Амжилттай шинэчлэгдлээ" });
       queryClient.invalidateQueries({ queryKey: [`/api/admin/${selectedTab}`] });
+      if (selectedTab === 'news') {
+        queryClient.invalidateQueries({ queryKey: ['/api/news'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/news/latest'] });
+      }
       setEditingItem(null);
       setFormData({});
     },
@@ -158,6 +166,10 @@ export default function AdminDashboard() {
     onSuccess: () => {
       toast({ title: "Амжилттай устгагдлаа" });
       queryClient.invalidateQueries({ queryKey: [`/api/admin/${selectedTab}`] });
+      if (selectedTab === 'news') {
+        queryClient.invalidateQueries({ queryKey: ['/api/news'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/news/latest'] });
+      }
     },
     onError: (error: any) => {
       toast({ title: "Алдаа гарлаа", description: error.message, variant: "destructive" });
@@ -289,13 +301,13 @@ export default function AdminDashboard() {
   const openCreateDialog = () => {
     // Initialize with appropriate default values based on selected tab
     let defaultData = {};
-    
+
     if (selectedTab === 'leagues') {
       // For leagues, provide sensible default dates
       const today = new Date();
       const nextMonth = new Date(today);
       nextMonth.setMonth(today.getMonth() + 1);
-      
+
       defaultData = {
         name: '',
         description: '',
@@ -303,8 +315,18 @@ export default function AdminDashboard() {
         startDate: today.toISOString().split('T')[0],
         endDate: nextMonth.toISOString().split('T')[0]
       };
+    } else if (selectedTab === 'news') {
+      // Match /news defaults
+      defaultData = {
+        title: '',
+        content: '',
+        excerpt: '',
+        imageUrl: '',
+        category: 'news',
+        published: true
+      };
     }
-    
+
     setFormData(defaultData);
     setIsCreateDialogOpen(true);
   };

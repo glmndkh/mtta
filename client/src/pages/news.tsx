@@ -24,7 +24,8 @@ import { Link } from "wouter";
 import PageWithLoading from "@/components/PageWithLoading";
 import RichTextEditor from "@/components/rich-text-editor";
 
-type CreateNewsForm = z.infer<typeof insertNewsSchema>;
+const newsFormSchema = insertNewsSchema.omit({ authorId: true });
+type CreateNewsForm = z.infer<typeof newsFormSchema>;
 
 export default function News() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -54,7 +55,7 @@ export default function News() {
 
   // Create news form
   const form = useForm<CreateNewsForm>({
-    resolver: zodResolver(insertNewsSchema),
+    resolver: zodResolver(newsFormSchema),
     defaultValues: {
       title: "",
       content: "",
@@ -66,8 +67,8 @@ export default function News() {
   });
 
   // Create news mutation
-  const createNewsMutation = useMutation({
-    mutationFn: async (data: CreateNewsForm) => {
+  const createNewsMutation = useMutation<any, Error, CreateNewsForm & { authorId: string }>({
+    mutationFn: async (data) => {
       const response = await apiRequest("/api/news", {
         method: "POST",
         body: JSON.stringify(data),
@@ -143,8 +144,8 @@ export default function News() {
   });
 
   // Update news mutation
-  const updateNewsMutation = useMutation({
-    mutationFn: async (data: { id: string; newsData: Partial<CreateNewsForm> }) => {
+  const updateNewsMutation = useMutation<any, Error, { id: string; newsData: Partial<CreateNewsForm> & { authorId: string } }>({
+    mutationFn: async (data) => {
       const response = await apiRequest(`/api/news/${data.id}`, {
         method: "PUT",
         body: JSON.stringify(data.newsData),
