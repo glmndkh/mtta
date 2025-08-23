@@ -663,6 +663,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/judges", async (req, res) => {
+    try {
+      const type = req.query.type as string;
+      const judges = await storage.getAllJudges(type);
+      res.json(judges);
+    } catch (e) {
+      console.error("Error fetching judges:", e);
+      res.status(500).json({ message: "Шүүгчдийн жагсаалт авахад алдаа гарлаа" });
+    }
+  });
+
   app.get("/api/clubs/:id", async (req, res) => {
     try {
       const club = await storage.getClub(req.params.id);

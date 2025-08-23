@@ -21,7 +21,8 @@ export default function JudgesPage() {
     queryKey: ["/api/judges", tab],
     queryFn: async () => {
       const res = await fetch(`/api/judges?type=${tab}`);
-      return res.json();
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     }
   });
 
