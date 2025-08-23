@@ -102,7 +102,7 @@ export default function Clubs() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mtta-green mx-auto mb-4"></div>
-          <p className="text-gray-600">Уншиж байна...</p>
+          <p style={{ color: 'var(--text-secondary)' }}>Уншиж байна...</p>
         </div>
       </div>
     );
@@ -119,8 +119,8 @@ export default function Clubs() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Клубууд</h1>
-            <p className="text-gray-600">Монголын ширээний теннисний клубуудын жагсаалт</p>
+            <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Клубууд</h1>
+            <p style={{ color: 'var(--text-secondary)' }}>Монголын ширээний теннисний клубуудын жагсаалт</p>
           </div>
           
           {user && (user as any)?.role === 'club_owner' && (
@@ -306,13 +306,13 @@ export default function Clubs() {
         {clubsLoading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mtta-green mx-auto mb-4"></div>
-            <p className="text-gray-600">Клубуудыг уншиж байна...</p>
+            <p style={{ color: 'var(--text-secondary)' }}>Клубуудыг уншиж байна...</p>
           </div>
         ) : clubs.length === 0 ? (
           <div className="text-center py-12">
             <Building className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Клуб байхгүй байна</h3>
-            <p className="text-gray-600 mb-6">Одоогоор бүртгэгдсэн клуб байхгүй байна</p>
+            <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Клуб байхгүй байна</h3>
+            <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>Одоогоор бүртгэгдсэн клуб байхгүй байна</p>
             {user && (user as any)?.role === 'club_owner' && (
               <Button 
                 className="mtta-green text-white hover:bg-mtta-green-dark"
@@ -340,10 +340,10 @@ export default function Clubs() {
 
                 return Object.entries(clubsByProvince).map(([province, provinceClubs]: [string, any]) => (
                   <div key={province} className="mb-8">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                    <h3 className="text-xl font-semibold mb-4 flex items-center" style={{ color: 'var(--text-primary)' }}>
                       <MapPin className="h-5 w-5 mr-2 text-mtta-green" />
                       {province}
-                      <span className="ml-2 text-sm text-gray-500">({provinceClubs.length} клуб)</span>
+                      <span className="ml-2 text-sm" style={{ color: 'var(--text-secondary)' }}>({provinceClubs.length} клуб)</span>
                     </h3>
                     <div className="grid md:grid-cols-2 gap-6">
                       {provinceClubs.map((club: any) => (
@@ -458,12 +458,12 @@ export default function Clubs() {
                   <CardContent>
                     <div className="space-y-4">
                       <div>
-                        <h4 className="font-semibold text-gray-900 mb-2">Тайлбар</h4>
+                        <h4 className="font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Тайлбар</h4>
                         <p className="text-gray-600 text-sm">{clubDetails.description || 'Тайлбар байхгүй'}</p>
                       </div>
 
                       <div>
-                        <h4 className="font-semibold text-gray-900 mb-2">Байршил</h4>
+                        <h4 className="font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Байршил</h4>
                         <div className="space-y-2 text-sm">
                           {(clubDetails.city || clubDetails.province || clubDetails.country) && (
                             <div className="flex items-start">
@@ -483,7 +483,7 @@ export default function Clubs() {
                       </div>
 
                       <div>
-                        <h4 className="font-semibold text-gray-900 mb-2">Холбоо барих</h4>
+                        <h4 className="font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Холбоо барих</h4>
                         <div className="space-y-2 text-sm">
                           {clubDetails.phone && (
                             <div className="flex items-center">
@@ -516,13 +516,13 @@ export default function Clubs() {
 
                       {clubDetails.trainingInfo && (
                         <div>
-                          <h4 className="font-semibold text-gray-900 mb-2">Сургалтын мэдээлэл</h4>
+                          <h4 className="font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Сургалтын мэдээлэл</h4>
                           <p className="text-gray-600 text-sm">{clubDetails.trainingInfo}</p>
                         </div>
                       )}
 
                       <div>
-                        <h4 className="font-semibold text-gray-900 mb-3">Дасгалжуулагчид ({clubDetails.coaches?.length || 0})</h4>
+                        <h4 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Дасгалжуулагчид ({clubDetails.coaches?.length || 0})</h4>
                         {clubDetails.coaches && clubDetails.coaches.length > 0 ? (
                           <div className="space-y-2 max-h-40 overflow-y-auto">
                             {clubDetails.coaches.map((coach: any) => (
@@ -538,7 +538,7 @@ export default function Clubs() {
                       </div>
 
                       <div>
-                        <h4 className="font-semibold text-gray-900 mb-3">Тоглогчид ({clubDetails.players?.length || 0})</h4>
+                        <h4 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Тоглогчид ({clubDetails.players?.length || 0})</h4>
                         {clubDetails.players && clubDetails.players.length > 0 ? (
                           <div className="space-y-2 max-h-40 overflow-y-auto">
                             {clubDetails.players.map((player: any) => (
@@ -578,7 +578,7 @@ export default function Clubs() {
                   <CardContent>
                     <div className="text-center py-8">
                       <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-600">Клуб сонгож дэлгэрэнгүй мэдээллийг үзнэ үү</p>
+                      <p style={{ color: 'var(--text-secondary)' }}>Клуб сонгож дэлгэрэнгүй мэдээллийг үзнэ үү</p>
                     </div>
                   </CardContent>
                 </Card>
