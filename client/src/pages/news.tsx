@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -705,18 +705,14 @@ export default function News() {
                     <CardTitle className="text-2xl">{article.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-600 mb-4">{article.excerpt}</p>
-                    <div
-                      className="text-gray-700 leading-relaxed mb-6 prose max-w-none"
-                      dangerouslySetInnerHTML={{ __html: article.content }}
-                    />
-                    
+                    <p className="text-gray-600 mb-4 line-clamp-3">{article.excerpt}</p>
+
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className="flex items-center space-x-2">
                           <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
                             {article.author?.profileImageUrl ? (
-                              <img 
+                              <img
                                 src={getImageUrl(article.author.profileImageUrl)} 
                                 alt={`${article.author.firstName} ${article.author.lastName}`}
                                 className="w-full h-full object-cover"
@@ -738,7 +734,7 @@ export default function News() {
                       
                       <div className="flex items-center space-x-2">
                         {user && (user as any)?.role === 'admin' && (
-                          <Button 
+                          <Button
                             size="sm"
                             variant="outline"
                             onClick={() => handleEditNews(article)}
@@ -748,7 +744,7 @@ export default function News() {
                           </Button>
                         )}
                         {!article.published && user && (user as any)?.role === 'admin' && (
-                          <Button 
+                          <Button
                             size="sm"
                             className="mtta-green text-white hover:bg-mtta-green-dark"
                             onClick={() => publishNewsMutation.mutate(article.id)}
@@ -758,6 +754,12 @@ export default function News() {
                             Нийтлэх
                           </Button>
                         )}
+                        <Link href={`/news/${article.id}`}>
+                          <Button size="sm" variant="outline">
+                            <Eye className="mr-1 h-3 w-3" />
+                            Унших
+                          </Button>
+                        </Link>
                         <Button size="sm" variant="outline">
                           <Share2 className="mr-1 h-3 w-3" />
                           Хуваалцах
