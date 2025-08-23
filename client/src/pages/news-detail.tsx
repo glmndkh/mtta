@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -9,34 +8,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Calendar, User, Megaphone, Share2, Clock, Eye } from "lucide-react";
+import { ArrowLeft, Calendar, User, Megaphone, Share2, Clock } from "lucide-react";
 import { Link, useParams } from "wouter";
 
 export default function NewsDetail() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
   const { toast } = useToast();
   const params = useParams();
   const newsId = params.id;
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Нэвтрэх шаардлагатай",
-        description: "Энэ хуудсыг үзэхийн тулд нэвтэрнэ үү...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
-
   // Optimized specific news article fetching
   const { data: article, isLoading: articleLoading } = useQuery({
     queryKey: ["/api/news", newsId],
-    enabled: isAuthenticated && !!newsId,
+    enabled: !!newsId,
     retry: false,
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
@@ -45,14 +29,10 @@ export default function NewsDetail() {
       onError: (error: Error) => {
         if (isUnauthorizedError(error)) {
           toast({
-            title: "Нэвтрэх шаардлагатай",
-            description: "Та дахин нэвтэрнэ үү...",
+            title: "Алдаа",
+            description: "Мэдээг ачаалах боломжгүй байна",
             variant: "destructive",
           });
-          setTimeout(() => {
-            window.location.href = "/api/login";
-          }, 500);
-          return;
         }
       },
     },
@@ -61,7 +41,6 @@ export default function NewsDetail() {
   // Optimized latest news fetching for sidebar
   const { data: latestNews = [] } = useQuery({
     queryKey: ["/api/news/latest"],
-    enabled: isAuthenticated,
     retry: false,
     staleTime: 3 * 60 * 1000, // Consider data fresh for 3 minutes
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
@@ -166,7 +145,7 @@ export default function NewsDetail() {
     );
   }
 
-  if (!isAuthenticated || !user || !article) {
+  if (!article) {
     return null;
   }
 
@@ -273,7 +252,7 @@ export default function NewsDetail() {
                   </div>
                   
                   <div className="flex items-center space-x-2">
-                    {!article.published && user.role === 'admin' && (
+                    {!article.published && user && user.role === 'admin' && (
                       <Button 
                         className="mtta-green text-white hover:bg-mtta-green-dark"
                         onClick={() => publishNewsMutation.mutate(article.id)}
