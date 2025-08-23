@@ -23,7 +23,7 @@ import {
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
 
-// Import clubMemberships table
+// Import database tables
 import {
   users,
   players,
@@ -31,20 +31,14 @@ import {
   tournaments,
   tournamentParticipants,
   tournamentResults,
-  news,
-  sliders,
+  newsFeed,
+  homepageSliders,
   sponsors,
-  judgeAssignments,
   judges,
-  clubMemberships,
-  coaches,
-  playerStats,
+  clubCoaches,
   memberships,
   branches,
   leagues,
-  leagueParticipants,
-  leagueResults,
-  knockoutBrackets,
 } from "../shared/schema";
 
 function calculateAge(dateOfBirth: Date | null | undefined) {
@@ -245,25 +239,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Create player record
-      const [player] = await storage.db
-        .insert(players)
-        .values({
-          userId: user.id,
-          gender: gender as "male" | "female" | "other",
-          dateOfBirth: new Date(dateOfBirth),
-          phone,
-          rank,
-          clubAffiliation: noClub ? clubAffiliation : null,
-        })
-        .returning();
+      const player = await storage.createPlayer({
+        userId: user.id,
+        dateOfBirth: new Date(dateOfBirth),
+        rank,
+        clubId: clubId && !noClub ? clubId : undefined,
+      });
 
       // Create club membership if club is selected
       if (clubId && !noClub) {
-        await storage.db.insert(clubMemberships).values({
+        await storage.createMembership({
           playerId: player.id,
-          clubId: clubId,
-          membershipType: "member",
-          joinDate: new Date(),
+          type: "adult", // Use enum value from schema
+          startDate: new Date(),
+          endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
+          amount: 0, // Free initial membership
+          paid: false,
         });
       }
 
