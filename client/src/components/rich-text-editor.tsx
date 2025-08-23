@@ -94,9 +94,10 @@ export default function RichTextEditor({ content, onChange, placeholder, classNa
         },
       }),
     ],
-    content,
+    content: content || '',
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML())
+      const html = editor.getHTML();
+      onChange(html);
     },
     editorProps: {
       attributes: {

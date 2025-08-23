@@ -191,6 +191,25 @@ export default function News() {
     console.log("Form errors:", form.formState.errors);
     console.log("Current user:", user);
     
+    // Validate that required fields are present
+    if (!data.title?.trim()) {
+      toast({
+        title: "Алдаа",
+        description: "Гарчиг заавал бөглөх ёстой",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!data.content?.trim()) {
+      toast({
+        title: "Алдаа", 
+        description: "Агуулга заавал бөглөх ёстой",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Check if user is authenticated for creating news
     if (!user?.id) {
       toast({
@@ -203,8 +222,12 @@ export default function News() {
     
     // Use the uploaded image URL if available and add authorId
     const finalData = {
-      ...data,
-      imageUrl: newsImageUrl || data.imageUrl,
+      title: data.title?.trim() || '',
+      content: data.content?.trim() || '',
+      excerpt: data.excerpt?.trim() || '',
+      category: data.category || 'news',
+      published: data.published || false,
+      imageUrl: newsImageUrl || data.imageUrl || '',
       authorId: user.id, // Add the required authorId field
     };
     
