@@ -645,7 +645,7 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
 
 /* Navigation link enhancements */
   .nav-link {
-    color: var(--text-secondary);
+    color: #ffffff !important; /* Always white for visibility */
   font-size: 0.95rem;
   font-weight: 600;
   letter-spacing: 0.6px;
@@ -657,7 +657,7 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
 }
 
   .nav-link:hover {
-    color: var(--link);
+    color: var(--link) !important;
   }
 
 /* Hover underline animation for nav links */
@@ -677,7 +677,7 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
 }
 
   .active-nav-link {
-    color: var(--link);
+    color: var(--link) !important;
   font-weight: bold;
 }
 
