@@ -237,7 +237,7 @@ export default function News() {
     }
     
     // Check if user is authenticated for creating news
-    if (!user?.id) {
+    if (!(user as any)?.id) {
       toast({
         title: "Алдаа",
         description: "Мэдээ үүсгэхийн тулд нэвтэрсэн байх ёстой",
@@ -254,7 +254,7 @@ export default function News() {
       category: categoryValue || 'news',
       published: publishedValue !== undefined ? publishedValue : true,
       imageUrl: newsImageUrl || imageUrlValue || '',
-      authorId: user.id, // Add the required authorId field
+      authorId: (user as any).id, // Add the required authorId field
     };
     
     console.log("Final data to submit:", finalData);

@@ -183,7 +183,7 @@ export default function AdminDashboard() {
       ),
     );
 
-  const handleCreate = () => {
+  const handleCreateItem = () => {
     if (!validateForm()) {
       toast({ title: "Алдаа", description: "Шаардлагатай талбаруудыг бөглөнө үү", variant: "destructive" });
       return;
@@ -971,7 +971,7 @@ export default function AdminDashboard() {
             <div>
               <Label>Клубын эзэн</Label>
               <UserAutocomplete
-                users={(allUsers || []).filter((u: any) => u.role === 'club_owner')}
+                users={(allUsers as any[] || []).filter((u: any) => u.role === 'club_owner')}
                 value={formData.ownerId}
                 onSelect={(u) =>
                   setFormData({
@@ -991,7 +991,7 @@ export default function AdminDashboard() {
             <div>
               <Label>Клубын багш дасгалжуулагч</Label>
               <UserAutocomplete
-                users={allUsers || []}
+                users={allUsers as any[] || []}
                 value={formData.coachUserId}
                 onSelect={(u) =>
                   setFormData({
