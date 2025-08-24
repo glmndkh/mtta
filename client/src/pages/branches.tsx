@@ -8,7 +8,7 @@ import { ChevronRight, MapPin, Users, Phone, Mail, Globe, Zap } from "lucide-rea
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 
-// Mock data for branches with coordinates on the map (precisely positioned on actual aimag locations)
+// Mock data for branches with coordinates on the map (accurately positioned on Mongolia aimags)
 const branchesData = [
   {
     id: "1",
@@ -20,7 +20,7 @@ const branchesData = [
     website: "www.mtta-ub.mn",
     members: 456,
     clubs: 12,
-    x: "60%", // Ulaanbaatar - central Mongolia
+    x: "57%", // Accurate position for Ulaanbaatar
     y: "48%",
     description: "Монголын хамгийн том хотын ширээний теннисний салбар"
   },
@@ -33,7 +33,7 @@ const branchesData = [
     email: "darkhan@mtta.mn",
     members: 89,
     clubs: 3,
-    x: "58%", // Darkhan-Uul - north of Ulaanbaatar
+    x: "53%", // Accurate position for Darkhan-Uul aimag
     y: "30%",
     description: "Хойд Монголын спортын хөгжлийн төв"
   },
@@ -46,8 +46,8 @@ const branchesData = [
     email: "uvurkhangai@mtta.mn",
     members: 67,
     clubs: 2,
-    x: "50%", // Uvurkhangai - southwest of Ulaanbaatar
-    y: "58%",
+    x: "48%", // Accurate position for Uvurkhangai aimag
+    y: "55%",
     description: "Төв Монголын уламжлалт спортын салбар"
   },
   {
@@ -59,7 +59,7 @@ const branchesData = [
     email: "bayan-ulgii@mtta.mn",
     members: 45,
     clubs: 2,
-    x: "15%", // Bayan-Ulgii - far western Mongolia
+    x: "8%", // Accurate position for Bayan-Ulgii aimag (far west)
     y: "22%",
     description: "Баруун Монголын уулархаг бүсийн салбар"
   },
@@ -72,7 +72,7 @@ const branchesData = [
     email: "dornogovi@mtta.mn",
     members: 34,
     clubs: 1,
-    x: "72%", // Dornogovi - southeast Mongolia
+    x: "73%", // Accurate position for Dornogovi aimag (southeast)
     y: "70%",
     description: "Говийн бүсийн ширээний теннисний салбар"
   },
@@ -85,7 +85,7 @@ const branchesData = [
     email: "khovd@mtta.mn",
     members: 52,
     clubs: 2,
-    x: "22%", // Khovd - western Mongolia
+    x: "15%", // Accurate position for Khovd aimag (west)
     y: "42%",
     description: "Баруун бүсийн спортын хөгжлийн салбар"
   }
@@ -280,21 +280,27 @@ export default function Branches() {
               <div className="relative bg-gradient-to-br from-blue-50 to-blue-100 overflow-hidden">
                 {/* Map Image */}
                 <img 
-                  src="/client/src/assets/mongolia-map.png" 
+                  src="/src/assets/mongolia-map.png" 
                   alt="Mongolia Map" 
                   className="w-full h-auto block"
                   style={{ maxHeight: '600px', objectFit: 'contain', minHeight: '400px' }}
                   onError={(e) => {
                     // Multiple fallback paths
                     const target = e.currentTarget;
-                    if (target.src.includes('/client/')) {
+                    if (target.src.includes('/src/assets/')) {
                       target.src = "./src/assets/mongolia-map.png";
                     } else if (target.src.includes('./src/')) {
-                      target.src = "/src/assets/mongolia-map.png";
+                      target.src = "client/src/assets/mongolia-map.png";
                     } else {
                       // Show a fallback background if image fails to load
                       target.style.display = 'none';
-                      target.parentElement!.style.background = 'linear-gradient(135deg, #1e3a8a, #3730a3, #1e40af)';
+                      target.parentElement!.style.background = `
+                        linear-gradient(135deg, #1e3a8a, #3730a3, #1e40af),
+                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400"><rect width="800" height="400" fill="%23334155"/><text x="400" y="200" text-anchor="middle" fill="white" font-size="20">Mongolia Map</text></svg>')
+                      `;
+                      target.parentElement!.style.backgroundSize = 'contain';
+                      target.parentElement!.style.backgroundRepeat = 'no-repeat';
+                      target.parentElement!.style.backgroundPosition = 'center';
                       target.parentElement!.style.minHeight = '500px';
                     }
                   }}
