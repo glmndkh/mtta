@@ -346,12 +346,13 @@ export default function News() {
     if (imageUrl.startsWith('http')) return imageUrl;
     if (imageUrl.startsWith('data:')) return imageUrl; // Handle base64 data URLs
     
-    // If it's already an objects path, use it directly (served from public directory)
+    // If it's an object storage path, map it to the public-objects route
     if (imageUrl.startsWith('/objects/')) {
-      return imageUrl;
+      const path = imageUrl.replace(/^\/objects\//, '');
+      return `/public-objects/${path}`;
     }
-    
-    // For other paths
+
+    // For other absolute or relative paths ensure they're served via public-objects
     if (imageUrl.startsWith('/')) return `/public-objects${imageUrl}`;
     return `/public-objects/${imageUrl}`;
   };

@@ -132,9 +132,11 @@ export default function RichTextEditor({ content, onChange, placeholder, classNa
         }),
       })
       const { objectPath } = await response.json()
-      const publicUrl = objectPath.startsWith('/')
-        ? `/public-objects${objectPath}`
-        : `/public-objects/${objectPath}`
+      // Normalize returned object path and convert to public serving URL
+      const normalizedPath = objectPath
+        .replace(/^\/?objects\//, "")
+        .replace(/^\//, "")
+      const publicUrl = `/public-objects/${normalizedPath}`
       setImageUrl(publicUrl)
     }
   }
