@@ -26,6 +26,7 @@ function getImageUrl(imageUrl?: string): string {
   ) {
     return imageUrl;
   }
+  if (imageUrl.startsWith("/public-objects/")) return imageUrl;
   if (imageUrl.startsWith("/objects/")) return imageUrl;
   if (imageUrl.startsWith("/")) return `/public-objects${imageUrl}`;
   return `/public-objects/${imageUrl}`;

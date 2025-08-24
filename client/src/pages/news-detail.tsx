@@ -29,11 +29,12 @@ function LatestNewsSidebar({ currentNewsId }: { currentNewsId: string | undefine
     if (!imageUrl) return placeholderImageData;
     if (imageUrl.startsWith('http')) return imageUrl;
     if (imageUrl.startsWith('data:')) return imageUrl;
-    
+
+    if (imageUrl.startsWith('/public-objects/')) return imageUrl;
     if (imageUrl.startsWith('/objects/')) {
       return imageUrl;
     }
-    
+
     if (imageUrl.startsWith('/')) return `/public-objects${imageUrl}`;
     return `/public-objects/${imageUrl}`;
   };
@@ -224,12 +225,13 @@ export default function NewsDetail() {
     if (!imageUrl) return placeholderImageData;
     if (imageUrl.startsWith('http')) return imageUrl;
     if (imageUrl.startsWith('data:')) return imageUrl; // Handle base64 data URLs
-    
+
+    if (imageUrl.startsWith('/public-objects/')) return imageUrl;
     // If it's already an objects path, use it directly (served from public directory)
     if (imageUrl.startsWith('/objects/')) {
       return imageUrl;
     }
-    
+
     // For other paths
     if (imageUrl.startsWith('/')) return `/public-objects${imageUrl}`;
     return `/public-objects/${imageUrl}`;

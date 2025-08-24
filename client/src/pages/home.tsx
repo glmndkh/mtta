@@ -104,8 +104,9 @@ export default function Home() {
     if (imageUrl.startsWith('data:')) {
       return imageUrl;
     }
-    
-    // If it's an object storage path (starts with /objects/), use it directly (served from public directory)
+
+    // If it's an object storage path (starts with /objects/) or already a public-objects path, use it directly
+    if (imageUrl.startsWith('/public-objects/')) return imageUrl;
     if (imageUrl.startsWith('/objects/')) {
       return imageUrl;
     }
