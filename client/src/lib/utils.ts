@@ -18,21 +18,39 @@ export const placeholderImageData =
  * when no URL is provided.
  */
 export function getImageUrl(imageUrl: string | undefined | null): string {
-  if (!imageUrl) return placeholderImageData
-  if (imageUrl.startsWith('http')) return imageUrl
-  if (imageUrl.startsWith('data:')) return imageUrl // Handle base64 data URLs
+  if (!imageUrl || imageUrl.trim() === '') return placeholderImageData
+  
+  // Handle full URLs (http/https)
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) return imageUrl
+  
+  // Handle base64 data URLs
+  if (imageUrl.startsWith('data:')) return imageUrl
+  
+  // Clean the URL - remove any extra slashes and whitespace
+  const cleanUrl = imageUrl.trim().replace(/\/+/g, '/')
 
   // If it's an object storage path, map it to the public-objects route
-  // Sometimes the API prefix may already be included (e.g. "/api/public-objects/")
-  // in stored URLs. Handle both cases gracefully without duplicating prefixes.
-  if (imageUrl.startsWith('/api/public-objects/')) return imageUrl
-  if (imageUrl.startsWith('/public-objects/')) return imageUrl
-  if (imageUrl.startsWith('/objects/')) {
-    const path = imageUrl.replace(/^\/objects\//, '')
+  // Handle various prefixes that might already be included
+  if (cleanUrl.startsWith('/api/public-objects/')) return cleanUrl
+  if (cleanUrl.startsWith('/public-objects/')) return cleanUrl
+  
+  if (cleanUrl.startsWith('/objects/')) {
+    const path = cleanUrl.replace(/^\/objects\//, '')
     return `/public-objects/${path}`
   }
 
-  // For other absolute or relative paths ensure they're served via public-objects
-  if (imageUrl.startsWith('/')) return `/public-objects${imageUrl}`
-  return `/public-objects/${imageUrl}`
+  // For paths starting with 'objects/' (without leading slash)
+  if (cleanUrl.startsWith('objects/')) {
+    const path = cleanUrl.replace(/^objects\//, '')
+    return `/public-objects/${path}`
+  }
+
+  // For other absolute paths, ensure they're served via public-objects
+  if (cleanUrl.startsWith('/')) {
+    const path = cleanUrl.substring(1) // Remove leading slash
+    return `/public-objects/${path}`
+  }
+  
+  // For relative paths, add to public-objects
+  return `/public-objects/${cleanUrl}`
 }

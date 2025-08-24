@@ -136,14 +136,21 @@ export default function RichTextEditor({ content, onChange, placeholder, classNa
         const imageUrl = data.objectPath;
         console.log("Rich text editor - received object path:", imageUrl);
 
-        // Use the object path directly - it will be processed by getImageUrl when displayed
-        const finalImageUrl = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+        // Store the raw object path - it will be processed by getImageUrl when displayed
+        let finalImageUrl = imageUrl;
+        
+        // Normalize the path format
+        if (finalImageUrl && !finalImageUrl.startsWith('/')) {
+          finalImageUrl = `/${finalImageUrl}`;
+        }
+        
         console.log("Rich text editor - using image URL:", finalImageUrl);
 
         // Insert image into editor
         editor.commands.setImage({
           src: finalImageUrl,
           alt: result.successful[0].name || 'Uploaded image',
+          style: 'max-width: 100%; height: auto;'
         });
       })
       .catch(err => console.error('Failed to finalize upload:', err));

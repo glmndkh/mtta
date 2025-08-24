@@ -227,6 +227,17 @@ export default function NewsDetail() {
       const processedSrc = getImageUrl(src);
       console.log("Processed to:", processedSrc);
       img.setAttribute("src", processedSrc);
+      
+      // Add error handling for broken images
+      img.setAttribute("onerror", `this.onerror=null; this.src='${getImageUrl('')}';`);
+      
+      // Add loading attribute for better performance
+      img.setAttribute("loading", "lazy");
+      
+      // Ensure images are responsive
+      if (!img.getAttribute("style")) {
+        img.setAttribute("style", "max-width: 100%; height: auto;");
+      }
     });
     return doc.body.innerHTML;
   };
