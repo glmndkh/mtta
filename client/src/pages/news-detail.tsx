@@ -330,10 +330,43 @@ export default function NewsDetail() {
               </CardHeader>
               
               <CardContent>
-                <div
-                  className="prose max-w-none text-gray-700 text-lg leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: article.content }}
-                />
+                <div className="prose max-w-none text-gray-700 text-lg leading-relaxed">
+                  {article.content.split('\n').map((line: string, index: number) => {
+                    // Check if line contains an image tag
+                    if (line.includes('<img') || line.includes('[image]') || line.includes('![')) {
+                      // Extract image URL from various formats
+                      let imageUrl = '';
+                      if (line.includes('src="')) {
+                        const match = line.match(/src="([^"]+)"/);
+                        imageUrl = match ? match[1] : '';
+                      } else if (line.includes('[image]')) {
+                        // Handle [image] placeholder format
+                        imageUrl = line.replace('[image]', '').trim();
+                      }
+                      
+                      if (imageUrl) {
+                        return (
+                          <div key={index} className="my-6">
+                            <img
+                              src={getImageUrl(imageUrl)}
+                              alt="News content image"
+                              className="w-full max-w-2xl mx-auto rounded-lg shadow-md"
+                              onError={(e) => {
+                                console.error('News content image failed to load:', imageUrl);
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        );
+                      }
+                    }
+                    
+                    // Regular text content
+                    return (
+                      <div key={index} dangerouslySetInnerHTML={{ __html: line }} />
+                    );
+                  })}
+                </div>
 
                 <Separator className="my-8" />
                 

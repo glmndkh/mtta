@@ -867,6 +867,12 @@ export default function News() {
                         </h3>
                       </Link>
                       <p className="text-gray-600 text-sm mb-3 line-clamp-2">{article.excerpt}</p>
+                      {/* Show embedded images in content if any */}
+                      {article.content && article.content.includes('[image]') && (
+                        <div className="mb-3">
+                          <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">📷 Зураг агуулсан</span>
+                        </div>
+                      )}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
