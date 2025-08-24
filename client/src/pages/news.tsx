@@ -196,11 +196,11 @@ export default function News() {
     console.log("Current user:", user);
     console.log("Form values:", form.getValues());
     console.log("Form is valid:", form.formState.isValid);
-    
+
     // Get all form values directly
     const formValues = form.getValues();
     console.log("Direct form values:", formValues);
-    
+
     // Use form values as primary source since data might be stale
     const titleValue = formValues.title || data.title;
     const contentValue = formValues.content || data.content; 
@@ -208,7 +208,7 @@ export default function News() {
     const categoryValue = formValues.category || data.category;
     const publishedValue = formValues.published !== undefined ? formValues.published : data.published;
     const imageUrlValue = formValues.imageUrl || data.imageUrl;
-    
+
     console.log("Extracted values:", {
       title: titleValue,
       content: contentValue,
@@ -217,7 +217,7 @@ export default function News() {
       published: publishedValue,
       imageUrl: imageUrlValue
     });
-    
+
     // Validate that required fields are present
     if (!titleValue?.trim()) {
       toast({
@@ -227,7 +227,7 @@ export default function News() {
       });
       return;
     }
-    
+
     if (!contentValue?.trim()) {
       toast({
         title: "Алдаа", 
@@ -236,7 +236,7 @@ export default function News() {
       });
       return;
     }
-    
+
     // Check if user is authenticated for creating news
     if (!(user as any)?.id) {
       toast({
@@ -246,7 +246,7 @@ export default function News() {
       });
       return;
     }
-    
+
     // Use the uploaded image URL if available and add authorId
     const finalData = {
       title: titleValue.trim(),
@@ -257,9 +257,9 @@ export default function News() {
       imageUrl: newsImageUrl || imageUrlValue || '',
       authorId: (user as any).id, // Add the required authorId field
     };
-    
+
     console.log("Final data to submit:", finalData);
-    
+
     if (editingNews) {
       updateNewsMutation.mutate({ id: editingNews.id, newsData: finalData });
     } else {
@@ -334,7 +334,7 @@ export default function News() {
       training: { label: "Сургалт", className: "bg-purple-500 text-white" },
       urgent: { label: "Яаралтай", className: "bg-red-500 text-white" },
     };
-    
+
     const cat = categories[category as keyof typeof categories] || { label: "Мэдээ", className: "bg-gray-500 text-white" };
     return <Badge className={cat.className}>{cat.label}</Badge>;
   };
@@ -397,7 +397,7 @@ export default function News() {
     <PageWithLoading>
       <div className="min-h-screen">
       <Navigation />
-      
+
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
@@ -405,7 +405,7 @@ export default function News() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Мэдээ мэдээлэл</h1>
             <p className="text-gray-600">Холбооны сүүлийн үеийн мэдээ, тэмцээний үр дүн</p>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             {/* Category Filter */}
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
@@ -448,7 +448,7 @@ export default function News() {
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="excerpt"
@@ -828,11 +828,23 @@ export default function News() {
                 <CardContent className="p-6">
                   <div className="flex gap-4">
                     {article.imageUrl && (
-                      <div className="w-40 h-28 md:w-48 md:h-32 flex-shrink-0 overflow-hidden rounded-lg">
+                      <div className="aspect-[4/3] w-40 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
                         <img
                           src={getImageUrl(article.imageUrl)}
                           alt={article.title}
-                          className="w-full h-full object-cover"
+                          className="h-full w-full object-cover transition-transform hover:scale-105"
+                          loading="lazy"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "data:image/svg+xml;utf8," + encodeURIComponent(`
+                              <svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'>
+                                <rect width='100%' height='100%' fill='#f3f4f6' />
+                                <g transform='translate(200,150)'>
+                                  <text x='0' y='0' fill='#9ca3af' font-family='sans-serif' font-size='14' text-anchor='middle'>Зураг олдсонгүй</text>
+                                </g>
+                              </svg>
+                            `);
+                          }}
                         />
                       </div>
                     )}

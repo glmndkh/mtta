@@ -41,7 +41,7 @@ function LatestNewsSidebar({ currentNewsId }: { currentNewsId: string | undefine
       training: { label: "Сургалт", className: "bg-purple-500 text-white" },
       urgent: { label: "Яаралтай", className: "bg-red-500 text-white" },
     };
-    
+
     const cat = categories[category as keyof typeof categories] || { label: "Мэдээ", className: "bg-gray-500 text-white" };
     return <Badge className={`${cat.className} text-xs`}>{cat.label}</Badge>;
   };
@@ -99,7 +99,7 @@ function LatestNewsSidebar({ currentNewsId }: { currentNewsId: string | undefine
                       />
                       <figcaption className="sr-only">{news.title}</figcaption>
                     </figure>
-                    
+
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="mb-1">
@@ -119,7 +119,7 @@ function LatestNewsSidebar({ currentNewsId }: { currentNewsId: string | undefine
             ))}
           </div>
         )}
-        
+
         <div className="mt-6 pt-4 border-t">
           <Link href="/news">
             <Button variant="outline" size="sm" className="w-full">
@@ -199,7 +199,7 @@ export default function NewsDetail() {
       training: { label: "Сургалт", className: "bg-purple-500 text-white" },
       urgent: { label: "Яаралтай", className: "bg-red-500 text-white" },
     };
-    
+
     const cat = categories[category as keyof typeof categories] || { label: "Мэдээ", className: "bg-gray-500 text-white" };
     return <Badge className={cat.className}>{cat.label}</Badge>;
   };
@@ -251,7 +251,7 @@ export default function NewsDetail() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back Button */}
         <div className="mb-6">
@@ -290,7 +290,7 @@ export default function NewsDetail() {
                   <figcaption className="mt-2 text-center text-sm text-gray-600">{article.title}</figcaption>
                 </figure>
               )}
-              
+
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between mb-4">
                   {getCategoryBadge(article.category)}
@@ -299,16 +299,16 @@ export default function NewsDetail() {
                     {formatDate(article.publishedAt || article.createdAt)}
                   </div>
                 </div>
-                
+
                 <CardTitle className="text-3xl font-bold text-gray-900 leading-tight">
                   {article.title}
                 </CardTitle>
-                
+
                 {article.excerpt && (
                   <p className="text-xl text-gray-600 mt-4">{article.excerpt}</p>
                 )}
               </CardHeader>
-              
+
               <CardContent>
                 <div
                   className="prose max-w-none text-gray-700 text-lg leading-relaxed"
@@ -316,7 +316,7 @@ export default function NewsDetail() {
                 />
 
                 <Separator className="my-8" />
-                
+
                 {/* Author Info and Actions */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
@@ -355,7 +355,7 @@ export default function NewsDetail() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     {!article.published && user && user.role === 'admin' && (
                       <Button 
