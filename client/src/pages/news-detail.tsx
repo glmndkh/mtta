@@ -3,6 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { getImageUrl } from "@/lib/utils";
 import Navigation from "@/components/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,22 +23,7 @@ function LatestNewsSidebar({ currentNewsId }: { currentNewsId: string | undefine
     refetchOnWindowFocus: false,
   });
 
-  // Static placeholder SVG
-  const placeholderImageData = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI0MCIgdmlld0JveD0iMCAwIDQwMCAyNDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNjAgMTAwSDI0MFYxNDBIMTYwVjEwMFoiIGZpbGw9IiNEMUQ1REIiLz4KPHBhdGggZD0iTTE3NSAxMTVIMjI1VjEyNUgxNzVWMTE1WiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K';
-
-  const getImageUrl = (imageUrl: string) => {
-    if (!imageUrl) return placeholderImageData;
-    if (imageUrl.startsWith('http')) return imageUrl;
-    if (imageUrl.startsWith('data:')) return imageUrl;
-
-    if (imageUrl.startsWith('/public-objects/')) return imageUrl;
-    if (imageUrl.startsWith('/objects/')) {
-      return imageUrl;
-    }
-
-    if (imageUrl.startsWith('/')) return `/public-objects${imageUrl}`;
-    return `/public-objects/${imageUrl}`;
-  };
+  // Use shared image URL helper
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -218,24 +204,7 @@ export default function NewsDetail() {
     return <Badge className={cat.className}>{cat.label}</Badge>;
   };
 
-  // Static placeholder SVG to avoid API calls and improve performance
-  const placeholderImageData = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI0MCIgdmlld0JveD0iMCAwIDQwMCAyNDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNjAgMTAwSDI0MFYxNDBIMTYwVjEwMFoiIGZpbGw9IiNEMUQ1REIiLz4KPHBhdGggZD0iTTE3NSAxMTVIMjI1VjEyNUgxNzVWMTE1WiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K';
-
-  const getImageUrl = (imageUrl: string) => {
-    if (!imageUrl) return placeholderImageData;
-    if (imageUrl.startsWith('http')) return imageUrl;
-    if (imageUrl.startsWith('data:')) return imageUrl; // Handle base64 data URLs
-
-    if (imageUrl.startsWith('/public-objects/')) return imageUrl;
-    // If it's already an objects path, use it directly (served from public directory)
-    if (imageUrl.startsWith('/objects/')) {
-      return imageUrl;
-    }
-
-    // For other paths
-    if (imageUrl.startsWith('/')) return `/public-objects${imageUrl}`;
-    return `/public-objects/${imageUrl}`;
-  };
+  // Image helper imported above handles placeholder and path normalization
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
