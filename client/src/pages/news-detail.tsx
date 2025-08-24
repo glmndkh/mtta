@@ -240,9 +240,9 @@ export default function NewsDetail() {
       return `/${imageUrl}`;
     }
     
-    // For other paths, ensure they work with public directory
+    // For other paths
     if (imageUrl.startsWith('/')) return imageUrl;
-    return `/objects/${imageUrl}`;
+    return `/${imageUrl}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -332,116 +332,38 @@ export default function NewsDetail() {
               <CardContent>
                 <div className="prose max-w-none text-gray-700 text-lg leading-relaxed">
                   {article.content.split('\n').map((line: string, index: number) => {
-                    // Check if line contains an image tag or image URL
-                    if (line.includes('<img') || line.includes('[image]') || line.includes('![') || 
-                        line.match(/https?:\/\/.*\.(jpg|jpeg|png|gif|webp|svg)/i) ||
-                        line.includes('/objects/') || line.includes('uploads/')) {
-                      
+                    // Check if line contains an image tag
+                    if (line.includes('<img') || line.includes('[image]') || line.includes('![')) {
                       // Extract image URL from various formats
                       let imageUrl = '';
-                      
-                      // HTML img tag
                       if (line.includes('src="')) {
                         const match = line.match(/src="([^"]+)"/);
                         imageUrl = match ? match[1] : '';
-                      } 
-                      // [image] placeholder format
-                      else if (line.includes('[image]')) {
-                        imageUrl = line.replace('[image]', '').replace(/[<>]/g, '').trim();
-                      }
-                      // Markdown image format
-                      else if (line.includes('![')) {
-                        const match = line.match(/!\[.*?\]\(([^)]+)\)/);
-                        imageUrl = match ? match[1] : '';
-                      }
-                      // Direct URL in line
-                      else if (line.match(/https?:\/\/.*\.(jpg|jpeg|png|gif|webp|svg)/i)) {
-                        const match = line.match(/(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp|svg))/i);
-                        imageUrl = match ? match[1] : '';
-                      }
-                      // Objects path
-                      else if (line.includes('/objects/') || line.includes('uploads/')) {
-                        imageUrl = line.trim();
+                      } else if (line.includes('[image]')) {
+                        // Handle [image] placeholder format
+                        imageUrl = line.replace('[image]', '').trim();
                       }
                       
                       if (imageUrl) {
                         return (
-                          <div key={index} className="my-8 text-center">
+                          <div key={index} className="my-6">
                             <img
                               src={getImageUrl(imageUrl)}
                               alt="News content image"
-                              className="w-full max-w-4xl mx-auto rounded-lg shadow-lg border"
+                              className="w-full max-w-2xl mx-auto rounded-lg shadow-md"
                               onError={(e) => {
                                 console.error('News content image failed to load:', imageUrl);
-                                console.log('Processed URL:', getImageUrl(imageUrl));
-                                // Try alternative formats
-                                const target = e.currentTarget;
-                                if (!target.src.includes('/objects/')) {
-                                  target.src = `/objects/${imageUrl.replace(/^\/+/, '')}`;
-                                } else if (!target.src.includes('/public-objects/')) {
-                                  target.src = `/public-objects/${imageUrl.replace(/^\/+/, '')}`;
-                                } else {
-                                  target.style.display = 'none';
-                                }
-                              }}
-                              onLoad={() => {
-                                console.log('News content image loaded successfully:', getImageUrl(imageUrl));
+                                e.currentTarget.style.display = 'none';
                               }}
                             />
-                            {/* Show caption if available */}
-                            {line.includes('alt="') && (
-                              <p className="text-sm text-gray-600 mt-2 italic">
-                                {line.match(/alt="([^"]+)"/)?.[1] || ''}
-                              </p>
-                            )}
                           </div>
                         );
                       }
                     }
                     
-                    // Check for video content
-                    if (line.includes('<video') || line.includes('[video]') || 
-                        line.match(/https?:\/\/.*\.(mp4|webm|ogg|mov)/i)) {
-                      
-                      let videoUrl = '';
-                      if (line.includes('src="')) {
-                        const match = line.match(/src="([^"]+)"/);
-                        videoUrl = match ? match[1] : '';
-                      } else if (line.includes('[video]')) {
-                        videoUrl = line.replace('[video]', '').trim();
-                      } else if (line.match(/https?:\/\/.*\.(mp4|webm|ogg|mov)/i)) {
-                        const match = line.match(/(https?:\/\/[^\s]+\.(mp4|webm|ogg|mov))/i);
-                        videoUrl = match ? match[1] : '';
-                      }
-                      
-                      if (videoUrl) {
-                        return (
-                          <div key={index} className="my-8 text-center">
-                            <video
-                              src={getImageUrl(videoUrl)}
-                              controls
-                              className="w-full max-w-4xl mx-auto rounded-lg shadow-lg border"
-                              onError={(e) => {
-                                console.error('News content video failed to load:', videoUrl);
-                              }}
-                            >
-                              Таны хөтөч видео тоглуулахыг дэмждэггүй байна.
-                            </video>
-                          </div>
-                        );
-                      }
-                    }
-                    
-                    // Regular text content - process for better formatting
-                    const processedLine = line
-                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold text
-                      .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italic text
-                      .replace(/`(.*?)`/g, '<code>$1</code>'); // Code text
-                    
+                    // Regular text content
                     return (
-                      <div key={index} className="mb-3">
-                        <div dangerouslySetInnerHTML={{ __html: processedLine }} />
-                      </div>
+                      <div key={index} dangerouslySetInnerHTML={{ __html: line }} />
                     );
                   })}
                 </div>
