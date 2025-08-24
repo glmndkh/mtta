@@ -8,7 +8,7 @@ import { ChevronRight, MapPin, Users, Phone, Mail, Globe, Zap } from "lucide-rea
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 
-// Mock data for branches with coordinates on the map (based on actual Mongolia map positioning)
+// Mock data for branches with coordinates on the map (precisely positioned on actual aimag locations)
 const branchesData = [
   {
     id: "1",
@@ -20,8 +20,8 @@ const branchesData = [
     website: "www.mtta-ub.mn",
     members: 456,
     clubs: 12,
-    x: "58%", // Position on map - adjusted for Ulaanbaatar
-    y: "50%",
+    x: "60%", // Ulaanbaatar - central Mongolia
+    y: "48%",
     description: "Монголын хамгийн том хотын ширээний теннисний салбар"
   },
   {
@@ -33,8 +33,8 @@ const branchesData = [
     email: "darkhan@mtta.mn",
     members: 89,
     clubs: 3,
-    x: "55%", // North of Ulaanbaatar
-    y: "35%",
+    x: "58%", // Darkhan-Uul - north of Ulaanbaatar
+    y: "30%",
     description: "Хойд Монголын спортын хөгжлийн төв"
   },
   {
@@ -46,8 +46,8 @@ const branchesData = [
     email: "uvurkhangai@mtta.mn",
     members: 67,
     clubs: 2,
-    x: "45%", // Southwest of Ulaanbaatar
-    y: "60%",
+    x: "50%", // Uvurkhangai - southwest of Ulaanbaatar
+    y: "58%",
     description: "Төв Монголын уламжлалт спортын салбар"
   },
   {
@@ -59,8 +59,8 @@ const branchesData = [
     email: "bayan-ulgii@mtta.mn",
     members: 45,
     clubs: 2,
-    x: "12%", // Far west
-    y: "25%",
+    x: "15%", // Bayan-Ulgii - far western Mongolia
+    y: "22%",
     description: "Баруун Монголын уулархаг бүсийн салбар"
   },
   {
@@ -72,8 +72,8 @@ const branchesData = [
     email: "dornogovi@mtta.mn",
     members: 34,
     clubs: 1,
-    x: "70%", // Southeast
-    y: "75%",
+    x: "72%", // Dornogovi - southeast Mongolia
+    y: "70%",
     description: "Говийн бүсийн ширээний теннисний салбар"
   },
   {
@@ -85,8 +85,8 @@ const branchesData = [
     email: "khovd@mtta.mn",
     members: 52,
     clubs: 2,
-    x: "18%", // West
-    y: "45%",
+    x: "22%", // Khovd - western Mongolia
+    y: "42%",
     description: "Баруун бүсийн спортын хөгжлийн салбар"
   }
 ];
