@@ -287,6 +287,40 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
   animation: float 6s ease-in-out infinite;
 }
 
+/* Lightning spot animations */
+@keyframes lightning-pulse {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes radar-sweep {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+
+.lightning-spot {
+  animation: lightning-pulse 2s ease-in-out infinite;
+}
+
+.radar-effect {
+  animation: radar-sweep 3s ease-out infinite;
+}
+
 /* Glowing border animation */
 .glow-border {
   position: relative;
