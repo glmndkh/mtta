@@ -23,6 +23,9 @@ export function getImageUrl(imageUrl: string | undefined | null): string {
   if (imageUrl.startsWith('data:')) return imageUrl // Handle base64 data URLs
 
   // If it's an object storage path, map it to the public-objects route
+  // Sometimes the API prefix may already be included (e.g. "/api/public-objects/")
+  // in stored URLs. Handle both cases gracefully without duplicating prefixes.
+  if (imageUrl.startsWith('/api/public-objects/')) return imageUrl
   if (imageUrl.startsWith('/public-objects/')) return imageUrl
   if (imageUrl.startsWith('/objects/')) {
     const path = imageUrl.replace(/^\/objects\//, '')
