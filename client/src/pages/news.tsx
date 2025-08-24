@@ -346,14 +346,19 @@ export default function News() {
     if (imageUrl.startsWith('http')) return imageUrl;
     if (imageUrl.startsWith('data:')) return imageUrl; // Handle base64 data URLs
 
-    // If it's already an objects path, use it directly (served from public directory)
+    // If it's already an objects path, use it directly
     if (imageUrl.startsWith('/objects/')) {
       return imageUrl;
     }
 
-    // For other paths
-    if (imageUrl.startsWith('/')) return `/public-objects${imageUrl}`;
-    return `/public-objects/${imageUrl}`;
+    // For object storage paths without leading slash
+    if (imageUrl.includes('objects/')) {
+      return `/${imageUrl}`;
+    }
+
+    // For other paths, ensure they work with object storage
+    if (imageUrl.startsWith('/')) return imageUrl;
+    return `/objects/${imageUrl}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -866,13 +871,36 @@ export default function News() {
                           {article.title}
                         </h3>
                       </Link>
-                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">{article.excerpt}</p>
-                      {/* Show embedded images in content if any */}
-                      {article.content && article.content.includes('[image]') && (
-                        <div className="mb-3">
-                          <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">📷 Зураг агуулсан</span>
-                        </div>
-                      )}
+                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                        {article.excerpt || 
+                         (article.content ? 
+                           article.content.replace(/<[^>]*>/g, '').replace(/\[image\].*?\n/g, '').substring(0, 150) + '...' 
+                           : ''
+                         )
+                        }
+                      </p>
+                      {/* Show embedded media indicators */}
+                      <div className="flex gap-2 mb-3">
+                        {article.content && (
+                          article.content.includes('[image]') || 
+                          article.content.includes('<img') || 
+                          article.content.match(/https?:\/\/.*\.(jpg|jpeg|png|gif|webp|svg)/i) ||
+                          article.content.includes('/objects/')
+                        ) && (
+                          <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded flex items-center gap-1">
+                            📷 Зураг агуулсан
+                          </span>
+                        )}
+                        {article.content && (
+                          article.content.includes('[video]') || 
+                          article.content.includes('<video') || 
+                          article.content.match(/https?:\/\/.*\.(mp4|webm|ogg|mov)/i)
+                        ) && (
+                          <span className="text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded flex items-center gap-1">
+                            🎥 Видео агуулсан
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
