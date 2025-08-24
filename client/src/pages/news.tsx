@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { getImageUrl } from "@/lib/utils";
 import Navigation from "@/components/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -336,26 +337,6 @@ export default function News() {
     
     const cat = categories[category as keyof typeof categories] || { label: "Мэдээ", className: "bg-gray-500 text-white" };
     return <Badge className={cat.className}>{cat.label}</Badge>;
-  };
-
-  // Static placeholder SVG to avoid API calls and improve performance
-  const placeholderImageData = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI0MCIgdmlld0JveD0iMCAwIDQwMCAyNDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNjAgMTAwSDI0MFYxNDBIMTYwVjEwMFoiIGZpbGw9IiNEMUQ1REIiLz4KPHBhdGggZD0iTTE3NSAxMTVIMjI1VjEyNUgxNzVWMTE1WiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K';
-
-  const getImageUrl = (imageUrl: string) => {
-    if (!imageUrl) return placeholderImageData;
-    if (imageUrl.startsWith('http')) return imageUrl;
-    if (imageUrl.startsWith('data:')) return imageUrl; // Handle base64 data URLs
-
-    // If it's an object storage path, map it to the public-objects route
-    if (imageUrl.startsWith('/public-objects/')) return imageUrl;
-    if (imageUrl.startsWith('/objects/')) {
-      const path = imageUrl.replace(/^\/objects\//, '');
-      return `/public-objects/${path}`;
-    }
-
-    // For other absolute or relative paths ensure they're served via public-objects
-    if (imageUrl.startsWith('/')) return `/public-objects${imageUrl}`;
-    return `/public-objects/${imageUrl}`;
   };
 
   const formatDate = (dateString: string) => {
