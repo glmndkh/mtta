@@ -1753,70 +1753,87 @@ export default function AdminDashboard() {
                 <Upload className="w-4 h-4" />
                 Зураг оруулах
               </Label>
-              <ObjectUploader
-                maxNumberOfFiles={1}
-                maxFileSize={5242880} // 5MB
-                onGetUploadParameters={async () => {
-                  const response = await fetch('/api/objects/upload', {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json'
-                    }
-                  });
-                  const data = await response.json();
-                  return {
-                    method: 'PUT' as const,
-                    url: data.uploadURL
-                  };
-                }}
-                onComplete={async (result) => {
-                  if (result.successful && result.successful.length > 0) {
-                    const uploadedFileUrl = result.successful[0].uploadURL;
+              <div className="space-y-2">
+                <ObjectUploader
+                  maxNumberOfFiles={1}
+                  maxFileSize={5242880} // 5MB
+                  onGetUploadParameters={async () => {
+                    const response = await fetch('/api/objects/upload', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json'
+                      }
+                    });
+                    const data = await response.json();
+                    return {
+                      method: 'PUT' as const,
+                      url: data.uploadURL
+                    };
+                  }}
+                  onComplete={async (result) => {
+                    if (result.successful && result.successful.length > 0) {
+                      const uploadedFileUrl = result.successful[0].uploadURL;
 
-                    try {
-                      const response = await fetch('/api/objects/finalize', {
-                        method: 'PUT',
-                        headers: {
-                          'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                          fileURL: uploadedFileUrl,
-                          isPublic: true
-                        })
-                      });
-                      const data = await response.json();
+                      try {
+                        const response = await fetch('/api/objects/finalize', {
+                          method: 'PUT',
+                          headers: {
+                            'Content-Type': 'application/json'
+                          },
+                          body: JSON.stringify({
+                            fileURL: uploadedFileUrl,
+                            isPublic: true
+                          })
+                        });
+                        const data = await response.json();
 
-                      setFormData({...formData, imageUrl: data.objectPath});
-                      toast({
-                        title: "Амжилттай",
-                        description: "Зураг амжилттай хуулагдлаа"
-                      });
-                    } catch (error) {
-                      console.error('Error setting image ACL:', error);
-                      setFormData({...formData, imageUrl: uploadedFileUrl});
-                      toast({
-                        title: "Анхааруулга",
-                        description: "Зураг хуулагдсан боловч зураг харагдахгүй байж магад"
-                      });
+                        setFormData({...formData, imageUrl: data.objectPath});
+                        toast({
+                          title: "Амжилттай",
+                          description: "Зураг амжилттай хуулагдлаа"
+                        });
+                      } catch (error) {
+                        console.error('Error setting image ACL:', error);
+                        setFormData({...formData, imageUrl: uploadedFileUrl});
+                        toast({
+                          title: "Анхааруулга",
+                          description: "Зураг хуулагдсан боловч зураг харагдахгүй байж магад"
+                        });
+                      }
                     }
-                  }
-                }}
-                buttonClassName="w-full"
-              >
-                <div className="flex items-center gap-2">
-                  <Upload className="w-4 h-4" />
-                  <span>Зураг файл сонгох</span>
-                </div>
-              </ObjectUploader>
-              {formData.imageUrl && (
-                <div className="mt-2">
-                  <img
-                    src={formData.imageUrl.startsWith('/') ? `/public-objects${formData.imageUrl}` : formData.imageUrl}
-                    alt="Мэдээний зураг"
-                    className="w-32 h-24 object-cover rounded"
+                  }}
+                  buttonClassName="w-full"
+                >
+                  <div className="flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    <span>Зураг файл сонгох</span>
+                  </div>
+                </ObjectUploader>
+                <div className="text-sm text-muted-foreground text-center">эсвэл</div>
+                <div>
+                  <Label htmlFor="newsImageUrl">Зурагны URL оруулах</Label>
+                  <Input
+                    id="newsImageUrl"
+                    type="url"
+                    placeholder="https://example.com/image.jpg"
+                    value={formData.imageUrl || ''}
+                    onChange={(e) => setFormData({...formData, imageUrl: e.target.value})}
                   />
                 </div>
-              )}
+                {formData.imageUrl && (
+                  <div className="mt-2">
+                    <img
+                      src={formData.imageUrl.startsWith('/') ? `/public-objects${formData.imageUrl}` : formData.imageUrl}
+                      alt="Мэдээний зураг"
+                      className="w-full max-w-sm h-40 object-cover rounded border"
+                      onError={(e) => {
+                        e.currentTarget.src = '/api/placeholder/400/300';
+                      }}
+                    />
+                    <div className="text-sm text-green-600 mt-1">✓ Зураг ачаалагдлаа</div>
+                  </div>
+                )}
+              </div>
             </div>
             <div>
               <Label htmlFor="category">Категори</Label>
