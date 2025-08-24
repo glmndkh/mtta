@@ -24,6 +24,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
+// Import Form components
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+
 export default function AdminDashboard() {
   const [selectedTab, setSelectedTab] = useState("stats");
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -1763,7 +1773,6 @@ export default function AdminDashboard() {
                   if (result.successful && result.successful.length > 0) {
                     const uploadedFileUrl = result.successful[0].uploadURL;
 
-                    // Update ACL policy and get normalized path
                     try {
                       const response = await fetch('/api/objects/finalize', {
                         method: 'PUT',
