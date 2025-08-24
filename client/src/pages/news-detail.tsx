@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Calendar, User, Megaphone, Share2, Clock } from "lucide-react";
 import { Link, useParams } from "wouter";
+import { useMemo } from "react";
 
 // Latest News Sidebar Component
 function LatestNewsSidebar({ currentNewsId }: { currentNewsId: string | undefined }) {
@@ -245,6 +246,22 @@ export default function NewsDetail() {
     });
   };
 
+  const processContentImages = (html: string) => {
+    if (!html) return "";
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    doc.querySelectorAll("img").forEach((img) => {
+      const src = img.getAttribute("src") || "";
+      img.setAttribute("src", getImageUrl(src));
+    });
+    return doc.body.innerHTML;
+  };
+
+  const processedContent = useMemo(
+    () => processContentImages(article?.content || ""),
+    [article?.content]
+  );
+
   if (isLoading || articleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -324,7 +341,7 @@ export default function NewsDetail() {
               <CardContent>
                 <div
                   className="prose max-w-none text-gray-700 text-lg leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: article.content }}
+                  dangerouslySetInnerHTML={{ __html: processedContent }}
                 />
 
                 <Separator className="my-8" />
