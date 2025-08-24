@@ -1,0 +1,280 @@
+import React, { useMemo, useState } from "react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { ChevronRight, Globe2, MapPin, Users } from "lucide-react";
+
+// ---------------------------------------------
+// 1) Загварын өгөгдөл — ЖИШЭЭ (Та API эсвэл DB-ээсээ тэжээнэ)
+// ---------------------------------------------
+
+type Branch = {
+  id: string;
+  name: string;
+  short?: string;
+  region?: string; // Asia, Europe, etc. or Aimag name
+  address?: string;
+  phone?: string;
+  email?: string;
+  leads?: number; // optional stat
+  image?: string; // logo/photo url
+  description?: string;
+  socials?: { type: "fb" | "ig" | "x" | "web"; url: string }[];
+};
+
+// Монголын 21 аймаг + УБ (жишээ)
+const MONGOL_AIMAGS: Branch[] = [
+  { id: "ub", name: "Улаанбаатар", short: "УБ", region: "Нийслэл", address: "Сүхбаатар дүүрэг…", phone: "+976 7000-0000", email: "ub@tt.mn", leads: 128 },
+  { id: "arkhangai", name: "Архангай", region: "Аймаг", address: "Эрдэнэтолгой баг…", phone: "+976 7033-0000", email: "arkhangai@tt.mn", leads: 12 },
+  { id: "bayankhongor", name: "Баянхонгор" },
+  { id: "baynulgii", name: "Баян-Өлгий" },
+  { id: "bulgan", name: "Булган" },
+  { id: "govi-altai", name: "Говь-Алтай" },
+  { id: "dornod", name: "Дорнод" },
+  { id: "dornogovi", name: "Дорноговь" },
+  { id: "dundgovi", name: "Дундговь" },
+  { id: "zavkhan", name: "Завхан" },
+  { id: "orkhon", name: "Орхон" },
+  { id: "ovorkhangai", name: "Өвөрхангай" },
+  { id: "ukhgovi", name: "Өмнөговь" },
+  { id: "sukhbaatar", name: "Сүхбаатар" },
+  { id: "selenge", name: "Сэлэнгэ" },
+  { id: "tov", name: "Төв" },
+  { id: "uvs", name: "Увс" },
+  { id: "khovd", name: "Ховд" },
+  { id: "khentii", name: "Хэнтий" },
+  { id: "khuvsgul", name: "Хөвсгөл" },
+  { id: "gobisb", name: "Говьсүмбэр" },
+  { id: "darhanuul", name: "Дархан-Уул" },
+];
+
+const INTERNATIONAL: Branch[] = [
+  { id: "jpn-niigata", name: "Japan — Niigata", region: "Asia/Japan", address: "Niigata City…", phone: "+81 25-000-0000", email: "jp@tt.mn", description: "Ниигата дахь албан ёсны түнш байгууллага.", leads: 22 },
+  { id: "kor-seoul", name: "Korea — Seoul", region: "Asia/Korea", description: "Сөүл хот дахь салбар." },
+  { id: "deu-berlin", name: "Germany — Berlin", region: "Europe/Germany" },
+  { id: "usa-la", name: "USA — Los Angeles", region: "North America/USA" },
+  { id: "aus-sydney", name: "Australia — Sydney", region: "Oceania/Australia" },
+];
+
+// Туслах: хоосон зураг орлуулах
+const fallback =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='360'>` +
+      `<rect width='100%' height='100%' fill='black' />` +
+      `<g transform='translate(300,180)'>` +
+      `<circle r='120' fill='none' stroke='white' stroke-width='2'/>` +
+      `<text x='0' y='8' fill='white' font-family='sans-serif' font-size='20' text-anchor='middle'>Branch Image</text>` +
+      `</g>` +
+    `</svg>`
+  );
+
+// ---------------------------------------------
+// 2) Компонент
+// ---------------------------------------------
+
+export default function BranchesDirectory() {
+  const [tab, setTab] = useState<string>("mn");
+  const [query, setQuery] = useState<string>("");
+  const [selected, setSelected] = useState<Branch | null>(null);
+
+  const list = tab === "mn" ? MONGOL_AIMAGS : INTERNATIONAL;
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return list;
+    return list.filter((b) =>
+      [b.name, b.short, b.region].filter(Boolean).some((v) => v!.toLowerCase().includes(q))
+    );
+  }, [list, query]);
+
+  return (
+    <div className="mx-auto max-w-[1400px] p-4 md:p-6 lg:p-8">
+      {/* Гарчиг ба хайлт */}
+      <div className="mb-4 flex flex-col gap-4 md:mb-6 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+            Салбар холбоод
+          </h1>
+          <p className="text-muted-foreground">
+            International & Монголын салбар холбоодууд — зургийн товч дээр дархад баруун талд дэлгэрэнгүй мэдээлэл харагдана.
+          </p>
+        </div>
+
+        <div className="w-full max-w-md">
+          <Input
+            placeholder="Хайх: аймаг, улс, хот…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Табууд */}
+      <Tabs value={tab} onValueChange={setTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="mn" className="gap-2">
+            <MapPin className="h-4 w-4" /> Монгол
+          </TabsTrigger>
+          <TabsTrigger value="int" className="gap-2">
+            <Globe2 className="h-4 w-4" /> International
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value={tab} className="space-y-6">
+          <DirectoryGrid
+            branches={filtered}
+            selectedId={selected?.id}
+            onSelect={(b) => setSelected(b)}
+          />
+
+          {/* Detail panel */}
+          <DetailPanel branch={selected} tab={tab} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// ---------------------------------------------
+// 3) Зүүн тал: Grid жагсаалт (Cards + Image button)
+// ---------------------------------------------
+
+function DirectoryGrid({
+  branches,
+  selectedId,
+  onSelect,
+}: {
+  branches: Branch[];
+  selectedId?: string;
+  onSelect: (b: Branch) => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+      {branches.map((b) => (
+        <button
+          key={b.id}
+          onClick={() => onSelect(b)}
+          className={
+            "group relative overflow-hidden rounded-2xl border bg-card text-left transition " +
+            (selectedId === b.id ? "ring-2 ring-primary" : "hover:shadow-md")
+          }
+        >
+          <div className="aspect-[4/3] w-full">
+            <img
+              src={b.image || fallback}
+              alt={b.name}
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
+          </div>
+          <div className="absolute inset-x-0 bottom-0 rounded-t-2xl bg-gradient-to-t from-black/70 to-black/0 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <span className="line-clamp-1 text-sm font-semibold text-white">{b.name}</span>
+              <ChevronRight className="h-4 w-4 text-white/80 transition group-hover:translate-x-0.5" />
+            </div>
+            {b.region && (
+              <div className="mt-1">
+                <Badge variant="secondary" className="bg-white/90 text-[10px]">
+                  {b.region}
+                </Badge>
+              </div>
+            )}
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------
+// 4) Баруун тал: Detail panel
+// ---------------------------------------------
+
+function DetailPanel({ branch, tab }: { branch: Branch | null; tab: string }) {
+  if (!branch) {
+    return (
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle className="text-base md:text-lg">
+            {tab === "mn" ? "Аймаг / Нийслэлийн салбар сонгоно уу" : "International салбар сонгоно уу"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          Зүүн талаас зургийн карт дээр дарж дэлгэрэнгүй мэдээллээ хараарай.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="mt-4">
+      <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div>
+          <CardTitle className="text-xl">{branch.name}</CardTitle>
+          {branch.region && (
+            <div className="mt-1 flex flex-wrap gap-2">
+              <Badge variant="outline">{branch.region}</Badge>
+              {branch.leads ? (
+                <Badge variant="secondary" className="gap-1">
+                  <Users className="h-3.5 w-3.5" /> {branch.leads} идэвхтэй гишүүн
+                </Badge>
+              ) : null}
+            </div>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline">Холбоо барих</Button>
+          <Button size="sm">Илүү үзэх</Button>
+        </div>
+      </CardHeader>
+      <Separator />
+      <CardContent className="grid grid-cols-1 gap-6 py-6 md:grid-cols-5">
+        {/* Зураг */}
+        <div className="md:col-span-2">
+          <div className="overflow-hidden rounded-xl border">
+            <img
+              src={branch.image || fallback}
+              alt={branch.name}
+              className="aspect-video w-full object-cover"
+            />
+          </div>
+        </div>
+
+        {/* Мэдээлэл */}
+        <div className="md:col-span-3">
+          <div className="space-y-4 text-sm">
+            {branch.description && <p className="leading-6">{branch.description}</p>}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Info label="Хаяг" value={branch.address || "―"} />
+              <Info label="Утас" value={branch.phone || "―"} />
+              <Info label="Имэйл" value={branch.email || "―"} />
+              <Info label="Товч нэр" value={branch.short || "―"} />
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function Info({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border p-3">
+      <div className="text-[11px] uppercase text-muted-foreground">{label}</div>
+      <div className="mt-0.5 text-sm font-medium">{value}</div>
+    </div>
+  );
+}
+
+// ---------------------------------------------
+// 5) Ашиглах заавар
+// ---------------------------------------------
+// - Энэ файлыг pages/branches/page.tsx эсвэл components/BranchesDirectory.tsx болгон тавиад default export-г хэрэглэнэ.
+// - Tailwind, shadcn/ui (tabs, input, card, badge, scroll-area, separator, button) суусан байх ёстой.
+// - Жинхэнэ өгөгдлөө API-ээс аваад MONGOL_AIMAGS, INTERNATIONAL массивыг солиход л болно.
+// - Хэрэв баруун талдаа үргэлж харагдах split layout хүсвэл grid layout-аа өөрчлөн, detail panel-ийг sticky болгоорой.
