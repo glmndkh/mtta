@@ -103,13 +103,14 @@ function LatestNewsSidebar({ currentNewsId }: { currentNewsId: string | undefine
                 <div className="group cursor-pointer">
                   <div className="flex gap-3">
                     {/* Image */}
-                    <div className="w-16 h-12 flex-shrink-0 overflow-hidden rounded">
+                    <figure className="w-16 h-12 flex-shrink-0 overflow-hidden rounded">
                       <img
                         src={getImageUrl(news.imageUrl)}
                         alt={news.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                       />
-                    </div>
+                      <figcaption className="sr-only">{news.title}</figcaption>
+                    </figure>
                     
                     {/* Content */}
                     <div className="flex-1 min-w-0">
@@ -279,24 +280,27 @@ export default function NewsDetail() {
           <div className="lg:col-span-2">
             <Card className="shadow-lg">
               {article.imageUrl && (
-                <div className="aspect-video overflow-hidden rounded-t-lg">
-                  <img 
-                    src={getImageUrl(article.imageUrl)} 
-                    alt={article.title}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      console.error('News detail image failed to load:', article.imageUrl);
-                      console.log('Processed URL:', getImageUrl(article.imageUrl));
-                      // Try alternative URL format
-                      if (!e.currentTarget.src.includes('/public-objects/')) {
-                        e.currentTarget.src = `/public-objects/${article.imageUrl.replace(/^\/+/, '')}`;
-                      }
-                    }}
-                    onLoad={() => {
-                      console.log('News detail image loaded successfully:', getImageUrl(article.imageUrl));
-                    }}
-                  />
-                </div>
+                <figure>
+                  <div className="aspect-video overflow-hidden rounded-t-lg">
+                    <img
+                      src={getImageUrl(article.imageUrl)}
+                      alt={article.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.error('News detail image failed to load:', article.imageUrl);
+                        console.log('Processed URL:', getImageUrl(article.imageUrl));
+                        // Try alternative URL format
+                        if (!e.currentTarget.src.includes('/public-objects/')) {
+                          e.currentTarget.src = `/public-objects/${article.imageUrl.replace(/^\/+/, '')}`;
+                        }
+                      }}
+                      onLoad={() => {
+                        console.log('News detail image loaded successfully:', getImageUrl(article.imageUrl));
+                      }}
+                    />
+                  </div>
+                  <figcaption className="mt-2 text-center text-sm text-gray-600">{article.title}</figcaption>
+                </figure>
               )}
               
               <CardHeader className="pb-4">
@@ -329,26 +333,29 @@ export default function NewsDetail() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-                        {article.author?.profileImageUrl ? (
-                          <img 
-                            src={getImageUrl(article.author.profileImageUrl)} 
-                            alt={`${article.author.firstName} ${article.author.lastName}`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              console.error('Author profile image failed to load:', article.author?.profileImageUrl);
-                              console.log('Processed author URL:', getImageUrl(article.author?.profileImageUrl || ''));
-                              // Fallback to user icon
-                              e.currentTarget.style.display = 'none';
-                            }}
-                            onLoad={() => {
-                              console.log('Author profile image loaded successfully:', getImageUrl(article.author?.profileImageUrl || ''));
-                            }}
-                          />
-                        ) : (
-                          <User className="h-6 w-6 text-gray-400" />
-                        )}
-                      </div>
+                    <figure className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                      {article.author?.profileImageUrl ? (
+                        <img
+                          src={getImageUrl(article.author.profileImageUrl)}
+                          alt={`${article.author.firstName} ${article.author.lastName}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            console.error('Author profile image failed to load:', article.author?.profileImageUrl);
+                            console.log('Processed author URL:', getImageUrl(article.author?.profileImageUrl || ''));
+                            // Fallback to user icon
+                            e.currentTarget.style.display = 'none';
+                          }}
+                          onLoad={() => {
+                            console.log('Author profile image loaded successfully:', getImageUrl(article.author?.profileImageUrl || ''));
+                          }}
+                        />
+                      ) : (
+                        <User className="h-6 w-6 text-gray-400" />
+                      )}
+                      <figcaption className="sr-only">
+                        {article.author?.firstName} {article.author?.lastName}
+                      </figcaption>
+                    </figure>
                       <div>
                         <p className="font-semibold text-gray-900">
                           {article.author?.firstName} {article.author?.lastName}
