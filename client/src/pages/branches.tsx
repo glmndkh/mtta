@@ -8,7 +8,7 @@ import { ChevronRight, MapPin, Users, Phone, Mail, Globe, Zap } from "lucide-rea
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 
-// Mock data for branches with coordinates on the map
+// Mock data for branches with coordinates on the map (based on actual Mongolia map positioning)
 const branchesData = [
   {
     id: "1",
@@ -20,8 +20,8 @@ const branchesData = [
     website: "www.mtta-ub.mn",
     members: 456,
     clubs: 12,
-    x: "65%", // Position on map
-    y: "45%",
+    x: "58%", // Position on map - adjusted for Ulaanbaatar
+    y: "50%",
     description: "Монголын хамгийн том хотын ширээний теннисний салбар"
   },
   {
@@ -33,8 +33,8 @@ const branchesData = [
     email: "darkhan@mtta.mn",
     members: 89,
     clubs: 3,
-    x: "58%",
-    y: "25%",
+    x: "55%", // North of Ulaanbaatar
+    y: "35%",
     description: "Хойд Монголын спортын хөгжлийн төв"
   },
   {
@@ -46,8 +46,8 @@ const branchesData = [
     email: "uvurkhangai@mtta.mn",
     members: 67,
     clubs: 2,
-    x: "45%",
-    y: "55%",
+    x: "45%", // Southwest of Ulaanbaatar
+    y: "60%",
     description: "Төв Монголын уламжлалт спортын салбар"
   },
   {
@@ -59,8 +59,8 @@ const branchesData = [
     email: "bayan-ulgii@mtta.mn",
     members: 45,
     clubs: 2,
-    x: "8%",
-    y: "15%",
+    x: "12%", // Far west
+    y: "25%",
     description: "Баруун Монголын уулархаг бүсийн салбар"
   },
   {
@@ -72,8 +72,8 @@ const branchesData = [
     email: "dornogovi@mtta.mn",
     members: 34,
     clubs: 1,
-    x: "75%",
-    y: "70%",
+    x: "70%", // Southeast
+    y: "75%",
     description: "Говийн бүсийн ширээний теннисний салбар"
   },
   {
@@ -85,8 +85,8 @@ const branchesData = [
     email: "khovd@mtta.mn",
     members: 52,
     clubs: 2,
-    x: "15%",
-    y: "40%",
+    x: "18%", // West
+    y: "45%",
     description: "Баруун бүсийн спортын хөгжлийн салбар"
   }
 ];
@@ -96,33 +96,40 @@ const LightningSpot = ({ branch, onClick }: { branch: any, onClick: () => void }
 
   return (
     <div
-      className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group"
+      className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group z-10"
       style={{ left: branch.x, top: branch.y }}
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Radar sweep effect */}
+      <div className="absolute inset-0 w-16 h-16 -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2">
+        <div className="radar-effect absolute inset-0 w-full h-full border-2 border-mtta-green rounded-full opacity-30"></div>
+      </div>
+      
       {/* Lightning effect */}
       <div className={`relative transition-all duration-300 ${isHovered ? 'scale-125' : 'scale-100'}`}>
-        {/* Pulsing outer circle */}
-        <div className="absolute inset-0 w-8 h-8 bg-blue-500 rounded-full opacity-30 animate-ping"></div>
+        {/* Pulsing outer circles */}
+        <div className="absolute inset-0 w-10 h-10 bg-mtta-green rounded-full opacity-20 animate-ping -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2"></div>
+        <div className="absolute inset-0 w-8 h-8 bg-mtta-green rounded-full opacity-40 animate-ping animation-delay-150 -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2"></div>
         
-        {/* Main circle */}
-        <div className="relative w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full flex items-center justify-center shadow-lg">
-          <Zap className="w-4 h-4 text-white" />
+        {/* Main lightning spot */}
+        <div className="relative w-6 h-6 bg-gradient-to-r from-mtta-green to-green-400 rounded-full flex items-center justify-center shadow-lg border-2 border-white lightning-spot">
+          <Zap className="w-3 h-3 text-white animate-pulse" />
         </div>
         
         {/* Hover glow effect */}
         {isHovered && (
-          <div className="absolute inset-0 w-8 h-8 bg-blue-400 rounded-full opacity-50 blur-sm"></div>
+          <div className="absolute inset-0 w-6 h-6 bg-mtta-green rounded-full opacity-60 blur-md glow-border"></div>
         )}
       </div>
       
-      {/* Tooltip on hover */}
+      {/* Enhanced tooltip on hover */}
       {isHovered && (
-        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black bg-opacity-80 text-white text-sm rounded-lg whitespace-nowrap z-10">
-          {branch.name}
-          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black border-t-opacity-80"></div>
+        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 px-3 py-2 bg-gray-900 bg-opacity-95 text-white text-sm rounded-lg whitespace-nowrap z-20 border border-mtta-green shadow-lg">
+          <div className="font-semibold">{branch.name}</div>
+          <div className="text-xs text-gray-300">{branch.members} гишүүн</div>
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
         </div>
       )}
     </div>
@@ -270,13 +277,27 @@ export default function Branches() {
               </p>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="relative bg-slate-100">
+              <div className="relative bg-gradient-to-br from-blue-50 to-blue-100 overflow-hidden">
                 {/* Map Image */}
                 <img 
-                  src="/src/assets/mongolia-map.png" 
+                  src="/client/src/assets/mongolia-map.png" 
                   alt="Mongolia Map" 
-                  className="w-full h-auto"
-                  style={{ maxHeight: '600px', objectFit: 'contain' }}
+                  className="w-full h-auto block"
+                  style={{ maxHeight: '600px', objectFit: 'contain', minHeight: '400px' }}
+                  onError={(e) => {
+                    // Multiple fallback paths
+                    const target = e.currentTarget;
+                    if (target.src.includes('/client/')) {
+                      target.src = "./src/assets/mongolia-map.png";
+                    } else if (target.src.includes('./src/')) {
+                      target.src = "/src/assets/mongolia-map.png";
+                    } else {
+                      // Show a fallback background if image fails to load
+                      target.style.display = 'none';
+                      target.parentElement!.style.background = 'linear-gradient(135deg, #1e3a8a, #3730a3, #1e40af)';
+                      target.parentElement!.style.minHeight = '500px';
+                    }
+                  }}
                 />
                 
                 {/* Lightning Spots */}
@@ -287,6 +308,17 @@ export default function Branches() {
                     onClick={() => handleBranchClick(branch)}
                   />
                 ))}
+                
+                {/* Map Legend */}
+                <div className="absolute bottom-4 left-4 bg-white bg-opacity-90 rounded-lg p-3 shadow-lg">
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-3 h-3 bg-mtta-green rounded-full animate-pulse"></div>
+                    <span className="text-gray-700">Салбар холбоо</span>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    Дэлгэрэнгүй мэдээлэл харахын тулд цэг дээр дарна уу
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
