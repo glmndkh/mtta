@@ -47,9 +47,9 @@ export default function JudgesPage() {
                   judges.filter(judge => judge.judgeType === 'domestic').map(judge => (
                     <Card key={judge.id} className="bg-gray-800 text-white hover:bg-gray-700 transition-colors aspect-[3/4] flex flex-col">
                       <CardContent className="flex flex-col items-center justify-center p-6 h-full text-center">
-                        <Avatar className="w-20 h-20 mb-4">
-                          <AvatarImage src={judge.imageUrl} alt={judge.firstName} />
-                          <AvatarFallback className="text-lg">{judge.firstName?.[0]}{judge.lastName?.[0]}</AvatarFallback>
+                        <Avatar className="w-32 h-40 mb-4 rounded-lg">
+                          <AvatarImage src={judge.imageUrl} alt={judge.firstName} className="object-cover" />
+                          <AvatarFallback className="text-2xl rounded-lg">{judge.firstName?.[0]}{judge.lastName?.[0]}</AvatarFallback>
                         </Avatar>
                         <div>
                           <div className="font-semibold text-lg mb-1">{judge.firstName} {judge.lastName}</div>
@@ -77,9 +77,9 @@ export default function JudgesPage() {
                   judges.filter(judge => judge.judgeType === 'international').map(judge => (
                     <Card key={judge.id} className="bg-gray-800 text-white hover:bg-gray-700 transition-colors aspect-[3/4] flex flex-col">
                       <CardContent className="flex flex-col items-center justify-center p-6 h-full text-center">
-                        <Avatar className="w-20 h-20 mb-4">
-                          <AvatarImage src={judge.imageUrl} alt={judge.firstName} />
-                          <AvatarFallback className="text-lg">{judge.firstName?.[0]}{judge.lastName?.[0]}</AvatarFallback>
+                        <Avatar className="w-32 h-40 mb-4 rounded-lg">
+                          <AvatarImage src={judge.imageUrl} alt={judge.firstName} className="object-cover" />
+                          <AvatarFallback className="text-2xl rounded-lg">{judge.firstName?.[0]}{judge.lastName?.[0]}</AvatarFallback>
                         </Avatar>
                         <div>
                           <div className="font-semibold text-lg mb-1">{judge.firstName} {judge.lastName}</div>
