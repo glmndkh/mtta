@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronRight, MapPin, Users, Phone, Mail, Globe, Zap } from "lucide-react";
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
+import mongoliaMapImage from "@/assets/mongolia-map.png";
 
 // Mock data for branches with coordinates on the map (accurately positioned on Mongolia aimags)
 const branchesData = [
@@ -280,29 +281,26 @@ export default function Branches() {
               <div className="relative bg-gradient-to-br from-blue-50 to-blue-100 overflow-hidden">
                 {/* Map Image */}
                 <img 
-                  src="/src/assets/mongolia-map.png" 
+                  src={mongoliaMapImage} 
                   alt="Mongolia Map" 
                   className="w-full h-auto block"
                   style={{ maxHeight: '600px', objectFit: 'contain', minHeight: '400px' }}
                   onError={(e) => {
-                    // Multiple fallback paths
+                    // Show a fallback SVG map if image fails to load
                     const target = e.currentTarget;
-                    if (target.src.includes('/src/assets/')) {
-                      target.src = "./src/assets/mongolia-map.png";
-                    } else if (target.src.includes('./src/')) {
-                      target.src = "client/src/assets/mongolia-map.png";
-                    } else {
-                      // Show a fallback background if image fails to load
-                      target.style.display = 'none';
-                      target.parentElement!.style.background = `
-                        linear-gradient(135deg, #1e3a8a, #3730a3, #1e40af),
-                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400"><rect width="800" height="400" fill="%23334155"/><text x="400" y="200" text-anchor="middle" fill="white" font-size="20">Mongolia Map</text></svg>')
-                      `;
-                      target.parentElement!.style.backgroundSize = 'contain';
-                      target.parentElement!.style.backgroundRepeat = 'no-repeat';
-                      target.parentElement!.style.backgroundPosition = 'center';
-                      target.parentElement!.style.minHeight = '500px';
-                    }
+                    target.style.display = 'none';
+                    const mapContainer = target.parentElement!;
+                    mapContainer.innerHTML = `
+                      <div class="w-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-200" style="min-height: 500px;">
+                        <svg viewBox="0 0 800 400" class="w-full h-full max-h-96">
+                          <rect width="800" height="400" fill="#e0f2fe" stroke="#0284c7" stroke-width="2"/>
+                          <path d="M100 150 Q200 100 400 120 Q600 100 700 150 Q750 200 700 250 Q600 300 400 280 Q200 300 100 250 Q50 200 100 150 Z" 
+                                fill="#0ea5e9" opacity="0.3" stroke="#0284c7" stroke-width="2"/>
+                          <text x="400" y="200" text-anchor="middle" fill="#0c4a6e" font-size="24" font-weight="bold">Монгол Улс</text>
+                          <text x="400" y="230" text-anchor="middle" fill="#0c4a6e" font-size="14">Mongolia Map Placeholder</text>
+                        </svg>
+                      </div>
+                    `;
                   }}
                 />
                 
