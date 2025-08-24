@@ -123,23 +123,33 @@ export default function RichTextEditor({ content, onChange, placeholder, classNa
     result: UploadResult<Record<string, unknown>, Record<string, unknown>>
   ) => {
     if (result.successful?.[0]?.uploadURL) {
-      const response = await fetch('/api/objects/finalize', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+      fetch("/api/objects/finalize", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fileURL: result.successful[0].uploadURL,
           isPublic: true,
         }),
       })
-      const { objectPath } = await response.json()
-      // Normalize returned object path and convert to public serving URL
-      const normalizedPath = objectPath
-        .replace(/^\/?objects\//, "")
-        .replace(/^\//, "")
-      const publicUrl = `/public-objects/${normalizedPath}`
-      setImageUrl(publicUrl)
+      .then(res => res.json())
+      .then(data => {
+        const imageUrl = data.objectPath;
+        console.log("Rich text editor - received object path:", imageUrl);
+
+        // Use the object path directly - it will be processed by getImageUrl when displayed
+        const finalImageUrl = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+        console.log("Rich text editor - using image URL:", finalImageUrl);
+
+        // Insert image into editor
+        editor.commands.setImage({
+          src: finalImageUrl,
+          alt: result.successful[0].name || 'Uploaded image',
+        });
+      })
+      .catch(err => console.error('Failed to finalize upload:', err));
     }
   }
+
 
   const addImage = () => {
     if (imageUrl) {

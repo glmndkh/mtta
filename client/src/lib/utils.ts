@@ -36,4 +36,3 @@ export function getImageUrl(imageUrl: string | undefined | null): string {
   if (imageUrl.startsWith('/')) return `/public-objects${imageUrl}`
   return `/public-objects/${imageUrl}`
 }
-

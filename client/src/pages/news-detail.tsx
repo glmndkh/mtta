@@ -223,7 +223,10 @@ export default function NewsDetail() {
     const doc = parser.parseFromString(html, "text/html");
     doc.querySelectorAll("img").forEach((img) => {
       const src = img.getAttribute("src") || "";
-      img.setAttribute("src", getImageUrl(src));
+      console.log("Processing content image src:", src);
+      const processedSrc = getImageUrl(src);
+      console.log("Processed to:", processedSrc);
+      img.setAttribute("src", processedSrc);
     });
     return doc.body.innerHTML;
   };
