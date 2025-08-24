@@ -29,12 +29,19 @@ function LatestNewsSidebar({ currentNewsId }: { currentNewsId: string | undefine
     if (imageUrl.startsWith('http')) return imageUrl;
     if (imageUrl.startsWith('data:')) return imageUrl;
     
+    // If it's already an objects path, use it directly
     if (imageUrl.startsWith('/objects/')) {
       return imageUrl;
     }
     
-    if (imageUrl.startsWith('/')) return `/public-objects${imageUrl}`;
-    return `/public-objects/${imageUrl}`;
+    // For object storage paths without leading slash
+    if (imageUrl.includes('objects/')) {
+      return `/${imageUrl}`;
+    }
+    
+    // For other paths
+    if (imageUrl.startsWith('/')) return imageUrl;
+    return `/${imageUrl}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -223,14 +230,19 @@ export default function NewsDetail() {
     if (imageUrl.startsWith('http')) return imageUrl;
     if (imageUrl.startsWith('data:')) return imageUrl; // Handle base64 data URLs
     
-    // If it's already an objects path, use it directly (served from public directory)
+    // If it's already an objects path, use it directly
     if (imageUrl.startsWith('/objects/')) {
       return imageUrl;
     }
     
+    // For object storage paths without leading slash
+    if (imageUrl.includes('objects/')) {
+      return `/${imageUrl}`;
+    }
+    
     // For other paths
-    if (imageUrl.startsWith('/')) return `/public-objects${imageUrl}`;
-    return `/public-objects/${imageUrl}`;
+    if (imageUrl.startsWith('/')) return imageUrl;
+    return `/${imageUrl}`;
   };
 
   const formatDate = (dateString: string) => {

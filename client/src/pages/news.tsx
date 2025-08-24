@@ -195,11 +195,11 @@ export default function News() {
     console.log("Current user:", user);
     console.log("Form values:", form.getValues());
     console.log("Form is valid:", form.formState.isValid);
-    
+
     // Get all form values directly
     const formValues = form.getValues();
     console.log("Direct form values:", formValues);
-    
+
     // Use form values as primary source since data might be stale
     const titleValue = formValues.title || data.title;
     const contentValue = formValues.content || data.content; 
@@ -207,7 +207,7 @@ export default function News() {
     const categoryValue = formValues.category || data.category;
     const publishedValue = formValues.published !== undefined ? formValues.published : data.published;
     const imageUrlValue = formValues.imageUrl || data.imageUrl;
-    
+
     console.log("Extracted values:", {
       title: titleValue,
       content: contentValue,
@@ -216,7 +216,7 @@ export default function News() {
       published: publishedValue,
       imageUrl: imageUrlValue
     });
-    
+
     // Validate that required fields are present
     if (!titleValue?.trim()) {
       toast({
@@ -226,7 +226,7 @@ export default function News() {
       });
       return;
     }
-    
+
     if (!contentValue?.trim()) {
       toast({
         title: "Алдаа", 
@@ -235,7 +235,7 @@ export default function News() {
       });
       return;
     }
-    
+
     // Check if user is authenticated for creating news
     if (!(user as any)?.id) {
       toast({
@@ -245,7 +245,7 @@ export default function News() {
       });
       return;
     }
-    
+
     // Use the uploaded image URL if available and add authorId
     const finalData = {
       title: titleValue.trim(),
@@ -256,9 +256,9 @@ export default function News() {
       imageUrl: newsImageUrl || imageUrlValue || '',
       authorId: (user as any).id, // Add the required authorId field
     };
-    
+
     console.log("Final data to submit:", finalData);
-    
+
     if (editingNews) {
       updateNewsMutation.mutate({ id: editingNews.id, newsData: finalData });
     } else {
@@ -333,24 +333,24 @@ export default function News() {
       training: { label: "Сургалт", className: "bg-purple-500 text-white" },
       urgent: { label: "Яаралтай", className: "bg-red-500 text-white" },
     };
-    
+
     const cat = categories[category as keyof typeof categories] || { label: "Мэдээ", className: "bg-gray-500 text-white" };
     return <Badge className={cat.className}>{cat.label}</Badge>;
   };
 
   // Static placeholder SVG to avoid API calls and improve performance
-  const placeholderImageData = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI0MCIgdmlld0JveD0iMCAwIDQwMCAyNDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNjAgMTAwSDI0MFYxNDBIMTYwVjEwMFoiIGZpbGw9IiNEMUQ1REIiLz4KPHBhdGggZD0iTTE3NSAxMTVIMjI1VjEyNUgxNzVWMTE1WiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K';
+  const placeholderImageData = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI0MCIgdmlld0JveD0iMCAwIDQwMCAy<bos>wMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIyNDAiIGZpbGw9IiNGM0Y0RjYiLz4KPHBhdGggZD0iTTE2MCAxMDBIMjQwVjE0MEhMMTYwVjEwMFoiIGZpbGw9IiNEMUQ1REIiLz4KPHBhdGggZD0iTTE3NSAxMTVIMjI1VjEyNUgxNzVWMTE1WiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K';
 
   const getImageUrl = (imageUrl: string) => {
     if (!imageUrl) return placeholderImageData;
     if (imageUrl.startsWith('http')) return imageUrl;
     if (imageUrl.startsWith('data:')) return imageUrl; // Handle base64 data URLs
-    
+
     // If it's already an objects path, use it directly (served from public directory)
     if (imageUrl.startsWith('/objects/')) {
       return imageUrl;
     }
-    
+
     // For other paths
     if (imageUrl.startsWith('/')) return `/public-objects${imageUrl}`;
     return `/public-objects/${imageUrl}`;
@@ -414,7 +414,7 @@ export default function News() {
     <PageWithLoading>
       <div className="min-h-screen">
       <Navigation />
-      
+
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
@@ -422,7 +422,7 @@ export default function News() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Мэдээ мэдээлэл</h1>
             <p className="text-gray-600">Холбооны сүүлийн үеийн мэдээ, тэмцээний үр дүн</p>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             {/* Category Filter */}
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
@@ -465,7 +465,7 @@ export default function News() {
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="excerpt"
@@ -552,7 +552,7 @@ export default function News() {
                             <div className="mt-2">
                               <div className="relative w-32 h-24 overflow-hidden rounded-lg border">
                                 <img
-                                  src={newsImageUrl.startsWith('/') ? `/public-objects${newsImageUrl}` : newsImageUrl}
+                                  src={getImageUrl(newsImageUrl)}
                                   alt="Preview"
                                   className="w-full h-full object-cover"
                                 />
@@ -720,7 +720,7 @@ export default function News() {
                             <div className="mt-2">
                               <div className="relative w-32 h-24 overflow-hidden rounded-lg border">
                                 <img
-                                  src={newsImageUrl.startsWith('/') ? `/public-objects${newsImageUrl}` : newsImageUrl}
+                                  src={getImageUrl(newsImageUrl)}
                                   alt="Preview"
                                   className="w-full h-full object-cover"
                                 />
@@ -786,7 +786,7 @@ export default function News() {
                   <div className="mt-2">
                     <div className="relative w-full h-40 overflow-hidden rounded-lg border">
                       <img
-                        src={newsImageUrl.startsWith('/') ? `/public-objects${newsImageUrl}` : newsImageUrl}
+                        src={getImageUrl(newsImageUrl)}
                         alt="Preview"
                         className="w-full h-full object-cover"
                       />
