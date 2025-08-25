@@ -1316,8 +1316,12 @@ export default function TournamentManagement() {
                                                     validExistingTeams.forEach((team: any) => {
                                                       if (team.players && Array.isArray(team.players)) {
                                                         team.players.forEach((teamPlayer: any) => {
+                                                          // Get player name from playerName field directly
+                                                          const displayName = teamPlayer.playerName || `Тоглогч ${teamPlayer.id}`;
+                                                          
                                                           leagueTeamPlayers.push({
                                                             ...teamPlayer,
+                                                            displayName,
                                                             teamName: team.name,
                                                             teamId: team.id
                                                           });
@@ -1337,36 +1341,11 @@ export default function TournamentManagement() {
                                                   }
 
                                                   return leagueTeamPlayers.map((teamPlayer: any, index: number) => {
-                                                    // Try multiple ways to get the player name
-                                                    let playerName = teamPlayer.playerName;
-
-                                                    // If no playerName, try to construct from firstName/lastName
-                                                    if (!playerName && teamPlayer.firstName && teamPlayer.lastName) {
-                                                      playerName = `${teamPlayer.firstName} ${teamPlayer.lastName}`;
-                                                    }
-
-                                                    // If still no name, try to get it from the user data
-                                                    if (!playerName && teamPlayer.playerId) {
-                                                      const userData = (allUsers as any[]).find((user: any) => user.id === teamPlayer.playerId);
-                                                      if (userData) {
-                                                        if (userData.firstName && userData.lastName) {
-                                                          playerName = `${userData.firstName} ${userData.lastName}`;
-                                                        } else if (userData.name) {
-                                                          playerName = userData.name;
-                                                        } else if (userData.email) {
-                                                          playerName = userData.email;
-                                                        }
-                                                      }
-                                                    }
-
-                                                    // Fallback to a generic name if still no name found
-                                                    if (!playerName) {
-                                                      playerName = `Тоглогч ${index + 1}`;
-                                                    }
+                                                    const playerName = teamPlayer.displayName;
 
                                                     return (
                                                       <CommandItem
-                                                        key={`${teamPlayer.teamId}-${teamPlayer.playerId}-${index}`}
+                                                        key={`${teamPlayer.teamId}-${teamPlayer.id}-${index}`}
                                                         value={`${playerName} ${teamPlayer.teamName}`}
                                                         onSelect={() => {
                                                           handleGroupPlayerChange(player.id, 'name', playerName);
@@ -1380,7 +1359,7 @@ export default function TournamentManagement() {
                                                             {playerName}
                                                           </div>
                                                           <div className="text-xs text-gray-500">
-                                                            {teamPlayer.teamName} • {teamPlayer.email || teamPlayer.playerId || 'Багийн гишүүн'}
+                                                            {teamPlayer.teamName} • Багийн гишүүн
                                                           </div>
                                                         </div>
                                                       </CommandItem>
