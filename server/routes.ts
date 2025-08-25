@@ -2189,6 +2189,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/admin/leagues", requireAuth, isAdminRole, async (_req, res) => {
+    try {
+      console.log('[Admin] Getting all leagues...');
+      const leagues = await storage.getAllLeagues();
+      console.log(`[Admin] Found ${leagues.length} leagues`);
+
+      // Set proper JSON content type
+      res.setHeader('Content-Type', 'application/json');
+      res.json(leagues);
+    } catch (e) {
+      console.error("Error fetching admin leagues:", e);
+      res.status(500).json({ message: "Лигүүдийг авахад алдаа гарлаа" });
+    }
+  });
+
   app.post("/api/admin/leagues", requireAuth, isAdminRole, async (req, res) => {
     try {
       const data: any = { ...req.body };

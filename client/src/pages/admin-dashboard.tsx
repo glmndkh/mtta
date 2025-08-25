@@ -87,16 +87,34 @@ export default function AdminDashboard() {
     enabled: selectedTab === 'tournaments'
   });
 
-  const { data: leagues, isLoading: leaguesLoading, error: leaguesError } = useQuery({
-    queryKey: ['/api/admin/leagues'],
+  // Fetch leagues for admin with proper error handling
+  const { data: leagues = [], isLoading: leaguesLoading, error: leaguesError } = useQuery({
+    queryKey: ["/api/admin/leagues"],
     enabled: selectedTab === 'leagues',
     retry: false,
-    onSuccess: (data) => {
-      console.log('Leagues data loaded:', data);
+    queryFn: async () => {
+      console.log('Fetching leagues...');
+      const response = await fetch('/api/admin/leagues');
+      console.log('Leagues response status:', response.status);
+
+      if (!response.ok) {
+        // Log the response text if it's not OK
+        const errorText = await response.text();
+        console.error('Failed to fetch leagues:', { status: response.status, statusText: response.statusText, body: errorText });
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Expected JSON but got content-type:', contentType, 'and body:', text.substring(0, 200));
+        throw new Error('Response is not JSON');
+      }
+
+      const data = await response.json();
+      console.log('Leagues data:', data);
+      return data;
     },
-    onError: (error) => {
-      console.error('Error loading leagues:', error);
-    }
   });
 
   const { data: teams, isLoading: teamsLoading } = useQuery({
@@ -185,7 +203,7 @@ export default function AdminDashboard() {
     mutationFn: async ({ endpoint, data }: { endpoint: string; data: any }) => {
       return apiRequest(endpoint, {
         method: 'PUT',
-        body: JSON.stringify(data)
+        body: JSON.JSON.stringify(data)
       });
     },
     onSuccess: () => {
@@ -438,10 +456,13 @@ export default function AdminDashboard() {
         queryClient.invalidateQueries({ queryKey: ['/api/admin/leagues'] });
         setIsTeamEnrollmentDialogOpen(false);
       } else {
-        toast({ title: "Алдаа гарлаа", variant: "destructive" });
+        const errorText = await response.text();
+        console.error('Failed to enroll team:', { status: response.status, body: errorText });
+        toast({ title: "Алдаа гарлаа", description: `Нэмж чадсангүй. Статус: ${response.status}`, variant: "destructive" });
       }
     } catch (error) {
-      toast({ title: "Алдаа гарлаа", variant: "destructive" });
+      console.error('Error enrolling team:', error);
+      toast({ title: "Алдаа гарлаа", description: "Системд алдаа гарлаа", variant: "destructive" });
     }
   };
 
@@ -2542,7 +2563,7 @@ export default function AdminDashboard() {
     }
   };
 
-  
+
 
   const handleCreate = () => {
     if (!validateForm()) {
@@ -2823,7 +2844,7 @@ export default function AdminDashboard() {
                   <div className="text-red-600">
                     Лигүүдийг ачаалахад алдаа гарлаа: {leaguesError.message}
                   </div>
-                ) : !leagues ? (
+                ) : !leagues || leagues.length === 0 ? (
                   <div>Лиг байхгүй байна</div>
                 ) : (
                   <Table>
@@ -2838,7 +2859,6 @@ export default function AdminDashboard() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {console.log('Rendering leagues:', leagues)}
                       {leagues && Array.isArray(leagues) && leagues.length > 0 ? leagues.map((league: any) => (
                         <TableRow key={league.id}>
                           <TableCell>{league.name}</TableCell>

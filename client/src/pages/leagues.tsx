@@ -21,9 +21,29 @@ export default function Leagues() {
   // Remove authentication requirement - allow viewing for all users
 
   // Fetch leagues - allow for all users
-  const { data: leagues = [], isLoading: leaguesLoading } = useQuery({
+  const { data: leagues = [], isLoading: leaguesLoading, error: leaguesError } = useQuery({
     queryKey: ["/api/leagues"],
     retry: false,
+    queryFn: async () => {
+      console.log('Fetching public leagues...');
+      const response = await fetch('/api/leagues');
+      console.log('Public leagues response status:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Expected JSON but got:', text.substring(0, 200));
+        throw new Error('Response is not JSON');
+      }
+      
+      const data = await response.json();
+      console.log('Public leagues data:', data);
+      return data;
+    },
   });
 
   // Fetch teams for selected league
