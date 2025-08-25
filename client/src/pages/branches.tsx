@@ -20,8 +20,8 @@ const fetchBranches = async () => {
   return response.json();
 };
 
-// Mock international branches data
-const internationalBranches = [
+// Mock domestic branches data for map visualization
+const branchesData = [
   {
     id: "1",
     name: "Улаанбаатар хотын салбар",
@@ -581,7 +581,7 @@ export default function Branches() {
               {activeTab === "domestic" ? "Монгол дахь бүх салбарууд" : "Гадаад дахь бүх салбарууд"}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {currentBranches.map((branch) => (
+              {currentBranches.map((branch: any) => (
                 <Card key={branch.id} className="hover:shadow-lg transition-shadow cursor-pointer"
                       onClick={() => handleBranchClick(branch)}>
                   <CardHeader className="pb-3">
