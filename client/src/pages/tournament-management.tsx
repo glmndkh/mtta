@@ -30,11 +30,11 @@ export default function TournamentManagement() {
         },
         body: JSON.stringify(matchData),
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to save match');
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -181,7 +181,7 @@ export default function TournamentManagement() {
   const [showMatchDetails, setShowMatchDetails] = useState<boolean>(false);
   const [matchDate, setMatchDate] = useState<string>('');
   const [matchTime, setMatchTime] = useState<string>('');
-  
+
   // Get current group data based on match type
   const groups = groupMatchType === 'team' ? teamGroups : individualGroups;
   const setGroups = groupMatchType === 'team' ? setTeamGroups : setIndividualGroups;
@@ -210,7 +210,7 @@ export default function TournamentManagement() {
   const addNewMatch = () => {
     const newMatchId = matches.length + 1;
     const defaultSets = 3;
-    
+
     setMatches([...matches, {
       id: newMatchId,
       player1: {
@@ -347,7 +347,7 @@ export default function TournamentManagement() {
     const fullName = user.firstName && user.lastName 
       ? `${user.firstName} ${user.lastName}` 
       : (user.firstName || user.lastName || user.email);
-      
+
     setTeams(teams.map(team => {
       if (team.id === teamId) {
         return {
@@ -371,7 +371,7 @@ export default function TournamentManagement() {
         }
       });
     });
-    
+
     return (allUsers as any[]).filter((user: any) => 
       !selectedPlayerIds.includes(user.id) && 
       // Show users with name or email if no name exists
@@ -433,14 +433,14 @@ export default function TournamentManagement() {
       logo: team.logo,
       players: team.players.filter(p => p.name && p.name.trim() !== "")
     })).filter(team => team.name.trim() !== "" && team.players.length > 0);
-    
+
     console.log("Saving teams:", teamsToSave);
   };
 
   const handleAddGroup = () => {
     const currentGroups = groupMatchType === 'team' ? teamGroups : individualGroups;
     const setCurrentGroups = groupMatchType === 'team' ? setTeamGroups : setIndividualGroups;
-    
+
     const newGroupId = Math.max(...currentGroups.map(g => g.id)) + 1;
     const groupLetter = String.fromCharCode(65 + currentGroups.length); // A, B, C, etc.
     const newGroup = {
@@ -461,28 +461,28 @@ export default function TournamentManagement() {
   const handleDeleteGroup = (groupId: number) => {
     const currentGroups = groupMatchType === 'team' ? teamGroups : individualGroups;
     const setCurrentGroups = groupMatchType === 'team' ? setTeamGroups : setIndividualGroups;
-    
+
     if (currentGroups.length <= 1) {
       toast({ title: "Хамгийн багадаа нэг групп байх ёстой", variant: "destructive" });
       return;
     }
-    
+
     const groupToDelete = currentGroups.find(g => g.id === groupId);
     const updatedGroups = currentGroups.filter(g => g.id !== groupId);
     setCurrentGroups(updatedGroups);
-    
+
     // If deleting active group, switch to first remaining group
     if (activeGroupId === groupId) {
       setActiveGroupId(updatedGroups[0].id);
     }
-    
+
     toast({ title: `${groupToDelete?.name} устгагдлаа`, variant: "default" });
   };
 
   const handleRenameGroup = (groupId: number, newName: string) => {
     const currentGroups = groupMatchType === 'team' ? teamGroups : individualGroups;
     const setCurrentGroups = groupMatchType === 'team' ? setTeamGroups : setIndividualGroups;
-    
+
     const updatedGroups = currentGroups.map(group =>
       group.id === groupId ? { ...group, name: newName } : group
     );
@@ -494,9 +494,9 @@ export default function TournamentManagement() {
     const currentGroups = groupMatchType === 'team' ? teamGroups : individualGroups;
     const setCurrentGroups = groupMatchType === 'team' ? setTeamGroups : setIndividualGroups;
     const currentGroup = currentGroups.find(g => g.id === activeGroupId);
-    
+
     if (!currentGroup) return;
-    
+
     const newId = Math.max(...currentGroup.players.map(p => p.id)) + 1;
     const updatedGroups = currentGroups.map(group => 
       group.id === activeGroupId 
@@ -521,9 +521,9 @@ export default function TournamentManagement() {
     const currentGroups = groupMatchType === 'team' ? teamGroups : individualGroups;
     const setCurrentGroups = groupMatchType === 'team' ? setTeamGroups : setIndividualGroups;
     const currentGroup = currentGroups.find(g => g.id === activeGroupId);
-    
+
     if (!currentGroup || currentGroup.players.length <= 1) return;
-    
+
     const updatedGroups = currentGroups.map(group => 
       group.id === activeGroupId 
         ? { ...group, players: group.players.filter(p => p.id !== id) }
@@ -535,7 +535,7 @@ export default function TournamentManagement() {
   const handleGroupPlayerChange = (id: number, field: string, value: string) => {
     const currentGroups = groupMatchType === 'team' ? teamGroups : individualGroups;
     const setCurrentGroups = groupMatchType === 'team' ? setTeamGroups : setIndividualGroups;
-    
+
     const updatedGroups = currentGroups.map(group => 
       group.id === activeGroupId 
         ? {
@@ -552,7 +552,7 @@ export default function TournamentManagement() {
   const handleMatchResultChange = (playerId: number, opponentId: number | string, result: string) => {
     const currentGroups = groupMatchType === 'team' ? teamGroups : individualGroups;
     const setCurrentGroups = groupMatchType === 'team' ? setTeamGroups : setIndividualGroups;
-    
+
     const updatedGroups = currentGroups.map(group => 
       group.id === activeGroupId 
         ? {
@@ -574,7 +574,7 @@ export default function TournamentManagement() {
     try {
       const currentGroups = groupMatchType === 'team' ? teamGroups : individualGroups;
       const currentGroup = currentGroups.find(g => g.id === activeGroupId);
-      
+
       if (!currentGroup) {
         toast({ 
           description: "Идэвхтэй групп олдсонгүй",
@@ -584,7 +584,7 @@ export default function TournamentManagement() {
       }
 
       const playersWithData = currentGroup.players.filter(player => player.name.trim());
-      
+
       if (playersWithData.length === 0) {
         toast({ 
           description: "Тоглогчид нэмнэ үү",
@@ -596,7 +596,7 @@ export default function TournamentManagement() {
       // Check if this is a tournament or league by trying to fetch tournament data
       let entityType = 'tournament';
       let tournamentExists = false;
-      
+
       try {
         const checkResponse = await fetch(`/api/tournaments/${id}`);
         if (checkResponse.ok) {
@@ -667,7 +667,7 @@ export default function TournamentManagement() {
       });
 
       console.log("Group table saved successfully:", groupStageData);
-      
+
     } catch (error) {
       console.error('Error saving group table:', error);
       toast({ 
@@ -904,7 +904,7 @@ export default function TournamentManagement() {
                               onChange={(e) => handleTeamNameChange(team.id, e.target.value)}
                             />
                           </div>
-                          
+
                           <div>
                             <Label htmlFor={`teamLogo-${team.id}`}>Багийн лого</Label>
                             <div className="flex items-center gap-2">
@@ -984,7 +984,7 @@ export default function TournamentManagement() {
                                         </PopoverTrigger>
                                         <PopoverContent className="w-80 p-0" align="start">
                                           <Command>
-                                            <CommandInput placeholder="Хэрэглэгчийн нэрээр хайх..." />
+                                            <CommandInput placeholder="Хэрэглэгчдийн нэрээр хайх..." />
                                             <CommandList>
                                               <CommandEmpty>Хэрэглэгч олдсонгүй</CommandEmpty>
                                               <CommandGroup heading="Бүртгэлтэй хэрэглэгчид">
@@ -993,7 +993,7 @@ export default function TournamentManagement() {
                                                   const fullName = user.firstName && user.lastName 
                                                     ? `${user.firstName} ${user.lastName}` 
                                                     : (user.firstName || user.lastName || user.email);
-                                                    
+
                                                   return (
                                                     <CommandItem
                                                       key={user.id}
@@ -1182,7 +1182,7 @@ export default function TournamentManagement() {
                           </Button>
                         </div>
                       </div>
-                      
+
                       <div className="space-y-2">
                         {groups.map(group => (
                           <div
@@ -1207,7 +1207,7 @@ export default function TournamentManagement() {
                                 placeholder="Группын нэр"
                               />
                             </div>
-                            
+
                             <div className="flex items-center gap-1">
                               <span className="text-xs text-gray-500">
                                 {group.players.filter(p => p.name.trim()).length} тоглогч
@@ -1311,7 +1311,7 @@ export default function TournamentManagement() {
                                                 (() => {
                                                   // Get all players from league teams
                                                   const leagueTeamPlayers: any[] = [];
-                                                  
+
                                                   if (validExistingTeams && validExistingTeams.length > 0) {
                                                     validExistingTeams.forEach((team: any) => {
                                                       if (team.players && Array.isArray(team.players)) {
@@ -1325,7 +1325,7 @@ export default function TournamentManagement() {
                                                       }
                                                     });
                                                   }
-                                                  
+
                                                   if (leagueTeamPlayers.length === 0) {
                                                     return (
                                                       <CommandItem disabled>
@@ -1335,13 +1335,35 @@ export default function TournamentManagement() {
                                                       </CommandItem>
                                                     );
                                                   }
-                                                  
+
                                                   return leagueTeamPlayers.map((teamPlayer: any, index: number) => {
-                                                    const playerName = teamPlayer.playerName || 
-                                                      (teamPlayer.firstName && teamPlayer.lastName 
-                                                        ? `${teamPlayer.firstName} ${teamPlayer.lastName}`
-                                                        : `Тоглогч ${teamPlayer.playerId}`);
-                                                    
+                                                    // Try multiple ways to get the player name
+                                                    let playerName = teamPlayer.playerName;
+
+                                                    // If no playerName, try to construct from firstName/lastName
+                                                    if (!playerName && teamPlayer.firstName && teamPlayer.lastName) {
+                                                      playerName = `${teamPlayer.firstName} ${teamPlayer.lastName}`;
+                                                    }
+
+                                                    // If still no name, try to get it from the user data
+                                                    if (!playerName && teamPlayer.playerId) {
+                                                      const userData = (allUsers as any[]).find((user: any) => user.id === teamPlayer.playerId);
+                                                      if (userData) {
+                                                        if (userData.firstName && userData.lastName) {
+                                                          playerName = `${userData.firstName} ${userData.lastName}`;
+                                                        } else if (userData.name) {
+                                                          playerName = userData.name;
+                                                        } else if (userData.email) {
+                                                          playerName = userData.email;
+                                                        }
+                                                      }
+                                                    }
+
+                                                    // Fallback to a generic name if still no name found
+                                                    if (!playerName) {
+                                                      playerName = `Тоглогч ${index + 1}`;
+                                                    }
+
                                                     return (
                                                       <CommandItem
                                                         key={`${teamPlayer.teamId}-${teamPlayer.playerId}-${index}`}
@@ -1358,7 +1380,7 @@ export default function TournamentManagement() {
                                                             {playerName}
                                                           </div>
                                                           <div className="text-xs text-gray-500">
-                                                            {teamPlayer.teamName} • {teamPlayer.email || 'Багийн гишүүн'}
+                                                            {teamPlayer.teamName} • {teamPlayer.email || teamPlayer.playerId || 'Багийн гишүүн'}
                                                           </div>
                                                         </div>
                                                       </CommandItem>
@@ -1396,7 +1418,7 @@ export default function TournamentManagement() {
                                 {groupData.map((opponent, opponentIndex) => (
                                   <TableCell key={opponent.id} className="text-center">
                                     {player.id === opponent.id ? (
-                                      <div className="w-12 h-8 bg-gray-200 flex items-center justify-center text-gray-500">
+                                      <div className="w-12 h-8 bg-gray-200 flex items-center justify-center text-gray-500 rounded">
                                         ****
                                       </div>
                                     ) : (
@@ -1404,7 +1426,7 @@ export default function TournamentManagement() {
                                         placeholder="3"
                                         value={player.matches[opponent.id] || ""}
                                         onChange={(e) => handleMatchResultChange(player.id, opponent.id, e.target.value)}
-                                        className="w-12 h-8 text-center p-1 border border-gray-300"
+                                        className="w-12 h-8 text-center p-1 border border-gray-300 rounded"
                                       />
                                     )}
                                   </TableCell>
@@ -1414,7 +1436,7 @@ export default function TournamentManagement() {
                                     placeholder="0/0"
                                     value={player.matches['total'] || ""}
                                     onChange={(e) => handleMatchResultChange(player.id, 'total', e.target.value)}
-                                    className="w-16 h-8 text-center p-1 border border-gray-300"
+                                    className="w-16 h-8 text-center p-1 border border-gray-300 rounded"
                                   />
                                 </TableCell>
                                 <TableCell className="text-center font-bold">
@@ -1422,7 +1444,7 @@ export default function TournamentManagement() {
                                     placeholder="1"
                                     value={player.rank || playerIndex + 1}
                                     onChange={(e) => handleGroupPlayerChange(player.id, 'rank', e.target.value)}
-                                    className="w-12 h-8 text-center p-1 border border-gray-300"
+                                    className="w-12 h-8 text-center p-1 border border-gray-300 rounded"
                                   />
                                 </TableCell>
                               </TableRow>
@@ -1750,13 +1772,7 @@ export default function TournamentManagement() {
                                               {(() => {
                                                 const selectedTeam = player.teamId === 1 ? selectedTeam1 : selectedTeam2;
                                                 const teamData = validExistingTeams.find(team => team.id === selectedTeam?.id);
-                                                
-                                                // Debug log to see the team data structure
-                                                console.log('Team data:', teamData);
-                                                if (teamData?.players) {
-                                                  console.log('Players in team:', teamData.players);
-                                                }
-                                                
+
                                                 if (!teamData?.players || teamData.players.length === 0) {
                                                   return (
                                                     <CommandItem disabled>
@@ -1764,14 +1780,14 @@ export default function TournamentManagement() {
                                                     </CommandItem>
                                                   );
                                                 }
-                                                
+
                                                 return teamData.players.map((teamPlayer: any) => {
                                                   // Use playerName directly since firstName/lastName join might not be working
                                                   const playerName = teamPlayer.playerName || 
                                                     (teamPlayer.firstName && teamPlayer.lastName 
                                                       ? `${teamPlayer.firstName} ${teamPlayer.lastName}`
                                                       : `Тоглогч ${teamPlayer.playerId}`);
-                                                  
+
                                                   return (
                                                     <CommandItem
                                                       key={teamPlayer.id}
