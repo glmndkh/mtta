@@ -113,8 +113,8 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
         // Create map centered on Mongolia (or worldwide if international branches exist)
         const mapInstance = new Map(mapRef.current, {
           center: mongoliaCenter,
-          zoom: shouldFocusOnMongolia ? 6 : (hasInternationalBranches ? 3 : 6),
-          minZoom: shouldFocusOnMongolia ? 5 : (hasInternationalBranches ? 2 : 5),
+          zoom: shouldFocusOnMongolia ? 5 : (hasInternationalBranches ? 3 : 5),
+          minZoom: shouldFocusOnMongolia ? 4 : (hasInternationalBranches ? 2 : 4),
           maxZoom: 15,
           restriction: shouldFocusOnMongolia ? {
             latLngBounds: mongoliaBounds,
@@ -128,35 +128,7 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
           mapTypeControl: true,
           fullscreenControl: true,
           zoomControl: true,
-          scaleControl: true,
-          // Add map ID to enable advanced features (optional)
-          mapId: 'mtta-branch-map',
-          styles: [
-            {
-              "featureType": "administrative.country",
-              "elementType": "geometry.stroke",
-              "stylers": [
-                {
-                  "color": "#ff0000"
-                },
-                {
-                  "weight": 2
-                }
-              ]
-            },
-            {
-              "featureType": "administrative.province",
-              "elementType": "geometry.stroke",
-              "stylers": [
-                {
-                  "color": "#0066cc"
-                },
-                {
-                  "weight": 1
-                }
-              ]
-            }
-          ]
+          scaleControl: true
         });
 
         setMap(mapInstance);
@@ -305,10 +277,10 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
             // Ensure appropriate zoom level for Mongolia
             const listener = google.maps.event.addListener(mapInstance, 'idle', () => {
               const currentZoom = mapInstance.getZoom();
-              if (currentZoom && currentZoom > 10) {
-                mapInstance.setZoom(8);
-              } else if (currentZoom && currentZoom < 5) {
+              if (currentZoom && currentZoom > 8) {
                 mapInstance.setZoom(6);
+              } else if (currentZoom && currentZoom < 4) {
+                mapInstance.setZoom(5);
               }
               google.maps.event.removeListener(listener);
             });
