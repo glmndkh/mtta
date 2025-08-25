@@ -2419,12 +2419,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           finalRankings,
           isPublished,
         } = req.body;
+        
+        console.log("Received tournament results data:", { tournamentId, participationType, groupStageResults });
+        
         if (!tournamentId || !participationType)
           return res
             .status(400)
             .json({
               message: "Tournament ID and participation type are required",
             });
+            
+        // Check if this is a tournament or league
+        const tournament = await storage.getTournament(tournamentId);
+        const league = tournament ? null : await storage.getLeague(tournamentId);
+        
+        if (!tournament && !league) {
+          return res.status(404).json({ message: "Tournament or League not found" });
+        }
+        
         const ensureParticipant = async (player: any) => {
           if (!player) return;
           if (player.playerId || player.id) return player.playerId || player.id;
@@ -2444,11 +2456,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             role: "player",
           });
           const newPlayer = await storage.createPlayer({ userId: newUser.id });
-          await storage.registerForTournament({
-            tournamentId,
-            playerId: newPlayer.id,
-            participationType,
-          });
+          
+          // Only register for tournament if it's actually a tournament, not a league
+          if (tournament) {
+            await storage.registerForTournament({
+              tournamentId,
+              playerId: newPlayer.id,
+              participationType,
+            });
+          }
+          
           player.playerId = newPlayer.id;
           player.id = newPlayer.id;
           player.playerName = name;
@@ -2460,8 +2477,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const newGroup = { ...group };
           newGroup.players = [];
           for (const p of group.players || []) {
-            await ensureParticipant(p);
-            newGroup.players.push(p);
+            // Don't auto-create players for existing names in management interface
+            if (p.name && p.name.trim()) {
+              newGroup.players.push(p);
+            }
           }
           processedGroup.push(newGroup);
         }

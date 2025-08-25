@@ -521,10 +521,88 @@ export default function TournamentManagement() {
 
 
 
-  const handleSaveGroupTable = () => {
-    // TODO: Implement group table saving logic
-    const tableToSave = groupData.filter(player => player.name.trim());
-    console.log("Saving group table:", { type: groupMatchType, players: tableToSave });
+  const handleSaveGroupTable = async () => {
+    try {
+      const currentGroup = groups.find(g => g.id === activeGroupId);
+      if (!currentGroup) {
+        toast({ 
+          description: "Идэвхтэй групп олдсонгүй",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const playersWithData = currentGroup.players.filter(player => player.name.trim());
+      
+      if (playersWithData.length === 0) {
+        toast({ 
+          description: "Тоглогчид нэмнэ үү",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Prepare group stage results data
+      const groupStageData = {
+        tournamentId: id,
+        participationType: groupMatchType === 'team' ? 'team_group' : 'individual_group',
+        groupStageResults: [{
+          groupName: currentGroup.name,
+          players: playersWithData.map(player => ({
+            id: player.id.toString(),
+            name: player.name,
+            club: player.club || '',
+            wins: player.wins || 0,
+            losses: player.losses || 0,
+            position: player.rank || 0,
+            matches: player.matches || {}
+          })),
+          resultMatrix: playersWithData.map((player, i) => 
+            playersWithData.map((opponent, j) => 
+              i === j ? 'X' : (player.matches[opponent.id] || '')
+            )
+          ),
+          standings: playersWithData.map((player, index) => ({
+            playerId: player.id.toString(),
+            playerName: player.name,
+            wins: player.wins || 0,
+            losses: player.losses || 0,
+            points: (player.wins || 0) * 2, // 2 points per win
+            position: player.rank || (index + 1)
+          }))
+        }],
+        knockoutResults: [],
+        finalRankings: [],
+        isPublished: false
+      };
+
+      const response = await fetch('/api/admin/tournament-results', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(groupStageData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save group table');
+      }
+
+      toast({ 
+        description: `${currentGroup.name} амжилттай хадгалагдлаа`,
+        variant: "default"
+      });
+
+      // Reset the current group to empty state or keep the data for further editing
+      console.log("Group table saved successfully:", groupStageData);
+      
+    } catch (error) {
+      console.error('Error saving group table:', error);
+      toast({ 
+        description: "Группын хүснэгт хадгалахад алдаа гарлаа",
+        variant: "destructive"
+      });
+    }
   };
 
   const managementOptions = [
