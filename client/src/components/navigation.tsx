@@ -87,7 +87,7 @@ export default function Navigation() {
             {navigationLinks.map((link) => {
               const Icon = link.icon;
               const active = isActive(location, link.href);
-              
+
               if (link.dropdown) {
                 return (
                   <DropdownMenu key={link.href}>
@@ -133,7 +133,7 @@ export default function Navigation() {
                   </DropdownMenu>
                 );
               }
-              
+
               return (
                 <Link key={link.href} href={link.href}>
                   <div className={`nav-link flex items-center space-x-1 px-3 py-2 cursor-pointer ${
@@ -145,6 +145,10 @@ export default function Navigation() {
                 </Link>
               );
             })}
+            {/* Add branch map navigation link */}
+            <Link href="/branch-map" className="text-sm font-medium transition-colors hover:text-primary">
+              🗺️ Салбарын газрын зураг
+            </Link>
           </div>
 
           {/* User Menu & Mobile Toggle */}
@@ -258,7 +262,7 @@ export default function Navigation() {
               {navigationLinks.map((link) => {
                 const Icon = link.icon;
                 const active = isActive(location, link.href);
-                
+
                 if (link.dropdown) {
                   return (
                     <div key={link.href}>
@@ -309,7 +313,7 @@ export default function Navigation() {
                     </div>
                   );
                 }
-                
+
                 return (
                   <Link key={link.href} href={link.href}>
                     <div
@@ -341,7 +345,7 @@ export default function Navigation() {
                       </div>
                     </Link>
                   )}
-                  
+
                   {(user as any)?.role === 'admin' && (
                     <>
                       <Link href="/admin/dashboard">
@@ -364,7 +368,7 @@ export default function Navigation() {
                       </Link>
                     </>
                   )}
-                  
+
                   <button
                     onClick={() => {
                       setShowMobileMenu(false);

@@ -18,6 +18,7 @@ import News from "@/pages/news";
 import NewsDetail from "@/pages/news-detail";
 import Branches from "@/pages/branches";
 import BranchDetails from "@/pages/branch-details";
+import BranchMapPage from "./pages/branch-map";
 import PastChampions from "@/pages/past-champions";
 import JudgesPage from "@/pages/judges";
 import AdminTournamentResults from "@/pages/admin-tournament-results";
@@ -55,6 +56,7 @@ function Router() {
       <Route path="/leagues/:id" component={LeagueDetails} />
       <Route path="/branches" component={Branches} />
       <Route path="/branches/:id" component={BranchDetails} />
+      <Route path="/branch-map" element={<BranchMapPage />} />
       <Route path="/past-champions" component={PastChampions} />
       <Route path="/judges" component={JudgesPage} />
       <Route path="/news/:id" component={NewsDetail} />
