@@ -145,10 +145,7 @@ export default function Navigation() {
                 </Link>
               );
             })}
-            {/* Add branch map navigation link */}
-            <Link href="/branch-map" className="text-sm font-medium transition-colors hover:text-primary">
-              🗺️ Салбарын газрын зураг
-            </Link>
+            
           </div>
 
           {/* User Menu & Mobile Toggle */}

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
 
@@ -160,7 +159,7 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
             bounds.extend({ lat: branch.lat, lng: branch.lng });
           });
           mapInstance.fitBounds(bounds);
-          
+
           // Ensure minimum zoom level
           const listener = google.maps.event.addListener(mapInstance, 'idle', () => {
             if (mapInstance.getZoom() && mapInstance.getZoom()! > 10) {

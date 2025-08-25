@@ -4,9 +4,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, MapPin, Users, Phone, Mail, Globe, Zap } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChevronRight, MapPin, Users, Phone, Mail, Globe, Zap, Map } from "lucide-react";
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
+import MongoliaMap from "@/components/MongoliaMap";
 
 // Mock data for branches with coordinates on the map (accurately positioned on Mongolia aimags)
 const branchesData = [
@@ -22,6 +24,8 @@ const branchesData = [
     clubs: 12,
     x: "57%", // Accurate position for Ulaanbaatar
     y: "48%",
+    lat: 47.9184,
+    lng: 106.9177,
     description: "Монголын хамгийн том хотын ширээний теннисний салбар"
   },
   {
@@ -35,6 +39,8 @@ const branchesData = [
     clubs: 3,
     x: "53%", // Accurate position for Darkhan-Uul aimag
     y: "30%",
+    lat: 49.4861,
+    lng: 105.9222,
     description: "Хойд Монголын спортын хөгжлийн төв"
   },
   {
@@ -48,6 +54,8 @@ const branchesData = [
     clubs: 2,
     x: "48%", // Accurate position for Uvurkhangai aimag
     y: "55%",
+    lat: 46.2764,
+    lng: 102.7753,
     description: "Төв Монголын уламжлалт спортын салбар"
   },
   {
@@ -61,6 +69,8 @@ const branchesData = [
     clubs: 2,
     x: "8%", // Accurate position for Bayan-Ulgii aimag (far west)
     y: "22%",
+    lat: 48.9667,
+    lng: 89.9167,
     description: "Баруун Монголын уулархаг бүсийн салбар"
   },
   {
@@ -74,6 +84,8 @@ const branchesData = [
     clubs: 1,
     x: "73%", // Accurate position for Dornogovi aimag (southeast)
     y: "70%",
+    lat: 44.8833,
+    lng: 110.1167,
     description: "Говийн бүсийн ширээний теннисний салбар"
   },
   {
@@ -87,7 +99,82 @@ const branchesData = [
     clubs: 2,
     x: "15%", // Accurate position for Khovd aimag (west)
     y: "42%",
+    lat: 48.0056,
+    lng: 91.6419,
     description: "Баруун бүсийн спортын хөгжлийн салбар"
+  },
+  {
+    id: "7",
+    name: "Орхон аймгийн салбар",
+    province: "Орхон",
+    address: "Эрдэнэт хот",
+    phone: "+976 35 123456",
+    email: "orkhon@mtta.mn",
+    members: 78,
+    clubs: 3,
+    x: "52%",
+    y: "38%",
+    lat: 49.0347,
+    lng: 104.0828,
+    description: "Уул уурхайн бүсийн салбар"
+  },
+  {
+    id: "8",
+    name: "Хөвсгөл аймгийн салбар",
+    province: "Хөвсгөл",
+    address: "Мөрөн сум",
+    phone: "+976 38 123456",
+    email: "khovsgol@mtta.mn",
+    members: 41,
+    clubs: 2,
+    x: "48%",
+    y: "25%",
+    lat: 49.6342,
+    lng: 100.1625,
+    description: "Хөвсгөл нуурын эргийн салбар"
+  }
+];
+
+// International branches data
+const internationalBranches = [
+  {
+    id: "int1",
+    name: "Бээжин салбар холбоо",
+    country: "Хятад",
+    address: "Beijing, China",
+    phone: "+86 10 12345678",
+    email: "beijing@mtta.mn",
+    members: 23,
+    clubs: 1,
+    lat: 39.9042,
+    lng: 116.4074,
+    description: "Хятад дахь монгол теннисчдын холбоо"
+  },
+  {
+    id: "int2",
+    name: "Сеул салбар холбоо",
+    country: "Солонгос",
+    address: "Seoul, South Korea",
+    phone: "+82 2 1234 5678",
+    email: "seoul@mtta.mn",
+    members: 15,
+    clubs: 1,
+    lat: 37.5665,
+    lng: 126.9780,
+    description: "Солонгос дахь монгол теннисчдын холбоо"
+  },
+  {
+    id: "int3",
+    name: "Токио салбар холбоо",
+    country: "Япон",
+    address: "Tokyo, Japan",
+    phone: "+81 3 1234 5678",
+    email: "tokyo@mtta.mn",
+    members: 18,
+    clubs: 1,
+    lat: 35.6762,
+    lng: 139.6503,
+    description: "Япон дахь монгол теннисчдын холбоо"
   }
 ];
 
@@ -192,8 +279,8 @@ const BranchDetailDialog = ({ branch, isOpen, onClose }: { branch: any, isOpen: 
                   <Badge variant="secondary">{branch.clubs}</Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Аймаг/хот</span>
-                  <Badge className="mtta-green text-white">{branch.province}</Badge>
+                  <span className="text-sm text-gray-600">{branch.province ? 'Аймаг/хот' : 'Улс'}</span>
+                  <Badge className="mtta-green text-white">{branch.province || branch.country}</Badge>
                 </div>
               </CardContent>
             </Card>
@@ -231,6 +318,7 @@ const BranchDetailDialog = ({ branch, isOpen, onClose }: { branch: any, isOpen: 
 export default function Branches() {
   const [selectedBranch, setSelectedBranch] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("domestic");
 
   const handleBranchClick = (branch: any) => {
     setSelectedBranch(branch);
@@ -241,6 +329,9 @@ export default function Branches() {
     setIsDialogOpen(false);
     setSelectedBranch(null);
   };
+
+  const currentBranches = activeTab === "domestic" ? branchesData : internationalBranches;
+  const apiKey = "AIzaSyCoaMbDgEr6zX7fqx6yxOg1GJmjIZiW9u0";
 
   return (
     <PageWithLoading>
@@ -254,92 +345,149 @@ export default function Branches() {
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Салбар холбоод</h1>
                 <p className="text-gray-600 mt-2">
-                  Монгол орны хэмжээнд үйл ажиллагаа явуулж буй МШТХ-ны салбар холбоод
+                  Монгол орон болон гадаадад үйл ажиллагаа явуулж буй МШТХ-ны салбар холбоод
                 </p>
               </div>
               <Badge className="mtta-green text-white text-lg px-4 py-2">
-                {branchesData.length} салбар
+                {branchesData.length + internationalBranches.length} салбар
               </Badge>
             </div>
           </div>
         </div>
 
-        {/* Interactive Map */}
+        {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <Card className="overflow-hidden">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-mtta-green" />
-                Интерактив газрын зураг
-              </CardTitle>
-              <p className="text-sm text-gray-600">
-                Салбарын дэлгэрэнгүй мэдээллийг харахын тулд цэнхэр цэгэн дээр дарна уу
-              </p>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="relative bg-gradient-to-br from-blue-50 to-blue-100 overflow-hidden">
-                {/* Map Image */}
-                <img 
-                  src="/src/assets/mongolia-map.png" 
-                  alt="Mongolia Map" 
-                  className="w-full h-auto block"
-                  style={{ maxHeight: '600px', objectFit: 'contain', minHeight: '400px' }}
-                  onError={(e) => {
-                    // Multiple fallback paths
-                    const target = e.currentTarget;
-                    if (target.src.includes('/src/assets/')) {
-                      target.src = "./src/assets/mongolia-map.png";
-                    } else if (target.src.includes('./src/')) {
-                      target.src = "client/src/assets/mongolia-map.png";
-                    } else {
-                      // Show a fallback background if image fails to load
-                      target.style.display = 'none';
-                      target.parentElement!.style.background = `
-                        linear-gradient(135deg, #1e3a8a, #3730a3, #1e40af),
-                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400"><rect width="800" height="400" fill="%23334155"/><text x="400" y="200" text-anchor="middle" fill="white" font-size="20">Mongolia Map</text></svg>')
-                      `;
-                      target.parentElement!.style.backgroundSize = 'contain';
-                      target.parentElement!.style.backgroundRepeat = 'no-repeat';
-                      target.parentElement!.style.backgroundPosition = 'center';
-                      target.parentElement!.style.minHeight = '500px';
-                    }
-                  }}
-                />
-                
-                {/* Lightning Spots */}
-                {branchesData.map((branch) => (
-                  <LightningSpot
-                    key={branch.id}
-                    branch={branch}
-                    onClick={() => handleBranchClick(branch)}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-8">
+              <TabsTrigger value="domestic" className="flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                Монгол дахь салбарууд ({branchesData.length})
+              </TabsTrigger>
+              <TabsTrigger value="international" className="flex items-center gap-2">
+                <Globe className="h-4 w-4" />
+                Гадаад дахь салбарууд ({internationalBranches.length})
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="domestic" className="space-y-8">
+              {/* Interactive Map for Domestic Branches */}
+              <Card className="overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-mtta-green" />
+                    Монгол дахь салбарууд - Интерактив газрын зураг
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">
+                    Салбарын дэлгэрэнгүй мэдээллийг харахын тулд цэнхэр цэгэн дээр дарна уу
+                  </p>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="relative bg-gradient-to-br from-blue-50 to-blue-100 overflow-hidden">
+                    {/* Map Image */}
+                    <img 
+                      src="/src/assets/mongolia-map.png" 
+                      alt="Mongolia Map" 
+                      className="w-full h-auto block"
+                      style={{ maxHeight: '600px', objectFit: 'contain', minHeight: '400px' }}
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (target.src.includes('/src/assets/')) {
+                          target.src = "./src/assets/mongolia-map.png";
+                        } else if (target.src.includes('./src/')) {
+                          target.src = "client/src/assets/mongolia-map.png";
+                        } else {
+                          target.style.display = 'none';
+                          target.parentElement!.style.background = `
+                            linear-gradient(135deg, #1e3a8a, #3730a3, #1e40af),
+                            url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400"><rect width="800" height="400" fill="%23334155"/><text x="400" y="200" text-anchor="middle" fill="white" font-size="20">Mongolia Map</text></svg>')
+                          `;
+                          target.parentElement!.style.backgroundSize = 'contain';
+                          target.parentElement!.style.backgroundRepeat = 'no-repeat';
+                          target.parentElement!.style.backgroundPosition = 'center';
+                          target.parentElement!.style.minHeight = '500px';
+                        }
+                      }}
+                    />
+                    
+                    {/* Lightning Spots */}
+                    {branchesData.map((branch) => (
+                      <LightningSpot
+                        key={branch.id}
+                        branch={branch}
+                        onClick={() => handleBranchClick(branch)}
+                      />
+                    ))}
+                    
+                    {/* Map Legend */}
+                    <div className="absolute bottom-4 left-4 bg-white bg-opacity-90 rounded-lg p-3 shadow-lg">
+                      <div className="flex items-center gap-2 text-sm">
+                        <div className="w-3 h-3 bg-mtta-green rounded-full animate-pulse"></div>
+                        <span className="text-gray-700">Салбар холбоо</span>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Дэлгэрэнгүй мэдээлэл харахын тулд цэг дээр дарна уу
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Google Maps for Domestic Branches */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Map className="h-5 w-5 text-mtta-green" />
+                    Google Maps дээрх салбарууд
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <MongoliaMap 
+                    branches={branchesData}
+                    height="600px"
+                    apiKey={apiKey}
                   />
-                ))}
-                
-                {/* Map Legend */}
-                <div className="absolute bottom-4 left-4 bg-white bg-opacity-90 rounded-lg p-3 shadow-lg">
-                  <div className="flex items-center gap-2 text-sm">
-                    <div className="w-3 h-3 bg-mtta-green rounded-full animate-pulse"></div>
-                    <span className="text-gray-700">Салбар холбоо</span>
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    Дэлгэрэнгүй мэдээлэл харахын тулд цэг дээр дарна уу
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="international" className="space-y-8">
+              {/* Google Maps for International Branches */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe className="h-5 w-5 text-mtta-green" />
+                    Олон улсын салбарууд - Google Maps
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">
+                    Гадаад орнууд дахь Монгол Ширээний Теннисний салбар холбоод
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <MongoliaMap 
+                    branches={internationalBranches}
+                    height="600px"
+                    apiKey={apiKey}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
           
           {/* Branches List */}
           <div className="mt-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Бүх салбарууд</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              {activeTab === "domestic" ? "Монгол дахь бүх салбарууд" : "Гадаад дахь бүх салбарууд"}
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {branchesData.map((branch) => (
+              {currentBranches.map((branch) => (
                 <Card key={branch.id} className="hover:shadow-lg transition-shadow cursor-pointer"
                       onClick={() => handleBranchClick(branch)}>
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <CardTitle className="text-lg line-clamp-2">{branch.name}</CardTitle>
-                      <Badge variant="outline" className="ml-2">{branch.province}</Badge>
+                      <Badge variant="outline" className="ml-2">
+                        {branch.province || branch.country}
+                      </Badge>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
