@@ -91,11 +91,23 @@ function LatestNewsSidebar({ currentNewsId }: { currentNewsId: string | undefine
                 <div className="group cursor-pointer">
                   <div className="flex gap-3">
                     {/* Image */}
-                    <figure className="w-16 h-12 flex-shrink-0 overflow-hidden rounded">
+                    <figure className="w-16 h-12 flex-shrink-0 overflow-hidden rounded bg-gray-100">
                       <img
                         src={getImageUrl(news.imageUrl)}
                         alt={news.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                        onError={(e) => {
+                          console.error('Sidebar image failed to load:', news.imageUrl);
+                          const target = e.currentTarget;
+                          target.style.display = 'none';
+                          target.parentElement!.innerHTML = `
+                            <div class="w-full h-full flex items-center justify-center bg-gray-200">
+                              <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                              </svg>
+                            </div>
+                          `;
+                        }}
                       />
                       <figcaption className="sr-only">{news.title}</figcaption>
                     </figure>
@@ -299,17 +311,39 @@ export default function NewsDetail() {
             <Card className="shadow-lg">
               {article.imageUrl && (
                 <figure>
-                  <div className="aspect-video overflow-hidden rounded-t-lg">
+                  <div className="aspect-video overflow-hidden rounded-t-lg bg-gray-100">
                     <img
                       src={getImageUrl(article.imageUrl)}
                       alt={article.title}
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         console.error('News detail image failed to load:', article.imageUrl);
+                        console.log('Original URL:', article.imageUrl);
                         console.log('Processed URL:', getImageUrl(article.imageUrl));
-                        // Try alternative URL format
-                        if (!e.currentTarget.src.includes('/public-objects/')) {
-                          e.currentTarget.src = `/public-objects/${article.imageUrl.replace(/^\/+/, '')}`;
+                        
+                        const target = e.currentTarget;
+                        const originalSrc = target.src;
+                        
+                        // Try different URL formats in sequence
+                        if (originalSrc.includes('/public-objects/')) {
+                          // Try direct object path
+                          const cleanPath = article.imageUrl.replace(/^\/+/, '').replace(/^objects\//, '');
+                          target.src = `/public-objects/${cleanPath}`;
+                        } else if (!originalSrc.includes('/api/')) {
+                          // Try API endpoint
+                          target.src = `/api/public-objects/${article.imageUrl.replace(/^\/+/, '').replace(/^objects\//, '')}`;
+                        } else {
+                          // Final fallback to placeholder
+                          target.style.display = 'none';
+                          target.parentElement?.classList.add('flex', 'items-center', 'justify-center');
+                          target.parentElement!.innerHTML = `
+                            <div class="flex flex-col items-center justify-center text-gray-400">
+                              <svg class="w-16 h-16 mb-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                              </svg>
+                              <span class="text-sm">Зураг ачаалагдсангүй</span>
+                            </div>
+                          `;
                         }
                       }}
                       onLoad={() => {

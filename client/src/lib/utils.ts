@@ -18,39 +18,83 @@ export const placeholderImageData =
  * when no URL is provided.
  */
 export function getImageUrl(imageUrl: string | undefined | null): string {
-  if (!imageUrl || imageUrl.trim() === '') return placeholderImageData
+  if (!imageUrl || imageUrl.trim() === '') {
+    console.log('getImageUrl: Empty or null URL, returning placeholder');
+    return placeholderImageData;
+  }
+
+  console.log('getImageUrl: Processing URL:', imageUrl);
 
   // Handle full URLs (http/https)
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) return imageUrl
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    console.log('getImageUrl: Full URL detected, returning as-is');
+    return imageUrl;
+  }
 
   // Handle base64 data URLs
-  if (imageUrl.startsWith('data:')) return imageUrl
+  if (imageUrl.startsWith('data:')) {
+    console.log('getImageUrl: Data URL detected, returning as-is');
+    return imageUrl;
+  }
 
   // Clean the URL - remove any extra slashes and whitespace
-  const cleanUrl = imageUrl.trim().replace(/\/+/g, '/')
+  const cleanUrl = imageUrl.trim().replace(/\/+/g, '/');
+  console.log('getImageUrl: Cleaned URL:', cleanUrl);
 
   // If it's an object storage path, map it to the public-objects route
   // Handle various prefixes that might already be included
-  if (cleanUrl.startsWith('/api/public-objects/')) return cleanUrl
-  if (cleanUrl.startsWith('/public-objects/')) return cleanUrl
+  if (cleanUrl.startsWith('/api/public-objects/')) {
+    console.log('getImageUrl: Already has /api/public-objects/ prefix');
+    return cleanUrl;
+  }
+  
+  if (cleanUrl.startsWith('/public-objects/')) {
+    console.log('getImageUrl: Already has /public-objects/ prefix');
+    return cleanUrl;
+  }
 
   if (cleanUrl.startsWith('/objects/')) {
-    const path = cleanUrl.replace(/^\/objects\//, '')
-    return `/public-objects/${path}`
+    const path = cleanUrl.replace(/^\/objects\//, '');
+    const result = `/public-objects/${path}`;
+    console.log('getImageUrl: Converted /objects/ to /public-objects/:', result);
+    return result;
   }
 
   // For paths starting with 'objects/' (without leading slash)
   if (cleanUrl.startsWith('objects/')) {
-    const path = cleanUrl.replace(/^objects\//, '')
-    return `/public-objects/${path}`
+    const path = cleanUrl.replace(/^objects\//, '');
+    const result = `/public-objects/${path}`;
+    console.log('getImageUrl: Converted objects/ to /public-objects/:', result);
+    return result;
+  }
+
+  // Handle Google Storage URLs
+  if (cleanUrl.includes('storage.googleapis.com')) {
+    try {
+      const url = new URL(cleanUrl);
+      const pathParts = url.pathname.split('/');
+      // Extract object path from Google Storage URL
+      if (pathParts.length > 2) {
+        const objectPath = pathParts.slice(2).join('/');
+        const result = `/public-objects/${objectPath}`;
+        console.log('getImageUrl: Converted Google Storage URL to:', result);
+        return result;
+      }
+    } catch (e) {
+      console.error('getImageUrl: Failed to parse Google Storage URL:', e);
+    }
   }
 
   // For other absolute paths, ensure they're served via public-objects
   if (cleanUrl.startsWith('/')) {
-    const path = cleanUrl.substring(1) // Remove leading slash
-    return `/public-objects/${path}`
+    const path = cleanUrl.substring(1); // Remove leading slash
+    const result = `/public-objects/${path}`;
+    console.log('getImageUrl: Converted absolute path to /public-objects/:', result);
+    return result;
   }
 
   // For relative paths, add to public-objects
-  return `/public-objects/${cleanUrl}`
+  const result = `/public-objects/${cleanUrl}`;
+  console.log('getImageUrl: Converted relative path to /public-objects/:', result);
+  return result;
 }
