@@ -329,7 +329,7 @@ export default function AdminDashboard() {
         ownerName: item.ownerName || "",
       });
     } else if (selectedTab === "judges") {
-      form.reset({
+      setFormData({
         firstName: item.firstName || "",
         lastName: item.lastName || "",
         userId: item.userId || "",
@@ -1521,66 +1521,49 @@ export default function AdminDashboard() {
       case 'judges':
         return (
           <>
-            <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <UserIcon className="w-4 h-4" />
-                      Нэр
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="Шүүгчийн нэр" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            <div>
+              <Label htmlFor="firstName" className="flex items-center gap-2">
+                <UserIcon className="w-4 h-4" />
+                Нэр
+              </Label>
+              <Input
+                id="firstName"
+                placeholder="Шүүгчийн нэр"
+                value={formData.firstName || ''}
+                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
               />
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <UserIcon className="w-4 h-4" />
-                      Овог
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="Шүүгчийн овог" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            </div>
+            <div>
+              <Label htmlFor="lastName" className="flex items-center gap-2">
+                <UserIcon className="w-4 h-4" />
+                Овог
+              </Label>
+              <Input
+                id="lastName"
+                placeholder="Шүүгчийн овог"
+                value={formData.lastName || ''}
+                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
               />
-              <FormField
-                control={form.control}
-                name="userId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <UserIcon className="w-4 h-4" />
-                      Хэрэглэгч (заавал биш)
-                    </FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ""}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Хэрэглэгч сонгоно уу (заавал биш)" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="">Хэрэглэгчгүй</SelectItem>
-                        {users && Array.isArray(users) ? users.map((user: any) => (
-                          <SelectItem key={user.id} value={user.id}>
-                            {user.firstName} {user.lastName}
-                          </SelectItem>
-                        )) : null}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            </div>
+            <div>
+              <Label className="flex items-center gap-2">
+                <UserIcon className="w-4 h-4" />
+                Хэрэглэгч (заавал биш)
+              </Label>
+              <Select value={formData.userId || ''} onValueChange={(value) => setFormData({ ...formData, userId: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Хэрэглэгч сонгоно уу (заавал биш)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Хэрэглэгчгүй</SelectItem>
+                  {users && Array.isArray(users) ? users.map((user: any) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.firstName} {user.lastName}
+                    </SelectItem>
+                  )) : null}
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <Label className="flex items-center gap-2">
                 <Upload className="w-4 h-4" />
@@ -2533,8 +2516,7 @@ export default function AdminDashboard() {
       case 'federation-members':
         return formData.name;
       case 'judges':
-        // Use form validation for judges
-        return form.formState.isValid;
+        return formData.firstName && formData.lastName;
       case 'coaches':
         return formData.clubId && (formData.userId || formData.name);
       case 'champions':
@@ -2544,50 +2526,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleCreateJudge = async () => {
-    const validatedForm = await form.trigger(); // Trigger validation
-    if (!validatedForm) {
-      toast({ title: "Алдаа", description: "Шүүгчийн мэдээллийг зөв оруулна уу", variant: "destructive" });
-      return;
-    }
-
-    const judgeData = form.getValues();
-    const { firstName, lastName, userId, judgeType, imageUrl } = judgeData;
-
-    try {
-      const response = await fetch('/api/admin/judges', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName,
-          lastName,
-          userId: userId || undefined, // Send userId only if it exists
-          judgeType,
-          imageUrl,
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create judge');
-      }
-
-      toast({
-        title: "Амжилттай",
-        description: "Шүүгч амжилттай үүсгэлээ"
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/judges'] }); // Invalidate judges query
-      form.reset(); // Reset the form
-      setIsCreateDialogOpen(false); // Close the dialog
-
-    } catch (error) {
-      console.error('Error creating judge:', error);
-      toast({
-        title: "Алдаа",
-        description: "Шүүгч үүсгэхэд алдаа гарлаа",
-        variant: "destructive"
-      });
-    }
-  };
+  
 
   const handleCreate = () => {
     if (!validateForm()) {
@@ -2595,14 +2534,10 @@ export default function AdminDashboard() {
       return;
     }
 
-    if (selectedTab === 'judges') {
-      handleCreateJudge();
-    } else {
-      createMutation.mutate({
-        endpoint: `/api/admin/${selectedTab}`,
-        data: sanitizeFormData(formData),
-      });
-    }
+    createMutation.mutate({
+      endpoint: `/api/admin/${selectedTab}`,
+      data: sanitizeFormData(formData),
+    });
   };
 
   return (
@@ -3152,31 +3087,15 @@ export default function AdminDashboard() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 overflow-y-auto flex-1 pr-2">
-            {selectedTab === 'judges' ? (
-              <form onSubmit={form.handleSubmit(handleCreateJudge)}>
-                {renderFormFields()}
-                <DialogFooter className="flex-shrink-0 pt-4 border-t">
-                  <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                    Цуцлах
-                  </Button>
-                  <Button type="submit" disabled={form.formState.isSubmitting}>
-                    {form.formState.isSubmitting ? "Үүсгэж байна..." : "Үүсгэх"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            ) : (
-              <>
-                {renderFormFields()}
-                <DialogFooter className="flex-shrink-0 pt-4 border-t">
-                  <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                    Цуцлах
-                  </Button>
-                  <Button onClick={handleCreate} disabled={createMutation.isPending}>
-                    {createMutation.isPending ? "Үүсгэж байна..." : "Үүсгэх"}
-                  </Button>
-                </DialogFooter>
-              </>
-            )}
+            {renderFormFields()}
+            <DialogFooter className="flex-shrink-0 pt-4 border-t">
+              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                Цуцлах
+              </Button>
+              <Button onClick={handleCreate} disabled={createMutation.isPending}>
+                {createMutation.isPending ? "Үүсгэж байна..." : "Үүсгэх"}
+              </Button>
+            </DialogFooter>
           </div>
         </DialogContent>
       </Dialog>
@@ -3185,7 +3104,7 @@ export default function AdminDashboard() {
       <Dialog open={showDialog} onOpenChange={() => {
         setShowDialog(false);
         setEditingItem(null);
-        form.reset(); // Reset form on close
+        setFormData({}); // Reset form data on close
       }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader className="flex-shrink-0">
@@ -3195,38 +3114,18 @@ export default function AdminDashboard() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 overflow-y-auto flex-1 pr-2">
-            {selectedTab === 'judges' ? (
-              <form onSubmit={form.handleSubmit(handleUpdate)}>
-                {renderFormFields()}
-                <DialogFooter className="flex-shrink-0 pt-4 border-t">
-                  <Button variant="outline" onClick={() => {
-                    setShowDialog(false);
-                    setEditingItem(null);
-                    form.reset();
-                  }}>
-                    Цуцлах
-                  </Button>
-                  <Button type="submit" disabled={form.formState.isSubmitting}>
-                    {form.formState.isSubmitting ? "Шинэчилж байна..." : "Шинэчлэх"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            ) : (
-              <>
-                {renderFormFields()}
-                <DialogFooter className="flex-shrink-0 pt-4 border-t">
-                  <Button variant="outline" onClick={() => {
-                    setEditingItem(null);
-                    setShowDialog(false);
-                  }}>
-                    Цуцлах
-                  </Button>
-                  <Button onClick={handleUpdate} disabled={updateMutation.isPending}>
-                    {updateMutation.isPending ? "Шинэчилж байна..." : "Шинэчлэх"}
-                  </Button>
-                </DialogFooter>
-              </>
-            )}
+            {renderFormFields()}
+            <DialogFooter className="flex-shrink-0 pt-4 border-t">
+              <Button variant="outline" onClick={() => {
+                setEditingItem(null);
+                setShowDialog(false);
+              }}>
+                Цуцлах
+              </Button>
+              <Button onClick={handleUpdate} disabled={updateMutation.isPending}>
+                {updateMutation.isPending ? "Шинэчилж байна..." : "Шинэчлэх"}
+              </Button>
+            </DialogFooter>
           </div>
         </DialogContent>
       </Dialog>
