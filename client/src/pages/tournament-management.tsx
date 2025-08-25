@@ -1307,40 +1307,64 @@ export default function TournamentManagement() {
                                                   </CommandItem>
                                                 )
                                               ) : (
-                                                // Show users for individual match type
-                                                allUsers && Array.isArray(allUsers) && allUsers.length > 0 ? allUsers.map((user: any) => {
-                                                  // Create full name from firstName + lastName
-                                                  const fullName = user.firstName && user.lastName 
-                                                    ? `${user.firstName} ${user.lastName}` 
-                                                    : (user.firstName || user.lastName || user.email);
+                                                // Show league team players for individual match type
+                                                (() => {
+                                                  // Get all players from league teams
+                                                  const leagueTeamPlayers: any[] = [];
+                                                  
+                                                  if (validExistingTeams && validExistingTeams.length > 0) {
+                                                    validExistingTeams.forEach((team: any) => {
+                                                      if (team.players && Array.isArray(team.players)) {
+                                                        team.players.forEach((teamPlayer: any) => {
+                                                          leagueTeamPlayers.push({
+                                                            ...teamPlayer,
+                                                            teamName: team.name,
+                                                            teamId: team.id
+                                                          });
+                                                        });
+                                                      }
+                                                    });
+                                                  }
+                                                  
+                                                  if (leagueTeamPlayers.length === 0) {
+                                                    return (
+                                                      <CommandItem disabled>
+                                                        <div className="text-center text-gray-500">
+                                                          Энэ лигт баг болон тоглогч нэмэгдээгүй байна. Эхлээд "Баг нэмэх" хэсгээс баг нэмнэ үү.
+                                                        </div>
+                                                      </CommandItem>
+                                                    );
+                                                  }
+                                                  
+                                                  return leagueTeamPlayers.map((teamPlayer: any, index: number) => {
+                                                    const playerName = teamPlayer.playerName || 
+                                                      (teamPlayer.firstName && teamPlayer.lastName 
+                                                        ? `${teamPlayer.firstName} ${teamPlayer.lastName}`
+                                                        : `Тоглогч ${teamPlayer.playerId}`);
                                                     
-                                                  return (
-                                                    <CommandItem
-                                                      key={user.id}
-                                                      value={`${fullName} ${user.email}`}
-                                                      onSelect={() => {
-                                                        handleGroupPlayerChange(player.id, 'name', fullName);
-                                                        setSearchOpen({ ...searchOpen, [`group-${player.id}`]: false });
-                                                      }}
-                                                      className="flex items-center justify-between"
-                                                    >
-                                                      <div>
-                                                        <div className="font-medium">
-                                                          {fullName}
+                                                    return (
+                                                      <CommandItem
+                                                        key={`${teamPlayer.teamId}-${teamPlayer.playerId}-${index}`}
+                                                        value={`${playerName} ${teamPlayer.teamName}`}
+                                                        onSelect={() => {
+                                                          handleGroupPlayerChange(player.id, 'name', playerName);
+                                                          handleGroupPlayerChange(player.id, 'club', teamPlayer.teamName);
+                                                          setSearchOpen({ ...searchOpen, [`group-${player.id}`]: false });
+                                                        }}
+                                                        className="flex items-center justify-between"
+                                                      >
+                                                        <div>
+                                                          <div className="font-medium">
+                                                            {playerName}
+                                                          </div>
+                                                          <div className="text-xs text-gray-500">
+                                                            {teamPlayer.teamName} • {teamPlayer.email || 'Багийн гишүүн'}
+                                                          </div>
                                                         </div>
-                                                        <div className="text-xs text-gray-500">
-                                                          {user.email} • {user.role === 'admin' ? 'Админ' : user.role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч'}
-                                                        </div>
-                                                      </div>
-                                                    </CommandItem>
-                                                  );
-                                                }) : (
-                                                  <CommandItem disabled>
-                                                    <div className="text-center text-gray-500">
-                                                      Хэрэглэгч олдсонгүй
-                                                    </div>
-                                                  </CommandItem>
-                                                )
+                                                      </CommandItem>
+                                                    );
+                                                  });
+                                                })()
                                               )}
                                             </CommandGroup>
                                           </CommandList>
