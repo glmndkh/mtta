@@ -64,6 +64,9 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
         }
 
         console.log('Initializing Google Maps Loader...');
+        console.log('Current domain:', window.location.hostname);
+        console.log('Current protocol:', window.location.protocol);
+        console.log('Full URL:', window.location.href);
         
         const loader = new Loader({
           apiKey: apiKey,
@@ -72,14 +75,42 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
         });
         
         console.log('Loader created successfully');
+        
+        // Test API key validity by making a simple request
+        try {
+          console.log('Testing API key validity...');
+          const testResponse = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=Mongolia&key=${apiKey}`);
+          const testData = await testResponse.json();
+          console.log('API key test response:', testData);
+          
+          if (testData.status === 'REQUEST_DENIED') {
+            throw new Error(`Google Maps API Key Error: ${testData.error_message || 'Request denied'}`);
+          }
+        } catch (testError) {
+          console.error('API key test failed:', testError);
+        }
 
         console.log('Loading Google Maps libraries...');
         
-        const { Map } = await loader.importLibrary('maps') as google.maps.MapsLibrary;
-        console.log('Maps library loaded');
+        // Add error handling for library loading
+        let Map, AdvancedMarkerElement;
+        try {
+          const mapsLib = await loader.importLibrary('maps') as google.maps.MapsLibrary;
+          Map = mapsLib.Map;
+          console.log('Maps library loaded successfully');
+        } catch (error) {
+          console.error('Failed to load Maps library:', error);
+          throw new Error(`Maps library failed to load: ${error}`);
+        }
         
-        const { AdvancedMarkerElement } = await loader.importLibrary('marker') as google.maps.MarkerLibrary;
-        console.log('Marker library loaded');
+        try {
+          const markerLib = await loader.importLibrary('marker') as google.maps.MarkerLibrary;
+          AdvancedMarkerElement = markerLib.AdvancedMarkerElement;
+          console.log('Marker library loaded successfully');
+        } catch (error) {
+          console.error('Failed to load Marker library:', error);
+          throw new Error(`Marker library failed to load: ${error}`);
+        }
 
         if (!mapRef.current) return;
 
@@ -350,15 +381,63 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
           height, 
           width, 
           display: 'flex', 
+          flexDirection: 'column',
           alignItems: 'center', 
           justifyContent: 'center',
           backgroundColor: '#f3f4f6',
           border: '1px solid #d1d5db',
-          borderRadius: '8px'
+          borderRadius: '8px',
+          padding: '20px'
         }}
       >
-        <div style={{ textAlign: 'center', color: '#dc2626' }}>
+        <div style={{ textAlign: 'center', color: '#dc2626', marginBottom: '20px' }}>
           <p>⚠️ {error}</p>
+          <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '10px' }}>
+            Google Maps could not load. Check console for details.
+          </p>
+        </div>
+        
+        {/* Fallback: Show branch list */}
+        <div style={{ 
+          backgroundColor: 'white', 
+          padding: '20px', 
+          borderRadius: '8px', 
+          maxHeight: '400px', 
+          overflowY: 'auto',
+          width: '100%'
+        }}>
+          <h3 style={{ marginBottom: '15px', color: '#374151' }}>Салбар холбоодын жагсаалт:</h3>
+          {branches.map((branch) => (
+            <div key={branch.id} style={{ 
+              marginBottom: '15px', 
+              padding: '12px', 
+              backgroundColor: '#f9fafb', 
+              borderRadius: '6px',
+              border: '1px solid #e5e7eb'
+            }}>
+              <div style={{ fontWeight: 'bold', color: '#1f2937', marginBottom: '5px' }}>
+                {branch.isInternational ? '🌍' : '📍'} {branch.name}
+              </div>
+              {(branch.country || branch.city) && (
+                <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '3px' }}>
+                  {branch.city ? `${branch.city}, ` : ''}{branch.country}
+                </div>
+              )}
+              {branch.address && (
+                <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '3px' }}>
+                  📍 {branch.address}
+                </div>
+              )}
+              <div style={{ fontSize: '11px', color: '#9ca3af' }}>
+                Координат: {branch.lat.toFixed(6)}, {branch.lng.toFixed(6)}
+              </div>
+              {branch.leader && (
+                <div style={{ fontSize: '12px', color: '#374151', marginTop: '5px' }}>
+                  👤 {branch.leader}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     );
