@@ -74,7 +74,7 @@ export interface IStorage {
   // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
-  
+
   // Simple auth operations
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByPhone(phone: string): Promise<User | undefined>;
@@ -123,7 +123,7 @@ export interface IStorage {
   getTournamentsByOrganizer(organizerId: string): Promise<Tournament[]>;
   getActiveTournaments(): Promise<Tournament[]>;
   registerPlayerForTournament(tournamentId: string, playerId: string): Promise<void>;
-  
+
   // Tournament registration operations
   registerForTournament(data: { tournamentId: string; playerId: string; participationType: string }): Promise<any>;
   getTournamentRegistration(tournamentId: string, playerId: string): Promise<any>;
@@ -151,14 +151,14 @@ export interface IStorage {
   updateMembershipPayment(id: string): Promise<void>;
 
   // League operations
-  getAllLeagues(): Promise<League[]>;
+  getAllLeagues(): Promise<Array<League & { teams: Array<TournamentTeam & { players: TournamentTeamPlayer[] }> }>>;
   getTeamsByLeague(leagueId: string): Promise<Team[]>;
 
   // Tournament results operations
   getTournamentResults(tournamentId: string): Promise<TournamentResults | undefined>;
   upsertTournamentResults(results: InsertTournamentResults): Promise<TournamentResults>;
   publishTournamentResults(tournamentId: string): Promise<void>;
-  
+
   // Player tournament match history
   getPlayerTournamentMatches(playerId: string): Promise<any[]>;
 
@@ -201,6 +201,25 @@ export interface IStorage {
   createJudge(judge: InsertJudge): Promise<Judge>;
   deleteJudge(id: string): Promise<boolean>;
   getJudgeByUserId(userId: string): Promise<Judge | undefined>;
+
+  // Membership operations
+  getMembership(playerId: string): Promise<Membership | undefined>;
+  createMembership(membership: InsertMembership): Promise<Membership>;
+  updateMembershipPayment(id: string): Promise<void>;
+
+  // League operations
+  getLeague(id: string): Promise<League | undefined>;
+  createLeague(leagueData: any): Promise<League>;
+  updateLeague(id: string, leagueData: any): Promise<League | undefined>;
+  deleteLeague(id: string): Promise<boolean>;
+  getTeamsByLeague(leagueId: string): Promise<Team[]>;
+
+  // Tournament results operations
+  getTournamentResults(tournamentId: string): Promise<TournamentResults | undefined>;
+  upsertTournamentResults(resultsData: InsertTournamentResults): Promise<TournamentResults>;
+  publishTournamentResults(tournamentId: string): Promise<void>;
+  updatePlayerStatsFromTournament(tournamentId: string): Promise<void>;
+  updateAllPlayerStatsFromTournaments(): Promise<void>;
 
   // Player tournament and match operations
   getPlayerTournamentRegistrations(playerId: string): Promise<any[]>;
@@ -293,7 +312,7 @@ export class DatabaseStorage implements IStorage {
     const updateData: any = {
       updatedAt: new Date(),
     };
-    
+
     // Only include fields that are defined
     if (userData.firstName !== undefined) updateData.firstName = userData.firstName;
     if (userData.lastName !== undefined) updateData.lastName = userData.lastName;
@@ -346,11 +365,11 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(users, eq(players.userId, users.id))
       .where(eq(players.id, id))
       .limit(1);
-    
+
     if (result.length === 0) {
       return undefined;
     }
-    
+
     return {
       id: result[0].player.id,
       userId: result[0].player.userId,
@@ -380,11 +399,11 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(users, eq(players.userId, users.id))
       .where(eq(users.id, userId))
       .limit(1);
-    
+
     if (result.length === 0) {
       return undefined;
     }
-    
+
     return {
       id: result[0].player.id,
       userId: result[0].player.userId,
@@ -407,25 +426,25 @@ export class DatabaseStorage implements IStorage {
   async ensurePlayerExists(userId: string): Promise<any> {
     // Check if player already exists
     let player = await this.getPlayerByUserId(userId);
-    
+
     if (!player) {
       // Get user info
       const user = await this.getUser(userId);
       if (!user) {
         throw new Error("User not found");
       }
-      
+
       // Create player profile automatically
       const newPlayer = await this.createPlayer({
         userId: userId,
         dateOfBirth: new Date(), // Default date
         rank: "Шинэ тоглогч"
       });
-      
+
       // Return the player with user info
       player = await this.getPlayerByUserId(userId);
     }
-    
+
     return player;
   }
 
@@ -445,7 +464,7 @@ export class DatabaseStorage implements IStorage {
   async updatePlayerStats(playerId: string, wins: number, losses: number): Promise<void> {
     const total = wins + losses;
     const winPercentage = total > 0 ? Math.round((wins / total) * 10000) : 0; // stored as percentage * 100
-    
+
     await db
       .update(players)
       .set({ wins, losses, winPercentage })
@@ -464,7 +483,7 @@ export class DatabaseStorage implements IStorage {
         console.error("Invalid rank value:", rank);
         return false;
       }
-      
+
       const result = await db
         .update(players)
         .set({ rank: rank as any })
@@ -671,7 +690,7 @@ export class DatabaseStorage implements IStorage {
 
   async createTournament(tournamentData: InsertTournament): Promise<Tournament> {
     console.log("Creating tournament with data:", tournamentData);
-    
+
     // Ensure required fields have proper values
     const insertData = {
       ...tournamentData,
@@ -683,11 +702,11 @@ export class DatabaseStorage implements IStorage {
         ? tournamentData.participationTypes 
         : ["individual"],
     };
-    
+
     console.log("Processed insert data:", insertData);
-    
+
     const [tournament] = await db.insert(tournaments).values(insertData).returning();
-    
+
     console.log("Tournament created successfully:", tournament);
     return tournament;
   }
@@ -770,21 +789,21 @@ export class DatabaseStorage implements IStorage {
   async getTournamentRegistrationStats(tournamentId: string): Promise<{ registered: number; maxParticipants?: number; registrationRate: number }> {
     // Get tournament details
     const tournament = await this.getTournament(tournamentId);
-    
+
     // Count registrations
     const registrationCount = await db
       .select({ count: sql<number>`count(*)` })
       .from(tournamentParticipants)
       .where(eq(tournamentParticipants.tournamentId, tournamentId));
-    
+
     const registered = Number(registrationCount[0]?.count || 0);
     const maxParticipants = tournament?.maxParticipants ?? undefined;
-    
+
     let registrationRate = 0;
     if (maxParticipants && maxParticipants > 0) {
       registrationRate = Math.round((registered / maxParticipants) * 100);
     }
-    
+
     return {
       registered,
       maxParticipants,
@@ -1041,7 +1060,7 @@ export class DatabaseStorage implements IStorage {
     // Generate UUID manually since database default isn't working with Drizzle
     const { randomUUID } = await import('crypto');
     const now = new Date();
-    
+
     const [slider] = await db.insert(homepageSliders).values({
       ...sliderData,
       id: randomUUID(),
@@ -1094,7 +1113,7 @@ export class DatabaseStorage implements IStorage {
   async createSponsor(sponsorData: InsertSponsor): Promise<Sponsor> {
     const { randomUUID } = await import('crypto');
     const now = new Date();
-    
+
     const [sponsor] = await db.insert(sponsors).values({
       ...sponsorData,
       id: randomUUID(),
@@ -1146,7 +1165,7 @@ export class DatabaseStorage implements IStorage {
     const [champion] = await db
       .update(pastChampions)
       .set(championData)
-      .where(eq(pastChampions.id, id))
+      .where(eq(championData.id, id))
       .returning();
     return champion;
   }
@@ -1244,20 +1263,23 @@ export class DatabaseStorage implements IStorage {
 
   // League operations
   async getAllLeagues(): Promise<Array<League & { teams: Array<TournamentTeam & { players: TournamentTeamPlayer[] }> }>> {
-    const leaguesList = await db.select().from(leagues).orderBy(desc(leagues.startDate));
-    
-    // Get teams for each league
-    const leaguesWithTeams = await Promise.all(
-      leaguesList.map(async (league) => {
-        const teams = await this.getLeagueTeams(league.id);
-        return {
-          ...league,
-          teams
-        };
-      })
-    );
-    
-    return leaguesWithTeams;
+    console.log('[Storage] Getting all leagues...');
+    const leagueData = await this.db.select().from(leagues);
+    console.log(`[Storage] Found ${leagueData.length} leagues in database`);
+
+    const result = [];
+
+    for (const league of leagueData) {
+      const teams = await this.getLeagueTeams(league.id);
+      console.log(`[Storage] League ${league.name} has ${teams.length} teams`);
+      result.push({
+        ...league,
+        teams
+      });
+    }
+
+    console.log(`[Storage] Returning ${result.length} leagues with teams`);
+    return result;
   }
 
   async getLeague(id: string): Promise<League | undefined> {
@@ -1330,11 +1352,11 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date(),
       })
       .where(eq(tournamentResults.tournamentId, tournamentId));
-    
+
     // Update player statistics when results are published
     await this.updatePlayerStatsFromTournament(tournamentId);
   }
-  
+
   async updatePlayerStatsFromTournament(tournamentId: string): Promise<void> {
     try {
       // Get tournament results
@@ -1343,9 +1365,9 @@ export class DatabaseStorage implements IStorage {
         .from(tournamentResults)
         .where(eq(tournamentResults.tournamentId, tournamentId))
         .limit(1);
-      
+
       if (!tournamentResult) return;
-      
+
       // Get all players who participated in this tournament
       const participants = await db
         .select({
@@ -1355,15 +1377,15 @@ export class DatabaseStorage implements IStorage {
         .from(tournamentParticipants)
         .innerJoin(players, eq(tournamentParticipants.playerId, players.id))
         .where(eq(tournamentParticipants.tournamentId, tournamentId));
-      
+
       // Track wins and losses for each player
       const playerStats: { [playerId: string]: { wins: number; losses: number } } = {};
-      
+
       // Initialize stats for all participants
       for (const participant of participants) {
         playerStats[participant.playerId] = { wins: 0, losses: 0 };
       }
-      
+
       // Process group stage results
       if (tournamentResult.groupStageResults) {
         try {
@@ -1373,26 +1395,27 @@ export class DatabaseStorage implements IStorage {
           } else {
             groupData = tournamentResult.groupStageResults;
           }
-          
+
           if (Array.isArray(groupData)) {
             for (const group of groupData) {
               if (group.players && group.resultMatrix) {
                 // Process each match in the group
                 for (let i = 0; i < group.players.length; i++) {
-                  for (let j = i + 1; j < group.players.length; j++) {
-                    // Get match results from both directions to handle different input formats
+                  for (let j = 0; j < group.players.length; j++) {
+                    if (i === j) continue; // Skip self-matches
+
                     const result1 = group.resultMatrix[i] && group.resultMatrix[i][j];
                     const result2 = group.resultMatrix[j] && group.resultMatrix[j][i];
-                    
+
                     // Process the match if there's a result
                     if ((result1 && result1 !== '' && result1 !== '*****') || (result2 && result2 !== '' && result2 !== '*****')) {
                       const player1 = group.players[i];
                       const player2 = group.players[j];
-                      
+
                       // Find player records by matching user ID from tournament data
                       let player1Id = null;
                       let player2Id = null;
-                      
+
                       // Try to find by user ID first, then by player ID
                       for (const participant of participants) {
                         if (participant.userId === player1.id || participant.playerId === player1.id) {
@@ -1402,12 +1425,12 @@ export class DatabaseStorage implements IStorage {
                           player2Id = participant.playerId;
                         }
                       }
-                      
+
                       if (player1Id && player2Id) {
                         // Determine winner based on sets/scores
                         let player1Wins = false;
                         let player2Wins = false;
-                        
+
                         // Parse individual match result (e.g., "3" vs "2" means 3 sets vs 2 sets)
                         if (result1 && result1 !== '' && result1 !== '*****') {
                           const score1 = parseInt(result1.toString().trim());
@@ -1424,7 +1447,7 @@ export class DatabaseStorage implements IStorage {
                             }
                           }
                         }
-                        
+
                         // Update win/loss counts
                         if (player1Wins) {
                           playerStats[player1Id].wins++;
@@ -1444,7 +1467,7 @@ export class DatabaseStorage implements IStorage {
           console.error('Error processing group stage results for stats:', e);
         }
       }
-      
+
       // Process knockout results
       if (tournamentResult.knockoutResults) {
         try {
@@ -1454,7 +1477,7 @@ export class DatabaseStorage implements IStorage {
           } else {
             knockoutData = tournamentResult.knockoutResults;
           }
-          
+
           if (Array.isArray(knockoutData)) {
             for (const match of knockoutData) {
               if (match.player1 && match.player2 && match.winner) {
@@ -1462,7 +1485,7 @@ export class DatabaseStorage implements IStorage {
                 let player1Id = null;
                 let player2Id = null;
                 let winnerId = null;
-                
+
                 for (const participant of participants) {
                   if (participant.userId === match.player1.id || participant.playerId === match.player1.id) {
                     player1Id = participant.playerId;
@@ -1474,7 +1497,7 @@ export class DatabaseStorage implements IStorage {
                     winnerId = participant.playerId;
                   }
                 }
-                
+
                 if (player1Id && player2Id && winnerId) {
                   if (winnerId === player1Id) {
                     playerStats[player1Id].wins++;
@@ -1491,7 +1514,7 @@ export class DatabaseStorage implements IStorage {
           console.error('Error processing knockout results for stats:', e);
         }
       }
-      
+
       // Update player statistics in database (replace, don't add to existing)
       for (const [playerId, stats] of Object.entries(playerStats)) {
         await this.updatePlayerStats(playerId, stats.wins, stats.losses);
@@ -1505,14 +1528,14 @@ export class DatabaseStorage implements IStorage {
     try {
       // Reset all player stats to 0
       await db.update(players).set({ wins: 0, losses: 0, winPercentage: 0 });
-      
+
       // Get all published tournaments
       const publishedTournaments = await db
         .select({ id: tournaments.id })
         .from(tournaments)
         .innerJoin(tournamentResults, eq(tournaments.id, tournamentResults.tournamentId))
         .where(eq(tournamentResults.isPublished, true));
-      
+
       // Update stats for each tournament
       for (const tournament of publishedTournaments) {
         await this.updatePlayerStatsFromTournament(tournament.id);
@@ -1525,7 +1548,7 @@ export class DatabaseStorage implements IStorage {
   // Player tournament match history
   async getPlayerTournamentMatches(playerId: string): Promise<any[]> {
     const tournamentMatches: any[] = [];
-    
+
     // Get all published tournament results where this player participated
     const results = await db
       .select({
@@ -1538,7 +1561,7 @@ export class DatabaseStorage implements IStorage {
 
     for (const result of results) {
       const { groupStageResults, knockoutResults, finalRankings } = result.tournamentResults;
-      
+
       // Check group stage matches
       if (groupStageResults) {
         try {
@@ -1548,13 +1571,13 @@ export class DatabaseStorage implements IStorage {
           } else {
             groupData = groupStageResults;
           }
-          
+
           if (Array.isArray(groupData)) {
             for (const group of groupData) {
               if (group.players && group.resultMatrix) {
                 // Try to find player by user ID or player ID
                 let playerIndex = group.players.findIndex((p: any) => p.id === playerId);
-                
+
                 // If not found by player ID, try to find by user ID
                 if (playerIndex === -1) {
                   // Get the player record to find user ID
@@ -1564,25 +1587,25 @@ export class DatabaseStorage implements IStorage {
                     playerIndex = group.players.findIndex((p: any) => p.id === userId);
                   }
                 }
-                
+
                 if (playerIndex !== -1) {
                   // This player was in this group
                   const playerData = group.players[playerIndex];
-                  
+
                   // Find matches for this player
                   for (let opponentIndex = 0; opponentIndex < group.players.length; opponentIndex++) {
                     if (playerIndex !== opponentIndex) {
                       const matchResult = group.resultMatrix[playerIndex]?.[opponentIndex];
                       if (matchResult && matchResult.trim() !== '') {
                         const opponent = group.players[opponentIndex];
-                        
+
                         // Determine winner based on score
                         let isWinner;
                         if (matchResult.includes('-')) {
                           const [score1, score2] = matchResult.split('-').map((s: string) => parseInt(s.trim()));
                           isWinner = score1 > score2;
                         }
-                        
+
                         tournamentMatches.push({
                           tournament: result.tournament,
                           stage: 'Группийн шат',
@@ -1605,7 +1628,7 @@ export class DatabaseStorage implements IStorage {
           console.error('Error parsing group stage results:', e);
         }
       }
-      
+
       // Check knockout stage matches
       if (knockoutResults) {
         try {
@@ -1615,12 +1638,12 @@ export class DatabaseStorage implements IStorage {
           } else {
             knockoutData = knockoutResults;
           }
-          
+
           if (Array.isArray(knockoutData)) {
             for (const match of knockoutData) {
               let isPlayerInMatch = false;
               let isPlayer1 = false;
-              
+
               // Check if player is in this match (by player ID or user ID)
               if (match.player1?.id === playerId || match.player2?.id === playerId) {
                 isPlayerInMatch = true;
@@ -1636,14 +1659,14 @@ export class DatabaseStorage implements IStorage {
                   }
                 }
               }
-              
+
               if (isPlayerInMatch && match.score) {
                 const opponent = isPlayer1 ? match.player2 : match.player1;
                 // Check winner by both player ID and user ID
                 const playerRecord = await db.select().from(players).where(eq(players.id, playerId)).limit(1);
                 const isWinner = match.winner?.id === playerId || 
                   (playerRecord.length > 0 && match.winner?.id === playerRecord[0].userId);
-                
+
                 tournamentMatches.push({
                   tournament: result.tournament,
                   stage: `Шилжилтийн шат - ${match.round || 'Тодорхойгүй'}`,
@@ -1660,7 +1683,7 @@ export class DatabaseStorage implements IStorage {
         }
       }
     }
-    
+
     // Sort by tournament date (newest first)
     return tournamentMatches.sort((a, b) => 
       new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()
@@ -1676,7 +1699,7 @@ export class DatabaseStorage implements IStorage {
       const [tournamentCount] = await db.select({ count: sql<number>`count(*)`.as('count') }).from(tournaments);
       const [leagueCount] = await db.select({ count: sql<number>`count(*)`.as('count') }).from(leagues);
       const [newsCount] = await db.select({ count: sql<number>`count(*)`.as('count') }).from(newsFeed);
-      
+
       // Get user role distribution
       const roleDistribution = await db
         .select({
@@ -1698,7 +1721,7 @@ export class DatabaseStorage implements IStorage {
       // Get monthly registrations for the last 6 months
       const sixMonthsAgo = new Date();
       sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-      
+
       const monthlyRegistrations = await db
         .select({
           month: sql<string>`TO_CHAR(created_at, 'YYYY-MM')`.as('month'),
@@ -1828,7 +1851,7 @@ export class DatabaseStorage implements IStorage {
           .from(tournamentTeamPlayers)
           .innerJoin(users, eq(tournamentTeamPlayers.playerId, users.id))
           .where(eq(tournamentTeamPlayers.tournamentTeamId, team.id));
-        
+
         return {
           ...team,
           players: playersData.map(p => ({
@@ -1859,7 +1882,7 @@ export class DatabaseStorage implements IStorage {
   async deleteTournamentTeam(teamId: string): Promise<boolean> {
     // Delete players first
     await db.delete(tournamentTeamPlayers).where(eq(tournamentTeamPlayers.tournamentTeamId, teamId));
-    
+
     // Delete team
     const result = await db.delete(tournamentTeams).where(eq(tournamentTeams.id, teamId));
     return (result.rowCount || 0) > 0;
@@ -1906,7 +1929,7 @@ export class DatabaseStorage implements IStorage {
   async deleteLeagueTeam(teamId: string): Promise<boolean> {
     // Delete players first
     await db.delete(tournamentTeamPlayers).where(eq(tournamentTeamPlayers.tournamentTeamId, teamId));
-    
+
     // Delete team
     const result = await db.delete(tournamentTeams).where(eq(tournamentTeams.id, teamId));
     return (result.rowCount || 0) > 0;
@@ -1958,7 +1981,7 @@ export class DatabaseStorage implements IStorage {
           .from(tournamentTeamPlayers)
           .innerJoin(users, eq(tournamentTeamPlayers.playerId, users.id))
           .where(eq(tournamentTeamPlayers.tournamentTeamId, team.id));
-        
+
         return {
           ...team,
           players: playersData.map(p => ({
@@ -1979,26 +2002,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getLeagueTeams(leagueId: string): Promise<Array<TournamentTeam & { players: TournamentTeamPlayer[] }>> {
-    const teams = await db
+    console.log(`[Storage] Getting teams for league ${leagueId}`);
+    const teamsData = await this.db
       .select()
       .from(tournamentTeams)
       .where(eq(tournamentTeams.tournamentId, leagueId));
 
-    const teamsWithPlayers = await Promise.all(
-      teams.map(async (team) => {
-        const players = await db
-          .select()
-          .from(tournamentTeamPlayers)
-          .where(eq(tournamentTeamPlayers.tournamentTeamId, team.id));
-        
-        return {
-          ...team,
-          players,
-        };
-      })
-    );
+    console.log(`[Storage] Found ${teamsData.length} teams for league ${leagueId}`);
 
-    return teamsWithPlayers;
+    const result = [];
+    for (const team of teamsData) {
+      const players = await this.db
+        .select({
+          id: tournamentTeamPlayers.playerId,
+          name: tournamentTeamPlayers.playerName,
+        })
+        .from(tournamentTeamPlayers)
+        .where(eq(tournamentTeamPlayers.tournamentTeamId, team.id));
+
+      console.log(`[Storage] Team ${team.name} has ${players.length} players`);
+      result.push({
+        ...team,
+        players,
+      });
+    }
+
+    return result;
   }
 
   async addTeamToLeague(leagueId: string, teamId: string): Promise<void> {
@@ -2085,7 +2114,7 @@ export class DatabaseStorage implements IStorage {
         .from(leagues)
         .where(eq(leagues.id, leagueId))
         .limit(1);
-      
+
       return league;
     } catch (error) {
       console.error('Error getting league by ID:', error);
@@ -2127,7 +2156,7 @@ export class DatabaseStorage implements IStorage {
       ));
 
     const matchIds = Array.from(new Set(playerMatches.map(pm => pm.leagueMatchId)));
-    
+
     if (matchIds.length === 0) {
       return [];
     }
@@ -2232,17 +2261,17 @@ export class DatabaseStorage implements IStorage {
                   const playerRowIndex = group.players.findIndex((player: any) => 
                     player.id === playerId || player.id === userId
                   );
-                  
+
                   if (playerRowIndex !== -1) {
                     const groupName = group.groupName || 'Групп';
                     const resultMatrix = group.resultMatrix || [];
-                    
+
                     // Extract matches from the result matrix
                     group.players.forEach((opponent: any, opponentIndex: number) => {
                       if (opponentIndex !== playerRowIndex && opponent.id) {
                         // Look for score in the result matrix
                         let playerScore, opponentScore, matchResult;
-                        
+
                         // Check the result matrix for this player's results
                         if (resultMatrix[playerRowIndex] && resultMatrix[playerRowIndex][opponentIndex] !== undefined) {
                           const scoreStr = resultMatrix[playerRowIndex][opponentIndex];
@@ -2258,7 +2287,7 @@ export class DatabaseStorage implements IStorage {
                             }
                           }
                         }
-                        
+
                         // Only add if we have a valid result
                         if (matchResult && playerScore !== undefined && opponentScore !== undefined) {
                           matches.push({
@@ -2296,12 +2325,12 @@ export class DatabaseStorage implements IStorage {
               knockoutData.forEach((match: any) => {
                 if (match.player1?.id === playerId || match.player1?.id === userId ||
                     match.player2?.id === playerId || match.player2?.id === userId) {
-                  
+
                   const isPlayer1 = match.player1?.id === playerId || match.player1?.id === userId;
                   const opponent = isPlayer1 ? match.player2 : match.player1;
                   const playerScore = isPlayer1 ? match.player1Score : match.player2Score;
                   const opponentScore = isPlayer1 ? match.player2Score : match.player1Score;
-                  
+
                   let matchResult = 'unknown';
                   if (playerScore !== undefined && opponentScore !== undefined) {
                     matchResult = playerScore > opponentScore ? 'win' : 'loss';
@@ -2402,10 +2431,10 @@ export class DatabaseStorage implements IStorage {
     // Get player's user ID
     const [playerRecord] = await db.select().from(players).where(eq(players.id, playerId)).limit(1);
     if (!playerRecord) return [];
-    
+
     const userId = playerRecord.userId;
     const medals: any[] = [];
-    
+
     // Get all published tournament results
     const results = await db
       .select({
@@ -2439,11 +2468,11 @@ export class DatabaseStorage implements IStorage {
             const playerRanking = rankingsData.find((ranking: any) => 
               ranking.playerId === playerId || ranking.playerId === userId
             );
-            
+
             if (playerRanking) {
               let medal = null;
               let medalType = null;
-              
+
               if (playerRanking.position === 1) {
                 medal = 'Алтан медаль';
                 medalType = 'gold';
@@ -2454,7 +2483,7 @@ export class DatabaseStorage implements IStorage {
                 medal = 'Хүрэл медаль';
                 medalType = 'bronze';
               }
-              
+
               if (medal) {
                 medals.push({
                   tournamentId: result.tournamentId,

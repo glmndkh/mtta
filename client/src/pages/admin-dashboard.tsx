@@ -87,9 +87,16 @@ export default function AdminDashboard() {
     enabled: selectedTab === 'tournaments'
   });
 
-  const { data: leagues, isLoading: leaguesLoading } = useQuery({
+  const { data: leagues, isLoading: leaguesLoading, error: leaguesError } = useQuery({
     queryKey: ['/api/admin/leagues'],
-    enabled: selectedTab === 'leagues'
+    enabled: selectedTab === 'leagues',
+    retry: false,
+    onSuccess: (data) => {
+      console.log('Leagues data loaded:', data);
+    },
+    onError: (error) => {
+      console.error('Error loading leagues:', error);
+    }
   });
 
   const { data: teams, isLoading: teamsLoading } = useQuery({
@@ -163,6 +170,9 @@ export default function AdminDashboard() {
         queryClient.invalidateQueries({ queryKey: ['/api/news'] });
         queryClient.invalidateQueries({ queryKey: ['/api/news/latest'] });
       }
+      if (selectedTab === 'leagues') {
+        queryClient.invalidateQueries({ queryKey: ['/api/leagues'] });
+      }
       setIsCreateDialogOpen(false);
       setFormData({});
     },
@@ -185,6 +195,9 @@ export default function AdminDashboard() {
         queryClient.invalidateQueries({ queryKey: ['/api/news'] });
         queryClient.invalidateQueries({ queryKey: ['/api/news/latest'] });
       }
+      if (selectedTab === 'leagues') {
+        queryClient.invalidateQueries({ queryKey: ['/api/leagues'] });
+      }
       setEditingItem(null);
       setFormData({});
     },
@@ -203,6 +216,9 @@ export default function AdminDashboard() {
       if (selectedTab === 'news') {
         queryClient.invalidateQueries({ queryKey: ['/api/news'] });
         queryClient.invalidateQueries({ queryKey: ['/api/news/latest'] });
+      }
+      if (selectedTab === 'leagues') {
+        queryClient.invalidateQueries({ queryKey: ['/api/leagues'] });
       }
     },
     onError: (error: any) => {
@@ -2803,6 +2819,12 @@ export default function AdminDashboard() {
 
                 {leaguesLoading ? (
                   <div>Ачааллаж байна...</div>
+                ) : leaguesError ? (
+                  <div className="text-red-600">
+                    Лигүүдийг ачаалахад алдаа гарлаа: {leaguesError.message}
+                  </div>
+                ) : !leagues ? (
+                  <div>Лиг байхгүй байна</div>
                 ) : (
                   <Table>
                     <TableHeader>
@@ -2816,7 +2838,8 @@ export default function AdminDashboard() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {leagues && Array.isArray(leagues) ? leagues.map((league: any) => (
+                      {console.log('Rendering leagues:', leagues)}
+                      {leagues && Array.isArray(leagues) && leagues.length > 0 ? leagues.map((league: any) => (
                         <TableRow key={league.id}>
                           <TableCell>{league.name}</TableCell>
                           <TableCell>{league.season}</TableCell>
@@ -2862,7 +2885,13 @@ export default function AdminDashboard() {
                             </div>
                           </TableCell>
                         </TableRow>
-                      )) : null}
+                      )) : (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8">
+                            Лиг байхгүй байна
+                          </TableCell>
+                        </TableRow>
+                      )}
                     </TableBody>
                   </Table>
                 )}
