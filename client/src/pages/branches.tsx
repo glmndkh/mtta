@@ -394,8 +394,8 @@ export default function Branches() {
 
   const currentBranches = activeTab === "domestic" ? domesticBranches : internationalBranches;
   const currentMapBranches = activeTab === "domestic" ? mapBranches : internationalBranches;
-  // Use environment variable for API key or fallback
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "AIzaSyCoaMbDgEr6zX7fqx6yxOg1GJmjIZiW9u0";
+  // Use environment variable for API key
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   if (isLoading) {
     return (
@@ -472,7 +472,27 @@ export default function Branches() {
                   </p>
                 </CardHeader>
                 <CardContent>
-                  {mapBranches.length > 0 ? (
+                  {!apiKey ? (
+                    <div className="flex items-center justify-center h-96 bg-gray-50 rounded-lg border">
+                      <div className="text-center">
+                        <Globe className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Google Maps API түлхүүр шаардлагатай</h3>
+                        <p className="text-gray-600 mb-4">Газрын зургийг харуулахын тулд Google Maps API түлхүүр тохируулна уу</p>
+                        <div className="bg-white p-4 rounded-lg border text-left">
+                          <h4 className="font-semibold mb-2">Салбар холбоод:</h4>
+                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {mapBranches.map((branch: any) => (
+                              <div key={branch.id} className="flex items-center gap-2 text-sm">
+                                <MapPin className="h-4 w-4 text-mtta-green" />
+                                <span className="font-medium">{branch.name}</span>
+                                <span className="text-gray-500">({branch.lat}, {branch.lng})</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : mapBranches.length > 0 ? (
                     <MongoliaMap 
                       branches={mapBranches}
                       height="600px"
@@ -504,11 +524,33 @@ export default function Branches() {
                   </p>
                 </CardHeader>
                 <CardContent>
-                  <MongoliaMap 
-                    branches={currentMapBranches}
-                    height="600px"
-                    apiKey={apiKey}
-                  />
+                  {!apiKey ? (
+                    <div className="flex items-center justify-center h-96 bg-gray-50 rounded-lg border">
+                      <div className="text-center">
+                        <Globe className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Google Maps API түлхүүр шаардлагатай</h3>
+                        <p className="text-gray-600 mb-4">Газрын зургийг харуулахын тулд Google Maps API түлхүүр тохируулна уу</p>
+                        <div className="bg-white p-4 rounded-lg border text-left">
+                          <h4 className="font-semibold mb-2">Олон улсын салбарууд:</h4>
+                          <div className="space-y-2">
+                            {currentMapBranches.map((branch: any) => (
+                              <div key={branch.id} className="flex items-center gap-2 text-sm">
+                                <Globe className="h-4 w-4 text-mtta-green" />
+                                <span className="font-medium">{branch.name}</span>
+                                <span className="text-gray-500">({branch.lat}, {branch.lng})</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <MongoliaMap 
+                      branches={currentMapBranches}
+                      height="600px"
+                      apiKey={apiKey}
+                    />
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

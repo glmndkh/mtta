@@ -9,6 +9,8 @@ interface BranchLocation {
   address?: string;
   phone?: string;
   description?: string;
+  leader?: string;
+  leadershipMembers?: string;
 }
 
 interface MongoliaMapProps {
@@ -22,7 +24,7 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
   branches,
   height = '600px',
   width = '100%',
-  apiKey
+  apiKey // apiKey prop is still here but will be overridden by env var if present
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
@@ -41,8 +43,11 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
   useEffect(() => {
     const loadMap = async () => {
       try {
+        // Use environment variable for API key
+        const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
         if (!apiKey) {
-          setError('Google Maps API key өгөгдөөгүй байна');
+          setError('Google Maps API key is not provided in the environment variables.');
           setIsLoading(false);
           return;
         }
@@ -53,7 +58,7 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
           libraries: ['maps', 'marker']
         });
 
-        const { Map } = await loader.importLibrary('maps');
+        const { Map } = await loader.importLibrary('maps') as google.maps.MapsLibrary;
         const { AdvancedMarkerElement } = await loader.importLibrary('marker') as google.maps.MarkerLibrary;
 
         if (!mapRef.current) return;
@@ -214,7 +219,7 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
                     font-weight: 600;
                   ">${branch.name}</h3>
                 </div>
-                
+
                 ${branch.leader ? `
                   <div style="margin: 8px 0; display: flex; align-items: start; gap: 6px;">
                     <span style="color: #6b7280; font-size: 14px;">👤</span>
@@ -224,7 +229,7 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
                     </div>
                   </div>
                 ` : ''}
-                
+
                 ${branch.address ? `
                   <div style="margin: 8px 0; display: flex; align-items: start; gap: 6px;">
                     <span style="color: #6b7280; font-size: 14px;">📍</span>
@@ -234,7 +239,7 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
                     </div>
                   </div>
                 ` : ''}
-                
+
                 ${branch.description ? `
                   <div style="margin: 8px 0; display: flex; align-items: start; gap: 6px;">
                     <span style="color: #6b7280; font-size: 14px;">ℹ️</span>
@@ -243,7 +248,7 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
                     </div>
                   </div>
                 ` : ''}
-                
+
                 ${branch.leadershipMembers ? `
                   <div style="margin: 8px 0; display: flex; align-items: start; gap: 6px;">
                     <span style="color: #6b7280; font-size: 14px;">👥</span>
@@ -253,7 +258,7 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
                     </div>
                   </div>
                 ` : ''}
-                
+
                 <div style="
                   margin-top: 12px;
                   padding-top: 8px;
@@ -293,14 +298,14 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
 
         setIsLoading(false);
       } catch (err) {
-        console.error('Google Maps ачаалахад алдаа гарлаа:', err);
-        setError('Газрын зураг ачаалахад алдаа гарлаа');
+        console.error('Google Maps failed to load:', err);
+        setError('Failed to load Google Maps. Please check API key and configuration.');
         setIsLoading(false);
       }
     };
 
     loadMap();
-  }, [apiKey, branches]);
+  }, [apiKey, branches]); // apiKey dependency is kept for cases where it might be passed directly, though env var is prioritized
 
   if (error) {
     return (
@@ -350,7 +355,7 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
               animation: 'spin 1s linear infinite',
               margin: '0 auto 10px'
             }}></div>
-            <p>Газрын зураг ачаалж байна...</p>
+            <p>Loading map...</p>
           </div>
         </div>
       )}
