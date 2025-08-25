@@ -1316,11 +1316,15 @@ export default function TournamentManagement() {
                                                     validExistingTeams.forEach((team: any) => {
                                                       if (team.players && Array.isArray(team.players)) {
                                                         team.players.forEach((teamPlayer: any) => {
-                                                          // Get player name from playerName field directly
-                                                          const displayName = teamPlayer.playerName || `Тоглогч ${teamPlayer.id}`;
+                                                          // Use playerName field directly from database or construct from user data
+                                                          const displayName = teamPlayer.playerName || 
+                                                            (teamPlayer.firstName && teamPlayer.lastName 
+                                                              ? `${teamPlayer.firstName} ${teamPlayer.lastName}`
+                                                              : teamPlayer.email || `Тоглогч ${teamPlayer.id}`);
                                                           
                                                           leagueTeamPlayers.push({
                                                             ...teamPlayer,
+                                                            playerName: displayName, // Ensure playerName is set
                                                             displayName,
                                                             teamName: team.name,
                                                             teamId: team.id
@@ -1341,7 +1345,11 @@ export default function TournamentManagement() {
                                                   }
 
                                                   return leagueTeamPlayers.map((teamPlayer: any, index: number) => {
-                                                    const playerName = teamPlayer.displayName;
+                                                    // Use playerName field directly from the database
+                                                    const playerName = teamPlayer.playerName || 
+                                                      (teamPlayer.firstName && teamPlayer.lastName 
+                                                        ? `${teamPlayer.firstName} ${teamPlayer.lastName}`
+                                                        : `Тоглогч ${teamPlayer.id}`);
 
                                                     return (
                                                       <CommandItem
