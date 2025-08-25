@@ -1550,12 +1550,12 @@ export default function AdminDashboard() {
                 <UserIcon className="w-4 h-4" />
                 Хэрэглэгч (заавал биш)
               </Label>
-              <Select value={formData.userId || ''} onValueChange={(value) => setFormData({ ...formData, userId: value })}>
+              <Select value={formData.userId || 'none'} onValueChange={(value) => setFormData({ ...formData, userId: value === 'none' ? '' : value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Хэрэглэгч сонгоно уу (заавал биш)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Хэрэглэгчгүй</SelectItem>
+                  <SelectItem value="none">Хэрэглэгчгүй</SelectItem>
                   {users && Array.isArray(users) ? users.map((user: any) => (
                     <SelectItem key={user.id} value={user.id}>
                       {user.firstName} {user.lastName}
