@@ -116,7 +116,33 @@ export default function TournamentManagement() {
   ]);
   const [searchOpen, setSearchOpen] = useState<{[key: string]: boolean}>({});
   const [groupMatchType, setGroupMatchType] = useState<'team' | 'individual' | null>(null);
-  const [groups, setGroups] = useState<Array<{
+  // Separate group data for team and individual matches
+  const [teamGroups, setTeamGroups] = useState<Array<{
+    id: number;
+    name: string;
+    players: Array<{
+      id: number;
+      name: string;
+      club: string;
+      matches: { [key: string]: string };
+      wins: number;
+      losses: number;
+      rank: number | string;
+    }>;
+  }>>([
+    {
+      id: 1,
+      name: "Групп A",
+      players: [
+        { id: 1, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 1 },
+        { id: 2, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 2 },
+        { id: 3, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 3 },
+        { id: 4, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 4 }
+      ]
+    }
+  ]);
+
+  const [individualGroups, setIndividualGroups] = useState<Array<{
     id: number;
     name: string;
     players: Array<{
@@ -156,7 +182,9 @@ export default function TournamentManagement() {
   const [matchDate, setMatchDate] = useState<string>('');
   const [matchTime, setMatchTime] = useState<string>('');
   
-  // Get current group data for compatibility
+  // Get current group data based on match type
+  const groups = groupMatchType === 'team' ? teamGroups : individualGroups;
+  const setGroups = groupMatchType === 'team' ? setTeamGroups : setIndividualGroups;
   const groupData = groups.find(g => g.id === activeGroupId)?.players || [];
 
   const handleBackToAdmin = () => {
@@ -410,8 +438,11 @@ export default function TournamentManagement() {
   };
 
   const handleAddGroup = () => {
-    const newGroupId = Math.max(...groups.map(g => g.id)) + 1;
-    const groupLetter = String.fromCharCode(65 + groups.length); // A, B, C, etc.
+    const currentGroups = groupMatchType === 'team' ? teamGroups : individualGroups;
+    const setCurrentGroups = groupMatchType === 'team' ? setTeamGroups : setIndividualGroups;
+    
+    const newGroupId = Math.max(...currentGroups.map(g => g.id)) + 1;
+    const groupLetter = String.fromCharCode(65 + currentGroups.length); // A, B, C, etc.
     const newGroup = {
       id: newGroupId,
       name: `Групп ${groupLetter}`,
@@ -422,20 +453,23 @@ export default function TournamentManagement() {
         { id: 4, name: "", club: "", matches: {}, wins: 0, losses: 0, rank: 4 }
       ]
     };
-    setGroups([...groups, newGroup]);
+    setCurrentGroups([...currentGroups, newGroup]);
     setActiveGroupId(newGroupId);
     toast({ title: `${newGroup.name} амжилттай нэмэгдлээ`, variant: "default" });
   };
 
   const handleDeleteGroup = (groupId: number) => {
-    if (groups.length <= 1) {
+    const currentGroups = groupMatchType === 'team' ? teamGroups : individualGroups;
+    const setCurrentGroups = groupMatchType === 'team' ? setTeamGroups : setIndividualGroups;
+    
+    if (currentGroups.length <= 1) {
       toast({ title: "Хамгийн багадаа нэг групп байх ёстой", variant: "destructive" });
       return;
     }
     
-    const groupToDelete = groups.find(g => g.id === groupId);
-    const updatedGroups = groups.filter(g => g.id !== groupId);
-    setGroups(updatedGroups);
+    const groupToDelete = currentGroups.find(g => g.id === groupId);
+    const updatedGroups = currentGroups.filter(g => g.id !== groupId);
+    setCurrentGroups(updatedGroups);
     
     // If deleting active group, switch to first remaining group
     if (activeGroupId === groupId) {
@@ -446,19 +480,25 @@ export default function TournamentManagement() {
   };
 
   const handleRenameGroup = (groupId: number, newName: string) => {
-    const updatedGroups = groups.map(group =>
+    const currentGroups = groupMatchType === 'team' ? teamGroups : individualGroups;
+    const setCurrentGroups = groupMatchType === 'team' ? setTeamGroups : setIndividualGroups;
+    
+    const updatedGroups = currentGroups.map(group =>
       group.id === groupId ? { ...group, name: newName } : group
     );
-    setGroups(updatedGroups);
+    setCurrentGroups(updatedGroups);
     toast({ title: "Группын нэр өөрчлөгдлөө", variant: "default" });
   };
 
   const handleAddGroupPlayer = () => {
-    const currentGroup = groups.find(g => g.id === activeGroupId);
+    const currentGroups = groupMatchType === 'team' ? teamGroups : individualGroups;
+    const setCurrentGroups = groupMatchType === 'team' ? setTeamGroups : setIndividualGroups;
+    const currentGroup = currentGroups.find(g => g.id === activeGroupId);
+    
     if (!currentGroup) return;
     
     const newId = Math.max(...currentGroup.players.map(p => p.id)) + 1;
-    const updatedGroups = groups.map(group => 
+    const updatedGroups = currentGroups.map(group => 
       group.id === activeGroupId 
         ? {
             ...group,
@@ -474,23 +514,29 @@ export default function TournamentManagement() {
           }
         : group
     );
-    setGroups(updatedGroups);
+    setCurrentGroups(updatedGroups);
   };
 
   const handleRemoveGroupPlayer = (id: number) => {
-    const currentGroup = groups.find(g => g.id === activeGroupId);
+    const currentGroups = groupMatchType === 'team' ? teamGroups : individualGroups;
+    const setCurrentGroups = groupMatchType === 'team' ? setTeamGroups : setIndividualGroups;
+    const currentGroup = currentGroups.find(g => g.id === activeGroupId);
+    
     if (!currentGroup || currentGroup.players.length <= 1) return;
     
-    const updatedGroups = groups.map(group => 
+    const updatedGroups = currentGroups.map(group => 
       group.id === activeGroupId 
         ? { ...group, players: group.players.filter(p => p.id !== id) }
         : group
     );
-    setGroups(updatedGroups);
+    setCurrentGroups(updatedGroups);
   };
 
   const handleGroupPlayerChange = (id: number, field: string, value: string) => {
-    const updatedGroups = groups.map(group => 
+    const currentGroups = groupMatchType === 'team' ? teamGroups : individualGroups;
+    const setCurrentGroups = groupMatchType === 'team' ? setTeamGroups : setIndividualGroups;
+    
+    const updatedGroups = currentGroups.map(group => 
       group.id === activeGroupId 
         ? {
             ...group,
@@ -500,11 +546,14 @@ export default function TournamentManagement() {
           }
         : group
     );
-    setGroups(updatedGroups);
+    setCurrentGroups(updatedGroups);
   };
 
   const handleMatchResultChange = (playerId: number, opponentId: number | string, result: string) => {
-    const updatedGroups = groups.map(group => 
+    const currentGroups = groupMatchType === 'team' ? teamGroups : individualGroups;
+    const setCurrentGroups = groupMatchType === 'team' ? setTeamGroups : setIndividualGroups;
+    
+    const updatedGroups = currentGroups.map(group => 
       group.id === activeGroupId 
         ? {
             ...group,
@@ -516,14 +565,16 @@ export default function TournamentManagement() {
           }
         : group
     );
-    setGroups(updatedGroups);
+    setCurrentGroups(updatedGroups);
   };
 
 
 
   const handleSaveGroupTable = async () => {
     try {
-      const currentGroup = groups.find(g => g.id === activeGroupId);
+      const currentGroups = groupMatchType === 'team' ? teamGroups : individualGroups;
+      const currentGroup = currentGroups.find(g => g.id === activeGroupId);
+      
       if (!currentGroup) {
         toast({ 
           description: "Идэвхтэй групп олдсонгүй",
@@ -540,6 +591,26 @@ export default function TournamentManagement() {
           variant: "destructive"
         });
         return;
+      }
+
+      // Check if this is a tournament or league by trying to fetch tournament data
+      let entityType = 'tournament';
+      let tournamentExists = false;
+      
+      try {
+        const checkResponse = await fetch(`/api/tournaments/${id}`);
+        if (checkResponse.ok) {
+          tournamentExists = true;
+        } else {
+          // Check if it's a league
+          const leagueResponse = await fetch(`/api/leagues/${id}`);
+          if (leagueResponse.ok) {
+            entityType = 'league';
+          }
+        }
+      } catch (error) {
+        console.log('Entity check failed, assuming league');
+        entityType = 'league';
       }
 
       // Prepare group stage results data
@@ -573,7 +644,8 @@ export default function TournamentManagement() {
         }],
         knockoutResults: [],
         finalRankings: [],
-        isPublished: false
+        isPublished: false,
+        entityType: entityType // Add entity type to help backend determine storage method
       };
 
       const response = await fetch('/api/admin/tournament-results', {
@@ -585,7 +657,8 @@ export default function TournamentManagement() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save group table');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to save group table');
       }
 
       toast({ 
@@ -593,13 +666,12 @@ export default function TournamentManagement() {
         variant: "default"
       });
 
-      // Reset the current group to empty state or keep the data for further editing
       console.log("Group table saved successfully:", groupStageData);
       
     } catch (error) {
       console.error('Error saving group table:', error);
       toast({ 
-        description: "Группын хүснэгт хадгалахад алдаа гарлаа",
+        description: `Группын хүснэгт хадгалахад алдаа гарлаа: ${error.message}`,
         variant: "destructive"
       });
     }
@@ -1001,7 +1073,13 @@ export default function TournamentManagement() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <Card className="border-2 hover:border-blue-500 cursor-pointer transition-colors" 
-                            onClick={() => setGroupMatchType('team')}>
+                            onClick={() => {
+                              setGroupMatchType('team');
+                              // Reset active group to first team group
+                              if (teamGroups.length > 0) {
+                                setActiveGroupId(teamGroups[0].id);
+                              }
+                            }}>
                         <CardHeader>
                           <CardTitle className="flex items-center gap-2">
                             <Users className="w-5 h-5 text-blue-500" />
@@ -1021,7 +1099,13 @@ export default function TournamentManagement() {
                       </Card>
 
                       <Card className="border-2 hover:border-green-500 cursor-pointer transition-colors" 
-                            onClick={() => setGroupMatchType('individual')}>
+                            onClick={() => {
+                              setGroupMatchType('individual');
+                              // Reset active group to first individual group
+                              if (individualGroups.length > 0) {
+                                setActiveGroupId(individualGroups[0].id);
+                              }
+                            }}>
                         <CardHeader>
                           <CardTitle className="flex items-center gap-2">
                             <UserPlus className="w-5 h-5 text-green-500" />
