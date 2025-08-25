@@ -1264,7 +1264,7 @@ export class DatabaseStorage implements IStorage {
   // League operations
   async getAllLeagues(): Promise<Array<League & { teams: Array<TournamentTeam & { players: TournamentTeamPlayer[] }> }>> {
     console.log('[Storage] Getting all leagues...');
-    const leagueData = await this.db.select().from(leagues);
+    const leagueData = await db.select().from(leagues);
     console.log(`[Storage] Found ${leagueData.length} leagues in database`);
 
     const result = [];
@@ -2003,7 +2003,7 @@ export class DatabaseStorage implements IStorage {
 
   async getLeagueTeams(leagueId: string): Promise<Array<TournamentTeam & { players: TournamentTeamPlayer[] }>> {
     console.log(`[Storage] Getting teams for league ${leagueId}`);
-    const teamsData = await this.db
+    const teamsData = await db
       .select()
       .from(tournamentTeams)
       .where(eq(tournamentTeams.tournamentId, leagueId));
@@ -2012,7 +2012,7 @@ export class DatabaseStorage implements IStorage {
 
     const result = [];
     for (const team of teamsData) {
-      const players = await this.db
+      const players = await db
         .select({
           id: tournamentTeamPlayers.playerId,
           name: tournamentTeamPlayers.playerName,
