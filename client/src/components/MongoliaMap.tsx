@@ -47,7 +47,9 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
         const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
         
         console.log('Google Maps API Key:', apiKey ? `${apiKey.substring(0, 10)}...` : 'Not found');
-        console.log('All env vars:', Object.keys(import.meta.env));
+        console.log('API Key length:', apiKey ? apiKey.length : 0);
+        console.log('All env vars:', Object.keys(import.meta.env).filter(key => key.startsWith('VITE_')));
+        console.log('Environment mode:', import.meta.env.MODE);
 
         if (!apiKey) {
           setError('Google Maps API key is not provided in the environment variables. Please set VITE_GOOGLE_MAPS_API_KEY in Secrets.');
@@ -55,14 +57,23 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
           return;
         }
 
+        console.log('Initializing Google Maps Loader...');
+        
         const loader = new Loader({
           apiKey: apiKey,
           version: 'weekly',
           libraries: ['maps', 'marker']
         });
+        
+        console.log('Loader created successfully');
 
+        console.log('Loading Google Maps libraries...');
+        
         const { Map } = await loader.importLibrary('maps') as google.maps.MapsLibrary;
+        console.log('Maps library loaded');
+        
         const { AdvancedMarkerElement } = await loader.importLibrary('marker') as google.maps.MarkerLibrary;
+        console.log('Marker library loaded');
 
         if (!mapRef.current) return;
 
