@@ -2158,8 +2158,7 @@ export default function AdminDashboard() {
                   <SelectTrigger>
                     <SelectValue placeholder="Мэдээ нийтлэл сонгоно уу" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {news && Array.isArray(news) ? news.filter((article: any) => article.published).map((article: any) => (
+                  <SelectContent>{news && Array.isArray(news) ? news.filter((article: any) => article.published).map((article: any) => (
                       <SelectItem key={article.id} value={article.id}>
                         {article.title}
                       </SelectItem>
@@ -2334,7 +2333,7 @@ export default function AdminDashboard() {
         return (
           <>
             <div>
-              <Label htmlFor="name">Тэмцээний нэр</Label>
+              <Label htmlFor="name">Тэмцээнний нэр</Label>
               <Input
                 id="name"
                 value={formData.name || ''}
@@ -2437,10 +2436,10 @@ export default function AdminDashboard() {
               <Label htmlFor="year">Он</Label>
               <Input
                 id="year"
-                type="number"
+                type="text"
+                placeholder="2024 эсвэл 2023-2024"
                 value={formData.year || ''}
-                onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
-                required
+                onChange={(e) => setFormData({...formData, year: e.target.value})}
               />
             </div>
             <div>

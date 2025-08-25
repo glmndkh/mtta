@@ -399,7 +399,7 @@ export const championTypeEnum = pgEnum("champion_type", ["өсвөрийн", "а
 export const pastChampions = pgTable("past_champions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name").notNull(),
-  year: integer("year").notNull(),
+  year: varchar("year").notNull(), // Changed to varchar to support multiple years like "2023-2024"
   gender: genderEnum("gender"),
   championType: championTypeEnum("champion_type"),
   imageUrl: varchar("image_url"),
@@ -570,6 +570,7 @@ export const insertChampionSchema = createInsertSchema(pastChampions).omit({
   id: true,
   createdAt: true,
 }).extend({
+  year: z.string().min(1, "Он заавал оруулна уу"), // Accept string for year
   gender: z.enum(["male", "female", "other"]).optional(),
   championType: z.enum(["өсвөрийн", "ахмадын", "улсын"]).optional(),
 });
