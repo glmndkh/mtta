@@ -1115,37 +1115,70 @@ export default function TournamentManagement() {
                                           <CommandInput placeholder="Тоглогчийн нэр эсвэл имэйлээр хайх..." />
                                           <CommandList>
                                             <CommandEmpty>Хэрэглэгч олдсонгүй. Хайлт хийхийн тулд нэр бичнэ үү.</CommandEmpty>
-                                            <CommandGroup heading="Бүртгэлтэй хэрэглэгчид">
-                                              {allUsers && Array.isArray(allUsers) && allUsers.length > 0 ? allUsers.map((user: any) => {
-                                                // Create full name from firstName + lastName
-                                                const fullName = user.firstName && user.lastName 
-                                                  ? `${user.firstName} ${user.lastName}` 
-                                                  : (user.firstName || user.lastName || user.email);
-                                                  
-                                                return (
+                                            <CommandGroup heading={groupMatchType === 'team' ? "Лигийн багууд" : "Бүртгэлтэй хэрэглэгчид"}>
+                                              {groupMatchType === 'team' ? (
+                                                // Show teams for team match type
+                                                validExistingTeams && validExistingTeams.length > 0 ? validExistingTeams.map((team: any) => (
                                                   <CommandItem
-                                                    key={user.id}
-                                                    value={`${fullName} ${user.email}`}
+                                                    key={team.id}
+                                                    value={team.name}
                                                     onSelect={() => {
-                                                      handleGroupPlayerChange(player.id, 'name', fullName);
+                                                      handleGroupPlayerChange(player.id, 'name', team.name);
                                                       setSearchOpen({ ...searchOpen, [`group-${player.id}`]: false });
                                                     }}
                                                     className="flex items-center justify-between"
                                                   >
                                                     <div>
                                                       <div className="font-medium">
-                                                        {fullName}
+                                                        {team.name}
                                                       </div>
                                                       <div className="text-xs text-gray-500">
-                                                        {user.email} • {user.role === 'admin' ? 'Админ' : user.role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч'}
+                                                        {team.players?.length || 0} тоглогчтой
                                                       </div>
                                                     </div>
                                                   </CommandItem>
-                                                );
-                                              }) : (
-                                                <CommandItem disabled>
-                                                  Хэрэглэгчид ачаалж байна...
-                                                </CommandItem>
+                                                )) : (
+                                                  <CommandItem disabled>
+                                                    <div className="text-center text-gray-500">
+                                                      Энэ лигт баг нэмэгдээгүй байна. Эхлээд "Баг нэмэх" хэсгээс баг нэмнэ үү.
+                                                    </div>
+                                                  </CommandItem>
+                                                )
+                                              ) : (
+                                                // Show users for individual match type
+                                                allUsers && Array.isArray(allUsers) && allUsers.length > 0 ? allUsers.map((user: any) => {
+                                                  // Create full name from firstName + lastName
+                                                  const fullName = user.firstName && user.lastName 
+                                                    ? `${user.firstName} ${user.lastName}` 
+                                                    : (user.firstName || user.lastName || user.email);
+                                                    
+                                                  return (
+                                                    <CommandItem
+                                                      key={user.id}
+                                                      value={`${fullName} ${user.email}`}
+                                                      onSelect={() => {
+                                                        handleGroupPlayerChange(player.id, 'name', fullName);
+                                                        setSearchOpen({ ...searchOpen, [`group-${player.id}`]: false });
+                                                      }}
+                                                      className="flex items-center justify-between"
+                                                    >
+                                                      <div>
+                                                        <div className="font-medium">
+                                                          {fullName}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500">
+                                                          {user.email} • {user.role === 'admin' ? 'Админ' : user.role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч'}
+                                                        </div>
+                                                      </div>
+                                                    </CommandItem>
+                                                  );
+                                                }) : (
+                                                  <CommandItem disabled>
+                                                    <div className="text-center text-gray-500">
+                                                      Хэрэглэгч олдсонгүй
+                                                    </div>
+                                                  </CommandItem>
+                                                )
                                               )}
                                             </CommandGroup>
                                           </CommandList>
