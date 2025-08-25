@@ -836,14 +836,14 @@ export default function News() {
                           loading="lazy"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            target.src = "data:image/svg+xml;utf8," + encodeURIComponent(`
-                              <svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'>
-                                <rect width='100%' height='100%' fill='#f3f4f6' />
-                                <g transform='translate(200,150)'>
-                                  <text x='0' y='0' fill='#9ca3af' font-family='sans-serif' font-size='14' text-anchor='middle'>Зураг олдсонгүй</text>
-                                </g>
-                              </svg>
-                            `);
+                            // Try alternative path formats before giving up
+                            const originalSrc = target.src;
+                            if (originalSrc.includes('/objects/') && !originalSrc.includes('/public-objects/')) {
+                              target.src = originalSrc.replace('/objects/', '/public-objects/objects/');
+                            } else if (!target.hasAttribute('data-fallback-tried')) {
+                              target.setAttribute('data-fallback-tried', 'true');
+                              target.src = getImageUrl('');
+                            }
                           }}
                         />
                       </div>

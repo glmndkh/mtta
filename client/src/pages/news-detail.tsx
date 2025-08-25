@@ -224,19 +224,35 @@ export default function NewsDetail() {
     doc.querySelectorAll("img").forEach((img) => {
       const src = img.getAttribute("src") || "";
       console.log("Processing content image src:", src);
-      const processedSrc = getImageUrl(src);
+      
+      // Fix common object storage path issues
+      let processedSrc = src;
+      
+      // Remove duplicate /objects/ in path
+      if (src.includes('/objects/objects/')) {
+        processedSrc = src.replace('/objects/objects/', '/objects/');
+      }
+      
+      // Remove duplicate /public-objects/ in path
+      if (src.includes('/public-objects/public-objects/')) {
+        processedSrc = src.replace('/public-objects/public-objects/', '/public-objects/');
+      }
+      
+      // Process through getImageUrl for consistent handling
+      processedSrc = getImageUrl(processedSrc);
       console.log("Processed to:", processedSrc);
       img.setAttribute("src", processedSrc);
       
       // Add error handling for broken images
-      img.setAttribute("onerror", `this.onerror=null; this.src='${getImageUrl('')}';`);
+      const fallbackSrc = getImageUrl('');
+      img.setAttribute("onerror", `this.onerror=null; this.src='${fallbackSrc}';`);
       
       // Add loading attribute for better performance
       img.setAttribute("loading", "lazy");
       
       // Ensure images are responsive
       if (!img.getAttribute("style")) {
-        img.setAttribute("style", "max-width: 100%; height: auto;");
+        img.setAttribute("style", "max-width: 100%; height: auto; border-radius: 8px;");
       }
     });
     return doc.body.innerHTML;

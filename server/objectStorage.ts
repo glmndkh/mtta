@@ -203,6 +203,12 @@ export class ObjectStorageService {
   
     // Extract the entity ID from the path
     const entityId = rawObjectPath.slice(objectEntityDir.length);
+    
+    // Ensure we don't create duplicate path segments
+    if (entityId.startsWith('objects/')) {
+      return `/${entityId}`;
+    }
+    
     return `/objects/${entityId}`;
   }
 
