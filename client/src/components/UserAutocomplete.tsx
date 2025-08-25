@@ -16,14 +16,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-
-interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email?: string;
-  clubAffiliation?: string;
-}
+import type { User } from "@shared/schema";
 
 interface UserAutocompleteProps {
   users: User[];

@@ -234,7 +234,7 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
         </div>
       )}
       <div ref={mapRef} style={{ height: '100%', width: '100%' }} />
-      <style jsx>{`
+      <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
