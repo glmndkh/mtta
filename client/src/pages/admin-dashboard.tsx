@@ -206,7 +206,7 @@ export default function AdminDashboard() {
     mutationFn: async ({ endpoint, data }: { endpoint: string; data: any }) => {
       return apiRequest(endpoint, {
         method: 'PUT',
-        body: JSON.JSON.stringify(data)
+        body: JSON.stringify(data)
       });
     },
     onSuccess: () => {
@@ -247,12 +247,15 @@ export default function AdminDashboard() {
     }
   });
 
-  const sanitizeFormData = (data: any) =>
-    Object.fromEntries(
-      Object.entries(data).filter(
-        ([, value]) => value !== "" && value !== undefined && value !== null,
-      ),
-    );
+  const sanitizeFormData = (data: any) => {
+    const cleaned: any = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== "" && value !== undefined && value !== null) {
+        cleaned[key] = value;
+      }
+    }
+    return cleaned;
+  };
 
   const handleCreateItem = () => {
     if (!validateForm()) {
