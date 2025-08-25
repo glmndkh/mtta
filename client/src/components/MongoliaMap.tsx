@@ -103,14 +103,8 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
           throw new Error(`Maps library failed to load: ${error}`);
         }
         
-        try {
-          const markerLib = await loader.importLibrary('marker') as google.maps.MarkerLibrary;
-          AdvancedMarkerElement = markerLib.AdvancedMarkerElement;
-          console.log('Marker library loaded successfully');
-        } catch (error) {
-          console.error('Failed to load Marker library:', error);
-          throw new Error(`Marker library failed to load: ${error}`);
-        }
+        // Note: Using regular markers instead of AdvancedMarkerElement for better compatibility
+        console.log('Skipping marker library - using regular markers');
 
         if (!mapRef.current) return;
 
@@ -130,6 +124,8 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
           fullscreenControl: true,
           zoomControl: true,
           scaleControl: true,
+          // Add map ID to enable advanced features (optional)
+          mapId: 'mtta-branch-map',
           styles: [
             {
               "featureType": "administrative.country",
@@ -160,79 +156,28 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
 
         setMap(mapInstance);
 
-        // Add markers for each branch
+        // Add markers for each branch using regular Marker
         branches.forEach((branch) => {
-          const markerElement = document.createElement('div');
-          markerElement.className = 'custom-marker';
-          markerElement.innerHTML = `
-            <div style="position: relative;">
-              <!-- Radiating effect rings -->
-              <div style="
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                width: 60px;
-                height: 60px;
-                border: 2px solid #dc2626;
-                border-radius: 50%;
-                animation: pulse-ring 2s infinite;
-                opacity: 0.4;
-              "></div>
-              <div style="
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                width: 40px;
-                height: 40px;
-                border: 2px solid #dc2626;
-                border-radius: 50%;
-                animation: pulse-ring 2s infinite 0.5s;
-                opacity: 0.6;
-              "></div>
-              <!-- Main marker -->
-              <div style="
-                position: relative;
-                background: ${branch.isInternational ? '#2563eb' : '#dc2626'};
-                color: white;
-                padding: 8px 12px;
-                border-radius: 20px;
-                font-weight: bold;
-                box-shadow: 0 4px 15px rgba(${branch.isInternational ? '37, 99, 235' : '220, 38, 38'}, 0.4);
-                cursor: pointer;
-                border: 2px solid white;
-                font-size: 12px;
-                white-space: nowrap;
-                z-index: 10;
-                transition: all 0.3s ease;
-              ">
-                ${branch.isInternational ? '🌍' : '📍'} ${branch.name}
-              </div>
-            </div>
-            <style>
-              @keyframes pulse-ring {
-                0% {
-                  transform: translate(-50%, -50%) scale(0.1);
-                  opacity: 1;
-                }
-                100% {
-                  transform: translate(-50%, -50%) scale(1);
-                  opacity: 0;
-                }
-              }
-              .custom-marker:hover div div:last-child {
-                transform: scale(1.1);
-                box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
-              }
-            </style>
-          `;
+          // Create a custom marker icon
+          const markerIcon = {
+            url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+              <svg width="40" height="40" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="20" cy="20" r="18" fill="${branch.isInternational ? '#2563eb' : '#dc2626'}" stroke="white" stroke-width="2"/>
+                <text x="20" y="26" font-family="Arial, sans-serif" font-size="12" fill="white" text-anchor="middle" font-weight="bold">
+                  ${branch.isInternational ? '🌍' : '📍'}
+                </text>
+              </svg>
+            `)}`,
+            scaledSize: new google.maps.Size(40, 40),
+            anchor: new google.maps.Point(20, 20)
+          };
 
-          const marker = new AdvancedMarkerElement({
-            map: mapInstance,
+          const marker = new google.maps.Marker({
             position: { lat: branch.lat, lng: branch.lng },
-            content: markerElement,
-            title: branch.name
+            map: mapInstance,
+            title: branch.name,
+            icon: markerIcon,
+            animation: google.maps.Animation.DROP
           });
 
           // Create info window
