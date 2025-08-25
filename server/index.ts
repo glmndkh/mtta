@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { ObjectStorageService } from "./objectStorage";
 
 const app = express();
 app.use(express.json());
@@ -35,6 +36,34 @@ app.use((req, res, next) => {
 
   next();
 });
+
+// Serve public objects with proper CORS headers
+app.get("/public-objects/*", async (req, res) => {
+  const filePath = req.params[0];
+  console.log(`[public-objects] Requested file path: ${filePath}`);
+
+  try {
+    const objectFile = await objectStorageService.searchPublicObject(filePath);
+    if (!objectFile) {
+      console.log(`[public-objects] File not found: ${filePath}`);
+      return res.status(404).json({ error: "Object not found" });
+    }
+
+    console.log(`[public-objects] Found file: ${filePath}`);
+
+    // Set CORS headers for images
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", "GET");
+    res.header("Access-Control-Allow-Headers", "Content-Type");
+
+    await objectStorageService.downloadObject(objectFile, res);
+    console.log(`[public-objects] Successfully served: ${filePath}`);
+  } catch (error) {
+    console.error(`[public-objects] Error serving file ${filePath}:`, error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 
 (async () => {
   const server = await registerRoutes(app);
