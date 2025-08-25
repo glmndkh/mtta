@@ -49,6 +49,9 @@ export default function AdminDashboard() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const [showDialog, setShowDialog] = useState(false); // State to control dialog visibility
+  const [editingId, setEditingId] = useState<string | null>(null); // State to track the item being edited
+  const [isDialogOpen, setIsDialogOpen] = useState(false); // State to control dialog visibility
+
 
   // Form schema and initialization for judges
   const judgeSchema = z.object({
@@ -345,7 +348,7 @@ export default function AdminDashboard() {
         role: item.role || "player",
       });
     } else if (selectedTab === "clubs") {
-      form.reset({
+      setFormData({
         name: item.name || "",
         description: item.description || "",
         address: item.address || "",
@@ -361,6 +364,7 @@ export default function AdminDashboard() {
         trainingInfo: item.trainingInfo || "",
         ownerId: item.ownerId || "",
         ownerName: item.ownerName || "",
+        extraData: item.extraData || [],
       });
     } else if (selectedTab === "judges") {
       setFormData({
@@ -368,6 +372,17 @@ export default function AdminDashboard() {
         lastName: item.lastName || "",
         userId: item.userId || "",
         judgeType: item.judgeType || "domestic",
+        imageUrl: item.imageUrl || "",
+      });
+    } else if (selectedTab === "branches") {
+      setFormData({
+        name: item.name || "",
+        leader: item.leader || "",
+        leadershipMembers: item.leadershipMembers || "",
+        address: item.address || "",
+        location: item.location || "",
+        coordinates: item.coordinates || "", // Preload coordinates
+        activities: item.activities || "",
         imageUrl: item.imageUrl || "",
       });
     }
@@ -442,6 +457,17 @@ export default function AdminDashboard() {
         coachName: '',
         sponsorLogo: '',
         playerIds: [],
+      };
+    } else if (selectedTab === 'branches') {
+      defaultData = {
+        name: '',
+        leader: '',
+        leadershipMembers: '',
+        address: '',
+        location: '',
+        coordinates: '', // Default to empty for new branches
+        activities: '',
+        imageUrl: '',
       };
     }
 
@@ -641,7 +667,8 @@ export default function AdminDashboard() {
             !searchText ||
             (branch.name || "").toLowerCase().includes(searchText) ||
             (branch.leader || "").toLowerCase().includes(searchText) ||
-            (branch.location || "").toLowerCase().includes(searchText)
+            (branch.location || "").toLowerCase().includes(searchText) ||
+            (branch.coordinates || "").toLowerCase().includes(searchText) // Filter by coordinates
           );
         })
       : [];
@@ -670,8 +697,9 @@ export default function AdminDashboard() {
             <TableHeader>
               <TableRow>
                 <TableHead>Нэр</TableHead>
-                <TableHead>Дарга</TableHead>
+                <TableHead>Тэргүүлэгч</TableHead>
                 <TableHead>Байршил</TableHead>
+                <TableHead>Координат</TableHead>
                 <TableHead>Үйлдэл</TableHead>
               </TableRow>
             </TableHeader>
@@ -681,6 +709,7 @@ export default function AdminDashboard() {
                   <TableCell>{branch.name}</TableCell>
                   <TableCell>{branch.leader}</TableCell>
                   <TableCell>{branch.location}</TableCell>
+                  <TableCell className="max-w-[200px] truncate">{branch.coordinates || 'Тодорхойгүй'}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       <Button size="sm" variant="outline" onClick={() => openEditDialog(branch)}>
@@ -1355,122 +1384,40 @@ export default function AdminDashboard() {
           <>
             <div>
               <Label htmlFor="name">Нэр</Label>
-              <Input
-                id="name"
-                value={formData.name || ''}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
+              <Input id="name" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
             </div>
             <div>
-              <Label htmlFor="leader">Дарга</Label>
-              <Input
-                id="leader"
-                value={formData.leader || ''}
-                onChange={(e) => setFormData({ ...formData, leader: e.target.value })}
-              />
+              <Label htmlFor="leader">Тэргүүлэгч</Label>
+              <Input id="leader" value={formData.leader || ''} onChange={(e) => setFormData({ ...formData, leader: e.target.value })} />
             </div>
             <div>
-              <Label htmlFor="leadershipMembers">Удирдлагын гишүүд</Label>
-              <Textarea
-                id="leadershipMembers"
-                value={formData.leadershipMembers || ''}
-                onChange={(e) => setFormData({ ...formData, leadershipMembers: e.target.value })}
-              />
+              <Label htmlFor="leadershipMembers">Тэргүүлэгч гишүүд</Label>
+              <Textarea id="leadershipMembers" value={formData.leadershipMembers || ''} onChange={(e) => setFormData({ ...formData, leadershipMembers: e.target.value })} />
             </div>
             <div>
               <Label htmlFor="address">Хаяг</Label>
-              <Textarea
-                id="address"
-                value={formData.address || ''}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              />
+              <Textarea id="address" value={formData.address || ''} onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
             </div>
             <div>
               <Label htmlFor="location">Байршил</Label>
-              <Input
-                id="location"
-                value={formData.location || ''}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              <Input id="location" value={formData.location || ''} onChange={(e) => setFormData({ ...formData, location: e.target.value })} />
+            </div>
+            <div>
+              <Label htmlFor="coordinates">Координат (Өргөрөг, Уртраг)</Label>
+              <Input 
+                id="coordinates" 
+                placeholder="47.704783510083026, 106.95838362275074"
+                value={formData.coordinates || ''} 
+                onChange={(e) => setFormData({ ...formData, coordinates: e.target.value })} 
               />
             </div>
             <div>
               <Label htmlFor="activities">Үйл ажиллагаа</Label>
-              <Textarea
-                id="activities"
-                value={formData.activities || ''}
-                onChange={(e) => setFormData({ ...formData, activities: e.target.value })}
-              />
+              <Textarea id="activities" value={formData.activities || ''} onChange={(e) => setFormData({ ...formData, activities: e.target.value })} />
             </div>
             <div>
-              <Label className="flex items-center gap-2">
-                <Upload className="w-4 h-4" />
-                Салбарын зураг
-              </Label>
-              <div className="space-y-2">
-                <ObjectUploader
-                  maxNumberOfFiles={1}
-                  maxFileSize={5 * 1024 * 1024}
-                  onGetUploadParameters={async () => {
-                    try {
-                      const response = await apiRequest("/api/objects/upload", {
-                        method: "POST",
-                      });
-                      const data = (await response.json()) as { uploadURL: string };
-                      if (!data || !data.uploadURL) {
-                        throw new Error("No upload URL received");
-                      }
-                      return {
-                        method: "PUT" as const,
-                        url: data.uploadURL,
-                      };
-                    } catch (error) {
-                      console.error("Error getting upload parameters:", error);
-                      toast({
-                        title: "Алдаа",
-                        description: "Файл хуулах URL авахад алдаа гарлаа",
-                        variant: "destructive",
-                      });
-                      throw error;
-                    }
-                  }}
-                  onComplete={async (result) => {
-                    if (result.successful && result.successful.length > 0) {
-                      const uploadURL = result.successful[0].uploadURL;
-                      try {
-                        const aclResponse = await apiRequest("/api/objects/acl", {
-                          method: "PUT",
-                          body: JSON.stringify({ imageURL: uploadURL }),
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
-                        });
-                        const aclData = (await aclResponse.json()) as { objectPath: string };
-                        setFormData({
-                          ...formData,
-                          imageUrl: aclData.objectPath,
-                        });
-                        toast({ title: "Зураг амжилттай хуулагдлаа" });
-                      } catch (error) {
-                        console.error("Error setting ACL:", error);
-                        toast({
-                          title: "Алдаа",
-                          description: "Зураг хуулагдсан боловч зөвшөөрөл тохируулахад алдаа гарлаа",
-                          variant: "destructive",
-                        });
-                      }
-                    }
-                  }}
-                  buttonClassName="w-full"
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Зураг сонгох
-                </ObjectUploader>
-                {formData.imageUrl && (
-                  <div className="text-sm text-green-600">
-                    ✓ Зураг хуулагдлаа: {formData.imageUrl}
-                  </div>
-                )}
-              </div>
+              <Label htmlFor="imageUrl">Зургийн URL</Label>
+              <Input id="imageUrl" value={formData.imageUrl || ''} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} />
             </div>
           </>
         );
@@ -2557,7 +2504,7 @@ export default function AdminDashboard() {
         // Add validation for location fields
         return formData.name && formData.country && formData.province && formData.city;
       case 'branches':
-        return formData.name;
+        return formData.name && formData.coordinates; // Add validation for coordinates
       case 'federation-members':
         return formData.name;
       case 'judges':
@@ -2777,7 +2724,7 @@ export default function AdminDashboard() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Админ удирдлагын самбар</h1>
+            <h1 className="text-3xl font-bold mb-2">Админ удирдлага</h1>
             <p className="text-text-secondary">Системийн бүх мэдээллийг энд удирдана уу</p>
           </div>
           <Link href="/">

@@ -356,6 +356,7 @@ export const branches = pgTable("branches", {
   location: varchar("location"),
   activities: text("activities"),
   imageUrl: varchar("image_url"),
+  coordinates: varchar("coordinates"), // Format: "latitude, longitude"
   createdAt: timestamp("created_at").defaultNow(),
 });
 
