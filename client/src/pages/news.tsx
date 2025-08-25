@@ -535,9 +535,21 @@ export default function News() {
                             <div className="mt-2">
                               <div className="relative w-32 h-24 overflow-hidden rounded-lg border">
                                 <img
-                                  src={newsImageUrl.startsWith('/') ? `/public-objects${newsImageUrl}` : newsImageUrl}
+                                  src={getImageUrl(newsImageUrl)}
                                   alt="Preview"
                                   className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    console.error('Preview image failed to load:', newsImageUrl);
+                                    const target = e.currentTarget;
+                                    target.style.display = 'none';
+                                    target.parentElement!.innerHTML = `
+                                      <div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                                          <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                                        </svg>
+                                      </div>
+                                    `;
+                                  }}
                                 />
                               </div>
                               <p className="text-xs text-gray-500 mt-1">Зураг амжилттай хуулагдлаа</p>
@@ -703,9 +715,21 @@ export default function News() {
                             <div className="mt-2">
                               <div className="relative w-32 h-24 overflow-hidden rounded-lg border">
                                 <img
-                                  src={newsImageUrl.startsWith('/') ? `/public-objects${newsImageUrl}` : newsImageUrl}
+                                  src={getImageUrl(newsImageUrl)}
                                   alt="Preview"
                                   className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    console.error('Edit preview image failed to load:', newsImageUrl);
+                                    const target = e.currentTarget;
+                                    target.style.display = 'none';
+                                    target.parentElement!.innerHTML = `
+                                      <div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                                          <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                                        </svg>
+                                      </div>
+                                    `;
+                                  }}
                                 />
                               </div>
                               <p className="text-xs text-gray-500 mt-1">Зураг амжилттай хуулагдлаа</p>
@@ -769,9 +793,21 @@ export default function News() {
                   <div className="mt-2">
                     <div className="relative w-full h-40 overflow-hidden rounded-lg border">
                       <img
-                        src={newsImageUrl.startsWith('/') ? `/public-objects${newsImageUrl}` : newsImageUrl}
+                        src={getImageUrl(newsImageUrl)}
                         alt="Preview"
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          console.error('Preview image failed to load:', newsImageUrl);
+                          const target = e.currentTarget;
+                          target.style.display = 'none';
+                          target.parentElement!.innerHTML = `
+                            <div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                              <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                              </svg>
+                            </div>
+                          `;
+                        }}
                       />
                     </div>
                     <p className="text-xs text-gray-500 mt-1">Зураг амжилттай хуулагдлаа</p>
@@ -837,7 +873,7 @@ export default function News() {
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             console.error('Image failed to load:', article.imageUrl, 'processed as:', getImageUrl(article.imageUrl));
-                            
+
                             if (!target.hasAttribute('data-fallback-tried')) {
                               target.setAttribute('data-fallback-tried', 'true');
                               // Try direct public-objects path

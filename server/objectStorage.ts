@@ -184,40 +184,56 @@ export class ObjectStorageService {
   normalizeObjectEntityPath(
     rawPath: string,
   ): string {
+    console.log('normalizeObjectEntityPath input:', rawPath);
+    
     if (!rawPath.startsWith("https://storage.googleapis.com/")) {
+      console.log('Not a Google Storage URL, returning as-is:', rawPath);
       return rawPath;
     }
   
-    // Extract the path from the URL by removing query parameters and domain
-    const url = new URL(rawPath);
-    const rawObjectPath = url.pathname;
+    try {
+      // Extract the path from the URL by removing query parameters and domain
+      const url = new URL(rawPath);
+      const rawObjectPath = url.pathname;
+      console.log('Extracted path from URL:', rawObjectPath);
   
-    let objectEntityDir = this.getPrivateObjectDir();
-    if (!objectEntityDir.endsWith("/")) {
-      objectEntityDir = `${objectEntityDir}/`;
-    }
+      let objectEntityDir = this.getPrivateObjectDir();
+      if (!objectEntityDir.endsWith("/")) {
+        objectEntityDir = `${objectEntityDir}/`;
+      }
+      console.log('Object entity dir:', objectEntityDir);
   
-    if (!rawObjectPath.startsWith(objectEntityDir)) {
-      return rawObjectPath;
-    }
+      if (!rawObjectPath.startsWith(objectEntityDir)) {
+        console.log('Path does not start with entity dir, returning raw path');
+        return rawObjectPath;
+      }
   
-    // Extract the entity ID from the path
-    const entityId = rawObjectPath.slice(objectEntityDir.length);
-    
-    // Clean up the entity ID to avoid duplicates
-    let cleanEntityId = entityId;
-    
-    // Remove duplicate uploads/ segments
-    if (cleanEntityId.includes('uploads/uploads/')) {
-      cleanEntityId = cleanEntityId.replace(/uploads\/uploads\//, 'uploads/');
+      // Extract the entity ID from the path
+      const entityId = rawObjectPath.slice(objectEntityDir.length);
+      console.log('Extracted entity ID:', entityId);
+      
+      // Clean up the entity ID to avoid duplicates
+      let cleanEntityId = entityId;
+      
+      // Remove duplicate uploads/ segments
+      if (cleanEntityId.includes('uploads/uploads/')) {
+        cleanEntityId = cleanEntityId.replace(/uploads\/uploads\//, 'uploads/');
+      }
+      
+      // Ensure we don't create duplicate path segments
+      if (cleanEntityId.startsWith('objects/')) {
+        const result = `/${cleanEntityId}`;
+        console.log('Entity ID already has objects/ prefix, result:', result);
+        return result;
+      }
+      
+      const result = `/objects/${cleanEntityId}`;
+      console.log('Normalized path result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error normalizing object path:', error);
+      return rawPath;
     }
-    
-    // Ensure we don't create duplicate path segments
-    if (cleanEntityId.startsWith('objects/')) {
-      return `/${cleanEntityId}`;
-    }
-    
-    return `/objects/${cleanEntityId}`;
   }
 
   // Tries to set the ACL policy for the object entity and return the normalized path.

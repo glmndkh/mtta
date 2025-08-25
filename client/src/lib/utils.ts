@@ -38,7 +38,7 @@ export function getImageUrl(imageUrl: string | undefined | null): string {
   }
 
   // Clean the URL - remove any extra slashes and whitespace
-  const cleanUrl = imageUrl.trim().replace(/\/+/g, '/');
+  let cleanUrl = imageUrl.trim().replace(/\/+/g, '/');
   console.log('getImageUrl: Cleaned URL:', cleanUrl);
 
   // If it's an object storage path, map it to the public-objects route
@@ -53,8 +53,10 @@ export function getImageUrl(imageUrl: string | undefined | null): string {
     return cleanUrl;
   }
 
+  // Handle uploaded object paths that start with /objects/
   if (cleanUrl.startsWith('/objects/')) {
-    const path = cleanUrl.replace(/^\/objects\//, '');
+    // Remove /objects/ prefix and add /public-objects/
+    const path = cleanUrl.substring(9); // Remove '/objects/'
     const result = `/public-objects/${path}`;
     console.log('getImageUrl: Converted /objects/ to /public-objects/:', result);
     return result;
@@ -62,35 +64,53 @@ export function getImageUrl(imageUrl: string | undefined | null): string {
 
   // For paths starting with 'objects/' (without leading slash)
   if (cleanUrl.startsWith('objects/')) {
-    const path = cleanUrl.replace(/^objects\//, '');
+    // Remove objects/ prefix and add /public-objects/
+    const path = cleanUrl.substring(8); // Remove 'objects/'
     const result = `/public-objects/${path}`;
     console.log('getImageUrl: Converted objects/ to /public-objects/:', result);
     return result;
   }
 
-  // Handle Google Storage URLs
-  if (cleanUrl.includes('storage.googleapis.com')) {
+  // Handle Google Storage URLs or signed URLs from object storage
+  if (cleanUrl.includes('storage.googleapis.com') || cleanUrl.includes('https://')) {
     try {
-      const url = new URL(cleanUrl);
-      const pathParts = url.pathname.split('/');
-      // Extract object path from Google Storage URL
-      if (pathParts.length > 2) {
-        const objectPath = pathParts.slice(2).join('/');
-        const result = `/public-objects/${objectPath}`;
-        console.log('getImageUrl: Converted Google Storage URL to:', result);
-        return result;
+      // If it's a Google Storage signed URL, we need to extract the object path
+      if (cleanUrl.includes('storage.googleapis.com')) {
+        const url = new URL(cleanUrl);
+        const pathParts = url.pathname.split('/');
+        // Extract object path from Google Storage URL
+        if (pathParts.length > 2) {
+          const bucketName = pathParts[1];
+          const objectPath = pathParts.slice(2).join('/');
+          
+          // Check if this is an uploads path that should be served via public-objects
+          if (objectPath.includes('uploads/')) {
+            const result = `/public-objects/${objectPath}`;
+            console.log('getImageUrl: Converted Google Storage upload URL to:', result);
+            return result;
+          }
+        }
       }
+      
+      // For other URLs, return as-is
+      console.log('getImageUrl: External URL, returning as-is');
+      return cleanUrl;
     } catch (e) {
-      console.error('getImageUrl: Failed to parse Google Storage URL:', e);
+      console.error('getImageUrl: Failed to parse URL:', e);
+      // Fall through to default handling
     }
   }
 
   // For other absolute paths, ensure they're served via public-objects
   if (cleanUrl.startsWith('/')) {
-    const path = cleanUrl.substring(1); // Remove leading slash
-    const result = `/public-objects/${path}`;
-    console.log('getImageUrl: Converted absolute path to /public-objects/:', result);
-    return result;
+    // Remove leading slash and check if it needs public-objects prefix
+    const path = cleanUrl.substring(1);
+    if (!path.startsWith('public-objects/') && !path.startsWith('api/')) {
+      const result = `/public-objects/${path}`;
+      console.log('getImageUrl: Converted absolute path to /public-objects/:', result);
+      return result;
+    }
+    return cleanUrl;
   }
 
   // For relative paths, add to public-objects
