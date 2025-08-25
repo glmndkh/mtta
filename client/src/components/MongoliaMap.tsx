@@ -45,6 +45,8 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
 
   // Check if we have international branches to adjust map view
   const hasInternationalBranches = branches.some(branch => branch.isInternational);
+  const domesticOnlyBranches = branches.filter(branch => !branch.isInternational);
+  const shouldFocusOnMongolia = domesticOnlyBranches.length > 0 && !hasInternationalBranches;
 
   useEffect(() => {
     const loadMap = async () => {
@@ -111,13 +113,16 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
         // Create map centered on Mongolia (or worldwide if international branches exist)
         const mapInstance = new Map(mapRef.current, {
           center: mongoliaCenter,
-          zoom: hasInternationalBranches ? 3 : 6,
-          minZoom: hasInternationalBranches ? 2 : 5,
+          zoom: shouldFocusOnMongolia ? 6 : (hasInternationalBranches ? 3 : 6),
+          minZoom: shouldFocusOnMongolia ? 5 : (hasInternationalBranches ? 2 : 5),
           maxZoom: 15,
-          restriction: hasInternationalBranches ? undefined : {
+          restriction: shouldFocusOnMongolia ? {
             latLngBounds: mongoliaBounds,
             strictBounds: false
-          },
+          } : (hasInternationalBranches ? undefined : {
+            latLngBounds: mongoliaBounds,
+            strictBounds: false
+          }),
           mapTypeId: google.maps.MapTypeId.ROADMAP,
           streetViewControl: false,
           mapTypeControl: true,
@@ -289,19 +294,40 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
 
         // Fit map to show all markers if there are branches
         if (branches.length > 0) {
-          const bounds = new google.maps.LatLngBounds();
-          branches.forEach(branch => {
-            bounds.extend({ lat: branch.lat, lng: branch.lng });
-          });
-          mapInstance.fitBounds(bounds);
+          if (shouldFocusOnMongolia) {
+            // For domestic branches, fit bounds but ensure we stay focused on Mongolia
+            const bounds = new google.maps.LatLngBounds();
+            domesticOnlyBranches.forEach(branch => {
+              bounds.extend({ lat: branch.lat, lng: branch.lng });
+            });
+            mapInstance.fitBounds(bounds);
 
-          // Ensure minimum zoom level
-          const listener = google.maps.event.addListener(mapInstance, 'idle', () => {
-            if (mapInstance.getZoom() && mapInstance.getZoom()! > 10) {
-              mapInstance.setZoom(8);
-            }
-            google.maps.event.removeListener(listener);
-          });
+            // Ensure appropriate zoom level for Mongolia
+            const listener = google.maps.event.addListener(mapInstance, 'idle', () => {
+              const currentZoom = mapInstance.getZoom();
+              if (currentZoom && currentZoom > 10) {
+                mapInstance.setZoom(8);
+              } else if (currentZoom && currentZoom < 5) {
+                mapInstance.setZoom(6);
+              }
+              google.maps.event.removeListener(listener);
+            });
+          } else {
+            // For international branches, fit all markers
+            const bounds = new google.maps.LatLngBounds();
+            branches.forEach(branch => {
+              bounds.extend({ lat: branch.lat, lng: branch.lng });
+            });
+            mapInstance.fitBounds(bounds);
+
+            // Ensure minimum zoom level
+            const listener = google.maps.event.addListener(mapInstance, 'idle', () => {
+              if (mapInstance.getZoom() && mapInstance.getZoom()! > 10) {
+                mapInstance.setZoom(8);
+              }
+              google.maps.event.removeListener(listener);
+            });
+          }
         }
 
         setIsLoading(false);

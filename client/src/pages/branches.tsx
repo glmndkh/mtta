@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronRight, MapPin, Users, Mail, Globe, Zap, Map } from "lucide-react";
+import { ChevronRight, MapPin, Users, Mail, Globe, Zap, Map, Phone } from "lucide-react";
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import MongoliaMap from "@/components/MongoliaMap";
@@ -321,7 +321,7 @@ export default function Branches() {
   const [activeTab, setActiveTab] = useState("domestic");
 
   // Fetch branches from database
-  const { data: domesticBranches = [], isLoading, error } = useQuery({
+  const { data: allBranches = [], isLoading, error } = useQuery({
     queryKey: ['branches'],
     queryFn: fetchBranches
   });
@@ -359,19 +359,20 @@ export default function Branches() {
     };
   };
 
-  const mapBranches = domesticBranches
+  // Filter domestic branches
+  const domesticBranchesOnly = allBranches
+    .filter(branch => !branch.isInternational)
     .map(convertBranchForMap)
     .filter(Boolean);
 
-  // Filter international branches based on coordinates from domesticBranches
-  const internationalBranches = domesticBranches
-    .filter(branch => branch.isInternational && branch.coordinates)
+  // Filter international branches
+  const internationalBranchesOnly = allBranches
+    .filter(branch => branch.isInternational)
     .map(convertBranchForMap)
     .filter(Boolean);
 
-
-  const currentBranches = activeTab === "domestic" ? domesticBranches : internationalBranches;
-  const currentMapBranches = activeTab === "domestic" ? mapBranches : internationalBranches;
+  const domesticMapBranches = domesticBranchesOnly;
+  const allMapBranches = domesticBranchesOnly.concat(internationalBranchesOnly);
 
   // Use environment variable for API key
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -418,7 +419,7 @@ export default function Branches() {
                 </p>
               </div>
               <Badge className="mtta-green text-white text-lg px-4 py-2">
-                {domesticBranches.length} салбар
+                {allBranches.length} салбар
               </Badge>
             </div>
           </div>
@@ -430,11 +431,11 @@ export default function Branches() {
             <TabsList className="grid w-full grid-cols-2 mb-8">
               <TabsTrigger value="domestic" className="flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
-                Монгол дахь салбарууд ({domesticBranches.filter(b => !b.isInternational).length})
+                Монгол дахь салбарууд ({domesticBranchesOnly.length})
               </TabsTrigger>
               <TabsTrigger value="international" className="flex items-center gap-2">
                 <Globe className="h-4 w-4" />
-                Гадаад дахь салбарууд ({internationalBranches.length})
+                Гадаад дахь салбарууд ({internationalBranchesOnly.length})
               </TabsTrigger>
             </TabsList>
 
@@ -460,7 +461,7 @@ export default function Branches() {
                         <div className="bg-white p-4 rounded-lg border text-left">
                           <h4 className="font-semibold mb-2">Салбар холбоод:</h4>
                           <div className="space-y-2 max-h-40 overflow-y-auto">
-                            {mapBranches.map((branch: any) => (
+                            {domesticMapBranches.map((branch: any) => (
                               <div key={branch.id} className="flex items-center gap-2 text-sm">
                                 <MapPin className="h-4 w-4 text-mtta-green" />
                                 <span className="font-medium">{branch.name}</span>
@@ -471,9 +472,9 @@ export default function Branches() {
                         </div>
                       </div>
                     </div>
-                  ) : mapBranches.length > 0 ? (
+                  ) : domesticMapBranches.length > 0 ? (
                     <MongoliaMap
-                      branches={mapBranches}
+                      branches={domesticMapBranches}
                       height="600px"
                       apiKey={apiKey}
                     />
@@ -510,9 +511,9 @@ export default function Branches() {
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">Google Maps API түлхүүр шаардлагатай</h3>
                         <p className="text-gray-600 mb-4">Газрын зургийг харуулахын тулд Google Maps API түлхүүр тохируулна уу</p>
                         <div className="bg-white p-4 rounded-lg border text-left">
-                          <h4 className="font-semibold mb-2">Олон улсын салбарууд:</h4>
+                          <h4 className="font-semibold mb-2">Салбар холбоод:</h4>
                           <div className="space-y-2">
-                            {currentMapBranches.map((branch: any) => (
+                            {internationalBranchesOnly.map((branch: any) => (
                               <div key={branch.id} className="flex items-center gap-2 text-sm">
                                 <Globe className="h-4 w-4 text-mtta-green" />
                                 <span className="font-medium">{branch.name}</span>
@@ -525,7 +526,7 @@ export default function Branches() {
                     </div>
                   ) : (
                     <MongoliaMap
-                      branches={currentMapBranches}
+                      branches={internationalBranchesOnly}
                       height="600px"
                       apiKey={apiKey}
                     />
@@ -541,7 +542,7 @@ export default function Branches() {
               {activeTab === "domestic" ? "Монгол дахь бүх салбарууд" : "Гадаад дахь бүх салбарууд"}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {currentBranches.map((branch: any) => (
+              {(activeTab === "domestic" ? domesticBranchesOnly : internationalBranchesOnly).map((branch: any) => (
                 <Card key={branch.id} className="hover:shadow-lg transition-shadow cursor-pointer"
                       onClick={() => handleBranchClick(branch)}>
                   <CardHeader className="pb-3">
