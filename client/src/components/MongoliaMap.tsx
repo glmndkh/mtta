@@ -45,9 +45,12 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
       try {
         // Use environment variable for API key
         const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+        
+        console.log('Google Maps API Key:', apiKey ? `${apiKey.substring(0, 10)}...` : 'Not found');
+        console.log('All env vars:', Object.keys(import.meta.env));
 
         if (!apiKey) {
-          setError('Google Maps API key is not provided in the environment variables.');
+          setError('Google Maps API key is not provided in the environment variables. Please set VITE_GOOGLE_MAPS_API_KEY in Secrets.');
           setIsLoading(false);
           return;
         }
@@ -299,7 +302,11 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
         setIsLoading(false);
       } catch (err) {
         console.error('Google Maps failed to load:', err);
-        setError('Failed to load Google Maps. Please check API key and configuration.');
+        if (err instanceof Error) {
+          setError(`Failed to load Google Maps: ${err.message}`);
+        } else {
+          setError('Failed to load Google Maps. Please check API key and configuration.');
+        }
         setIsLoading(false);
       }
     };
