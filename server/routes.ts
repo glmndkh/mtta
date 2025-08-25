@@ -2558,6 +2558,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Tournament teams endpoints (missing endpoints that frontend is calling)
+  app.post("/api/tournaments/:id/teams", requireAuth, async (req, res) => {
+    try {
+      const { id: tournamentId } = req.params;
+      const teamData = req.body;
+
+      // Create tournament team using the existing storage method
+      const team = await storage.createLeagueTeam(tournamentId, {
+        name: teamData.name,
+        logoUrl: teamData.logoUrl,
+        sponsorLogo: teamData.sponsorLogo,
+        ownerName: teamData.ownerName,
+        coachName: teamData.coachName,
+      });
+
+      res.json(team);
+    } catch (e) {
+      console.error("Error creating tournament team:", e);
+      res.status(400).json({ message: "Баг үүсгэхэд алдаа гарлаа" });
+    }
+  });
+
+  app.get("/api/tournaments/:id/teams", async (req, res) => {
+    try {
+      const { id: tournamentId } = req.params;
+      const teams = await storage.getLeagueTeams(tournamentId);
+      res.json(teams);
+    } catch (e) {
+      console.error("Error fetching tournament teams:", e);
+      res.status(400).json({ message: "Багийн жагсаалт авахад алдаа гарлаа" });
+    }
+  });
+
+  app.post("/api/tournament-teams/:teamId/players", requireAuth, async (req, res) => {
+    try {
+      const { teamId } = req.params;
+      const { playerId, playerName } = req.body;
+
+      if (!playerId || !playerName) {
+        return res.status(400).json({ message: "Тоглогчийн ID болон нэр заавал оруулна уу" });
+      }
+
+      const player = await storage.addPlayerToLeagueTeam(teamId, playerId, playerName);
+      res.json(player);
+    } catch (e) {
+      console.error("Error adding player to tournament team:", e);
+      res.status(400).json({ message: "Тоглогч багт нэмэхэд алдаа гарлаа" });
+    }
+  });
+
+  app.delete("/api/tournament-teams/:teamId", requireAuth, async (req, res) => {
+    try {
+      const { teamId } = req.params;
+      const success = await storage.deleteLeagueTeam(teamId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Баг олдсонгүй" });
+      }
+
+      res.json({ message: "Баг амжилттай устгагдлаа" });
+    } catch (e) {
+      console.error("Error deleting tournament team:", e);
+      res.status(400).json({ message: "Баг устгахад алдаа гарлаа" });
+    }
+  });
+
   // ----------
   // Server up
   // ----------
