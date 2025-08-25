@@ -1527,7 +1527,7 @@ export default function AdminDashboard() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      <User className="w-4 h-4" />
+                      <UserIcon className="w-4 h-4" />
                       Нэр
                     </FormLabel>
                     <FormControl>
@@ -1543,7 +1543,7 @@ export default function AdminDashboard() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      <User className="w-4 h-4" />
+                      <UserIcon className="w-4 h-4" />
                       Овог
                     </FormLabel>
                     <FormControl>
@@ -1559,7 +1559,7 @@ export default function AdminDashboard() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      <User className="w-4 h-4" />
+                      <UserIcon className="w-4 h-4" />
                       Хэрэглэгч (заавал биш)
                     </FormLabel>
                     <Select onValueChange={field.onChange} value={field.value || ""}>
