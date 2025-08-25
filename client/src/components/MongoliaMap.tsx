@@ -109,20 +109,67 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
           const markerElement = document.createElement('div');
           markerElement.className = 'custom-marker';
           markerElement.innerHTML = `
-            <div style="
-              background: #dc2626;
-              color: white;
-              padding: 8px 12px;
-              border-radius: 20px;
-              font-weight: bold;
-              box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-              cursor: pointer;
-              border: 2px solid white;
-              font-size: 12px;
-              white-space: nowrap;
-            ">
-              📍 ${branch.name}
+            <div style="position: relative;">
+              <!-- Radiating effect rings -->
+              <div style="
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 60px;
+                height: 60px;
+                border: 2px solid #dc2626;
+                border-radius: 50%;
+                animation: pulse-ring 2s infinite;
+                opacity: 0.4;
+              "></div>
+              <div style="
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 40px;
+                height: 40px;
+                border: 2px solid #dc2626;
+                border-radius: 50%;
+                animation: pulse-ring 2s infinite 0.5s;
+                opacity: 0.6;
+              "></div>
+              <!-- Main marker -->
+              <div style="
+                position: relative;
+                background: #dc2626;
+                color: white;
+                padding: 8px 12px;
+                border-radius: 20px;
+                font-weight: bold;
+                box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+                cursor: pointer;
+                border: 2px solid white;
+                font-size: 12px;
+                white-space: nowrap;
+                z-index: 10;
+                transition: all 0.3s ease;
+              ">
+                📍 ${branch.name}
+              </div>
             </div>
+            <style>
+              @keyframes pulse-ring {
+                0% {
+                  transform: translate(-50%, -50%) scale(0.1);
+                  opacity: 1;
+                }
+                100% {
+                  transform: translate(-50%, -50%) scale(1);
+                  opacity: 0;
+                }
+              }
+              .custom-marker:hover div div:last-child {
+                transform: scale(1.1);
+                box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
+              }
+            </style>
           `;
 
           const marker = new AdvancedMarkerElement({
@@ -135,16 +182,91 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
           // Create info window
           const infoWindow = new google.maps.InfoWindow({
             content: `
-              <div style="padding: 10px; font-family: Arial, sans-serif;">
-                <h3 style="margin: 0 0 10px 0; color: #dc2626;">${branch.name}</h3>
-                ${branch.address ? `<p style="margin: 5px 0;"><strong>Хаяг:</strong> ${branch.address}</p>` : ''}
-                ${branch.phone ? `<p style="margin: 5px 0;"><strong>Утас:</strong> ${branch.phone}</p>` : ''}
-                ${branch.description ? `<p style="margin: 5px 0;">${branch.description}</p>` : ''}
-                <p style="margin: 5px 0; color: #666; font-size: 12px;">
-                  Координат: ${branch.lat.toFixed(4)}, ${branch.lng.toFixed(4)}
-                </p>
+              <div style="
+                padding: 15px; 
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                max-width: 300px;
+                line-height: 1.5;
+              ">
+                <div style="
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  margin-bottom: 12px;
+                  padding-bottom: 8px;
+                  border-bottom: 1px solid #e5e7eb;
+                ">
+                  <div style="
+                    background: #dc2626;
+                    color: white;
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 12px;
+                  ">📍</div>
+                  <h3 style="
+                    margin: 0;
+                    color: #1f2937;
+                    font-size: 16px;
+                    font-weight: 600;
+                  ">${branch.name}</h3>
+                </div>
+                
+                ${branch.leader ? `
+                  <div style="margin: 8px 0; display: flex; align-items: start; gap: 6px;">
+                    <span style="color: #6b7280; font-size: 14px;">👤</span>
+                    <div>
+                      <span style="font-weight: 500; color: #374151; font-size: 13px;">Тэргүүлэгч:</span>
+                      <span style="color: #6b7280; font-size: 13px; margin-left: 4px;">${branch.leader}</span>
+                    </div>
+                  </div>
+                ` : ''}
+                
+                ${branch.address ? `
+                  <div style="margin: 8px 0; display: flex; align-items: start; gap: 6px;">
+                    <span style="color: #6b7280; font-size: 14px;">📍</span>
+                    <div>
+                      <span style="font-weight: 500; color: #374151; font-size: 13px;">Хаяг:</span>
+                      <span style="color: #6b7280; font-size: 13px; margin-left: 4px;">${branch.address}</span>
+                    </div>
+                  </div>
+                ` : ''}
+                
+                ${branch.description ? `
+                  <div style="margin: 8px 0; display: flex; align-items: start; gap: 6px;">
+                    <span style="color: #6b7280; font-size: 14px;">ℹ️</span>
+                    <div>
+                      <span style="color: #6b7280; font-size: 13px;">${branch.description}</span>
+                    </div>
+                  </div>
+                ` : ''}
+                
+                ${branch.leadershipMembers ? `
+                  <div style="margin: 8px 0; display: flex; align-items: start; gap: 6px;">
+                    <span style="color: #6b7280; font-size: 14px;">👥</span>
+                    <div>
+                      <span style="font-weight: 500; color: #374151; font-size: 13px;">Гишүүд:</span>
+                      <span style="color: #6b7280; font-size: 13px; margin-left: 4px;">${branch.leadershipMembers}</span>
+                    </div>
+                  </div>
+                ` : ''}
+                
+                <div style="
+                  margin-top: 12px;
+                  padding-top: 8px;
+                  border-top: 1px solid #e5e7eb;
+                  font-size: 11px;
+                  color: #9ca3af;
+                  text-align: center;
+                ">
+                  Координат: ${branch.lat.toFixed(6)}, ${branch.lng.toFixed(6)}
+                </div>
               </div>
-            `
+            `,
+            maxWidth: 350
           });
 
           marker.addListener('click', () => {

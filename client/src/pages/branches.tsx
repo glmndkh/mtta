@@ -1,5 +1,6 @@
 
 import React, { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,8 +11,17 @@ import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import MongoliaMap from "@/components/MongoliaMap";
 
-// Mock data for branches with coordinates on the map (accurately positioned on Mongolia aimags)
-const branchesData = [
+// Fetch branches from API
+const fetchBranches = async () => {
+  const response = await fetch('/api/branches');
+  if (!response.ok) {
+    throw new Error('Failed to fetch branches');
+  }
+  return response.json();
+};
+
+// Mock international branches data
+const internationalBranches = [
   {
     id: "1",
     name: "Улаанбаатар хотын салбар",
@@ -237,6 +247,20 @@ const BranchDetailDialog = ({ branch, isOpen, onClose }: { branch: any, isOpen: 
         </DialogHeader>
         
         <div className="space-y-6">
+          {/* Branch Image */}
+          {branch.imageUrl && (
+            <div className="w-full">
+              <img 
+                src={branch.imageUrl} 
+                alt={branch.name}
+                className="w-full h-48 object-cover rounded-lg"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            </div>
+          )}
+
           {/* Branch Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
@@ -244,22 +268,31 @@ const BranchDetailDialog = ({ branch, isOpen, onClose }: { branch: any, isOpen: 
                 <CardTitle className="text-sm">Ерөнхий мэдээлэл</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">{branch.address}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">{branch.phone}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">{branch.email}</span>
-                </div>
-                {branch.website && (
-                  <div className="flex items-center gap-2">
-                    <Globe className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm">{branch.website}</span>
+                {branch.leader && (
+                  <div className="flex items-start gap-2">
+                    <Users className="h-4 w-4 text-gray-500 mt-0.5" />
+                    <div>
+                      <div className="text-sm font-medium">Тэргүүлэгч</div>
+                      <div className="text-sm text-gray-600">{branch.leader}</div>
+                    </div>
+                  </div>
+                )}
+                {branch.address && (
+                  <div className="flex items-start gap-2">
+                    <MapPin className="h-4 w-4 text-gray-500 mt-0.5" />
+                    <div>
+                      <div className="text-sm font-medium">Хаяг</div>
+                      <div className="text-sm text-gray-600">{branch.address}</div>
+                    </div>
+                  </div>
+                )}
+                {branch.location && (
+                  <div className="flex items-start gap-2">
+                    <Globe className="h-4 w-4 text-gray-500 mt-0.5" />
+                    <div>
+                      <div className="text-sm font-medium">Байршил</div>
+                      <div className="text-sm text-gray-600">{branch.location}</div>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -267,46 +300,45 @@ const BranchDetailDialog = ({ branch, isOpen, onClose }: { branch: any, isOpen: 
 
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Статистик</CardTitle>
+                <CardTitle className="text-sm">Нэмэлт мэдээлэл</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Гишүүд</span>
-                  <Badge variant="secondary">{branch.members}</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Клубууд</span>
-                  <Badge variant="secondary">{branch.clubs}</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">{branch.province ? 'Аймаг/хот' : 'Улс'}</span>
-                  <Badge className="mtta-green text-white">{branch.province || branch.country}</Badge>
-                </div>
+                {branch.leadershipMembers && (
+                  <div>
+                    <div className="text-sm font-medium">Тэргүүлэгч гишүүд</div>
+                    <div className="text-sm text-gray-600">{branch.leadershipMembers}</div>
+                  </div>
+                )}
+                {branch.coordinates && (
+                  <div>
+                    <div className="text-sm font-medium">Координат</div>
+                    <div className="text-sm text-gray-600 font-mono">{branch.coordinates}</div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Description */}
-          {branch.description && (
+          {/* Activities */}
+          {branch.activities && (
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Дэлгэрэнгүй</CardTitle>
+                <CardTitle className="text-sm">Үйл ажиллагаа</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-gray-600">{branch.description}</p>
+                <p className="text-sm text-gray-600">{branch.activities}</p>
               </CardContent>
             </Card>
           )}
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
-            <Button className="mtta-green text-white hover:bg-mtta-green-dark flex-1">
-              <Users className="h-4 w-4 mr-2" />
-              Гишүүдийг харах
-            </Button>
-            <Button variant="outline" className="border-mtta-green text-mtta-green hover:bg-mtta-green hover:text-white flex-1">
-              <ChevronRight className="h-4 w-4 mr-2" />
-              Дэлгэрэнгүй
+            <Button 
+              variant="outline" 
+              className="border-mtta-green text-mtta-green hover:bg-mtta-green hover:text-white flex-1"
+              onClick={onClose}
+            >
+              Хаах
             </Button>
           </div>
         </div>
@@ -320,6 +352,12 @@ export default function Branches() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("domestic");
 
+  // Fetch branches from database
+  const { data: domesticBranches = [], isLoading, error } = useQuery({
+    queryKey: ['branches'],
+    queryFn: fetchBranches
+  });
+
   const handleBranchClick = (branch: any) => {
     setSelectedBranch(branch);
     setIsDialogOpen(true);
@@ -330,8 +368,59 @@ export default function Branches() {
     setSelectedBranch(null);
   };
 
-  const currentBranches = activeTab === "domestic" ? branchesData : internationalBranches;
+  // Convert database branches to map format
+  const convertBranchForMap = (branch: any) => {
+    if (!branch.coordinates) return null;
+    
+    const [lat, lng] = branch.coordinates.split(',').map((coord: string) => parseFloat(coord.trim()));
+    if (isNaN(lat) || isNaN(lng)) return null;
+    
+    return {
+      id: branch.id,
+      name: branch.name,
+      lat,
+      lng,
+      address: branch.address,
+      description: branch.activities || branch.location,
+      leader: branch.leader,
+      leadershipMembers: branch.leadershipMembers,
+      imageUrl: branch.imageUrl
+    };
+  };
+
+  const mapBranches = domesticBranches
+    .map(convertBranchForMap)
+    .filter(Boolean);
+
+  const currentBranches = activeTab === "domestic" ? domesticBranches : internationalBranches;
+  const currentMapBranches = activeTab === "domestic" ? mapBranches : internationalBranches;
   const apiKey = "AIzaSyCoaMbDgEr6zX7fqx6yxOg1GJmjIZiW9u0";
+
+  if (isLoading) {
+    return (
+      <PageWithLoading>
+        <div className="min-h-screen bg-gray-50">
+          <Navigation />
+          <div className="flex items-center justify-center h-64">
+            <div className="text-lg">Салбар холбоодыг ачааллаж байна...</div>
+          </div>
+        </div>
+      </PageWithLoading>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageWithLoading>
+        <div className="min-h-screen bg-gray-50">
+          <Navigation />
+          <div className="flex items-center justify-center h-64">
+            <div className="text-lg text-red-600">Салбар холбоод ачаалахад алдаа гарлаа</div>
+          </div>
+        </div>
+      </PageWithLoading>
+    );
+  }
 
   return (
     <PageWithLoading>
@@ -349,7 +438,7 @@ export default function Branches() {
                 </p>
               </div>
               <Badge className="mtta-green text-white text-lg px-4 py-2">
-                {branchesData.length + internationalBranches.length} салбар
+                {domesticBranches.length + internationalBranches.length} салбар
               </Badge>
             </div>
           </div>
@@ -361,7 +450,7 @@ export default function Branches() {
             <TabsList className="grid w-full grid-cols-2 mb-8">
               <TabsTrigger value="domestic" className="flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
-                Монгол дахь салбарууд ({branchesData.length})
+                Монгол дахь салбарууд ({domesticBranches.length})
               </TabsTrigger>
               <TabsTrigger value="international" className="flex items-center gap-2">
                 <Globe className="h-4 w-4" />
@@ -439,13 +528,26 @@ export default function Branches() {
                     <Map className="h-5 w-5 text-mtta-green" />
                     Google Maps дээрх салбарууд
                   </CardTitle>
+                  <p className="text-sm text-gray-600">
+                    Салбарын дэлгэрэнгүй мэдээллийг харахын тулд маркер дээр дарна уу
+                  </p>
                 </CardHeader>
                 <CardContent>
-                  <MongoliaMap 
-                    branches={branchesData}
-                    height="600px"
-                    apiKey={apiKey}
-                  />
+                  {mapBranches.length > 0 ? (
+                    <MongoliaMap 
+                      branches={mapBranches}
+                      height="600px"
+                      apiKey={apiKey}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-96 bg-gray-50 rounded-lg border">
+                      <div className="text-center">
+                        <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                        <p className="text-gray-600">Координат бүхий салбар холбоо олдсонгүй</p>
+                        <p className="text-sm text-gray-500">Админ хэсгээс салбар холбоодод координат нэмнэ үү</p>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -464,7 +566,7 @@ export default function Branches() {
                 </CardHeader>
                 <CardContent>
                   <MongoliaMap 
-                    branches={internationalBranches}
+                    branches={currentMapBranches}
                     height="600px"
                     apiKey={apiKey}
                   />
@@ -486,25 +588,29 @@ export default function Branches() {
                     <div className="flex items-start justify-between">
                       <CardTitle className="text-lg line-clamp-2">{branch.name}</CardTitle>
                       <Badge variant="outline" className="ml-2">
-                        {branch.province || branch.country}
+                        {branch.location || 'Монгол'}
                       </Badge>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin className="h-4 w-4" />
-                      <span className="line-clamp-1">{branch.address}</span>
-                    </div>
+                    {branch.address && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <MapPin className="h-4 w-4" />
+                        <span className="line-clamp-1">{branch.address}</span>
+                      </div>
+                    )}
                     
-                    <div className="flex justify-between text-sm">
-                      <div className="flex items-center gap-1">
-                        <Users className="h-4 w-4 text-mtta-green" />
-                        <span>{branch.members} гишүүн</span>
+                    {branch.leader && (
+                      <div className="text-sm">
+                        <span className="font-medium text-mtta-green">Тэргүүлэгч:</span> {branch.leader}
                       </div>
-                      <div className="text-gray-500">
-                        {branch.clubs} клуб
+                    )}
+
+                    {branch.coordinates && (
+                      <div className="text-xs text-gray-500">
+                        📍 Координат: {branch.coordinates}
                       </div>
-                    </div>
+                    )}
                     
                     <Button 
                       variant="outline" 
