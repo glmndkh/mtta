@@ -725,7 +725,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/branches", async (_req, res) => {
     try {
       const branches = await storage.getAllBranches();
-      res.json(branches);
+      
+      // Add location information for branches with coordinates
+      const branchesWithLocation = await Promise.all(
+        branches.map(async (branch) => {
+          if (branch.coordinates) {
+            try {
+              const [lat, lng] = branch.coordinates.split(',').map(coord => parseFloat(coord.trim()));
+              if (!isNaN(lat) && !isNaN(lng)) {
+                // Reverse geocoding using a free service
+                const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`);
+                const locationData = await response.json();
+                
+                return {
+                  ...branch,
+                  country: locationData.countryName || null,
+                  city: locationData.city || locationData.locality || null,
+                  countryCode: locationData.countryCode || null,
+                  isInternational: locationData.countryCode !== 'MN' // MN is Mongolia's country code
+                };
+              }
+            } catch (error) {
+              console.error('Error fetching location data for branch:', branch.name, error);
+            }
+          }
+          
+          return {
+            ...branch,
+            country: null,
+            city: null,
+            countryCode: null,
+            isInternational: false
+          };
+        })
+      );
+      
+      res.json(branchesWithLocation);
     } catch (e) {
       console.error("Error fetching branches:", e);
       res.status(500).json({ message: "Салбар холбоод авахад алдаа гарлаа" });

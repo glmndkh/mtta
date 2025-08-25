@@ -11,6 +11,9 @@ interface BranchLocation {
   description?: string;
   leader?: string;
   leadershipMembers?: string;
+  country?: string;
+  city?: string;
+  isInternational?: boolean;
 }
 
 interface MongoliaMapProps {
@@ -39,6 +42,9 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
     east: 119.9,
     west: 87.7
   };
+
+  // Check if we have international branches to adjust map view
+  const hasInternationalBranches = branches.some(branch => branch.isInternational);
 
   useEffect(() => {
     const loadMap = async () => {
@@ -77,13 +83,13 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
 
         if (!mapRef.current) return;
 
-        // Create map centered on Mongolia
+        // Create map centered on Mongolia (or worldwide if international branches exist)
         const mapInstance = new Map(mapRef.current, {
           center: mongoliaCenter,
-          zoom: 6,
-          minZoom: 5,
+          zoom: hasInternationalBranches ? 3 : 6,
+          minZoom: hasInternationalBranches ? 2 : 5,
           maxZoom: 15,
-          restriction: {
+          restriction: hasInternationalBranches ? undefined : {
             latLngBounds: mongoliaBounds,
             strictBounds: false
           },
@@ -157,12 +163,12 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
               <!-- Main marker -->
               <div style="
                 position: relative;
-                background: #dc2626;
+                background: ${branch.isInternational ? '#2563eb' : '#dc2626'};
                 color: white;
                 padding: 8px 12px;
                 border-radius: 20px;
                 font-weight: bold;
-                box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+                box-shadow: 0 4px 15px rgba(${branch.isInternational ? '37, 99, 235' : '220, 38, 38'}, 0.4);
                 cursor: pointer;
                 border: 2px solid white;
                 font-size: 12px;
@@ -170,7 +176,7 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
                 z-index: 10;
                 transition: all 0.3s ease;
               ">
-                📍 ${branch.name}
+                ${branch.isInternational ? '🌍' : '📍'} ${branch.name}
               </div>
             </div>
             <style>
@@ -216,7 +222,7 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
                   border-bottom: 1px solid #e5e7eb;
                 ">
                   <div style="
-                    background: #dc2626;
+                    background: ${branch.isInternational ? '#2563eb' : '#dc2626'};
                     color: white;
                     width: 24px;
                     height: 24px;
@@ -225,7 +231,7 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
                     align-items: center;
                     justify-content: center;
                     font-size: 12px;
-                  ">📍</div>
+                  ">${branch.isInternational ? '🌍' : '📍'}</div>
                   <h3 style="
                     margin: 0;
                     color: #1f2937;
@@ -233,6 +239,18 @@ const MongoliaMap: React.FC<MongoliaMapProps> = ({
                     font-weight: 600;
                   ">${branch.name}</h3>
                 </div>
+
+                ${branch.isInternational && (branch.country || branch.city) ? `
+                  <div style="margin: 8px 0; display: flex; align-items: start; gap: 6px;">
+                    <span style="color: #6b7280; font-size: 14px;">🌍</span>
+                    <div>
+                      <span style="font-weight: 500; color: #374151; font-size: 13px;">Улс/Хот:</span>
+                      <span style="color: #6b7280; font-size: 13px; margin-left: 4px;">
+                        ${branch.city ? `${branch.city}, ` : ''}${branch.country}
+                      </span>
+                    </div>
+                  </div>
+                ` : ''}
 
                 ${branch.leader ? `
                   <div style="margin: 8px 0; display: flex; align-items: start; gap: 6px;">

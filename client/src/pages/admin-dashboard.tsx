@@ -1401,18 +1401,30 @@ export default function AdminDashboard() {
               <Label htmlFor="address">Хаяг</Label>
               <Textarea id="address" value={formData.address || ''} onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
             </div>
-            <div>
-              <Label htmlFor="location">Байршил</Label>
-              <Input id="location" value={formData.location || ''} onChange={(e) => setFormData({ ...formData, location: e.target.value })} />
-            </div>
-            <div>
-              <Label htmlFor="coordinates">Координат (Өргөрөг, Уртраг)</Label>
-              <Input 
-                id="coordinates" 
-                placeholder="47.704783510083026, 106.95838362275074"
-                value={formData.coordinates || ''} 
-                onChange={(e) => setFormData({ ...formData, coordinates: e.target.value })} 
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="branchCoordinates">Координат (lat, lng)</Label>
+                <Input
+                  id="branchCoordinates"
+                  name="coordinates"
+                  value={formData.coordinates}
+                  onChange={(e) => setFormData({ ...formData, coordinates: e.target.value })}
+                  placeholder="47.9184, 106.9177"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Координат оруулсны дараа байршил автоматаар тодорхойлогдоно
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="branchLocation">Байршил</Label>
+                <Input
+                  id="branchLocation"
+                  name="location"
+                  value={formData.location}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  placeholder="Улаанбаатар хот"
+                />
+              </div>
             </div>
             <div>
               <Label htmlFor="activities">Үйл ажиллагаа</Label>
@@ -1935,7 +1947,7 @@ export default function AdminDashboard() {
                     className="w-16 h-16 object-contain border rounded"
                     onError={(e) => {
                       console.error('Image load error:', e);
-                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.style.display = 'none'; 
                     }}
                   />
                 </div>

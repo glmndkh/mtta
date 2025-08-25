@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -6,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronRight, MapPin, Users, Phone, Mail, Globe, Zap, Map } from "lucide-react";
+import { ChevronRight, MapPin, Users, Mail, Globe, Zap, Map } from "lucide-react";
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import MongoliaMap from "@/components/MongoliaMap";
@@ -145,49 +144,6 @@ const branchesData = [
   }
 ];
 
-// International branches data
-const internationalBranches = [
-  {
-    id: "int1",
-    name: "Бээжин салбар холбоо",
-    country: "Хятад",
-    address: "Beijing, China",
-    phone: "+86 10 12345678",
-    email: "beijing@mtta.mn",
-    members: 23,
-    clubs: 1,
-    lat: 39.9042,
-    lng: 116.4074,
-    description: "Хятад дахь монгол теннисчдын холбоо"
-  },
-  {
-    id: "int2",
-    name: "Сеул салбар холбоо",
-    country: "Солонгос",
-    address: "Seoul, South Korea",
-    phone: "+82 2 1234 5678",
-    email: "seoul@mtta.mn",
-    members: 15,
-    clubs: 1,
-    lat: 37.5665,
-    lng: 126.9780,
-    description: "Солонгос дахь монгол теннисчдын холбоо"
-  },
-  {
-    id: "int3",
-    name: "Токио салбар холбоо",
-    country: "Япон",
-    address: "Tokyo, Japan",
-    phone: "+81 3 1234 5678",
-    email: "tokyo@mtta.mn",
-    members: 18,
-    clubs: 1,
-    lat: 35.6762,
-    lng: 139.6503,
-    description: "Япон дахь монгол теннисчдын холбоо"
-  }
-];
-
 const LightningSpot = ({ branch, onClick }: { branch: any, onClick: () => void }) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -203,24 +159,24 @@ const LightningSpot = ({ branch, onClick }: { branch: any, onClick: () => void }
       <div className="absolute inset-0 w-16 h-16 -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2">
         <div className="radar-effect absolute inset-0 w-full h-full border-2 border-mtta-green rounded-full opacity-30"></div>
       </div>
-      
+
       {/* Lightning effect */}
       <div className={`relative transition-all duration-300 ${isHovered ? 'scale-125' : 'scale-100'}`}>
         {/* Pulsing outer circles */}
         <div className="absolute inset-0 w-10 h-10 bg-mtta-green rounded-full opacity-20 animate-ping -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2"></div>
         <div className="absolute inset-0 w-8 h-8 bg-mtta-green rounded-full opacity-40 animate-ping animation-delay-150 -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2"></div>
-        
+
         {/* Main lightning spot */}
         <div className="relative w-6 h-6 bg-gradient-to-r from-mtta-green to-green-400 rounded-full flex items-center justify-center shadow-lg border-2 border-white lightning-spot">
           <Zap className="w-3 h-3 text-white animate-pulse" />
         </div>
-        
+
         {/* Hover glow effect */}
         {isHovered && (
           <div className="absolute inset-0 w-6 h-6 bg-mtta-green rounded-full opacity-60 blur-md glow-border"></div>
         )}
       </div>
-      
+
       {/* Enhanced tooltip on hover */}
       {isHovered && (
         <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 px-3 py-2 bg-gray-900 bg-opacity-95 text-white text-sm rounded-lg whitespace-nowrap z-20 border border-mtta-green shadow-lg">
@@ -245,13 +201,13 @@ const BranchDetailDialog = ({ branch, isOpen, onClose }: { branch: any, isOpen: 
             {branch.name}
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           {/* Branch Image */}
           {branch.imageUrl && (
             <div className="w-full">
-              <img 
-                src={branch.imageUrl} 
+              <img
+                src={branch.imageUrl}
                 alt={branch.name}
                 className="w-full h-48 object-cover rounded-lg"
                 onError={(e) => {
@@ -315,6 +271,18 @@ const BranchDetailDialog = ({ branch, isOpen, onClose }: { branch: any, isOpen: 
                     <div className="text-sm text-gray-600 font-mono">{branch.coordinates}</div>
                   </div>
                 )}
+                {branch.phone && (
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-gray-500" />
+                    <div className="text-sm text-gray-600">{branch.phone}</div>
+                  </div>
+                )}
+                {branch.email && (
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-gray-500" />
+                    <div className="text-sm text-gray-600 break-all">{branch.email}</div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -333,8 +301,8 @@ const BranchDetailDialog = ({ branch, isOpen, onClose }: { branch: any, isOpen: 
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="border-mtta-green text-mtta-green hover:bg-mtta-green hover:text-white flex-1"
               onClick={onClose}
             >
@@ -371,10 +339,10 @@ export default function Branches() {
   // Convert database branches to map format
   const convertBranchForMap = (branch: any) => {
     if (!branch.coordinates) return null;
-    
+
     const [lat, lng] = branch.coordinates.split(',').map((coord: string) => parseFloat(coord.trim()));
     if (isNaN(lat) || isNaN(lng)) return null;
-    
+
     return {
       id: branch.id,
       name: branch.name,
@@ -384,7 +352,10 @@ export default function Branches() {
       description: branch.activities || branch.location,
       leader: branch.leader,
       leadershipMembers: branch.leadershipMembers,
-      imageUrl: branch.imageUrl
+      imageUrl: branch.imageUrl,
+      isInternational: branch.isInternational,
+      country: branch.country,
+      city: branch.city,
     };
   };
 
@@ -392,8 +363,16 @@ export default function Branches() {
     .map(convertBranchForMap)
     .filter(Boolean);
 
+  // Filter international branches based on coordinates from domesticBranches
+  const internationalBranches = domesticBranches
+    .filter(branch => branch.isInternational && branch.coordinates)
+    .map(convertBranchForMap)
+    .filter(Boolean);
+
+
   const currentBranches = activeTab === "domestic" ? domesticBranches : internationalBranches;
   const currentMapBranches = activeTab === "domestic" ? mapBranches : internationalBranches;
+
   // Use environment variable for API key
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
@@ -427,7 +406,7 @@ export default function Branches() {
     <PageWithLoading>
       <div className="min-h-screen bg-gray-50">
         <Navigation />
-        
+
         {/* Header */}
         <div className="bg-white shadow-sm border-b">
           <div className="max-w-7xl mx-auto px-4 py-6">
@@ -439,7 +418,7 @@ export default function Branches() {
                 </p>
               </div>
               <Badge className="mtta-green text-white text-lg px-4 py-2">
-                {domesticBranches.length + internationalBranches.length} салбар
+                {domesticBranches.length} салбар
               </Badge>
             </div>
           </div>
@@ -451,7 +430,7 @@ export default function Branches() {
             <TabsList className="grid w-full grid-cols-2 mb-8">
               <TabsTrigger value="domestic" className="flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
-                Монгол дахь салбарууд ({domesticBranches.length})
+                Монгол дахь салбарууд ({domesticBranches.filter(b => !b.isInternational).length})
               </TabsTrigger>
               <TabsTrigger value="international" className="flex items-center gap-2">
                 <Globe className="h-4 w-4" />
@@ -493,7 +472,7 @@ export default function Branches() {
                       </div>
                     </div>
                   ) : mapBranches.length > 0 ? (
-                    <MongoliaMap 
+                    <MongoliaMap
                       branches={mapBranches}
                       height="600px"
                       apiKey={apiKey}
@@ -545,7 +524,7 @@ export default function Branches() {
                       </div>
                     </div>
                   ) : (
-                    <MongoliaMap 
+                    <MongoliaMap
                       branches={currentMapBranches}
                       height="600px"
                       apiKey={apiKey}
@@ -555,7 +534,7 @@ export default function Branches() {
               </Card>
             </TabsContent>
           </Tabs>
-          
+
           {/* Branches List */}
           <div className="mt-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
@@ -569,7 +548,9 @@ export default function Branches() {
                     <div className="flex items-start justify-between">
                       <CardTitle className="text-lg line-clamp-2">{branch.name}</CardTitle>
                       <Badge variant="outline" className="ml-2">
-                        {branch.location || 'Монгол'}
+                        {branch.isInternational
+                          ? `${branch.city ? `${branch.city}, ` : ''}${branch.country || 'Гадаад'}`
+                          : branch.location || 'Монгол'}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -580,7 +561,7 @@ export default function Branches() {
                         <span className="line-clamp-1">{branch.address}</span>
                       </div>
                     )}
-                    
+
                     {branch.leader && (
                       <div className="text-sm">
                         <span className="font-medium text-mtta-green">Тэргүүлэгч:</span> {branch.leader}
@@ -592,10 +573,10 @@ export default function Branches() {
                         📍 Координат: {branch.coordinates}
                       </div>
                     )}
-                    
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="w-full border-mtta-green text-mtta-green hover:bg-mtta-green hover:text-white"
                     >
                       Дэлгэрэнгүй <ChevronRight className="h-4 w-4 ml-2" />
@@ -608,7 +589,7 @@ export default function Branches() {
         </div>
 
         {/* Branch Detail Dialog */}
-        <BranchDetailDialog 
+        <BranchDetailDialog
           branch={selectedBranch}
           isOpen={isDialogOpen}
           onClose={closeDialog}
