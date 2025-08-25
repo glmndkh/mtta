@@ -570,7 +570,7 @@ export const insertChampionSchema = createInsertSchema(pastChampions).omit({
   id: true,
   createdAt: true,
 }).extend({
-  year: z.string().min(1, "Он заавал оруулна уу"), // Accept string for year
+  year: z.string().min(1, "Он заавал оруулна уу"),
   gender: z.enum(["male", "female", "other"]).optional(),
   championType: z.enum(["өсвөрийн", "ахмадын", "улсын"]).optional(),
 });

@@ -427,7 +427,7 @@ export default function AdminDashboard() {
     } else if (selectedTab === 'champions') {
       defaultData = {
         name: '',
-        year: new Date().getFullYear(), // Default to current year
+        year: new Date().getFullYear().toString(), // Default to current year as string
         imageUrl: '',
         gender: '',
         championType: ''
