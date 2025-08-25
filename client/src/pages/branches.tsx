@@ -394,7 +394,8 @@ export default function Branches() {
 
   const currentBranches = activeTab === "domestic" ? domesticBranches : internationalBranches;
   const currentMapBranches = activeTab === "domestic" ? mapBranches : internationalBranches;
-  const apiKey = "AIzaSyCoaMbDgEr6zX7fqx6yxOg1GJmjIZiW9u0";
+  // Use environment variable for API key or fallback
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "AIzaSyCoaMbDgEr6zX7fqx6yxOg1GJmjIZiW9u0";
 
   if (isLoading) {
     return (
@@ -459,74 +460,12 @@ export default function Branches() {
             </TabsList>
 
             <TabsContent value="domestic" className="space-y-8">
-              {/* Interactive Map for Domestic Branches */}
-              <Card className="overflow-hidden">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Zap className="h-5 w-5 text-mtta-green" />
-                    Монгол дахь салбарууд - Интерактив газрын зураг
-                  </CardTitle>
-                  <p className="text-sm text-gray-600">
-                    Салбарын дэлгэрэнгүй мэдээллийг харахын тулд цэнхэр цэгэн дээр дарна уу
-                  </p>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="relative bg-gradient-to-br from-blue-50 to-blue-100 overflow-hidden">
-                    {/* Map Image */}
-                    <img 
-                      src="/src/assets/mongolia-map.png" 
-                      alt="Mongolia Map" 
-                      className="w-full h-auto block"
-                      style={{ maxHeight: '600px', objectFit: 'contain', minHeight: '400px' }}
-                      onError={(e) => {
-                        const target = e.currentTarget;
-                        if (target.src.includes('/src/assets/')) {
-                          target.src = "./src/assets/mongolia-map.png";
-                        } else if (target.src.includes('./src/')) {
-                          target.src = "client/src/assets/mongolia-map.png";
-                        } else {
-                          target.style.display = 'none';
-                          target.parentElement!.style.background = `
-                            linear-gradient(135deg, #1e3a8a, #3730a3, #1e40af),
-                            url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400"><rect width="800" height="400" fill="%23334155"/><text x="400" y="200" text-anchor="middle" fill="white" font-size="20">Mongolia Map</text></svg>')
-                          `;
-                          target.parentElement!.style.backgroundSize = 'contain';
-                          target.parentElement!.style.backgroundRepeat = 'no-repeat';
-                          target.parentElement!.style.backgroundPosition = 'center';
-                          target.parentElement!.style.minHeight = '500px';
-                        }
-                      }}
-                    />
-                    
-                    {/* Lightning Spots */}
-                    {branchesData.map((branch) => (
-                      <LightningSpot
-                        key={branch.id}
-                        branch={branch}
-                        onClick={() => handleBranchClick(branch)}
-                      />
-                    ))}
-                    
-                    {/* Map Legend */}
-                    <div className="absolute bottom-4 left-4 bg-white bg-opacity-90 rounded-lg p-3 shadow-lg">
-                      <div className="flex items-center gap-2 text-sm">
-                        <div className="w-3 h-3 bg-mtta-green rounded-full animate-pulse"></div>
-                        <span className="text-gray-700">Салбар холбоо</span>
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Дэлгэрэнгүй мэдээлэл харахын тулд цэг дээр дарна уу
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
               {/* Google Maps for Domestic Branches */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Map className="h-5 w-5 text-mtta-green" />
-                    Google Maps дээрх салбарууд
+                    Салбар холбоодын байршил
                   </CardTitle>
                   <p className="text-sm text-gray-600">
                     Салбарын дэлгэрэнгүй мэдээллийг харахын тулд маркер дээр дарна уу
