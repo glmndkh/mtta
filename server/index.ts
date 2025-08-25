@@ -43,6 +43,7 @@ app.get("/public-objects/*", async (req, res) => {
   console.log(`[public-objects] Requested file path: ${filePath}`);
 
   try {
+    const objectStorageService = new ObjectStorageService();
     const objectFile = await objectStorageService.searchPublicObject(filePath);
     if (!objectFile) {
       console.log(`[public-objects] File not found: ${filePath}`);
