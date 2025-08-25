@@ -47,7 +47,7 @@ export function getImageUrl(imageUrl: string | undefined | null): string {
     console.log('getImageUrl: Already has /api/public-objects/ prefix');
     return cleanUrl;
   }
-  
+
   if (cleanUrl.startsWith('/public-objects/')) {
     console.log('getImageUrl: Already has /public-objects/ prefix');
     return cleanUrl;

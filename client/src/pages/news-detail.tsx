@@ -322,16 +322,17 @@ export default function NewsDetail() {
                         console.log('Processed URL:', getImageUrl(article.imageUrl));
                         
                         const target = e.currentTarget;
-                        const originalSrc = target.src;
                         
-                        // Try different URL formats in sequence
-                        if (originalSrc.includes('/public-objects/')) {
-                          // Try direct object path
+                        if (!target.hasAttribute('data-fallback-tried')) {
+                          target.setAttribute('data-fallback-tried', 'true');
+                          // Try direct public-objects path
                           const cleanPath = article.imageUrl.replace(/^\/+/, '').replace(/^objects\//, '');
                           target.src = `/public-objects/${cleanPath}`;
-                        } else if (!originalSrc.includes('/api/')) {
-                          // Try API endpoint
-                          target.src = `/api/public-objects/${article.imageUrl.replace(/^\/+/, '').replace(/^objects\//, '')}`;
+                        } else if (!target.hasAttribute('data-fallback-2-tried')) {
+                          target.setAttribute('data-fallback-2-tried', 'true');
+                          // Try with objects prefix
+                          const cleanPath = article.imageUrl.replace(/^\/+/, '').replace(/^objects\//, '');
+                          target.src = `/public-objects/objects/${cleanPath}`;
                         } else {
                           // Final fallback to placeholder
                           target.style.display = 'none';

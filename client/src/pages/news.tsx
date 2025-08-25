@@ -836,14 +836,34 @@ export default function News() {
                           loading="lazy"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            // Try alternative path formats before giving up
-                            const originalSrc = target.src;
-                            if (originalSrc.includes('/objects/') && !originalSrc.includes('/public-objects/')) {
-                              target.src = originalSrc.replace('/objects/', '/public-objects/objects/');
-                            } else if (!target.hasAttribute('data-fallback-tried')) {
+                            console.error('Image failed to load:', article.imageUrl, 'processed as:', getImageUrl(article.imageUrl));
+                            
+                            if (!target.hasAttribute('data-fallback-tried')) {
                               target.setAttribute('data-fallback-tried', 'true');
-                              target.src = getImageUrl('');
+                              // Try direct public-objects path
+                              const cleanPath = article.imageUrl.replace(/^\/+/, '').replace(/^objects\//, '');
+                              target.src = `/public-objects/${cleanPath}`;
+                            } else if (!target.hasAttribute('data-fallback-2-tried')) {
+                              target.setAttribute('data-fallback-2-tried', 'true');
+                              // Try with objects prefix
+                              const cleanPath = article.imageUrl.replace(/^\/+/, '').replace(/^objects\//, '');
+                              target.src = `/public-objects/objects/${cleanPath}`;
+                            } else {
+                              // Final fallback to placeholder
+                              target.style.display = 'none';
+                              target.parentElement!.classList.add('flex', 'items-center', 'justify-center', 'bg-gray-100');
+                              target.parentElement!.innerHTML = `
+                                <div class="flex flex-col items-center justify-center text-gray-400">
+                                  <svg class="w-8 h-8 mb-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                                  </svg>
+                                  <span class="text-xs">Зураг ачаалагдсангүй</span>
+                                </div>
+                              `;
                             }
+                          }}
+                          onLoad={() => {
+                            console.log('Image loaded successfully:', getImageUrl(article.imageUrl));
                           }}
                         />
                       </div>

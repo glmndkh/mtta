@@ -204,12 +204,20 @@ export class ObjectStorageService {
     // Extract the entity ID from the path
     const entityId = rawObjectPath.slice(objectEntityDir.length);
     
-    // Ensure we don't create duplicate path segments
-    if (entityId.startsWith('objects/')) {
-      return `/${entityId}`;
+    // Clean up the entity ID to avoid duplicates
+    let cleanEntityId = entityId;
+    
+    // Remove duplicate uploads/ segments
+    if (cleanEntityId.includes('uploads/uploads/')) {
+      cleanEntityId = cleanEntityId.replace(/uploads\/uploads\//, 'uploads/');
     }
     
-    return `/objects/${entityId}`;
+    // Ensure we don't create duplicate path segments
+    if (cleanEntityId.startsWith('objects/')) {
+      return `/${cleanEntityId}`;
+    }
+    
+    return `/objects/${cleanEntityId}`;
   }
 
   // Tries to set the ACL policy for the object entity and return the normalized path.
