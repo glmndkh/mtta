@@ -435,6 +435,14 @@ export default function AdminDashboard() {
         trainingInfo: '',
         extraData: [],
       };
+    } else if (selectedTab === 'teams') {
+      defaultData = {
+        name: '',
+        ownerName: '',
+        coachName: '',
+        sponsorLogo: '',
+        playerIds: [],
+      };
     }
 
     setFormData(defaultData);
@@ -2558,6 +2566,8 @@ export default function AdminDashboard() {
         return formData.clubId && (formData.userId || formData.name);
       case 'champions':
         return formData.name && formData.year;
+      case 'teams':
+        return formData.name;
       default:
         return true;
     }
@@ -2575,6 +2585,191 @@ export default function AdminDashboard() {
       endpoint: `/api/admin/${selectedTab}`,
       data: sanitizeFormData(formData),
     });
+  };
+
+  // Function to render the leagues tab content
+  const renderLeaguesTab = () => {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-wrap justify-between items-center gap-4">
+          <h2 className="text-2xl font-bold">Лигүүд</h2>
+          <Button onClick={openCreateDialog}>
+            <Plus className="w-4 h-4 mr-2" />
+            Лиг нэмэх
+          </Button>
+        </div>
+
+        {leaguesLoading ? (
+          <div>Ачааллаж байна...</div>
+        ) : leaguesError ? (
+          <div className="text-red-500">Лигүүдийг ачаалахад алдаа гарлаа: {leaguesError.message}</div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Нэр</TableHead>
+                <TableHead>Улирал</TableHead>
+                <TableHead>Эхлэх огноо</TableHead>
+                <TableHead>Дуусах огноо</TableHead>
+                <TableHead>Багууд</TableHead>
+                <TableHead>Үйлдэл</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {leagues && Array.isArray(leagues) ? leagues.map((league: any) => (
+                <TableRow key={league.id}>
+                  <TableCell>{league.name}</TableCell>
+                  <TableCell>{league.season || '-'}</TableCell>
+                  <TableCell>{league.startDate ? new Date(league.startDate).toLocaleDateString('mn-MN') : '-'}</TableCell>
+                  <TableCell>{league.endDate ? new Date(league.endDate).toLocaleDateString('mn-MN') : '-'}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">
+                        {league.teams?.length || 0} баг
+                      </Badge>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => openTeamEnrollmentDialog(league)}
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Баг нэмэх
+                      </Button>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="sm" variant="outline">
+                            <Settings className="w-4 h-4 mr-1" />
+                            Удирдах
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onClick={() => handleTournamentManagement(league.id, 'manage-league')}>
+                            <Settings className="w-4 h-4 mr-2" />
+                            Удирдлагын самбар нээх
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <Button size="sm" variant="outline" onClick={() => openEditDialog(league)}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleDelete(league.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8">
+                    Лиг байхгүй байна
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        )}
+      </div>
+    );
+  };
+
+  // Function to render the teams tab content
+  const renderTeamsTab = () => {
+    const filteredTeams = teams && Array.isArray(teams) ? teams.filter((team: any) => {
+      const searchText = userFilter.toLowerCase(); // Reusing userFilter for team search for simplicity
+      return !searchText ||
+             team.name?.toLowerCase().includes(searchText) ||
+             (team.ownerName || "").toLowerCase().includes(searchText) ||
+             (team.coachName || "").toLowerCase().includes(searchText);
+    }) : [];
+
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-wrap justify-between items-center gap-4">
+          <h2 className="text-2xl font-bold">Багууд</h2>
+          <div className="flex-1 max-w-sm">
+            <Input
+              placeholder="Баг хайх..."
+              value={userFilter} // Reusing userFilter
+              onChange={(e) => setUserFilter(e.target.value)}
+            />
+          </div>
+          <Button onClick={openCreateDialog}>
+            <Plus className="w-4 h-4 mr-2" />
+            Баг нэмэх
+          </Button>
+        </div>
+
+        {teamsLoading ? (
+          <div>Ачааллаж байна...</div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Нэр</TableHead>
+                <TableHead>Эзэн</TableHead>
+                <TableHead>Дасгалжуулагч</TableHead>
+                <TableHead>Тоглогчид</TableHead>
+                <TableHead>Үйлдэл</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredTeams.map((team: any) => (
+                <TableRow key={team.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {team.logoUrl && (
+                        <img src={team.logoUrl} alt={team.name} className="w-8 h-8 rounded-full" />
+                      )}
+                      <div>
+                        <div className="font-medium">{team.name}</div>
+                        {team.sponsorLogo && (
+                          <div className="text-sm text-muted-foreground">
+                            <img 
+                              src={team.sponsorLogo} 
+                              alt="Sponsor" 
+                              className="w-4 h-4 inline mr-1"
+                              onError={(e) => {
+                                console.error('Sponsor logo load error:', e);
+                                e.currentTarget.style.display = 'none'; 
+                              }}
+                            />
+                            Ивээн тэтгэгч
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{team.ownerName || '-'}</TableCell>
+                  <TableCell>{team.coachName || '-'}</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">
+                      {team.players?.length || 0} тоглогч
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => openEditDialog(team)}>
+                        <Settings className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => openEditDialog(team)}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleDelete(team.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -2635,8 +2830,8 @@ export default function AdminDashboard() {
             Тэмцээн
           </TabsTrigger>
           <TabsTrigger value="leagues" className="admin-tab-trigger flex items-center gap-2 data-[state=active]:bg-green-600 font-semibold text-base">
-            <Calendar className="w-4 h-4" />
-            Лиг
+            <Trophy className="w-4 h-4" />
+            Лигүүд
           </TabsTrigger>
           <TabsTrigger value="teams" className="admin-tab-trigger flex items-center gap-2 data-[state=active]:bg-green-600 font-semibold text-base">
             <Users className="w-4 h-4" />
@@ -2829,93 +3024,7 @@ export default function AdminDashboard() {
               <CardDescription>Лигүүдийг нэмэх, засах, устгах</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex flex-wrap justify-between items-center gap-4">
-                  <h2 className="text-2xl font-bold">Лигүүд</h2>
-                  <Button onClick={openCreateDialog}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Лиг нэмэх
-                  </Button>
-                </div>
-
-                {leaguesLoading ? (
-                  <div>Ачааллаж байна...</div>
-                ) : leaguesError ? (
-                  <div className="text-red-600">
-                    Лигүүдийг ачаалахад алдаа гарлаа: {leaguesError.message}
-                  </div>
-                ) : !leagues || leagues.length === 0 ? (
-                  <div>Лиг байхгүй байна</div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Нэр</TableHead>
-                        <TableHead>Улирал</TableHead>
-                        <TableHead>Эхлэх огноо</TableHead>
-                        <TableHead>Дуусах огноо</TableHead>
-                        <TableHead>Багууд</TableHead>
-                        <TableHead>Үйлдэл</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {leagues && Array.isArray(leagues) && leagues.length > 0 ? leagues.map((league: any) => (
-                        <TableRow key={league.id}>
-                          <TableCell>{league.name}</TableCell>
-                          <TableCell>{league.season}</TableCell>
-                          <TableCell>{new Date(league.startDate).toLocaleDateString('mn-MN')}</TableCell>
-                          <TableCell>{new Date(league.endDate).toLocaleDateString('mn-MN')}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="secondary">
-                                {league.teams?.length || 0} баг
-                              </Badge>
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => openTeamEnrollmentDialog(league)}
-                              >
-                                <Plus className="w-4 h-4 mr-1" />
-                                Баг нэмэх
-                              </Button>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button size="sm" variant="outline">
-                                    <Settings className="w-4 h-4 mr-1" />
-                                    Удирдах
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                  <DropdownMenuItem onClick={() => handleTournamentManagement(league.id, 'manage-league')}>
-                                    <Settings className="w-4 h-4 mr-2" />
-                                    Удирдлагын самбар нээх
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                              <Button size="sm" variant="outline" onClick={() => openEditDialog(league)}>
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                              <Button size="sm" variant="destructive" onClick={() => handleDelete(league.id)}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )) : (
-                        <TableRow>
-                          <TableCell colSpan={6} className="text-center py-8">
-                            Лиг байхгүй байна
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                )}
-              </div>
+              {renderLeaguesTab()}
             </CardContent>
           </Card>
         </TabsContent>
@@ -2987,80 +3096,7 @@ export default function AdminDashboard() {
               <CardDescription>Лигийн багуудыг нэмэх, засах, устгах</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex flex-wrap justify-between items-center gap-4">
-                  <h2 className="text-2xl font-bold">Лигийн багууд</h2>
-                  <Button onClick={openCreateDialog}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Баг нэмэх
-                  </Button>
-                </div>
-
-                {teamsLoading ? (
-                  <div>Ачааллаж байна...</div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Нэр</TableHead>
-                        <TableHead>Эзэн</TableHead>
-                        <TableHead>Дасгалжуулагч</TableHead>
-                        <TableHead>Тоглогчид</TableHead>
-                        <TableHead>Үйлдэл</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {teams && Array.isArray(teams) ? teams.map((team: any) => (
-                        <TableRow key={team.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {team.logoUrl && (
-                                <img src={team.logoUrl} alt={team.name} className="w-8 h-8 rounded-full" />
-                              )}
-                              <div>
-                                <div className="font-medium">{team.name}</div>
-                                {team.sponsorLogo && (
-                                  <div className="text-sm text-muted-foreground">
-                                    <img 
-                                      src={team.sponsorLogo} 
-                                      alt="Sponsor" 
-                                      className="w-4 h-4 inline mr-1"
-                                      onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                      }}
-                                    />
-                                    Ивээн тэтгэгч
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>{team.ownerName || '-'}</TableCell>
-                          <TableCell>{team.coachName || '-'}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">
-                              {team.players?.length || 0} тоглогч
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button size="sm" variant="outline" onClick={() => openEditDialog(team)}>
-                                <Settings className="w-4 h-4" />
-                              </Button>
-                              <Button size="sm" variant="outline" onClick={() => openEditDialog(team)}>
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                              <Button size="sm" variant="destructive" onClick={() => handleDelete(team.id)}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )) : null}
-                    </TableBody>
-                  </Table>
-                )}
-              </div>
+              {renderTeamsTab()}
             </CardContent>
           </Card>
         </TabsContent>

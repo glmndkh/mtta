@@ -2204,6 +2204,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // League teams management
+  app.get("/api/admin/teams", requireAuth, isAdminRole, async (_req, res) => {
+    try {
+      const teams = await storage.getAllLeagueTeams();
+      res.json(teams);
+    } catch (e) {
+      console.error("Error fetching league teams:", e);
+      res.status(500).json({ message: "Багуудыг авахад алдаа гарлаа" });
+    }
+  });
+
+  app.post("/api/admin/teams", requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const { name, logoUrl, sponsorLogo, ownerName, coachName, playerIds, leagueId } = req.body;
+      
+      if (!name) {
+        return res.status(400).json({ message: "Багийн нэр заавал оруулна уу" });
+      }
+
+      // Create league team
+      const team = await storage.createLeagueTeam(leagueId || 'default', {
+        name,
+        logoUrl,
+        sponsorLogo,
+        ownerName,
+        coachName
+      });
+
+      // Add players to team if provided
+      if (playerIds && Array.isArray(playerIds)) {
+        for (const playerId of playerIds) {
+          // Get player name from users table
+          const user = await storage.getUser(playerId);
+          const playerName = user ? `${user.firstName} ${user.lastName}` : 'Unknown Player';
+          
+          await storage.addPlayerToLeagueTeam(team.id, playerId, playerName);
+        }
+      }
+
+      res.json(team);
+    } catch (e) {
+      console.error("Error creating league team:", e);
+      res.status(400).json({ message: "Баг үүсгэхэд алдаа гарлаа" });
+    }
+  });
+
+  app.put("/api/admin/teams/:id", requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const { name, logoUrl, sponsorLogo, ownerName, coachName } = req.body;
+      
+      const team = await storage.updateLeagueTeam(req.params.id, {
+        name,
+        logoUrl,
+        sponsorLogo,
+        ownerName,
+        coachName
+      });
+
+      if (!team) {
+        return res.status(404).json({ message: "Баг олдсонгүй" });
+      }
+
+      res.json(team);
+    } catch (e) {
+      console.error("Error updating league team:", e);
+      res.status(400).json({ message: "Баг засварлахад алдаа гарлаа" });
+    }
+  });
+
+  app.delete("/api/admin/teams/:id", requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const success = await storage.deleteLeagueTeam(req.params.id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Баг олдсонгүй" });
+      }
+
+      res.json({ message: "Баг амжилттай устгагдлаа" });
+    } catch (e) {
+      console.error("Error deleting league team:", e);
+      res.status(400).json({ message: "Баг устгахад алдаа гарлаа" });
+    }
+  });
+
+  app.post("/api/admin/leagues/:leagueId/teams", requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const { leagueId } = req.params;
+      const { teamId } = req.body;
+
+      if (!teamId) {
+        return res.status(400).json({ message: "Багийн ID заавал оруулна уу" });
+      }
+
+      await storage.addTeamToLeague(leagueId, teamId);
+      res.json({ message: "Баг лигт амжилттай нэмэгдлээ" });
+    } catch (e) {
+      console.error("Error adding team to league:", e);
+      res.status(400).json({ message: "Баг лигт нэмэхэд алдаа гарлаа" });
+    }
+  });
+
   app.post("/api/admin/leagues", requireAuth, isAdminRole, async (req, res) => {
     try {
       const data: any = { ...req.body };
