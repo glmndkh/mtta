@@ -1929,7 +1929,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     isAdminRole,
     async (req, res) => {
       try {
-        const branch = await storage.updateBranch(req.params.id, req.body);
+        // Clean and validate the data before updating
+        const updateData = {
+          name: req.body.name || "",
+          leader: req.body.leader || null,
+          leadershipMembers: req.body.leadershipMembers || null,
+          address: req.body.address || null,
+          location: req.body.location || null,
+          activities: req.body.activities || null,
+          imageUrl: req.body.imageUrl || null,
+          coordinates: req.body.coordinates || null
+        };
+
+        const branch = await storage.updateBranch(req.params.id, updateData);
         if (!branch)
           return res.status(404).json({ message: "Салбар холбоо олдсонгүй" });
         res.json(branch);
