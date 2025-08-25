@@ -429,6 +429,8 @@ export default function AdminDashboard() {
         name: '',
         year: new Date().getFullYear(), // Default to current year
         imageUrl: '',
+        gender: '',
+        championType: ''
       };
     } else if (selectedTab === 'judges') {
       defaultData = {
@@ -506,7 +508,7 @@ export default function AdminDashboard() {
   const renderUsersTab = () => {
     const filteredUsers = users && Array.isArray(users) ? users.filter((user: any) => {
       const searchText = userFilter.toLowerCase();
-      return !searchText || 
+      return !searchText ||
              user.firstName?.toLowerCase().includes(searchText) ||
              user.lastName?.toLowerCase().includes(searchText) ||
              user.email?.toLowerCase().includes(searchText) ||
@@ -969,9 +971,9 @@ export default function AdminDashboard() {
                 <TableCell>{sponsor.name}</TableCell>
                 <TableCell>
                   {sponsor.logoUrl ? (
-                    <img 
-                      src={sponsor.logoUrl} 
-                      alt={sponsor.name} 
+                    <img
+                      src={sponsor.logoUrl}
+                      alt={sponsor.name}
                       className="w-12 h-12 object-contain rounded"
                     />
                   ) : (
@@ -1022,20 +1024,28 @@ export default function AdminDashboard() {
             <TableRow>
               <TableHead>Нэр</TableHead>
               <TableHead>Он</TableHead>
+              <TableHead>Хүйс</TableHead>
+              <TableHead>Аваргын төрөл</TableHead>
               <TableHead>Зураг</TableHead>
               <TableHead>Үйлдэл</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {champions && Array.isArray(champions) ? champions.map((champ: any) => (
-              <TableRow key={champ.id}>
-                <TableCell>{champ.name}</TableCell>
-                <TableCell>{champ.year}</TableCell>
+            {champions && Array.isArray(champions) ? champions.map((champion: any) => (
+              <TableRow key={champion.id}>
+                <TableCell>{champion.name}</TableCell>
+                <TableCell>{champion.year}</TableCell>
                 <TableCell>
-                  {champ.imageUrl ? (
+                  {champion.gender === 'male' ? 'Эрэгтэй' :
+                   champion.gender === 'female' ? 'Эмэгтэй' :
+                   champion.gender === 'other' ? 'Бусад' : '-'}
+                </TableCell>
+                <TableCell>{champion.championType || '-'}</TableCell>
+                <TableCell>
+                  {champion.imageUrl ? (
                     <img
-                      src={champ.imageUrl}
-                      alt={champ.name}
+                      src={champion.imageUrl}
+                      alt={champion.name}
                       className="w-12 h-12 object-cover rounded"
                     />
                   ) : (
@@ -1046,10 +1056,10 @@ export default function AdminDashboard() {
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => openEditDialog(champ)}>
+                    <Button size="sm" variant="outline" onClick={() => openEditDialog(champion)}>
                       <Pencil className="w-4 h-4" />
                     </Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(champ.id)}>
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(champion.id)}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
@@ -1941,13 +1951,13 @@ export default function AdminDashboard() {
               </ObjectUploader>
               {formData.sponsorLogo && (
                 <div className="mt-2">
-                  <img 
-                    src={formData.sponsorLogo} 
-                    alt="Sponsor Logo" 
+                  <img
+                    src={formData.sponsorLogo}
+                    alt="Sponsor Logo"
                     className="w-16 h-16 object-contain border rounded"
                     onError={(e) => {
                       console.error('Image load error:', e);
-                      e.currentTarget.style.display = 'none'; 
+                      e.currentTarget.style.display = 'none';
                     }}
                   />
                 </div>
@@ -1955,8 +1965,8 @@ export default function AdminDashboard() {
             </div>
             <div>
               <Label htmlFor="playerIds">Тоглогчид сонгох</Label>
-              <Select 
-                value={formData.selectedPlayerId || ""} 
+              <Select
+                value={formData.selectedPlayerId || ""}
                 onValueChange={(value) => {
                   if (value && !formData.playerIds?.includes(value)) {
                     setFormData({
@@ -2086,15 +2096,15 @@ export default function AdminDashboard() {
 
                         // Update form with the normalized object path
                         setFormData({
-                          ...formData, 
+                          ...formData,
                           imageUrl: aclData.objectPath
                         });
 
                         toast({ title: "Зураг амжилттай хуулагдлаа" });
                       } catch (error) {
                         console.error("Error setting ACL:", error);
-                        toast({ 
-                          title: "Алдаа", 
+                        toast({
+                          title: "Алдаа",
                           description: "Зураг хуулагдсан боловч зөвшөөрөл тохируулахад алдаа гарлаа",
                           variant: "destructive"
                         });
@@ -2117,8 +2127,8 @@ export default function AdminDashboard() {
                 <LinkIcon className="w-4 h-4" />
                 Холбоос төрөл
               </Label>
-              <Select 
-                value={formData.linkType || 'custom'} 
+              <Select
+                value={formData.linkType || 'custom'}
                 onValueChange={(value) => setFormData({...formData, linkType: value, linkUrl: ''})}
               >
                 <SelectTrigger>
@@ -2133,13 +2143,13 @@ export default function AdminDashboard() {
             {formData.linkType === 'news' ? (
               <div>
                 <Label htmlFor="selectedNews">Мэдээ нийтлэл сонгох</Label>
-                <Select 
-                  value={formData.selectedNewsId || ''} 
+                <Select
+                  value={formData.selectedNewsId || ''}
                   onValueChange={(value) => {
                     const selectedArticle = Array.isArray(news) ? news.find((article: any) => article.id === value) : null;
                     setFormData({
-                      ...formData, 
-                      selectedNewsId: value, 
+                      ...formData,
+                      selectedNewsId: value,
                       linkUrl: `/news/${value}`,
                       buttonText: formData.buttonText || 'Дэлгэрэнгүй үзэх'
                     });
@@ -2265,15 +2275,15 @@ export default function AdminDashboard() {
 
                         // Update form with the normalized object path
                         setFormData({
-                          ...formData, 
+                          ...formData,
                           logoUrl: aclData.objectPath
                         });
 
                         toast({ title: "Лого амжилттай хуулагдлаа" });
                       } catch (error) {
                         console.error("Error setting ACL:", error);
-                        toast({ 
-                          title: "Алдаа", 
+                        toast({
+                          title: "Алдаа",
                           description: "Лого хуулагдсан боловч зөвшөөрөл тохируулахад алдаа гарлаа",
                           variant: "destructive"
                         });
@@ -2286,9 +2296,9 @@ export default function AdminDashboard() {
                 </ObjectUploader>
                 {formData.logoUrl && (
                   <div className="flex items-center gap-2">
-                    <img 
-                      src={formData.logoUrl} 
-                      alt="Sponsor Logo" 
+                    <img
+                      src={formData.logoUrl}
+                      alt="Sponsor Logo"
                       className="w-16 h-16 object-contain border rounded"
                     />
                     <div className="text-sm text-green-600">
@@ -2430,7 +2440,36 @@ export default function AdminDashboard() {
                 type="number"
                 value={formData.year || ''}
                 onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
+                required
               />
+            </div>
+            <div>
+              <Label htmlFor="gender">Хүйс</Label>
+              <select
+                id="gender"
+                value={formData.gender || ''}
+                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">Хүйс сонгох</option>
+                <option value="male">Эрэгтэй</option>
+                <option value="female">Эмэгтэй</option>
+                <option value="other">Бусад</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="championType">Аваргын төрөл</Label>
+              <select
+                id="championType"
+                value={formData.championType || ''}
+                onChange={(e) => setFormData({ ...formData, championType: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">Төрөл сонгох</option>
+                <option value="өсвөрийн">Өсвөрийн</option>
+                <option value="ахмадын">Ахмадын</option>
+                <option value="улсын">Улсын</option>
+              </select>
             </div>
             <div>
               <Label className="flex items-center gap-2">
@@ -2527,7 +2566,7 @@ export default function AdminDashboard() {
       case 'coaches':
         return formData.clubId && (formData.userId || formData.name);
       case 'champions':
-        return formData.name && formData.year;
+        return formData.name && formData.year && formData.gender && formData.championType;
       case 'teams':
         return formData.name;
       default:
@@ -2589,8 +2628,8 @@ export default function AdminDashboard() {
                       <Badge variant="secondary">
                         {league.teams?.length || 0} баг
                       </Badge>
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         variant="outline"
                         onClick={() => openTeamEnrollmentDialog(league)}
                       >
@@ -2690,13 +2729,13 @@ export default function AdminDashboard() {
                         <div className="font-medium">{team.name}</div>
                         {team.sponsorLogo && (
                           <div className="text-sm text-muted-foreground">
-                            <img 
-                              src={team.sponsorLogo} 
-                              alt="Sponsor" 
+                            <img
+                              src={team.sponsorLogo}
+                              alt="Sponsor"
                               className="w-4 h-4 inline mr-1"
                               onError={(e) => {
                                 console.error('Sponsor logo load error:', e);
-                                e.currentTarget.style.display = 'none'; 
+                                e.currentTarget.style.display = 'none';
                               }}
                             />
                             Ивээн тэтгэгч
@@ -3189,7 +3228,7 @@ export default function AdminDashboard() {
           <div className="space-y-4">
             {teams && Array.isArray(teams) ? (
               <div className="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto">
-                {teams.filter((team: any) => 
+                {teams.filter((team: any) =>
                   !selectedLeague?.teams?.some((enrolledTeam: any) => enrolledTeam.id === team.id)
                 ).map((team: any) => (
                   <div key={team.id} className="flex items-center justify-between p-3 border rounded-lg">

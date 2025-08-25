@@ -392,11 +392,16 @@ export const clubCoaches = pgTable("club_coaches", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Champion type enum
+export const championTypeEnum = pgEnum("champion_type", ["өсвөрийн", "ахмадын", "улсын"]);
+
 // Past champions table
 export const pastChampions = pgTable("past_champions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name").notNull(),
   year: integer("year").notNull(),
+  gender: genderEnum("gender"),
+  championType: championTypeEnum("champion_type"),
   imageUrl: varchar("image_url"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -564,6 +569,9 @@ export const insertClubCoachSchema = createInsertSchema(clubCoaches).omit({
 export const insertChampionSchema = createInsertSchema(pastChampions).omit({
   id: true,
   createdAt: true,
+}).extend({
+  gender: z.enum(["male", "female", "other"]).optional(),
+  championType: z.enum(["өсвөрийн", "ахмадын", "улсын"]).optional(),
 });
 
 export const insertMembershipSchema = createInsertSchema(memberships).omit({
