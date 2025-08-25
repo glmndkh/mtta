@@ -98,15 +98,31 @@ function LatestNewsSidebar({ currentNewsId }: { currentNewsId: string | undefine
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                         onError={(e) => {
                           console.error('Sidebar image failed to load:', news.imageUrl);
-                          const target = e.currentTarget;
-                          target.style.display = 'none';
-                          target.parentElement!.innerHTML = `
-                            <div class="w-full h-full flex items-center justify-center bg-gray-200">
-                              <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                              </svg>
-                            </div>
-                          `;
+                          const target = e.currentTarget as HTMLImageElement;
+                          const container = target.parentElement;
+                          
+                          if (!target.hasAttribute('data-sidebar-fallback-tried')) {
+                            target.setAttribute('data-sidebar-fallback-tried', 'true');
+                            // Try fallback path
+                            const cleanPath = news.imageUrl?.replace(/^\/+/, '').replace(/^(public-)?objects\//, '') || '';
+                            target.src = `/public-objects/${cleanPath}`;
+                            console.log('Sidebar trying fallback:', target.src);
+                          } else {
+                            // Show placeholder
+                            target.style.display = 'none';
+                            if (container) {
+                              container.innerHTML = `
+                                <div class="w-full h-full flex items-center justify-center bg-gray-200">
+                                  <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                                  </svg>
+                                </div>
+                              `;
+                            }
+                          }
+                        }}
+                        onLoad={() => {
+                          console.log('Sidebar image loaded successfully:', getImageUrl(news.imageUrl));
                         }}
                       />
                       <figcaption className="sr-only">{news.title}</figcaption>
@@ -321,30 +337,41 @@ export default function NewsDetail() {
                         console.log('Original URL:', article.imageUrl);
                         console.log('Processed URL:', getImageUrl(article.imageUrl));
                         
-                        const target = e.currentTarget;
+                        const target = e.currentTarget as HTMLImageElement;
+                        const container = target.parentElement;
                         
                         if (!target.hasAttribute('data-fallback-tried')) {
                           target.setAttribute('data-fallback-tried', 'true');
-                          // Try direct public-objects path
-                          const cleanPath = article.imageUrl.replace(/^\/+/, '').replace(/^objects\//, '');
+                          // Try multiple fallback paths
+                          const cleanPath = article.imageUrl.replace(/^\/+/, '').replace(/^(public-)?objects\//, '');
                           target.src = `/public-objects/${cleanPath}`;
+                          console.log('Trying fallback 1:', target.src);
                         } else if (!target.hasAttribute('data-fallback-2-tried')) {
                           target.setAttribute('data-fallback-2-tried', 'true');
                           // Try with objects prefix
-                          const cleanPath = article.imageUrl.replace(/^\/+/, '').replace(/^objects\//, '');
+                          const cleanPath = article.imageUrl.replace(/^\/+/, '').replace(/^(public-)?objects\//, '');
                           target.src = `/public-objects/objects/${cleanPath}`;
+                          console.log('Trying fallback 2:', target.src);
+                        } else if (!target.hasAttribute('data-fallback-3-tried')) {
+                          target.setAttribute('data-fallback-3-tried', 'true');
+                          // Try direct path without any modification
+                          target.src = article.imageUrl.startsWith('/') ? article.imageUrl : `/${article.imageUrl}`;
+                          console.log('Trying fallback 3:', target.src);
                         } else {
                           // Final fallback to placeholder
+                          console.log('All fallbacks failed, showing placeholder');
                           target.style.display = 'none';
-                          target.parentElement?.classList.add('flex', 'items-center', 'justify-center');
-                          target.parentElement!.innerHTML = `
-                            <div class="flex flex-col items-center justify-center text-gray-400">
-                              <svg class="w-16 h-16 mb-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                              </svg>
-                              <span class="text-sm">Зураг ачаалагдсангүй</span>
-                            </div>
-                          `;
+                          if (container) {
+                            container.classList.add('flex', 'items-center', 'justify-center');
+                            container.innerHTML = `
+                              <div class="flex flex-col items-center justify-center text-gray-400 py-8">
+                                <svg class="w-16 h-16 mb-2" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                                </svg>
+                                <span class="text-sm">Зураг ачаалагдсангүй</span>
+                              </div>
+                            `;
+                          }
                         }
                       }}
                       onLoad={() => {
@@ -395,8 +422,21 @@ export default function NewsDetail() {
                           onError={(e) => {
                             console.error('Author profile image failed to load:', article.author?.profileImageUrl);
                             console.log('Processed author URL:', getImageUrl(article.author?.profileImageUrl || ''));
-                            // Fallback to user icon
-                            e.currentTarget.style.display = 'none';
+                            const target = e.currentTarget as HTMLImageElement;
+                            const container = target.parentElement;
+                            
+                            if (!target.hasAttribute('data-author-fallback-tried')) {
+                              target.setAttribute('data-author-fallback-tried', 'true');
+                              const cleanPath = article.author?.profileImageUrl?.replace(/^\/+/, '').replace(/^(public-)?objects\//, '') || '';
+                              target.src = `/public-objects/${cleanPath}`;
+                              console.log('Author trying fallback:', target.src);
+                            } else {
+                              // Fallback to user icon
+                              target.style.display = 'none';
+                              if (container) {
+                                container.innerHTML = '<div class="h-6 w-6 text-gray-400"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg></div>';
+                              }
+                            }
                           }}
                           onLoad={() => {
                             console.log('Author profile image loaded successfully:', getImageUrl(article.author?.profileImageUrl || ''));
