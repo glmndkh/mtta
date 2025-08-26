@@ -112,7 +112,7 @@ const AboutPage = () => {
                     <div className="flex flex-col md:flex-row gap-6 items-start">
                       <div className="flex-shrink-0">
                         <img 
-                          src={getImageUrl("/objects/uploads/president-gantulga.jpg")}
+                          src="objects/uploads/president-gantulga.jpg"
                           alt="Ц. Гантулга"
                           className="w-32 h-40 object-cover rounded-lg border-2 border-green-400/30"
                           onError={(e) => {
@@ -122,17 +122,19 @@ const AboutPage = () => {
                             if (!target.hasAttribute('data-fallback-tried')) {
                               target.setAttribute('data-fallback-tried', 'true');
                               // Try alternative paths
-                              if (target.src.includes('/objects/')) {
-                                target.src = '/uploads/president-gantulga.jpg';
-                              } else {
-                                target.style.display = 'none';
-                                const container = target.parentElement;
-                                if (container && !container.querySelector('.fallback-text')) {
-                                  const fallback = document.createElement('div');
-                                  fallback.className = 'fallback-text w-32 h-40 bg-gray-200 dark:bg-gray-700 rounded-lg border-2 border-green-400/30 flex items-center justify-center text-xs text-gray-500';
-                                  fallback.textContent = 'Зураг байхгүй';
-                                  container.appendChild(fallback);
-                                }
+                              target.src = 'uploads/president-gantulga.jpg';
+                            } else if (!target.hasAttribute('data-fallback-2-tried')) {
+                              target.setAttribute('data-fallback-2-tried', 'true');
+                              // Try direct path from public folder
+                              target.src = '/objects/uploads/president-gantulga.jpg';
+                            } else {
+                              target.style.display = 'none';
+                              const container = target.parentElement;
+                              if (container && !container.querySelector('.fallback-text')) {
+                                const fallback = document.createElement('div');
+                                fallback.className = 'fallback-text w-32 h-40 bg-gray-200 dark:bg-gray-700 rounded-lg border-2 border-green-400/30 flex items-center justify-center text-xs text-gray-500';
+                                fallback.textContent = 'Зураг байхгүй';
+                                container.appendChild(fallback);
                               }
                             }
                           }}
