@@ -338,6 +338,7 @@ export default function AdminDashboard() {
   };
 
   const openEditDialog = (item: any) => {
+    setEditingItem(item);
     if (selectedTab === 'champions') {
       setFormData({
         name: item.name || '',
