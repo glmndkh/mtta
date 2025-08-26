@@ -23,6 +23,7 @@ import RichTextEditor from "@/components/rich-text-editor";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { getImageUrl } from "@/lib/utils";
 
 // Import Form components
 import {
@@ -1066,18 +1067,26 @@ export default function AdminDashboard() {
                 <TableCell>
                   {champion.imageUrl ? (
                     <img
-                      src={champion.imageUrl.startsWith('/public-objects') ? champion.imageUrl : `/public-objects${champion.imageUrl}`}
+                      src={getImageUrl(champion.imageUrl)}
                       alt={champion.name}
                       className="w-12 h-12 object-cover rounded"
                       onError={(e) => {
-                        // Try fallback URLs if the image fails to load
-                        if (e.currentTarget.src.includes('/public-objects')) {
-                          e.currentTarget.src = champion.imageUrl;
-                        } else if (!e.currentTarget.src.includes('/objects/')) {
-                          e.currentTarget.src = `/objects${champion.imageUrl}`;
+                        const target = e.currentTarget as HTMLImageElement;
+                        console.error('Admin champion image failed to load:', champion.imageUrl);
+                        
+                        if (!target.hasAttribute('data-fallback-tried')) {
+                          target.setAttribute('data-fallback-tried', 'true');
+                          // Try direct objects path
+                          const cleanPath = champion.imageUrl.replace(/^\/+/, '').replace(/^(public-)?objects\//, '');
+                          target.src = `/objects/uploads/${cleanPath}`;
+                        } else if (!target.hasAttribute('data-fallback-2-tried')) {
+                          target.setAttribute('data-fallback-2-tried', 'true');
+                          // Try without uploads prefix
+                          const cleanPath = champion.imageUrl.replace(/^\/+/, '').replace(/^(public-)?objects\/(uploads\/)?/, '');
+                          target.src = `/objects/${cleanPath}`;
                         } else {
                           // Hide image if all attempts fail
-                          e.currentTarget.style.display = 'none';
+                          target.style.display = 'none';
                         }
                       }}
                     />

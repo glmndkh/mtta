@@ -4,6 +4,7 @@ import { useState } from "react";
 import PageLayout from "@/components/PageLayout";
 import PageWithLoading from "@/components/PageWithLoading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getImageUrl } from "@/lib/utils";
 
 export default function PastChampions() {
   const { data: champions = [] } = useQuery({ queryKey: ['/api/champions'] });
@@ -33,18 +34,26 @@ export default function PastChampions() {
         <div key={champ.id} className="text-center">
           {champ.imageUrl && (
             <img
-              src={champ.imageUrl.startsWith('/public-objects') ? champ.imageUrl : `/public-objects${champ.imageUrl}`}
+              src={getImageUrl(champ.imageUrl)}
               alt={champ.name}
               className="w-full h-40 object-cover rounded"
               onError={(e) => {
-                // Try fallback URLs if the image fails to load
-                if (e.currentTarget.src.includes('/public-objects')) {
-                  e.currentTarget.src = champ.imageUrl;
-                } else if (!e.currentTarget.src.includes('/objects/')) {
-                  e.currentTarget.src = `/objects${champ.imageUrl}`;
+                const target = e.currentTarget as HTMLImageElement;
+                console.error('Champion image failed to load:', champ.imageUrl);
+                
+                if (!target.hasAttribute('data-fallback-tried')) {
+                  target.setAttribute('data-fallback-tried', 'true');
+                  // Try direct objects path
+                  const cleanPath = champ.imageUrl.replace(/^\/+/, '').replace(/^(public-)?objects\//, '');
+                  target.src = `/objects/uploads/${cleanPath}`;
+                } else if (!target.hasAttribute('data-fallback-2-tried')) {
+                  target.setAttribute('data-fallback-2-tried', 'true');
+                  // Try without uploads prefix
+                  const cleanPath = champ.imageUrl.replace(/^\/+/, '').replace(/^(public-)?objects\/(uploads\/)?/, '');
+                  target.src = `/objects/${cleanPath}`;
                 } else {
                   // Hide image if all attempts fail
-                  e.currentTarget.style.display = 'none';
+                  target.style.display = 'none';
                 }
               }}
             />

@@ -41,12 +41,12 @@ export function getImageUrl(imageUrl: string): string {
   let cleanUrl = imageUrl.replace(/^\/+/, '');
   console.log("getImageUrl: Cleaned URL:", cleanUrl);
 
-  // Handle object storage paths - try direct object access first
+  // Handle object storage paths - convert to public-objects for serving
   if (cleanUrl.startsWith('objects/')) {
-    // Try the direct objects path first (this should work with proper server setup)
-    const directPath = `/${cleanUrl}`;
-    console.log("getImageUrl: Using direct objects path:", directPath);
-    return directPath;
+    // Convert objects/ paths to public-objects/ for serving
+    const publicPath = `/public-${cleanUrl}`;
+    console.log("getImageUrl: Converting objects path to public-objects:", publicPath);
+    return publicPath;
   }
 
   // Handle paths that already have public-objects prefix
@@ -55,9 +55,11 @@ export function getImageUrl(imageUrl: string): string {
     return `/${cleanUrl}`;
   }
 
-  // For other relative paths, ensure they start with /
+  // For other relative paths, try with public-objects prefix first
   if (!cleanUrl.startsWith('/')) {
-    cleanUrl = `/${cleanUrl}`;
+    const withPublicObjects = `/public-objects/${cleanUrl}`;
+    console.log("getImageUrl: Adding public-objects prefix:", withPublicObjects);
+    return withPublicObjects;
   }
 
   console.log("getImageUrl: Final URL:", cleanUrl);
