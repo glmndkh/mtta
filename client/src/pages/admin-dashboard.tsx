@@ -1066,9 +1066,20 @@ export default function AdminDashboard() {
                 <TableCell>
                   {champion.imageUrl ? (
                     <img
-                      src={champion.imageUrl}
+                      src={champion.imageUrl.startsWith('/public-objects') ? champion.imageUrl : `/public-objects${champion.imageUrl}`}
                       alt={champion.name}
                       className="w-12 h-12 object-cover rounded"
+                      onError={(e) => {
+                        // Try fallback URLs if the image fails to load
+                        if (e.currentTarget.src.includes('/public-objects')) {
+                          e.currentTarget.src = champion.imageUrl;
+                        } else if (!e.currentTarget.src.includes('/objects/')) {
+                          e.currentTarget.src = `/objects${champion.imageUrl}`;
+                        } else {
+                          // Hide image if all attempts fail
+                          e.currentTarget.style.display = 'none';
+                        }
+                      }}
                     />
                   ) : (
                     <div className="w-12 h-12 bg-secondary rounded flex items-center justify-center">
@@ -2523,20 +2534,24 @@ export default function AdminDashboard() {
                     if (result.successful && result.successful.length > 0) {
                       const uploadURL = result.successful[0].uploadURL;
                       try {
-                        const aclResponse = await apiRequest("/api/objects/acl", {
+                        const aclResponse = await apiRequest("/api/objects/finalize", {
                           method: "PUT",
-                          body: JSON.stringify({ imageURL: uploadURL }),
+                          body: JSON.stringify({ 
+                            fileURL: uploadURL,
+                            isPublic: true 
+                          }),
                           headers: { 'Content-Type': 'application/json' },
                         });
                         const aclData = await aclResponse.json() as { objectPath: string };
                         setFormData({ ...formData, imageUrl: aclData.objectPath });
                         toast({ title: "Зураг амжилттай хуулагдлаа" });
                       } catch (error) {
-                        console.error("Error setting ACL:", error);
+                        console.error("Error finalizing upload:", error);
+                        // Fallback to direct URL if finalize fails
+                        setFormData({ ...formData, imageUrl: uploadURL });
                         toast({
-                          title: "Алдаа",
+                          title: "Анхааруулга",
                           description: "Зураг хуулагдсан боловч зөвшөөрөл тохируулахад алдаа гарлаа",
-                          variant: "destructive",
                         });
                       }
                     }
@@ -2548,9 +2563,15 @@ export default function AdminDashboard() {
                 {formData.imageUrl && (
                   <div className="flex items-center gap-2">
                     <img
-                      src={formData.imageUrl}
+                      src={formData.imageUrl.startsWith('/public-objects') ? formData.imageUrl : `/public-objects${formData.imageUrl}`}
                       alt="Champion"
                       className="w-16 h-16 object-cover border rounded"
+                      onError={(e) => {
+                        // Fallback to original URL if public-objects path fails
+                        if (e.currentTarget.src.includes('/public-objects')) {
+                          e.currentTarget.src = formData.imageUrl;
+                        }
+                      }}
                     />
                     <div className="text-sm text-green-600">✓ Зураг хуулагдлаа</div>
                   </div>

@@ -33,9 +33,20 @@ export default function PastChampions() {
         <div key={champ.id} className="text-center">
           {champ.imageUrl && (
             <img
-              src={champ.imageUrl}
+              src={champ.imageUrl.startsWith('/public-objects') ? champ.imageUrl : `/public-objects${champ.imageUrl}`}
               alt={champ.name}
               className="w-full h-40 object-cover rounded"
+              onError={(e) => {
+                // Try fallback URLs if the image fails to load
+                if (e.currentTarget.src.includes('/public-objects')) {
+                  e.currentTarget.src = champ.imageUrl;
+                } else if (!e.currentTarget.src.includes('/objects/')) {
+                  e.currentTarget.src = `/objects${champ.imageUrl}`;
+                } else {
+                  // Hide image if all attempts fail
+                  e.currentTarget.style.display = 'none';
+                }
+              }}
             />
           )}
           <h2 className="mt-2 font-semibold">{champ.name}</h2>
