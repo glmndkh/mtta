@@ -1,6 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { z } from "zod";
+import express from "express"; // Import express
+import path from "path"; // Import path
 
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
@@ -725,7 +727,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/branches", async (_req, res) => {
     try {
       const branches = await storage.getAllBranches();
-      
+
       // Add location information for branches with coordinates
       const branchesWithLocation = await Promise.all(
         branches.map(async (branch) => {
@@ -736,7 +738,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 // Reverse geocoding using a free service
                 const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`);
                 const locationData = await response.json();
-                
+
                 return {
                   ...branch,
                   country: locationData.countryName || null,
@@ -749,7 +751,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               console.error('Error fetching location data for branch:', branch.name, error);
             }
           }
-          
+
           return {
             ...branch,
             country: null,
@@ -759,7 +761,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
         })
       );
-      
+
       res.json(branchesWithLocation);
     } catch (e) {
       console.error("Error fetching branches:", e);
@@ -1398,6 +1400,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error setting image ACL:", e);
       res.status(500).json({ error: "Internal server error" });
     }
+  });
+
+  // Serve objects directly (for uploaded files)
+  app.use("/objects", express.static(path.join(process.cwd(), "objects"), {
+    setHeaders: (res, path) => {
+      console.log('[objects] Requested file path:', path.split('/objects/').pop());
+      res.set("Cache-Control", "public, max-age=86400"); // Cache for 1 day
+    },
+    fallthrough: true
+  }));
+
+  // Serve public objects (finalized objects that should be publicly accessible)
+  app.use("/public-objects", express.static(path.join(process.cwd(), "objects"), {
+    setHeaders: (res, path) => {
+      console.log('[public-objects] Requested file path:', path.split('/objects/').pop());
+      res.set("Cache-Control", "public, max-age=86400"); // Cache for 1 day
+    },
+    fallthrough: true
+  }));
+
+  // Fallback for object files
+  app.use("/objects", (req, res) => {
+    const filePath = req.path.substring(1); // Remove leading slash
+    console.log('[objects] File not found:', filePath);
+    res.status(404).json({ error: "File not found" });
+  });
+
+  app.use("/public-objects", (req, res) => {
+    const filePath = req.path.substring(1); // Remove leading slash
+    console.log('[public-objects] File not found:', filePath);
+    res.status(404).json({ error: "File not found" });
   });
 
   // serve private with ACL
@@ -2265,7 +2298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/teams", requireAuth, isAdminRole, async (req, res) => {
     try {
       const { name, logoUrl, sponsorLogo, ownerName, coachName, playerIds, leagueId } = req.body;
-      
+
       if (!name) {
         return res.status(400).json({ message: "Багийн нэр заавал оруулна уу" });
       }
@@ -2285,7 +2318,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Get player name from users table
           const user = await storage.getUser(playerId);
           const playerName = user ? `${user.firstName} ${user.lastName}` : 'Unknown Player';
-          
+
           await storage.addPlayerToLeagueTeam(team.id, playerId, playerName);
         }
       }
@@ -2300,7 +2333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/admin/teams/:id", requireAuth, isAdminRole, async (req, res) => {
     try {
       const { name, logoUrl, sponsorLogo, ownerName, coachName } = req.body;
-      
+
       const team = await storage.updateLeagueTeam(req.params.id, {
         name,
         logoUrl,
@@ -2323,7 +2356,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/teams/:id", requireAuth, isAdminRole, async (req, res) => {
     try {
       const success = await storage.deleteLeagueTeam(req.params.id);
-      
+
       if (!success) {
         return res.status(404).json({ message: "Баг олдсонгүй" });
       }
@@ -2466,20 +2499,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           finalRankings,
           isPublished,
         } = req.body;
-        
+
         console.log("Received tournament results data:", { tournamentId, participationType, groupStageResults });
-        
+
         if (!tournamentId || !participationType)
           return res
             .status(400)
             .json({
               message: "Tournament ID and participation type are required",
             });
-            
+
         // Check if this is a tournament or league
         const tournament = await storage.getTournament(tournamentId);
         const league = tournament ? null : await storage.getLeague(tournamentId);
-        
+
         if (!tournament && !league) {
           return res.status(404).json({ message: "Tournament or League not found" });
         }
@@ -2495,7 +2528,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             data: { tournamentId, participationType, groupStageResults } 
           });
         }
-        
+
         const ensureParticipant = async (player: any) => {
           if (!player) return;
           if (player.playerId || player.id) return player.playerId || player.id;
@@ -2515,7 +2548,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             role: "player",
           });
           const newPlayer = await storage.createPlayer({ userId: newUser.id });
-          
+
           // Only register for tournament if it's actually a tournament, not a league
           if (tournament) {
             await storage.registerForTournament({
@@ -2524,7 +2557,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               participationType,
             });
           }
-          
+
           player.playerId = newPlayer.id;
           player.id = newPlayer.id;
           player.playerName = name;
@@ -2690,7 +2723,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { teamId } = req.params;
       const success = await storage.deleteLeagueTeam(teamId);
-      
+
       if (!success) {
         return res.status(404).json({ message: "Баг олдсонгүй" });
       }

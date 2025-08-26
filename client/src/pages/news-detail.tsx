@@ -328,18 +328,30 @@ export default function NewsDetail() {
                         const target = e.currentTarget as HTMLImageElement;
                         const container = target.parentElement;
 
-                        // Hide the broken image and show placeholder
-                        target.style.display = 'none';
-                        if (container) {
-                          container.classList.add('flex', 'items-center', 'justify-center');
-                          container.innerHTML = `
-                            <div class="flex flex-col items-center justify-center text-gray-400 py-8">
-                              <svg class="w-16 h-16 mb-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                              </svg>
-                              <span class="text-sm">Зураг ачаалагдсангүй</span>
-                            </div>
-                          `;
+                        if (!target.hasAttribute('data-fallback-tried')) {
+                          target.setAttribute('data-fallback-tried', 'true');
+                          // Try public-objects path as fallback
+                          const cleanPath = article.imageUrl.replace(/^\/+/, '').replace(/^objects\//, '');
+                          target.src = `/public-objects/${cleanPath}`;
+                        } else if (!target.hasAttribute('data-fallback-2-tried')) {
+                          target.setAttribute('data-fallback-2-tried', 'true');
+                          // Try with objects prefix
+                          const cleanPath = article.imageUrl.replace(/^\/+/, '').replace(/^objects\//, '');
+                          target.src = `/public-objects/objects/${cleanPath}`;
+                        } else {
+                          // Final fallback to placeholder
+                          target.style.display = 'none';
+                          if (container) {
+                            container.classList.add('flex', 'items-center', 'justify-center');
+                            container.innerHTML = `
+                              <div class="flex flex-col items-center justify-center text-gray-400 py-8">
+                                <svg class="w-16 h-16 mb-2" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                                </svg>
+                                <span class="text-sm">Зураг ачаалагдсангүй</span>
+                              </div>
+                            `;
+                          }
                         }
                       }}
                       onLoad={() => {
