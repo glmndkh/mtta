@@ -3,6 +3,8 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Menu, X, Home, Trophy, Building, Users, Newspaper, User, LogOut, ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
@@ -22,6 +24,7 @@ export default function Navigation() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [location] = useLocation();
   const { user, isAuthenticated } = useAuth();
+  const { t } = useLanguage();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
 
@@ -41,28 +44,28 @@ export default function Navigation() {
   const navigationLinks = [
     {
       href: "/about",
-      label: "Бидний тухай",
+      label: t('nav.about'),
       icon: User,
       dropdown: [
         {
-          label: "Холбоо",
+          label: t('nav.federation'),
           sublinks: [
-            { href: "/about#history", label: "Танилцуулга" },
-            { href: "/about#goals", label: "Бидний зорилго" },
-            { href: "/about#management", label: "Түүхэн замнал" },
-            { href: "/about#leadership", label: "Холбооны гишүүд" },
+            { href: "/about#history", label: t('nav.introduction') },
+            { href: "/about#goals", label: t('nav.goals') },
+            { href: "/about#management", label: t('nav.history') },
+            { href: "/about#leadership", label: t('nav.members') },
           ],
         },
-        { href: "/branches", label: "Салбар холбоод" },
-        { href: "/national-team", label: "Үндэсний шигшээ" },
-        { href: "/judges", label: "Шүүгчид" },
-        { href: "/past-champions", label: "Үе үеийн аваргууд" },
+        { href: "/branches", label: t('nav.branches') },
+        { href: "/national-team", label: t('nav.nationalTeam') },
+        { href: "/judges", label: t('nav.judges') },
+        { href: "/past-champions", label: t('nav.pastChampions') },
       ],
     },
-    { href: "/tournaments", label: "Тэмцээн", icon: Trophy },
-    { href: "/clubs", label: "Клубууд", icon: Building },
-    { href: "/leagues", label: "Лиг", icon: Users },
-    { href: "/news", label: "Мэдээ", icon: Newspaper },
+    { href: "/tournaments", label: t('nav.tournaments'), icon: Trophy },
+    { href: "/clubs", label: t('nav.clubs'), icon: Building },
+    { href: "/leagues", label: t('nav.leagues'), icon: Users },
+    { href: "/news", label: t('nav.news'), icon: Newspaper },
   ];
 
   // Drawer animation classes
@@ -166,13 +169,13 @@ export default function Navigation() {
                     <Link href="/admin/dashboard">
                       <div className="nav-link flex items-center space-x-2 px-3 py-2 cursor-pointer">
                         <User className="h-4 w-4" />
-                        <span>Админ самбар</span>
+                        <span>{t('nav.admin')}</span>
                       </div>
                     </Link>
                     <Link href="/profile">
                       <div className="nav-link flex items-center space-x-2 px-3 py-2 cursor-pointer">
                         <User className="h-4 w-4" />
-                        <span>{(user as any).firstName} (Админ)</span>
+                        <span>{(user as any).firstName} (Admin)</span>
                       </div>
                     </Link>
                   </>
@@ -181,7 +184,7 @@ export default function Navigation() {
                     <div className="nav-link flex items-center space-x-2 px-3 py-2 cursor-pointer">
                       <User className="h-4 w-4" />
                       <span>{(user as any).firstName} ({
-                        (user as any).role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч'
+                        (user as any).role === 'score_recorder' ? 'Score Recorder' : 'User'
                       })</span>
                     </div>
                   </Link>
@@ -193,23 +196,26 @@ export default function Navigation() {
                   className="nav-link hover:text-red-400 text-sm px-2 py-1"
                 >
                   <LogOut className="h-4 w-4 mr-1" />
-                  Гарах
+                  {t('nav.logout')}
                 </Button>
               </div>
             ) : (
               <div className="hidden md:flex items-center space-x-2">
                 <Link href="/register">
                   <button className="btn-green">
-                    Бүртгүүлэх
+                    {t('nav.register')}
                   </button>
                 </Link>
                 <Link href="/login">
                   <button className="btn-green">
-                    Нэвтрэх
+                    {t('nav.login')}
                   </button>
                 </Link>
               </div>
             )}
+
+            {/* Language Switcher */}
+            <LanguageSwitcher />
 
             {/* Theme Toggle */}
             <ThemeToggle />
@@ -338,7 +344,7 @@ export default function Navigation() {
                         className="flex items-center text-white p-3 rounded hover:bg-gray-700"
                       >
                         <User className="h-4 w-4 mr-3" />
-                        <span>Миний профайл</span>
+                        <span>{t('nav.profile')}</span>
                       </div>
                     </Link>
                   )}
@@ -351,7 +357,7 @@ export default function Navigation() {
                           className="flex items-center text-white p-3 rounded hover:bg-gray-700"
                         >
                           <User className="h-4 w-4 mr-3" />
-                          <span>Админ самбар</span>
+                          <span>{t('nav.admin')}</span>
                         </div>
                       </Link>
                       <Link href="/admin/generator">
@@ -360,7 +366,7 @@ export default function Navigation() {
                           className="flex items-center text-white p-3 rounded hover:bg-gray-700"
                         >
                           <Trophy className="h-4 w-4 mr-3" />
-                          <span>Тэмцээн үүсгэх</span>
+                          <span>{t('nav.createTournament')}</span>
                         </div>
                       </Link>
                     </>
@@ -374,7 +380,7 @@ export default function Navigation() {
                     className="flex items-center text-red-400 p-3 rounded hover:bg-red-900 hover:bg-opacity-20 w-full"
                   >
                     <LogOut className="h-4 w-4 mr-3" />
-                    <span>Гарах</span>
+                    <span>{t('nav.logout')}</span>
                   </button>
                 </div>
               ) : (
@@ -384,7 +390,7 @@ export default function Navigation() {
                       onClick={() => setShowMobileMenu(false)}
                       className="w-full py-3 text-green-400 border border-green-400 rounded hover:bg-green-400 hover:text-black"
                     >
-                      Бүртгүүлэх
+                      {t('nav.register')}
                     </button>
                   </Link>
                   <Link href="/login">
@@ -392,7 +398,7 @@ export default function Navigation() {
                       onClick={() => setShowMobileMenu(false)}
                       className="w-full py-3 bg-green-400 text-black rounded hover:bg-green-500"
                     >
-                      Нэвтрэх
+                      {t('nav.login')}
                     </button>
                   </Link>
                 </div>

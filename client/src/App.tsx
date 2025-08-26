@@ -36,6 +36,7 @@ import TournamentManagement from "@/pages/tournament-management";
 import AboutPage from "@/pages/about";
 import { useAuth } from "@/hooks/useAuth";
 import AdminPlayerDetailsPage from "@/pages/admin-player-details"; // Import the new page
+import { LanguageProvider } from "@/contexts/LanguageContext";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -85,17 +86,19 @@ function Router() {
 
 function App() {
   return (
-    <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <div className="glow-bg"></div>
-          <div className="main-bg">
-            <Toaster />
-            <Router />
-          </div>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <LanguageProvider>
+        <ThemeProvider>
+          <TooltipProvider>
+            <div className="glow-bg"></div>
+            <div className="main-bg">
+              <Toaster />
+              <Router />
+            </div>
+          </TooltipProvider>
+        </ThemeProvider>
+      </LanguageProvider>
+    </QueryClientProvider>
   );
 }
 
