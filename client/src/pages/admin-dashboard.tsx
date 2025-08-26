@@ -338,8 +338,15 @@ export default function AdminDashboard() {
   };
 
   const openEditDialog = (item: any) => {
-    setEditingItem(item);
-    if (selectedTab === "users") {
+    if (selectedTab === 'champions') {
+      setFormData({
+        name: item.name || '',
+        year: item.year || '',
+        gender: item.gender || '',
+        championType: item.championType || '',
+        imageUrl: item.imageUrl || ''
+      });
+    } else if (selectedTab === "users") {
       form.reset({
         firstName: item.firstName || "",
         lastName: item.lastName || "",

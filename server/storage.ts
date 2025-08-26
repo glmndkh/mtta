@@ -1982,6 +1982,43 @@ export class DatabaseStorage implements IStorage {
 
     return medals.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
+
+  async getAdminStatistics(): Promise<any> {
+    try {
+      // Get counts for various entities
+      const [usersCount] = await db.select({ count: sql<number>`count(*)` }).from(users);
+      const [playersCount] = await db.select({ count: sql<number>`count(*)` }).from(players);
+      const [clubsCount] = await db.select({ count: sql<number>`count(*)` }).from(clubs);
+      const [tournamentsCount] = await db.select({ count: sql<number>`count(*)` }).from(tournaments);
+      const [newsCount] = await db.select({ count: sql<number>`count(*)` }).from(newsFeed);
+      const [branchesCount] = await db.select({ count: sql<number>`count(*)` }).from(branches);
+      const [championsCount] = await db.select({ count: sql<number>`count(*)` }).from(pastChampions);
+      const [judgesCount] = await db.select({ count: sql<number>`count(*)` }).from(judges);
+
+      return {
+        users: Number(usersCount?.count || 0),
+        players: Number(playersCount?.count || 0),
+        clubs: Number(clubsCount?.count || 0),
+        tournaments: Number(tournamentsCount?.count || 0),
+        news: Number(newsCount?.count || 0),
+        branches: Number(branchesCount?.count || 0),
+        champions: Number(championsCount?.count || 0),
+        judges: Number(judgesCount?.count || 0)
+      };
+    } catch (error) {
+      console.error('Error getting admin statistics:', error);
+      return {
+        users: 0,
+        players: 0,
+        clubs: 0,
+        tournaments: 0,
+        news: 0,
+        branches: 0,
+        champions: 0,
+        judges: 0
+      };
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
