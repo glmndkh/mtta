@@ -9,6 +9,14 @@ import PageWithLoading from "@/components/PageWithLoading";
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
 
+// Helper function to construct image URLs, potentially handling different base paths or fallbacks
+const getImageUrl = (path: string): string => {
+  // This is a placeholder. In a real app, you might check environment variables
+  // or have more sophisticated logic to determine the correct image path.
+  // For now, we'll just return the path as is, and the onError handler will manage fallbacks.
+  return path;
+};
+
 const AboutPage = () => {
   const [activeTab, setActiveTab] = useState("history");
   const { data: members = [] } = useQuery<any[]>({ queryKey: ["/api/federation-members"] });
@@ -104,20 +112,28 @@ const AboutPage = () => {
                     <div className="flex flex-col md:flex-row gap-6 items-start">
                       <div className="flex-shrink-0">
                         <img 
-                          src="/objects/uploads/president-gantulga.jpg" 
-                          alt="President Ts. Gantulga" 
+                          src={getImageUrl("/objects/uploads/president-gantulga.jpg")}
+                          alt="Ц. Гантулга"
                           className="w-32 h-40 object-cover rounded-lg border-2 border-green-400/30"
                           onError={(e) => {
-                            const target = e.currentTarget as HTMLImageElement;
-                            console.error('President image failed to load');
-                            // Fallback to a placeholder
-                            target.style.display = 'none';
-                            const container = target.parentElement;
-                            if (container && !container.querySelector('.fallback-text')) {
-                              const fallback = document.createElement('div');
-                              fallback.className = 'fallback-text w-32 h-40 bg-gray-200 dark:bg-gray-700 rounded-lg border-2 border-green-400/30 flex items-center justify-center text-xs text-gray-500';
-                              fallback.textContent = 'Зураг байхгүй';
-                              container.appendChild(fallback);
+                            const target = e.target as HTMLImageElement;
+                            console.error('President image failed to load:', target.src);
+
+                            if (!target.hasAttribute('data-fallback-tried')) {
+                              target.setAttribute('data-fallback-tried', 'true');
+                              // Try alternative paths
+                              if (target.src.includes('/objects/')) {
+                                target.src = '/uploads/president-gantulga.jpg';
+                              } else {
+                                target.style.display = 'none';
+                                const container = target.parentElement;
+                                if (container && !container.querySelector('.fallback-text')) {
+                                  const fallback = document.createElement('div');
+                                  fallback.className = 'fallback-text w-32 h-40 bg-gray-200 dark:bg-gray-700 rounded-lg border-2 border-green-400/30 flex items-center justify-center text-xs text-gray-500';
+                                  fallback.textContent = 'Зураг байхгүй';
+                                  container.appendChild(fallback);
+                                }
+                              }
                             }
                           }}
                         />
@@ -132,7 +148,7 @@ const AboutPage = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div>
                     <h3 className="text-xl font-semibold text-white mb-3">{t('about.federationTitle')}</h3>
                     <p className="leading-relaxed">
@@ -190,7 +206,7 @@ const AboutPage = () => {
                         {t('about.sportDevelopmentDesc')}
                       </p>
                     </div>
-                    
+
                     <div className="bg-gray-800 p-6 rounded-lg">
                       <h3 className="text-xl font-semibold text-white mb-3 flex items-center">
                         <Badge variant="outline" className="mr-3 border-green-400 text-green-400">02</Badge>
