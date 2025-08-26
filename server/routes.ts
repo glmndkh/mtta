@@ -1211,7 +1211,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       res.set({
         "Cache-Control": "public, max-age=300",
-        ETag: `news-${Date.now()}`,
+        "ETag": `news-${Date.now()}`,
       });
       const news = await storage.getPublishedNews();
       res.json(news);
@@ -1227,7 +1227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       res.set({
         "Cache-Control": "public, max-age=180",
-        ETag: `latest-news-${Date.now()}`,
+        "ETag": `latest-news-${Date.now()}`,
       });
       const latestNews = await storage.getLatestPublishedNews(5);
       res.json(latestNews);
@@ -1239,17 +1239,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get news article by id
   app.get("/api/news/:id", async (req, res) => {
     try {
-      res.set({
-        "Cache-Control": "public, max-age=600",
-        ETag: `news-${req.params.id}-${Date.now()}`,
-      });
-      const news = await storage.getNewsById(req.params.id);
-      if (!news) return res.status(404).json({ message: "Мэдээ олдсонгүй" });
-      res.json(news);
+      const article = await storage.getNewsById(req.params.id);
+      if (!article) {
+        return res.status(404).json({ message: "Мэдээ олдсонгүй" });
+      }
+      res.json(article);
     } catch (e) {
-      console.error("Error fetching news:", e);
+      console.error("Error fetching news article:", e);
       res.status(500).json({ message: "Мэдээ авахад алдаа гарлаа" });
     }
   });

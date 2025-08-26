@@ -12,10 +12,8 @@ export const placeholderImageData =
 /**
  * Normalizes an object storage path into a publicly served URL.
  *
- * The backend serves files through the `/public-objects` endpoint, so paths
- * returned from uploads (e.g. `/objects/...`) need to be converted. This
- * helper centralizes that logic and also falls back to a placeholder image
- * when no URL is provided.
+ * For object storage files, we need to serve them through the `/objects/` endpoint
+ * since they are stored in private object storage and need proper ACL handling.
  */
 export function getImageUrl(imageUrl: string): string {
   if (!imageUrl?.trim()) {
@@ -41,25 +39,25 @@ export function getImageUrl(imageUrl: string): string {
   let cleanUrl = imageUrl.replace(/^\/+/, '');
   console.log("getImageUrl: Cleaned URL:", cleanUrl);
 
-  // Handle object storage paths - convert to public-objects for serving
+  // Handle object storage paths - these should be served through /objects/ endpoint
   if (cleanUrl.startsWith('objects/')) {
-    // Convert objects/ paths to public-objects/ for serving
-    const publicPath = `/public-${cleanUrl}`;
-    console.log("getImageUrl: Converting objects path to public-objects:", publicPath);
-    return publicPath;
+    const objectPath = `/${cleanUrl}`;
+    console.log("getImageUrl: Object storage path:", objectPath);
+    return objectPath;
   }
 
-  // Handle paths that already have public-objects prefix
+  // Handle paths that already have public-objects prefix - convert to objects
   if (cleanUrl.startsWith('public-objects/')) {
-    console.log("getImageUrl: Already has /public-objects/ prefix");
-    return `/${cleanUrl}`;
+    const objectPath = cleanUrl.replace('public-objects/', 'objects/');
+    console.log("getImageUrl: Converting public-objects to objects:", `/${objectPath}`);
+    return `/${objectPath}`;
   }
 
-  // For other relative paths, try with public-objects prefix first
+  // For other relative paths, assume they are object storage paths
   if (!cleanUrl.startsWith('/')) {
-    const withPublicObjects = `/public-objects/${cleanUrl}`;
-    console.log("getImageUrl: Adding public-objects prefix:", withPublicObjects);
-    return withPublicObjects;
+    const objectPath = `/objects/${cleanUrl}`;
+    console.log("getImageUrl: Treating as object storage path:", objectPath);
+    return objectPath;
   }
 
   console.log("getImageUrl: Final URL:", cleanUrl);
