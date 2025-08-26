@@ -53,6 +53,13 @@ export function getImageUrl(imageUrl: string): string {
     return `/${objectPath}`;
   }
 
+  // For paths starting with uploads/, assume they are object storage uploads
+  if (cleanUrl.startsWith('uploads/')) {
+    const objectPath = `/objects/${cleanUrl}`;
+    console.log("getImageUrl: Converting uploads path to objects:", objectPath);
+    return objectPath;
+  }
+
   // For other relative paths, assume they are object storage paths
   if (!cleanUrl.startsWith('/')) {
     const objectPath = `/objects/${cleanUrl}`;

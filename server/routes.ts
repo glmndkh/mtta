@@ -23,7 +23,7 @@ import {
 } from "@shared/schema";
 
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
-import { ObjectPermission } from "./objectAcl";
+import { ObjectPermission, getObjectAclPolicy } from "./objectAcl";
 
 // Import database tables
 import {
@@ -1401,65 +1401,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve objects directly (for uploaded files)
-  app.use("/objects", express.static(path.join(process.cwd(), "objects"), {
-    setHeaders: (res, path) => {
-      console.log('[objects] Requested file path:', path.split('/objects/').pop());
-      res.set("Cache-Control", "public, max-age=86400"); // Cache for 1 day
-    },
-    fallthrough: true
-  }));
-
-  // Serve public objects (finalized objects that should be publicly accessible)
-  app.use("/public-objects", express.static(path.join(process.cwd(), "objects"), {
-    setHeaders: (res, path) => {
-      console.log('[public-objects] Requested file path:', path.split('/objects/').pop());
-      res.set("Cache-Control", "public, max-age=86400"); // Cache for 1 day
-    },
-    fallthrough: true
-  }));
-
-  // Fallback for object files
-  app.use("/objects", (req, res) => {
-    const filePath = req.path.substring(1); // Remove leading slash
-    console.log('[objects] File not found:', filePath);
-    res.status(404).json({ error: "File not found" });
-  });
-
-  app.use("/public-objects", (req, res) => {
-    const filePath = req.path.substring(1); // Remove leading slash
-    console.log('[public-objects] File not found:', filePath);
-    res.status(404).json({ error: "File not found" });
-  });
-
-  // serve private with ACL
-  app.get("/objects/:objectPath(*)", requireAuth, async (req: any, res) => {
-    const userId = req.session.userId;
+  // Handle object storage files through the object storage service
+  app.get("/objects/:objectPath(*)", async (req: any, res) => {
     const oss = new ObjectStorageService();
     try {
       const objectFile = await oss.getObjectEntityFile(req.path);
+      
+      // Check if this is a public object (no auth required for public objects)
+      const aclPolicy = await getObjectAclPolicy(objectFile);
+      if (aclPolicy?.visibility === "public") {
+        await oss.downloadObject(objectFile, res);
+        return;
+      }
+
+      // For private objects, require authentication
+      if (!req.session?.userId) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
       const canAccess = await oss.canAccessObjectEntity({
         objectFile,
-        userId,
+        userId: req.session.userId,
         requestedPermission: ObjectPermission.READ,
       });
-      if (!canAccess) return res.sendStatus(401);
-      oss.downloadObject(objectFile, res);
+      
+      if (!canAccess) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
+      await oss.downloadObject(objectFile, res);
     } catch (e) {
-      console.error("Error checking object access:", e);
-      if (e instanceof ObjectNotFoundError) return res.sendStatus(404);
-      return res.sendStatus(500);
+      console.error("Error serving object:", e);
+      if (e instanceof ObjectNotFoundError) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      return res.status(500).json({ error: "Internal server error" });
     }
   });
 
-  // serve public
+  // Serve public objects (for backwards compatibility)
   app.get("/public-objects/:filePath(*)", async (req, res) => {
     const filePath = req.params.filePath;
     const oss = new ObjectStorageService();
     try {
       const file = await oss.searchPublicObject(filePath);
       if (!file) return res.status(404).json({ error: "File not found" });
-      oss.downloadObject(file, res);
+      await oss.downloadObject(file, res);
     } catch (e) {
       console.error("Error searching for public object:", e);
       return res.status(500).json({ error: "Internal server error" });
