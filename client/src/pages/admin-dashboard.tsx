@@ -262,9 +262,16 @@ export default function AdminDashboard() {
       toast({ title: "Алдаа", description: "Шаардлагатай талбаруудыг бөглөнө үү", variant: "destructive" });
       return;
     }
+    
+    // Ensure year is string for champions
+    let processedData = sanitizeFormData(formData);
+    if (selectedTab === 'champions' && processedData.year) {
+      processedData.year = String(processedData.year);
+    }
+    
     createMutation.mutate({
       endpoint: `/api/admin/${selectedTab}`,
-      data: sanitizeFormData(formData),
+      data: processedData,
     });
   };
 
@@ -274,9 +281,16 @@ export default function AdminDashboard() {
       return;
     }
     const endpoint = `/api/admin/${selectedTab}/${editingItem.id}`;
+    
+    // Ensure year is string for champions
+    let processedData = sanitizeFormData(formData);
+    if (selectedTab === 'champions' && processedData.year) {
+      processedData.year = String(processedData.year);
+    }
+    
     updateMutation.mutate({
       endpoint,
-      data: sanitizeFormData(formData),
+      data: processedData,
     });
   };
 
