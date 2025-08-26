@@ -104,7 +104,7 @@ const AboutPage = () => {
                     <div className="flex flex-col md:flex-row gap-6 items-start">
                       <div className="flex-shrink-0">
                         <img 
-                          src="/objects/uploads/44d9eb32-d0d0-4fce-9c7f-9bc00fa13f49" 
+                          src="/objects/uploads/NEW_PRESIDENT_IMAGE_ID" 
                           alt="President" 
                           className="w-32 h-40 object-cover rounded-lg border-2 border-green-400/30"
                         />
