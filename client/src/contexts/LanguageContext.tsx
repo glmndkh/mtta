@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export type Language = 'mn' | 'en';
@@ -61,6 +60,8 @@ const translations = {
     'about.infrastructureDevelopmentDesc': 'Орон нутагт ширээний теннисний спортын дэд бүтцийг хөгжүүлж, тамирчдад тохиромжтой нөхцөлийг бүрдүүлэх.',
     'about.historicalMilestones': 'Холбооны түүхэн хөгжлийн тэмдэглэл үеүүд',
     'about.federationMembers': 'Холбооны гишүүдийн бүрэлдэхүүн болон үүрэг хариуцлага',
+    'about.presidentGreeting': 'Ерөнхийлөгчийн мэндчилгээ',
+    'about.presidentGreetingText': 'Эрхэм тамирчид болон дэмжигчид ээ! Монголын ширээний теннисний холбооны Ерөнхийлөгчийн хувьд та бүхэнд чин сэтгэлээсээ хандлагаа илэрхийлж байна. 1965 онд байгуулагдсан цагаасаа хойш бид Монголын ширээний тенниснийг олон улсын стандартад хүргэх, залуучуудыг спортын үйл ажиллагаанд татан оролцуулахад шамдан ажиллаж ирсэн. Ирээдүйд илүү амжилт гаргаж, Монгол улсаа дэлхийн тавцанд төлөөлөхийг эрмэлзэж байна.',
   },
   en: {
     // Navigation
@@ -110,7 +111,9 @@ const translations = {
     'about.infrastructureDevelopment': 'Infrastructure Development',
     'about.infrastructureDevelopmentDesc': 'Developing table tennis sports infrastructure in rural areas and creating suitable conditions for athletes.',
     'about.historicalMilestones': 'Historical milestones of the federation\'s development',
-    'about.federationMembers': 'Federation members\' composition and responsibilities',
+    'about.federationMembers': 'Federation member composition and responsibilities',
+    'about.presidentGreeting': 'Presidential Greeting',
+    'about.presidentGreetingText': 'Dear athletes and supporters! As the President of the Mongolian Table Tennis Federation, I extend warm greetings to all of you. Since our federation was established in 1965, we have been working tirelessly to elevate Mongolian table tennis to international standards and engage young people in sports activities. We aim to achieve greater success in the future and proudly represent Mongolia on the world stage.',
   }
 };
 

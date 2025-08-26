@@ -95,6 +95,31 @@ const AboutPage = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="text-gray-300 space-y-6">
+                  {/* Presidential Greeting Section */}
+                  <div className="bg-gray-800 p-6 rounded-lg border border-green-400/20">
+                    <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
+                      <Award className="w-5 h-5 mr-2 text-green-400" />
+                      {t('about.presidentGreeting')}
+                    </h3>
+                    <div className="flex flex-col md:flex-row gap-6 items-start">
+                      <div className="flex-shrink-0">
+                        <img 
+                          src="/objects/uploads/44d9eb32-d0d0-4fce-9c7f-9bc00fa13f49" 
+                          alt="President" 
+                          className="w-32 h-40 object-cover rounded-lg border-2 border-green-400/30"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <p className="leading-relaxed text-gray-300 italic">
+                          "{t('about.presidentGreetingText')}"
+                        </p>
+                        <p className="mt-4 text-green-400 font-semibold">
+                          - {t('about.presidentGreeting')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
                   <div>
                     <h3 className="text-xl font-semibold text-white mb-3">{t('about.federationTitle')}</h3>
                     <p className="leading-relaxed">
