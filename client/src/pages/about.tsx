@@ -104,7 +104,7 @@ const AboutPage = () => {
                     <div className="flex flex-col md:flex-row gap-6 items-start">
                       <div className="flex-shrink-0">
                         <img 
-                          src="/objects/uploads/e777df81-a401-41a6-90d7-67d7b521b73a" 
+                          src="/objects/uploads/NEW_PRESIDENT_IMAGE_ID" 
                           alt="President Ts. Gantulga" 
                           className="w-32 h-40 object-cover rounded-lg border-2 border-green-400/30"
                         />
