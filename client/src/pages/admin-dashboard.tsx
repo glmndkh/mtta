@@ -1066,10 +1066,11 @@ export default function AdminDashboard() {
                 <TableCell>{champion.championType || '-'}</TableCell>
                 <TableCell>
                   {champion.imageUrl ? (
-                    <img
-                      src={getImageUrl(champion.imageUrl)}
-                      alt={champion.name}
-                      className="w-12 h-12 object-cover rounded"
+                    <div className="w-12 h-12 rounded overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                      <img
+                        src={getImageUrl(champion.imageUrl)}
+                        alt={champion.name}
+                        className="max-w-full max-h-full object-contain"
                       onError={(e) => {
                         const target = e.currentTarget as HTMLImageElement;
                         console.error('Admin champion image failed to load:', champion.imageUrl);
@@ -1089,7 +1090,8 @@ export default function AdminDashboard() {
                           target.style.display = 'none';
                         }
                       }}
-                    />
+                      />
+                    </div>
                   ) : (
                     <div className="w-12 h-12 bg-secondary rounded flex items-center justify-center">
                       <Upload className="w-6 h-6 text-text-secondary" />

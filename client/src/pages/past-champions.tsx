@@ -33,11 +33,12 @@ export default function PastChampions() {
       {filteredChampions.map((champ: any) => (
         <div key={champ.id} className="text-center">
           {champ.imageUrl && (
-            <img
-              src={getImageUrl(champ.imageUrl)}
-              alt={champ.name}
-              className="w-full h-40 object-cover rounded"
-              onError={(e) => {
+            <div className="w-full aspect-[3/4] rounded overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+              <img
+                src={getImageUrl(champ.imageUrl)}
+                alt={champ.name}
+                className="max-w-full max-h-full object-contain"
+                onError={(e) => {
                 const target = e.currentTarget as HTMLImageElement;
                 console.error('Champion image failed to load:', champ.imageUrl);
                 
@@ -56,7 +57,8 @@ export default function PastChampions() {
                   target.style.display = 'none';
                 }
               }}
-            />
+              />
+            </div>
           )}
           <h2 className="mt-2 font-semibold">{champ.name}</h2>
           <p className="text-sm text-gray-400">{champ.year} оны аварга</p>
