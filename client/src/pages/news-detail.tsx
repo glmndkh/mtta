@@ -100,7 +100,7 @@ function LatestNewsSidebar({ currentNewsId }: { currentNewsId: string | undefine
                           console.error('Sidebar image failed to load:', news.imageUrl);
                           const target = e.currentTarget as HTMLImageElement;
                           const container = target.parentElement;
-                          
+
                           target.style.display = 'none';
                           if (container) {
                             container.innerHTML = `
@@ -243,32 +243,32 @@ export default function NewsDetail() {
     doc.querySelectorAll("img").forEach((img) => {
       const src = img.getAttribute("src") || "";
       console.log("Processing content image src:", src);
-      
+
       // Fix common object storage path issues
       let processedSrc = src;
-      
+
       // Remove duplicate /objects/ in path
       if (src.includes('/objects/objects/')) {
         processedSrc = src.replace('/objects/objects/', '/objects/');
       }
-      
+
       // Remove duplicate /public-objects/ in path
       if (src.includes('/public-objects/public-objects/')) {
         processedSrc = src.replace('/public-objects/public-objects/', '/public-objects/');
       }
-      
+
       // Process through getImageUrl for consistent handling
       processedSrc = getImageUrl(processedSrc);
       console.log("Processed to:", processedSrc);
       img.setAttribute("src", processedSrc);
-      
+
       // Add error handling for broken images
       const fallbackSrc = getImageUrl('');
       img.setAttribute("onerror", `this.onerror=null; this.src='${fallbackSrc}';`);
-      
+
       // Add loading attribute for better performance
       img.setAttribute("loading", "lazy");
-      
+
       // Ensure images are responsive
       if (!img.getAttribute("style")) {
         img.setAttribute("style", "max-width: 100%; height: auto; border-radius: 8px;");
@@ -327,7 +327,7 @@ export default function NewsDetail() {
                         console.error('News detail image failed to load:', article.imageUrl);
                         const target = e.currentTarget as HTMLImageElement;
                         const container = target.parentElement;
-                        
+
                         // Hide the broken image and show placeholder
                         target.style.display = 'none';
                         if (container) {
@@ -351,7 +351,7 @@ export default function NewsDetail() {
                 </figure>
               )}
 
-              <CardHeader className="pb-4">
+              <CardHeader>
                 <div className="flex items-center justify-between mb-4">
                   {getCategoryBadge(article.category)}
                   <div className="flex items-center text-gray-500 text-sm">
@@ -380,34 +380,34 @@ export default function NewsDetail() {
                 {/* Author Info and Actions */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-3">
-                    <figure className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-                      {article.author?.profileImageUrl ? (
-                        <img
-                          src={getImageUrl(article.author.profileImageUrl)}
-                          alt={`${article.author.firstName} ${article.author.lastName}`}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            console.error('Author profile image failed to load:', article.author?.profileImageUrl);
-                            const target = e.currentTarget as HTMLImageElement;
-                            const container = target.parentElement;
-                            
-                            target.style.display = 'none';
-                            if (container) {
-                              container.innerHTML = '<div class="h-6 w-6 text-gray-400"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg></div>';
-                            }
-                          }}
-                          onLoad={() => {
-                            console.log('Author profile image loaded successfully:', getImageUrl(article.author?.profileImageUrl || ''));
-                          }}
-                        />
-                      ) : (
-                        <User className="h-6 w-6 text-gray-400" />
-                      )}
-                      <figcaption className="sr-only">
-                        {article.author?.firstName} {article.author?.lastName}
-                      </figcaption>
-                    </figure>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                        {article.author?.profileImageUrl ? (
+                          <img
+                            src={getImageUrl(article.author.profileImageUrl)}
+                            alt={`${article.author.firstName} ${article.author.lastName}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              console.error('Author profile image failed to load:', article.author?.profileImageUrl);
+                              const target = e.currentTarget as HTMLImageElement;
+                              const container = target.parentElement;
+
+                              target.style.display = 'none';
+                              if (container) {
+                                container.innerHTML = '<div class="h-6 w-6 text-gray-400"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg></div>';
+                              }
+                            }}
+                            onLoad={() => {
+                              console.log('Author profile image loaded successfully:', getImageUrl(article.author?.profileImageUrl || ''));
+                            }}
+                          />
+                        ) : (
+                          <User className="h-6 w-6 text-gray-400" />
+                        )}
+                        <figcaption className="sr-only">
+                          {article.author?.firstName} {article.author?.lastName}
+                        </figcaption>
+                      </div>
                       <div>
                         <p className="font-semibold text-gray-900">
                           {article.author?.firstName} {article.author?.lastName}
@@ -422,7 +422,7 @@ export default function NewsDetail() {
 
                   <div className="flex items-center space-x-2">
                     {!article.published && user && user.role === 'admin' && (
-                      <Button 
+                      <Button
                         className="mtta-green text-white hover:bg-mtta-green-dark"
                         onClick={() => publishNewsMutation.mutate(article.id)}
                         disabled={publishNewsMutation.isPending}
@@ -437,7 +437,7 @@ export default function NewsDetail() {
                     </Button>
                   </div>
                 </div>
-          </CardContent>
+              </CardContent>
             </Card>
           </div>
 
