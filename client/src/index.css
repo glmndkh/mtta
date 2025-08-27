@@ -685,6 +685,44 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
     color: var(--text-primary) !important;
   }
 
+/* News section styling */
+.news-section-title {
+  color: var(--text-primary) !important;
+  position: relative;
+  padding-bottom: 8px;
+}
+
+.news-section-title::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: var(--success);
+}
+
+/* News card titles - ensure proper visibility */
+.news-card h3, .news-card h4 {
+  color: var(--text-primary) !important;
+}
+
+/* Dark theme news card titles */
+[data-theme="dark"] .news-card h3,
+[data-theme="dark"] .news-card h4,
+.dark .news-card h3,
+.dark .news-card h4 {
+  color: #ffffff !important;
+}
+
+/* Light theme news card titles */
+[data-theme="light"] .news-card h3,
+[data-theme="light"] .news-card h4,
+.light .news-card h3,
+.light .news-card h4 {
+  color: #000000 !important;
+}
+
 /* Navigation enhancements */
 .nav-dark {
   position: relative;
