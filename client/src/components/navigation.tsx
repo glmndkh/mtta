@@ -8,6 +8,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Menu, X, Home, Trophy, Building, Users, Newspaper, User, LogOut, ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
+  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSub,
