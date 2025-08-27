@@ -26,6 +26,14 @@ import { Link } from "wouter";
 import PageWithLoading from "@/components/PageWithLoading";
 import RichTextEditor from "@/components/rich-text-editor";
 
+// Helper function to strip HTML tags
+const stripHtml = (html: string): string => {
+  if (!html) return '';
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = html;
+  return tempDiv.textContent || tempDiv.innerText || '';
+};
+
 const newsFormSchema = insertNewsSchema.omit({ authorId: true });
 type CreateNewsForm = z.infer<typeof newsFormSchema>;
 
@@ -917,7 +925,7 @@ export default function News() {
                           {article.title}
                         </h3>
                       </Link>
-                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">{article.excerpt}</p>
+                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">{stripHtml(article.excerpt || '')}</p>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">

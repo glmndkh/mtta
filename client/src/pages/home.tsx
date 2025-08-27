@@ -91,6 +91,15 @@ export default function Home() {
   // Static placeholder SVG to avoid API calls and improve performance
   const placeholderImageData = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI0MCIgdmlld0JveD0iMCAwIDQwMCAyNDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNjAgMTAwSDI0MFYxNDBIMTYwVjEwMFoiIGZpbGw9IiNEMUQ1REIiLz4KPHBhdGggZD0iTTE3NSAxMTVIMjI1VjEyNUgxNzVWMTE1WiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K';
 
+  // Helper function to strip HTML tags and get plain text
+  const stripHtml = (html: string): string => {
+    if (!html) return '';
+    // Create a temporary div to parse HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    return tempDiv.textContent || tempDiv.innerText || '';
+  };
+
   // Helper function to get image URL from object storage or external URL
   const getImageUrl = (imageUrl: string): string => {
     if (!imageUrl) return placeholderImageData;
@@ -279,10 +288,10 @@ export default function Home() {
                     {/* News Content */}
                     <div className="p-4">
                       <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-3 mb-2 hover:text-mtta-green transition-colors">
-                        {news.title}
+                        {stripHtml(news.title)}
                       </h3>
                       <p className="text-gray-600 text-xs leading-relaxed line-clamp-2">
-                        {news.summary || news.content?.substring(0, 100) + '...'}
+                        {news.summary ? stripHtml(news.summary) : stripHtml(news.content || '').substring(0, 100) + '...'}
                       </p>
                     </div>
                   </div>
