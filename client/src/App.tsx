@@ -61,8 +61,8 @@ function Router() {
       <Route path="/judges" component={JudgesPage} />
       <Route path="/news/:id" component={NewsDetail} />
       <Route path="/news" component={News} />
-      <Route path="/about" element={<AboutPage />} />
-          <Route path="/history-timeline" element={<HistoryTimelinePage />} />
+      <Route path="/about" component={AboutPage} />
+      <Route path="/history-timeline" component={HistoryTimelinePage} />
       <Route path="/" component={Home} />
       {!isLoading && isAuthenticated && (
         <>
