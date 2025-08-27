@@ -723,6 +723,117 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
   color: #000000 !important;
 }
 
+/* About page card content styling - ensure proper contrast in both themes */
+.card-dark {
+  background: var(--card);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+/* Dark theme card content - white text */
+[data-theme="dark"] .card-dark,
+.dark .card-dark {
+  background: #1a1a1a !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .card-dark h3,
+[data-theme="dark"] .card-dark h4,
+[data-theme="dark"] .card-dark p,
+[data-theme="dark"] .card-dark div,
+[data-theme="dark"] .card-dark span,
+.dark .card-dark h3,
+.dark .card-dark h4,
+.dark .card-dark p,
+.dark .card-dark div,
+.dark .card-dark span {
+  color: #ffffff !important;
+}
+
+/* Light theme card content - dark text */
+[data-theme="light"] .card-dark,
+.light .card-dark {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+[data-theme="light"] .card-dark h3,
+[data-theme="light"] .card-dark h4,
+[data-theme="light"] .card-dark p,
+[data-theme="light"] .card-dark div,
+[data-theme="light"] .card-dark span,
+.light .card-dark h3,
+.light .card-dark h4,
+.light .card-dark p,
+.light .card-dark div,
+.light .card-dark span {
+  color: #000000 !important;
+}
+
+/* Specific about page dark boxes styling */
+.bg-gray-800 {
+  background-color: #1f2937 !important;
+}
+
+/* Dark theme - keep dark boxes with white text */
+[data-theme="dark"] .bg-gray-800,
+.dark .bg-gray-800 {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .bg-gray-800 h3,
+[data-theme="dark"] .bg-gray-800 h4,
+[data-theme="dark"] .bg-gray-800 p,
+[data-theme="dark"] .bg-gray-800 div,
+[data-theme="dark"] .bg-gray-800 span,
+.dark .bg-gray-800 h3,
+.dark .bg-gray-800 h4,
+.dark .bg-gray-800 p,
+.dark .bg-gray-800 div,
+.dark .bg-gray-800 span {
+  color: #ffffff !important;
+}
+
+/* Light theme - make dark boxes lighter with dark text for better contrast */
+[data-theme="light"] .bg-gray-800,
+.light .bg-gray-800 {
+  background-color: #f3f4f6 !important;
+  color: #000000 !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+[data-theme="light"] .bg-gray-800 h3,
+[data-theme="light"] .bg-gray-800 h4,
+[data-theme="light"] .bg-gray-800 p,
+[data-theme="light"] .bg-gray-800 div,
+[data-theme="light"] .bg-gray-800 span,
+.light .bg-gray-800 h3,
+.light .bg-gray-800 h4,
+.light .bg-gray-800 p,
+.light .bg-gray-800 div,
+.light .bg-gray-800 span {
+  color: #000000 !important;
+}
+
+/* Tab content text colors - ensure proper visibility */
+.text-gray-300 {
+  color: var(--text-secondary) !important;
+}
+
+/* Dark theme - light text for content */
+[data-theme="dark"] .text-gray-300,
+.dark .text-gray-300 {
+  color: #d1d5db !important;
+}
+
+/* Light theme - dark text for content */
+[data-theme="light"] .text-gray-300,
+.light .text-gray-300 {
+  color: #374151 !important;
+}
+
 /* Navigation enhancements */
 .nav-dark {
   position: relative;
