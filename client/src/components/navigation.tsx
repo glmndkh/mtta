@@ -10,7 +10,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
   DropdownMenuSub,
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
@@ -66,7 +65,6 @@ export default function Navigation() {
     { href: "/clubs", label: t('nav.clubs'), icon: Building },
     { href: "/leagues", label: t('nav.leagues'), icon: Users },
     { href: "/news", label: t('nav.news'), icon: Newspaper },
-    { href: "/history-timeline", label: t('nav.historyTimeline'), icon: Newspaper }, // Added history timeline link
   ];
 
   // Drawer animation classes
@@ -380,7 +378,7 @@ export default function Navigation() {
                     }}
                     className="flex items-center text-red-400 p-3 rounded hover:bg-red-900 hover:bg-opacity-20 w-full"
                   >
-                    <LogOut className="h-4 w-4 mr-3" />
+                    <LogOut className="h-4 w-4 mr-1" />
                     <span>{t('nav.logout')}</span>
                   </button>
                 </div>
