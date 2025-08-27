@@ -66,6 +66,7 @@ export default function Navigation() {
     { href: "/clubs", label: t('nav.clubs'), icon: Building },
     { href: "/leagues", label: t('nav.leagues'), icon: Users },
     { href: "/news", label: t('nav.news'), icon: Newspaper },
+    { href: "/history-timeline", label: t('nav.historyTimeline'), icon: Newspaper }, // Added history timeline link
   ];
 
   // Drawer animation classes
@@ -148,7 +149,7 @@ export default function Navigation() {
                 </Link>
               );
             })}
-            
+
           </div>
 
           {/* User Menu & Mobile Toggle */}

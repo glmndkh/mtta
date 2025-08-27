@@ -33,6 +33,7 @@ const translations = {
     'nav.profile': 'Миний профайл',
     'nav.admin': 'Админ самбар',
     'nav.createTournament': 'Тэмцээн үүсгэх',
+    'nav.historyTimeline': 'Түүхэн замнал',
 
     // About page
     'about.title': 'Бидний тухай',
@@ -62,6 +63,40 @@ const translations = {
     'about.federationMembers': 'Холбооны гишүүдийн бүрэлдэхүүн болон үүрэг хариуцлага',
     'about.presidentGreeting': 'Ерөнхийлөгчийн мэндчилгээ',
     'about.presidentGreetingText': 'Эрхэм тамирчид болон дэмжигчид ээ! Монголын ширээний теннисний холбооны Ерөнхийлөгчийн хувьд та бүхэнд чин сэтгэлээсээ хандлагаа илэрхийлж байна. 1965 онд байгуулагдсан цагаасаа хойш бид Монголын ширээний тенниснийг олон улсын стандартад хүргэх, залуучуудыг спортын үйл ажиллагаанд татан оролцуулахад шамдан ажиллаж ирсэн. Ирээдүйд илүү амжилт гаргаж, Монгол улсаа дэлхийн тавцанд төлөөлөхийг эрмэлзэж байна.',
+
+    // Timeline page
+    'timeline.title': 'Түүхэн хөгжлийн замнал',
+    'timeline.subtitle': 'Монголын ширээний теннисний холбооны 60 жилийн түүхэн замнал',
+    'timeline.categories.foundation': 'Үндэслэл',
+    'timeline.categories.achievement': 'Амжилт',
+    'timeline.categories.international': 'Олон улсын хамтын ажиллагаа',
+    'timeline.categories.development': 'Хөгжил',
+    'timeline.stats.years': 'Жилийн туршлага',
+    'timeline.stats.athletes': 'Тамирчин',
+    'timeline.stats.clubs': 'Клуб',
+    'timeline.stats.tournaments': 'Тэмцээн',
+
+    // Timeline events
+    'timeline.1965.title': 'Холбоо байгуулагдав',
+    'timeline.1965.description': 'Монголын ширээний теннисний холбоо албан ёсоор байгуулагдаж, спортын салбарт шинэ эрин эхэлсэн.',
+    'timeline.1971.title': 'ITTF-д элссэн',
+    'timeline.1971.description': 'Олон улсын ширээний теннисний холбоонд (ITTF) элсэж, дэлхийн спортын нийгэмлэгт нэгдсэн.',
+    'timeline.1980.title': 'Анхны үндэсний аварга',
+    'timeline.1980.description': 'Анхны үндэсний аваргын тэмцээн зохион байгуулагдаж, улсын түвшинд спорт хөгжсөн.',
+    'timeline.1990.title': 'Олон улсын тэмцээнд оролцсон',
+    'timeline.1990.description': 'Анх удаа олон улсын томоохон тэмцээнд Монголын тамирчид амжилттай оролцсон.',
+    'timeline.2000.title': 'Клубын системийг бий болгосон',
+    'timeline.2000.description': 'Орон нутагт клубын системийг бий болгож, залуучуудын дунд спортыг өргөн дэлгэрүүлсэн.',
+    'timeline.2008.title': 'Азийн тэмцээнд медаль хүртсэн',
+    'timeline.2008.description': 'Анх удаа Азийн түвшинд медаль хүртэж, Монголын ширээний теннисний нэр хүндийг өсгөсөн.',
+    'timeline.2012.title': 'Шинэ өртөө барьсан',
+    'timeline.2012.description': 'Орчин үеийн стандартын дагуу шинэ дасгалжуулалтын өртөө барьж, дэд бүтцийг сайжруулсан.',
+    'timeline.2016.title': 'Залуучуудын хөгжлийн хөтөлбөр',
+    'timeline.2016.description': 'Залуучуудын спортыг дэмжих тусгай хөтөлбөр хэрэгжүүлж, цаашдын хөгжлийн суурийг бэхжүүлсэн.',
+    'timeline.2020.title': 'Дижитал шилжилт',
+    'timeline.2020.description': 'COVID-19 цар тахлын үед онлайн тэмцээн, сургалт зохион байгуулж дижитал шилжилтийг хийсэн.',
+    'timeline.2024.title': 'Шинэ стратегийн төлөвлөгөө',
+    'timeline.2024.description': '2030 хүртэлх хөгжлийн стратегийн төлөвлөгөө батлагдаж, ирээдүйн зорилтыг тодорхойлсон.',
   },
   en: {
     // Navigation
@@ -85,6 +120,7 @@ const translations = {
     'nav.profile': 'My Profile',
     'nav.admin': 'Admin Dashboard',
     'nav.createTournament': 'Create Tournament',
+    'nav.historyTimeline': 'History Timeline',
 
     // About page
     'about.title': 'About Us',
@@ -114,6 +150,40 @@ const translations = {
     'about.federationMembers': 'Federation member composition and responsibilities',
     'about.presidentGreeting': 'Presidential Greeting',
     'about.presidentGreetingText': 'Dear athletes and supporters! As the President of the Mongolian Table Tennis Federation, I extend warm greetings to all of you. Since our federation was established in 1965, we have been working tirelessly to elevate Mongolian table tennis to international standards and engage young people in sports activities. We aim to achieve greater success in the future and proudly represent Mongolia on the world stage.',
+
+    // Timeline page
+    'timeline.title': 'Historical Journey',
+    'timeline.subtitle': '60 years of Mongolian Table Tennis Federation history',
+    'timeline.categories.foundation': 'Foundation',
+    'timeline.categories.achievement': 'Achievement',
+    'timeline.categories.international': 'International Cooperation',
+    'timeline.categories.development': 'Development',
+    'timeline.stats.years': 'Years of Experience',
+    'timeline.stats.athletes': 'Athletes',
+    'timeline.stats.clubs': 'Clubs',
+    'timeline.stats.tournaments': 'Tournaments',
+
+    // Timeline events
+    'timeline.1965.title': 'Federation Established',
+    'timeline.1965.description': 'The Mongolian Table Tennis Association was officially established, marking the beginning of a new era in sports development.',
+    'timeline.1971.title': 'Joined ITTF',
+    'timeline.1971.description': 'Became a member of the International Table Tennis Federation (ITTF), joining the global table tennis community.',
+    'timeline.1980.title': 'First National Championship',
+    'timeline.1980.description': 'The first national championship was organized, establishing competitive table tennis at the national level.',
+    'timeline.1990.title': 'International Competition Debut',
+    'timeline.1990.description': 'Mongolian athletes successfully participated in major international competitions for the first time.',
+    'timeline.2000.title': 'Club System Established',
+    'timeline.2000.description': 'Established a comprehensive club system nationwide, expanding table tennis among youth.',
+    'timeline.2008.title': 'First Asian Medal',
+    'timeline.2008.description': 'Won the first medal at Asian level, enhancing Mongolia\'s reputation in table tennis.',
+    'timeline.2012.title': 'New Training Facility',
+    'timeline.2012.description': 'Built a modern training facility meeting international standards, improving infrastructure.',
+    'timeline.2016.title': 'Youth Development Program',
+    'timeline.2016.description': 'Implemented special youth development programs, strengthening the foundation for future growth.',
+    'timeline.2020.title': 'Digital Transformation',
+    'timeline.2020.description': 'During COVID-19, organized online competitions and training, embracing digital transformation.',
+    'timeline.2024.title': 'New Strategic Plan',
+    'timeline.2024.description': 'Adopted a comprehensive development strategy until 2030, defining future goals and objectives.',
   }
 };
 

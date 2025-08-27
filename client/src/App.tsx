@@ -33,7 +33,8 @@ import Profile from "@/pages/profile";
 import PlayerProfilePage from "@/pages/player-profile";
 import AdminDashboard from "@/pages/admin-dashboard";
 import TournamentManagement from "@/pages/tournament-management";
-import AboutPage from "@/pages/about";
+import AboutPage from './pages/about';
+import HistoryTimelinePage from './pages/history-timeline';
 import { useAuth } from "@/hooks/useAuth";
 import AdminPlayerDetailsPage from "@/pages/admin-player-details"; // Import the new page
 import { LanguageProvider } from "@/contexts/LanguageContext";
@@ -60,7 +61,8 @@ function Router() {
       <Route path="/judges" component={JudgesPage} />
       <Route path="/news/:id" component={NewsDetail} />
       <Route path="/news" component={News} />
-      <Route path="/about" component={AboutPage} />
+      <Route path="/about" element={<AboutPage />} />
+          <Route path="/history-timeline" element={<HistoryTimelinePage />} />
       <Route path="/" component={Home} />
       {!isLoading && isAuthenticated && (
         <>
