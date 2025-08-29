@@ -2336,12 +2336,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Create league team
-      const team = await storage.createLeagueTeam(leagueId || 'default', {
+      const team = await storage.createLeagueTeam({
         name,
         logoUrl,
         sponsorLogo,
         ownerName,
-        coachName
+        coachName,
+        tournamentId: leagueId || 'default'
       });
 
       // Add players to team if provided
@@ -2708,12 +2709,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const teamData = req.body;
 
       // Create tournament team using the existing storage method
-      const team = await storage.createLeagueTeam(tournamentId, {
+      const team = await storage.createLeagueTeam({
         name: teamData.name,
         logoUrl: teamData.logoUrl,
         sponsorLogo: teamData.sponsorLogo,
         ownerName: teamData.ownerName,
         coachName: teamData.coachName,
+        tournamentId: tournamentId
       });
 
       res.json(team);
