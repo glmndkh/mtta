@@ -1,0 +1,52 @@
+You are a senior React + Tailwind + shadcn/ui engineer.
+
+Goal:
+Implement a “News” section with excellent UX, accessibility, and performance. No dialogs; clean card-based layout.
+
+Requirements:
+1) Layout
+   - Featured area at the top (latest or pinned item) with large thumbnail, title, date, short excerpt.
+   - Latest News grid below: responsive 1/2/3 columns (sm/md/lg).
+   - Optional sidebar or toolbar for filters/search if space allows.
+
+2) Card UI
+   - Each card shows: thumbnail (lazy), title, published date, 2–3 line excerpt, tags/categories, “Read more” link.
+   - Hover: soft shadow/elevation; keyboard-focus styles (focus-visible ring).
+   - Use shadcn/ui components where appropriate.
+
+3) Filters & Search
+   - Category tabs (e.g., “Сургалт”, “Арга хэмжээ”, “Амжилт”, “Зарлал”).
+   - Text search (title/excerpt).
+   - Sort by date (newest first by default).
+
+4) States
+   - Loading: skeletons.
+   - Empty: friendly empty state.
+   - Error: retry option + concise message.
+
+5) Data
+   - Fetch from `/api/news?category=&q=&page=&limit=`.
+   - Each item: { id, title, slug, excerpt, content, image, date, tags[], category }.
+   - Support pagination (page/limit) or “Load more”.
+   - Gracefully handle missing images (fallback).
+
+6) Accessibility & i18n
+   - Semantic sections, <h2> for lists, aria-labels, alt text.
+   - Keyboard navigable.
+   - i18n labels (mn/en): “Шинэ мэдээ”, “Дэлгэрэнгүй”, “Хайх…”, category names.
+
+7) Performance & SEO
+   - Lazy images, optimized thumbnails (WebP if available).
+   - Preload featured image.
+   - SEO-ready structure (proper headings, readable URLs via slug).
+
+8) Sharing & Analytics
+   - Social share buttons on detail page (FB/Twitter/LinkedIn).
+   - Emit events: news_card_view, news_read_more_click, filter_change, search_submit.
+
+Acceptance Criteria:
+- Featured item renders distinctly; grid is responsive (1/2/3 cols).
+- Filters/search/sort work together and update the list without full reload.
+- Loading/empty/error states are visible and polished.
+- Lighthouse: Performance ≥ 90, Accessibility ≥ 95.
+- All interactive elements accessible via keyboard and have focus styles.
