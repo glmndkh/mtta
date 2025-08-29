@@ -226,6 +226,24 @@ export interface IStorage {
   getPlayerMatchesWithDetails(playerId: string): Promise<any[]>;
   getPlayerTeams(playerId: string): Promise<any[]>;
   getPlayerMedals(playerId: string): Promise<any[]>;
+  getPlayerTournamentRegistrations(playerId: string): Promise<any[]>;
+
+  // League team operations
+  getLeagueMatches(leagueId: string): Promise<any[]>;
+  getAllLeagueTeams(): Promise<any[]>;
+  getLeagueTeams(leagueId: string): Promise<any[]>;
+  createLeagueTeam(teamData: any): Promise<any>;
+  addPlayerToLeagueTeam(teamId: string, playerId: string, playerName: string): Promise<any>;
+  updateLeagueTeam(teamId: string, teamData: any): Promise<any>;
+  deleteLeagueTeam(teamId: string): Promise<boolean>;
+  addTeamToLeague(leagueId: string, teamData: any): Promise<any>;
+
+  // Tournament team operations
+  createTournamentTeam(teamData: any): Promise<any>;
+  addPlayerToTournamentTeam(teamId: string, playerId: string, playerName: string): Promise<any>;
+  getTournamentTeams(tournamentId: string): Promise<any[]>;
+  getTournamentTeamById(teamId: string): Promise<any>;
+  deleteTournamentTeam(teamId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -253,9 +271,9 @@ export class DatabaseStorage implements IStorage {
           profileImageUrl: userData.profileImageUrl,
           province: userData.province,
           city: userData.city,
-          rubberTypes: Array.isArray(userData.rubberTypes) ? userData.rubberTypes : [],
+          rubberTypes: Array.isArray(userData.rubberTypes) ? userData.rubberTypes as string[] : [],
           handedness: userData.handedness,
-          playingStyles: Array.isArray(userData.playingStyles) ? userData.playingStyles : [],
+          playingStyles: Array.isArray(userData.playingStyles) ? userData.playingStyles as string[] : [],
           bio: userData.bio,
           membershipType: userData.membershipType,
           membershipStartDate: userData.membershipStartDate,
@@ -2020,12 +2038,164 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Dummy method for getLeagueTeams as it was called but not defined in the original code
-  // This will be replaced with the actual implementation if available elsewhere or needs to be added.
-  async getLeagueTeams(leagueId: string): Promise<Array<TournamentTeam & { players: TournamentTeamPlayer[] }>> {
-    // Placeholder implementation - replace with actual logic to fetch teams and their players for a league
-    console.warn("Placeholder method: getLeagueTeams called. Implement actual logic.");
-    return [];
+  // League team operations
+  async getPlayerTournamentRegistrations(playerId: string): Promise<any[]> {
+    try {
+      const registrations = await db.select().from(tournamentParticipants).where(eq(tournamentParticipants.playerId, playerId));
+      return registrations;
+    } catch (error) {
+      console.error('Error getting player tournament registrations:', error);
+      return [];
+    }
+  }
+
+  async getLeagueMatches(leagueId: string): Promise<any[]> {
+    try {
+      const leagueMatches = await db.select().from(matches).where(eq(matches.tournamentId, leagueId));
+      return leagueMatches;
+    } catch (error) {
+      console.error('Error getting league matches:', error);
+      return [];
+    }
+  }
+
+  async getAllLeagueTeams(): Promise<any[]> {
+    try {
+      const teams = await db.select().from(tournamentTeams);
+      return teams;
+    } catch (error) {
+      console.error('Error getting all league teams:', error);
+      return [];
+    }
+  }
+
+  async getLeagueTeams(leagueId: string): Promise<any[]> {
+    try {
+      const teams = await db.select().from(tournamentTeams).where(eq(tournamentTeams.tournamentId, leagueId));
+      return teams;
+    } catch (error) {
+      console.error('Error getting league teams:', error);
+      return [];
+    }
+  }
+
+  async createLeagueTeam(teamData: any): Promise<any> {
+    try {
+      const [team] = await db.insert(tournamentTeams).values(teamData).returning();
+      return team;
+    } catch (error) {
+      console.error('Error creating league team:', error);
+      throw error;
+    }
+  }
+
+  async addPlayerToLeagueTeam(teamId: string, playerId: string, playerName: string): Promise<any> {
+    try {
+      const [player] = await db.insert(tournamentTeamPlayers).values({
+        teamId,
+        playerId,
+        playerName
+      }).returning();
+      return player;
+    } catch (error) {
+      console.error('Error adding player to league team:', error);
+      throw error;
+    }
+  }
+
+  async updateLeagueTeam(teamId: string, teamData: any): Promise<any> {
+    try {
+      const [team] = await db.update(tournamentTeams)
+        .set(teamData)
+        .where(eq(tournamentTeams.id, teamId))
+        .returning();
+      return team;
+    } catch (error) {
+      console.error('Error updating league team:', error);
+      throw error;
+    }
+  }
+
+  async deleteLeagueTeam(teamId: string): Promise<boolean> {
+    try {
+      // First delete team players
+      await db.delete(tournamentTeamPlayers).where(eq(tournamentTeamPlayers.teamId, teamId));
+      // Then delete the team
+      const result = await db.delete(tournamentTeams).where(eq(tournamentTeams.id, teamId));
+      return result.rowCount ? result.rowCount > 0 : false;
+    } catch (error) {
+      console.error('Error deleting league team:', error);
+      return false;
+    }
+  }
+
+  async addTeamToLeague(leagueId: string, teamData: any): Promise<any> {
+    try {
+      const teamWithLeague = { ...teamData, tournamentId: leagueId };
+      const [team] = await db.insert(tournamentTeams).values(teamWithLeague).returning();
+      return team;
+    } catch (error) {
+      console.error('Error adding team to league:', error);
+      throw error;
+    }
+  }
+
+  // Tournament team operations
+  async createTournamentTeam(teamData: any): Promise<any> {
+    try {
+      const [team] = await db.insert(tournamentTeams).values(teamData).returning();
+      return team;
+    } catch (error) {
+      console.error('Error creating tournament team:', error);
+      throw error;
+    }
+  }
+
+  async addPlayerToTournamentTeam(teamId: string, playerId: string, playerName: string): Promise<any> {
+    try {
+      const [player] = await db.insert(tournamentTeamPlayers).values({
+        teamId,
+        playerId,
+        playerName
+      }).returning();
+      return player;
+    } catch (error) {
+      console.error('Error adding player to tournament team:', error);
+      throw error;
+    }
+  }
+
+  async getTournamentTeams(tournamentId: string): Promise<any[]> {
+    try {
+      const teams = await db.select().from(tournamentTeams).where(eq(tournamentTeams.tournamentId, tournamentId));
+      return teams;
+    } catch (error) {
+      console.error('Error getting tournament teams:', error);
+      return [];
+    }
+  }
+
+  async getTournamentTeamById(teamId: string): Promise<any> {
+    try {
+      const [team] = await db.select().from(tournamentTeams).where(eq(tournamentTeams.id, teamId));
+      return team;
+    } catch (error) {
+      console.error('Error getting tournament team by ID:', error);
+      return null;
+    }
+  }
+
+  async deleteTournamentTeam(teamId: string): Promise<boolean> {
+    try {
+      // First delete team players
+      await db.delete(tournamentTeamPlayers).where(eq(tournamentTeamPlayers.teamId, teamId));
+      // Then delete the team
+      const result = await db.delete(tournamentTeams).where(eq(tournamentTeams.id, teamId));
+      return result.rowCount ? result.rowCount > 0 : false;
+    } catch (error) {
+      console.error('Error deleting tournament team:', error);
+      return false;
+    }
   }
 
 }
