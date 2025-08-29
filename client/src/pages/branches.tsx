@@ -496,12 +496,7 @@ const BranchCard = ({ branch }: { branch: any }) => {
           </div>
         )}
 
-        {/* Coordinates (for reference) */}
-        {branch.coordinates && (
-          <div className="text-xs text-gray-400 pt-2 border-t border-gray-50">
-            📍 Координат: {branch.coordinates}
-          </div>
-        )}
+        
       </CardContent>
     </Card>
   );
