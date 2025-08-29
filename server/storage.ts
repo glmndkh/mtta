@@ -721,6 +721,9 @@ export class DatabaseStorage implements IStorage {
         : ["individual"],
     };
 
+    // Remove showCountdown field if it doesn't exist in database yet
+    delete insertData.showCountdown;
+
     console.log("Processed insert data:", insertData);
 
     const [tournament] = await db.insert(tournaments).values(insertData).returning();
