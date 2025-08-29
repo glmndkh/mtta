@@ -230,8 +230,6 @@ function TournamentRegistrationButton({ tournamentId }: { tournamentId: string }
 function TournamentCard({ tournament }: { tournament: TournamentData }) {
   const [, setLocation] = useLocation();
   const [countdown, setCountdown] = useState<CountdownTime>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  const [previousCountdown, setPreviousCountdown] = useState<CountdownTime>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  const [isFlipping, setIsFlipping] = useState({ days: false, hours: false, minutes: false, seconds: false });
 
   // Countdown timer logic
   useEffect(() => {
@@ -246,26 +244,7 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
         const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((difference % (1000 * 60)) / 1000);
 
-        const newCountdown = { days, hours, minutes, seconds };
-
-        // Check if values changed to trigger flip animation
-        if (countdown.days !== days || countdown.hours !== hours || countdown.minutes !== minutes || countdown.seconds !== seconds) {
-          const flips = {
-            days: countdown.days !== days,
-            hours: countdown.hours !== hours,
-            minutes: countdown.minutes !== minutes,
-            seconds: countdown.seconds !== seconds
-          };
-          setIsFlipping(flips);
-
-          // Reset flip animation after 600ms
-          setTimeout(() => {
-            setIsFlipping({ days: false, hours: false, minutes: false, seconds: false });
-          }, 600);
-        }
-
-        setPreviousCountdown(countdown);
-        setCountdown(newCountdown);
+        setCountdown({ days, hours, minutes, seconds });
       } else {
         setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
       }
@@ -273,7 +252,6 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
 
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
-
     return () => clearInterval(interval);
   }, [tournament.startDate]);
 
@@ -281,186 +259,204 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
     const startDate = new Date(tournament.startDate);
     const endDate = new Date(tournament.endDate);
     const startFormatted = startDate.toLocaleDateString('mn-MN', { 
-      month: 'short', 
-      day: 'numeric' 
+      day: 'numeric',
+      month: 'short' 
     });
     const endFormatted = endDate.toLocaleDateString('mn-MN', { 
-      month: 'short', 
-      day: 'numeric' 
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
     });
-    const startTime = startDate.toLocaleTimeString('mn-MN', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: false
-    });
-    const year = startDate.getFullYear();
 
-    return `${startFormatted} – ${endFormatted} ${year}, ${startTime}`;
+    return `${startFormatted} - ${endFormatted}`;
   };
+
+  const backgroundImageUrl = tournament.backgroundImage || extractImageFromRichDescription(tournament.richDescription);
 
   return (
     <div
-      className="relative overflow-hidden cursor-pointer hover:shadow-2xl transition-shadow duration-300 rounded-xl mb-8"
+      className="relative overflow-hidden cursor-pointer hover:shadow-2xl transition-all duration-300 rounded-2xl mb-8"
       onClick={() => setLocation(`/tournament/${tournament.id}/full`)}
     >
-      <div className="relative h-64 lg:h-80">
-        {/* Background Image */}
+      <div className="relative h-80 lg:h-96">
+        {/* Background Image with Mountains/City Style */}
         <div className="absolute inset-0">
-          {tournament.backgroundImage || (tournament.richDescription && tournament.richDescription.includes('<img')) ? (
+          {backgroundImageUrl ? (
             <div 
               className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-              style={{
-                backgroundImage: `url(${tournament.backgroundImage || extractImageFromRichDescription(tournament.richDescription)})`
-              }}
+              style={{ backgroundImage: `url(${backgroundImageUrl})` }}
             />
           ) : (
-            // Default night city background
+            // WTT-style mountain/city background
             <div 
-              className="absolute inset-0 bg-gradient-to-b from-slate-900 via-blue-900 to-slate-800"
+              className="absolute inset-0"
               style={{
-                backgroundImage: `
-                  radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-                  radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
-                  radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.1) 0%, transparent 50%)
-                `
+                background: `linear-gradient(135deg, #1e3a8a 0%, #3b82f6 25%, #60a5fa 50%, #93c5fd 75%, #dbeafe 100%),
+                            url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400"><polygon fill="%23334155" points="0,400 200,100 400,200 600,80 800,150 1000,50 1200,120 1200,400"/><polygon fill="%23475569" points="0,400 150,180 300,220 450,160 600,200 750,140 900,180 1050,100 1200,160 1200,400"/></svg>')`
               }}
             >
-              {/* Simulated city lights */}
-              <div className="absolute inset-0 opacity-60">
-                <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-yellow-400/20 via-orange-400/10 to-transparent"></div>
-                <div className="absolute bottom-0 left-0 right-0">
-                  {[...Array(10)].map((_, i) => (
-                    <div 
-                      key={i}
-                      className="absolute bottom-0 bg-gradient-to-t from-yellow-300/40 to-transparent"
-                      style={{
-                        left: `${i * 10}%`,
-                        width: `${2 + Math.random() * 3}%`,
-                        height: `${20 + Math.random() * 30}%`,
-                        opacity: 0.6 + Math.random() * 0.4
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
+              {/* City buildings overlay */}
+              <div className="absolute bottom-0 left-0 right-0 h-32 opacity-60"
+                   style={{
+                     background: `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 128"><rect fill="%23374151" x="0" y="80" width="60" height="48"/><rect fill="%23475569" x="60" y="60" width="80" height="68"/><rect fill="%23374151" x="140" y="40" width="60" height="88"/><rect fill="%23475569" x="200" y="70" width="50" height="58"/><rect fill="%23374151" x="250" y="30" width="70" height="98"/><rect fill="%23475569" x="320" y="50" width="90" height="78"/><rect fill="%23374151" x="410" y="20" width="60" height="108"/><rect fill="%23475569" x="470" y="65" width="80" height="63"/><rect fill="%23374151" x="550" y="45" width="70" height="83"/><rect fill="%23475569" x="620" y="75" width="50" height="53"/><rect fill="%23374151" x="670" y="35" width="80" height="93"/><rect fill="%23475569" x="750" y="55" width="60" height="73"/><rect fill="%23374151" x="810" y="25" width="90" height="103"/><rect fill="%23475569" x="900" y="60" width="70" height="68"/><rect fill="%23374151" x="970" y="40" width="60" height="88"/><rect fill="%23475569" x="1030" y="70" width="80" height="58"/><rect fill="%23374151" x="1110" y="30" width="90" height="98"/></svg>')`,
+                     backgroundSize: 'cover',
+                     backgroundRepeat: 'no-repeat',
+                     backgroundPosition: 'bottom'
+                   }}
+              />
             </div>
           )}
-
-          {/* Dark green overlay for text readability */}
-          <div className="absolute inset-0 bg-green-900/80" />
+          
+          {/* Dark overlay for better text readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/30 to-black/60" />
         </div>
 
         {/* Content Overlay */}
-        <div className="relative z-10 h-full">
-          <div className="h-full flex flex-col p-6 lg:p-8 gap-6">
-            {/* Top Countdown */}
-            <div className="flex justify-center lg:justify-end gap-2 mt-2">
-              <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 text-white text-center">
-                <div className="text-xl font-bold">{countdown.days.toString().padStart(2, '0')}</div>
-                <div className="text-xs text-gray-300">Days</div>
+        <div className="relative z-10 h-full flex flex-col">
+          {/* Top Section - Logo and Countdown */}
+          <div className="flex items-start justify-between p-6">
+            {/* Logo Section */}
+            <div className="flex items-center space-x-3">
+              <div className="bg-cyan-400 text-black px-3 py-1 rounded font-bold text-lg">
+                MTTA
               </div>
-              <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 text-white text-center">
-                <div className="text-xl font-bold">{countdown.hours.toString().padStart(2, '0')}</div>
-                <div className="text-xs text-gray-300">Hours</div>
-              </div>
-              <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 text-white text-center">
-                <div className="text-xl font-bold">{countdown.minutes.toString().padStart(2, '0')}</div>
-                <div className="text-xs text-gray-300">Minutes</div>
-              </div>
-              <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 text-white text-center">
-                <div className="text-xl font-bold">{countdown.seconds.toString().padStart(2, '0')}</div>
-                <div className="text-xs text-gray-300">Seconds</div>
+              <div className="text-white text-sm font-medium opacity-90">
+                CONTENDER
               </div>
             </div>
 
-            {/* Main Content Section */}
-            <div className="flex flex-col lg:flex-row items-start justify-between gap-4 flex-1">
+            {/* Countdown Timer - WTT Style */}
+            <div className="flex items-center space-x-1 bg-black/80 rounded-lg px-4 py-2">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-white">{countdown.days}</div>
+                <div className="text-xs text-gray-300 -mt-1">Days</div>
+              </div>
+              <div className="text-white mx-1">:</div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-white">{countdown.hours.toString().padStart(2, '0')}</div>
+                <div className="text-xs text-gray-300 -mt-1">Hours</div>
+              </div>
+              <div className="text-white mx-1">:</div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-white">{countdown.minutes.toString().padStart(2, '0')}</div>
+                <div className="text-xs text-gray-300 -mt-1">Minutes</div>
+              </div>
+              <div className="text-white mx-1">:</div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-white">{countdown.seconds.toString().padStart(2, '0')}</div>
+                <div className="text-xs text-gray-300 -mt-1">Seconds</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content Area */}
+          <div className="flex-1 flex items-end p-6">
+            <div className="flex flex-col lg:flex-row items-start justify-between w-full gap-6">
               {/* Left Section - Tournament Info */}
-              <div className="flex-1 space-y-3">
+              <div className="flex-1 space-y-4">
                 {/* Date Badge */}
-                <div className="inline-flex items-center space-x-2 text-white">
-                  <div className="w-6 h-4 bg-red-600 rounded-sm flex items-center justify-center">
-                    <span className="text-xs font-bold">🇲🇳</span>
+                <div className="inline-flex items-center space-x-2">
+                  <div className="bg-green-600 text-white px-3 py-1 rounded text-sm font-medium flex items-center space-x-1">
+                    <span>⭐</span>
+                    <span>{formatDateRange()}</span>
                   </div>
-                  <span className="text-sm bg-black/40 px-3 py-1 rounded text-white font-medium">
-                    {formatDateRange()}
-                  </span>
                 </div>
 
-                {/* Tournament Name */}
-                <h2 className="text-3xl lg:text-4xl font-bold text-white leading-tight">
+                {/* Tournament Title */}
+                <h2 className="text-4xl lg:text-5xl font-bold text-white leading-tight max-w-2xl">
                   {tournament.name}
                 </h2>
 
+                {/* Subtitle */}
+                <div className="text-white/90 text-lg">
+                  {tournament.description || "Ширээний теннисний төв"}
+                </div>
+
                 {/* Location */}
-                <div className="flex items-center text-white/90 text-lg">
-                  <MapPin className="w-5 h-5 mr-2" />
+                <div className="text-white/90 text-lg">
                   {tournament.location}
                 </div>
 
                 {/* Prize Money */}
-                {(tournament.prizeMoney || tournament.prizes) && (
-                  <div className="text-white text-lg font-medium">
-                    Шагналын сан: <span className="font-bold">{tournament.prizeMoney || tournament.prizes}</span>
-                  </div>
-                )}
-
-                {/* Entry Fee */}
-                {tournament.entryFee && parseFloat(tournament.entryFee) > 0 && (
-                  <div className="text-white text-lg font-medium">
-                    Бүртгэлийн хураамж: <span className="font-bold">{parseFloat(tournament.entryFee).toLocaleString()}₮</span>
-                  </div>
-                )}
-
-                {/* Action Buttons */}
-                <div className="flex flex-wrap gap-3">
-                  <TournamentRegistrationButton tournamentId={tournament.id} />
+                <div className="flex items-center space-x-4">
+                  {(tournament.prizeMoney || tournament.prizes) && (
+                    <div className="text-white text-xl font-bold">
+                      PRIZE MONEY: {tournament.prizeMoney || tournament.prizes}
+                    </div>
+                  )}
+                  
                   {tournament.eventInfoUrl && (
                     <Button
                       variant="outline"
+                      size="sm"
                       className="border-white text-white hover:bg-white hover:text-black"
                       onClick={(e) => {
                         e.stopPropagation();
                         window.open(tournament.eventInfoUrl, '_blank');
                       }}
                     >
-                      Тэмцээний мэдээлэл
-                    </Button>
-                  )}
-                  {tournament.ticketUrl && (
-                    <Button
-                      className="bg-white text-black hover:bg-gray-100"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        window.open(tournament.ticketUrl, '_blank');
-                      }}
-                    >
-                      Тасалбар захиалах
+                      EVENT INFO
                     </Button>
                   )}
                 </div>
+
+                {/* Registration Button */}
+                <div className="pt-2">
+                  <TournamentRegistrationButton tournamentId={tournament.id} />
+                </div>
               </div>
 
-              {/* Right Section - Categories */}
-              <div className="w-full lg:w-64 space-y-2">
-                {(tournament.categories || tournament.participationTypes || []).map((category) => {
+              {/* Right Section - Categories (WTT Style) */}
+              <div className="w-full lg:w-80 space-y-3">
+                {(tournament.categories || tournament.participationTypes || []).map((category, index) => {
                   const label = CATEGORY_LABELS[category] || formatParticipation(parseParticipation(category));
                   return (
                     <div
                       key={category}
-                      className="flex items-center justify-between bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded px-3 py-2 text-sm font-medium text-gray-900 dark:text-gray-100"
+                      className="flex items-center justify-between bg-black/70 backdrop-blur-sm rounded-lg px-4 py-3 text-white hover:bg-black/80 transition-colors"
                     >
-                      <span>{label}</span>
-                      <ChevronRight className="w-4 h-4" />
+                      <span className="font-medium">{label}</span>
+                      <div className="w-6 h-6 rounded-full bg-cyan-400 flex items-center justify-center">
+                        <div className="w-2 h-2 rounded-full bg-black"></div>
+                      </div>
                     </div>
                   );
                 })}
+                
                 {(!tournament.categories || tournament.categories.length === 0) &&
                  (!tournament.participationTypes || tournament.participationTypes.length === 0) && (
-                  <div className="flex items-center justify-between bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded px-3 py-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-                    <span>Ганцаарчилсан</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </div>
+                  <>
+                    <div className="flex items-center justify-between bg-black/70 backdrop-blur-sm rounded-lg px-4 py-3 text-white">
+                      <span className="font-medium">Эрэгтэй ганцаарчилсан</span>
+                      <div className="w-6 h-6 rounded-full bg-cyan-400 flex items-center justify-center">
+                        <div className="w-2 h-2 rounded-full bg-black"></div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between bg-black/70 backdrop-blur-sm rounded-lg px-4 py-3 text-white">
+                      <span className="font-medium">Эмэгтэй ганцаарчилсан</span>
+                      <div className="w-6 h-6 rounded-full bg-cyan-400 flex items-center justify-center">
+                        <div className="w-2 h-2 rounded-full bg-black"></div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between bg-black/70 backdrop-blur-sm rounded-lg px-4 py-3 text-white">
+                      <span className="font-medium">Эрэгтэй хосоор</span>
+                      <div className="w-6 h-6 rounded-full bg-cyan-400 flex items-center justify-center">
+                        <div className="w-2 h-2 rounded-full bg-black"></div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between bg-black/70 backdrop-blur-sm rounded-lg px-4 py-3 text-white">
+                      <span className="font-medium">Эмэгтэй хосоор</span>
+                      <div className="w-6 h-6 rounded-full bg-cyan-400 flex items-center justify-center">
+                        <div className="w-2 h-2 rounded-full bg-black"></div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between bg-black/70 backdrop-blur-sm rounded-lg px-4 py-3 text-white">
+                      <span className="font-medium">Холимог хосоор</span>
+                      <div className="w-6 h-6 rounded-full bg-cyan-400 flex items-center justify-center">
+                        <div className="w-2 h-2 rounded-full bg-black"></div>
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
             </div>
