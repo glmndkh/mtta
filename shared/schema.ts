@@ -59,7 +59,7 @@ export const users = pgTable("users", {
   phone: varchar("phone").unique(),
   password: varchar("password"), // Added password field
   firstName: varchar("first_name"),
-  lastName: varchar("last_name"), 
+  lastName: varchar("last_name"),
   gender: genderEnum("gender"),
   dateOfBirth: timestamp("date_of_birth"),
   clubAffiliation: varchar("club_affiliation"), // Club name or location where they usually play
@@ -173,6 +173,7 @@ export const tournaments = pgTable("tournaments", {
   // New fields for enhanced tournament features
   backgroundImageUrl: varchar("background_image_url"), // Background image for tournament
   regulationDocumentUrl: varchar("regulation_document_url"), // Tournament regulation document
+  showCountdown: boolean("show_countdown").default(true),
   minRating: varchar("min_rating"), // Minimum rating/rank requirement (e.g., "Beginner", "Intermediate")
   maxRating: varchar("max_rating"), // Maximum rating/rank requirement
   createdAt: timestamp("created_at").defaultNow(),

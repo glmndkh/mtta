@@ -844,6 +844,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clubId: null,
         backgroundImageUrl: req.body.backgroundImageUrl || null,
         regulationDocumentUrl: req.body.regulationDocumentUrl || null,
+        showCountdown: req.body.showCountdown !== undefined ? req.body.showCountdown : true,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
