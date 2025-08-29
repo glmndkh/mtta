@@ -25,7 +25,7 @@ const AboutPage = () => {
   // Handle URL hash changes to switch tabs
   useEffect(() => {
     const hash = window.location.hash.replace('#', '');
-    if (hash && ['history', 'goals', 'management', 'leadership'].includes(hash)) {
+    if (hash && ['history', 'goals', 'management'].includes(hash)) {
       setActiveTab(hash);
     }
   }, []);
@@ -55,7 +55,7 @@ const AboutPage = () => {
 
           {/* Navigation Tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-8 bg-gray-800 border-gray-700 sticky top-16 z-30">
+            <TabsList className="grid w-full grid-cols-3 mb-8 bg-gray-800 border-gray-700 sticky top-16 z-30">
               <TabsTrigger 
                 value="history" 
                 className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300 text-xs md:text-sm px-1 md:px-3"
@@ -79,14 +79,6 @@ const AboutPage = () => {
                 <Users className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                 <span className="hidden sm:inline">{t('about.history')}</span>
                 <span className="sm:hidden">{t('about.history').substring(0, 4)}</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="leadership" 
-                className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300 text-xs md:text-sm px-1 md:px-3"
-              >
-                <Award className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                <span className="hidden sm:inline">{t('about.members')}</span>
-                <span className="sm:hidden">{t('about.members').substring(0, 4)}</span>
               </TabsTrigger>
             </TabsList>
 
@@ -169,7 +161,7 @@ const AboutPage = () => {
                       <p>1965</p>
                     </div>
                     <div className="bg-gray-800 p-4 rounded-lg">
-                      <h4 className="font-semibold text-green-400 mb-2">{t('about.members')}</h4>
+                      <h4 className="font-semibold text-green-400 mb-2">{t('about.memberCount')}</h4>
                       <p>500+ athletes</p>
                     </div>
                     <div className="bg-gray-800 p-4 rounded-lg">
@@ -442,35 +434,7 @@ const AboutPage = () => {
               </Card>
             </TabsContent>
 
-            {/* Leadership Tab */}
-            <TabsContent value="leadership" id="leadership">
-              <Card className="card-dark">
-                <CardHeader>
-                  <CardTitle className="text-2xl text-white flex items-center">
-                    <Award className="w-6 h-6 mr-3 text-green-400" />
-                    {t('about.members')}
-                  </CardTitle>
-                  <CardDescription className="text-gray-300">
-                    {t('about.federationMembers')}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="text-gray-300">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {members.map((member) => (
-                      <div key={member.id} className="bg-gray-800 p-6 rounded-lg">
-                        <div className="text-center mb-4">
-                          {member.imageUrl && (
-                            <img src={member.imageUrl} alt={member.name} className="w-20 h-20 rounded-full mx-auto mb-3 object-cover" />
-                          )}
-                          <h3 className="text-xl font-semibold text-white">{member.name}</h3>
-                          <p className="text-green-400">{member.position}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+            
           </Tabs>
         </div>
       </div>
