@@ -38,7 +38,6 @@ import HistoryTimelinePage from './pages/history-timeline';
 import { useAuth } from "@/hooks/useAuth";
 import AdminPlayerDetailsPage from "@/pages/admin-player-details"; // Import the new page
 import { LanguageProvider } from "@/contexts/LanguageContext";
-import CompetitionHero from './pages/competition-hero'; // Import the new page
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -53,7 +52,6 @@ function Router() {
       <Route path="/tournament/:id/full" component={TournamentFullInfo} />
       <Route path="/player/:id" component={PlayerProfilePage} />
       <Route path="/tournaments" component={Tournaments} />
-      <Route path="/competition/:id" component={CompetitionHero} />
       <Route path="/clubs" component={Clubs} />
       <Route path="/leagues" component={Leagues} />
       <Route path="/leagues/:id" component={LeagueDetails} />

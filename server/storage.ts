@@ -256,7 +256,7 @@ export class DatabaseStorage implements IStorage {
   async upsertUser(userData: UpsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
-      .values(userData)
+      .values([userData])
       .onConflictDoUpdate({
         target: users.email,
         set: {
@@ -720,9 +720,6 @@ export class DatabaseStorage implements IStorage {
         ? tournamentData.participationTypes 
         : ["individual"],
     };
-
-    // Remove showCountdown field if it doesn't exist in database yet
-    delete insertData.showCountdown;
 
     console.log("Processed insert data:", insertData);
 
@@ -2095,7 +2092,7 @@ export class DatabaseStorage implements IStorage {
   async addPlayerToLeagueTeam(teamId: string, playerId: string, playerName: string): Promise<any> {
     try {
       const [player] = await db.insert(tournamentTeamPlayers).values({
-        tournamentTeamId: teamId,
+        teamId,
         playerId,
         playerName
       }).returning();
@@ -2122,7 +2119,7 @@ export class DatabaseStorage implements IStorage {
   async deleteLeagueTeam(teamId: string): Promise<boolean> {
     try {
       // First delete team players
-      await db.delete(tournamentTeamPlayers).where(eq(tournamentTeamPlayers.tournamentTeamId, teamId));
+      await db.delete(tournamentTeamPlayers).where(eq(tournamentTeamPlayers.teamId, teamId));
       // Then delete the team
       const result = await db.delete(tournamentTeams).where(eq(tournamentTeams.id, teamId));
       return result.rowCount ? result.rowCount > 0 : false;
@@ -2157,7 +2154,7 @@ export class DatabaseStorage implements IStorage {
   async addPlayerToTournamentTeam(teamId: string, playerId: string, playerName: string): Promise<any> {
     try {
       const [player] = await db.insert(tournamentTeamPlayers).values({
-        tournamentTeamId: teamId,
+        teamId,
         playerId,
         playerName
       }).returning();
@@ -2191,7 +2188,7 @@ export class DatabaseStorage implements IStorage {
   async deleteTournamentTeam(teamId: string): Promise<boolean> {
     try {
       // First delete team players
-      await db.delete(tournamentTeamPlayers).where(eq(tournamentTeamPlayers.tournamentTeamId, teamId));
+      await db.delete(tournamentTeamPlayers).where(eq(tournamentTeamPlayers.teamId, teamId));
       // Then delete the team
       const result = await db.delete(tournamentTeams).where(eq(tournamentTeams.id, teamId));
       return result.rowCount ? result.rowCount > 0 : false;
