@@ -215,7 +215,7 @@ function TournamentRegistrationButton({ tournamentId }: { tournamentId: string }
   return (
     <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
       <Button
-        className="bg-blue-600 hover:bg-blue-700 text-white"
+        className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2"
         onClick={handleRegister}
         disabled={registerMutation.isPending}
       >
@@ -314,13 +314,13 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
         {/* Content Overlay */}
         <div className="relative z-10 h-full flex flex-col">
           {/* Top Section - Logo and Countdown */}
-          <div className="flex items-start justify-between p-6">
-            {/* Logo Section */}
-            <div className="flex items-center space-x-3">
-              <div className="bg-cyan-400 text-black px-3 py-1 rounded font-bold text-lg">
+          <div className="flex items-start justify-between p-4">
+            {/* Logo Section - More Compact */}
+            <div className="flex items-center space-x-2">
+              <div className="bg-cyan-400 text-black px-2 py-1 rounded font-bold text-sm">
                 MTTA
               </div>
-              <div className="text-white text-sm font-medium opacity-90">
+              <div className="text-white text-xs font-medium opacity-90">
                 CONTENDER
               </div>
             </div>
@@ -401,7 +401,7 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
                 </div>
 
                 {/* Registration Button */}
-                <div className="pt-2">
+                <div className="pt-2 flex flex-wrap gap-2">
                   <TournamentRegistrationButton tournamentId={tournament.id} />
                 </div>
               </div>
