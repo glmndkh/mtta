@@ -1,0 +1,66 @@
+You are a senior Odoo (v16/17) + Website/Portal + UX engineer.
+
+Goal:
+Rebuild the Tournament/Competition “Hero” section to match the WTT-style example:
+- Full-width background from admin-uploaded image
+- Big title, date range badge, location line
+- Live countdown timer
+- Category pills (MS/MD/XD/WS/WD)
+- Primary CTA button labeled **"Дэлгэрэнгүй"**
+- Fully responsive, accessible, and performant
+
+Scope & Tasks:
+
+1) Data & Admin (Model/Form)
+- Ensure the competition model has these fields:
+  - name, start_date, end_date
+  - location_text (venue + city + country)
+  - categories (list or m2m tags: MS, MD, XD, WS, WD)
+  - registration_url (used by CTA)
+  - background_image: fields.Image (image_1920 + resized variants)
+  - show_countdown: Boolean (default True)
+- Admin form: add an “Appearance” tab with background_image upload (recommended 1920×1080), CTA label readonly = "Дэлгэрэнгүй" (text fixed).
+
+2) Website/Portal Route & Template
+- Route: `/competition/<id>` (controller) rendering a QWeb template.
+- Hero section:
+  - Use `background_image` as full-width background (cover, center).
+  - Add dark gradient overlay for contrast.
+  - Top-left badge: formatted date range from start_date/end_date (e.g., “2 Sep – 7 Sep 2025”).
+  - Large title (event name); below it `location_text`.
+  - Top-right: live countdown to end_date; after zero show “Live” or “Finished”.
+  - Right side (or under title on mobile): stacked category pills for available categories.
+  - Bottom-left primary CTA:
+      - label: **"Дэлгэрэнгүй"**
+      - href: `registration_url` (same tab)
+- If `background_image` is missing, render a neutral gradient fallback so text stays readable.
+
+3) Responsiveness & A11y
+- Desktop hero height ~420–520px; mobile ~300–360px.
+- Semantic headings (<h1>/<h2>), alt text = event name, aria-labels on badges/CTA.
+- Keyboard focus styles (focus-visible ring); high-contrast friendly.
+
+4) Performance
+- Serve responsive sizes (use image_1024/512 on smaller screens).
+- Lazy-load below-the-fold assets; defer small countdown script.
+- No console errors; minimal CSS/JS.
+
+5) Internationalization
+- Static labels in Mongolian:
+  - CTA: "Дэлгэрэнгүй"
+  - Countdown units: "Days", "Hours", "Minutes", "Seconds" may be localized if i18n available; otherwise leave English.
+- Date formatted per locale; ensure 0-padded timer digits.
+
+6) Acceptance Criteria (must all pass)
+- Visiting `/competition/<id>` shows a hero visually similar to the WTT example:
+  background image (from admin), date badge, big title, location, live countdown, category pills, CTA "Дэлгэрэнгүй".
+- Works on mobile/desktop (no layout break).
+- If no background image, hero still renders with readable fallback.
+- Lighthouse: Performance ≥ 90, Accessibility ≥ 95.
+- No console errors or broken links.
+
+Deliverables:
+- Model/admin updates (fields + "Appearance" tab)
+- Website controller route
+- QWeb template + minimal SCSS/JS
+- Short dev notes with steps to test (upload background_image in admin, set dates/URL, verify on `/competition/<id>`).

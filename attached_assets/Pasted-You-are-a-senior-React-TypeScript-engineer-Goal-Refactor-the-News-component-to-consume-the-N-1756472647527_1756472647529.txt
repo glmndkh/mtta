@@ -1,0 +1,76 @@
+You are a senior React + TypeScript engineer.
+
+Goal:
+Refactor the News component to consume the NEW API response format and preserve all UX features (featured item, responsive grid, filters/search/sort, pagination, skeleton/empty/error states, a11y, analytics, i18n).
+
+New API (example):
+GET /api/news?category=&q=&sort=&page=&limit=&locale=mn
+Response:
+{
+  "data": [{
+    "id": "n_123",
+    "title": "string",
+    "slug": "string",
+    "excerpt": "string",
+    "content": "string",
+    "image": { "src": "https://...", "webp": "https://...", "alt": "string", "width": 1280, "height": 720 },
+    "date": "2025-08-26T10:20:00Z",
+    "tags": ["Сургалт","Арга хэмжээ"],
+    "category": "events",
+    "popularity": 412,
+    "shareUrl": "https://site/news/slug"
+  }],
+  "meta": { "page": 1, "limit": 12, "total": 263, "hasNext": true, "nextCursor": null },
+  "i18n": { "locale": "mn", "labels": { "readMore": "Дэлгэрэнгүй" } }
+}
+
+Tasks:
+1) Types & adapter
+   - Create strict TS types for API payload.
+   - Write an adapter mapping API → UI model; handle missing/nullable fields.
+   - Normalize dates with dayjs/date-fns and format per locale (mn).
+
+2) Fetching
+   - Implement a fetcher with AbortController + retry (exponential backoff on 5xx).
+   - Cache + revalidate (stale-while-revalidate). (SWR or React Query acceptable.)
+   - Support both page-based and cursor-based pagination using `meta`.
+
+3) URL state
+   - Sync category, q, sort, page with URL (pushState/replaceState).
+   - On popstate, restore filters and list.
+
+4) UI integration
+   - Featured = first item of current result (or `pinned` later if provided).
+   - Grid 1/2/3 cols (sm/md/lg). Hover + focus-visible rings.
+   - Cards use lazy images; prefer `.webp` if available, fallback to `.src`.
+   - Show share buttons using `shareUrl`.
+
+5) States
+   - Skeletons for featured and grid.
+   - Empty with helpful message when `data.length === 0`.
+   - Error with Retry button; keep user filters.
+
+6) Filters & sort
+   - Category tabs (i18n labels).
+   - Search across title/excerpt/content.
+   - Sort by: date(desc default), title(a-z), popularity(desc).
+
+7) Accessibility & i18n
+   - Semantic sections, <h2> headings, aria-labels/roles.
+   - Keyboard navigation; high contrast mode friendly.
+   - All labels pulled from `i18n.labels` with sensible fallbacks.
+
+8) Performance & SEO
+   - Use optimized thumbs, loading="lazy", decoding="async".
+   - Memoize derived lists; stable callbacks.
+   - Add meta tags (title/description) for the news detail route.
+
+9) Analytics
+   - Emit events: news_card_view, news_read_more_click, filter_change, search_submit, load_more.
+   - Count views when a card enters viewport (intersection observer).
+
+Acceptance:
+- Works end-to-end with the new API.
+- Filters/search/sort/pagination all function and persist via URL.
+- Skeleton, empty, error states look polished.
+- Lighthouse: Perf ≥ 90, A11y ≥ 95. No console errors.
