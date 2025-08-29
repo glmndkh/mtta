@@ -263,13 +263,13 @@ export default function AdminDashboard() {
       toast({ title: "Алдаа", description: "Шаардлагатай талбаруудыг бөглөнө үү", variant: "destructive" });
       return;
     }
-    
+
     // Ensure year is string for champions
     let processedData = sanitizeFormData(formData);
     if (selectedTab === 'champions' && processedData.year) {
       processedData.year = String(processedData.year);
     }
-    
+
     createMutation.mutate({
       endpoint: `/api/admin/${selectedTab}`,
       data: processedData,
@@ -282,13 +282,13 @@ export default function AdminDashboard() {
       return;
     }
     const endpoint = `/api/admin/${selectedTab}/${editingItem.id}`;
-    
+
     // Ensure year is string for champions
     let processedData = sanitizeFormData(formData);
     if (selectedTab === 'champions' && processedData.year) {
       processedData.year = String(processedData.year);
     }
-    
+
     updateMutation.mutate({
       endpoint,
       data: processedData,
@@ -409,7 +409,7 @@ export default function AdminDashboard() {
         location: item.location || "",
         coordinates: item.coordinates || "", // Preload coordinates
         activities: item.activities || "",
-        imageUrl: item.imageUrl || "",
+        imageUrl: item.imageUrl || "", // Preload imageUrl
       });
     }
     setShowDialog(true); // Show the dialog
@@ -495,7 +495,7 @@ export default function AdminDashboard() {
         location: '',
         coordinates: '', // Default to empty for new branches
         activities: '',
-        imageUrl: '',
+        imageUrl: '', // Default to empty for new branches
       };
     }
 
@@ -726,7 +726,7 @@ export default function AdminDashboard() {
               <TableRow>
                 <TableHead>Нэр</TableHead>
                 <TableHead>Тэргүүлэгч</TableHead>
-                <TableHead>Байршил</TableHead>
+                <TableHead>Хаяг</TableHead>
                 <TableHead>Координат</TableHead>
                 <TableHead>Үйлдэл</TableHead>
               </TableRow>
@@ -736,7 +736,7 @@ export default function AdminDashboard() {
                 <TableRow key={branch.id}>
                   <TableCell>{branch.name}</TableCell>
                   <TableCell>{branch.leader}</TableCell>
-                  <TableCell>{branch.location}</TableCell>
+                  <TableCell>{branch.address || branch.location}</TableCell>
                   <TableCell className="max-w-[200px] truncate">{branch.coordinates || 'Тодорхойгүй'}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
@@ -1065,16 +1065,15 @@ export default function AdminDashboard() {
                 </TableCell>
                 <TableCell>{champion.championType || '-'}</TableCell>
                 <TableCell>
-                  {champion.imageUrl ? (
-                    <div className="w-12 h-12 rounded overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                      <img
-                        src={getImageUrl(champion.imageUrl)}
-                        alt={champion.name}
-                        className="max-w-full max-h-full object-contain"
+                  <div className="w-12 h-12 rounded overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <img
+                      src={getImageUrl(champion.imageUrl)}
+                      alt={champion.name}
+                      className="max-w-full max-h-full object-contain"
                       onError={(e) => {
                         const target = e.currentTarget as HTMLImageElement;
                         console.error('Admin champion image failed to load:', champion.imageUrl);
-                        
+
                         if (!target.hasAttribute('data-fallback-tried')) {
                           target.setAttribute('data-fallback-tried', 'true');
                           // Try direct objects path
@@ -1092,11 +1091,6 @@ export default function AdminDashboard() {
                       }}
                       />
                     </div>
-                  ) : (
-                    <div className="w-12 h-12 bg-secondary rounded flex items-center justify-center">
-                      <Upload className="w-6 h-6 text-text-secondary" />
-                    </div>
-                  )}
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-2">
@@ -1445,48 +1439,110 @@ export default function AdminDashboard() {
             </div>
             <div>
               <Label htmlFor="leader">Тэргүүлэгч</Label>
-              <Input id="leader" value={formData.leader || ''} onChange={(e) => setFormData({ ...formData, leader: e.target.value })} />
+              <Input id="leader" value={formData.leader || ''} onChange={(e) => setFormData({...formData, leader: e.target.value})} />
             </div>
             <div>
-              <Label htmlFor="leadershipMembers">Тэргүүлэгч гишүүд</Label>
-              <Textarea id="leadershipMembers" value={formData.leadershipMembers || ''} onChange={(e) => setFormData({ ...formData, leadershipMembers: e.target.value })} />
+              <Label htmlFor="leadershipMembers">Удирдлагын гишүүд</Label>
+              <Textarea id="leadershipMembers" value={formData.leadershipMembers || ''} onChange={(e) => setFormData({...formData, leadershipMembers: e.target.value})} />
             </div>
             <div>
               <Label htmlFor="address">Хаяг</Label>
-              <Textarea id="address" value={formData.address || ''} onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
+              <Input id="address" value={formData.address || ''} onChange={(e) => setFormData({...formData, address: e.target.value})} />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="branchCoordinates">Координат (lat, lng)</Label>
-                <Input
-                  id="branchCoordinates"
-                  name="coordinates"
-                  value={formData.coordinates}
-                  onChange={(e) => setFormData({ ...formData, coordinates: e.target.value })}
-                  placeholder="47.9184, 106.9177"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Координат оруулсны дараа байршил автоматаар тодорхойлогдоно
-                </p>
-              </div>
-              <div>
-                <Label htmlFor="branchLocation">Байршил</Label>
-                <Input
-                  id="branchLocation"
-                  name="location"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="Улаанбаатар хот"
-                />
+            <div>
+              <Label htmlFor="location">Байршил</Label>
+              <Input id="location" value={formData.location || ''} onChange={(e) => setFormData({...formData, location: e.target.value})} />
+            </div>
+            <div>
+              <Label className="flex items-center gap-2">
+                <Upload className="w-4 h-4" />
+                Лого оруулах
+              </Label>
+              <div className="space-y-2">
+                <ObjectUploader
+                  maxNumberOfFiles={1}
+                  maxFileSize={5 * 1024 * 1024}
+                  onGetUploadParameters={async () => {
+                    try {
+                      const response = await apiRequest("/api/objects/upload", {
+                        method: "POST",
+                      });
+                      const data = (await response.json()) as { uploadURL: string };
+                      if (!data || !data.uploadURL) {
+                        throw new Error("No upload URL received");
+                      }
+                      return {
+                        method: "PUT" as const,
+                        url: data.uploadURL,
+                      };
+                    } catch (error) {
+                      console.error("Error getting upload parameters:", error);
+                      toast({
+                        title: "Алдаа",
+                        description: "Файл хуулах URL авахад алдаа гарлаа",
+                        variant: "destructive",
+                      });
+                      throw error;
+                    }
+                  }}
+                  onComplete={async (result) => {
+                    try {
+                      if (result.successful && result.successful.length > 0) {
+                        const file = result.successful[0];
+                        const response = await apiRequest("/api/objects/finalize", {
+                          method: "PUT",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            fileURL: file.uploadURL,
+                            isPublic: true,
+                          }),
+                        });
+                        const { objectPath } = await response.json();
+                        setFormData({ ...formData, imageUrl: objectPath });
+                        toast({
+                          title: "Амжилттай",
+                          description: "Лого амжилттай хуулагдлаа",
+                        });
+                      }
+                    } catch (error) {
+                      console.error("Error finalizing upload:", error);
+                      toast({
+                        title: "Алдаа",
+                        description: "Файл боловсруулахад алдаа гарлаа",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  buttonClassName="w-full"
+                >
+                  Лого сонгох
+                </ObjectUploader>
+                {formData.imageUrl && (
+                  <div className="mt-2">
+                    <img
+                      src={formData.imageUrl.startsWith("/") ? formData.imageUrl : `/objects/${formData.imageUrl}`}
+                      alt="Branch logo preview"
+                      className="w-24 h-24 object-contain border rounded"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
             <div>
               <Label htmlFor="activities">Үйл ажиллагаа</Label>
-              <Textarea id="activities" value={formData.activities || ''} onChange={(e) => setFormData({ ...formData, activities: e.target.value })} />
+              <Textarea id="activities" value={formData.activities || ''} onChange={(e) => setFormData({...formData, activities: e.target.value})} />
             </div>
             <div>
-              <Label htmlFor="imageUrl">Зургийн URL</Label>
-              <Input id="imageUrl" value={formData.imageUrl || ''} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} />
+              <Label htmlFor="coordinates">Координат (lat,lng)</Label>
+              <Input
+                id="coordinates"
+                value={formData.coordinates || ''}
+                placeholder="47.9184, 106.9177"
+                onChange={(e) => setFormData({...formData, coordinates: e.target.value})}
+              />
             </div>
           </>
         );
@@ -1515,66 +1571,68 @@ export default function AdminDashboard() {
                 <Upload className="w-4 h-4" />
                 Зураг оруулах
               </Label>
-              <ObjectUploader
-                maxNumberOfFiles={1}
-                maxFileSize={5242880} // 5MB
-                onGetUploadParameters={async () => {
-                  const response = await fetch('/api/objects/upload', {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json'
-                    }
-                  });
-                  const data = await response.json();
-                  return {
-                    method: 'PUT' as const,
-                    url: data.uploadURL
-                  };
-                }}
-                onComplete={async (result) => {
-                  if (result.successful && result.successful.length > 0) {
-                    const uploadedFileUrl = result.successful[0].uploadURL;
+              <div className="space-y-2">
+                <ObjectUploader
+                  maxNumberOfFiles={1}
+                  maxFileSize={5242880} // 5MB
+                  onGetUploadParameters={async () => {
+                    const response = await fetch('/api/objects/upload', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json'
+                      }
+                    });
+                    const data = await response.json();
+                    return {
+                      method: 'PUT' as const,
+                      url: data.uploadURL
+                    };
+                  }}
+                  onComplete={async (result) => {
+                    if (result.successful && result.successful.length > 0) {
+                      const uploadedFileUrl = result.successful[0].uploadURL;
 
-                    try {
-                      const response = await fetch('/api/objects/finalize', {
-                        method: 'PUT',
-                        headers: {
-                          'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                          fileURL: uploadedFileUrl,
-                          isPublic: true
-                        })
-                      });
-                      const data = await response.json();
+                      try {
+                        const response = await fetch('/api/objects/finalize', {
+                          method: 'PUT',
+                          headers: {
+                            'Content-Type': 'application/json'
+                          },
+                          body: JSON.stringify({
+                            fileURL: uploadedFileUrl,
+                            isPublic: true
+                          })
+                        });
+                        const data = await response.json();
 
-                      setFormData({ ...formData, imageUrl: data.objectPath });
-                      toast({
-                        title: "Амжилттай",
-                        description: "Зураг амжилттай хуулагдлаа"
-                      });
-                    } catch (error) {
-                      console.error('Error setting image ACL:', error);
-                      setFormData({ ...formData, imageUrl: uploadedFileUrl });
-                      toast({
-                        title: "Анхааруулга",
-                        description: "Зураг хуулагдсан боловч зураг харагдахгүй байж магад"
-                      });
+                        setFormData({ ...formData, imageUrl: data.objectPath });
+                        toast({
+                          title: "Амжилттай",
+                          description: "Зураг амжилттай хуулагдлаа"
+                        });
+                      } catch (error) {
+                        console.error('Error setting image ACL:', error);
+                        setFormData({ ...formData, imageUrl: uploadedFileUrl });
+                        toast({
+                          title: "Анхааруулга",
+                          description: "Зураг хуулагдсан боловч зураг харагдахгүй байж магад"
+                        });
+                      }
                     }
-                  }
-                }}
-                buttonClassName="w-full"
-              >
-                <div className="flex items-center gap-2">
-                  <Upload className="w-4 h-4" />
-                  <span>Зураг файл сонгох</span>
-                </div>
-              </ObjectUploader>
-              {formData.imageUrl && (
-                <div className="mt-2">
-                  <p className="text-sm text-text-secondary">Зураг хуулагдсан: {formData.imageUrl}</p>
-                </div>
-              )}
+                  }}
+                  buttonClassName="w-full"
+                >
+                  <div className="flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    <span>Зураг файл сонгох</span>
+                  </div>
+                </ObjectUploader>
+                {formData.imageUrl && (
+                  <div className="mt-2">
+                    <p className="text-sm text-text-secondary">Зураг хуулагдсан: {formData.imageUrl}</p>
+                  </div>
+                )}
+              </div>
             </div>
           </>
         );
@@ -2150,7 +2208,7 @@ export default function AdminDashboard() {
                         toast({
                           title: "Алдаа",
                           description: "Зураг хуулагдсан боловч зөвшөөрөл тохируулахад алдаа гарлаа",
-                          variant: "destructive"
+                          variant: "destructive",
                         });
                       }
                     }
@@ -2611,7 +2669,7 @@ export default function AdminDashboard() {
         // Add validation for location fields
         return formData.name && formData.country && formData.province && formData.city;
       case 'branches':
-        return formData.name && formData.coordinates; // Add validation for coordinates
+        return formData.name && formData.imageUrl; // Add validation for imageUrl
       case 'federation-members':
         return formData.name;
       case 'judges':
