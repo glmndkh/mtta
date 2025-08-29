@@ -64,7 +64,6 @@ export default function Navigation() {
     },
     { href: "/tournaments", label: t('nav.tournaments'), icon: Trophy },
     { href: "/clubs", label: t('nav.clubs'), icon: Building },
-    { href: "/leagues", label: t('nav.leagues'), icon: Users },
     { href: "/news", label: t('nav.news'), icon: Newspaper },
   ];
 
