@@ -359,6 +359,32 @@ const BranchCard = ({ branch }: { branch: any }) => {
     ? `${branch.city ? `${branch.city}, ` : ''}${branch.country || 'Гадаад'}`
     : branch.location || 'Монгол';
 
+  // Helper function to process phone numbers
+  const getPhoneNumbers = (branch: any): string[] => {
+    const phoneData = branch.phone || branch.phones || branch.phone_numbers;
+    if (!phoneData) return [];
+    
+    if (Array.isArray(phoneData)) {
+      return phoneData.filter(phone => phone && phone.trim());
+    }
+    
+    if (typeof phoneData === 'string') {
+      return phoneData
+        .split(/[,;\n]/)
+        .map(phone => phone.trim())
+        .filter(phone => phone.length > 0);
+    }
+    
+    return [];
+  };
+
+  // Helper function to create tel: link (digits only)
+  const getTelLink = (phone: string): string => {
+    return `tel:${phone.replace(/[^0-9+]/g, '')}`;
+  };
+
+  const phoneNumbers = getPhoneNumbers(branch);
+
   return (
     <Card className="hover:shadow-lg transition-shadow duration-300 rounded-2xl h-full">
       <CardHeader className="pb-4">
@@ -424,18 +450,23 @@ const BranchCard = ({ branch }: { branch: any }) => {
         )}
 
         {/* Phone */}
-        {branch.phone && (
+        {phoneNumbers.length > 0 && (
           <div className="flex items-start gap-3">
             <Phone className="h-4 w-4 text-mtta-green mt-0.5 flex-shrink-0" />
             <div className="min-w-0 flex-1">
               <div className="text-sm font-medium text-gray-900">Утас</div>
-              <a
-                href={`tel:${branch.phone}`}
-                className="text-sm text-mtta-green hover:text-mtta-green/80 transition-colors"
-                aria-label={`Утасаар холбогдох: ${branch.phone}`}
-              >
-                {branch.phone}
-              </a>
+              <div className="space-y-1">
+                {phoneNumbers.map((phone, index) => (
+                  <a
+                    key={index}
+                    href={getTelLink(phone)}
+                    className="text-sm text-mtta-green hover:text-mtta-green/80 transition-colors block"
+                    aria-label={`Утасаар холбогдох: ${phone}`}
+                  >
+                    {phone}
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
         )}
