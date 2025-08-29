@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'wouter';
+import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Calendar, MapPin, Clock, Users, ExternalLink } from 'lucide-react';
 import { Badge } from '../components/ui/badge';
@@ -52,7 +52,7 @@ export default function CompetitionHero() {
     queryFn: async () => {
       const response = await fetch(`/api/tournaments/${id}`);
       if (!response.ok) throw new Error('Competition not found');
-      return await response.json() as Competition;
+      return response.json() as Competition;
     },
     enabled: !!id,
     retry: 2,
