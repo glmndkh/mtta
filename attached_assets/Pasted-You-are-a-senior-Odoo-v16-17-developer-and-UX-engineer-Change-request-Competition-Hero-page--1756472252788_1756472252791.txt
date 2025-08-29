@@ -1,0 +1,38 @@
+You are a senior Odoo (v16/17) developer and UX engineer.
+
+Change request (Competition Hero page):
+1) The primary CTA button text must be **"Дэлгэрэнгүй"** (not “Event Info”).
+2) The hero background image must come from the admin form field named **background_image** (fields.Image),
+   not any hardcoded or default asset.
+
+Scope:
+- Model/admin:
+  - Add/ensure `background_image` (image_1920 + variants) in an “Appearance” tab.
+  - Keep existing data backward-compatible: if `background_image` is empty, fall back to a neutral gradient.
+  - Keep fields: name, start_date, end_date, location_text, categories/tags, registration_url (still used for the CTA link).
+  - Add a boolean `show_countdown` (default True).
+
+- Website/portal hero view (`/competition/<id>`):
+  - Use `background_image` as full-width background (cover, center). Height ~420–520px desktop, ~300–360px mobile.
+  - Dark gradient overlay for readability.
+  - Top-left: date range badge (`2 Sep – 7 Sep 2025`) computed from start/end.
+  - Big title (event name) + location_text line.
+  - Top-right: live countdown (to end_date); after zero show “Live” or “Finished”.
+  - Right side: stacked category pills (MS/MD/XD/WS/WD) if available.
+  - Bottom-left CTA button:
+      - label: **"Дэлгэрэнгүй"**
+      - href: `registration_url` (open same tab)
+      - style matches current theme.
+  - Alt text from event name; semantic headings; keyboard focus styles.
+
+- Performance & accessibility:
+  - Serve responsive sizes (`image_1024/512` where appropriate).
+  - Lazy-load below-the-fold assets; small deferred JS for countdown.
+  - Contrast AA with overlay.
+
+Acceptance criteria:
+- Visiting `/competition/<id>` displays the hero with the **admin-uploaded `background_image`**.
+- The CTA button text is exactly **"Дэлгэрэнгүй"** and links to `registration_url`.
+- Layout mirrors the WTT example (background image, date badge, title, location, countdown, category pills).
+- Works on mobile/desktop; no console errors; graceful fallback when image missing.
+- Provide updated model/view XML/QWeb/controller and minimal SCSS/JS as needed, plus instructions to test.
