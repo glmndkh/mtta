@@ -221,26 +221,7 @@ function TournamentRegistrationButton({ tournamentId }: { tournamentId: string }
       >
         {registerMutation.isPending ? "Бүртгүүлж байна..." : "Бүртгүүлэх"}
       </Button>
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" onClick={(e) => e.stopPropagation()}>Бусдыг бүртгүүлэх</Button>
-        </DialogTrigger>
-        <DialogContent onClick={(e) => e.stopPropagation()}>
-          <DialogHeader>
-            <DialogTitle>Өөр хүн бүртгүүлэх</DialogTitle>
-          </DialogHeader>
-          <UserAutocomplete
-            users={playerOptions}
-            value={selectedPlayer?.id}
-            onSelect={(user) => setSelectedPlayer(user)}
-          />
-          <DialogFooter>
-            <Button onClick={handleRegisterOther} disabled={!selectedPlayer || registerMutation.isPending}>
-              {registerMutation.isPending ? "Бүртгүүлж байна..." : "Бүртгүүлэх"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Removed the "Register Others" button */}
     </div>
   );
 }
@@ -266,7 +247,7 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
         const seconds = Math.floor((difference % (1000 * 60)) / 1000);
 
         const newCountdown = { days, hours, minutes, seconds };
-        
+
         // Check if values changed to trigger flip animation
         if (countdown.days !== days || countdown.hours !== hours || countdown.minutes !== minutes || countdown.seconds !== seconds) {
           const flips = {
@@ -276,7 +257,7 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
             seconds: countdown.seconds !== seconds
           };
           setIsFlipping(flips);
-          
+
           // Reset flip animation after 600ms
           setTimeout(() => {
             setIsFlipping({ days: false, hours: false, minutes: false, seconds: false });
@@ -313,7 +294,7 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
       hour12: false
     });
     const year = startDate.getFullYear();
-    
+
     return `${startFormatted} – ${endFormatted} ${year}, ${startTime}`;
   };
 
@@ -364,7 +345,7 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
               </div>
             </div>
           )}
-          
+
           {/* Dark green overlay for text readability */}
           <div className="absolute inset-0 bg-green-900/80" />
         </div>
@@ -467,7 +448,7 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
                   return (
                     <div
                       key={category}
-                      className="flex items-center justify-between bg-white/90 backdrop-blur-sm rounded px-3 py-2 text-sm font-medium text-gray-900"
+                      className="flex items-center justify-between bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded px-3 py-2 text-sm font-medium text-gray-900 dark:text-gray-100"
                     >
                       <span>{label}</span>
                       <ChevronRight className="w-4 h-4" />
@@ -476,7 +457,7 @@ function TournamentCard({ tournament }: { tournament: TournamentData }) {
                 })}
                 {(!tournament.categories || tournament.categories.length === 0) &&
                  (!tournament.participationTypes || tournament.participationTypes.length === 0) && (
-                  <div className="flex items-center justify-between bg-white/90 backdrop-blur-sm rounded px-3 py-2 text-sm font-medium text-gray-900">
+                  <div className="flex items-center justify-between bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded px-3 py-2 text-sm font-medium text-gray-900 dark:text-gray-100">
                     <span>Ганцаарчилсан</span>
                     <ChevronRight className="w-4 h-4" />
                   </div>
@@ -524,7 +505,7 @@ export default function Tournaments() {
     <PageWithLoading>
       <div className="min-h-screen">
       <Navigation />
-      
+
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -538,16 +519,8 @@ export default function Tournaments() {
                 Бүх идэвхтэй болон удахгүй болох тэмцээнүүд
               </p>
             </div>
-            
-            {user && (user as any)?.role === 'admin' ? (
-              <Button 
-                className="mtta-green text-white hover:bg-mtta-green-dark"
-                onClick={() => window.location.href = '/admin/generator'}
-              >
-                <Trophy className="mr-2 h-5 w-5" />
-                Тэмцээн үүсгэх
-              </Button>
-            ) : null}
+
+            {/* Removed the "Create Tournament" button */}
           </div>
         </div>
 
@@ -561,15 +534,7 @@ export default function Tournaments() {
             <p className="text-gray-600 mb-6">
               Одоогоор ямар нэг тэмцээн зарлагдаагүй байна.
             </p>
-            {user && (user as any)?.role === 'admin' ? (
-              <Button 
-                className="mtta-green text-white hover:bg-mtta-green-dark"
-                onClick={() => window.location.href = '/admin/generator'}
-              >
-                <Trophy className="mr-2 h-5 w-5" />
-                Тэмцээн үүсгэх
-              </Button>
-            ) : null}
+            {/* Removed the "Create Tournament" button from empty state */}
           </div>
         ) : (
           <div className="space-y-6">
