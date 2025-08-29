@@ -383,38 +383,76 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
   animation-duration: 2s;
 }
 
+:root {
+  --radius: 0.75rem;
+}
+
+/* Dark theme (default) */
 :root, [data-theme="dark"], .dark {
   --background: #0a0f14;
   --card: #1a1a1a;
-  --card-foreground: var(--text-primary);
+  --card-foreground: #f9fafb;
   --text-primary: #f9fafb;
   --text-secondary: #a0a8b3;
-  --foreground: var(--text-primary);
+  --foreground: #f9fafb;
   --muted: rgba(26, 26, 26, 0.8);
-  --muted-foreground: var(--text-secondary);
+  --muted-foreground: #a0a8b3;
   --popover: rgba(17, 24, 32, 0.97);
-  --popover-foreground: var(--text-primary);
+  --popover-foreground: #f9fafb;
   --link: #00c896;
   --link-rgb: 0, 200, 150;
-  --accent: rgba(var(--link-rgb), 0.1);
-  --accent-foreground: var(--text-primary);
-  --border: rgba(var(--link-rgb), 0.3);
+  --accent: rgba(0, 200, 150, 0.1);
+  --accent-foreground: #f9fafb;
+  --border: rgba(0, 200, 150, 0.3);
   --input: rgba(26, 26, 26, 0.8);
-  --primary: var(--link);
-  --primary-foreground: var(--text-primary);
+  --primary: #00c896;
+  --primary-foreground: #f9fafb;
   --secondary: rgba(26, 26, 26, 0.8);
-  --secondary-foreground: var(--text-primary);
+  --secondary-foreground: #f9fafb;
   --success: #22c55e;
   --success-rgb: 34, 197, 94;
-  --success-foreground: var(--text-primary);
+  --success-foreground: #f9fafb;
   --warning: #facc15;
   --warning-rgb: 250, 204, 21;
-  --warning-foreground: var(--text-primary);
+  --warning-foreground: #0a0f14;
   --error: #ef4444;
   --error-rgb: 239, 68, 68;
-  --error-foreground: var(--text-primary);
-  --ring: var(--link);
-  --radius: 0.75rem;
+  --error-foreground: #f9fafb;
+  --ring: #00c896;
+}
+
+/* Light theme */
+[data-theme="light"], .light {
+  --background: #ffffff;
+  --card: #ffffff;
+  --card-foreground: #1f2937;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --foreground: #1f2937;
+  --muted: #f9fafb;
+  --muted-foreground: #6b7280;
+  --popover: #ffffff;
+  --popover-foreground: #1f2937;
+  --link: #00c896;
+  --link-rgb: 0, 200, 150;
+  --accent: rgba(0, 200, 150, 0.1);
+  --accent-foreground: #1f2937;
+  --border: #e5e7eb;
+  --input: #ffffff;
+  --primary: #00c896;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f4f6;
+  --secondary-foreground: #1f2937;
+  --success: #22c55e;
+  --success-rgb: 34, 197, 94;
+  --success-foreground: #ffffff;
+  --warning: #facc15;
+  --warning-rgb: 250, 204, 21;
+  --warning-foreground: #1f2937;
+  --error: #ef4444;
+  --error-rgb: 239, 68, 68;
+  --error-foreground: #ffffff;
+  --ring: #00c896;
 }
 
 [data-theme="light"], .light {
@@ -783,38 +821,32 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
   color: #ffffff !important;
 }
 
-[data-theme="dark"] .bg-gray-800 h3,
-[data-theme="dark"] .bg-gray-800 h4,
-[data-theme="dark"] .bg-gray-800 p,
-[data-theme="dark"] .bg-gray-800 div,
-[data-theme="dark"] .bg-gray-800 span,
-.dark .bg-gray-800 h3,
-.dark .bg-gray-800 h4,
-.dark .bg-gray-800 p,
-.dark .bg-gray-800 div,
-.dark .bg-gray-800 span {
-  color: #ffffff !important;
+/* Background and text color fixes */
+.bg-gray-800 {
+  background-color: var(--card) !important;
+  color: var(--card-foreground) !important;
 }
 
-/* Light theme - make dark boxes lighter with dark text for better contrast */
+[data-theme="dark"] .bg-gray-800,
+.dark .bg-gray-800 {
+  background-color: #1a1a1a !important;
+  color: #f9fafb !important;
+}
+
 [data-theme="light"] .bg-gray-800,
 .light .bg-gray-800 {
   background-color: #f3f4f6 !important;
-  color: #000000 !important;
+  color: #1f2937 !important;
   border: 1px solid #e5e7eb !important;
 }
 
-[data-theme="light"] .bg-gray-800 h3,
-[data-theme="light"] .bg-gray-800 h4,
-[data-theme="light"] .bg-gray-800 p,
-[data-theme="light"] .bg-gray-800 div,
-[data-theme="light"] .bg-gray-800 span,
-.light .bg-gray-800 h3,
-.light .bg-gray-800 h4,
-.light .bg-gray-800 p,
-.light .bg-gray-800 div,
-.light .bg-gray-800 span {
-  color: #000000 !important;
+/* Ensure all child elements inherit proper colors */
+.bg-gray-800 h3,
+.bg-gray-800 h4,
+.bg-gray-800 p,
+.bg-gray-800 div,
+.bg-gray-800 span {
+  color: inherit !important;
 }
 
 /* Tab content text colors - ensure proper visibility */
@@ -831,7 +863,26 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
 /* Light theme - dark text for content */
 [data-theme="light"] .text-gray-300,
 .light .text-gray-300 {
-  color: #374151 !important;
+  color: #6b7280 !important;
+}
+
+/* Fix background colors for different themes */
+.bg-gray-50 {
+  background-color: var(--background) !important;
+}
+
+[data-theme="dark"] .bg-gray-50,
+.dark .bg-gray-50 {
+  background-color: #0a0f14 !important;
+}
+
+[data-theme="light"] .bg-gray-50,
+.light .bg-gray-50 {
+  background-color: #f9fafb !important;
+}
+
+.bg-white {
+  background-color: var(--card) !important;
 }
 
 /* Navigation enhancements */
@@ -913,17 +964,55 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
   font-weight: bold;
 }
 
-/* Text enhancements */
-  .text-glow {
-    text-shadow: 0 0 10px rgba(var(--success-rgb), 0.5);
-  }
+/* MTTA Green utility classes */
+.mtta-green {
+  background-color: #00c896 !important;
+}
 
-  .heading-glow {
-    background: linear-gradient(45deg, var(--success), var(--link));
+.text-mtta-green {
+  color: #00c896 !important;
+}
+
+.border-mtta-green {
+  border-color: #00c896 !important;
+}
+
+.hover\:bg-mtta-green:hover {
+  background-color: #00c896 !important;
+}
+
+.hover\:text-mtta-green:hover {
+  color: #00c896 !important;
+}
+
+.hover\:text-mtta-green\/80:hover {
+  color: rgba(0, 200, 150, 0.8) !important;
+}
+
+/* Text enhancements */
+.text-glow {
+  text-shadow: 0 0 10px rgba(var(--success-rgb), 0.5);
+}
+
+.heading-glow {
+  background: linear-gradient(45deg, var(--success), var(--link));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Ensure proper text contrast in both themes */
+.text-gray-900 {
+  color: var(--text-primary) !important;
+}
+
+.text-gray-600 {
+  color: var(--text-secondary) !important;
+}
+
+.text-gray-500 {
+  color: var(--muted-foreground) !important;
 }
 
 /* Input enhancements */
