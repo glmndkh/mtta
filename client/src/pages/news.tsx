@@ -1,986 +1,896 @@
-import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { isUnauthorizedError } from "@/lib/authUtils";
-import { getImageUrl } from "@/lib/utils";
-import Navigation from "@/components/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Newspaper, Plus, Calendar, User, Edit, Megaphone, Upload, Image } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { insertNewsSchema } from "@shared/schema";
-import { z } from "zod";
-import { ObjectUploader } from "@/components/ObjectUploader";
-import type { UploadResult } from "@uppy/core";
-import { Link } from "wouter";
-import PageWithLoading from "@/components/PageWithLoading";
-import RichTextEditor from "@/components/rich-text-editor";
 
-// Helper function to strip HTML tags
-const stripHtml = (html: string): string => {
-  if (!html) return '';
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = html;
-  return tempDiv.textContent || tempDiv.innerText || '';
-};
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../hooks/use-toast';
+import PageLayout from '../components/PageLayout';
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle,
+  CardDescription 
+} from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Textarea } from '../components/ui/textarea';
+import { Label } from '../components/ui/label';
+import { Badge } from '../components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Skeleton } from '../components/ui/skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Switch } from '../components/ui/switch';
+import { 
+  Plus, 
+  Edit,
+  Trash2,
+  Search,
+  Calendar,
+  Clock,
+  Eye,
+  Share2,
+  Facebook,
+  Twitter,
+  Linkedin,
+  Filter,
+  SortDesc,
+  ChevronRight,
+  AlertCircle,
+  RefreshCw
+} from 'lucide-react';
 
-const newsFormSchema = insertNewsSchema.omit({ authorId: true });
+// Enhanced schema for news
+const newsFormSchema = z.object({
+  title: z.string().min(3, 'Гарчиг дор хаяж 3 тэмдэгт байх ёстой'),
+  content: z.string().min(10, 'Агуулга дор хаяж 10 тэмдэгт байх ёстой'),
+  excerpt: z.string().max(200, 'Товч агуулга 200 тэмдэгтээс хэтрэхгүй байх ёстой').optional(),
+  category: z.enum(['news', 'training', 'event', 'achievement', 'announcement']),
+  published: z.boolean(),
+  imageUrl: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  featured: z.boolean().optional(),
+});
+
 type CreateNewsForm = z.infer<typeof newsFormSchema>;
 
+// Category mappings
+const categoryLabels = {
+  news: 'Мэдээ',
+  training: 'Сургалт',
+  event: 'Арга хэмжээ',
+  achievement: 'Амжилт',
+  announcement: 'Зарлал'
+};
+
+// Analytics helper
+const emitAnalyticsEvent = (event: string, data: any) => {
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag('event', event, data);
+  }
+  console.log(`Analytics: ${event}`, data);
+};
+
 export default function News() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // State management
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'date' | 'title'>('date');
+  const [page, setPage] = useState(1);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [newsImageUrl, setNewsImageUrl] = useState<string>("");
-  const [editingNews, setEditingNews] = useState<any>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [showImageDialog, setShowImageDialog] = useState(false);
+  const [editingNews, setEditingNews] = useState<any>(null);
+  const [newsImageUrl, setNewsImageUrl] = useState<string>('');
 
-  // Remove authentication requirement - allow viewing for all users
-
-  // Fetch news data - allow for all users
-  const { data: allNews = [], isLoading: newsLoading } = useQuery({
-    queryKey: ['/api/news'],
-    retry: false,
-    staleTime: 30 * 1000, // Reduced to 30 seconds for better real-time updates
-    gcTime: 2 * 60 * 1000, // Keep in cache for 2 minutes  
-    refetchOnWindowFocus: true, // Enable refetch to see updates
-    refetchOnMount: true, // Enable refetch on mount
-  });
-
-  // Filter news by category
-  const news = selectedCategory === "all" 
-    ? (allNews as any[]) 
-    : (allNews as any[]).filter((item: any) => item.category === selectedCategory);
-
-  // Create news form
+  // Form setup
   const form = useForm<CreateNewsForm>({
     resolver: zodResolver(newsFormSchema),
     defaultValues: {
-      title: "",
-      content: "",
-      excerpt: "",
-      category: "news",
+      title: '',
+      content: '',
+      excerpt: '',
+      category: 'news',
       published: true,
-      imageUrl: "",
+      imageUrl: '',
+      tags: [],
+      featured: false,
     },
   });
 
-  // Create news mutation
-  const createNewsMutation = useMutation<any, Error, CreateNewsForm & { authorId: string }>({
-    mutationFn: async (data) => {
-      console.log("Creating news with data:", data);
-      const response = await apiRequest("/api/admin/news", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+  // Fetch news data
+  const { data: allNews = [], isLoading, error, refetch } = useQuery({
+    queryKey: ['news', selectedCategory, searchQuery, sortBy, page],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedCategory !== 'all') params.append('category', selectedCategory);
+      if (searchQuery.trim()) params.append('q', searchQuery.trim());
+      params.append('sort', sortBy);
+      params.append('page', page.toString());
+      params.append('limit', '12');
+
+      const response = await fetch(`/api/news?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch news');
       return response.json();
     },
-    onSuccess: (result) => {
-      console.log("News created successfully:", result);
-      toast({
-        title: "Амжилттай",
-        description: "Мэдээ амжилттай үүсгэгдлээ",
+    staleTime: 30 * 1000,
+    gcTime: 2 * 60 * 1000,
+    retry: 2,
+  });
+
+  // Filter and sort news client-side for better UX
+  const { featuredNews, regularNews } = useMemo(() => {
+    let filtered = [...(allNews as any[])];
+
+    // Apply filters
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(item => item.category === selectedCategory);
+    }
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(item => 
+        item.title?.toLowerCase().includes(query) ||
+        item.excerpt?.toLowerCase().includes(query) ||
+        item.content?.toLowerCase().includes(query)
+      );
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      if (sortBy === 'date') {
+        return new Date(b.createdAt || b.publishedAt).getTime() - new Date(a.createdAt || a.publishedAt).getTime();
+      }
+      return a.title.localeCompare(b.title);
+    });
+
+    // Separate featured and regular news
+    const featured = filtered.find(item => item.featured) || filtered[0];
+    const regular = filtered.filter(item => item.id !== featured?.id);
+
+    return { featuredNews: featured, regularNews: regular };
+  }, [allNews, selectedCategory, searchQuery, sortBy]);
+
+  // Mutations
+  const createNewsMutation = useMutation({
+    mutationFn: async (newsData: any) => {
+      const response = await fetch('/api/news', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newsData),
       });
+      if (!response.ok) throw new Error('Failed to create news');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['news'] });
+      toast({ title: 'Амжилттай нэмэгдлээ', description: 'Шинэ мэдээ амжилттай нэмэгдлээ' });
       setShowCreateDialog(false);
       form.reset();
-      queryClient.invalidateQueries({ queryKey: ["/api/news"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/news"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/news/latest"] });
+      setNewsImageUrl('');
+      emitAnalyticsEvent('news_create', { category: form.getValues('category') });
     },
-    onError: (error: Error) => {
-      console.error("News creation error:", error);
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Нэвтрэх шаардлагатай",
-          description: "Та дахин нэвтэрнэ үү...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Алдаа",
-        description: "Мэдээ үүсгэхэд алдаа гарлаа. Консол лог шалгана уу.",
-        variant: "destructive",
+    onError: (error: any) => {
+      toast({ 
+        title: 'Алдаа гарлаа', 
+        description: error.message || 'Мэдээ нэмэхэд алдаа гарлаа',
+        variant: 'destructive' 
       });
     },
   });
 
-  // Publish news mutation
-  const publishNewsMutation = useMutation({
-    mutationFn: async (newsId: string) => {
-      const response = await apiRequest(`/api/news/${newsId}/publish`, {
-        method: "PUT",
+  const updateNewsMutation = useMutation({
+    mutationFn: async ({ id, newsData }: { id: string; newsData: any }) => {
+      const response = await fetch(`/api/news/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newsData),
       });
+      if (!response.ok) throw new Error('Failed to update news');
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Амжилттай",
-        description: "Мэдээ амжилттай нийтлэгдлээ",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/news"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/news"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/news/latest"] });
-    },
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Нэвтрэх шаардлагатай",
-          description: "Та дахин нэвтэрнэ үү...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Алдаа",
-        description: "Мэдээ нийтлэхэд алдаа гарлаа",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Update news mutation
-  const updateNewsMutation = useMutation<any, Error, { id: string; newsData: Partial<CreateNewsForm> & { authorId: string } }>({
-    mutationFn: async (data) => {
-      const response = await apiRequest(`/api/news/${data.id}`, {
-        method: "PUT",
-        body: JSON.stringify(data.newsData),
-      });
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Амжилттай",
-        description: "Мэдээ амжилттай шинэчлэгдлээ",
-      });
+      queryClient.invalidateQueries({ queryKey: ['news'] });
+      toast({ title: 'Амжилттай шинэчлэгдлээ', description: 'Мэдээ амжилттай шинэчлэгдлээ' });
       setShowEditDialog(false);
       setEditingNews(null);
       form.reset();
-      queryClient.invalidateQueries({ queryKey: ["/api/news"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/news"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/news/latest"] });
-    },
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Нэвтрэх шаардлагатай",
-          description: "Та дахин нэвтэрнэ үү...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Алдаа",
-        description: "Мэдээ шинэчлэхэд алдаа гарлаа",
-        variant: "destructive",
-      });
+      setNewsImageUrl('');
+      emitAnalyticsEvent('news_update', { id });
     },
   });
 
-  const onSubmit = (data: CreateNewsForm) => {
-    console.log("Form submitted with data:", data);
-    console.log("Form errors:", form.formState.errors);
-    console.log("Current user:", user);
-    console.log("Form values:", form.getValues());
-    console.log("Form is valid:", form.formState.isValid);
+  const deleteNewsMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/news/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete news');
+    },
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['news'] });
+      toast({ title: 'Амжилттай устгагдлаа', description: 'Мэдээ амжилттай устгагдлаа' });
+      emitAnalyticsEvent('news_delete', { id });
+    },
+  });
 
-    // Get all form values directly
-    const formValues = form.getValues();
-    console.log("Direct form values:", formValues);
+  // Event handlers
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    emitAnalyticsEvent('news_search', { query: searchQuery, category: selectedCategory });
+  };
 
-    // Use form values as primary source since data might be stale
-    const titleValue = formValues.title || data.title;
-    const contentValue = formValues.content || data.content; 
-    const excerptValue = formValues.excerpt || data.excerpt;
-    const categoryValue = formValues.category || data.category;
-    const publishedValue = formValues.published !== undefined ? formValues.published : data.published;
-    const imageUrlValue = formValues.imageUrl || data.imageUrl;
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    setPage(1);
+    emitAnalyticsEvent('filter_change', { category });
+  };
 
-    console.log("Extracted values:", {
-      title: titleValue,
-      content: contentValue,
-      excerpt: excerptValue,
-      category: categoryValue,
-      published: publishedValue,
-      imageUrl: imageUrlValue
+  const handleCardClick = (newsItem: any) => {
+    emitAnalyticsEvent('news_card_view', { 
+      id: newsItem.id, 
+      title: newsItem.title,
+      category: newsItem.category 
     });
+  };
 
-    // Validate that required fields are present
-    if (!titleValue?.trim()) {
-      toast({
-        title: "Алдаа",
-        description: "Гарчиг заавал бөглөх ёстой",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleReadMoreClick = (newsItem: any) => {
+    emitAnalyticsEvent('news_read_more_click', { 
+      id: newsItem.id, 
+      title: newsItem.title 
+    });
+  };
 
-    if (!contentValue?.trim()) {
-      toast({
-        title: "Алдаа", 
-        description: "Агуулга заавал бөглөх ёстой",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Check if user is authenticated for creating news
-    if (!(user as any)?.id) {
-      toast({
-        title: "Алдаа",
-        description: "Мэдээ үүсгэхийн тулд нэвтэрсэн байх ёстой",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Use the uploaded image URL if available and add authorId
+  const handleSubmit = form.handleSubmit((data) => {
     const finalData = {
-      title: titleValue.trim(),
-      content: contentValue.trim(),
-      excerpt: excerptValue?.trim() || '',
-      category: categoryValue || 'news',
-      published: publishedValue !== undefined ? publishedValue : true,
-      imageUrl: newsImageUrl || imageUrlValue || '',
-      authorId: (user as any).id, // Add the required authorId field
+      ...data,
+      imageUrl: newsImageUrl || data.imageUrl || '',
+      authorId: (user as any)?.id,
     };
-
-    console.log("Final data to submit:", finalData);
 
     if (editingNews) {
       updateNewsMutation.mutate({ id: editingNews.id, newsData: finalData });
     } else {
       createNewsMutation.mutate(finalData);
     }
-  };
+  });
 
-  // Handle opening edit dialog
   const handleEditNews = (newsItem: any) => {
     setEditingNews(newsItem);
-    setNewsImageUrl(newsItem.imageUrl || "");
+    setNewsImageUrl(newsItem.imageUrl || '');
     form.reset({
       title: newsItem.title,
       content: newsItem.content,
-      excerpt: newsItem.excerpt || "",
-      category: newsItem.category || "news",
+      excerpt: newsItem.excerpt || '',
+      category: newsItem.category || 'news',
       published: newsItem.published,
-      imageUrl: newsItem.imageUrl || "",
+      imageUrl: newsItem.imageUrl || '',
+      tags: newsItem.tags || [],
+      featured: newsItem.featured || false,
     });
     setShowEditDialog(true);
   };
 
-  // Handle closing edit dialog
-  const handleCloseEditDialog = () => {
-    setShowEditDialog(false);
-    setEditingNews(null);
-    setNewsImageUrl("");
-    form.reset();
-  };
-
-  // Handle image upload
-  const handleImageUpload = async () => {
-    const response = await fetch("/api/objects/upload", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-    });
-    const { uploadURL } = await response.json();
-    return { method: "PUT" as const, url: uploadURL };
-  };
-
-  const handleImageUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
-    if (result.successful?.[0]?.uploadURL) {
-      const response = await fetch("/api/objects/finalize", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fileURL: result.successful[0].uploadURL,
-          isPublic: true,
-        }),
-      });
-      const { objectPath } = await response.json();
-      setNewsImageUrl(objectPath);
-      form.setValue("imageUrl", objectPath);
-      toast({
-        title: "Амжилттай",
-        description: "Зураг амжилттай хуулагдлаа",
-      });
+  const handleShare = (platform: string, newsItem: any) => {
+    const url = `${window.location.origin}/news/${newsItem.slug || newsItem.id}`;
+    const title = newsItem.title;
+    
+    let shareUrl = '';
+    switch (platform) {
+      case 'facebook':
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+        break;
+      case 'twitter':
+        shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
+        break;
+      case 'linkedin':
+        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+        break;
+    }
+    
+    if (shareUrl) {
+      window.open(shareUrl, '_blank', 'width=600,height=400');
+      emitAnalyticsEvent('news_share', { platform, id: newsItem.id });
     }
   };
 
-  const handleConfirmImage = () => {
-    if (newsImageUrl) {
-      form.setValue("imageUrl", newsImageUrl);
-      setShowImageDialog(false);
-    }
+  // Image helper
+  const getImageUrl = (imageUrl: string) => {
+    if (!imageUrl) return null;
+    if (imageUrl.startsWith('data:')) return imageUrl;
+    if (imageUrl.startsWith('/objects/')) return imageUrl;
+    return `/objects/uploads/${imageUrl}`;
   };
 
-  const getCategoryBadge = (category: string) => {
-    const categories = {
-      tournament: { label: "Тэмцээн", className: "bg-blue-500 text-white" },
-      news: { label: "Мэдээ", className: "bg-green-500 text-white" },
-      training: { label: "Сургалт", className: "bg-purple-500 text-white" },
-      urgent: { label: "Яаралтай", className: "bg-red-500 text-white" },
-    };
+  // Loading skeleton component
+  const NewsSkeleton = () => (
+    <div className="space-y-8">
+      {/* Featured skeleton */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+        <div className="md:flex">
+          <Skeleton className="w-full md:w-1/2 h-64" />
+          <div className="p-6 md:w-1/2 space-y-4">
+            <Skeleton className="h-8 w-3/4" />
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+        </div>
+      </div>
+      
+      {/* Grid skeleton */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[...Array(6)].map((_, i) => (
+          <Card key={i} className="overflow-hidden">
+            <Skeleton className="w-full h-48" />
+            <CardContent className="p-4 space-y-3">
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-8 w-24" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
 
-    const cat = categories[category as keyof typeof categories] || { label: "Мэдээ", className: "bg-gray-500 text-white" };
-    return <Badge className={cat.className}>{cat.label}</Badge>;
-  };
+  // Error state component
+  const ErrorState = () => (
+    <div className="text-center py-12">
+      <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+        Мэдээ ачаалахад алдаа гарлаа
+      </h3>
+      <p className="text-gray-600 dark:text-gray-400 mb-4">
+        Интернет холболтоо шалгаад дахин оролдоно уу
+      </p>
+      <Button onClick={() => refetch()} variant="outline">
+        <RefreshCw className="w-4 h-4 mr-2" />
+        Дахин оролдох
+      </Button>
+    </div>
+  );
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('mn-MN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  // Empty state component
+  const EmptyState = () => (
+    <div className="text-center py-12">
+      <div className="mx-auto w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+        <Search className="w-8 h-8 text-gray-400" />
+      </div>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+        Мэдээ олдсонгүй
+      </h3>
+      <p className="text-gray-600 dark:text-gray-400">
+        {searchQuery ? 'Хайлтын үр дүн олдсонгүй. Өөр түлхүүр үг ашиглан хайж үзнэ үү.' : 'Одоогоор мэдээ байхгүй байна.'}
+      </p>
+    </div>
+  );
 
-  // Loading skeleton for better UX
-  if (isLoading || newsLoading) {
+  // Featured news card
+  const FeaturedNewsCard = ({ item }: { item: any }) => {
+    const imageUrl = getImageUrl(item.imageUrl);
+    
     return (
-      <div className="min-h-screen">
-        <Navigation />
-        <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="bg-white rounded-lg shadow-sm border p-6">
-                  <div className="animate-pulse">
-                    <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
-                    <div className="h-6 bg-gray-200 rounded mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-                    <div className="space-y-2">
-                      <div className="h-4 bg-gray-200 rounded"></div>
-                      <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                    </div>
-                  </div>
+      <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <div className="md:flex">
+          <div className="md:w-1/2">
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt={item.title}
+                className="w-full h-64 md:h-full object-cover"
+                loading="eager"
+                onLoad={() => console.log('Featured image loaded successfully:', imageUrl)}
+                onError={(e) => {
+                  console.error('Featured image failed to load:', imageUrl);
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            ) : (
+              <div className="w-full h-64 md:h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                <div className="text-gray-400 text-center">
+                  <Calendar className="w-12 h-12 mx-auto mb-2" />
+                  <span>Зураг байхгүй</span>
                 </div>
-              ))}
+              </div>
+            )}
+          </div>
+          <div className="p-6 md:w-1/2 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                  Онцлох мэдээ
+                </Badge>
+                <Badge variant="outline">
+                  {categoryLabels[item.category as keyof typeof categoryLabels] || item.category}
+                </Badge>
+              </div>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-3 leading-tight">
+                {item.title}
+              </h1>
+              <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4">
+                <Clock className="w-4 h-4 mr-1" />
+                {new Date(item.createdAt || item.publishedAt).toLocaleDateString('mn-MN')}
+              </div>
+              <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-3">
+                {item.excerpt || item.content?.substring(0, 200) + '...'}
+              </p>
             </div>
-            <div className="space-y-6">
-              <div className="bg-white rounded-lg shadow-sm border p-6">
-                <div className="animate-pulse">
-                  <div className="h-6 bg-gray-200 rounded mb-4"></div>
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="mb-4">
-                      <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                      <div className="h-3 bg-gray-200 rounded w-4/5"></div>
-                    </div>
-                  ))}
-                </div>
+            <div className="flex items-center justify-between">
+              <Button 
+                onClick={() => {
+                  handleCardClick(item);
+                  handleReadMoreClick(item);
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Дэлгэрэнгүй унших
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleShare('facebook', item)}
+                  aria-label="Facebook дээр хуваалцах"
+                >
+                  <Facebook className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleShare('twitter', item)}
+                  aria-label="Twitter дээр хуваалцах"
+                >
+                  <Twitter className="w-4 h-4" />
+                </Button>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </Card>
     );
-  }
+  };
 
-  // Show content for all users, but only show admin functions if authenticated as admin
+  // Regular news card
+  const NewsCard = ({ item }: { item: any }) => {
+    const imageUrl = getImageUrl(item.imageUrl);
+    
+    return (
+      <Card 
+        className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-opacity-50"
+        onClick={() => handleCardClick(item)}
+        tabIndex={0}
+        role="article"
+        aria-labelledby={`news-title-${item.id}`}
+      >
+        <div className="aspect-video overflow-hidden">
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={item.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
+              onLoad={() => console.log('Image loaded successfully:', imageUrl)}
+              onError={(e) => {
+                console.error('Image failed to load:', imageUrl);
+                (e.target as HTMLImageElement).src = '/api/placeholder/400/240';
+              }}
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+              <Calendar className="w-8 h-8 text-gray-400" />
+            </div>
+          )}
+        </div>
+        
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Badge variant="outline" className="text-xs">
+              {categoryLabels[item.category as keyof typeof categoryLabels] || item.category}
+            </Badge>
+            <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
+              <Clock className="w-3 h-3 mr-1" />
+              {new Date(item.createdAt || item.publishedAt).toLocaleDateString('mn-MN')}
+            </span>
+          </div>
+          
+          <h3 
+            id={`news-title-${item.id}`}
+            className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
+          >
+            {item.title}
+          </h3>
+          
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-3">
+            {item.excerpt || item.content?.substring(0, 120) + '...'}
+          </p>
+          
+          <div className="flex items-center justify-between">
+            <Button 
+              size="sm" 
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleReadMoreClick(item);
+              }}
+              className="text-blue-600 hover:text-blue-700 dark:text-blue-400 p-0 h-auto font-medium"
+            >
+              Дэлгэрэнгүй
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleShare('facebook', item);
+              }}
+              aria-label="Хуваалцах"
+            >
+              <Share2 className="w-4 h-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
-    <PageWithLoading>
-      <div className="min-h-screen">
-      <Navigation />
-
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Мэдээ мэдээлэл</h1>
-            <p className="text-gray-600">Холбооны сүүлийн үеийн мэдээ, тэмцээний үр дүн</p>
-          </div>
-
-          <div className="flex items-center space-x-4">
-            {/* Category Filter */}
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Бүгд</SelectItem>
-                <SelectItem value="tournament">Тэмцээн</SelectItem>
-                <SelectItem value="news">Мэдээ</SelectItem>
-                <SelectItem value="training">Сургалт</SelectItem>
-                <SelectItem value="urgent">Яаралтай</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {user && (user as any)?.role === 'admin' && (
+    <PageLayout>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                Шинэ мэдээ
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                Монголын ширээний теннисний холбооны мэдээ мэдээлэл
+              </p>
+            </div>
+            
+            {isAuthenticated && user?.role === 'admin' && (
               <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                 <DialogTrigger asChild>
-                  <Button className="mtta-green text-white hover:bg-mtta-green-dark">
-                    <Plus className="mr-2 h-4 w-4" />
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                    <Plus className="w-4 h-4 mr-2" />
                     Мэдээ нэмэх
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-3xl">
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>Шинэ мэдээ үүсгэх</DialogTitle>
+                    <DialogTitle>Шинэ мэдээ нэмэх</DialogTitle>
                   </DialogHeader>
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="title"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Гарчиг</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Мэдээний гарчиг..." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <Label htmlFor="title">Гарчиг *</Label>
+                      <Input
+                        id="title"
+                        {...form.register('title')}
+                        placeholder="Мэдээний гарчиг"
                       />
+                      {form.formState.errors.title && (
+                        <p className="text-sm text-red-600 mt-1">
+                          {form.formState.errors.title.message}
+                        </p>
+                      )}
+                    </div>
 
-                      <FormField
-                        control={form.control}
-                        name="excerpt"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Товч агуулга</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="Мэдээний товч агуулга..." 
-                                rows={2}
-                                {...field}
-                                value={field.value || ""}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                    <div>
+                      <Label htmlFor="excerpt">Товч агуулга</Label>
+                      <Textarea
+                        id="excerpt"
+                        {...form.register('excerpt')}
+                        placeholder="Мэдээний товч агуулга"
+                        rows={3}
                       />
+                    </div>
 
-                      <FormField
-                        control={form.control}
-                        name="content"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Дэлгэрэнгүй агуулга</FormLabel>
-                            <FormControl>
-                              <RichTextEditor
-                                content={field.value}
-                                onChange={field.onChange}
-                                placeholder="Мэдээний дэлгэрэнгүй агуулга..."
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                    <div>
+                      <Label htmlFor="content">Агуулга *</Label>
+                      <Textarea
+                        id="content"
+                        {...form.register('content')}
+                        placeholder="Мэдээний бүрэн агуулга"
+                        rows={6}
                       />
+                      {form.formState.errors.content && (
+                        <p className="text-sm text-red-600 mt-1">
+                          {form.formState.errors.content.message}
+                        </p>
+                      )}
+                    </div>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="category"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Ангилал</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Ангилал сонгоно уу" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="tournament">Тэмцээн</SelectItem>
-                                  <SelectItem value="news">Мэдээ</SelectItem>
-                                  <SelectItem value="training">Сургалт</SelectItem>
-                                  <SelectItem value="urgent">Яаралтай</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="category">Ангилал</Label>
+                        <Select
+                          onValueChange={(value) => form.setValue('category', value as any)}
+                          defaultValue={form.getValues('category')}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Ангилал сонгох" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(categoryLabels).map(([key, label]) => (
+                              <SelectItem key={key} value={key}>{label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">Мэдээний зураг</label>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full"
-                            onClick={() => setShowImageDialog(true)}
-                          >
-                            {newsImageUrl ? (
-                              <div className="flex items-center gap-2">
-                                <Image className="h-4 w-4" />
-                                <span>Зураг засах</span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <Upload className="h-4 w-4" />
-                                <span>Зураг нэмэх</span>
-                              </div>
-                            )}
-                          </Button>
-                          {newsImageUrl && (
-                            <div className="mt-2">
-                              <div className="relative w-32 h-24 overflow-hidden rounded-lg border">
-                                <img
-                                  src={getImageUrl(newsImageUrl)}
-                                  alt="Preview"
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    console.error('Preview image failed to load:', newsImageUrl);
-                                    const target = e.currentTarget;
-                                    target.style.display = 'none';
-                                    target.parentElement!.innerHTML = `
-                                      <div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
-                                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                                          <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                                        </svg>
-                                      </div>
-                                    `;
-                                  }}
-                                />
-                              </div>
-                              <p className="text-xs text-gray-500 mt-1">Зураг амжилттай хуулагдлаа</p>
-                            </div>
-                          )}
+                      <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            id="published"
+                            checked={form.watch('published')}
+                            onCheckedChange={(checked) => form.setValue('published', checked)}
+                          />
+                          <Label htmlFor="published">Нийтлэх</Label>
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            id="featured"
+                            checked={form.watch('featured')}
+                            onCheckedChange={(checked) => form.setValue('featured', checked)}
+                          />
+                          <Label htmlFor="featured">Онцлох</Label>
                         </div>
                       </div>
+                    </div>
 
-                      <div className="flex justify-end space-x-2 pt-4">
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={() => setShowCreateDialog(false)}
-                        >
-                          Цуцлах
-                        </Button>
-                        <Button 
-                          type="submit" 
-                          className="mtta-green text-white hover:bg-mtta-green-dark"
-                          disabled={createNewsMutation.isPending}
-                        >
-                          {createNewsMutation.isPending ? "Үүсгэж байна..." : "Мэдээ үүсгэх"}
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                </DialogContent>
-              </Dialog>
-            )}
-
-            {/* Edit News Dialog */}
-            {user && (user as any)?.role === 'admin' && (
-              <Dialog open={showEditDialog} onOpenChange={handleCloseEditDialog}>
-                <DialogContent className="max-w-3xl">
-                  <DialogHeader>
-                    <DialogTitle>Мэдээ засварлах</DialogTitle>
-                  </DialogHeader>
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="title"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Гарчиг *</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="Мэдээний гарчиг оруулна уу" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                    <div>
+                      <Label htmlFor="imageUrl">Зургийн URL</Label>
+                      <Input
+                        id="imageUrl"
+                        value={newsImageUrl}
+                        onChange={(e) => setNewsImageUrl(e.target.value)}
+                        placeholder="Зургийн холбоос"
                       />
+                    </div>
 
-                      <FormField
-                        control={form.control}
-                        name="excerpt"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Товч агуулга</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                {...field}
-                                value={field.value || ""}
-                                placeholder="Мэдээний товч агуулга (2-3 өгүүлбэр)"
-                                rows={2}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="content"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Мэдээний агуулга *</FormLabel>
-                            <FormControl>
-                              <RichTextEditor
-                                content={field.value || ""}
-                                onChange={(content) => {
-                                  console.log("RichTextEditor onChange called with:", content);
-                                  field.onChange(content);
-                                  form.setValue("content", content);
-                                }}
-                                placeholder="Мэдээний бүрэн агуулга оруулна уу"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="category"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Ангилал</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || "news"}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Ангилал сонгоно уу" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="tournament">Тэмцээн</SelectItem>
-                                <SelectItem value="news">Мэдээ</SelectItem>
-                                <SelectItem value="training">Сургалт</SelectItem>
-                                <SelectItem value="urgent">Яаралтай</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="published"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Статус</FormLabel>
-                              <Select onValueChange={(value) => field.onChange(value === 'true')} value={field.value ? 'true' : 'false'}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="false">Ноорог</SelectItem>
-                                  <SelectItem value="true">Нийтлэгдсэн</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">Зураг</label>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full"
-                            onClick={() => setShowImageDialog(true)}
-                          >
-                            {newsImageUrl ? (
-                              <div className="flex items-center gap-2">
-                                <Image className="h-4 w-4" />
-                                <span>Зураг засах</span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <Upload className="h-4 w-4" />
-                                <span>Зураг нэмэх</span>
-                              </div>
-                            )}
-                          </Button>
-                          {newsImageUrl && (
-                            <div className="mt-2">
-                              <div className="relative w-32 h-24 overflow-hidden rounded-lg border">
-                                <img
-                                  src={getImageUrl(newsImageUrl)}
-                                  alt="Preview"
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    console.error('Edit preview image failed to load:', newsImageUrl);
-                                    const target = e.currentTarget;
-                                    target.style.display = 'none';
-                                    target.parentElement!.innerHTML = `
-                                      <div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
-                                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                                          <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                                        </svg>
-                                      </div>
-                                    `;
-                                  }}
-                                />
-                              </div>
-                              <p className="text-xs text-gray-500 mt-1">Зураг амжилттай хуулагдлаа</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex justify-end space-x-2 pt-4">
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={handleCloseEditDialog}
-                        >
-                          Цуцлах
-                        </Button>
-                        <Button 
-                          type="submit" 
-                          className="mtta-green text-white hover:bg-mtta-green-dark"
-                          disabled={updateNewsMutation.isPending}
-                        >
-                          {updateNewsMutation.isPending ? "Шинэчилж байна..." : "Мэдээ шинэчлэх"}
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
+                    <div className="flex justify-end space-x-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowCreateDialog(false)}
+                      >
+                        Цуцлах
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={createNewsMutation.isPending}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        {createNewsMutation.isPending ? 'Хадгалж байна...' : 'Хадгалах'}
+                      </Button>
+                    </div>
+                  </form>
                 </DialogContent>
               </Dialog>
             )}
           </div>
-        </div>
 
-        {showImageDialog && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg w-96">
-              <h3 className="text-lg font-semibold mb-4">Зураг нэмэх</h3>
-              <div className="space-y-4">
-                <ObjectUploader
-                  maxNumberOfFiles={1}
-                  maxFileSize={5242880}
-                  onGetUploadParameters={handleImageUpload}
-                  onComplete={handleImageUploadComplete}
-                  buttonClassName="w-full"
-                >
-                  <div className="flex items-center gap-2">
-                    <Upload className="h-4 w-4" />
-                    <span>Зураг хуулах</span>
-                  </div>
-                </ObjectUploader>
-                <div className="mt-4">
-                  <Label htmlFor="newsImageUrlInput">Зурагны URL (заавал биш)</Label>
+          {/* Filters and Search */}
+          <div className="mb-8">
+            <div className="flex flex-col lg:flex-row lg:items-center gap-4 mb-6">
+              {/* Search */}
+              <form onSubmit={handleSearch} className="flex-1 max-w-md">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
-                    id="newsImageUrlInput"
-                    type="text"
-                    value={newsImageUrl}
-                    onChange={(e) => setNewsImageUrl(e.target.value)}
-                    placeholder="https://example.com/image.jpg"
+                    type="search"
+                    placeholder="Мэдээ хайх..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                    aria-label="Мэдээ хайх"
                   />
                 </div>
-                {newsImageUrl && (
-                  <div className="mt-2">
-                    <div className="relative w-full h-40 overflow-hidden rounded-lg border">
-                      <img
-                        src={getImageUrl(newsImageUrl)}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          console.error('Preview image failed to load:', newsImageUrl);
-                          const target = e.currentTarget;
-                          target.style.display = 'none';
-                          target.parentElement!.innerHTML = `
-                            <div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
-                              <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                              </svg>
-                            </div>
-                          `;
-                        }}
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">Зураг амжилттай хуулагдлаа</p>
-                  </div>
-                )}
-              </div>
-              <div className="flex justify-end space-x-2 mt-4">
-                <Button type="button" variant="outline" onClick={() => setShowImageDialog(false)}>
-                  Цуцлах
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleConfirmImage}
-                  className="mtta-green text-white hover:bg-mtta-green-dark"
-                  disabled={!newsImageUrl}
-                >
-                  Оруулах
-                </Button>
+              </form>
+
+              {/* Sort */}
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-gray-500" />
+                <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="date">Огнооны дараалал</SelectItem>
+                    <SelectItem value="title">Нэрийн дараалал</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* News List */}
-        {newsLoading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mtta-green mx-auto mb-4"></div>
-            <p className="text-gray-600">Мэдээнүүдийг уншиж байна...</p>
+            {/* Category Tabs */}
+            <Tabs value={selectedCategory} onValueChange={handleCategoryChange}>
+              <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 mb-6">
+                <TabsTrigger value="all">Бүгд</TabsTrigger>
+                {Object.entries(categoryLabels).map(([key, label]) => (
+                  <TabsTrigger key={key} value={key}>{label}</TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
           </div>
-        ) : news.length === 0 ? (
-          <div className="text-center py-12">
-            <Newspaper className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Мэдээ байхгүй байна</h3>
-            <p className="text-gray-600 mb-6">
-              {selectedCategory === "all" 
-                ? "Одоогоор мэдээ байхгүй байна" 
-                : "Энэ ангилалд мэдээ байхгүй байна"
-              }
-            </p>
-            {user && (user as any)?.role === 'admin' && (
-              <Button 
-                className="mtta-green text-white hover:bg-mtta-green-dark"
-                onClick={() => setShowCreateDialog(true)}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Анхны мэдээ нэмэх
-              </Button>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {news.map((article: any) => (
-              <Card key={article.id} className="shadow-md hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex gap-4">
-                    {article.imageUrl && (
-                      <div className="aspect-[4/3] w-40 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
-                        <img
-                          src={getImageUrl(article.imageUrl)}
-                          alt={article.title}
-                          className="h-full w-full object-cover transition-transform hover:scale-105"
-                          loading="lazy"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            console.error('Image failed to load:', article.imageUrl, 'processed as:', getImageUrl(article.imageUrl));
 
-                            if (!target.hasAttribute('data-fallback-tried')) {
-                              target.setAttribute('data-fallback-tried', 'true');
-                              // Try direct public-objects path
-                              const cleanPath = article.imageUrl.replace(/^\/+/, '').replace(/^objects\//, '');
-                              target.src = `/public-objects/${cleanPath}`;
-                            } else if (!target.hasAttribute('data-fallback-2-tried')) {
-                              target.setAttribute('data-fallback-2-tried', 'true');
-                              // Try with objects prefix
-                              const cleanPath = article.imageUrl.replace(/^\/+/, '').replace(/^objects\//, '');
-                              target.src = `/public-objects/objects/${cleanPath}`;
-                            } else {
-                              // Final fallback to placeholder
-                              target.style.display = 'none';
-                              target.parentElement!.classList.add('flex', 'items-center', 'justify-center', 'bg-gray-100');
-                              target.parentElement!.innerHTML = `
-                                <div class="flex flex-col items-center justify-center text-gray-400">
-                                  <svg class="w-8 h-8 mb-2" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                                  </svg>
-                                  <span class="text-xs">Зураг ачаалагдсангүй</span>
-                                </div>
-                              `;
-                            }
-                          }}
-                          onLoad={() => {
-                            console.log('Image loaded successfully:', getImageUrl(article.imageUrl));
-                          }}
-                        />
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        {getCategoryBadge(article.category)}
-                        <div className="flex items-center text-gray-500 text-sm">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          {formatDate(article.publishedAt || article.createdAt)}
-                        </div>
-                      </div>
-                      <Link href={`/news/${article.id}`}>
-                        <h3 className="font-bold text-xl text-gray-900 mb-2 hover:text-mtta-green transition-colors">
-                          {article.title}
-                        </h3>
-                      </Link>
-                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">{stripHtml(article.excerpt || '')}</p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-                            {article.author?.profileImageUrl ? (
-                              <img
-                                src={getImageUrl(article.author.profileImageUrl)}
-                                alt={`${article.author.firstName} ${article.author.lastName}`}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <User className="h-3 w-3 text-gray-400" />
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium text-gray-900">
-                              {article.author?.firstName} {article.author?.lastName}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {formatDate(article.createdAt)}д нэмсэн
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {user && (user as any)?.role === 'admin' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEditNews(article)}
-                            >
-                              <Edit className="mr-1 h-3 w-3" />
-                              Засах
-                            </Button>
-                          )}
-                          {!article.published && user && (user as any)?.role === 'admin' && (
-                            <Button
-                              size="sm"
-                              className="mtta-green text-white hover:bg-mtta-green-dark"
-                              onClick={() => publishNewsMutation.mutate(article.id)}
-                              disabled={publishNewsMutation.isPending}
-                            >
-                              <Megaphone className="mr-1 h-3 w-3" />
-                              Нийтлэх
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+          {/* Content */}
+          {error ? (
+            <ErrorState />
+          ) : isLoading ? (
+            <NewsSkeleton />
+          ) : (
+            <>
+              {/* Featured News */}
+              {featuredNews && (
+                <section className="mb-12" aria-labelledby="featured-news-title">
+                  <h2 id="featured-news-title" className="sr-only">Онцлох мэдээ</h2>
+                  <FeaturedNewsCard item={featuredNews} />
+                </section>
+              )}
+
+              {/* Regular News Grid */}
+              <section aria-labelledby="news-list-title">
+                <h2 id="news-list-title" className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                  Сүүлийн мэдээ
+                </h2>
+                
+                {regularNews.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {regularNews.map((item: any) => (
+                      <NewsCard key={item.id} item={item} />
+                    ))}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                ) : (
+                  <EmptyState />
+                )}
+              </section>
+
+              {/* Load More */}
+              {regularNews.length >= 12 && (
+                <div className="text-center mt-12">
+                  <Button 
+                    variant="outline" 
+                    size="lg"
+                    onClick={() => setPage(prev => prev + 1)}
+                  >
+                    Цааш үзэх
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
-    </PageWithLoading>
+
+      {/* Edit Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Мэдээ засах</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="edit-title">Гарчиг *</Label>
+              <Input
+                id="edit-title"
+                {...form.register('title')}
+                placeholder="Мэдээний гарчиг"
+              />
+              {form.formState.errors.title && (
+                <p className="text-sm text-red-600 mt-1">
+                  {form.formState.errors.title.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="edit-excerpt">Товч агуулга</Label>
+              <Textarea
+                id="edit-excerpt"
+                {...form.register('excerpt')}
+                placeholder="Мэдээний товч агуулга"
+                rows={3}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-content">Агуулга *</Label>
+              <Textarea
+                id="edit-content"
+                {...form.register('content')}
+                placeholder="Мэдээний бүрэн агуулга"
+                rows={6}
+              />
+              {form.formState.errors.content && (
+                <p className="text-sm text-red-600 mt-1">
+                  {form.formState.errors.content.message}
+                </p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="edit-category">Ангилал</Label>
+                <Select
+                  onValueChange={(value) => form.setValue('category', value as any)}
+                  value={form.watch('category')}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Ангилал сонгох" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(categoryLabels).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="edit-published"
+                    checked={form.watch('published')}
+                    onCheckedChange={(checked) => form.setValue('published', checked)}
+                  />
+                  <Label htmlFor="edit-published">Нийтлэх</Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="edit-featured"
+                    checked={form.watch('featured')}
+                    onCheckedChange={(checked) => form.setValue('featured', checked)}
+                  />
+                  <Label htmlFor="edit-featured">Онцлох</Label>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="edit-imageUrl">Зургийн URL</Label>
+              <Input
+                id="edit-imageUrl"
+                value={newsImageUrl}
+                onChange={(e) => setNewsImageUrl(e.target.value)}
+                placeholder="Зургийн холбоос"
+              />
+            </div>
+
+            <div className="flex justify-end space-x-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowEditDialog(false);
+                  setEditingNews(null);
+                  form.reset();
+                }}
+              >
+                Цуцлах
+              </Button>
+              <Button
+                type="submit"
+                disabled={updateNewsMutation.isPending}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {updateNewsMutation.isPending ? 'Шинэчлэж байна...' : 'Шинэчлэх'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </PageLayout>
   );
 }

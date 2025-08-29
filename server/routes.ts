@@ -1406,7 +1406,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const oss = new ObjectStorageService();
     try {
       const objectFile = await oss.getObjectEntityFile(req.path);
-      
+
       // Check if this is a public object (no auth required for public objects)
       const aclPolicy = await getObjectAclPolicy(objectFile);
       if (aclPolicy?.visibility === "public") {
@@ -1424,11 +1424,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.session.userId,
         requestedPermission: ObjectPermission.READ,
       });
-      
+
       if (!canAccess) {
         return res.status(403).json({ error: "Access denied" });
       }
-      
+
       await oss.downloadObject(objectFile, res);
     } catch (e) {
       console.error("Error serving object:", e);

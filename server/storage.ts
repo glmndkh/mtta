@@ -2019,6 +2019,15 @@ export class DatabaseStorage implements IStorage {
       };
     }
   }
+
+  // Dummy method for getLeagueTeams as it was called but not defined in the original code
+  // This will be replaced with the actual implementation if available elsewhere or needs to be added.
+  async getLeagueTeams(leagueId: string): Promise<Array<TournamentTeam & { players: TournamentTeamPlayer[] }>> {
+    // Placeholder implementation - replace with actual logic to fetch teams and their players for a league
+    console.warn("Placeholder method: getLeagueTeams called. Implement actual logic.");
+    return [];
+  }
+
 }
 
 export const storage = new DatabaseStorage();
