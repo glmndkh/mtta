@@ -1,14 +1,14 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronRight, MapPin, Users, Mail, Globe, Zap, Map, Phone } from "lucide-react";
+import { MapPin, Globe, Phone, Mail, Building2, ChevronRight, Map, Zap } from "lucide-react";
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import MongoliaMap from "@/components/MongoliaMap";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 // Fetch branches from API
 const fetchBranches = async () => {
@@ -315,6 +315,167 @@ const BranchDetailDialog = ({ branch, isOpen, onClose }: { branch: any, isOpen: 
   );
 };
 
+// Helper function to get image URL
+function getImageUrl(imageUrl?: string): string {
+  if (!imageUrl) return "";
+  if (
+    imageUrl.startsWith("http://") ||
+    imageUrl.startsWith("https://") ||
+    imageUrl.startsWith("data:")
+  ) {
+    return imageUrl;
+  }
+  if (imageUrl.startsWith("/public-objects/")) return imageUrl;
+  if (imageUrl.startsWith("/objects/")) return imageUrl;
+  if (imageUrl.startsWith("/")) return `/public-objects${imageUrl}`;
+  return `/public-objects/${imageUrl}`;
+}
+
+// Helper function to convert database branches to map format
+const convertBranchForMap = (branch: any) => {
+  if (!branch.coordinates) return null;
+
+  const [lat, lng] = branch.coordinates.split(',').map((coord: string) => parseFloat(coord.trim()));
+  if (isNaN(lat) || isNaN(lng)) return null;
+
+  return {
+    id: branch.id,
+    name: branch.name,
+    lat,
+    lng,
+    address: branch.address,
+    description: branch.activities || branch.location,
+    leader: branch.leader,
+    leadershipMembers: branch.leadershipMembers,
+    imageUrl: branch.imageUrl,
+    isInternational: branch.isInternational,
+    country: branch.country,
+    city: branch.city,
+  };
+};
+
+const BranchCard = ({ branch }: { branch: any }) => {
+  const displayLocation = branch.isInternational
+    ? `${branch.city ? `${branch.city}, ` : ''}${branch.country || 'Гадаад'}`
+    : branch.location || 'Монгол';
+
+  return (
+    <Card className="hover:shadow-lg transition-shadow duration-300 rounded-2xl h-full">
+      <CardHeader className="pb-4">
+        <div className="flex items-start gap-4">
+          {branch.imageUrl && (
+            <div className="flex-shrink-0">
+              <img
+                src={getImageUrl(branch.imageUrl)}
+                alt={`${branch.name} лого`}
+                className="w-16 h-16 object-cover rounded-xl border-2 border-gray-100"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-lg leading-tight mb-2 text-gray-900">
+              {branch.name}
+            </CardTitle>
+            <Badge
+              variant="outline"
+              className="border-mtta-green text-mtta-green text-xs"
+            >
+              {displayLocation}
+            </Badge>
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4 pt-0">
+        {/* Leader Information */}
+        {branch.leader && (
+          <div className="flex items-start gap-3">
+            <Building2 className="h-4 w-4 text-mtta-green mt-0.5 flex-shrink-0" />
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-medium text-gray-900">Тэргүүлэгч</div>
+              <div className="text-sm text-gray-600">{branch.leader}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Leadership Members */}
+        {branch.leadershipMembers && (
+          <div className="flex items-start gap-3">
+            <Building2 className="h-4 w-4 text-mtta-green mt-0.5 flex-shrink-0" />
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-medium text-gray-900">Тэргүүлэгч гишүүд</div>
+              <div className="text-sm text-gray-600">{branch.leadershipMembers}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Address */}
+        {branch.address && (
+          <div className="flex items-start gap-3">
+            <MapPin className="h-4 w-4 text-mtta-green mt-0.5 flex-shrink-0" />
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-medium text-gray-900">Хаяг</div>
+              <div className="text-sm text-gray-600">{branch.address}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Phone */}
+        {branch.phone && (
+          <div className="flex items-start gap-3">
+            <Phone className="h-4 w-4 text-mtta-green mt-0.5 flex-shrink-0" />
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-medium text-gray-900">Утас</div>
+              <a
+                href={`tel:${branch.phone}`}
+                className="text-sm text-mtta-green hover:text-mtta-green/80 transition-colors"
+                aria-label={`Утасаар холбогдох: ${branch.phone}`}
+              >
+                {branch.phone}
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* Email */}
+        {branch.email && (
+          <div className="flex items-start gap-3">
+            <Mail className="h-4 w-4 text-mtta-green mt-0.5 flex-shrink-0" />
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-medium text-gray-900">И-мэйл</div>
+              <a
+                href={`mailto:${branch.email}`}
+                className="text-sm text-mtta-green hover:text-mtta-green/80 transition-colors break-all"
+                aria-label={`И-мэйлээр холбогдох: ${branch.email}`}
+              >
+                {branch.email}
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* Activities */}
+        {branch.activities && (
+          <div className="pt-2 border-t border-gray-100">
+            <div className="text-sm font-medium text-gray-900 mb-1">Үйл ажиллагаа</div>
+            <div className="text-sm text-gray-600">{branch.activities}</div>
+          </div>
+        )}
+
+        {/* Coordinates (for reference) */}
+        {branch.coordinates && (
+          <div className="text-xs text-gray-400 pt-2 border-t border-gray-50">
+            📍 Координат: {branch.coordinates}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 export default function Branches() {
   const [selectedBranch, setSelectedBranch] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -336,43 +497,22 @@ export default function Branches() {
     setSelectedBranch(null);
   };
 
-  // Convert database branches to map format
-  const convertBranchForMap = (branch: any) => {
-    if (!branch.coordinates) return null;
-
-    const [lat, lng] = branch.coordinates.split(',').map((coord: string) => parseFloat(coord.trim()));
-    if (isNaN(lat) || isNaN(lng)) return null;
-
-    return {
-      id: branch.id,
-      name: branch.name,
-      lat,
-      lng,
-      address: branch.address,
-      description: branch.activities || branch.location,
-      leader: branch.leader,
-      leadershipMembers: branch.leadershipMembers,
-      imageUrl: branch.imageUrl,
-      isInternational: branch.isInternational,
-      country: branch.country,
-      city: branch.city,
-    };
-  };
-
   // Filter domestic branches
-  const domesticBranchesOnly = allBranches
-    .filter(branch => !branch.isInternational)
-    .map(convertBranchForMap)
-    .filter(Boolean);
+  const domesticBranches = allBranches
+    .filter((branch: any) => !branch.isInternational);
 
   // Filter international branches
-  const internationalBranchesOnly = allBranches
-    .filter(branch => branch.isInternational)
+  const internationalBranches = allBranches
+    .filter((branch: any) => branch.isInternational);
+
+  // Convert branches for map
+  const domesticMapBranches = domesticBranches
     .map(convertBranchForMap)
     .filter(Boolean);
 
-  const domesticMapBranches = domesticBranchesOnly;
-  const allMapBranches = domesticBranchesOnly.concat(internationalBranchesOnly);
+  const internationalMapBranches = internationalBranches
+    .map(convertBranchForMap)
+    .filter(Boolean);
 
   // Use environment variable for API key
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -409,7 +549,7 @@ export default function Branches() {
         <Navigation />
 
         {/* Header */}
-        <div className="bg-white shadow-sm border-b">
+        <section className="bg-white shadow-sm border-b">
           <div className="max-w-7xl mx-auto px-4 py-6">
             <div className="flex items-center justify-between">
               <div>
@@ -423,171 +563,92 @@ export default function Branches() {
               </Badge>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 py-8">
+        <section className="max-w-7xl mx-auto px-4 py-8">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-8">
               <TabsTrigger value="domestic" className="flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
-                Монгол дахь салбарууд ({domesticBranchesOnly.length})
+                Монгол дахь салбарууд ({domesticBranches.length})
               </TabsTrigger>
               <TabsTrigger value="international" className="flex items-center gap-2">
                 <Globe className="h-4 w-4" />
-                Гадаад дахь салбарууд ({internationalBranchesOnly.length})
+                Гадаад дахь салбарууд ({internationalBranches.length})
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="domestic" className="space-y-8">
-              {/* Google Maps for Domestic Branches */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Map className="h-5 w-5 text-mtta-green" />
-                    Салбар холбоодын байршил
-                  </CardTitle>
-                  <p className="text-sm text-gray-600">
-                    Салбарын дэлгэрэнгүй мэдээллийг харахын тулд маркер дээр дарна уу
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  {!apiKey ? (
-                    <div className="flex items-center justify-center h-96 bg-gray-50 rounded-lg border">
-                      <div className="text-center">
-                        <Globe className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Google Maps API түлхүүр шаардлагатай</h3>
-                        <p className="text-gray-600 mb-4">Газрын зургийг харуулахын тулд Google Maps API түлхүүр тохируулна уу</p>
-                        <div className="bg-white p-4 rounded-lg border text-left">
-                          <h4 className="font-semibold mb-2">Салбар холбоод:</h4>
-                          <div className="space-y-2 max-h-40 overflow-y-auto">
-                            {domesticMapBranches.map((branch: any) => (
-                              <div key={branch.id} className="flex items-center gap-2 text-sm">
-                                <MapPin className="h-4 w-4 text-mtta-green" />
-                                <span className="font-medium">{branch.name}</span>
-                                <span className="text-gray-500">({branch.lat}, {branch.lng})</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : domesticMapBranches.length > 0 ? (
-                    <MongoliaMap
-                      branches={domesticMapBranches}
-                      height="600px"
-                      apiKey={apiKey}
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-96 bg-gray-50 rounded-lg border">
-                      <div className="text-center">
-                        <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                        <p className="text-gray-600">Координат бүхий салбар холбоо олдсонгүй</p>
-                        <p className="text-sm text-gray-500">Админ хэсгээс салбар холбоодод координат нэмнэ үү</p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              {/* Domestic Branches Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {domesticBranches.map((branch: any) => (
+                  <BranchCard key={branch.id} branch={branch} />
+                ))}
+                {domesticBranches.length === 0 && (
+                  <div className="col-span-full text-center py-12 text-gray-500">
+                    <MapPin className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p>Монгол дахь салбар холбоо олдсонгүй</p>
+                  </div>
+                )}
+              </div>
             </TabsContent>
 
             <TabsContent value="international" className="space-y-8">
-              {/* Google Maps for International Branches */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Globe className="h-5 w-5 text-mtta-green" />
-                    Олон улсын салбарууд - Google Maps
-                  </CardTitle>
-                  <p className="text-sm text-gray-600">
-                    Гадаад орнууд дахь Монгол Ширээний Теннисний салбар холбоод
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  {!apiKey ? (
-                    <div className="flex items-center justify-center h-96 bg-gray-50 rounded-lg border">
-                      <div className="text-center">
-                        <Globe className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Google Maps API түлхүүр шаардлагатай</h3>
-                        <p className="text-gray-600 mb-4">Газрын зургийг харуулахын тулд Google Maps API түлхүүр тохируулна уу</p>
-                        <div className="bg-white p-4 rounded-lg border text-left">
-                          <h4 className="font-semibold mb-2">Салбар холбоод:</h4>
-                          <div className="space-y-2">
-                            {internationalBranchesOnly.map((branch: any) => (
-                              <div key={branch.id} className="flex items-center gap-2 text-sm">
-                                <Globe className="h-4 w-4 text-mtta-green" />
-                                <span className="font-medium">{branch.name}</span>
-                                <span className="text-gray-500">({branch.lat}, {branch.lng})</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <MongoliaMap
-                      branches={internationalBranchesOnly}
-                      height="600px"
-                      apiKey={apiKey}
-                    />
-                  )}
-                </CardContent>
-              </Card>
+              {/* International Branches Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {internationalBranches.map((branch: any) => (
+                  <BranchCard key={branch.id} branch={branch} />
+                ))}
+                {internationalBranches.length === 0 && (
+                  <div className="col-span-full text-center py-12 text-gray-500">
+                    <Globe className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p>Гадаад дахь салбар холбоо олдсонгүй</p>
+                  </div>
+                )}
+              </div>
             </TabsContent>
           </Tabs>
+        </section>
 
-          {/* Branches List */}
-          <div className="mt-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
-              {activeTab === "domestic" ? "Монгол дахь бүх салбарууд" : "Гадаад дахь бүх салбарууд"}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {(activeTab === "domestic" ? domesticBranchesOnly : internationalBranchesOnly).map((branch: any) => (
-                <Card key={branch.id} className="hover:shadow-lg transition-shadow cursor-pointer"
-                      onClick={() => handleBranchClick(branch)}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="text-lg line-clamp-2">{branch.name}</CardTitle>
-                      <Badge variant="outline" className="ml-2">
-                        {branch.isInternational
-                          ? `${branch.city ? `${branch.city}, ` : ''}${branch.country || 'Гадаад'}`
-                          : branch.location || 'Монгол'}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {branch.address && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <MapPin className="h-4 w-4" />
-                        <span className="line-clamp-1">{branch.address}</span>
-                      </div>
-                    )}
+        {/* Map Section - Moved to Bottom */}
+        <section id="map" className="w-full bg-white border-t">
+          <div className="max-w-7xl mx-auto px-4 py-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Салбар холбоодын байршил
+              </h2>
+              <p className="text-gray-600">
+                {activeTab === "domestic"
+                  ? "Монгол дахь салбар холбоодын байршлыг газрын зураг дээрээс харна уу"
+                  : "Гадаад дахь салбар холбоодын байршлыг газрын зураг дээрээс харна уу"
+                }
+              </p>
+            </div>
 
-                    {branch.leader && (
-                      <div className="text-sm">
-                        <span className="font-medium text-mtta-green">Тэргүүлэгч:</span> {branch.leader}
-                      </div>
-                    )}
-
-                    {branch.coordinates && (
-                      <div className="text-xs text-gray-500">
-                        📍 Координат: {branch.coordinates}
-                      </div>
-                    )}
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full border-mtta-green text-mtta-green hover:bg-mtta-green hover:text-white"
-                    >
-                      Дэлгэрэнгүй <ChevronRight className="h-4 w-4 ml-2" />
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="w-full h-96 rounded-2xl overflow-hidden border shadow-sm">
+              {!apiKey ? (
+                <div className="flex items-center justify-center h-full bg-gray-50">
+                  <div className="text-center">
+                    <Globe className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      Google Maps API түлхүүр шаардлагатай
+                    </h3>
+                    <p className="text-gray-600">
+                      Газрын зургийг харуулахын тулд Google Maps API түлхүүр тохируулна уу
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <MongoliaMap
+                  branches={activeTab === "domestic" ? domesticMapBranches : internationalMapBranches}
+                  height="100%"
+                  apiKey={apiKey}
+                />
+              )}
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Branch Detail Dialog */}
         <BranchDetailDialog
