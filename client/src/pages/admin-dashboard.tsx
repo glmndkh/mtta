@@ -407,6 +407,7 @@ export default function AdminDashboard() {
         leadershipMembers: item.leadershipMembers || "",
         address: item.address || "",
         location: item.location || "",
+        phone: item.phone || "",
         coordinates: item.coordinates || "", // Preload coordinates
         activities: item.activities || "",
         imageUrl: item.imageUrl || "", // Preload imageUrl
@@ -493,6 +494,7 @@ export default function AdminDashboard() {
         leadershipMembers: '',
         address: '',
         location: '',
+        phone: '',
         coordinates: '', // Default to empty for new branches
         activities: '',
         imageUrl: '', // Default to empty for new branches
@@ -727,6 +729,7 @@ export default function AdminDashboard() {
                 <TableHead>Нэр</TableHead>
                 <TableHead>Тэргүүлэгч</TableHead>
                 <TableHead>Хаяг</TableHead>
+                <TableHead>Утас</TableHead>
                 <TableHead>Координат</TableHead>
                 <TableHead>Үйлдэл</TableHead>
               </TableRow>
@@ -737,6 +740,7 @@ export default function AdminDashboard() {
                   <TableCell>{branch.name}</TableCell>
                   <TableCell>{branch.leader}</TableCell>
                   <TableCell>{branch.address || branch.location}</TableCell>
+                  <TableCell>{branch.phone || '-'}</TableCell>
                   <TableCell className="max-w-[200px] truncate">{branch.coordinates || 'Тодорхойгүй'}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
@@ -1452,6 +1456,10 @@ export default function AdminDashboard() {
             <div>
               <Label htmlFor="location">Байршил</Label>
               <Input id="location" value={formData.location || ''} onChange={(e) => setFormData({...formData, location: e.target.value})} />
+            </div>
+            <div>
+              <Label htmlFor="phone">Утасны дугаар</Label>
+              <Input id="phone" value={formData.phone || ''} onChange={(e) => setFormData({...formData, phone: e.target.value})} placeholder="+976-11-123456" />
             </div>
             <div>
               <Label className="flex items-center gap-2">
