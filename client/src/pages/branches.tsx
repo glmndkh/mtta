@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Globe, Phone, Mail, Building2, ChevronRight, Map, Zap } from "lucide-react";
+import { MapPin, Globe, Phone, Mail, Building2, ChevronRight, Map, Zap, Users } from "lucide-react";
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import MongoliaMap from "@/components/MongoliaMap";
@@ -271,10 +271,31 @@ const BranchDetailDialog = ({ branch, isOpen, onClose }: { branch: any, isOpen: 
                     <div className="text-sm text-gray-600 font-mono">{branch.coordinates}</div>
                   </div>
                 )}
-                {branch.phone && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-gray-500" />
-                    <div className="text-sm text-gray-600">{branch.phone}</div>
+                {(branch.phone || branch.phones || branch.phone_numbers) && (
+                  <div>
+                    <div className="text-sm font-medium mb-1">Утас</div>
+                    <div className="space-y-1">
+                      {(() => {
+                        const phoneData = branch.phone || branch.phones || branch.phone_numbers;
+                        const phoneNumbers = Array.isArray(phoneData) 
+                          ? phoneData.filter(phone => phone && phone.trim())
+                          : typeof phoneData === 'string' 
+                            ? phoneData.split(/[,;\n]/).map(phone => phone.trim()).filter(phone => phone.length > 0)
+                            : [];
+                        
+                        return phoneNumbers.map((phone, index) => (
+                          <a
+                            key={index}
+                            href={`tel:${phone.replace(/[^0-9+]/g, '')}`}
+                            className="text-sm text-mtta-green hover:text-mtta-green/80 transition-colors flex items-center gap-2"
+                            aria-label={`Утасаар холбогдох: ${phone}`}
+                          >
+                            <Phone className="h-3 w-3" />
+                            {phone}
+                          </a>
+                        ));
+                      })()}
+                    </div>
                   </div>
                 )}
                 {branch.email && (
