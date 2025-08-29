@@ -1207,14 +1207,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/news", async (_req, res) => {
+  app.get("/api/news", async (req, res) => {
     try {
+      const { category, q, sort = 'date', page = '1', limit = '12' } = req.query;
+      
       res.set({
         "Cache-Control": "public, max-age=300",
         "ETag": `news-${Date.now()}`,
       });
-      const news = await storage.getPublishedNews();
-      res.json(news);
+      
+      let news = await storage.getPublishedNews();
+      
+      // Apply filters
+      if (category && category !== 'all') {
+        news = news.filter((item: any) => item.category === category);
+      }
+      
+      if (q && typeof q === 'string') {
+        const query = q.toLowerCase();
+        news = news.filter((item: any) => 
+          item.title?.toLowerCase().includes(query) ||
+          item.excerpt?.toLowerCase().includes(query) ||
+          item.content?.toLowerCase().includes(query)
+        );
+      }
+      
+      // Apply sorting
+      if (sort === 'title') {
+        news.sort((a: any, b: any) => a.title.localeCompare(b.title));
+      } else if (sort === 'popular') {
+        news.sort((a: any, b: any) => (b.viewCount || 0) - (a.viewCount || 0));
+      } else {
+        // Default: sort by date
+        news.sort((a: any, b: any) => 
+          new Date(b.createdAt || b.publishedAt).getTime() - 
+          new Date(a.createdAt || a.publishedAt).getTime()
+        );
+      }
+      
+      // Apply pagination
+      const pageNum = parseInt(page as string) || 1;
+      const limitNum = parseInt(limit as string) || 12;
+      const startIndex = (pageNum - 1) * limitNum;
+      const endIndex = startIndex + limitNum;
+      
+      const paginatedNews = news.slice(startIndex, endIndex);
+      
+      res.json({
+        news: paginatedNews,
+        total: news.length,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(news.length / limitNum)
+      });
     } catch (e) {
       console.error("Error fetching news:", e);
       res
