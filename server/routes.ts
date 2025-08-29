@@ -819,15 +819,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .status(403)
           .json({ message: "Зөвхөн админ хэрэглэгч тэмцээн үүсгэх боломжтой" });
 
+      // Validate required fields
+      if (!req.body.name) {
+        return res.status(400).json({ message: "Тэмцээний нэр заавал байх ёстой" });
+      }
+      if (!req.body.startDate) {
+        return res.status(400).json({ message: "Эхлэх огноо заавал байх ёстой" });
+      }
+      if (!req.body.endDate) {
+        return res.status(400).json({ message: "Дуусах огноо заавал байх ёстой" });
+      }
+      if (!req.body.location) {
+        return res.status(400).json({ message: "Байршил заавал байх ёстой" });
+      }
+
+      // Validate dates
+      const startDate = new Date(req.body.startDate);
+      const endDate = new Date(req.body.endDate);
+      
+      if (isNaN(startDate.getTime())) {
+        return res.status(400).json({ message: "Эхлэх огноо буруу байна" });
+      }
+      if (isNaN(endDate.getTime())) {
+        return res.status(400).json({ message: "Дуусах огноо буруу байна" });
+      }
+      if (endDate <= startDate) {
+        return res.status(400).json({ message: "Дуусах огноо эхлэх огнооноос хойш байх ёстой" });
+      }
+
+      let registrationDeadline = null;
+      if (req.body.registrationDeadline) {
+        registrationDeadline = new Date(req.body.registrationDeadline);
+        if (isNaN(registrationDeadline.getTime())) {
+          return res.status(400).json({ message: "Бүртгэлийн эцсийн хугацаа буруу байна" });
+        }
+      }
+
       const tournamentData = {
         name: req.body.name,
         description: req.body.description || null,
         richDescription: req.body.richDescription || null,
-        startDate: new Date(req.body.startDate),
-        endDate: new Date(req.body.endDate),
-        registrationDeadline: req.body.registrationDeadline
-          ? new Date(req.body.registrationDeadline)
-          : null,
+        startDate,
+        endDate,
+        registrationDeadline,
         location: req.body.location,
         organizer: req.body.organizer || null,
         maxParticipants: parseInt(req.body.maxParticipants) || 32,
