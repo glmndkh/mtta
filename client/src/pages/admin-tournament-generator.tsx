@@ -52,7 +52,7 @@ export default function AdminTournamentGenerator() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
 
-  // Parse query parameters from the current URL to determine if we're editing
+  // Parse query params
   const params = new URLSearchParams(window.location.search);
   const editingId = params.get('id');
   const isEditing = !!editingId;
@@ -67,6 +67,7 @@ export default function AdminTournamentGenerator() {
   const [previewMode, setPreviewMode] = useState(false);
   const [backgroundImageUrl, setBackgroundImageUrl] = useState("");
   const [regulationDocumentUrl, setRegulationDocumentUrl] = useState("");
+  const [isLoadingTournament, setIsLoadingTournament] = useState(false);
 
   // Redirect if not admin
   useEffect(() => {
@@ -126,6 +127,7 @@ export default function AdminTournamentGenerator() {
   // Load existing tournament when editing
   useEffect(() => {
     if (isEditing && editingId) {
+      setIsLoadingTournament(true);
       (async () => {
         try {
           const res = await apiRequest(`/api/tournaments/${editingId}`);
@@ -165,47 +167,110 @@ export default function AdminTournamentGenerator() {
               } else if (nums.length >= 2) {
                 [min, max] = nums;
               }
-              return { minAge: min, maxAge: max, gender: "male" };
+              return { minAge: null, maxAge: null, gender: "male" };
             }
           });
           setParticipationCategories(parsedCats);
-          form.reset({
-            name: data.name || '',
-            description: data.description || '',
-            richDescription: data.richDescription || '',
-            startDate: data.startDate ? data.startDate.split('T')[0] : '',
-            endDate: data.endDate ? data.endDate.split('T')[0] : '',
-            registrationDeadline: data.registrationDeadline ? data.registrationDeadline.split('T')[0] : '',
-            location: data.location || '',
-            organizer: data.organizer || '',
-            maxParticipants: data.maxParticipants || 32,
-            entryFee: data.entryFee || 0,
-            participationTypes: data.participationTypes || [],
-            rules: data.rules || '',
-            prizes: data.prizes || '',
-            contactInfo: data.contactInfo || '',
-            schedule: data.schedule || '',
-            requirements: data.requirements || '',
-            backgroundImageUrl: data.backgroundImageUrl || '',
-            regulationDocumentUrl: data.regulationDocumentUrl || '',
-            minRating: data.minRating ? String(data.minRating) : 'none',
-            maxRating: data.maxRating ? String(data.maxRating) : 'none',
-            isPublished: data.isPublished ?? true,
-          });
-          setRichDescription(data.richDescription || '');
-          setBackgroundImageUrl(data.backgroundImageUrl || '');
-          setRegulationDocumentUrl(data.regulationDocumentUrl || '');
+
+          // Set form values with proper type handling
+          form.setValue("name", data.name || "");
+          form.setValue("description", data.description || "");
+          form.setValue("startDate", data.startDate ? new Date(data.startDate).toISOString().slice(0, 16) : "");
+          form.setValue("endDate", data.endDate ? new Date(data.endDate).toISOString().slice(0, 16) : "");
+          form.setValue("registrationDeadline", data.registrationDeadline ? new Date(data.registrationDeadline).toISOString().slice(0, 16) : "");
+          form.setValue("location", data.location || "");
+          form.setValue("organizer", data.organizer || "");
+          form.setValue("maxParticipants", Number(data.maxParticipants) || 32);
+          form.setValue("entryFee", Number(data.entryFee) || 0);
+          form.setValue("rules", data.rules || "");
+          form.setValue("prizes", data.prizes || "");
+          form.setValue("contactInfo", data.contactInfo || "");
+          form.setValue("schedule", data.schedule || "");
+          form.setValue("requirements", data.requirements || "");
+          form.setValue("backgroundImageUrl", data.backgroundImageUrl || "");
+          form.setValue("regulationDocumentUrl", data.regulationDocumentUrl || "");
+          form.setValue("minRating", data.minRating || "none");
+          form.setValue("maxRating", data.maxRating || "none");
+          form.setValue("isPublished", Boolean(data.isPublished));
+
+          // Set state values
+          setRichDescription(data.richDescription || "");
+          setBackgroundImageUrl(data.backgroundImageUrl || "");
+          setRegulationDocumentUrl(data.regulationDocumentUrl || "");
+
         } catch (error) {
-          console.error('Failed to load tournament:', error);
+          console.error("Failed to load tournament data:", error);
           toast({
-            title: 'Алдаа гарлаа',
-            description: 'Тэмцээний мэдээлэл ачаалахад алдаа гарлаа',
-            variant: 'destructive',
+            title: "Алдаа",
+            description: "Тэмцээний мэдээлэл ачаалахад алдаа гарлаа",
+            variant: "destructive",
           });
+        } finally {
+          setIsLoadingTournament(false);
         }
       })();
     }
   }, [isEditing, editingId, form, toast]);
+
+  // Mutation for creating/updating tournament
+  const tournamentMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const payload = {
+        ...data,
+        richDescription,
+        backgroundImageUrl,
+        regulationDocumentUrl,
+        schedule: data.schedule ? JSON.stringify({ description: data.schedule }) : null,
+      };
+
+      if (isEditing && editingId) {
+        await apiRequest("PUT", `/api/admin/tournaments/${editingId}`, payload);
+      } else {
+        await apiRequest("POST", "/api/tournaments", payload);
+      }
+    },
+    onSuccess: () => {
+      toast({
+        title: "Амжилттай",
+        description: isEditing ? "Тэмцээн амжилттай шинэчлэгдлээ" : "Тэмцээн амжилттай үүсгэгдлээ",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tournaments'] });
+
+      if (!isEditing) {
+        form.reset();
+        setRichDescription("");
+        setBackgroundImageUrl("");
+        setRegulationDocumentUrl("");
+      }
+
+      if (isEditing) {
+        setLocation("/admin/tournaments");
+      }
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Нэвтрэх шаардлагатай",
+          description: "Та дахин нэвтэрнэ үү...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Алдаа",
+        description: isEditing ? "Тэмцээн шинэчлэхэд алдаа гарлаа" : "Тэмцээн үүсгэхэд алдаа гарлаа",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (data: any) => {
+    tournamentMutation.mutate(data);
+  };
 
   // Participation type management
 
@@ -235,7 +300,7 @@ export default function AdminTournamentGenerator() {
     return { method: "PUT" as const, url: uploadURL };
   };
 
-  const handleBackgroundComplete = async (result: any) => {
+  const handleBackgroundImageComplete = async (result: any) => {
     if (result.successful?.[0]?.uploadURL) {
       const response = await fetch("/api/objects/finalize", {
         method: "PUT",
@@ -245,6 +310,10 @@ export default function AdminTournamentGenerator() {
       const { objectPath } = await response.json();
       setBackgroundImageUrl(objectPath);
       form.setValue("backgroundImageUrl", objectPath);
+      toast({
+        title: "Амжилттай",
+        description: "Арын зураг амжилттай хуулагдлаа",
+      });
     }
   };
 
@@ -267,62 +336,14 @@ export default function AdminTournamentGenerator() {
       const { objectPath } = await response.json();
       setRegulationDocumentUrl(objectPath);
       form.setValue("regulationDocumentUrl", objectPath);
+      toast({
+        title: "Амжилттай",
+        description: "Дүрмийн баримт бичиг амжилттай хуулагдлаа",
+      });
     }
   };
 
-  const saveTournament = useMutation({
-    mutationFn: async (data: any) => {
-      return apiRequest(isEditing ? `/api/tournaments/${editingId}` : '/api/tournaments', {
-        method: isEditing ? 'PUT' : 'POST',
-        body: JSON.stringify({
-          ...data,
-          participationTypes: participationCategories.map(c => JSON.stringify(c)),
-          backgroundImageUrl,
-          regulationDocumentUrl,
-        })
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: isEditing ? "Амжилттай шинэчлэгдлээ!" : "Амжилттай үүсгэлээ!",
-        description: isEditing ? "Тэмцээн амжилттай шинэчлэгдлээ" : "Тэмцээн амжилттай бүртгэгдлээ",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/tournaments'] });
-      setLocation(isEditing ? '/admin-dashboard' : '/tournaments');
-    },
-    onError: (error: any) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Нэвтрэх шаардлагатай",
-          description: "Та дахин нэвтэрнэ үү",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/login";
-        }, 1000);
-        return;
-      }
-      toast({
-        title: "Алдаа гарлаа",
-        description: error.message || (isEditing ? "Тэмцээн шинэчлэхэд алдаа гарлаа" : "Тэмцээн үүсгэхэд алдаа гарлаа"),
-        variant: "destructive",
-      });
-    },
-  });
-
-  const onSubmit = (data: any) => {
-    const finalData = {
-      ...data,
-      richDescription,
-      participationTypes: participationCategories.map(c => JSON.stringify(c)),
-      minRating: data.minRating === "none" ? null : parseInt(data.minRating) || null,
-      maxRating: data.maxRating === "none" ? null : parseInt(data.maxRating) || null,
-    };
-
-    saveTournament.mutate(finalData);
-  };
-
-  if (isLoading) {
+  if (isLoading || isLoadingTournament) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -340,14 +361,14 @@ export default function AdminTournamentGenerator() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      
+
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <Trophy className="h-12 w-12 text-mtta-green mr-4" />
             <h1 className="text-4xl font-bold text-gray-900">
-              {isEditing ? 'Тэмцээн засварлах' : 'Тэмцээн үүсгэх'}
+              {isEditing ? 'Тэмцээн засах' : 'Тэмцээн үүсгэх'}
             </h1>
           </div>
           <p className="text-gray-600 max-w-2xl mx-auto">
@@ -521,7 +542,7 @@ export default function AdminTournamentGenerator() {
                         )}
                         <ObjectUploader
                           onGetUploadParameters={handleBackgroundImageUpload}
-                          onComplete={handleBackgroundComplete}
+                          onComplete={handleBackgroundImageComplete}
                         >
                           Зураг хуулах
                         </ObjectUploader>
@@ -848,9 +869,9 @@ export default function AdminTournamentGenerator() {
               <Button
                 type="submit"
                 className="mtta-green text-white hover:bg-mtta-green-dark"
-                disabled={saveTournament.isPending}
+                disabled={tournamentMutation.isPending}
               >
-                {saveTournament.isPending ? (
+                {tournamentMutation.isPending ? (
                   <div className="flex items-center">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                     {isEditing ? 'Шинэчлэж байна...' : 'Үүсгэж байна...'}
