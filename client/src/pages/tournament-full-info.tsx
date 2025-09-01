@@ -510,9 +510,30 @@ interface Participant {
 
                     {/* Group participants by age category */}
                     {(() => {
+                      // Насны ангилал үүсгэх функц
+                      const getAgeGroup = (age: number | string) => {
+                        const ageNum = typeof age === 'string' ? parseInt(age) : age;
+                        if (isNaN(ageNum) || ageNum < 0) return 'Тодорхойгүй нас';
+                        
+                        if (ageNum <= 12) return '8-12 нас';
+                        if (ageNum <= 15) return '13-15 нас';
+                        if (ageNum <= 18) return '16-18 нас';
+                        if (ageNum <= 25) return '19-25 нас';
+                        if (ageNum <= 30) return '26-30 нас';
+                        if (ageNum <= 35) return '31-35 нас';
+                        if (ageNum <= 40) return '36-40 нас';
+                        if (ageNum <= 45) return '41-45 нас';
+                        if (ageNum <= 50) return '46-50 нас';
+                        return '50+ нас';
+                      };
+
                       const participantsByCategory = filteredParticipants.reduce((acc, p) => {
+                        const age = calculateAge(p.dateOfBirth);
+                        const ageGroup = getAgeGroup(age);
                         const cat = parseParticipationType(p.participationType);
-                        const categoryKey = formatParticipationType(cat);
+                        const genderStr = cat.gender === 'male' ? 'эрэгтэй' : 'эмэгтэй';
+                        const categoryKey = `${ageGroup} ${genderStr}`;
+                        
                         if (!acc[categoryKey]) {
                           acc[categoryKey] = [];
                         }
@@ -520,7 +541,9 @@ interface Participant {
                         return acc;
                       }, {} as Record<string, typeof participants>);
 
-                      return Object.entries(participantsByCategory).map(([categoryName, categoryParticipants]) => (
+                      return Object.entries(participantsByCategory)
+                        .sort(([a], [b]) => a.localeCompare(b))
+                        .map(([categoryName, categoryParticipants]) => (
                         <Card key={categoryName} className="mb-4">
                           <CardHeader>
                             <CardTitle className="flex items-center justify-between">
