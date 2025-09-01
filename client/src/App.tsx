@@ -74,6 +74,7 @@ function Router() {
           <Route path="/admin/player/:id" component={AdminPlayerDetailsPage} />
           <Route path="/admin/tournament/:id/manage" component={TournamentManagement} />
           <Route path="/admin/tournament/:id/results" component={AdminTournamentResultsPage} />
+          <Route path="/admin/tournament/:id/results/:type" component={AdminTournamentResultsPage} />
           <Route path="/admin/tournaments" component={AdminTournaments} />
           <Route path="/admin/league/:id/manage" component={TournamentManagement} />
           <Route path="/admin/generator" component={AdminTournamentGenerator} />
