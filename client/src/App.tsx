@@ -20,7 +20,7 @@ import Branches from "@/pages/branches";
 import BranchDetails from "@/pages/branch-details";
 import PastChampions from "@/pages/past-champions";
 import JudgesPage from "@/pages/judges";
-import AdminTournamentResults from "@/pages/admin-tournament-results";
+import AdminTournamentResultsPage from "@/pages/admin-tournament-results";
 import AdminTournaments from "@/pages/admin-tournaments";
 import ExcelTournamentDemo from "@/pages/excel-tournament-demo";
 import AdminTournamentCreate from "@/pages/admin-tournament-create";
@@ -73,12 +73,13 @@ function Router() {
           <Route path="/admin" component={AdminDashboard} />
           <Route path="/admin/player/:id" component={AdminPlayerDetailsPage} />
           <Route path="/admin/tournament/:id/manage" component={TournamentManagement} />
-          <Route path="/admin/tournament/:id/results" component={AdminTournamentResults} />
+          <Route path="/admin/tournament/:id/results" component={AdminTournamentResultsPage} />
           <Route path="/admin/tournaments" component={AdminTournaments} />
           <Route path="/admin/league/:id/manage" component={TournamentManagement} />
           <Route path="/admin/generator" component={AdminTournamentGenerator} />
           <Route path="/admin/tournament-create" component={AdminTournamentGenerator} />
           <Route path="/excel-tournament-demo" component={ExcelTournamentDemo} />
+          <Route path="/admin/tournament-results" component={AdminTournamentResultsPage} />
         </>
       )}
       <Route component={NotFound} />
