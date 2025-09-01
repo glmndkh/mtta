@@ -507,65 +507,89 @@ interface Participant {
                         </SelectContent>
                       </Select>
                     </div>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Нэр</TableHead>
-                          <TableHead>Нас</TableHead>
-                          <TableHead>Хүйс</TableHead>
-                          <TableHead>Насны ангилал</TableHead>
-                          {user?.role === 'admin' && <TableHead></TableHead>}
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredParticipants.map((p) => {
-                          const cat = parseParticipationType(p.participationType);
-                          return (
-                            <TableRow key={p.id}>
-                              <TableCell>
-                                {p.email ? (
-                                  <button
-                                    className="flex items-center gap-1 text-left hover:text-mtta-green"
-                                    onClick={() => setLocation(`/player/${p.id}`)}
-                                  >
-                                    <User className="w-4 h-4" />
-                                    {`${p.lastName} ${p.firstName}`}
-                                  </button>
-                                ) : (
-                                  `${p.lastName} ${p.firstName}`
-                                )}
-                              </TableCell>
-                              <TableCell>{calculateAge(p.dateOfBirth)}</TableCell>
-                              <TableCell>
-                                {cat.gender === 'male' ? 'Эрэгтэй' : 'Эмэгтэй'}
-                              </TableCell>
-                              <TableCell>
-                                {cat.minAge !== null && cat.maxAge !== null
-                                  ? `${cat.minAge}-${cat.maxAge}`
-                                  : cat.minAge !== null
-                                  ? `${cat.minAge}+`
-                                  : cat.maxAge !== null
-                                  ? `${cat.maxAge}-аас доош`
-                                  : "Нас хязгааргүй"}
-                              </TableCell>
-                              {user?.role === 'admin' && (
-                                <TableCell>
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() =>
-                                      removeParticipantMutation.mutate(p.id)
-                                    }
-                                  >
-                                    Хасах
-                                  </Button>
-                                </TableCell>
-                              )}
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
+
+                    {/* Group participants by age category */}
+                    {(() => {
+                      const participantsByCategory = filteredParticipants.reduce((acc, p) => {
+                        const cat = parseParticipationType(p.participationType);
+                        const categoryKey = formatParticipationType(cat);
+                        if (!acc[categoryKey]) {
+                          acc[categoryKey] = [];
+                        }
+                        acc[categoryKey].push(p);
+                        return acc;
+                      }, {} as Record<string, typeof participants>);
+
+                      return Object.entries(participantsByCategory).map(([categoryName, categoryParticipants]) => (
+                        <Card key={categoryName} className="mb-4">
+                          <CardHeader>
+                            <CardTitle className="flex items-center justify-between">
+                              <span>{categoryName}</span>
+                              <span className="text-sm font-normal bg-blue-600 text-white px-2 py-1 rounded">
+                                {categoryParticipants.length} тамирчин
+                              </span>
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Нэр</TableHead>
+                                  <TableHead>Нас</TableHead>
+                                  <TableHead>Хүйс</TableHead>
+                                  {user?.role === 'admin' && <TableHead></TableHead>}
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {categoryParticipants
+                                  .sort((a, b) => {
+                                    const ageA = calculateAge(a.dateOfBirth);
+                                    const ageB = calculateAge(b.dateOfBirth);
+                                    return typeof ageA === 'number' && typeof ageB === 'number' ? ageA - ageB : 0;
+                                  })
+                                  .map((p) => {
+                                    const cat = parseParticipationType(p.participationType);
+                                    return (
+                                      <TableRow key={p.id}>
+                                        <TableCell>
+                                          {p.email ? (
+                                            <button
+                                              className="flex items-center gap-1 text-left hover:text-mtta-green"
+                                              onClick={() => setLocation(`/player/${p.id}`)}
+                                            >
+                                              <User className="w-4 h-4" />
+                                              {`${p.lastName} ${p.firstName}`}
+                                            </button>
+                                          ) : (
+                                            `${p.lastName} ${p.firstName}`
+                                          )}
+                                        </TableCell>
+                                        <TableCell>{calculateAge(p.dateOfBirth)}</TableCell>
+                                        <TableCell>
+                                          {cat.gender === 'male' ? 'Эрэгтэй' : 'Эмэгтэй'}
+                                        </TableCell>
+                                        {user?.role === 'admin' && (
+                                          <TableCell>
+                                            <Button
+                                              variant="destructive"
+                                              size="sm"
+                                              onClick={() =>
+                                                removeParticipantMutation.mutate(p.id)
+                                              }
+                                            >
+                                              Хасах
+                                            </Button>
+                                          </TableCell>
+                                        )}
+                                      </TableRow>
+                                    );
+                                  })}
+                              </TableBody>
+                            </Table>
+                          </CardContent>
+                        </Card>
+                      ));
+                    })()}
                   </div>
                 ) : (
                   <div className="text-center text-gray-400 py-8">
