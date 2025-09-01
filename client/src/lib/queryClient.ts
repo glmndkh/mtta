@@ -16,10 +16,10 @@ export async function apiRequest(
   } = {}
 ): Promise<Response> {
   const { method = 'GET', body, headers = {} } = options;
-  
+
   const defaultHeaders: Record<string, string> = body ? { "Content-Type": "application/json" } : {};
   const finalHeaders = { ...defaultHeaders, ...headers };
-  
+
   const res = await fetch(url, {
     method,
     headers: finalHeaders,

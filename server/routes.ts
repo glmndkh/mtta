@@ -836,7 +836,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate dates
       const startDate = new Date(req.body.startDate);
       const endDate = new Date(req.body.endDate);
-      
+
       if (isNaN(startDate.getTime())) {
         return res.status(400).json({ message: "Эхлэх огноо буруу байна" });
       }
@@ -1244,19 +1244,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/news", async (req, res) => {
     try {
       const { category, q, sort = 'date', page = '1', limit = '12' } = req.query;
-      
+
       res.set({
         "Cache-Control": "public, max-age=300",
         "ETag": `news-${Date.now()}`,
       });
-      
+
       let news = await storage.getPublishedNews();
-      
+
       // Apply filters
       if (category && category !== 'all') {
         news = news.filter((item: any) => item.category === category);
       }
-      
+
       if (q && typeof q === 'string') {
         const query = q.toLowerCase();
         news = news.filter((item: any) => 
@@ -1265,7 +1265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           item.content?.toLowerCase().includes(query)
         );
       }
-      
+
       // Apply sorting
       if (sort === 'title') {
         news.sort((a: any, b: any) => a.title.localeCompare(b.title));
@@ -1278,15 +1278,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           new Date(a.createdAt || a.publishedAt).getTime()
         );
       }
-      
+
       // Apply pagination
       const pageNum = parseInt(page as string) || 1;
       const limitNum = parseInt(limit as string) || 12;
       const startIndex = (pageNum - 1) * limitNum;
       const endIndex = startIndex + limitNum;
-      
+
       const paginatedNews = news.slice(startIndex, endIndex);
-      
+
       res.json({
         news: paginatedNews,
         total: news.length,

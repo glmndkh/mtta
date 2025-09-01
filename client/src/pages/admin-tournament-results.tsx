@@ -105,15 +105,16 @@ export default function AdminTournamentResultsPage() {
   });
 
   // Fetch tournament data
-  const { data: tournament, isLoading: tournamentLoading } = useQuery<Tournament>({
+  const { data: tournament, isLoading: tournamentLoading, error: tournamentError } = useQuery<Tournament>({
     queryKey: ['/api/tournaments', tournamentId],
     enabled: !!tournamentId,
   });
 
   // Fetch tournament participants
-  const { data: participantsData = [] } = useQuery<TournamentParticipant[]>({
+  const { data: participantsData = [], error: participantsError } = useQuery<TournamentParticipant[]>({
     queryKey: ['/api/tournaments', tournamentId, 'participants'],
     enabled: !!tournamentId,
+    retry: 1,
   });
   const participants = participationType
     ? participantsData.filter(p => p.participationType === participationType)
@@ -121,9 +122,10 @@ export default function AdminTournamentResultsPage() {
   const allParticipationTypes = [...(tournament?.participationTypes || []), ...customParticipationTypes];
 
   // Fetch existing results
-  const { data: existingResults } = useQuery<TournamentResults>({
+  const { data: existingResults, error: resultsError } = useQuery<TournamentResults>({
     queryKey: ['/api/tournaments', tournamentId, 'results'],
     enabled: !!tournamentId,
+    retry: 1,
   });
 
   // Fetch all users for autocomplete
@@ -400,22 +402,36 @@ export default function AdminTournamentResultsPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-text-secondary">Тэмцээний мэдээлэл ачаалж байна...</p>
+          {tournamentId && (
+            <p className="text-xs text-text-secondary mt-2">Tournament ID: {tournamentId}</p>
+          )}
         </div>
       </div>
     );
   }
 
-  if (!tournament) {
+  if (tournamentError || (!tournamentLoading && !tournament)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2 text-text-primary">Тэмцээн олдсонгүй</h1>
-          <Button 
-            onClick={() => setLocation('/admin/tournaments')}
-            variant="outline"
-          >
-            Буцах
-          </Button>
+          <p className="text-text-secondary mb-4">
+            {tournamentError ? 'Тэмцээн ачаалахад алдаа гарлаа' : 'Энэ ID-тай тэмцээн олдсонгүй'}
+          </p>
+          <div className="flex gap-2 justify-center">
+            <Button 
+              onClick={() => setLocation('/admin/tournaments')}
+              variant="outline"
+            >
+              Тэмцээний жагсаалт руу буцах
+            </Button>
+            <Button 
+              onClick={() => setLocation('/admin/tournament-results')}
+              variant="outline"
+            >
+              Тэмцээн сонгох
+            </Button>
+          </div>
         </div>
       </div>
     );
