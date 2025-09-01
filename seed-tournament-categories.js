@@ -1,6 +1,6 @@
 
-const { db } = require('./server/db.ts');
-const { users, players, tournamentParticipants } = require('./shared/schema.ts');
+import { db } from './server/db.ts';
+import { users, players, tournamentParticipants } from './shared/schema.ts';
 
 const tournamentId = '4f1651de-eb33-4bb0-987f-b8d162ace245';
 
