@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Menu, X, Home, Trophy, Building, Users, Newspaper, User, LogOut, ChevronDown } from "lucide-react";
+import { Menu, X, Home, Trophy, Building, Users, Newspaper, User, LogOut, ChevronDown, UserPlus, Medal } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -15,6 +15,14 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import mttaLogo from "@assets/logoweb_1754749015700.png";
 
 const isActive = (current: string, href: string) =>
@@ -22,6 +30,7 @@ const isActive = (current: string, href: string) =>
 
 export default function Navigation() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const [location] = useLocation();
   const { user, isAuthenticated } = useAuth();
   const { t } = useLanguage();
@@ -34,6 +43,18 @@ export default function Navigation() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [showMobileMenu]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setShowSearch((open) => !open);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -406,6 +427,42 @@ export default function Navigation() {
           </div>
         </div>
       )}
+
+      {/* Global Search Dialog */}
+      <CommandDialog open={showSearch} onOpenChange={setShowSearch}>
+        <CommandInput placeholder="Тамирчин, тэмцээн, клуб..." />
+        <CommandList>
+          <CommandEmpty>Илэрц олдсонгүй.</CommandEmpty>
+          <CommandGroup heading="Хуудас">
+            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/"; }}>
+              <Home className="mr-2 h-4 w-4" />
+              <span>Нүүр хуудас</span>
+            </CommandItem>
+            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/tournaments"; }}>
+              <Trophy className="mr-2 h-4 w-4" />
+              <span>Тэмцээнүүд</span>
+            </CommandItem>
+            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/clubs"; }}>
+              <Building className="mr-2 h-4 w-4" />
+              <span>Клубууд</span>
+            </CommandItem>
+            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/athletes"; }}>
+              <Users className="mr-2 h-4 w-4" />
+              <span>Тамирчид</span>
+            </CommandItem>
+          </CommandGroup>
+          <CommandGroup heading="Үйлдэл">
+            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/register"; }}>
+              <UserPlus className="mr-2 h-4 w-4" />
+              <span>Бүртгүүлэх</span>
+            </CommandItem>
+            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/results"; }}>
+              <Medal className="mr-2 h-4 w-4" />
+              <span>Үр дүн харах</span>
+            </CommandItem>
+          </CommandGroup>
+        </CommandList>
+      </CommandDialog>
     </>
   );
 }

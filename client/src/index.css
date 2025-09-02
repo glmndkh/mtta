@@ -656,6 +656,44 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
     flex-shrink: 0 !important;
   }
 
+/* Header navigation styling */
+.nav-dark {
+  background: rgba(17, 24, 39, 0.95) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Focus indicators for keyboard navigation */
+.nav-dark button:focus-visible,
+.nav-dark a:focus-visible {
+  outline: 2px solid white !important;
+  outline-offset: 2px !important;
+  border-radius: 4px !important;
+}
+
+/* Active state for navigation links */
+.nav-dark .nav-link-active {
+  position: relative;
+}
+
+.nav-dark .nav-link-active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #10b981;
+}
+
+/* Mobile CTA buttons styling */
+.mobile-cta-buttons {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
   .mobile-menu .mobile-menu-link:hover {
     background: var(--accent) !important;
     color: var(--link) !important;
