@@ -1,0 +1,106 @@
+Events — WTT-style Showcase (NO filters)”
+
+Зорилго: /events хуудсыг WTT Events List-ийн hero-карт шиг болго. БҮХ тэмцээн дараалж харагдана (филтер/хайлтгүй). Карт бүрт: background image, огноо, том гарчиг (тэмцээний нэр), байр/хот/улс, EVENT INFO товч, PRIZE MONEY, баруун талд төрлийн жагсаалт (MS/MD/XD, WS/WD) — яг screenshot-ийн мэдрэмж.
+
+Стек
+
+Одоогийн стек (React + Tailwind + Express/Vite/Drizzle)-ээ ашигла. Кодыг client/src/pages/EventsPage.tsx (эсвэл танай маршрутад таарах файл) дээр хийж, /events руу холбo.
+
+API (ALL events)
+
+GET /api/events → { items: EventItem[] }
+EventItem = { id, name, city, country, venue, startDate, endDate, timezone?, series, categories: ('MS'|'WS'|'MD'|'WD'|'XD')[], coverUrl?, prizePool?: { amount:number, currency:'MNT'|'USD'|... } }
+
+Сонголтгүйгээр бүх event-ийг startDate DESC (эсвэл ойрын → холын) эрэмбэлж буцаа.
+
+Cover/Prize/Timezone байхгүй тохиолдолд fallback-ууд хэрэглэ.
+
+UI/UX Спек (карт бүр)
+
+Картын хэмжээ: h=340–400px, rounded-2xl (16–20px), overflow-hidden, shadow-md→hover shadow-lg.
+
+Background: coverUrl бүрэн дүүрэн; дээр нь доороос дээш linear-gradient(black/70 → black/0) overlay.
+
+Зүүн дээд мөр:
+
+🇲🇳 Flag (iso-country байвал),
+
+Огноо: 2 Sep – 7 Sep 2025 (MMM DD – MMM DD YYYY).
+
+Гарчиг (том): name — bold, white, drop-shadow, 1–2 мөр, урт бол truncate.
+
+Venue + Location (2 мөр): venue, дараагийн мөрөнд city, country.
+
+Action (зүүн доод):
+
+Button: EVENT INFO (white pill, bold) → /events/:id.
+
+Доор PRIZE MONEY: USD 100,000 (эсвэл 20,000,000 MNT). Prize байхгүй бол энэ мөр гарахгүй.
+
+Баруун талын самбарууд (black translucent card-ууд):
+2 багана, тус бүрт 2–3 мөр:
+
+Зүүн багана: Men’s Singles (MS), Men’s Doubles (MD), Mixed Doubles (XD)
+
+Баруун багана: Women’s Singles (WS), Women’s Doubles (WD)
+
+Аль ангилал байхгүй бол тухайн мөрийг нууна.
+
+Мөр бүрийн баруун талд дугуй жижиг badge (MS/MD/WD/WS/XD)
+
+Countdown/Status (баруун доод):
+
+upcoming: “Starts in {d}d {h}h {m}m”
+
+ongoing: LIVE (pulse) + “{h}h {m}m to end”
+
+past: “Finished”
+(Timezone өгөгдвөл түүн дээр тооц.)
+
+Hover/Focus: бүх карт clickable биш, “EVENT INFO” товч л үндсэн навигац (keyboard focus ring=2px green). Карт дээр hover-т subtle zoom (reduce-motion үед унтраа).
+
+Mobile (≤640px):
+
+Баруун талын 2 самбар доош шилжиж, нэг баганад байрлана.
+
+Гарчиг ба товч нь эхний дэлгэцэнд багтахуйц.
+
+Хэлбэржүүлэлт ба форматууд
+
+Prize формат: MNT бол бутархай 0; бусад валют бутархай 0–2, Intl.NumberFormat ашигла.
+
+Огноо: MMM DD – MMM DD YYYY (locale en-US OK).
+
+Country flag: боломжтой бол iso2‐оос emoji flag; боломжгүй бол нуух.
+
+Perf/A11y
+
+Зургууд loading=\"lazy\", LCP дээрх зурагт fetchpriority=high.
+
+Контраст ≥ 4.5:1; aria-label-ууд тодорхой; keyboard-аар “EVENT INFO” хүртэл очих ёстой.
+
+prefers-reduced-motion үед pulse/zoom унтраа.
+
+Analytics (GA4)
+
+event_card_click {id, action:'info', position}
+
+events_page_view нэг удаа.
+
+Acceptance Criteria (DoD)
+
+ /events дээр филтер/хайлт байхгүй; бүх event карт байдлаар жагсана.
+
+ Карт бүр: cover + overlay + date + title + venue/location + EVENT INFO + PRIZE MONEY + categories (MS/MD/XD/WS/WD) + status/countdown.
+
+ Ангилал байхгүй мөр гарахгүй (динамик).
+
+ Mobile-д баруун самбарууд доош шилжиж эвдэрч харагдахгүй.
+
+ Prize/cover байхгүй үед цэвэр fallback.
+
+ Lighthouse (desktop): Perf ≥85, A11y ≥90, SEO ≥90.
+
+Тест дата (mock, хэрэв API хоосон бол түр)
+
+2–3 event with/without prize & cover; нэг нь ongoing, нэг нь upcoming, нэг нь past.
