@@ -1,0 +1,263 @@
+1) Навигац ба толгой
+
+Хийх зүйл
+
+Header: зүүнд лого, баруунд 6 цэс: Нүүр · Тэмцээн · Бүртгүүлэх · Үр дүн/Чансаа · Тамирчид · Түүх, мөн Хайлт (⌘/Ctrl+K).
+
+Мобайл: hamburger → drawer; хоёр том CTA нь үргэлж харагдана: “Ойрын тэмцээнүүд”, “Онлайн бүртгүүлэх”.
+
+Microcopy
+
+Хайлтын placeholder: “Тамирчин, тэмцээн, клуб…”
+
+CTA: “Ойрын тэмцээнүүд”, “Онлайн бүртгүүлэх”
+
+Чеклист
+
+ Header 56–64px, sticky, backdrop blur
+
+ Active state underline + high contrast
+
+ Keyboard-nav: Tab дарахад фокус тод
+
+2) Нүүр (Home)
+
+Hero (эхний дэлгэц)
+
+Гарчиг 2 мөр: “Монголын Ширээний Теннис — хуваарь, бүртгэл, үр дүн, чансаа нэг дор.”
+
+Доор хоёр CTA: “Ойрын тэмцээнүүд” (primary), “Бүртгүүлэх” (secondary).
+
+Баруун талд (desktop) ойрын 3 тэмцээний компакт карт (сар/өдөр том цифр).
+
+Дараах 4 блок
+
+Ойрын тэмцээнүүд (cards + chips: MS/WS/MD/WD/XD)
+
+Шинэ мэдээ (3–4 карт)
+
+Топ тамирчид (avatar-grid, ангилал сонгох чипс)
+
+Ивээн тэтгэгчид (лого-grid, grayscale→hover color)
+
+Чеклист
+
+ Above-the-fold CTA харагддаг
+
+ Cards clickable бүхэлдээ
+
+ Skeleton loading (shimmer) бэлэн
+
+3) Тэмцээний жагсаалт (Events)
+
+Шүүлтүүр мөр (sticky)
+
+Онгод: Сар/он (Date picker), Ангилал (чипс), Байршил, Статус (Бүртгэл нээлттэй/Хаагдсан/Дууссан)
+
+Баруун: sort (Ойрын/Хамгийн шинэ зарласан)
+
+Карт бүр
+
+Том сар/өдөр (дизайн акцент), нэр, хот/заал, төрлийн чипс, 2 товч: “Дэлгэрэнгүй”, “Бүртгүүлэх”
+
+Хэрэв лайв бол LIVE badge (pulse)
+
+Empty state
+
+“Энэ сард тэмцээн алга. Өөр сар сонгоорой.”
+
+Чеклист
+
+ Filters sticky on scroll
+
+ Мобайлд 1 багана, desktop-д 2–3 багана
+
+ LIVE багаж нүдэнд дулаан pulse (prefers-reduced-motion хүнд animation off)
+
+4) Тэмцээний дэлгэрэнгүй (Event Detail)
+
+Tab-ууд
+
+Танилцуулга (өдөр, байр, дүрэм, ангиллууд)
+
+Бүртгэл (алхам алхмаар)
+
+Хуваарь (ширээ/цаг)
+
+Draw/Results (RR/SE bracket)
+
+Медиа (галерей)
+
+Бүртгэлийн урсгал (4 алхам)
+
+Хувийн мэдээлэл (OTP/имэйл эсвэл нэвтрэлт)
+
+Ангилал сонгох (MS/WS/MD/WD/XD)
+
+Төлбөр (QPay) — invoice modal, төлсөн бол ногоон тэмдэг
+
+Баталгаажуулалт — “Бүртгэл амжилттай. Танилцуулга/PDF тасалбар имэйлд очсон.”
+
+Мессэж (MN)
+
+Алдаа: “Талбарыг бөглөнө үү.” / “Давхардсан бүртгэл байна.”
+
+Амжилт: “Төлбөр амжилттай. Танай бүртгэлийг баталгаажууллаа.”
+
+Чеклист
+
+ Progress steps (1–4) + completed check
+
+ Disabled state, loading spinners тодорхой
+
+ Form validation inline (доор нь улаан жижиг текст)
+
+5) Үр дүн / Чансаа (Results / Rankings)
+
+Tab бар
+
+Draw (KO/RR) + round chips
+
+Match schedule (ширээ/цаг)
+
+Rankings (ангилал сонгох селектор, сар/он)
+
+Rankings table
+
+Багана: #, Нэр (avatar+клуб), Оноо, Сүүлчийн өөрчлөлт (↑↓), Үйлдэл (Профайл)
+
+Баруун дээд: “CSV татах”
+
+Чеклист
+
+ Table мобайлд карт болж эвдэрч харагдана (responsive table → stacked)
+
+ Sticky head (desktop)
+
+ Search by name club
+
+6) Тамирчид (Athletes)
+
+Лист + хайлт
+
+Хайлт (нэр/клуб), шүүлтүүр (нас, аймаг, клуб)
+
+Карт: avatar, нэр, клуб, ангилал, оноо, “Профайл” товч
+
+Профайл
+
+Hero: Нэр, клуб, ангилал чипс
+
+2 багана (desktop):
+
+Зүүн: үндсэн мэдээлэл, карьерийн медаль (chips)
+
+Баруун: Чансааны шугаман график (сүүлийн 12 сар)
+
+Доор: Сүүлийн 10 тоглолт (оноо, өрсөлдөгч, өдөр)
+
+Чеклист
+
+ Фото байхгүй бол initials avatar
+
+ “Share profile” (OG image тааруул)
+
+7) Түүх/Аваргууд (History)
+
+Хэвтээ timeline (дээд)
+
+Жилүүдийг гүйлгэж сонгох (1970–2025)
+
+Доор тухайн жил дотор: гол үйл явдал, фото, холбоос
+
+“Үндэсний аваргууд” таб
+
+Эр/Эм таб
+
+Жил сонгох select → аварга, финалын оноо, медальтнууд (карт)
+
+Чеклист
+
+ Keyboard-scroll for years
+
+ Filter state URL-д хадгалах (?year=1998&gender=F)
+
+8) Хөл хэсэг (Footer)
+
+Гол холбоосууд, холбоо барих, сошиал, спонсор логонууд
+
+“Made with ♥ by MTT” биш, албан ёсны нэршил
+
+Newsletter (ирээдүйд GA4 goal-д бэлд)
+
+9) Дизайн систем (Tokens)
+
+Өнгө:
+
+Primary: #16a34a (green-600) / hover #15803d;
+
+Neutral: gray-900/700/500;
+
+Danger: #dc2626; Info: #2563eb; Live: #ef4444.
+
+Фонт: Inter (body), Oswald/Sora (headline).
+
+Spacing: 8px grid (8/16/24/32).
+
+Radius: 12–16px cards, 9999px chips.
+
+Сүүдэр: subtle (shadow-md), hover үед elevate.
+
+10) Микро-туршлага (micro-interactions)
+
+Chips: selected → filled; keyboard-ээр солигдоно.
+
+Buttons: hover→elevate, focus ring 2px.
+
+Live badge: soft pulse (reduce-motion хүнд off).
+
+Form: inline validation, error summary top (a11y).
+
+11) Хүртээмж (A11y)
+
+Контраст ≥4.5:1
+
+Alt бүрэн; иконоос өмнө текст
+
+Keyboard-only flow: бүртгэл 100% дамжина
+
+ARIA live region for LIVE score
+
+12) Гүйцэтгэл
+
+Above-the-fold зургийг priority, бусдыг lazy
+
+Icon-уудыг sprite эсвэл @phosphor-icons/lite
+
+JS code-split (route level), CSS minify
+
+Prefetch: hover дээр next page data
+
+13) Контент & микрокопи (MN)
+
+Button-ууд:
+
+Primary: “Бүртгүүлэх”, “Үр дүн харах”
+
+Secondary: “Дэлгэрэнгүй”, “Хуваарь”
+
+Алдаа/амжилт:
+
+“Амжилттай хадгаллаа.”
+
+“Мэдээллээ шалгаад дахин оролдоно уу.”
+
+14) Админ UI (internal UX)
+
+Sidebar: Dashboard · Events · Entries · Matches · Athletes · Rankings · Media · Imports
+
+CSV импорт: dropzone + mapping preview
+
+Bulk ops: bracket generate, reseed, publish toggle
+
+Role-based visibility
