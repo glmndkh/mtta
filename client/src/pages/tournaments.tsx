@@ -17,6 +17,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import PageWithLoading from "@/components/PageWithLoading";
 import { format, differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
+import { Link } from "wouter"; // Imported Link for navigation
 
 interface Tournament {
   id: string;
@@ -39,6 +40,9 @@ interface Tournament {
   };
   registrationStatus?: 'open' | 'closed' | 'full';
   isLive?: boolean;
+  participationTypes?: string[]; // Added for compatibility with the edit
+  backgroundImageUrl?: string; // Added for compatibility with the edit
+  prizes?: string; // Added for compatibility with the edit
 }
 
 const categoryLabels = {
@@ -80,7 +84,7 @@ export default function Tournaments() {
   );
 
   // Map tournament data to expected format
-  const mappedTournaments = sortedTournaments.map((tournament: any) => ({
+  const mappedTournaments: Tournament[] = sortedTournaments.map((tournament: any) => ({
     ...tournament,
     city: tournament.city || tournament.location?.split(',')[0]?.trim(),
     country: tournament.country || 'Mongolia',
@@ -132,8 +136,13 @@ export default function Tournaments() {
     return 'Finished';
   };
 
-  const formatPrizePool = (prizePool?: { amount: number; currency: string }) => {
+  const formatPrizePool = (prizePool?: { amount: number; currency: string } | string) => {
     if (!prizePool) return null;
+
+    // Handle string prize pools directly
+    if (typeof prizePool === 'string') {
+      return prizePool;
+    }
 
     const { amount, currency } = prizePool;
 
@@ -213,7 +222,8 @@ export default function Tournaments() {
       });
     }
 
-    window.location.href = `/tournament/${tournament.id}`;
+    // Using Link from wouter for client-side navigation
+    // window.location.href = `/tournament/${tournament.id}`; // Removed to use Link
   };
 
   // GA4 page view
@@ -234,7 +244,7 @@ export default function Tournaments() {
             <Skeleton className="h-6 w-96 mx-auto" />
           </div>
 
-          {/* Skeleton for cards */}
+          {/* Skeleton for cards - Keeping original grid for loading state */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map(i => (
               <Skeleton key={i} className="h-96 w-full rounded-2xl" />
@@ -245,196 +255,251 @@ export default function Tournaments() {
     );
   }
 
+  // New implementation for hero rows layout
+  const formatDateRange = (startDate: string, endDate: string) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (start.getFullYear() === end.getFullYear() && start.getMonth() === end.getMonth()) {
+      return `${format(start, 'MMM dd')} – ${format(end, 'MMM dd yyyy')}`;
+    }
+    return `${format(start, 'MMM dd')} – ${format(end, 'MMM dd yyyy')}`;
+  };
+
+  const getTournamentStatus = (tournament: Tournament) => {
+    const now = new Date();
+    const start = new Date(tournament.startDate);
+    const end = new Date(tournament.endDate);
+
+    if (now < start) {
+      // Use date-fns for more robust relative time formatting
+      const distance = formatDistanceToNow(start, { addSuffix: true });
+      return { type: 'upcoming', text: `Starts ${distance}` };
+    } else if (now >= start && now <= end) {
+      const distance = formatDistanceToNow(end, { addSuffix: true });
+      return { type: 'ongoing', text: `Ends ${distance}` };
+    } else {
+      return { type: 'finished', text: 'Finished' };
+    }
+  };
+
+  const getCategories = (participationTypes: string[]) => {
+    const categories = participationTypes.map(type => categoryLabels[type as keyof typeof categoryLabels] || type.substring(0, 2).toUpperCase());
+
+    const menCategories = categories.filter(cat => ['MS', 'MD'].includes(cat));
+    const womenCategories = categories.filter(cat => ['WS', 'WD'].includes(cat));
+    const mixedCategories = categories.filter(cat => cat === 'XD');
+
+    // Combine men's and mixed, and women's and mixed categories
+    return {
+      men: [...menCategories, ...mixedCategories].filter((value, index, self) => self.indexOf(value) === index), // Remove duplicates if any
+      women: [...womenCategories, ...mixedCategories].filter((value, index, self) => self.indexOf(value) === index) // Remove duplicates if any
+    };
+  };
+
   return (
     <PageWithLoading>
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
+      <Navigation />
 
-        {/* Header */}
-        <div className="bg-white border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="text-center">
-              <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center justify-center">
-                <Trophy className="mr-3 h-8 w-8 text-mtta-green" />
-                Тэмцээнүүд
-              </h1>
-              <p className="text-gray-600">
-                Дэлхийн ширээний теннисний тэмцээнүүд
-              </p>
-            </div>
-          </div>
+      {/* Header */}
+      <div className="bg-gradient-to-r from-mtta-green to-green-700 text-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">Тэмцээнүүд</h1>
+          <p className="text-xl text-green-100">Ширээний теннисний тэмцээнүүдийн бүрэн жагсаалт</p>
         </div>
+      </div>
 
-        {/* Events Grid */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {mappedTournaments.length === 0 ? (
-            <div className="text-center py-16">
-              <Trophy className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-              <h3 className="text-xl font-medium text-gray-900 mb-2">
-                Тэмцээн байхгүй байна
-              </h3>
-              <p className="text-gray-600">
-                Тун удахгүй шинэ тэмцээнүүд нэмэгдэх болно.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mappedTournaments.map((tournament, index) => {
-                const status = getEventStatus(tournament);
-                const countdown = getCountdown(tournament);
-                const flag = getCountryFlag(tournament.country);
-                const { leftColumn, rightColumn } = organizeCategories(tournament.categories || []);
+      {/* Tournament List - Hero Rows Layout */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {mappedTournaments.length === 0 ? (
+          <div className="text-center py-16">
+            <Trophy className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+            <h3 className="text-xl font-medium text-gray-900 mb-2">
+              Тэмцээн байхгүй байна
+            </h3>
+            <p className="text-gray-600">
+              Тун удахгүй шинэ тэмцээнүүд нэмэгдэх болно.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-6"> {/* Changed from grid to vertical spacing */}
+            {mappedTournaments.map((tournament, index) => {
+              const status = getTournamentStatus(tournament);
+              const categories = getCategories(tournament.categories || []);
+              const prizeText = formatPrizePool(tournament.prizePool);
+              const flag = getCountryFlag(tournament.country); // Get country flag
 
-                return (
-                  <Card 
-                    key={tournament.id} 
-                    className="overflow-hidden rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 group h-96 relative"
-                  >
-                    {/* Background Image with Overlay */}
-                    <div className="relative h-full">
-                      <img
-                        src={getCoverImage(tournament.coverUrl)}
-                        alt={tournament.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading={index < 3 ? "eager" : "lazy"}
-                        fetchPriority={index < 3 ? "high" : "auto"}
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/api/placeholder/600/400';
-                        }}
-                      />
+              return (
+                <Card 
+                  key={tournament.id} 
+                  className="overflow-hidden rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 h-[360px] group relative"
+                >
+                  {/* Background Image with Overlay */}
+                  <div className="relative h-full w-full">
+                    <img
+                      src={getCoverImage(tournament.coverUrl)}
+                      alt={tournament.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading={index < 3 ? "eager" : "lazy"} // Load first 3 eagerly
+                      fetchPriority={index < 3 ? "high" : "auto"}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/api/placeholder/600/400'; // Fallback image
+                      }}
+                    />
+                    {/* Dark gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/0"></div>
+                  </div>
 
-                      {/* Dark gradient overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/0"></div>
+                  {/* Content */}
+                  <div className="absolute inset-0 p-6 flex flex-col justify-between">
 
+                    {/* Top Section */}
+                    <div className="flex justify-between items-start">
                       {/* Top Left - Flag and Date */}
-                      <div className="absolute top-4 left-4 space-y-1">
+                      <div className="flex flex-col space-y-1">
                         {flag && (
-                          <div className="text-2xl">
+                          <div className="text-3xl"> {/* Increased flag size */}
                             {flag}
                           </div>
                         )}
                         <div className="text-white text-sm font-medium drop-shadow-lg">
-                          {format(new Date(tournament.startDate), 'MMM dd')}
-                          {tournament.endDate && tournament.endDate !== tournament.startDate && (
-                            ` – ${format(new Date(tournament.endDate), 'MMM dd yyyy')}`
-                          )}
+                          {formatDateRange(tournament.startDate, tournament.endDate)}
                         </div>
                       </div>
 
-                      {/* Title */}
-                      <div className="absolute top-16 left-4 right-4">
-                        <h2 className="text-white font-bold text-xl leading-tight drop-shadow-lg line-clamp-2">
-                          {tournament.name}
-                        </h2>
+                      {/* Top Right - Status */}
+                      <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2">
+                        {status.type === 'ongoing' ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                            <span className="text-white text-sm font-medium">LIVE</span>
+                          </div>
+                        ) : (
+                          <div className="text-white text-sm font-medium">
+                            {status.text}
+                          </div>
+                        )}
                       </div>
+                    </div>
 
-                      {/* Venue + Location */}
-                      <div className="absolute top-32 left-4 right-4 space-y-1">
+                    {/* Middle Section - Tournament Name */}
+                    <h2 className="text-white font-bold text-3xl leading-tight drop-shadow-lg line-clamp-2">
+                      {tournament.name}
+                    </h2>
+                    
+                    {/* Bottom Section */}
+                    <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+
+                      {/* Left Side - Venue & Location */}
+                      <div className="flex-1 space-y-1">
                         {tournament.venue && (
-                          <div className="text-white/90 text-sm font-medium drop-shadow-lg">
+                          <div className="text-white/90 text-lg font-medium drop-shadow-lg">
                             {tournament.venue}
                           </div>
                         )}
-                        <div className="text-white/80 text-sm drop-shadow-lg">
+                        <div className="text-white/80 text-base drop-shadow-lg">
                           {tournament.city || tournament.location}
                           {tournament.country && `, ${tournament.country}`}
                         </div>
                       </div>
 
-                      {/* Categories - Right Side */}
-                      <div className="absolute top-4 right-4 space-y-2">
-                        <div className="grid grid-cols-2 gap-2">
-                          {/* Left Column */}
-                          <div className="space-y-2">
-                            {leftColumn.map((category) => (
-                              <div key={category} className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center justify-between">
-                                <span className="text-white text-sm font-medium">
-                                  {category === 'MS' ? "Men's Singles" : 
-                                   category === 'MD' ? "Men's Doubles" : 
-                                   category === 'XD' ? "Mixed Doubles" : category}
-                                </span>
-                                <Badge className={`${categoryColors[category as keyof typeof categoryColors]} text-white text-xs ml-2`}>
-                                  {category}
-                                </Badge>
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Right Column */}
-                          <div className="space-y-2">
-                            {rightColumn.map((category) => (
-                              <div key={category} className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center justify-between">
-                                <span className="text-white text-sm font-medium">
-                                  {category === 'WS' ? "Women's Singles" : 
-                                   category === 'WD' ? "Women's Doubles" : category}
-                                </span>
-                                <Badge className={`${categoryColors[category as keyof typeof categoryColors]} text-white text-xs ml-2`}>
-                                  {category}
-                                </Badge>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Mobile Categories - Bottom on small screens */}
-                      <div className="absolute bottom-20 left-4 right-4 md:hidden">
-                        <div className="bg-black/60 backdrop-blur-sm rounded-lg p-3">
-                          <div className="flex flex-wrap gap-1">
-                            {[...leftColumn, ...rightColumn].map((category) => (
-                              <Badge key={category} className={`${categoryColors[category as keyof typeof categoryColors]} text-white text-xs`}>
-                                {category}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Bottom Left - Event Info Button */}
-                      <div className="absolute bottom-4 left-4">
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEventInfoClick(tournament);
-                          }}
-                          className="bg-white text-black hover:bg-gray-100 font-bold px-6 py-2 rounded-full transition-all duration-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                          aria-label={`View details for ${tournament.name}`}
-                        >
-                          EVENT INFO
-                          <ExternalLink className="w-4 h-4 ml-2" />
-                        </Button>
-
-                        {/* Prize Money - Below button */}
-                        {tournament.prizePool && (
-                          <div className="mt-2">
-                            <div className="text-white font-bold text-lg drop-shadow-lg">
-                              PRIZE MONEY
+                      {/* Right Side - Categories (Desktop) */}
+                      <div className="hidden lg:flex gap-4">
+                        {/* Men's Categories */}
+                        {categories.men.length > 0 && (
+                          <div className="bg-black/60 backdrop-blur-sm rounded-lg p-4 min-w-[140px]">
+                            <div className="text-white/80 text-sm font-medium mb-3">Men's</div>
+                            <div className="space-y-2">
+                              {categories.men.map((category, idx) => (
+                                <div key={idx} className="flex items-center justify-between">
+                                  <span className="text-white text-sm">{category}</span>
+                                  <div className={`w-6 h-6 rounded-full ${categoryColors[category as keyof typeof categoryColors] || 'bg-gray-500'} flex items-center justify-center`}>
+                                    <span className="text-white text-xs font-bold">{category}</span>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                            <div className="text-yellow-400 font-bold text-xl drop-shadow-lg">
-                              {formatPrizePool(tournament.prizePool)}
+                          </div>
+                        )}
+
+                        {/* Women's Categories */}
+                        {categories.women.length > 0 && (
+                          <div className="bg-black/60 backdrop-blur-sm rounded-lg p-4 min-w-[140px]">
+                            <div className="text-white/80 text-sm font-medium mb-3">Women's</div>
+                            <div className="space-y-2">
+                              {categories.women.map((category, idx) => (
+                                <div key={idx} className="flex items-center justify-between">
+                                  <span className="text-white text-sm">{category}</span>
+                                  <div className={`w-6 h-6 rounded-full ${categoryColors[category as keyof typeof categoryColors] || 'bg-gray-500'} flex items-center justify-center`}>
+                                    <span className="text-white text-xs font-bold">{category}</span>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         )}
                       </div>
 
-                      {/* Bottom Right - Countdown/Status */}
-                      <div className="absolute bottom-4 right-4">
-                        <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2">
-                          <div className="text-white text-sm font-medium text-right">
-                            {typeof countdown === 'string' ? countdown : countdown}
-                          </div>
+                      {/* Categories for Mobile */}
+                      <div className="lg:hidden w-full">
+                        <div className="flex flex-wrap gap-2">
+                          {categories.men.map((category, idx) => (
+                            <div 
+                              key={idx} 
+                              className={`${categoryColors[category as keyof typeof categoryColors] || 'bg-gray-500'} text-white px-3 py-1 rounded-full text-sm font-medium`}
+                            >
+                              {category}
+                            </div>
+                          ))}
+                          {categories.women.map((category, idx) => (
+                            <div 
+                              key={idx} 
+                              className={`${categoryColors[category as keyof typeof categoryColors] || 'bg-gray-500'} text-white px-3 py-1 rounded-full text-sm font-medium`}
+                            >
+                              {category}
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-        </div>
 
-        <Footer />
+                    {/* Bottom Row - Action Button and Prize Money */}
+                    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mt-auto">
+                      {/* Action Button */}
+                      <div>
+                        <Link href={`/tournament/${tournament.id}`}>
+                          <Button 
+                            variant="outline" 
+                            className="bg-white/10 border-white/30 text-white hover:bg-white hover:text-black backdrop-blur-sm transition-all font-bold px-6 py-2 rounded-full"
+                            aria-label={`View details for ${tournament.name}`}
+                          >
+                            EVENT INFO
+                            <ExternalLink className="w-4 h-4 ml-2" />
+                          </Button>
+                        </Link>
+                      </div>
+
+                      {/* Prize Money */}
+                      {prizeText && (
+                        <div className="flex flex-col">
+                          <div className="text-white/80 text-sm font-medium drop-shadow-lg">
+                            PRIZE MONEY
+                          </div>
+                          <div className="text-yellow-400 text-xl font-bold drop-shadow-lg">
+                            {prizeText}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
+
+      <Footer />
     </PageWithLoading>
   );
 }
