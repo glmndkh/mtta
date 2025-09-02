@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Users, Building, Trophy, Medal, Calendar, Award, ExternalLink, MapPin, Clock } from "lucide-react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -158,9 +159,64 @@ export default function Home() {
         <Navigation />
 
         {/* Hero Section */}
-        <section className="relative bg-gradient-to-r from-mtta-green to-green-700 text-white py-20">
-          <div className="absolute inset-0 bg-black bg-opacity-20"></div>
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="relative">
+          {/* Hero Slider */}
+          {slidersLoading ? (
+            <div className="bg-gradient-to-r from-mtta-green to-green-700 text-white py-20">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <Skeleton className="h-12 w-3/4 mb-4 bg-white bg-opacity-20" />
+                <Skeleton className="h-6 w-1/2 bg-white bg-opacity-20" />
+              </div>
+            </div>
+          ) : sliders.length > 0 ? (
+            <div className="relative">
+              {sliders.map((slide, index) => (
+                <div key={slide.id} className={`relative ${index === 0 ? 'block' : 'hidden'}`}>
+                  <div 
+                    className="h-96 bg-cover bg-center relative"
+                    style={{
+                      backgroundImage: slide.imageUrl 
+                        ? `url(${getImageUrl(slide.imageUrl)})` 
+                        : 'linear-gradient(to right, #10b981, #047857)'
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+                    <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center">
+                      <div className="text-white space-y-4">
+                        <h1 className="text-4xl md:text-6xl font-bold">{slide.title}</h1>
+                        {slide.description && (
+                          <p className="text-xl md:text-2xl text-gray-200">{slide.description}</p>
+                        )}
+                        {slide.linkUrl && (
+                          <Link href={slide.linkUrl}>
+                            <Button size="lg" className="bg-white text-mtta-green hover:bg-gray-100 font-semibold px-8 py-4">
+                              Дэлгэрэнгүй
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-gradient-to-r from-mtta-green to-green-700 text-white py-20">
+              <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+              <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"></div>
+            </div>
+          )}
+          
+          {/* Default Hero Content when no sliders */}
+          {!slidersLoading && sliders.length === 0 && (
+            <div className="bg-gradient-to-r from-mtta-green to-green-700 text-white py-20">
+              <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+              <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"></div>
+            </div>
+          )}
+
+        <div className="bg-gradient-to-r from-mtta-green to-green-700 text-white py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               {/* Left Side - Main Content */}
               <div className="space-y-8">

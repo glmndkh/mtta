@@ -898,13 +898,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Public tournaments = active only
   app.get("/api/tournaments", async (_req, res) => {
     try {
-      const tournaments = await storage.getActiveTournaments();
+      const tournaments = await storage.getTournaments();
       res.json(tournaments);
     } catch (e) {
       console.error("Error fetching tournaments:", e);
       res
         .status(500)
-        .json({ message: "Тэмцээний жагсаалт авахад алдаа гарлаа" });
+        .json({ message: "Тэмцээн олдсонгүй" });
+    }
+  });
+
+  app.get("/api/tournaments/upcoming", async (_req, res) => {
+    try {
+      const tournaments = await storage.getTournaments();
+      const now = new Date();
+      const upcomingTournaments = tournaments.filter(tournament => 
+        new Date(tournament.startDate) >= now
+      );
+      res.json(upcomingTournaments);
+    } catch (e) {
+      console.error("Error fetching upcoming tournaments:", e);
+      res.status(500).json({ message: "Тэмцээн олдсонгүй" });
     }
   });
 
@@ -1131,9 +1145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             password: null,
             role: "player",
           });
-          const newPlayer = await storage.createPlayer({
-            userId: newUser.id,
-          });
+          const newPlayer = await storage.createPlayer({ userId: newUser.id });
           finalPlayerId = newPlayer.id;
         } else {
           try {
