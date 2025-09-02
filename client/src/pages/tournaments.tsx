@@ -43,7 +43,7 @@ const months = [
 ];
 
 const categoryChips = [
-  { id: 'all', label: 'Бүгд', value: '' },
+  { id: 'all', label: 'Бүгд', value: 'all' },
   { id: 'singles_men', label: 'MS', value: 'singles_men' },
   { id: 'singles_women', label: 'WS', value: 'singles_women' },
   { id: 'doubles_men', label: 'MD', value: 'doubles_men' },
@@ -52,7 +52,7 @@ const categoryChips = [
 ];
 
 const statusOptions = [
-  { value: '', label: 'Бүгд' },
+  { value: 'all', label: 'Бүгд' },
   { value: 'open', label: 'Бүртгэл нээлттэй' },
   { value: 'closed', label: 'Хаагдсан' },
   { value: 'completed', label: 'Дууссан' },
@@ -65,9 +65,9 @@ export default function Tournaments() {
   // Filters state
   const [selectedMonth, setSelectedMonth] = useState<string>('');
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [locationFilter, setLocationFilter] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<'upcoming' | 'newest'>('upcoming');
 
   // Fetch tournaments from database
@@ -133,7 +133,7 @@ export default function Tournaments() {
     }
 
     // Category filter
-    if (selectedCategory && !tournament.participationTypes.includes(selectedCategory)) {
+    if (selectedCategory && selectedCategory !== 'all' && !tournament.participationTypes.includes(selectedCategory)) {
       return false;
     }
 
@@ -143,7 +143,7 @@ export default function Tournaments() {
     }
 
     // Status filter
-    if (statusFilter) {
+    if (statusFilter && statusFilter !== 'all') {
       if (statusFilter === 'open' && tournament.registrationStatus !== 'open') return false;
       if (statusFilter === 'closed' && tournament.registrationStatus !== 'closed') return false;
       if (statusFilter === 'completed' && tournament.status !== 'completed') return false;
@@ -307,9 +307,9 @@ export default function Tournaments() {
               </p>
               <Button onClick={() => {
                 setSelectedMonth('');
-                setSelectedCategory('');
+                setSelectedCategory('all');
                 setLocationFilter('');
-                setStatusFilter('');
+                setStatusFilter('all');
               }}>
                 Бүх шүүлтүүрийг арилгах
               </Button>
