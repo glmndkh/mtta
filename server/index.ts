@@ -39,7 +39,7 @@ app.use((req, res, next) => {
 
 // Serve public objects with proper CORS headers
 app.get("/public-objects/*", async (req, res) => {
-  const filePath = req.params['0'] as string;
+  const filePath = req.params[0] as string;
   console.log(`[public-objects] Requested file path: ${filePath}`);
 
   try {

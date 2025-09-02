@@ -109,7 +109,7 @@ export default function AdminTournamentCreate() {
   });
 
   useEffect(() => {
-    form.setValue("participationTypes", participationCategories);
+    form.setValue("participationTypes", participationCategories as any);
   }, [participationCategories, form]);
 
   // File upload handlers
@@ -174,12 +174,15 @@ export default function AdminTournamentCreate() {
   // Mutation for creating tournament
   const createTournamentMutation = useMutation({
     mutationFn: async (data: any) => {
-      await apiRequest("POST", "/api/tournaments", {
-        ...data,
-        richDescription,
-        backgroundImageUrl,
-        regulationDocumentUrl,
-        schedule: data.schedule ? JSON.stringify({ description: data.schedule }) : null,
+      await apiRequest("/api/tournaments", {
+        method: "POST",
+        body: JSON.stringify({
+          ...data,
+          richDescription,
+          backgroundImageUrl,
+          regulationDocumentUrl,
+          schedule: data.schedule ? JSON.stringify({ description: data.schedule }) : null,
+        })
       });
     },
     onSuccess: () => {
