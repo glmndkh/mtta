@@ -62,25 +62,38 @@ export default function Tournaments() {
   const { toast } = useToast();
 
   // Fetch all tournaments
-  const { data: tournamentsData, isLoading: tournamentsLoading } = useQuery({
-    queryKey: ['/api/events'],
+  const { data: tournamentsData, isLoading: tournamentsLoading, error: tournamentsError } = useQuery({
+    queryKey: ['/api/tournaments'],
     queryFn: async () => {
-      const response = await fetch('/api/events');
-      if (!response.ok) {
-        // Fallback to existing API
-        const fallbackResponse = await fetch('/api/tournaments');
-        if (!fallbackResponse.ok) {
-          throw new Error('Failed to fetch tournaments');
+      try {
+        // Try the events API first
+        const eventsResponse = await fetch('/api/events');
+        if (eventsResponse.ok) {
+          const eventsData = await eventsResponse.json();
+          console.log('Events API response:', eventsData);
+          return { items: eventsData.items || eventsData || [] };
         }
-        const tournaments = await fallbackResponse.json();
-        return { items: tournaments };
+      } catch (error) {
+        console.log('Events API failed, trying tournaments API:', error);
       }
-      return response.json();
+
+      // Fallback to tournaments API
+      const tournamentsResponse = await fetch('/api/tournaments');
+      if (!tournamentsResponse.ok) {
+        throw new Error('Failed to fetch tournaments from both APIs');
+      }
+      const tournaments = await tournamentsResponse.json();
+      console.log('Tournaments API response:', tournaments);
+      return { items: Array.isArray(tournaments) ? tournaments : [] };
     },
     staleTime: 30 * 1000,
   });
 
   const tournaments = tournamentsData?.items || [];
+  
+  console.log('Final tournaments data:', tournaments);
+  console.log('Tournaments loading:', tournamentsLoading);
+  console.log('Tournaments error:', tournamentsError);
 
   // Sort tournaments by startDate DESC (newest first)
   const sortedTournaments = [...tournaments].sort((a, b) => 
@@ -203,7 +216,7 @@ export default function Tournaments() {
 
   if (isLoading || tournamentsLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Navigation />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Skeleton for header */}
@@ -225,18 +238,18 @@ export default function Tournaments() {
 
   return (
     <PageWithLoading>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Navigation />
 
         {/* Header */}
-        <div className="bg-white border-b">
+        <div className="bg-card border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="text-center">
-              <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center justify-center">
+              <h1 className="text-4xl font-bold text-foreground mb-2 flex items-center justify-center">
                 <Trophy className="mr-3 h-8 w-8 text-mtta-green" />
                 Тэмцээнүүд
               </h1>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 Дэлхийн ширээний теннисний тэмцээнүүд
               </p>
             </div>
@@ -245,15 +258,31 @@ export default function Tournaments() {
 
         {/* Events Grid */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {sortedTournaments.length === 0 ? (
+          {tournamentsError && (
             <div className="text-center py-16">
-              <Trophy className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-              <h3 className="text-xl font-medium text-gray-900 mb-2">
+              <Trophy className="mx-auto h-16 w-16 text-destructive mb-4" />
+              <h3 className="text-xl font-medium text-foreground mb-2">
+                Алдаа гарлаа
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Тэмцээнүүдийг ачаалахад алдаа гарлаа: {tournamentsError.message}
+              </p>
+              <Button onClick={() => window.location.reload()}>
+                Дахин оролдох
+              </Button>
+            </div>
+          ) : sortedTournaments.length === 0 ? (
+            <div className="text-center py-16">
+              <Trophy className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
+              <h3 className="text-xl font-medium text-foreground mb-2">
                 Тэмцээн байхгүй байна
               </h3>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground mb-4">
                 Тун удахгүй шинэ тэмцээнүүд нэмэгдэх болно.
               </p>
+              <div className="text-xs text-muted-foreground mt-4">
+                API хариу: {JSON.stringify(tournamentsData, null, 2)}
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
