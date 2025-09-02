@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -126,7 +125,7 @@ export default function Tournaments() {
       const tournamentDate = parseISO(tournament.startDate);
       const monthStart = startOfMonth(new Date(parseInt(selectedYear), parseInt(selectedMonth)));
       const monthEnd = endOfMonth(new Date(parseInt(selectedYear), parseInt(selectedMonth)));
-      
+
       if (!isWithinInterval(tournamentDate, { start: monthStart, end: monthEnd })) {
         return false;
       }
@@ -160,7 +159,8 @@ export default function Tournaments() {
 
   // Generate year options
   const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
+  const yearOptions = Array.from({ length: 5 }, (_, i) => ({ value: (currentYear - 2 + i).toString(), label: (currentYear - 2 + i).toString() }));
+
 
   if (isLoading || tournamentsLoading) {
     return (
@@ -222,10 +222,8 @@ export default function Tournaments() {
                       <SelectValue placeholder="Он" />
                     </SelectTrigger>
                     <SelectContent>
-                      {yearOptions.map(year => (
-                        <SelectItem key={year} value={year.toString()}>
-                          {year}
-                        </SelectItem>
+                      {yearOptions.map(yearOption => (
+                        <SelectItem key={yearOption.value} value={yearOption.value}>{yearOption.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -379,8 +377,8 @@ export default function Tournaments() {
                         </Button>
                       </Link>
                       <Link href={`/tournament/${tournament.id}/register`}>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           className="flex-1 text-xs bg-mtta-green hover:bg-green-700"
                           disabled={tournament.registrationStatus === 'closed' || tournament.status === 'completed'}
                         >
