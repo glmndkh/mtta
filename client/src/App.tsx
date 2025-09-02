@@ -60,6 +60,7 @@ function Router() {
       <Route path="/branches" component={Branches} />
       <Route path="/branch-details/:id" component={BranchDetails} />
       <Route path="/past-champions" component={PastChampions} />
+      <Route path="/history" component={PastChampions} />
       <Route path="/judges" component={JudgesPage} />
       <Route path="/news/:id" component={NewsDetail} />
       <Route path="/news" component={News} />

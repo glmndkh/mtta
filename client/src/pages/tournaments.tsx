@@ -210,7 +210,7 @@ export default function Tournaments() {
                     <SelectContent>
                       <SelectItem value="all">Бүх сар</SelectItem>
                       {months.map(month => (
-                        <SelectItem key={month.value} value={month.value}>
+                        <SelectItem key={month.value} value={month.value || "0"}>
                           {month.label}
                         </SelectItem>
                       ))}

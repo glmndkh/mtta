@@ -1,5 +1,6 @@
 import React from "react";
 import Navigation from "@/components/navigation";
+import Footer from "./Footer";
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -13,6 +14,7 @@ export default function PageLayout({ children, className = "" }: PageLayoutProps
       <div className="main-bg">
         <div className={`container mx-auto px-4 py-8 ${className}`}>{children}</div>
       </div>
+      <Footer />
     </>
   );
 }

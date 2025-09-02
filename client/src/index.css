@@ -387,6 +387,32 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
   --radius: 0.75rem;
 }
 
+/* Design System Tokens */
+:root {
+  --color-primary: #16a34a; /* green-600 */
+  --color-primary-hover: #15803d; /* green-700 */
+  --color-neutral-900: #111827;
+  --color-neutral-700: #374151;
+  --color-neutral-500: #6b7280;
+  --color-danger: #dc2626;
+  --color-info: #2563eb;
+  --color-live: #ef4444;
+
+  --font-body: 'Inter', sans-serif;
+  --font-headline: 'Oswald', 'Sora', sans-serif;
+
+  --spacing-xs: 8px;
+  --spacing-sm: 16px;
+  --spacing-md: 24px;
+  --spacing-lg: 32px;
+
+  --radius-card: 12px;
+  --radius-chip: 9999px;
+
+  --shadow-subtle: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+}
+
 /* Dark theme (default) */
 :root, [data-theme="dark"], .dark {
   --background: #0a0f14;
@@ -929,7 +955,7 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
   background: linear-gradient(to bottom, rgba(25,30,38,0.98) 0%, rgba(15,20,25,0.96) 40%, rgba(10,15,20,0.96) 40%);
   backdrop-filter: blur(6px);
   border-bottom: 1px solid rgba(255,255,255,0.05);
-  box-shadow: inset 0 1px rgba(255,255,255,0.07), inset 0 -2px rgba(0,0,0,0.35);
+  box-shadow: inset 1px 1px rgba(255,255,255,0.07), inset 0 -2px rgba(0,0,0,0.35);
   overflow: hidden;
 }
 
@@ -1304,7 +1330,7 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
 .checkbox-enhanced[data-state="checked"] {
   background: linear-gradient(135deg, #16a34a, #22c55e) !important;
   border: 3px solid #16a34a !important;
-  box-shadow: 
+  box-shadow:
     0 0 0 4px rgba(22, 163, 74, 0.2),
     0 8px 25px rgba(22, 163, 74, 0.6),
     inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
@@ -1322,7 +1348,7 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
 .checkbox-enhanced[data-state="checked"]:hover {
   background: linear-gradient(135deg, #15803d, #16a34a) !important;
   border-color: #15803d !important;
-  box-shadow: 
+  box-shadow:
     0 0 0 6px rgba(22, 163, 74, 0.3),
     0 12px 35px rgba(22, 163, 74, 0.8),
     inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
@@ -1341,7 +1367,7 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
 .dark .checkbox-enhanced[data-state="checked"] {
   background: linear-gradient(135deg, #22c55e, #10b981) !important;
   border: 3px solid #22c55e !important;
-  box-shadow: 
+  box-shadow:
     0 0 0 4px rgba(34, 197, 94, 0.25),
     0 8px 25px rgba(34, 197, 94, 0.7),
     inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
@@ -1361,7 +1387,7 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
 .dark .checkbox-enhanced[data-state="checked"]:hover {
   background: linear-gradient(135deg, #16a34a, #22c55e) !important;
   border-color: #16a34a !important;
-  box-shadow: 
+  box-shadow:
     0 0 0 6px rgba(34, 197, 94, 0.35),
     0 12px 35px rgba(34, 197, 94, 0.9),
     inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
@@ -1380,7 +1406,7 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
 .light .checkbox-enhanced[data-state="checked"] {
   background: linear-gradient(135deg, #16a34a, #22c55e) !important;
   border: 3px solid #16a34a !important;
-  box-shadow: 
+  box-shadow:
     0 0 0 4px rgba(22, 163, 74, 0.2),
     0 8px 25px rgba(22, 163, 74, 0.6),
     inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
@@ -1426,13 +1452,13 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
 
 @keyframes checkboxGlow {
   0% {
-    box-shadow: 
+    box-shadow:
       0 0 0 4px rgba(22, 163, 74, 0.2),
       0 8px 25px rgba(22, 163, 74, 0.6),
       inset 0 1px 0 rgba(255, 255, 255, 0.3);
   }
   100% {
-    box-shadow: 
+    box-shadow:
       0 0 0 6px rgba(22, 163, 74, 0.4),
       0 12px 35px rgba(22, 163, 74, 0.8),
       inset 0 1px 0 rgba(255, 255, 255, 0.4);
@@ -1441,13 +1467,13 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
 
 @keyframes checkboxGlowDark {
   0% {
-    box-shadow: 
+    box-shadow:
       0 0 0 4px rgba(34, 197, 94, 0.25),
       0 8px 25px rgba(34, 197, 94, 0.7),
       inset 0 1px 0 rgba(255, 255, 255, 0.4);
   }
   100% {
-    box-shadow: 
+    box-shadow:
       0 0 0 6px rgba(34, 197, 94, 0.45),
       0 12px 35px rgba(34, 197, 94, 0.9),
       inset 0 1px 0 rgba(255, 255, 255, 0.5);
@@ -1526,5 +1552,158 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
   .responsive-table td:before {
     content: attr(data-label) ": ";
     @apply font-semibold text-gray-300 mr-2;
+  }
+}
+
+/* Design System Micro-interactions */
+
+/* Live pulse animation - respects reduced motion */
+@keyframes livePulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.live-pulse {
+  animation: livePulse 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-pulse {
+    animation: none;
+  }
+
+  .animate-pulse,
+  .animate-spin {
+    animation: none !important;
+  }
+}
+
+/* Chip micro-interactions */
+.chip {
+  @apply transition-all duration-200;
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+}
+
+.chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.chip.selected {
+  @apply bg-green-600 text-white;
+}
+
+.chip:focus-visible {
+  outline: 2px solid #16a34a;
+  outline-offset: 2px;
+}
+
+/* Button micro-interactions */
+.btn-hover-elevate {
+  @apply transition-all duration-200;
+}
+
+.btn-hover-elevate:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.btn-hover-elevate:focus-visible {
+  outline: 2px solid #16a34a;
+  outline-offset: 2px;
+}
+
+.btn-hover-elevate:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+/* Card micro-interactions */
+.card-interactive {
+  @apply transition-all duration-300 cursor-pointer;
+}
+
+.card-interactive:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+}
+
+/* Form validation styles */
+.form-error {
+  @apply text-red-600 text-sm mt-1;
+}
+
+.form-success {
+  @apply text-green-600 text-sm mt-1;
+}
+
+.input-error {
+  @apply border-red-600 focus:border-red-600 focus:ring-red-600;
+}
+
+.input-success {
+  @apply border-green-600 focus:border-green-600 focus:ring-green-600;
+}
+
+/* Live regions for accessibility */
+.live-region {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* Keyboard navigation styles */
+.keyboard-nav:focus-visible {
+  outline: 2px solid #16a34a;
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+}
+
+/* Sponsor logos */
+.sponsor-logo {
+  transition: all 0.3s ease;
+  filter: grayscale(100%);
+}
+
+.sponsor-logo:hover {
+  filter: grayscale(0%);
+  transform: scale(1.05);
+}
+
+/* Sticky header enhancements */
+.sticky-header {
+  backdrop-filter: blur(8px);
+  background-color: rgba(255, 255, 255, 0.95);
+}
+
+.dark .sticky-header {
+  background-color: rgba(17, 24, 39, 0.95);
+}
+
+/* Loading states */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.dark .skeleton {
+  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+  background-size: 200% 100%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
   }
 }

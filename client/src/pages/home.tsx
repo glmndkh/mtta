@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
+import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -459,6 +460,7 @@ export default function Home() {
           </section>
         </div>
       </div>
+      <Footer />
     </PageWithLoading>
   );
 }
