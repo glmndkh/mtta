@@ -63,7 +63,7 @@ export default function Tournaments() {
   const { toast } = useToast();
 
   // Filters state
-  const [selectedMonth, setSelectedMonth] = useState<string>('');
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [locationFilter, setLocationFilter] = useState<string>('');
@@ -122,7 +122,7 @@ export default function Tournaments() {
   // Filter and sort tournaments
   const filteredTournaments = tournaments.filter(tournament => {
     // Date filter
-    if (selectedMonth && selectedYear) {
+    if (selectedMonth && selectedMonth !== 'all' && selectedYear) {
       const tournamentDate = parseISO(tournament.startDate);
       const monthStart = startOfMonth(new Date(parseInt(selectedYear), parseInt(selectedMonth)));
       const monthEnd = endOfMonth(new Date(parseInt(selectedYear), parseInt(selectedMonth)));
@@ -208,7 +208,7 @@ export default function Tournaments() {
                       <SelectValue placeholder="Сар" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Бүх сар</SelectItem>
+                      <SelectItem value="all">Бүх сар</SelectItem>
                       {months.map(month => (
                         <SelectItem key={month.value} value={month.value}>
                           {month.label}
@@ -306,7 +306,7 @@ export default function Tournaments() {
                 Таны сонгосон шүүлтүүрт тохирох тэмцээн олдсонгүй.
               </p>
               <Button onClick={() => {
-                setSelectedMonth('');
+                setSelectedMonth('all');
                 setSelectedCategory('all');
                 setLocationFilter('');
                 setStatusFilter('all');
