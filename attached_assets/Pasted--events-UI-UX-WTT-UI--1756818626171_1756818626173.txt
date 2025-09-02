@@ -1,0 +1,101 @@
+/events хуудасны UI/UX-ийг WTT-стайл болгож ЯГ ЗӨВХӨН UI-г өөрчил”
+
+ЧУХАЛ ХЯЗГААРУУД (баримтлах дүрэм):
+
+❌ API/DB/Server код, fetch логикууд, маршрутууд, дата загварын нэршилд гар бүү хүр.
+
+❌ server/**, shared/schema.*, /api/** endpoint-уудын гарын үсэг өөрчилж болохгүй.
+
+✅ Зөвхөн client UI код: client/src/pages/EventsPage.tsx, client/src/components/**, client/src/index.css (эсвэл Tailwind class) дээр ажилла.
+
+✅ Одоогийн fetch('/api/events')-ээс ирж буй контентыг тэр чигт нь хэрэглэ (талбар нэмэх/нэр солихгүй).
+
+Зорилго
+
+/events хуудсыг WTT шиг урт hero мөр-өөр (full-bleed card) бүх тэмцээнийг дараалуулан харуулдаг UI болго. Филтер/хайлт ҮГҮЙ. Ямар ч бизнес логик нэмэхгүй.
+
+Хийх UI өөрчлөлт (presentational only)
+
+Grid картыг бүрмөсөн авч, “hero row” layout хий.
+
+Wrapper: relative overflow-hidden rounded-2xl shadow-md hover:shadow-lg transition
+
+Өндөр: h-[340–380px] (responsive)
+
+Background: coverUrl зураг + доороос дээш black/75 → black/0 градиент overlay
+
+Зүүн доод мэдээлэл (уншигдах хэсэг):
+
+Огнооны badge: MMM DD – MMM DD YYYY (ж: Sep 02 – Sep 07 2025)
+
+Том гарчиг: тэмцээний нэр (2 мөр хүртэл, truncate)
+
+Venue + city, country (2 тусдаа мөр)
+
+EVENT INFO товч → /events/:id
+
+PRIZE MONEY мөр (байвал л үзүүл; MNT бол бутархай 0)
+
+Баруун талын ангиллын самбар (screenshot-ын шиг):
+
+2 хар карт: зүүнд MS/MD/XD, баруунд WS/WD
+
+Байхгүй категориудыг нууж үзүүл
+
+Мөр бүрийн баруунд жижиг дугуй badge (MS, MD, …)
+
+Статус/Countdown (баруун дээд):
+
+upcoming: “Starts in {d}d {h}h {m}m”
+
+ongoing: LIVE (pulse) + “{h}h {m}m to end”
+
+past: “Finished”
+
+Countdown тооцооллыг зөвхөн UI талд хий, одоо байгаа талбаруудаас (start/end/optional timezone) л унш.
+
+Mobile ≤640px:
+
+Баруун 2 самбар доош шилжиж нэг багана болно
+
+Гарчиг/товч эхний дэлгэцэнд багтана (truncate/line-clamp)
+
+Аccessibility & Perf (UI-д хамаарах)
+
+Контраст ≥ 4.5:1, бүх товчид focus ring (2px, ring-offset)
+
+Зургууд loading="lazy", эхний мөрийн зурагт л fetchpriority="high"
+
+prefers-reduced-motion үед pulse/zoom унтраа (UI-гийн түвшинд)
+
+Файлын хүрээ (зөвхөн эдгээрт өөрчлөлт хийж болно)
+
+client/src/pages/EventsPage.tsx — layout солих, hero мөр жагсаах
+
+client/src/components/EventHeroRow.tsx (шинэ presentational компонент байж болно)
+
+client/src/index.css эсвэл Tailwind класс (зөвхөн стилл)
+
+Хийж БОЛОХГҮЙ (дахин давтав)
+
+❌ server/**, /api/** дотор ямар нэг өөрчлөлт хийхгүй
+
+❌ fetch URL, query, header өөрчилж болохгүй
+
+❌ Дата талбарт rename/add/remove хийхгүй
+
+❌ Pagination/ordering-ийн логик өөрчлөхгүй (ирж буй дарааллаар/эсвэл одоогийнх шиг)
+
+❌ GA/event tracking-ийг өөрчлөхгүй
+
+Acceptance Criteria (Done болсон шалгуур)
+
+ /events дээр филтер/хайлт байхгүй, бүх event урт hero мөрүүдээр дараалж харагдана
+
+ Мөр бүр: background + overlay + date badge + том title + venue/location + “EVENT INFO” + PRIZE MONEY + баруун талын MS/MD/XD/WS/WD самбар + статус/countdown
+
+ Байхгүй категори, prize, cover-ын fallback цэвэр (саарал градиент, мөр нуух)
+
+ Mobile-д самбар доош шилжиж UI эвдрэхгүй
+
+ API/DB/Server-т ямар ч commit өөрчлөлт байхгүй
