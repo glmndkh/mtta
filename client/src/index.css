@@ -1528,10 +1528,50 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
   animation: live-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* WTT-style card hover animations */
+@keyframes card-glow {
+  0%, 100% {
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  }
+  50% {
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25), 0 10px 15px -3px rgb(34 197 94 / 0.1);
+  }
+}
+
+.wtt-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wtt-card:hover {
+  transform: translateY(-4px);
+  animation: card-glow 2s ease-in-out infinite;
+}
+
+/* Enhanced countdown animations */
+@keyframes countdown-tick {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+    text-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+  }
+}
+
+.countdown-text {
+  animation: countdown-tick 2s ease-in-out infinite;
+}
+
 /* Respect user's motion preferences */
 @media (prefers-reduced-motion: reduce) {
-  .live-badge {
-    animation: none;
+  .live-badge,
+  .wtt-card,
+  .countdown-text {
+    animation: none !important;
+  }
+
+  .wtt-card:hover {
+    transform: none !important;
   }
 }
 
