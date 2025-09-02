@@ -62,30 +62,36 @@ export default function Tournaments() {
   const { toast } = useToast();
 
   // Fetch all tournaments
-  const { data: tournamentsData, isLoading: tournamentsLoading } = useQuery({
-    queryKey: ['/api/events'],
+  const { data: tournaments = [], isLoading: tournamentsLoading } = useQuery({
+    queryKey: ['/api/tournaments'],
     queryFn: async () => {
-      const response = await fetch('/api/events');
+      const response = await fetch('/api/tournaments');
       if (!response.ok) {
-        // Fallback to existing API
-        const fallbackResponse = await fetch('/api/tournaments');
-        if (!fallbackResponse.ok) {
-          throw new Error('Failed to fetch tournaments');
-        }
-        const tournaments = await fallbackResponse.json();
-        return { items: tournaments };
+        throw new Error('Failed to fetch tournaments');
       }
       return response.json();
     },
     staleTime: 30 * 1000,
   });
 
-  const tournaments = tournamentsData?.items || [];
-
   // Sort tournaments by startDate DESC (newest first)
   const sortedTournaments = [...tournaments].sort((a, b) => 
     new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
   );
+
+  // Map tournament data to expected format
+  const mappedTournaments = sortedTournaments.map((tournament: any) => ({
+    ...tournament,
+    city: tournament.city || tournament.location?.split(',')[0]?.trim(),
+    country: tournament.country || 'Mongolia',
+    venue: tournament.venue || tournament.location,
+    categories: tournament.categories || tournament.participationTypes || [],
+    coverUrl: tournament.coverUrl || tournament.backgroundImageUrl,
+    prizePool: tournament.prizePool || (tournament.prizes ? {
+      amount: parseFloat(tournament.prizes.replace(/[^\d.]/g, '')) || 0,
+      currency: 'MNT'
+    } : null)
+  }));
 
   // Helper functions
   const getEventStatus = (tournament: Tournament): 'upcoming' | 'ongoing' | 'past' => {
@@ -170,7 +176,22 @@ export default function Tournaments() {
     const rightColumn = [];
 
     categories.forEach(cat => {
-      const label = categoryLabels[cat as keyof typeof categoryLabels] || cat.toUpperCase();
+      // Handle both database format and display format
+      let label = cat;
+      if (categoryLabels[cat as keyof typeof categoryLabels]) {
+        label = categoryLabels[cat as keyof typeof categoryLabels];
+      } else if (cat.includes('эрэгтэй')) {
+        if (cat.includes('Singles') || cat.includes('дан')) label = 'MS';
+        else if (cat.includes('Doubles') || cat.includes('давхар')) label = 'MD';
+      } else if (cat.includes('эмэгтэй')) {
+        if (cat.includes('Singles') || cat.includes('дан')) label = 'WS';
+        else if (cat.includes('Doubles') || cat.includes('давхар')) label = 'WD';
+      } else if (cat.includes('холимог') || cat.includes('Mixed')) {
+        label = 'XD';
+      } else {
+        label = cat.substring(0, 2).toUpperCase();
+      }
+
       if (['MS', 'MD', 'XD'].includes(label)) {
         leftColumn.push(label);
       } else if (['WS', 'WD'].includes(label)) {
@@ -187,7 +208,7 @@ export default function Tournaments() {
       gtag('event', 'event_card_click', {
         id: tournament.id,
         action: 'info',
-        position: sortedTournaments.indexOf(tournament)
+        position: mappedTournaments.indexOf(tournament)
       });
     }
 
@@ -245,7 +266,7 @@ export default function Tournaments() {
 
         {/* Events Grid */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {sortedTournaments.length === 0 ? (
+          {mappedTournaments.length === 0 ? (
             <div className="text-center py-16">
               <Trophy className="mx-auto h-16 w-16 text-gray-400 mb-4" />
               <h3 className="text-xl font-medium text-gray-900 mb-2">
@@ -257,11 +278,11 @@ export default function Tournaments() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sortedTournaments.map((tournament, index) => {
+              {mappedTournaments.map((tournament, index) => {
                 const status = getEventStatus(tournament);
                 const countdown = getCountdown(tournament);
                 const flag = getCountryFlag(tournament.country);
-                const { leftColumn, rightColumn } = organizeCategories(tournament.categories || tournament.participationTypes || []);
+                const { leftColumn, rightColumn } = organizeCategories(tournament.categories || []);
 
                 return (
                   <Card 
