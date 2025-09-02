@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import PageWithLoading from "@/components/PageWithLoading";
-import { format, differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
+import { format, parseISO, isBefore, isAfter, formatDistanceToNow } from "date-fns";
 import { Link } from "wouter"; // Imported Link for navigation
 
 interface Tournament {
@@ -386,7 +386,7 @@ export default function Tournaments() {
                     <h2 className="text-white font-bold text-3xl leading-tight drop-shadow-lg line-clamp-2">
                       {tournament.name}
                     </h2>
-                    
+
                     {/* Bottom Section */}
                     <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
 
