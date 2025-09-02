@@ -5,10 +5,12 @@ import Navigation from "@/components/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Building, Trophy, Medal, Calendar, Award, ExternalLink } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Users, Building, Trophy, Medal, Calendar, Award, ExternalLink, MapPin, Clock } from "lucide-react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import PageWithLoading from "@/components/PageWithLoading";
+import { format } from "date-fns";
 
 // Type definitions for API responses
 interface SliderItem {
@@ -31,26 +33,58 @@ interface NewsItem {
   authorId: string;
 }
 
+interface Tournament {
+  id: string;
+  name: string;
+  description?: string;
+  startDate: string;
+  endDate: string;
+  location: string;
+  status: string;
+  backgroundImageUrl?: string;
+  participationTypes: string[];
+}
 
+interface TopPlayer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  profileImageUrl?: string;
+  rating?: number;
+  rank?: number;
+  category?: string;
+}
 
 export default function Home() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
-  
+
   // Fetch active sliders
   const { data: sliders = [], isLoading: slidersLoading } = useQuery<SliderItem[]>({
     queryKey: ['/api/sliders'],
     enabled: true,
   });
 
-  // Fetch latest news for ticker
+  // Fetch latest news
   const { data: latestNews = [], isLoading: newsLoading } = useQuery<NewsItem[]>({
     queryKey: ['/api/news/latest'],
     enabled: true,
-    staleTime: 30 * 1000, // 30 seconds for real-time updates
-    gcTime: 2 * 60 * 1000, // 2 minutes in cache
-    refetchOnWindowFocus: true, // Refetch when window gains focus
-    refetchOnMount: true, // Refetch on component mount
+    staleTime: 30 * 1000,
+    gcTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+  });
+
+  // Fetch upcoming tournaments
+  const { data: upcomingTournaments = [], isLoading: tournamentsLoading } = useQuery<Tournament[]>({
+    queryKey: ['/api/tournaments/upcoming'],
+    enabled: true,
+  });
+
+  // Fetch top players
+  const { data: topPlayers = [], isLoading: playersLoading } = useQuery<TopPlayer[]>({
+    queryKey: ['/api/players/top'],
+    enabled: true,
   });
 
   // Fetch active sponsors
@@ -59,76 +93,52 @@ export default function Home() {
     enabled: true,
   });
 
-  // State for current slider index
-  const [currentSlider, setCurrentSlider] = useState(0);
-  
-  // State for current news set index (for showing 3 at a time)
-  const [currentNewsSet, setCurrentNewsSet] = useState(0);
+  const [selectedPlayerCategory, setSelectedPlayerCategory] = useState('all');
 
-  // Auto-rotate sliders every 3 seconds
-  useEffect(() => {
-    if (!sliders || sliders.length <= 1) return;
+  // Helper function to get image URL
+  const getImageUrl = (imageUrl: string): string => {
+    if (!imageUrl) return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI0MCIgdmlld0JveD0iMCAwIDQwMCAyNDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNjAgMTAwSDI0MFYxNDBIMTYwVjEwMFoiIGZpbGw9IiNEMUQ1REIiLz4KPHBhdGggZD0iTTE3NSAxMTVIMjI1VjEyNUgxNzVWMTE1WiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K';
 
-    const interval = setInterval(() => {
-      setCurrentSlider((prev) => (prev + 1) % sliders.length);
-    }, 3000);
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
 
-    return () => clearInterval(interval);
-  }, [sliders]);
+    if (imageUrl.startsWith('data:')) {
+      return imageUrl;
+    }
 
-  // Auto-rotate news sets every 3 seconds
-  useEffect(() => {
-    if (!latestNews || latestNews.length <= 4) return;
+    if (imageUrl.startsWith('/public-objects/')) return imageUrl;
+    if (imageUrl.startsWith('/objects/')) {
+      return imageUrl;
+    }
 
-    const totalSets = Math.ceil(latestNews.length / 4);
-    const interval = setInterval(() => {
-      setCurrentNewsSet((prev) => (prev + 1) % totalSets);
-    }, 3000);
+    if (imageUrl.startsWith('/')) {
+      return `/public-objects${imageUrl}`;
+    }
 
-    return () => clearInterval(interval);
-  }, [latestNews]);
+    return `/public-objects/${imageUrl}`;
+  };
 
-  // Static placeholder SVG to avoid API calls and improve performance
-  const placeholderImageData = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI0MCIgdmlld0JveD0iMCAwIDQwMCAyNDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNjAgMTAwSDI0MFYxNDBIMTYwVjEwMFoiIGZpbGw9IiNEMUQ1REIiLz4KPHBhdGggZD0iTTE3NSAxMTVIMjI1VjEyNUgxNzVWMTE1WiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K';
-
-  // Helper function to strip HTML tags and get plain text
+  // Helper function to strip HTML tags
   const stripHtml = (html: string): string => {
     if (!html) return '';
-    // Create a temporary div to parse HTML
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = html;
     return tempDiv.textContent || tempDiv.innerText || '';
   };
 
-  // Helper function to get image URL from object storage or external URL
-  const getImageUrl = (imageUrl: string): string => {
-    if (!imageUrl) return placeholderImageData;
-    
-    // If it's already a full URL, use it as is
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      return imageUrl;
-    }
-    
-    // Handle base64 data URLs
-    if (imageUrl.startsWith('data:')) {
-      return imageUrl;
-    }
+  // Helper function to get participation type chips
+  const getParticipationChips = (types: string[]) => {
+    const typeMap: Record<string, { label: string; color: string }> = {
+      'singles_men': { label: 'MS', color: 'bg-blue-500' },
+      'singles_women': { label: 'WS', color: 'bg-pink-500' },
+      'doubles_men': { label: 'MD', color: 'bg-green-500' },
+      'doubles_women': { label: 'WD', color: 'bg-purple-500' },
+      'mixed_doubles': { label: 'XD', color: 'bg-orange-500' },
+    };
 
-    // If it's an object storage path (starts with /objects/) or already a public-objects path, use it directly
-    if (imageUrl.startsWith('/public-objects/')) return imageUrl;
-    if (imageUrl.startsWith('/objects/')) {
-      return imageUrl;
-    }
-    
-    // If it's a relative path, assume it's in public objects
-    if (imageUrl.startsWith('/')) {
-      return `/public-objects${imageUrl}`;
-    }
-    
-    return `/public-objects/${imageUrl}`;
+    return types.map(type => typeMap[type] || { label: type.substring(0, 2).toUpperCase(), color: 'bg-gray-500' });
   };
-
-  // Remove the redirect effect - let both authenticated and non-authenticated users see the same page
 
   if (isLoading) {
     return (
@@ -141,132 +151,182 @@ export default function Home() {
     );
   }
 
-  // Show content for both authenticated and non-authenticated users
-
   return (
     <PageWithLoading>
       <div className="min-h-screen">
-      <Navigation />
-      
-      {/* Hero Slider Section */}
-      {!slidersLoading && sliders && sliders.length > 0 && (
-        <div className="w-full">
-          <div className="relative h-[600px] overflow-hidden bg-gradient-to-r from-mtta-green to-green-700">
-            {sliders.map((slider: any, index: number) => (
-              <div
-                key={slider.id}
-                className={`absolute inset-0 transition-opacity duration-1000 ${
-                  index === currentSlider ? 'opacity-100' : 'opacity-0'
-                }`}
-              >
-                <img 
-                  src={getImageUrl(slider.imageUrl)} 
-                  alt={slider.title}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    console.error('Image failed to load:', slider.imageUrl);
-                    console.log('Processed URL:', getImageUrl(slider.imageUrl));
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-                  <div className="text-center text-white max-w-4xl px-6">
-                    <h1 className="text-4xl md:text-6xl font-bold mb-4">
-                      {slider.title}
-                    </h1>
-                    {slider.subtitle && (
-                      <p className="text-xl md:text-2xl mb-6 opacity-90">
-                        {slider.subtitle}
-                      </p>
-                    )}
-                    {slider.description && (
-                      <p className="text-lg mb-8 opacity-80 max-w-2xl mx-auto">
-                        {slider.description}
-                      </p>
-                    )}
-                    {slider.linkUrl && slider.buttonText && (
-                      <a 
-                        href={slider.linkUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 mtta-green text-white px-8 py-3 rounded-lg hover:bg-opacity-90 transition-all duration-200 font-semibold"
-                      >
-                        {slider.buttonText}
-                        <ExternalLink className="h-5 w-5" />
-                      </a>
-                    )}
-                  </div>
+        <Navigation />
+
+        {/* Hero Section */}
+        <section className="relative bg-gradient-to-r from-mtta-green to-green-700 text-white py-20">
+          <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              {/* Left Side - Main Content */}
+              <div className="space-y-8">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                  Монголын Ширээний Теннис — хуваарь, бүртгэл, үр дүн, чансаа нэг дор.
+                </h1>
+
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Link href="/tournaments">
+                    <Button size="lg" className="bg-white text-mtta-green hover:bg-gray-100 font-semibold px-8 py-4 text-lg">
+                      Ойрын тэмцээнүүд
+                    </Button>
+                  </Link>
+                  <Link href="/register">
+                    <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-mtta-green font-semibold px-8 py-4 text-lg">
+                      Бүртгүүлэх
+                    </Button>
+                  </Link>
                 </div>
               </div>
-            ))}
-            
-            {/* Slider Indicators */}
-            {sliders.length > 1 && (
-              <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                {sliders.map((_, index: number) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentSlider(index)}
-                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                      index === currentSlider 
-                        ? 'bg-white scale-125' 
-                        : 'bg-white bg-opacity-50 hover:bg-opacity-75'
-                    }`}
-                    aria-label={`Go to slide ${index + 1}`}
-                  />
+
+              {/* Right Side - Upcoming Tournaments (Desktop) */}
+              <div className="hidden lg:block">
+                {tournamentsLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map(i => (
+                      <Skeleton key={i} className="h-24 w-full bg-white bg-opacity-20" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {upcomingTournaments.slice(0, 3).map((tournament) => (
+                      <Card key={tournament.id} className="bg-white bg-opacity-10 backdrop-blur-sm border-white border-opacity-20">
+                        <CardContent className="p-4">
+                          <div className="flex items-center space-x-4">
+                            {/* Date */}
+                            <div className="text-center min-w-0 flex-shrink-0">
+                              <div className="text-3xl font-bold">
+                                {format(new Date(tournament.startDate), 'd')}
+                              </div>
+                              <div className="text-sm opacity-80">
+                                {format(new Date(tournament.startDate), 'MMM')}
+                              </div>
+                            </div>
+
+                            {/* Tournament Info */}
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-white truncate">{tournament.name}</h3>
+                              <div className="flex items-center text-sm opacity-80 mt-1">
+                                <MapPin className="w-4 h-4 mr-1" />
+                                <span className="truncate">{tournament.location}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Main Content - 4 Blocks */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16">
+
+          {/* 1. Ойрын тэмцээнүүд */}
+          <section>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-3xl font-bold text-gray-900">Ойрын тэмцээнүүд</h2>
+              <Link href="/tournaments">
+                <Button variant="outline" className="flex items-center gap-2">
+                  Бүгдийг харах
+                  <ExternalLink className="w-4 h-4" />
+                </Button>
+              </Link>
+            </div>
+
+            {tournamentsLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5, 6].map(i => (
+                  <Card key={i}>
+                    <CardHeader>
+                      <Skeleton className="h-6 w-3/4" />
+                      <Skeleton className="h-4 w-1/2" />
+                    </CardHeader>
+                    <CardContent>
+                      <Skeleton className="h-4 w-full mb-2" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {upcomingTournaments.slice(0, 6).map((tournament) => (
+                  <Card key={tournament.id} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => window.location.href = `/tournament/${tournament.id}`}>
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <CardTitle className="text-lg line-clamp-2">{tournament.name}</CardTitle>
+                        <Badge className="bg-mtta-green text-white">
+                          {tournament.status === 'registration' ? 'Бүртгэл' : 'Идэвхтэй'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Calendar className="w-4 h-4 mr-1" />
+                        {format(new Date(tournament.startDate), 'yyyy/MM/dd')}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center text-sm text-gray-600 mb-3">
+                        <MapPin className="w-4 h-4 mr-1" />
+                        <span className="truncate">{tournament.location}</span>
+                      </div>
+
+                      {/* Participation Type Chips */}
+                      <div className="flex flex-wrap gap-1">
+                        {getParticipationChips(tournament.participationTypes || []).map((chip, index) => (
+                          <span key={index} className={`${chip.color} text-white text-xs px-2 py-1 rounded font-medium`}>
+                            {chip.label}
+                          </span>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             )}
-          </div>
-        </div>
-      )}
-      
-      {/* Top Stories Section */}
-      {!newsLoading && latestNews && latestNews.length > 0 && (
-        <div className="w-full py-8">
-          <div className="max-w-7xl mx-auto px-4">
-            {/* Section Header */}
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold news-section-title">СҮҮЛИЙН ҮЕИЙН МЭДЭЭ</h2>
-              <button 
-                onClick={() => window.location.href = '/news'}
-                className="text-mtta-green hover:text-green-700 font-medium text-sm flex items-center"
-              >
-                Бүгдийг харах
-                <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
+          </section>
+
+          {/* 2. Шинэ мэдээ */}
+          <section>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-3xl font-bold text-gray-900">Шинэ мэдээ</h2>
+              <Link href="/news">
+                <Button variant="outline" className="flex items-center gap-2">
+                  Бүгдийг харах
+                  <ExternalLink className="w-4 h-4" />
+                </Button>
+              </Link>
             </div>
 
-            {/* News Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {(() => {
-                const startIndex = currentNewsSet * 4;
-                const currentSet = latestNews.slice(startIndex, startIndex + 4);
-                
-                // Ensure we always show 4 items by cycling back to beginning if needed
-                while (currentSet.length < 4 && latestNews.length > 0) {
-                  const remainingNeeded = 4 - currentSet.length;
-                  const additionalItems = latestNews.slice(0, remainingNeeded);
-                  currentSet.push(...additionalItems);
-                }
-                
-                return currentSet.map((news: NewsItem, index: number) => (
-                  <div 
-                    key={`${news.id}-${currentNewsSet}-${index}`}
-                    className="news-card rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow animate-fade-in cursor-pointer"
-                    onClick={() => window.location.href = `/news/${news.id}`}
-                  >
-                    {/* News Image */}
-                    <div className="relative aspect-video bg-gradient-to-br from-blue-600 to-blue-800 overflow-hidden">
+            {newsLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[1, 2, 3, 4].map(i => (
+                  <Card key={i}>
+                    <Skeleton className="aspect-video w-full" />
+                    <CardContent className="p-4">
+                      <Skeleton className="h-4 w-full mb-2" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {latestNews.slice(0, 4).map((news) => (
+                  <Card key={news.id} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => window.location.href = `/news/${news.id}`}>
+                    <div className="aspect-video relative overflow-hidden">
                       {news.imageUrl ? (
-                        <img 
-                          src={getImageUrl(news.imageUrl)} 
+                        <img
+                          src={getImageUrl(news.imageUrl)}
                           alt={news.title}
                           className="w-full h-full object-cover"
                           onError={(e) => {
-                            e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI0MCIgdmlld0JveD0iMCAwIDQwMCAyNDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNjAgMTAwSDI0MFYxNDBIMTYwVjEwMFoiIGZpbGw9IiNEMUQ1REIiLz4KPHBhdGggZD0iTTE3NSAxMTVIMjI1VjEyNUgxNzVWMTE1WiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K';
+                            e.currentTarget.src = getImageUrl('');
                           }}
                         />
                       ) : (
@@ -276,443 +336,127 @@ export default function Home() {
                           </svg>
                         </div>
                       )}
-                      
-                      {/* Category Badge */}
-                      <div className="absolute bottom-3 left-3">
-                        <span className="bg-mtta-green text-white text-xs font-medium px-2 py-1 rounded">
-                          ШУУДАН
-                        </span>
-                      </div>
                     </div>
-
-                    {/* News Content */}
-                    <div className="p-4">
-                      <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-3 mb-2 hover:text-mtta-green transition-colors">
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2 mb-2">
                         {stripHtml(news.title)}
                       </h3>
                       <p className="text-gray-600 text-xs leading-relaxed line-clamp-2">
                         {news.summary ? stripHtml(news.summary) : stripHtml(news.content || '').substring(0, 100) + '...'}
                       </p>
-                    </div>
-                  </div>
-                ));
-              })()}
-            </div>
-          </div>
-        </div>
-      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </section>
 
-      {/* Sponsors Section - Right after news */}
-      {!sponsorsLoading && sponsors && sponsors.length > 0 && (
-        <div className="py-8">
-          <div className="container mx-auto px-4">
-            <div className="relative overflow-hidden">
-              <div className="flex gap-8 animate-scroll-horizontal">
-                {/* Duplicate sponsors to create seamless loop */}
-                {[...sponsors, ...sponsors].map((sponsor, index) => (
-                  <div
-                    key={`${sponsor.id}-${index}`}
-                    className="flex-shrink-0 sponsor-card rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+          {/* 3. Топ тамирчид */}
+          <section>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-3xl font-bold text-gray-900">Топ тамирчид</h2>
+
+              {/* Category Filter Chips */}
+              <div className="flex gap-2">
+                {['all', 'men', 'women', 'junior'].map((category) => (
+                  <Button
+                    key={category}
+                    variant={selectedPlayerCategory === category ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedPlayerCategory(category)}
+                    className={selectedPlayerCategory === category ? 'bg-mtta-green text-white' : ''}
                   >
-                    <div className="flex items-center justify-center h-16 w-32">
-                      {sponsor.logoUrl ? (
-                        <img
-                          src={sponsor.logoUrl}
-                          alt={sponsor.name}
-                          className="max-h-full max-w-full object-contain"
-                        />
-                      ) : (
-                        <div className="text-gray-400 text-center">
-                          <span className="font-medium">{sponsor.name}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                    {category === 'all' ? 'Бүгд' :
+                     category === 'men' ? 'Эрэгтэй' :
+                     category === 'women' ? 'Эмэгтэй' : 'Залуучууд'}
+                  </Button>
                 ))}
               </div>
             </div>
-          </div>
-        </div>
-      )}
-      
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          {isAuthenticated && user ? (
-            <>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Сайн байна уу, {user.firstName} {user.lastName}!
-              </h1>
-              <p className="text-gray-600">
-                MTTA системд тавтай морилно уу. Таны эрх: {
-                  user.role === 'admin' ? 'Админ' :
-                  user.role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч'
-                }
-              </p>
-            </>
-          ) : (
-            <>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                MTTA системд тавтай морилно уу!
-              </h1>
-              <p className="text-gray-600">
-                Монголын Ширээний Теннисний Холбоо - Тоглогчид, тэмцээнүүд, үр дүнгүүд
-              </p>
-            </>
-          )}
-        </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="mtta-green text-white w-12 h-12 rounded-full flex items-center justify-center">
-                  <Users className="h-6 w-6" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">1,250+</p>
-                  <p className="text-gray-600">Тоглогчид</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="mtta-green text-white w-12 h-12 rounded-full flex items-center justify-center">
-                  <Building className="h-6 w-6" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">45+</p>
-                  <p className="text-gray-600">Клубууд</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="mtta-green text-white w-12 h-12 rounded-full flex items-center justify-center">
-                  <Trophy className="h-6 w-6" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">120+</p>
-                  <p className="text-gray-600">Тэмцээнүүд</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="mtta-green text-white w-12 h-12 rounded-full flex items-center justify-center">
-                  <Medal className="h-6 w-6" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">8</p>
-                  <p className="text-gray-600">Лигүүд</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* User-specific content based on authentication and role */}
-        {isAuthenticated && user && user.role === 'admin' ? (
-          <div className="max-w-2xl mx-auto">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-center text-xl">
-                  <Trophy className="mr-3 h-6 w-6 text-mtta-green" />
-                  Тэмцээн удирдах
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <Link href="/admin/generator">
-                    <Button 
-                      className="w-full mtta-green text-white hover:bg-mtta-green-dark py-6 text-lg" 
-                    >
-                      <Trophy className="mr-3 h-5 w-5" />
-                      Тэмцээн үүсгэх
-                    </Button>
-                  </Link>
-                  <Link href="/admin/tournament-results">
-                    <Button 
-                      variant="outline" 
-                      className="w-full border-mtta-green text-mtta-green hover:bg-mtta-green hover:text-white py-6 text-lg" 
-                    >
-                      <Award className="mr-3 h-5 w-5" />
-                      Тэмцээний үр дүн оруулах
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        ) : (
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Main Content for Non-Admin Users */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Active Tournaments */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Trophy className="mr-2 h-5 w-5 text-mtta-green" />
-                    Идэвхтэй Тэмцээнүүд
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-bold text-lg text-gray-900">Өвлийн Аварга Шалгаруулалт</h4>
-                        <Badge className="mtta-green text-white">Идэвхтэй</Badge>
-                      </div>
-                      <p className="text-gray-600 mb-3">Эрэгтэй дан бие • 16-р шаталт</p>
-                      <div className="grid grid-cols-3 gap-2 text-sm">
-                        <div>
-                          <span className="text-gray-500">Огноо:</span>
-                          <p className="font-medium">2024.01.20-25</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Байршил:</span>
-                          <p className="font-medium">МУИС</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Оролцогчид:</span>
-                          <p className="font-medium">32 тоглогч</p>
-                        </div>
-                      </div>
-                      <Button className="w-full mt-4 mtta-green text-white hover:bg-mtta-green-dark">
-                        Дэлгэрэнгүй үзэх
-                      </Button>
-                    </div>
-
-                    <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-bold text-lg text-gray-900">Клубын Лига 2024</h4>
-                        <Badge variant="secondary">Бүлгийн шат</Badge>
-                      </div>
-                      <p className="text-gray-600 mb-3">Эмэгтэй дан бие • Групп А</p>
-                      <div className="grid grid-cols-3 gap-2 text-sm">
-                        <div>
-                          <span className="text-gray-500">Дараагийн тоглолт:</span>
-                          <p className="font-medium">2024.01.18</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Статус:</span>
-                          <p className="font-medium">Бэлэн</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Оноо:</span>
-                          <p className="font-medium">2/3 тоглолт</p>
-                        </div>
-                      </div>
-                      <Button className="w-full mt-4 mtta-green text-white hover:bg-mtta-green-dark">
-                        Дэлгэрэнгүй үзэх
-                      </Button>
-                    </div>
+            {playersLoading ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                  <div key={i} className="text-center">
+                    <Skeleton className="w-16 h-16 rounded-full mx-auto mb-2" />
+                    <Skeleton className="h-4 w-full" />
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Player Actions */}
-              {isAuthenticated && user && user.role === 'player' && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Medal className="mr-2 h-5 w-5 text-mtta-green" />
-                      Тоглогчийн үйлдлүүд
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
-                      <Link href="/dashboard">
-                        <Button 
-                          className="mtta-green text-white hover:bg-mtta-green-dark" 
-                          size="lg"
-                        >
-                          <Medal className="mr-2 h-4 w-4" />
-                          Миний статистик
-                        </Button>
-                      </Link>
-                      <Button variant="outline" size="lg">
-                        <Trophy className="mr-2 h-4 w-4" />
-                        Тэмцээнд бүртгүүлэх
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Club Owner Actions */}
-              {isAuthenticated && user && user.role === 'club_owner' && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Building className="mr-2 h-5 w-5 text-mtta-green" />
-                      Клубын эзний үйлдлүүд
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
-                      <Button className="mtta-green text-white hover:bg-mtta-green-dark" size="lg">
-                        <Building className="mr-2 h-4 w-4" />
-                        Клуб удирдах
-                      </Button>
-                      <Button variant="outline" size="lg">
-                        <Users className="mr-2 h-4 w-4" />
-                        Тоглогч нэмэх
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Score Recorder Actions */}
-              {isAuthenticated && user && user.role === 'score_recorder' && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Award className="mr-2 h-5 w-5 text-mtta-green" />
-                      Оноо бүртгэгчийн үйлдлүүд
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
-                      <Button className="mtta-green text-white hover:bg-mtta-green-dark" size="lg">
-                        <Award className="mr-2 h-4 w-4" />
-                        Оноо бүртгэх
-                      </Button>
-                      <Button variant="outline" size="lg">
-                        <Calendar className="mr-2 h-4 w-4" />
-                        Тоглолтын жагсаалт
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Recent News */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Calendar className="mr-2 h-5 w-5 text-mtta-green" />
-                    Сүүлийн мэдээ
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="border-l-4 border-mtta-green pl-4">
-                      <div className="flex items-center mb-2">
-                        <Badge className="mtta-green text-white mr-2">Онцлох</Badge>
-                        <span className="text-gray-500 text-sm">2024.01.15</span>
-                      </div>
-                      <h4 className="font-bold text-gray-900 mb-1">Өвлийн Аварга Шалгаруулалт</h4>
-                      <p className="text-gray-600 text-sm">МУИС-ийн спортын өргөөнд амжилттай зохион байгуулагдлаа</p>
-                    </div>
-
-                    <div className="border-l-4 border-blue-500 pl-4">
-                      <div className="flex items-center mb-2">
-                        <Badge variant="secondary" className="mr-2">Тэмцээн</Badge>
-                        <span className="text-gray-500 text-sm">2024.01.12</span>
-                      </div>
-                      <h4 className="font-bold text-gray-900 mb-1">Хаврын лигийн бүртгэл</h4>
-                      <p className="text-gray-600 text-sm">2024 оны хаврын лигт оролцох багуудын бүртгэл эхэллээ</p>
-                    </div>
-
-                    <div className="border-l-4 border-yellow-500 pl-4">
-                      <div className="flex items-center mb-2">
-                        <Badge variant="outline" className="mr-2">Мэдээлэл</Badge>
-                        <span className="text-gray-500 text-sm">2024.01.10</span>
-                      </div>
-                      <h4 className="font-bold text-gray-900 mb-1">Гишүүнчлэлийн хөнгөлөлт</h4>
-                      <p className="text-gray-600 text-sm">12 хүртэлх хүүхдүүдэд 20% хөнгөлөлт үзүүлнэ</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* User Profile Card - Only show for authenticated users */}
-              {isAuthenticated && user && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Миний профайл</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center">
-                      {user.profileImageUrl ? (
-                        <img 
-                          src={user.profileImageUrl} 
-                          alt="Profile" 
-                          className="w-16 h-16 rounded-full mx-auto mb-4 object-cover"
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+                {topPlayers.slice(0, 8).map((player) => (
+                  <div key={player.id} className="text-center group cursor-pointer" onClick={() => window.location.href = `/player/${player.id}`}>
+                    <div className="relative mb-3">
+                      {player.profileImageUrl ? (
+                        <img
+                          src={getImageUrl(player.profileImageUrl)}
+                          alt={`${player.firstName} ${player.lastName}`}
+                          className="w-16 h-16 rounded-full mx-auto object-cover group-hover:scale-105 transition-transform"
                         />
                       ) : (
-                        <div className="w-16 h-16 rounded-full bg-mtta-green text-white flex items-center justify-center mx-auto mb-4">
-                          <span className="text-xl font-bold">
-                            {user.firstName?.[0]}{user.lastName?.[0]}
+                        <div className="w-16 h-16 rounded-full bg-mtta-green text-white flex items-center justify-center mx-auto group-hover:scale-105 transition-transform">
+                          <span className="text-lg font-bold">
+                            {player.firstName?.[0]}{player.lastName?.[0]}
                           </span>
                         </div>
                       )}
-                      <h3 className="font-bold text-lg">{user.firstName} {user.lastName}</h3>
-                      <p className="text-gray-600 capitalize">{
-                        user.role === 'admin' ? 'Админ' :
-                        user.role === 'score_recorder' ? 'Оноо бүртгэгч' : 'Хэрэглэгч'
-                      }</p>
-                      <Link href="/profile">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="mt-4"
-                        >
-                          Дэлгэрэнгүй профайл
-                        </Button>
-                      </Link>
+                      {player.rank && player.rank <= 3 && (
+                        <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-yellow-500 text-white text-xs flex items-center justify-center font-bold">
+                          {player.rank}
+                        </div>
+                      )}
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                    <h4 className="font-medium text-sm text-gray-900 group-hover:text-mtta-green transition-colors">
+                      {player.firstName} {player.lastName}
+                    </h4>
+                    {player.rating && (
+                      <p className="text-xs text-gray-600">{player.rating} pts</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
 
-              {/* Guest Actions - Show for non-authenticated users */}
-              {!isAuthenticated && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Системд нэвтрэх</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center space-y-4">
-                      <p className="text-gray-600">
-                        Бүх боломжийг ашиглахын тулд нэвтэрнэ үү
-                      </p>
-                      <div className="space-y-2">
-                        <Link href="/login">
-                          <Button className="w-full mtta-green text-white hover:bg-mtta-green-dark">
-                            Нэвтрэх
-                          </Button>
-                        </Link>
-                        <Link href="/register">
-                          <Button variant="outline" className="w-full border-mtta-green text-mtta-green hover:bg-mtta-green hover:text-white">
-                            Бүртгүүлэх
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+          {/* 4. Ивээн тэтгэгчид */}
+          <section>
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-900">Ивээн тэтгэгчид</h2>
+              <p className="text-gray-600 mt-2">Монголын ширээний теннисийг дэмжигч байгууллагууд</p>
             </div>
-          </div>
-        )}
 
-
+            {sponsorsLoading ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8">
+                {[1, 2, 3, 4, 5, 6].map(i => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
+              </div>
+            ) : sponsors.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8">
+                {sponsors.map((sponsor) => (
+                  <div key={sponsor.id} className="flex items-center justify-center group">
+                    {sponsor.logoUrl ? (
+                      <img
+                        src={getImageUrl(sponsor.logoUrl)}
+                        alt={sponsor.name}
+                        className="max-h-16 max-w-full object-contain filter grayscale hover:grayscale-0 transition-all duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="text-gray-400 text-center p-4 border-2 border-dashed border-gray-200 rounded-lg group-hover:border-mtta-green transition-colors">
+                        <span className="font-medium text-sm">{sponsor.name}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Building className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">Удахгүй ивээн тэтгэгчдийн мэдээлэл нэмэгдэх болно</p>
+              </div>
+            )}
+          </section>
         </div>
       </div>
     </PageWithLoading>
