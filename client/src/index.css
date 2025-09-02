@@ -1562,15 +1562,42 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
   animation: countdown-tick 2s ease-in-out infinite;
 }
 
+/* LIVE pulse animation */
+@keyframes live-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.live-pulse {
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+/* Text truncation utilities */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* Respect user's motion preferences */
 @media (prefers-reduced-motion: reduce) {
   .live-badge,
   .wtt-card,
-  .countdown-text {
+  .countdown-text,
+  .live-pulse {
     animation: none !important;
   }
 
   .wtt-card:hover {
+    transform: none !important;
+  }
+
+  .group:hover img {
     transform: none !important;
   }
 }
