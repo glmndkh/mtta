@@ -1,0 +1,136 @@
+Тэмцээнүүд (WTT-стайл) UI/UX-г хэрэгжүүл”
+
+Зорилго: /events хуудсыг WTT Events List шиг харагдах/ажиллах болго. Карт бүрт prize pool, тэмцээний нэр, админаас өгсөн background зураг, series/type чипс, эхлэх хүртэлх countdown (эсвэл LIVE/Finished) заавал байна.
+
+Орц ба дата
+
+Тэмцээний талбарууд:
+id, name, city, country, venue, startDate, endDate, timezone, series, categories[MS/WS/MD/WD/XD], coverUrl, prizePool{amount,currency}
+
+API шаардлага:
+GET /api/events?status=upcoming|ongoing|past&month=YYYY-MM&series=a,b&region=asia&search=...&cursor=...
+→ { items: EventItem[], nextCursor?: string }
+
+Хийх даалгавар
+
+Статус табууд (дээр): Upcoming · Ongoing · Past
+
+Сонгосон таб нь URL query-д status= хадгалагдана.
+
+Sticky шүүлтүүр мөр:
+
+Month scroller: month=YYYY-MM-г 5 сар (−2…+2) тойруулан сонгох.
+
+Series чипс: grand_smash, champions, star_contender, contender, feeder, youth, para (олон сонголттой, URL-д series= жагсаалтаар).
+
+Хайлт: нэр/хот/улсаар filter (150ms debounce).
+
+Картын UI (WTT мэдрэмж):
+
+Background: coverUrl дээр харанхуй градиент overlay → текст уншигддаг.
+
+Зүүн дээд: series badge (өнгөт чипс).
+
+Баруун дээд: 🏆 Prize pool (байвал) — валют форматтай (MNT бол бутархайгүй).
+
+Доод зүүн: том шрифттай нэр, доор нь огноо (MMM DD – MMM DD) + байршил; categories чипс (MS/WS/MD/WD/XD).
+
+Доод баруун: Countdown
+
+upcoming: “Starts in {d}d {h}h {m}m”
+
+ongoing: LIVE (pulse) + “{h}h {m}m to end”
+
+past: “Finished”
+
+Картын доод action bar:
+
+Зүүн: “Дэлгэрэнгүй →”
+
+Баруун:
+
+upcoming: “Бүртгүүлэх” (primary)
+
+ongoing/past: “Үр дүн”
+
+Ачаалалт/илүү их үзэх:
+
+Эхний 12 карт → “Load more” эсвэл infinite scroll (nextCursor ашигла).
+
+Skeleton (shimmer) таны өмнөх загвартай ижил.
+
+URL state & back/forward:
+
+Бүх filter/таб/сар сонголт URL query-д хадгалагдана; буцах/урагш явбал утга сэргээнэ.
+
+Time zone & статус тооцоо:
+
+status серверээс ирэхгүй бол client талд startDate/endDate + timezone-оор тооц.
+
+Accessibility & perf:
+
+Контраст ≥ 4.5:1; keyboard focus ring.
+
+Зургууд lazy; карт бүрийн бүхэлд нь clickable (accessibility label-тай).
+
+Motion reduce үед LIVE pulse багасгана.
+
+GA4 эвентууд:
+
+events_filter_change {status, month, series}
+
+event_card_click {id, action: "details|register|results", position}
+
+events_load_more {count}
+
+Микрокопи (MN)
+
+Tabs: Upcoming · Ongoing · Past
+
+Карт action: Дэлгэрэнгүй →, Бүртгүүлэх, Үр дүн
+
+Countdown: “Starts in {d}d {h}h {m}m”, “Finished”, LIVE
+
+Empty state: “Энэ сонголтоор тэмцээн алга. Шүүлтүүрээ өөрчлөөд дахин оролдоно уу.”
+
+Acceptance Criteria (DoD)
+
+ /events дээр статус табууд, sticky filter мөр ажиллаж, URL query-тай синк.
+
+ Карт бүр cover image + series badge + prize pool + categories + countdown-той.
+
+ Upcoming үед “Бүртгүүлэх”, Ongoing/Past үед “Үр дүн” товч гарна.
+
+ Month scroller 5-сонголттой (−2…+2), дараагийн/өмнөх сумтай.
+
+ Series chips олон сонголттой; сонгосон чипсүүд highlight; “Clear” боломжтой.
+
+ 12+ тэмцээнд “Load more” ажиллана (эсвэл infinite scroll).
+
+ Skeleton/Empty/Error төлөвүүд бүрэн.
+
+ Lighthouse (desktop): Perf ≥ 85, A11y ≥ 90, Best ≥ 90, SEO ≥ 90.
+
+ GA4 эвентүүд Realtime-д ирж байна.
+
+Тест кейсүүд
+
+No image: coverUrl хоосон → саарал gradient fallback.
+
+No prize: prizePool байхгүй → 🏆 badge нуудна.
+
+Timezone: Asia/Ulaanbaatar → countdown зөв; ongoing/past зөв солигдоно.
+
+Long name: урт нэр truncation + title tooltip.
+
+Mobile (360px): 1 багана, картууд эвдрэлгүй; sticky filter мөр овоолтгүй.
+
+Гаргах зүйлс
+
+/events хуудасны UI/UX (компонентууд, state менежмент, ачаалалт)
+
+API дуудлага /api/events-тэй холболт (хэрэв API бэлэн биш бол mock → дараа солихоор abstraction-тэй)
+
+GA4 эвентүүд
+
+Богино README: query params ба component props тайлбар
