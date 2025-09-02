@@ -172,8 +172,8 @@ export default function Tournaments() {
   };
 
   const organizeCategories = (categories: string[]) => {
-    const leftColumn = [];
-    const rightColumn = [];
+    const leftColumn: string[] = [];
+    const rightColumn: string[] = [];
 
     categories.forEach(cat => {
       // Handle both database format and display format
@@ -204,8 +204,9 @@ export default function Tournaments() {
 
   const handleEventInfoClick = (tournament: Tournament) => {
     // GA4 event
-    if (typeof gtag !== 'undefined') {
-      gtag('event', 'event_card_click', {
+    // Track event click if gtag is available
+    if (typeof window !== 'undefined' && 'gtag' in window) {
+      (window as any).gtag('event', 'event_card_click', {
         id: tournament.id,
         action: 'info',
         position: mappedTournaments.indexOf(tournament)
@@ -217,8 +218,8 @@ export default function Tournaments() {
 
   // GA4 page view
   useEffect(() => {
-    if (typeof gtag !== 'undefined') {
-      gtag('event', 'events_page_view');
+    if (typeof window !== 'undefined' && 'gtag' in window) {
+      (window as any).gtag('event', 'events_page_view');
     }
   }, []);
 

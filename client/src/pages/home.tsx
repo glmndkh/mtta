@@ -279,6 +279,7 @@ export default function Home() {
               </div>
             </div>
           </div>
+        </div>
         </section>
 
         {/* Main Content - 4 Blocks */}
