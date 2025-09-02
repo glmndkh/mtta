@@ -161,24 +161,13 @@ export const ClubCard: React.FC<ClubCardProps> = ({ club, onDetailClick }) => {
               </span>
             </div>
 
-            <button
+            <Button
+              size="sm"
+              className="bg-primary hover:bg-primary/90 text-white text-xs font-medium px-4 py-2 h-auto min-w-fit whitespace-nowrap"
               onClick={() => onDetailClick(club)}
-              className="px-4 py-2 text-sm font-bold rounded-lg transition-all duration-300 hover:scale-105 active:scale-95"
-              style={{
-                backgroundColor: tokens.colors.primary,
-                color: tokens.colors.card,
-                minHeight: tokens.minTouchTarget,
-                boxShadow: `0 4px 12px ${tokens.colors.primary}40`
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = tokens.colors.primaryHover;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = tokens.colors.primary;
-              }}
             >
               Дэлгэрэнгүй
-            </button>
+            </Button>
           </div>
         </div>
       </div>

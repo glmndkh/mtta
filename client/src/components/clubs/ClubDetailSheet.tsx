@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { X, Phone, Mail, MapPin, Clock, GraduationCap, Wrench, Star } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../ui/sheet';
@@ -271,11 +270,10 @@ export const ClubDetailSheet: React.FC<ClubDetailSheetProps> = ({
           <Button
             onClick={handleCall}
             disabled={!club.phone}
-            className="w-full"
+            className="w-full py-3 text-sm min-h-[44px]"
             style={{
               backgroundColor: tokens.colors.primary,
               color: tokens.colors.bg,
-              minHeight: tokens.minTouchTarget,
               borderRadius: tokens.radius
             }}
           >
