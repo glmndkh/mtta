@@ -17,6 +17,7 @@ import {
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
+import RichTextEditor from '../components/rich-text-editor';
 import { Label } from '../components/ui/label';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
@@ -761,12 +762,11 @@ export default function News() {
 
                     <div>
                       <Label htmlFor="content">Агуулга *</Label>
-                      <Textarea
-                        id="content"
-                        {...form.register('content')}
+                      <RichTextEditor
+                        content={form.watch('content')}
+                        onChange={(value) => form.setValue('content', value)}
                         placeholder="Мэдээний бүрэн агуулга"
-                        rows={6}
-                        aria-describedby="content-error"
+                        className="mt-2"
                       />
                       {form.formState.errors.content && (
                         <p id="content-error" className="text-sm text-red-600 mt-1" role="alert">
@@ -990,12 +990,11 @@ export default function News() {
 
             <div>
               <Label htmlFor="edit-content">Агуулга *</Label>
-              <Textarea
-                id="edit-content"
-                {...form.register('content')}
+              <RichTextEditor
+                content={form.watch('content')}
+                onChange={(value) => form.setValue('content', value)}
                 placeholder="Мэдээний бүрэн агуулга"
-                rows={6}
-                aria-describedby="edit-content-error"
+                className="mt-2"
               />
               {form.formState.errors.content && (
                 <p id="edit-content-error" className="text-sm text-red-600 mt-1" role="alert">
