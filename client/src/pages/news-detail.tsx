@@ -338,6 +338,11 @@ export default function NewsDetail() {
                           // Try with objects prefix
                           const cleanPath = article.imageUrl.replace(/^\/+/, '').replace(/^objects\//, '');
                           target.src = `/public-objects/objects/${cleanPath}`;
+                        } else if (!target.hasAttribute('data-fallback-3-tried')) {
+                          target.setAttribute('data-fallback-3-tried', 'true');
+                          // Final attempt using legacy objects endpoint
+                          const cleanPath = article.imageUrl.replace(/^\/+/, '').replace(/^objects\//, '');
+                          target.src = `/objects/${cleanPath}`;
                         } else {
                           // Final fallback to placeholder
                           target.style.display = 'none';
