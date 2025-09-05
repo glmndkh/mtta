@@ -29,8 +29,21 @@ export function getImageUrl(imageUrl: string): string {
     return imageUrl;
   }
 
-  // Handle external URLs
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+  // Convert Google Cloud Storage URLs to our objects endpoint
+  if (imageUrl.startsWith('https://storage.googleapis.com/')) {
+    console.log("getImageUrl: GCS URL detected, converting to object path");
+    try {
+      const url = new URL(imageUrl);
+      // Remove the bucket name from the path
+      const parts = url.pathname.split('/').filter(Boolean);
+      parts.shift(); // bucket
+      imageUrl = parts.join('/');
+    } catch (e) {
+      console.error("getImageUrl: Failed to parse GCS URL", e);
+      return placeholderImageData;
+    }
+  } else if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    // Handle other external URLs
     console.log("getImageUrl: External URL detected, returning as-is");
     return imageUrl;
   }
