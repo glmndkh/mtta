@@ -23,6 +23,7 @@ export function getImageUrl(imageUrl: string): string {
 
   console.log("getImageUrl: Processing URL:", imageUrl);
 
+
   // Handle data URLs (base64 encoded images)
   if (imageUrl.startsWith('data:')) {
     console.log("getImageUrl: Data URL detected, returning as-is");
@@ -47,6 +48,11 @@ export function getImageUrl(imageUrl: string): string {
     console.log("getImageUrl: External URL detected, returning as-is");
     return imageUrl;
   }
+
+  // Fix duplicate path segments that may appear in stored URLs
+  imageUrl = imageUrl
+    .replace(/\/public-objects\/public-objects\//g, '/public-objects/')
+    .replace(/\/objects\/objects\//g, '/objects/');
 
   // Clean up the path - remove leading slashes and normalize
   let cleanUrl = imageUrl.replace(/^\/+/, '');
