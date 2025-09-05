@@ -60,6 +60,7 @@ interface TopPlayer {
 export default function Home() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   // Fetch active sliders
   const { data: sliders = [], isLoading: slidersLoading } = useQuery<SliderItem[]>({
@@ -96,6 +97,17 @@ export default function Home() {
   });
 
   const [selectedPlayerCategory, setSelectedPlayerCategory] = useState('all');
+
+  // Auto-play slider
+  useEffect(() => {
+    if (sliders.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % sliders.length);
+    }, 5000); // Change slide every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [sliders.length]);
 
   // Helper function to get image URL
   const getImageUrl = (imageUrl: string): string => {
@@ -169,11 +181,16 @@ export default function Home() {
               </div>
             </div>
           ) : sliders.length > 0 ? (
-            <div className="relative">
-              {sliders.map((slide, index) => (
-                <div key={slide.id} className={`relative ${index === 0 ? 'block' : 'hidden'}`}>
+            <div className="relative w-full h-96 overflow-hidden">
+              {/* Slides */}
+              <div 
+                className="flex transition-transform duration-500 ease-in-out h-full"
+                style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+              >
+                {sliders.map((slide, index) => (
                   <div 
-                    className="h-96 bg-cover bg-center relative"
+                    key={slide.id}
+                    className="w-full flex-shrink-0 bg-cover bg-center relative"
                     style={{
                       backgroundImage: slide.imageUrl 
                         ? `url(${getImageUrl(slide.imageUrl)})` 
@@ -182,7 +199,7 @@ export default function Home() {
                   >
                     <div className="absolute inset-0 bg-black bg-opacity-40"></div>
                     <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center">
-                      <div className="text-white space-y-4">
+                      <div className="text-white space-y-4 animate-fade-in">
                         <h1 className="text-4xl md:text-6xl font-bold">{slide.title}</h1>
                         {slide.description && (
                           <p className="text-xl md:text-2xl text-gray-200">{slide.description}</p>
@@ -197,8 +214,47 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
+                ))}
+              </div>
+
+              {/* Navigation arrows */}
+              {sliders.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setCurrentSlide((prev) => (prev - 1 + sliders.length) % sliders.length)}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-mtta-green p-2 rounded-full transition-all duration-200 hover:scale-110"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setCurrentSlide((prev) => (prev + 1) % sliders.length)}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-mtta-green p-2 rounded-full transition-all duration-200 hover:scale-110"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </>
+              )}
+
+              {/* Dots indicator */}
+              {sliders.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                  {sliders.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentSlide(index)}
+                      className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                        index === currentSlide 
+                          ? 'bg-white scale-110' 
+                          : 'bg-white bg-opacity-50 hover:bg-opacity-80'
+                      }`}
+                    />
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           ) : (
             <div className="bg-gradient-to-r from-mtta-green to-green-700 text-white py-20">
