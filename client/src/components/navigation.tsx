@@ -192,6 +192,12 @@ export default function Navigation() {
                         <span>{t('nav.admin')}</span>
                       </div>
                     </Link>
+                    <Link href="/admin/national-team">
+                      <div className="nav-link flex items-center space-x-2 px-3 py-2 cursor-pointer">
+                        <Users className="h-4 w-4" />
+                        <span>{t('nav.nationalTeam')}</span>
+                      </div>
+                    </Link>
                     <Link href="/profile">
                       <div className="nav-link flex items-center space-x-2 px-3 py-2 cursor-pointer">
                         <User className="h-4 w-4" />
@@ -378,6 +384,15 @@ export default function Navigation() {
                         >
                           <User className="h-4 w-4 mr-3" />
                           <span>{t('nav.admin')}</span>
+                        </div>
+                      </Link>
+                      <Link href="/admin/national-team">
+                        <div
+                          onClick={() => setShowMobileMenu(false)}
+                          className="flex items-center text-white p-3 rounded hover:bg-gray-700"
+                        >
+                          <Users className="h-4 w-4 mr-3" />
+                          <span>{t('nav.nationalTeam')}</span>
                         </div>
                       </Link>
                       <Link href="/admin/generator">
