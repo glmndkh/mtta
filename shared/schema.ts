@@ -423,6 +423,16 @@ export const pastChampions = pgTable("past_champions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// National team players table
+export const nationalTeamPlayers = pgTable("national_team_players", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  firstName: varchar("first_name").notNull(),
+  lastName: varchar("last_name").notNull(),
+  age: integer("age"),
+  imageUrl: varchar("image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   player: one(players, {
@@ -592,6 +602,11 @@ export const insertChampionSchema = createInsertSchema(pastChampions).omit({
   championType: z.enum(["өсвөрийн", "ахмадын", "улсын"]).optional(),
 });
 
+export const insertNationalTeamPlayerSchema = createInsertSchema(nationalTeamPlayers).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertMembershipSchema = createInsertSchema(memberships).omit({
   id: true,
   createdAt: true,
@@ -643,6 +658,8 @@ export type InsertClubCoach = z.infer<typeof insertClubCoachSchema>;
 export type ClubCoach = typeof clubCoaches.$inferSelect;
 export type InsertChampion = z.infer<typeof insertChampionSchema>;
 export type Champion = typeof pastChampions.$inferSelect;
+export type InsertNationalTeamPlayer = z.infer<typeof insertNationalTeamPlayerSchema>;
+export type NationalTeamPlayer = typeof nationalTeamPlayers.$inferSelect;
 export type TournamentParticipant = typeof tournamentParticipants.$inferSelect;
 export type InsertTournamentParticipant = typeof tournamentParticipants.$inferInsert;
 export type TournamentResults = typeof tournamentResults.$inferSelect;
