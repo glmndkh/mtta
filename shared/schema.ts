@@ -369,6 +369,16 @@ export const federationMembers = pgTable("federation_members", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// National team players table
+export const nationalTeamPlayers = pgTable("national_team_players", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  firstName: varchar("first_name").notNull(),
+  lastName: varchar("last_name").notNull(),
+  age: integer("age"),
+  imageUrl: varchar("image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Judge type enum
 export const judgeTypeEnum = pgEnum("judge_type", ["domestic", "international"]);
 
@@ -550,6 +560,11 @@ export const insertFederationMemberSchema = createInsertSchema(federationMembers
   createdAt: true,
 });
 
+export const insertNationalTeamPlayerSchema = createInsertSchema(nationalTeamPlayers).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertJudgeSchema = createInsertSchema(judges).omit({
   id: true,
   createdAt: true,
@@ -620,6 +635,8 @@ export type InsertBranch = z.infer<typeof insertBranchSchema>;
 export type Branch = typeof branches.$inferSelect;
 export type InsertFederationMember = z.infer<typeof insertFederationMemberSchema>;
 export type FederationMember = typeof federationMembers.$inferSelect;
+export type InsertNationalTeamPlayer = z.infer<typeof insertNationalTeamPlayerSchema>;
+export type NationalTeamPlayer = typeof nationalTeamPlayers.$inferSelect;
 export type InsertJudge = z.infer<typeof insertJudgeSchema>;
 export type Judge = typeof judges.$inferSelect;
 export type InsertClubCoach = z.infer<typeof insertClubCoachSchema>;
