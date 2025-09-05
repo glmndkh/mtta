@@ -12,9 +12,12 @@ export const placeholderImageData =
 /**
  * Normalizes an object storage path into a publicly served URL.
  *
- * All uploaded images are stored in object storage and are exposed through the
- * `/public-objects/` endpoint. This helper converts whatever form the path is in
- * into a browser friendly URL that points at that endpoint.
+ * All uploaded images are stored in object storage and are historically served
+ * through the legacy `/objects/` endpoint. Recently the project added a
+ * `/public-objects/` endpoint, but some environments haven't configured it
+ * properly which results in broken images. To keep images working across both
+ * setups this helper now prefers the `/objects/` path while still attempting to
+ * clean up any provided URLs.
  */
 export function getImageUrl(imageUrl: string): string {
   if (!imageUrl?.trim()) {
@@ -59,34 +62,34 @@ export function getImageUrl(imageUrl: string): string {
   let cleanUrl = imageUrl.replace(/^\/+/, '');
   console.log("getImageUrl: Cleaned URL:", cleanUrl);
 
-  // Normalize known object storage paths to the publicly served endpoint
+  // Prefer serving through the legacy /objects/ endpoint which works in all environments
   if (cleanUrl.startsWith('objects/')) {
-    const publicPath = `/public-objects/${cleanUrl.replace(/^objects\//, '')}`;
-    console.log("getImageUrl: Object storage path:", publicPath);
-    return publicPath;
+    const objectPath = `/objects/${cleanUrl.replace(/^objects\//, '')}`;
+    console.log('getImageUrl: Object storage path:', objectPath);
+    return objectPath;
   }
 
-  // Already a public objects path
+  // Convert already-public paths back to the objects endpoint
   if (cleanUrl.startsWith('public-objects/')) {
-    const publicPath = `/${cleanUrl}`;
-    console.log("getImageUrl: Public object path:", publicPath);
-    return publicPath;
+    const objectPath = `/objects/${cleanUrl.replace(/^public-objects\//, '')}`;
+    console.log('getImageUrl: Converting public object path to objects path:', objectPath);
+    return objectPath;
   }
 
-  // Paths beginning with uploads/ should also point to public objects
+  // Paths beginning with uploads/ should also point to objects
   if (cleanUrl.startsWith('uploads/')) {
-    const publicPath = `/public-objects/${cleanUrl}`;
-    console.log("getImageUrl: Converting uploads path to public objects:", publicPath);
-    return publicPath;
+    const objectPath = `/objects/${cleanUrl}`;
+    console.log('getImageUrl: Converting uploads path to objects path:', objectPath);
+    return objectPath;
   }
 
-  // For other relative paths, default to public objects
+  // For other relative paths, default to /objects/
   if (!cleanUrl.startsWith('/')) {
-    const publicPath = `/public-objects/${cleanUrl}`;
-    console.log("getImageUrl: Treating as public object path:", publicPath);
-    return publicPath;
+    const objectPath = `/objects/${cleanUrl}`;
+    console.log('getImageUrl: Defaulting to objects path:', objectPath);
+    return objectPath;
   }
 
-  console.log("getImageUrl: Final URL:", cleanUrl);
+  console.log('getImageUrl: Final URL:', cleanUrl);
   return cleanUrl;
 }
