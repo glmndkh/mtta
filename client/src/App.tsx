@@ -38,6 +38,7 @@ import HistoryTimelinePage from './pages/history-timeline';
 import { useAuth } from "@/hooks/useAuth";
 import AdminPlayerDetailsPage from "@/pages/admin-player-details"; // Import the new page
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import EventDetail from "@/pages/event-detail";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -63,6 +64,7 @@ function Router() {
       <Route path="/news/:id" component={NewsDetail} />
       <Route path="/news" component={News} />
       <Route path="/about" component={AboutPage} />
+      <Route path="/events/:id" component={EventDetail} />
 
       <Route path="/" component={Home} />
       {!isLoading && isAuthenticated && (
