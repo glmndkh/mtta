@@ -65,11 +65,11 @@ export function getImageUrl(imageUrl: string): string {
     return objectPath;
   }
 
-  // Handle paths that already have public-objects prefix - convert to objects
+  // Handle paths that already have public-objects prefix - serve as-is for public access
   if (cleanUrl.startsWith('public-objects/')) {
-    const objectPath = cleanUrl.replace('public-objects/', 'objects/');
-    console.log("getImageUrl: Converting public-objects to objects:", `/${objectPath}`);
-    return `/${objectPath}`;
+    const publicPath = `/${cleanUrl}`;
+    console.log("getImageUrl: Public object path:", publicPath);
+    return publicPath;
   }
 
   // For paths starting with uploads/, assume they are object storage uploads
