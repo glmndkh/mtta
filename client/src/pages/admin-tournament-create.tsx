@@ -49,7 +49,7 @@ export default function AdminTournamentCreate() {
   const { user, isAuthenticated, isLoading } = useAuth() as any;
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const [ageCategory, setAgeCategory] = useState("");
   const [gender, setGender] = useState("male");
   const [participationCategories, setParticipationCategories] = useState<string[]>([]);
@@ -674,7 +674,7 @@ export default function AdminTournamentCreate() {
                           <Award className="h-4 w-4 text-mtta-green" />
                           <Label className="text-sm font-medium">Зэрэглэлийн хязгаарлалт</Label>
                         </div>
-                        
+
                         <div className="grid grid-cols-2 gap-4">
                           <FormField
                             control={form.control}
@@ -728,7 +728,7 @@ export default function AdminTournamentCreate() {
                             )}
                           />
                         </div>
-                        
+
                         <p className="text-xs text-gray-500">
                           Зэрэглэлийн хязгаарлалт тавбал зөвхөн тохирох зэрэгтэй тамирчид тэмцээнд оролцох боломжтой
                         </p>
