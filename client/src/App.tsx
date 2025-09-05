@@ -11,7 +11,6 @@ import Login from "@/pages/login";
 import Register from "@/pages/register";
 import PlayerDashboard from "@/pages/player-dashboard";
 import TournamentsPage from '@/pages/tournaments';
-import ResultsRankingsPage from '@/pages/results-rankings';
 import Clubs from "@/pages/clubs";
 import Leagues from "@/pages/leagues";
 import LeagueDetails from "@/pages/league-details";
@@ -53,7 +52,6 @@ function Router() {
       <Route path="/tournament/:id/full" component={TournamentFullInfo} />
       <Route path="/player/:id" component={PlayerProfilePage} />
       <Route path="/tournaments" component={TournamentsPage} />
-      <Route path="/results" component={ResultsRankingsPage} />
       <Route path="/clubs" component={Clubs} />
       <Route path="/leagues" component={Leagues} />
       <Route path="/leagues/:id" component={LeagueDetails} />

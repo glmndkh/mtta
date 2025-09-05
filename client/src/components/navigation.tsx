@@ -86,7 +86,6 @@ export default function Navigation() {
     { href: "/tournaments", label: t('nav.tournaments'), icon: Trophy },
     { href: "/clubs", label: t('nav.clubs'), icon: Building },
     { href: "/news", label: t('nav.news'), icon: Newspaper },
-    { href: "/results", label: t('nav.results'), icon: Medal } // Added Results/Rankings link
   ];
 
   // Drawer animation classes
