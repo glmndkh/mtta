@@ -22,17 +22,7 @@ interface Tournament {
 
 export default function AdminTournaments() {
   const { data: tournaments = [], isLoading } = useQuery<Tournament[]>({
-    queryKey: ['/api/admin/tournaments'],
-    queryFn: async () => {
-      console.log("[Frontend] Fetching admin tournaments...");
-      const response = await fetch('/api/admin/tournaments');
-      if (!response.ok) {
-        throw new Error('Failed to fetch tournaments');
-      }
-      const data = await response.json();
-      console.log(`[Frontend] Received ${data.length} tournaments:`, data);
-      return data;
-    }
+    queryKey: ['/api/tournaments'],
   });
 
   const formatDate = (dateString: string) => {

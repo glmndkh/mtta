@@ -40,7 +40,6 @@ import { useAuth } from "@/hooks/useAuth";
 import AdminPlayerDetailsPage from "@/pages/admin-player-details"; // Import the new page
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import EventDetail from "@/pages/EventDetail";
-import AdminNationalTeamPage from "@/pages/admin-national-team";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -84,7 +83,6 @@ function Router() {
           <Route path="/admin/tournament/:id/results/:type" component={AdminTournamentResultsPage} />
           <Route path="/admin/tournaments" component={AdminTournaments} />
           <Route path="/admin/league/:id/manage" component={TournamentManagement} />
-          <Route path="/admin/national-team" component={AdminNationalTeamPage} />
           <Route path="/admin/generator" component={AdminTournamentGenerator} />
           <Route path="/admin/tournament-create" component={AdminTournamentGenerator} />
           <Route path="/excel-tournament-demo" component={ExcelTournamentDemo} />

@@ -224,15 +224,9 @@ export default function AdminTournamentGenerator() {
       };
 
       if (isEditing && editingId) {
-        await apiRequest(`/api/admin/tournaments/${editingId}`, {
-          method: "PUT",
-          body: JSON.stringify(payload),
-        });
+        await apiRequest("PUT", `/api/admin/tournaments/${editingId}`, payload);
       } else {
-        await apiRequest("/api/tournaments", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
+        await apiRequest("POST", "/api/tournaments", payload);
       }
     },
     onSuccess: () => {

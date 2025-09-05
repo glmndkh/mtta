@@ -19,7 +19,6 @@ import {
   judges,
   clubCoaches,
   pastChampions,
-  nationalTeamPlayers,
   tournamentTeams,
   tournamentTeamPlayers,
   leagueMatches,
@@ -51,8 +50,6 @@ import {
   type InsertSponsor,
   type Champion,
   type InsertChampion,
-  type NationalTeamPlayer,
-  type InsertNationalTeamPlayer,
   type Branch,
   type InsertBranch,
   type FederationMember,
@@ -192,12 +189,6 @@ export interface IStorage {
   createChampion(champion: InsertChampion): Promise<Champion>;
   updateChampion(id: string, champion: Partial<InsertChampion>): Promise<Champion | undefined>;
   deleteChampion(id: string): Promise<boolean>;
-
-  // National team player operations
-  getAllNationalTeamPlayers(): Promise<NationalTeamPlayer[]>;
-  createNationalTeamPlayer(player: InsertNationalTeamPlayer): Promise<NationalTeamPlayer>;
-  updateNationalTeamPlayer(id: string, player: Partial<InsertNationalTeamPlayer>): Promise<NationalTeamPlayer | undefined>;
-  deleteNationalTeamPlayer(id: string): Promise<boolean>;
 
   // Federation member operations
   getAllFederationMembers(): Promise<FederationMember[]>;
@@ -762,13 +753,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTournaments(): Promise<Tournament[]> {
-    console.log("[Storage] Getting all tournaments from database...");
-    const result = await db
+    return await db
       .select()
       .from(tournaments)
       .orderBy(desc(tournaments.createdAt));
-    console.log(`[Storage] Retrieved ${result.length} tournaments from database`);
-    return result;
   }
 
   async updateTournament(id: string, tournamentData: Partial<InsertTournament>): Promise<Tournament | undefined> {
@@ -1202,45 +1190,6 @@ export class DatabaseStorage implements IStorage {
 
   async deleteChampion(id: string): Promise<boolean> {
     const result = await db.delete(pastChampions).where(eq(pastChampions.id, id));
-    return (result.rowCount || 0) > 0;
-  }
-
-  // National team player operations
-  async getAllNationalTeamPlayers(): Promise<NationalTeamPlayer[]> {
-    return await db
-      .select()
-      .from(nationalTeamPlayers)
-      .orderBy(nationalTeamPlayers.createdAt);
-  }
-
-  async createNationalTeamPlayer(
-    playerData: InsertNationalTeamPlayer,
-  ): Promise<NationalTeamPlayer> {
-    const { randomUUID } = await import('crypto');
-    const now = new Date();
-    const [player] = await db
-      .insert(nationalTeamPlayers)
-      .values({ ...playerData, id: randomUUID(), createdAt: now })
-      .returning();
-    return player;
-  }
-
-  async updateNationalTeamPlayer(
-    id: string,
-    playerData: Partial<InsertNationalTeamPlayer>,
-  ): Promise<NationalTeamPlayer | undefined> {
-    const [player] = await db
-      .update(nationalTeamPlayers)
-      .set(playerData)
-      .where(eq(nationalTeamPlayers.id, id))
-      .returning();
-    return player;
-  }
-
-  async deleteNationalTeamPlayer(id: string): Promise<boolean> {
-    const result = await db
-      .delete(nationalTeamPlayers)
-      .where(eq(nationalTeamPlayers.id, id));
     return (result.rowCount || 0) > 0;
   }
 

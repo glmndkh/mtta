@@ -22,7 +22,6 @@ import {
   insertJudgeSchema,
   insertClubCoachSchema,
   insertChampionSchema,
-  insertNationalTeamPlayerSchema,
 } from "@shared/schema";
 
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
@@ -799,18 +798,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/national-team", async (_req, res) => {
-    try {
-      const players = await storage.getAllNationalTeamPlayers();
-      res.json(players);
-    } catch (e) {
-      console.error("Error fetching national team players:", e);
-      res
-        .status(500)
-        .json({ message: "Шигшээ багийн тоглогчид авахад алдаа гарлаа" });
-    }
-  });
-
   app.get("/api/judges", async (req, res) => {
     try {
       const { type } = req.query;
@@ -834,8 +821,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res
           .status(403)
           .json({ message: "Зөвхөн админ хэрэглэгч тэмцээн үүсгэх боломжтой" });
-
-      console.log("Creating tournament with data:", req.body);
 
       // Validate required fields
       if (!req.body.name) {
@@ -873,7 +858,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const tournamentData = insertTournamentSchema.parse({
+      const tournamentData = {
         name: req.body.name,
         description: req.body.description || null,
         richDescription: req.body.richDescription || null,
@@ -884,7 +869,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         organizer: req.body.organizer || null,
         maxParticipants: parseInt(req.body.maxParticipants) || 32,
         entryFee: req.body.entryFee ? req.body.entryFee.toString() : "0",
-        status: "registration",
+        status: "registration" as any,
         participationTypes: req.body.participationTypes || [],
         rules: req.body.rules || null,
         prizes: req.body.prizes || null,
@@ -896,13 +881,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clubId: null,
         backgroundImageUrl: req.body.backgroundImageUrl || null,
         regulationDocumentUrl: req.body.regulationDocumentUrl || null,
-      });
-
-      console.log("Validated tournament data:", tournamentData);
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
 
       const tournament = await storage.createTournament(tournamentData);
-      console.log("Created tournament:", tournament);
-      
       res.json(tournament);
     } catch (e) {
       console.error("Error creating tournament:", e);
@@ -918,9 +901,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Public tournaments = active only
   app.get("/api/tournaments", async (_req, res) => {
     try {
-      console.log("[Public] Getting tournaments...");
       const tournaments = await storage.getTournaments();
-      console.log(`[Public] Found ${tournaments.length} tournaments`);
       res.json(tournaments);
     } catch (e) {
       console.error("Error fetching tournaments:", e);
@@ -1800,9 +1781,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     isAdminRole,
     async (_req, res) => {
       try {
-        console.log("[Admin] Getting all tournaments...");
         const tournaments = await storage.getTournaments();
-        console.log(`[Admin] Found ${tournaments.length} tournaments`);
         res.json(tournaments);
       } catch (e) {
         console.error("Error fetching all tournaments:", e);
@@ -2050,93 +2029,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json({ message: "Аварга амжилттай устгагдлаа" });
       } catch (e) {
         console.error("Error deleting champion:", e);
-      res.status(400).json({ message: "Аварга устгахад алдаа гарлаа" });
-      }
-    },
-  );
-
-  // National team players (admin)
-  app.get(
-    "/api/admin/national-team",
-    requireAuth,
-    isAdminRole,
-    async (_req, res) => {
-      try {
-        const players = await storage.getAllNationalTeamPlayers();
-        res.json(players);
-      } catch (e) {
-        console.error("Error fetching national team players:", e);
-        res
-          .status(500)
-          .json({
-            message: "Шигшээ багийн тоглогчид авахад алдаа гарлаа",
-          });
-      }
-    },
-  );
-
-  app.post(
-    "/api/admin/national-team",
-    requireAuth,
-    isAdminRole,
-    async (req, res) => {
-      try {
-        const data = insertNationalTeamPlayerSchema.parse(req.body);
-        const player = await storage.createNationalTeamPlayer(data);
-        res.json(player);
-      } catch (e) {
-        console.error("Error creating national team player:", e);
-        res.status(400).json({ message: "Шигшээ тоглогч нэмэхэд алдаа гарлаа" });
-      }
-    },
-  );
-
-  app.put(
-    "/api/admin/national-team/:id",
-    requireAuth,
-    isAdminRole,
-    async (req, res) => {
-      try {
-        const data = insertNationalTeamPlayerSchema
-          .partial()
-          .parse(req.body);
-        const player = await storage.updateNationalTeamPlayer(
-          req.params.id,
-          data,
-        );
-        if (!player)
-          return res
-            .status(404)
-            .json({ message: "Шигшээ тоглогч олдсонгүй" });
-        res.json(player);
-      } catch (e) {
-        console.error("Error updating national team player:", e);
-        res
-          .status(400)
-          .json({ message: "Шигшээ тоглогч засварлахад алдаа гарлаа" });
-      }
-    },
-  );
-
-  app.delete(
-    "/api/admin/national-team/:id",
-    requireAuth,
-    isAdminRole,
-    async (req, res) => {
-      try {
-        const success = await storage.deleteNationalTeamPlayer(
-          req.params.id,
-        );
-        if (!success)
-          return res
-            .status(404)
-            .json({ message: "Шигшээ тоглогч олдсонгүй" });
-        res.json({ message: "Шигшээ тоглогч амжилттай устгагдлаа" });
-      } catch (e) {
-        console.error("Error deleting national team player:", e);
-        res
-          .status(400)
-          .json({ message: "Шигшээ тоглогч устгахад алдаа гарлаа" });
+        res.status(400).json({ message: "Аварга устгахад алдаа гарлаа" });
       }
     },
   );
