@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Trash2, Plus, Users, Shield, Building, Trophy, Calendar, Newspaper, Images, TrendingUp, Upload, Link as LinkIcon, ArrowLeft, Settings, UserPlus, Play, Zap, X, Crown, FileText, UserCog, User as UserIcon } from "lucide-react";
+import { Pencil, Trash2, Plus, Users, Shield, Building, Trophy, Calendar, Newspaper, Images, TrendingUp, Upload, Link as LinkIcon, ArrowLeft, Settings, UserPlus, Play, Zap, X, Crown, FileText, UserCog, User as UserIcon, Flag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import AdminStatsDashboard from "@/components/admin-stats-dashboard";
@@ -46,6 +46,7 @@ export default function AdminDashboard() {
   const [clubFilter, setClubFilter] = useState("");
   const [branchFilter, setBranchFilter] = useState("");
   const [memberFilter, setMemberFilter] = useState("");
+  const [nationalTeamFilter, setNationalTeamFilter] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -131,14 +132,19 @@ export default function AdminDashboard() {
     enabled: selectedTab === 'branches'
   });
 
-  const { data: federationMembers, isLoading: federationMembersLoading } = useQuery({
-    queryKey: ['/api/admin/federation-members'],
-    enabled: selectedTab === 'federation-members'
-  });
+const { data: federationMembers, isLoading: federationMembersLoading } = useQuery({
+  queryKey: ['/api/admin/federation-members'],
+  enabled: selectedTab === 'federation-members'
+});
 
-  const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQuery({
-    queryKey: ['/api/admin/judges'],
-    enabled: selectedTab === 'judges'
+const { data: nationalTeam, isLoading: nationalTeamLoading } = useQuery({
+  queryKey: ['/api/admin/national-team'],
+  enabled: selectedTab === 'national-team'
+});
+
+const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQuery({
+  queryKey: ['/api/admin/judges'],
+  enabled: selectedTab === 'judges'
   });
 
   const { data: coaches, isLoading: coachesLoading } = useQuery({
@@ -195,6 +201,9 @@ export default function AdminDashboard() {
       if (selectedTab === 'leagues') {
         queryClient.invalidateQueries({ queryKey: ['/api/leagues'] });
       }
+      if (selectedTab === 'national-team') {
+        queryClient.invalidateQueries({ queryKey: ['/api/national-team'] });
+      }
       setIsCreateDialogOpen(false);
       setFormData({});
     },
@@ -220,6 +229,9 @@ export default function AdminDashboard() {
       if (selectedTab === 'leagues') {
         queryClient.invalidateQueries({ queryKey: ['/api/leagues'] });
       }
+      if (selectedTab === 'national-team') {
+        queryClient.invalidateQueries({ queryKey: ['/api/national-team'] });
+      }
       setEditingItem(null);
       setFormData({});
     },
@@ -241,6 +253,9 @@ export default function AdminDashboard() {
       }
       if (selectedTab === 'leagues') {
         queryClient.invalidateQueries({ queryKey: ['/api/leagues'] });
+      }
+      if (selectedTab === 'national-team') {
+        queryClient.invalidateQueries({ queryKey: ['/api/national-team'] });
       }
     },
     onError: (error: any) => {
@@ -412,6 +427,13 @@ export default function AdminDashboard() {
         activities: item.activities || "",
         imageUrl: item.imageUrl || "", // Preload imageUrl
       });
+    } else if (selectedTab === "national-team") {
+      setFormData({
+        firstName: item.firstName || "",
+        lastName: item.lastName || "",
+        age: item.age || 0,
+        imageUrl: item.imageUrl || "",
+      });
     }
     setShowDialog(true); // Show the dialog
   };
@@ -462,6 +484,13 @@ export default function AdminDashboard() {
         lastName: '',
         imageUrl: '',
         judgeType: 'domestic' // Default to domestic
+      };
+    } else if (selectedTab === 'national-team') {
+      defaultData = {
+        firstName: '',
+        lastName: '',
+        age: '',
+        imageUrl: '',
       };
     } else if (selectedTab === 'clubs') {
       // Default values for clubs, including location fields
@@ -814,6 +843,82 @@ export default function AdminDashboard() {
                         <Pencil className="w-4 h-4" />
                       </Button>
                       <Button size="sm" variant="destructive" onClick={() => handleDelete(member.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
+    );
+  };
+
+  const renderNationalTeamTab = () => {
+    const filteredPlayers = nationalTeam && Array.isArray(nationalTeam)
+      ? nationalTeam.filter((player: any) => {
+          const searchText = nationalTeamFilter.toLowerCase();
+          return (
+            !searchText ||
+            player.firstName?.toLowerCase().includes(searchText) ||
+            player.lastName?.toLowerCase().includes(searchText)
+          );
+        })
+      : [];
+
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-wrap justify-between items-center gap-4">
+          <h2 className="text-2xl font-bold">Үндэсний шигшээ</h2>
+          <div className="flex-1 max-w-sm">
+            <Input
+              placeholder="Тоглогч хайх..."
+              value={nationalTeamFilter}
+              onChange={(e) => setNationalTeamFilter(e.target.value)}
+            />
+          </div>
+          <Button onClick={openCreateDialog}>
+            <Plus className="w-4 h-4 mr-2" />
+            Тоглогч нэмэх
+          </Button>
+        </div>
+
+        {nationalTeamLoading ? (
+          <div>Ачааллаж байна...</div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Нэр</TableHead>
+                <TableHead>Овог</TableHead>
+                <TableHead>Нас</TableHead>
+                <TableHead>Зураг</TableHead>
+                <TableHead>Үйлдэл</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredPlayers.map((player: any) => (
+                <TableRow key={player.id}>
+                  <TableCell>{player.firstName}</TableCell>
+                  <TableCell>{player.lastName}</TableCell>
+                  <TableCell>{player.age}</TableCell>
+                  <TableCell>
+                    {player.imageUrl && (
+                      <img
+                        src={player.imageUrl}
+                        alt={player.firstName}
+                        className="w-10 h-10 rounded-full"
+                      />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => openEditDialog(player)}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleDelete(player.id)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
@@ -1583,6 +1688,107 @@ export default function AdminDashboard() {
                 <ObjectUploader
                   maxNumberOfFiles={1}
                   maxFileSize={5242880} // 5MB
+                  onGetUploadParameters={async () => {
+                    const response = await fetch('/api/objects/upload', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json'
+                      }
+                    });
+                    const data = await response.json();
+                    return {
+                      method: 'PUT' as const,
+                      url: data.uploadURL
+                    };
+                  }}
+                  onComplete={async (result) => {
+                    if (result.successful && result.successful.length > 0) {
+                      const uploadedFileUrl = result.successful[0].uploadURL;
+
+                      try {
+                        const response = await fetch('/api/objects/finalize', {
+                          method: 'PUT',
+                          headers: {
+                            'Content-Type': 'application/json'
+                          },
+                          body: JSON.stringify({
+                            fileURL: uploadedFileUrl,
+                            isPublic: true
+                          })
+                        });
+                        const data = await response.json();
+
+                        setFormData({ ...formData, imageUrl: data.objectPath });
+                        toast({
+                          title: "Амжилттай",
+                          description: "Зураг амжилттай хуулагдлаа"
+                        });
+                      } catch (error) {
+                        console.error('Error setting image ACL:', error);
+                        setFormData({ ...formData, imageUrl: uploadedFileUrl });
+                        toast({
+                          title: "Анхааруулга",
+                          description: "Зураг хуулагдсан боловч зураг харагдахгүй байж магад"
+                        });
+                      }
+                    }
+                  }}
+                  buttonClassName="w-full"
+                >
+                  <div className="flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    <span>Зураг файл сонгох</span>
+                  </div>
+                </ObjectUploader>
+                {formData.imageUrl && (
+                  <div className="mt-2">
+                    <p className="text-sm text-text-secondary">Зураг хуулагдсан: {formData.imageUrl}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        );
+
+      case 'national-team':
+        return (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="firstName">Нэр</Label>
+                <Input
+                  id="firstName"
+                  value={formData.firstName || ''}
+                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="lastName">Овог</Label>
+                <Input
+                  id="lastName"
+                  value={formData.lastName || ''}
+                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="age">Нас</Label>
+              <Input
+                id="age"
+                type="number"
+                value={formData.age || ''}
+                onChange={(e) => setFormData({ ...formData, age: parseInt(e.target.value) })}
+              />
+            </div>
+            <div>
+              <Label className="flex items-center gap-2">
+                <Upload className="w-4 h-4" />
+                Зураг оруулах
+              </Label>
+              <div className="space-y-2">
+                <ObjectUploader
+                  maxNumberOfFiles={1}
+                  maxFileSize={5242880}
                   onGetUploadParameters={async () => {
                     const response = await fetch('/api/objects/upload', {
                       method: 'POST',
@@ -2680,6 +2886,8 @@ export default function AdminDashboard() {
         return formData.name && formData.imageUrl; // Add validation for imageUrl
       case 'federation-members':
         return formData.name;
+      case 'national-team':
+        return formData.firstName && formData.lastName && formData.age && formData.imageUrl;
       case 'judges':
         return formData.firstName && formData.lastName;
       case 'coaches':
@@ -2931,6 +3139,10 @@ export default function AdminDashboard() {
           <TabsTrigger value="coaches" className="admin-tab-trigger flex items-center gap-2 data-[state=active]:bg-green-600 font-semibold text-base">
             <UserCog className="w-4 h-4" />
             Дасгалжуулагчид
+          </TabsTrigger>
+          <TabsTrigger value="national-team" className="admin-tab-trigger flex items-center gap-2 data-[state=active]:bg-green-600 font-semibold text-base">
+            <Flag className="w-4 h-4" />
+            Үндэсний шигшээ
           </TabsTrigger>
           <TabsTrigger value="champions" className="admin-tab-trigger flex items-center gap-2 data-[state=active]:bg-green-600 font-semibold text-base">
             <Crown className="w-4 h-4" />
@@ -3265,6 +3477,18 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               {renderCoachesTab()}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="national-team">
+          <Card>
+            <CardHeader>
+              <CardTitle>Үндэсний шигшээ баг</CardTitle>
+              <CardDescription>Шигшээ багийн тоглогчдыг нэмэх, засах, устгах</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {renderNationalTeamTab()}
             </CardContent>
           </Card>
         </TabsContent>
