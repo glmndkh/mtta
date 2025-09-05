@@ -918,7 +918,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Public tournaments = active only
   app.get("/api/tournaments", async (_req, res) => {
     try {
+      console.log("[Public] Getting tournaments...");
       const tournaments = await storage.getTournaments();
+      console.log(`[Public] Found ${tournaments.length} tournaments`);
       res.json(tournaments);
     } catch (e) {
       console.error("Error fetching tournaments:", e);

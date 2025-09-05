@@ -762,10 +762,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTournaments(): Promise<Tournament[]> {
-    return await db
+    console.log("[Storage] Getting all tournaments from database...");
+    const result = await db
       .select()
       .from(tournaments)
       .orderBy(desc(tournaments.createdAt));
+    console.log(`[Storage] Retrieved ${result.length} tournaments from database`);
+    return result;
   }
 
   async updateTournament(id: string, tournamentData: Partial<InsertTournament>): Promise<Tournament | undefined> {
