@@ -32,7 +32,6 @@ interface Countdown {
 interface EventHeroRowProps {
   event: Event;
   priority?: boolean;
-  detailPage?: boolean;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -91,11 +90,7 @@ function getCover(ev: Event) {
   return isAbs ? src : src.startsWith('/') ? src : `/${src}`;
 }
 
-export default function EventHeroRow({
-  event,
-  priority = false,
-  detailPage = false,
-}: EventHeroRowProps) {
+export default function EventHeroRow({ event, priority = false }: EventHeroRowProps) {
   const [countdown, setCountdown] = useState<Countdown>({
     days: 0,
     hours: 0,
@@ -108,11 +103,6 @@ export default function EventHeroRow({
   const [imgErr, setImgErr] = useState(false);
 
   useEffect(() => {
-    const reduce = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
-    if (reduce) return;
-
     const update = () => {
       const now = getNow(event.timezone);
       const start = new Date(event.startDate);
@@ -137,9 +127,7 @@ export default function EventHeroRow({
     };
 
     update();
-    const id = setInterval(() => {
-      if (!document.hidden) update();
-    }, 1000);
+    const id = setInterval(update, 1000);
     return () => clearInterval(id);
   }, [event.startDate, event.endDate, event.timezone]);
 
@@ -191,25 +179,16 @@ export default function EventHeroRow({
             PRIZE MONEY: {prize}
           </div>
         )}
-        {detailPage ? (
-          <a
-            href={status === "upcoming" ? "#register" : "#results"}
-            className="mt-4 inline-block rounded-full bg-white text-gray-900 px-4 py-2 text-sm font-bold hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
-          >
-            {status === "upcoming" ? "БҮРТГҮҮЛЭХ" : "Үр дүн"}
-          </a>
-        ) : (
-          <Link
-            to={
-              status === "upcoming"
-                ? `/events/${event.id}#register`
-                : `/events/${event.id}#results`
-            }
-            className="mt-4 inline-block rounded-full bg-white text-gray-900 px-4 py-2 text-sm font-bold hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
-          >
-            {status === "upcoming" ? "БҮРТГҮҮЛЭХ" : "Үр дүн"}
-          </Link>
-        )}
+        <Link
+          to={
+            status === 'upcoming'
+              ? `/events/${event.id}`
+              : `/events/${event.id}#results`
+          }
+          className='mt-4 inline-block rounded-full bg-white text-gray-900 px-4 py-2 text-sm font-bold hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2'
+        >
+          {status === 'upcoming' ? 'БҮРТГҮҮЛЭХ' : 'Үр дүн'}
+        </Link>
       </div>
 
       {/* Right side countdown & categories */}

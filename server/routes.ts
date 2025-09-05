@@ -3,8 +3,6 @@ import { createServer, type Server } from "http";
 import { z } from "zod";
 import express from "express"; // Import express
 import path from "path"; // Import path
-import { db } from "./db";
-import { eq } from "drizzle-orm";
 
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
@@ -33,7 +31,6 @@ import {
   players,
   clubs,
   tournaments,
-  events,
   tournamentParticipants,
   tournamentResults,
   newsFeed,
@@ -2720,120 +2717,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     },
   );
-
-  // Events
-  const eventSchema = z.object({
-    name: z.string(),
-    startDate: z.string(),
-    endDate: z.string(),
-    venue: z.string().optional(),
-    city: z.string().optional(),
-    country: z.string().optional(),
-    categories: z.array(z.string()).optional(),
-    coverUrl: z.string().optional(),
-    prizePool: z
-      .object({ amount: z.number(), currency: z.string() })
-      .optional(),
-    timezone: z.string().optional(),
-  });
-
-  app.post("/api/events", async (req, res) => {
-    try {
-      const {
-        name,
-        startDate,
-        endDate,
-        venue,
-        city,
-        country,
-        categories,
-        coverUrl,
-        prizePool,
-        timezone,
-      } = eventSchema.parse(req.body);
-
-      const [row] = await db
-        .insert(events)
-        .values({
-          name,
-          startDate: new Date(startDate),
-          endDate: new Date(endDate),
-          venue,
-          city,
-          country,
-          categories: categories ?? [],
-          coverUrl,
-          prizeAmount: prizePool?.amount ?? null,
-          prizeCurrency: prizePool?.currency ?? null,
-          timezone,
-        })
-        .returning({ id: events.id });
-
-      res.status(201).json({ id: row.id });
-    } catch (err) {
-      console.error("Error creating event:", err);
-      if (err instanceof z.ZodError) {
-        res.status(400).json({ error: "Invalid event data" });
-      } else {
-        res.status(500).json({ error: "Failed to create event" });
-      }
-    }
-  });
-
-  app.get("/api/events", async (_req, res) => {
-    try {
-      const rows = await db.select().from(events);
-      const result = rows.map((ev) => ({
-        id: ev.id,
-        name: ev.name,
-        startDate: ev.startDate,
-        endDate: ev.endDate,
-        venue: ev.venue,
-        city: ev.city,
-        country: ev.country,
-        categories: ev.categories ?? [],
-        coverUrl: ev.coverUrl,
-        prizePool:
-          ev.prizeAmount && ev.prizeCurrency
-            ? { amount: ev.prizeAmount, currency: ev.prizeCurrency }
-            : undefined,
-        timezone: ev.timezone,
-      }));
-      res.json(result);
-    } catch (err) {
-      console.error("Error fetching events:", err);
-      res.status(500).json({ error: "Failed to fetch events" });
-    }
-  });
-
-  app.get("/api/events/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const [ev] = await db.select().from(events).where(eq(events.id, id));
-      if (!ev) {
-        return res.status(404).json({ error: "Not found" });
-      }
-      res.json({
-        id: ev.id,
-        name: ev.name,
-        startDate: ev.startDate,
-        endDate: ev.endDate,
-        venue: ev.venue,
-        city: ev.city,
-        country: ev.country,
-        categories: ev.categories ?? [],
-        coverUrl: ev.coverUrl,
-        prizePool:
-          ev.prizeAmount && ev.prizeCurrency
-            ? { amount: ev.prizeAmount, currency: ev.prizeCurrency }
-            : undefined,
-        timezone: ev.timezone,
-      });
-    } catch (err) {
-      console.error("Error fetching event:", err);
-      res.status(500).json({ error: "Failed to fetch event" });
-    }
-  });
 
   // --------------
   // Avatars

@@ -10,7 +10,7 @@ import Home from "@/pages/home";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import PlayerDashboard from "@/pages/player-dashboard";
-import EventsPage from '@/pages/EventsPage';
+import TournamentsPage from '@/pages/tournaments';
 import Clubs from "@/pages/clubs";
 import Leagues from "@/pages/leagues";
 import LeagueDetails from "@/pages/league-details";
@@ -39,7 +39,7 @@ import HistoryTimelinePage from './pages/history-timeline';
 import { useAuth } from "@/hooks/useAuth";
 import AdminPlayerDetailsPage from "@/pages/admin-player-details"; // Import the new page
 import { LanguageProvider } from "@/contexts/LanguageContext";
-import EventDetail from "@/pages/EventDetail";
+import EventDetail from "@/pages/event-detail";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -53,8 +53,7 @@ function Router() {
       <Route path="/tournament/:id/results" component={TournamentResults} />
       <Route path="/tournament/:id/full" component={TournamentFullInfo} />
       <Route path="/player/:id" component={PlayerProfilePage} />
-      <Route path="/events" component={EventsPage} />
-      <Route path="/tournaments" component={EventsPage} />
+      <Route path="/tournaments" component={TournamentsPage} />
       <Route path="/clubs" component={Clubs} />
       <Route path="/leagues" component={Leagues} />
       <Route path="/leagues/:id" component={LeagueDetails} />

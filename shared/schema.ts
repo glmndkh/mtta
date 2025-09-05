@@ -147,23 +147,6 @@ export const memberships = pgTable("memberships", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Events table
-export const events = pgTable("events", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: varchar("name").notNull(),
-  startDate: timestamp("start_date").notNull(),
-  endDate: timestamp("end_date").notNull(),
-  venue: varchar("venue"),
-  city: varchar("city"),
-  country: varchar("country"),
-  categories: jsonb("categories").$type<string[]>().default([]),
-  coverUrl: varchar("cover_url"),
-  prizeAmount: integer("prize_amount"),
-  prizeCurrency: varchar("prize_currency"),
-  timezone: varchar("timezone"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
 // Tournaments table
 export const tournaments = pgTable("tournaments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
