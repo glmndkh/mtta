@@ -859,7 +859,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
   const renderNationalTeamTab = () => {
     const filteredPlayers = nationalTeam && Array.isArray(nationalTeam)
       ? nationalTeam.filter((player: any) => {
-          const searchTextearchText = nationalTeamFilter.toLowerCase();
+          const searchText = nationalTeamFilter.toLowerCase();
           return (
             !searchText ||
             player.firstName?.toLowerCase().includes(searchText) ||
@@ -907,33 +907,6 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                   <TableCell>
                     {player.imageUrl && (
                       <img src={player.imageUrl} alt={`${player.firstName} ${player.lastName}`} className="w-10 h-10 rounded-full object-cover" />
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => openEditDialog(player)}>
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => handleDelete(player.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </div>
-                  <TableCell>{player.lastName}</TableCell>
-                  <TableCell>{player.age}</TableCell>
-                  <TableCell>
-                    {player.imageUrl && (
-                      <img
-                        src={player.imageUrl}
-                        alt={player.firstName}
-                        className="w-10 h-10 rounded-full"
-                      />
                     )}
                   </TableCell>
                   <TableCell>
