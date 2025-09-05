@@ -181,7 +181,7 @@ export default function Home() {
               </div>
             </div>
           ) : sliders.length > 0 ? (
-            <div className="relative w-full h-96 overflow-hidden">
+            <div className="relative w-full h-[500px] overflow-hidden">
               {/* Slides */}
               <div 
                 className="flex transition-transform duration-500 ease-in-out h-full"
