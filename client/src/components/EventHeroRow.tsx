@@ -12,6 +12,11 @@ interface Event {
   country?: string;
   location?: string;
   coverUrl?: string;
+  backgroundUrl?: string;
+  background?: string;
+  heroImage?: string;
+  imageUrl?: string;
+  image?: string;
   categories: string[];
   prizePool?: { amount: number; currency: string };
   timezone?: string;
@@ -71,6 +76,20 @@ const formatPrize = (prize?: { amount: number; currency: string }) => {
   }).format(prize.amount);
 };
 
+function getCover(ev: Event) {
+  const src =
+    ev.coverUrl ??
+    ev.backgroundUrl ??
+    ev.background ??
+    ev.heroImage ??
+    ev.imageUrl ??
+    ev.image ??
+    '';
+  if (!src) return null;
+  const isAbs = /^https?:\/\//i.test(src);
+  return isAbs ? src : src.startsWith('/') ? src : `/${src}`;
+}
+
 export default function EventHeroRow({ event, priority = false }: EventHeroRowProps) {
   const [countdown, setCountdown] = useState<Countdown>({
     days: 0,
@@ -81,6 +100,7 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
   const [status, setStatus] = useState<"upcoming" | "ongoing" | "past">(
     "upcoming"
   );
+  const [imgErr, setImgErr] = useState(false);
 
   useEffect(() => {
     const update = () => {
@@ -121,24 +141,22 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
 
   const prize = formatPrize(event.prizePool);
 
+  const bg = !imgErr ? getCover(event) : null;
+
   return (
     <div className="relative h-[360px] w-full overflow-hidden rounded-2xl">
-      <img
-        src={
-          event.coverUrl?.startsWith("http")
-            ? event.coverUrl
-            : event.coverUrl
-            ? `/objects/uploads/${event.coverUrl}`
-            : "/api/placeholder/600/400"
-        }
-        alt={event.name}
-        className="absolute inset-0 h-full w-full object-cover"
-        loading={priority ? "eager" : "lazy"}
-        fetchPriority={priority ? "high" : "auto"}
-        onError={(e) => {
-          (e.target as HTMLImageElement).src = "/api/placeholder/600/400";
-        }}
-      />
+      {bg ? (
+        <img
+          src={bg}
+          onError={() => setImgErr(true)}
+          alt='Event cover'
+          className='absolute inset-0 h-full w-full object-cover'
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : 'auto'}
+        />
+      ) : (
+        <div className='absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300' />
+      )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/0" />
 
       {/* Left info */}
@@ -162,13 +180,14 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
           </div>
         )}
         <Link
-          href={`/events/${event.id}${
-            status === "upcoming" ? "#register" : "#results"
-          }`}
+          to={
+            status === 'upcoming'
+              ? `/events/${event.id}`
+              : `/events/${event.id}#results`
+          }
+          className='mt-4 inline-block rounded-full bg-white text-gray-900 px-4 py-2 text-sm font-bold hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2'
         >
-          <a className="mt-4 inline-block rounded-full bg-white text-gray-900 px-4 py-2 text-sm font-bold hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2">
-            {status === "upcoming" ? "БҮРТГҮҮЛЭХ" : "Үр дүн"}
-          </a>
+          {status === 'upcoming' ? 'БҮРТГҮҮЛЭХ' : 'Үр дүн'}
         </Link>
       </div>
 
