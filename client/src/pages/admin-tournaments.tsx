@@ -22,7 +22,7 @@ interface Tournament {
 
 export default function AdminTournaments() {
   const { data: tournaments = [], isLoading } = useQuery<Tournament[]>({
-    queryKey: ['/api/tournaments'],
+    queryKey: ['/api/admin/tournaments'],
   });
 
   const formatDate = (dateString: string) => {

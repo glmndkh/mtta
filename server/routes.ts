@@ -835,6 +835,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .status(403)
           .json({ message: "Зөвхөн админ хэрэглэгч тэмцээн үүсгэх боломжтой" });
 
+      console.log("Creating tournament with data:", req.body);
+
       // Validate required fields
       if (!req.body.name) {
         return res.status(400).json({ message: "Тэмцээний нэр заавал байх ёстой" });
@@ -871,7 +873,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const tournamentData = {
+      const tournamentData = insertTournamentSchema.parse({
         name: req.body.name,
         description: req.body.description || null,
         richDescription: req.body.richDescription || null,
@@ -882,7 +884,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         organizer: req.body.organizer || null,
         maxParticipants: parseInt(req.body.maxParticipants) || 32,
         entryFee: req.body.entryFee ? req.body.entryFee.toString() : "0",
-        status: "registration" as any,
+        status: "registration",
         participationTypes: req.body.participationTypes || [],
         rules: req.body.rules || null,
         prizes: req.body.prizes || null,
@@ -894,11 +896,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clubId: null,
         backgroundImageUrl: req.body.backgroundImageUrl || null,
         regulationDocumentUrl: req.body.regulationDocumentUrl || null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      });
+
+      console.log("Validated tournament data:", tournamentData);
 
       const tournament = await storage.createTournament(tournamentData);
+      console.log("Created tournament:", tournament);
+      
       res.json(tournament);
     } catch (e) {
       console.error("Error creating tournament:", e);
@@ -1794,7 +1798,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     isAdminRole,
     async (_req, res) => {
       try {
+        console.log("[Admin] Getting all tournaments...");
         const tournaments = await storage.getTournaments();
+        console.log(`[Admin] Found ${tournaments.length} tournaments`);
         res.json(tournaments);
       } catch (e) {
         console.error("Error fetching all tournaments:", e);
