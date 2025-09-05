@@ -20,6 +20,7 @@ import Branches from "@/pages/branches";
 import BranchDetails from "@/pages/branch-details";
 import PastChampions from "@/pages/past-champions";
 import JudgesPage from "@/pages/judges";
+import NationalTeamPage from "@/pages/national-team";
 import AdminTournamentResultsPage from "@/pages/admin-tournament-results";
 import AdminTournaments from "@/pages/admin-tournaments";
 import ExcelTournamentDemo from "@/pages/excel-tournament-demo";
@@ -58,6 +59,7 @@ function Router() {
       <Route path="/leagues/:id" component={LeagueDetails} />
       <Route path="/branches" component={Branches} />
       <Route path="/branch-details/:id" component={BranchDetails} />
+      <Route path="/national-team" component={NationalTeamPage} />
       <Route path="/past-champions" component={PastChampions} />
       <Route path="/history" component={PastChampions} />
       <Route path="/judges" component={JudgesPage} />
