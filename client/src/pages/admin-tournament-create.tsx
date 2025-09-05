@@ -305,7 +305,9 @@ export default function AdminTournamentCreate() {
                     <div className="flex items-center">
                       <Calendar className="h-5 w-5 text-mtta-green mr-2" />
                       <span className="font-medium">Огноо:</span>
-                      <span className="ml-2">{form.getValues('startDate')} - {form.getValues('endDate')}</span>
+                      <span className="ml-2">
+                        {form.getValues('startDate') ? new Date(form.getValues('startDate')).toLocaleDateString('mn-MN') : 'Тодорхойгүй'} - {form.getValues('endDate') ? new Date(form.getValues('endDate')).toLocaleDateString('mn-MN') : 'Тодорхойгүй'}
+                      </span>
                     </div>
                     <div className="flex items-center">
                       <MapPin className="h-5 w-5 text-mtta-green mr-2" />
@@ -322,19 +324,68 @@ export default function AdminTournamentCreate() {
                       <span className="font-medium">Оролцооны төлбөр:</span>
                       <span className="ml-2">{form.getValues('entryFee')}₮</span>
                     </div>
+                    {form.getValues('organizer') && (
+                      <div className="flex items-center">
+                        <Users className="h-5 w-5 text-mtta-green mr-2" />
+                        <span className="font-medium">Зохион байгуулагч:</span>
+                        <span className="ml-2">{form.getValues('organizer')}</span>
+                      </div>
+                    )}
+                    {form.getValues('registrationDeadline') && (
+                      <div className="flex items-center">
+                        <Calendar className="h-5 w-5 text-mtta-green mr-2" />
+                        <span className="font-medium">Бүртгэлийн хугацаа:</span>
+                        <span className="ml-2">{new Date(form.getValues('registrationDeadline')).toLocaleDateString('mn-MN')}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div>
                     <h3 className="font-medium mb-2">Оролцооны төрлүүд:</h3>
                     <div className="flex flex-wrap gap-2">
-                      {form.getValues('participationTypes').map((type: string) => (
+                      {participationCategories.length > 0 ? participationCategories.map((type: string) => (
                         <span
                           key={type}
                           className="px-3 py-1 bg-mtta-green text-white rounded-full text-sm"
                         >
                           {type}
                         </span>
-                      ))}
+                      )) : (
+                        <span className="text-gray-500 text-sm">Ангилал нэмээгүй байна</span>
+                      )}
+                    </div>
+
+                    {(form.getValues('rules') || form.getValues('prizes') || form.getValues('contactInfo')) && (
+                      <div className="mt-4 space-y-2">
+                        {form.getValues('rules') && (
+                          <div>
+                            <h4 className="font-medium text-sm">Дүрэм журам:</h4>
+                            <p className="text-sm text-gray-600">{form.getValues('rules')}</p>
+                          </div>
+                        )}
+                        {form.getValues('prizes') && (
+                          <div>
+                            <h4 className="font-medium text-sm">Шагнал урамшуулал:</h4>
+                            <p className="text-sm text-gray-600">{form.getValues('prizes')}</p>
+                          </div>
+                        )}
+                        {form.getValues('contactInfo') && (
+                          <div>
+                            <h4 className="font-medium text-sm">Холбоо барих:</h4>
+                            <p className="text-sm text-gray-600">{form.getValues('contactInfo')}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    <div className="mt-4">
+                      <span className={`px-2 py-1 rounded text-sm ${
+                        form.getValues('isPublished') 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {form.getValues('isPublished') ? 'Нийтлэгдсэн' : 'Ноорог'}
+                      </span>
                     </div>
                   </div>
                 </div>
