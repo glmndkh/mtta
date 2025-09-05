@@ -1237,7 +1237,7 @@ export class DatabaseStorage implements IStorage {
 
   // National team player operations
   async getAllNationalTeamPlayers(): Promise<NationalTeamPlayer[]> {
-    return await db
+    return await dbt db
       .select()
       .from(nationalTeamPlayers)
       .orderBy(nationalTeamPlayers.createdAt);
