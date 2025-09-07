@@ -182,8 +182,8 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
         <Link
           to={
             status === 'upcoming'
-              ? `/events/${event.id}`
-              : `/events/${event.id}#results`
+              ? `/tournament/${event.id}`
+              : `/tournament/${event.id}/results`
           }
           className='mt-4 inline-block rounded-full bg-white text-gray-900 px-4 py-2 text-sm font-bold hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2'
         >
