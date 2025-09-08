@@ -308,7 +308,7 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
             </Button>
           </div>
         ) : (
-          <>
+          <form onSubmit={handleSubmit}>
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-foreground">
                 Оролцох төрөл сонгох
@@ -368,7 +368,7 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
             >
               {registerMutation.isPending ? "Бүртгүүлж байна..." : "Бүртгүүлэх"}
             </Button>
-          </>
+          </form>
         )}
       </CardContent>
     </Card>
