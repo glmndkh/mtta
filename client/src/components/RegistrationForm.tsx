@@ -39,8 +39,17 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
 
   // Check user registration status
   const { data: userRegistrations = [], refetch: refetchRegistrations } = useQuery({
-    queryKey: ["/api/registrations/me", { tid: tournament.id }],
-    enabled: !!user,
+    queryKey: ["/api/registrations/me", tournament.id],
+    queryFn: async () => {
+      if (!tournament.id) return [];
+      const res = await fetch(`/api/registrations/me?tid=${tournament.id}`, {
+        credentials: 'include'
+      });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    staleTime: 30 * 1000,
+    enabled: !!tournament.id && !!isAuthenticated,
   });
 
   const isRegistered = userRegistrations.length > 0;
@@ -153,19 +162,16 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
-        title: "Амжилттай бүртгүүллээ!",
+        title: "Амжилттай!",
         description: "Тэмцээнд амжилттай бүртгүүллээ.",
       });
-      queryClient.invalidateQueries({
-        queryKey: ["/api/tournaments", tournament.id, "participants"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["/api/registrations/me"],
-      });
+      // Invalidate and refetch all related queries
+      queryClient.invalidateQueries({ queryKey: ["/api/registrations/me"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tournaments", tournament.id, "participants"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tournaments", tournament.id, "user-registration"] });
       refetchRegistrations();
-      onSuccess?.();
     },
     onError: (error: any) => {
       toast({
@@ -287,7 +293,7 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
           <div className="space-y-4">
             <div className="text-center p-6 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
               <h3 className="text-lg font-semibold text-green-800 dark:text-green-200 mb-2">
-                Амжилттай бүртгэгдлээ
+                Амжилттай бүртгэгдээ
               </h3>
               <p className="text-green-700 dark:text-green-300 mb-4">
                 Та энэ тэмцээнд бүртгэгдсэн байна

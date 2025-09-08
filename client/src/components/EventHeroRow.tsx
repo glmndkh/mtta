@@ -155,8 +155,16 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
 
   // Check user registration status
   const { data: userRegistrations = [] } = useQuery({
-    queryKey: ["/api/registrations/me", { tid: event.id }],
-    enabled: !!user,
+    queryKey: ["/api/registrations/me", event.id],
+    queryFn: async () => {
+      const res = await fetch(`/api/registrations/me?tid=${event.id}`, {
+        credentials: 'include'
+      });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    staleTime: 30 * 1000,
+    enabled: !!user && !!event.id,
   });
 
   const isRegistered = Array.isArray(userRegistrations) && userRegistrations.length > 0;
@@ -228,11 +236,17 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
                     </select>
                   )}
 
-                  <Link href={`/events/${event.id}#register`}>
-                    <Button className="px-6 py-2 rounded-full font-bold hover:bg-green-700">
-                      БҮРТГҮҮЛЭХ
+                  {isRegistered ? (
+                    <Button disabled className="px-6 py-2 rounded-full font-bold bg-green-600 text-white cursor-not-allowed">
+                      БҮРТГЭГДСЭН
                     </Button>
-                  </Link>
+                  ) : (
+                    <Link href={`/events/${event.id}#register`}>
+                      <Button className="px-6 py-2 rounded-full font-bold hover:bg-green-700">
+                        БҮРТГҮҮЛЭХ
+                      </Button>
+                    </Link>
+                  )}
                 </div>
               ) : status === 'ongoing' ? (
                 <Link href={`/events/${event.id}#schedule`}>

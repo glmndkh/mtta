@@ -1118,7 +1118,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           dateOfBirth: user.dateOfBirth || new Date(),
           rank: "Шинэ тоглогч",
         });
+        console.log(`Created new player record for user ${userId}:`, player);
       }
+      
+      console.log(`Registering player ${player.id} for tournament ${tournamentId} with category ${category}`);
 
       // Check for existing registration with same category
       const existing = await storage.getTournamentRegistrationByCategory(
@@ -1144,6 +1147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         participationType: category,
       });
 
+      console.log(`Successfully registered player ${player.id} for tournament ${tournamentId}:`, registration);
       res.status(201).json({ id: registration.id, message: "Амжилттай бүртгүүллээ" });
     } catch (e) {
       console.error("Registration error:", e);

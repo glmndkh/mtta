@@ -164,6 +164,23 @@ export default function EventDetail() {
     );
   }
 
+  // Check user registration status for any category
+  const { data: userRegistrations = [] } = useQuery({
+    queryKey: ["/api/registrations/me", tournament?.id],
+    queryFn: async () => {
+      if (!tournament?.id) return [];
+      const res = await fetch(`/api/registrations/me?tid=${tournament.id}`, {
+        credentials: 'include'
+      });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    staleTime: 30 * 1000,
+    enabled: !!user && !!tournament?.id,
+  });
+
+  const isUserRegistered = Array.isArray(userRegistrations) && userRegistrations.length > 0;
+
   const imageUrl = getImageUrl(tournament);
   const venue = tournament.venue || tournament.location;
   const cityCountry = [tournament.city, tournament.country].filter(Boolean).join(', ');
@@ -227,21 +244,30 @@ export default function EventDetail() {
                     ))}
                   </select>
                 )}
-                
-                <Button
-                  onClick={() => {
-                    setActiveTab('register');
-                    setTimeout(() => {
-                      const element = document.getElementById('register');
-                      if (element) {
-                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }
-                    }, 100);
-                  }}
-                  className="rounded-full bg-white text-gray-900 px-4 py-2 font-bold hover:bg-gray-100 focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
-                >
-                  Бүртгүүлэх
-                </Button>
+
+                {!isUserRegistered ? (
+                  <Button
+                    onClick={() => {
+                      setActiveTab('register');
+                      setTimeout(() => {
+                        const element = document.getElementById('register');
+                        if (element) {
+                          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                      }, 100);
+                    }}
+                    className="bg-mtta-green hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                  >
+                    Бүртгүүлэх
+                  </Button>
+                ) : (
+                  <Button
+                    disabled
+                    className="bg-green-600 text-white cursor-not-allowed font-bold py-3 px-8 rounded-full text-lg shadow-lg"
+                  >
+                    БҮРТГЭГДСЭН
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -395,14 +421,15 @@ export default function EventDetail() {
                 </TabsContent>
 
                 <TabsContent value="register" className="space-y-8" id="register">
-                  <RegistrationForm 
-                    tournament={tournament} 
+                  <RegistrationForm
+                    tournament={tournament}
                     preselectedCategory={selectedCategory}
                     onSuccess={() => {
                       // Refresh participants after successful registration
                       queryClient.invalidateQueries({
                         queryKey: [`/api/tournaments/${tournament.id}`],
                       });
+                      queryClient.invalidateQueries({ queryKey: ["/api/registrations/me", tournament?.id] });
                     }}
                   />
                 </TabsContent>
