@@ -35,7 +35,7 @@ export default function NationalTeamPage() {
                   <img
                     src={player.imageUrl}
                     alt={`${player.firstName} ${player.lastName}`}
-                    className="w-full h-48 object-cover"
+                    className="w-full h-48 object-contain bg-gray-100"
                   />
                 )}
                 <CardContent className="p-4 bg-gradient-to-r from-orange-700 to-red-700 text-white">
