@@ -24,6 +24,7 @@ interface Event {
   imageUrl?: string;
   image?: string;
   categories: string[];
+  participationTypes?: string[];
   prizePool?: { amount: number; currency: string };
   timezone?: string;
 }
@@ -158,7 +159,7 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
     enabled: !!user,
   });
 
-  const isRegistered = userRegistrations.length > 0;
+  const isRegistered = Array.isArray(userRegistrations) && userRegistrations.length > 0;
 
   return (
     <div className="relative h-[360px] w-full overflow-hidden rounded-2xl">
@@ -205,7 +206,7 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
                       defaultValue=""
                     >
                       <option value="" disabled>Ангилал сонгох</option>
-                      {event.participationTypes.map((type) => (
+                      {event.participationTypes.map((type: string) => (
                         <option key={type} value={type} className="text-gray-900">
                           {type}
                         </option>

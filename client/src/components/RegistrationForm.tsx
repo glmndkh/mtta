@@ -71,7 +71,11 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
       'singles_women': 'Эмэгтэй дан',
       'doubles_men': 'Эрэгтэй хос',
       'doubles_women': 'Эмэгтэй хос',
-      'mixed_doubles': 'Холимог хос'
+      'mixed_doubles': 'Холимог хос',
+      'singles': 'Дан',
+      'doubles': 'Хос',
+      'team': 'Баг',
+      'individual': 'Хувь хүн'
     };
     return labels[type] || type;
   };

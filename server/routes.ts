@@ -580,6 +580,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add missing API endpoints for profile fetching
+  app.get("/api/players/me", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.session.userId;
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Тоглогч олдсонгүй" });
+      }
+
+      const player = await storage.getPlayerByUserId(userId);
+      
+      const profileData = {
+        id: user.id,
+        fullName: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+        name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+        gender: user.gender || 'male',
+        birthDate: user.dateOfBirth ? user.dateOfBirth.toISOString().split("T")[0] : '1990-01-01',
+        email: user.email,
+        phone: user.phone,
+        clubAffiliation: user.clubAffiliation,
+        player: player
+      };
+      
+      res.json(profileData);
+    } catch (e) {
+      console.error("Error fetching player profile:", e);
+      res.status(500).json({ message: "Тоглогчийн профайл авахад алдаа гарлаа" });
+    }
+  });
+
+  app.get("/api/me", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.session.userId;
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Хэрэглэгч олдсонгүй" });
+      }
+      
+      const profileData = {
+        id: user.id,
+        fullName: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+        name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+        gender: user.gender || 'male',
+        birthDate: user.dateOfBirth ? user.dateOfBirth.toISOString().split("T")[0] : '1990-01-01',
+        email: user.email,
+        phone: user.phone,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        clubAffiliation: user.clubAffiliation,
+        role: user.role
+      };
+      
+      res.json(profileData);
+    } catch (e) {
+      console.error("Error fetching user profile:", e);
+      res.status(500).json({ message: "Хэрэглэгчийн мэдээлэл авахад алдаа гарлаа" });
+    }
+  });
+
   // --------------
   // Public players/clubs
   // --------------
