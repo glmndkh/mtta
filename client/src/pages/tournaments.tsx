@@ -30,13 +30,32 @@ interface Tournament {
   fee?: number; // Added based on the changes snippet
 }
 
-// Assuming RegistrationStatus component is defined elsewhere and imported,
-// and it expects a tournamentId of type string.
-// Example placeholder for RegistrationStatus:
-// const RegistrationStatus = ({ tournamentId }: { tournamentId: string }) => {
-//   // ... component logic
-//   return <div>Registration Status for {tournamentId}</div>;
-// };
+// RegistrationStatus component implementation
+const RegistrationStatus = ({ tournamentId }: { tournamentId: string }) => {
+  const { data: userRegistrations = [] } = useQuery({
+    queryKey: [`/api/registrations/me?tid=${tournamentId}`],
+    queryFn: async () => {
+      const res = await fetch(`/api/registrations/me?tid=${tournamentId}`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    staleTime: 30 * 1000,
+  });
+
+  if (userRegistrations.length > 0) {
+    return (
+      <div className="text-sm text-green-600 font-medium">
+        Бүртгэгдсэн ({userRegistrations.length})
+      </div>
+    );
+  }
+
+  return (
+    <div className="text-sm text-gray-500">
+      Бүртгэгдээгүй
+    </div>
+  );
+};
 
 
 export default function Tournaments() {
@@ -109,21 +128,7 @@ export default function Tournaments() {
           </div>
         ) : (
           mapped.map((t, idx) => (
-            // The following snippet was modified to pass `tournament.id` instead of `tournament`
-            <div key={t.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-xl font-semibold mb-2">{t.name}</h3>
-                  <p className="text-gray-600 dark:text-gray-300 mb-2">{t.description}</p>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    <p>📅 {format(new Date(t.startDate), 'PPP', { locale: mn })}</p>
-                    <p>📍 {t.location}</p>
-                    <p>💰 {t.fee?.toLocaleString() || '0'} ₮</p>
-                  </div>
-                </div>
-                <RegistrationStatus tournamentId={t.id} />
-              </div>
-            </div>
+            <EventHeroRow key={t.id} event={t} priority={idx < 1} />
           ))
         )}
       </div>
