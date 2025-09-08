@@ -1285,6 +1285,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Fetching participants for tournament: ${tournamentId}, category: ${category}`);
       
+      if (!tournamentId) {
+        return res.status(400).json({ message: "Tournament ID is required" });
+      }
+
       let participants = await storage.getTournamentParticipants(tournamentId);
 
       // Filter by category if specified

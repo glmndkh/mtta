@@ -172,6 +172,7 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
       return res.json();
     },
     staleTime: 30 * 1000,
+    enabled: !!event.id,
   });
 
   return (

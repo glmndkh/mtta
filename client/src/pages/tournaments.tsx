@@ -33,7 +33,7 @@ interface Tournament {
 // RegistrationStatus component implementation
 const RegistrationStatus = ({ tournamentId }: { tournamentId: string }) => {
   const { data: userRegistrations = [] } = useQuery({
-    queryKey: ["/api/registrations/me", { tid: tournamentId }],
+    queryKey: ["/api/registrations/me", tournamentId],
     queryFn: async () => {
       const res = await fetch(`/api/registrations/me?tid=${tournamentId}`, {
         credentials: 'include'
@@ -42,6 +42,7 @@ const RegistrationStatus = ({ tournamentId }: { tournamentId: string }) => {
       return res.json();
     },
     staleTime: 30 * 1000,
+    enabled: !!tournamentId,
   });
 
   if (userRegistrations.length > 0) {
