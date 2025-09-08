@@ -168,73 +168,7 @@ export default function Home() {
   return (
     <PageWithLoading>
       <div className="min-h-screen">
-        {/* Hero Section */}
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              {/* Left Content */}
-              <div className="space-y-8">
-                <div className="space-y-4">
-                  <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
-                    Монгольн<br />
-                    Ширээний Теннис
-                  </h1>
-                  <div className="h-1 w-16 bg-mtta-green"></div>
-                  <p className="text-xl text-gray-300 leading-relaxed">
-                    хуваарь,<br />
-                    бүртгэл, үр дүн,<br />
-                    чансаа нэг дор.
-                  </p>
-                </div>
-                
-                <div className="flex gap-4">
-                  <button className="bg-mtta-green hover:bg-green-600 text-white px-6 py-3 rounded-lg font-medium transition-colors">
-                    Бүртгүүлэх
-                  </button>
-                  <button className="border border-mtta-green text-mtta-green hover:bg-mtta-green hover:text-white px-6 py-3 rounded-lg font-medium transition-colors">
-                    Бүртгүүлэх
-                  </button>
-                </div>
-              </div>
-
-              {/* Right Content - Tournament Schedule */}
-              <div className="space-y-4">
-                <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-4xl font-bold">15</span>
-                    <div className="text-right">
-                      <div className="text-sm text-gray-300">Sep</div>
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-300 mb-2">2025 Монгол Ширээний Теннисний Demo Тэмцээн</div>
-                  <div className="text-xs text-gray-400">📍 Монгол Ширээний Теннисний Холбооны Төв Заал</div>
-                </div>
-
-                <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-4xl font-bold">30</span>
-                    <div className="text-right">
-                      <div className="text-sm text-gray-300">Nov</div>
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-300 mb-2">asdf</div>
-                  <div className="text-xs text-gray-400">📍 өөн</div>
-                </div>
-
-                <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-4xl font-bold">1</span>
-                    <div className="text-right">
-                      <div className="text-sm text-gray-300">Feb</div>
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-300 mb-2">Улсын аварга</div>
-                  <div className="text-xs text-gray-400">📍 өөн</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        
 
         
 
@@ -341,141 +275,15 @@ export default function Home() {
             </div>
           )}
 
-        <div className="bg-gradient-to-r from-mtta-green to-green-700 text-white py-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              {/* Left Side - Main Content */}
-              <div className="space-y-8">
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                  Монголын Ширээний Теннис — хуваарь, бүртгэл, үр дүн, чансаа нэг дор.
-                </h1>
-
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Link href="/tournaments">
-                    <Button size="lg" className="bg-white text-mtta-green hover:bg-gray-100 font-semibold px-8 py-4 text-lg">
-                      Ойрын тэмцээнүүд
-                    </Button>
-                  </Link>
-                  <Link href="/register">
-                    <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-mtta-green font-semibold px-8 py-4 text-lg">
-                      Бүртгүүлэх
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-
-              {/* Right Side - Upcoming Tournaments (Desktop) */}
-              <div className="hidden lg:block">
-                {tournamentsLoading ? (
-                  <div className="space-y-4">
-                    {[1, 2, 3].map(i => (
-                      <Skeleton key={i} className="h-24 w-full bg-white bg-opacity-20" />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {upcomingTournaments.slice(0, 3).map((tournament) => (
-                      <Card key={tournament.id} className="bg-white bg-opacity-10 backdrop-blur-sm border-white border-opacity-20">
-                        <CardContent className="p-4">
-                          <div className="flex items-center space-x-4">
-                            {/* Date */}
-                            <div className="text-center min-w-0 flex-shrink-0">
-                              <div className="text-3xl font-bold">
-                                {format(new Date(tournament.startDate), 'd')}
-                              </div>
-                              <div className="text-sm opacity-80">
-                                {format(new Date(tournament.startDate), 'MMM')}
-                              </div>
-                            </div>
-
-                            {/* Tournament Info */}
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-white truncate">{tournament.name}</h3>
-                              <div className="flex items-center text-sm opacity-80 mt-1">
-                                <MapPin className="w-4 h-4 mr-1" />
-                                <span className="truncate">{tournament.location}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        
         </section>
 
-        {/* Main Content - 4 Blocks */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16">
+        {/* Main Content - Remaining Blocks */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 space-y-16">
 
-          {/* 1. Ойрын тэмцээнүүд */}
-          <section>
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-3xl font-bold text-gray-900">Ойрын тэмцээнүүд</h2>
-              <Link href="/tournaments">
-                <Button variant="outline" className="flex items-center gap-2">
-                  Бүгдийг харах
-                  <ExternalLink className="w-4 h-4" />
-                </Button>
-              </Link>
-            </div>
+          
 
-            {tournamentsLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3, 4, 5, 6].map(i => (
-                  <Card key={i}>
-                    <CardHeader>
-                      <Skeleton className="h-6 w-3/4" />
-                      <Skeleton className="h-4 w-1/2" />
-                    </CardHeader>
-                    <CardContent>
-                      <Skeleton className="h-4 w-full mb-2" />
-                      <Skeleton className="h-4 w-2/3" />
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {upcomingTournaments.slice(0, 6).map((tournament) => (
-                  <Card key={tournament.id} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => window.location.href = `/tournament/${tournament.id}`}>
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-lg line-clamp-2">{tournament.name}</CardTitle>
-                        <Badge className="bg-mtta-green text-white">
-                          {tournament.status === 'registration' ? 'Бүртгэл' : 'Идэвхтэй'}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Calendar className="w-4 h-4 mr-1" />
-                        {format(new Date(tournament.startDate), 'yyyy/MM/dd')}
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center text-sm text-gray-600 mb-3">
-                        <MapPin className="w-4 h-4 mr-1" />
-                        <span className="truncate">{tournament.location}</span>
-                      </div>
-
-                      {/* Participation Type Chips */}
-                      <div className="flex flex-wrap gap-1">
-                        {getParticipationChips(tournament.participationTypes || []).map((chip, index) => (
-                          <span key={index} className={`${chip.color} text-white text-xs px-2 py-1 rounded font-medium`}>
-                            {chip.label}
-                          </span>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* 2. Шинэ мэдээ */}
+          {/* 1. Шинэ мэдээ */}
           <section>
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-3xl font-bold text-gray-900">Шинэ мэдээ</h2>
@@ -535,7 +343,7 @@ export default function Home() {
             )}
           </section>
 
-          {/* 3. Топ тамирчид */}
+          {/* 2. Топ тамирчид */}
           <section>
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-3xl font-bold text-gray-900">Топ тамирчид</h2>
@@ -603,7 +411,7 @@ export default function Home() {
             )}
           </section>
 
-          {/* 4. Ивээн тэтгэгчид */}
+          {/* 3. Ивээн тэтгэгчид */}
           <section>
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-gray-900">Ивээн тэтгэгчид</h2>
