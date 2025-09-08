@@ -1,0 +1,124 @@
+“RegistrationForm-ыг profile-backed болго: зөвхөн ‘Оролцох төрөл’ сонгоод бүртгүүлэх”
+Хязгаарлалт
+
+❌ Одоогийн schema/route-уудыг эвдэхгүй.
+
+✅ Client-талын UI/logic-ийг сайжруулж, тоглогчийн мэдээллийг автоматаар уншина.
+
+✅ Server байвал /api/players/me (эсвэл /api/me) → gender, birthDate, fullName авч, /api/registrations руу тэмцээн + төрөл л POST хийнэ (playerId-ийг сервер auth-оос таамаглана).
+
+1) Шинэ hook: usePlayerProfile
+
+Файл: client/src/hooks/usePlayerProfile.ts
+
+useAuth() ашигла. Нэвтрээгүй бол {profile:null, loading:false, error:null}.
+
+Оролдлого 1: GET /api/players/me
+
+Оролдлого 2 (fallback): GET /api/me
+
+Оролдлого 3 (fallback): user объектоос хөрвүүлэх.
+
+Profile shape:
+
+type PlayerProfile = { id?: string; fullName: string; gender: 'male'|'female'; birthDate: string };
+
+
+Сайншүүлэлт: fullName байхгүй бол email-ийн өмнөх хэсгийг түр ашигла.
+
+2) RegistrationForm-ыг шинэчил (зөвхөн төрөл сонгоно)
+
+Файл: client/src/components/RegistrationForm.tsx
+
+Props өөрчлөхгүй (tournament хэвээр).
+
+Дотор нь const { profile, loading } = usePlayerProfile();
+
+UI өөрчлөлт:
+
+Нэвтрээгүй үед: Card → “Нэвтэрч бүртгүүлэх” (/login?redirect=/events/${tournament.id}#register)
+
+Loading үед: skeleton.
+
+Нэвтэрсэн үед: Read-only profile самбар (нэр, хүйс, нас). Эдгээр талбаруудыг засах боломжгүй.
+
+Интеракшн: зөвхөн Оролцох төрөл-ийн Select.
+
+Eligibility логик (UI тал):
+
+Нас = birthDate-аас tournament.startDate өдөрт тооц.
+
+Журам:
+
+singles_men/doubles_men → gender=male
+
+singles_women/doubles_women → gender=female
+
+mixed_doubles → аль ч хүйс
+
+Хэрэв tournament.eligibility?.[category] байвал minAge/maxAge/genders-ыг override.
+
+Дүрэм зөрвөл улаан анхааруулга, Submit disabled.
+
+Submit:
+
+Payload минимал:
+
+{ "tournamentId": "<id>", "category": "<selected>" }
+
+
+POST /api/registrations (Content-Type: application/json).
+
+201/200 амжилт → success toast + reset category.
+
+Амжилтгүй/endpoint байхгүй → localStorage-д reg-cache:<tournament.id> push хийж success toast (“түр хадгаллаа”).
+
+UI copy:
+
+Button: “Бүртгүүлэх”
+
+Warning: “Энэ төрөлд таны нас/хүйс тохирохгүй.”
+
+Profile chips: Нэр · Хүйс · Нас
+
+3) event-detail.tsx интеграц (register хэсэг)
+
+import RegistrationForm from "@/components/RegistrationForm";
+
+#register дотор байсан placeholder-ийг:
+
+<section id="register" tabIndex={-1} className="scroll-mt-24 md:scroll-mt-28">
+  <h2 className="text-2xl font-bold text-gray-900 mb-6">Бүртгүүлэх</h2>
+  <RegistrationForm tournament={tournament} />
+</section>
+
+
+Hero-ийн “Бүртгүүлэх” товч → одоо байгаа scroll-ийг хэвээр (hash-тэй smooth scroll).
+
+4) Bonus (хэрэв server дэмждэг бол)
+
+Already registered шалгалт: mount дээр GET /api/registrations?tid=<id> → өөрийн бүртгэл байвал “Та энэ төрөлд бүртгэгдсэн байна” badge/disable.
+
+Гэр бүл/клуб код гэх нэмэлт талбаруудыг props-оор унтрааж/ асаах боломжтой болгож орхих.
+
+Acceptance (Done)
+
+ Нэвтэрсэн хэрэглэгчийн нэр/хүйс/нас автоматаар дүүргэгдэнэ (read-only).
+
+ Хэрэглэгч зөвхөн оролцох төрөл сонгоод “Бүртгүүлэх” дарна.
+
+ Нас/хүйсийн eligibility UI дээр хатуу шалгагдаж, зөрвөл бүртгэл disable.
+
+ Амжилтад toast; сервергүй үед localStorage-ийн reg-cache-д түр хадгалж амжилтын мессэж гарна.
+
+ Нэвтрээгүй үед login CTA гарч, бүртгэл хийх боломжгүй.
+
+Тэмдэглэл (API талын зөвлөмж — хийж чадвал)
+
+/api/players/me → { id, fullName, gender, birthDate }
+
+POST /api/registrations body → { tournamentId, category }
+
+Server нь auth-оос playerId тодорхойлж хадгална.
+
+Duplicate guard: (playerId, tournamentId, category) UNIQUE.
