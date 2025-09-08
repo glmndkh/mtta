@@ -24,10 +24,11 @@ type RegistrationFormProps = {
       maxAge?: number;
     }>;
   };
+  preselectedCategory?: string;
   onSuccess?: () => void;
 };
 
-export default function RegistrationForm({ tournament, onSuccess }: RegistrationFormProps) {
+export default function RegistrationForm({ tournament, preselectedCategory, onSuccess }: RegistrationFormProps) {
   const { isAuthenticated, user } = useAuth();
   const { data: profile, loading } = usePlayerProfile();
 
@@ -39,8 +40,15 @@ export default function RegistrationForm({ tournament, onSuccess }: Registration
 
   const isRegistered = userRegistrations.length > 0;
 
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>(preselectedCategory || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Update selected category when preselected category changes
+  React.useEffect(() => {
+    if (preselectedCategory && !selectedCategory) {
+      setSelectedCategory(preselectedCategory);
+    }
+  }, [preselectedCategory, selectedCategory]);
 
   // Calculate age on tournament start date
   const calculateAge = (birthDate: string, startDate: string): number => {

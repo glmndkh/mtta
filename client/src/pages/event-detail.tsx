@@ -56,6 +56,7 @@ export default function EventDetail() {
   const [location] = useLocation();
   const { user, isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
 
   // Fetch tournament data
   const { data: tournament, isLoading } = useQuery<Tournament>({
@@ -215,7 +216,8 @@ export default function EventDetail() {
                 {tournament.participationTypes && tournament.participationTypes.length > 0 && (
                   <select
                     className="rounded-full bg-white/20 text-white border border-white/30 px-3 py-2 text-sm font-medium backdrop-blur-sm focus:bg-white/30 focus:outline-none focus:ring-2 focus:ring-green-600"
-                    defaultValue=""
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
                   >
                     <option value="" disabled>Ангилал сонгох</option>
                     {tournament.participationTypes.map((type) => (
@@ -246,10 +248,11 @@ export default function EventDetail() {
 
           {/* Tabs Navigation */}
           <div className="sticky top-16 z-10 bg-white/80 backdrop-blur border-b mt-8">
-            <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="overview">Ерөнхий</TabsTrigger>
                 <TabsTrigger value="participants">Оролцогчид</TabsTrigger>
+                <TabsTrigger value="register">Бүртгүүлэх</TabsTrigger>
                 <TabsTrigger value="results">Үр дүн</TabsTrigger>
               </TabsList>
 
@@ -389,6 +392,19 @@ export default function EventDetail() {
 
                 <TabsContent value="participants" className="space-y-6">
                   <ParticipantsTab tournamentId={tournament.id} />
+                </TabsContent>
+
+                <TabsContent value="register" className="space-y-8" id="register">
+                  <RegistrationForm 
+                    tournament={tournament} 
+                    preselectedCategory={selectedCategory}
+                    onSuccess={() => {
+                      // Refresh participants after successful registration
+                      queryClient.invalidateQueries({
+                        queryKey: [`/api/tournaments/${tournament.id}`],
+                      });
+                    }}
+                  />
                 </TabsContent>
 
                 <TabsContent value="results" className="space-y-8">
