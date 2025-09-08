@@ -9,11 +9,13 @@ import { User, Users } from 'lucide-react';
 
 const categories = [
   { value: 'all', label: 'Бүгд' },
+  { value: 'singles', label: 'Дан' },
+  { value: 'doubles', label: 'Хос' },
+  { value: 'mixed_doubles', label: 'Холимог хос' },
   { value: 'singles_men', label: 'Эрэгтэй дан' },
   { value: 'singles_women', label: 'Эмэгтэй дан' },
   { value: 'doubles_men', label: 'Эрэгтэй хос' },
   { value: 'doubles_women', label: 'Эмэгтэй хос' },
-  { value: 'mixed_doubles', label: 'Холимог хос' },
 ];
 
 interface ParticipantsTabProps {
@@ -25,6 +27,23 @@ export function ParticipantsTab({ tournamentId }: ParticipantsTabProps) {
 
   const { data: participants = [], isLoading } = useQuery({
     queryKey: ["/api/tournaments", tournamentId, "participants", { category: selectedCategory }],
+    queryFn: async () => {
+      const res = await fetch(`/api/tournaments/${tournamentId}/participants`, {
+        credentials: 'include'
+      });
+      if (!res.ok) {
+        throw new Error('Failed to fetch participants');
+      }
+      const data = await res.json();
+      
+      // Filter by category if selected
+      if (selectedCategory && selectedCategory !== 'all') {
+        return data.filter((p: any) => p.participationType === selectedCategory);
+      }
+      
+      return data;
+    },
+    enabled: !!tournamentId,
   });
 
   const getCategoryLabel = (category: string) => {
@@ -112,14 +131,14 @@ export function ParticipantsTab({ tournamentId }: ParticipantsTabProps) {
                 >
                   <Avatar className="h-10 w-10">
                     <AvatarFallback>
-                      {getInitials(participant.playerName || participant.fullName || 'N/A')}
+                      {getInitials(participant.playerName || participant.fullName || `${participant.firstName || ''} ${participant.lastName || ''}`.trim() || 'N/A')}
                     </AvatarFallback>
                   </Avatar>
                   
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">
-                        {participant.playerName || participant.fullName || 'Тодорхойгүй'}
+                        {participant.playerName || participant.fullName || `${participant.firstName || ''} ${participant.lastName || ''}`.trim() || 'Тодорхойгүй'}
                       </span>
                       {participant.gender && (
                         <span className="text-xs text-muted-foreground">
@@ -128,8 +147,11 @@ export function ParticipantsTab({ tournamentId }: ParticipantsTabProps) {
                       )}
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      {participant.birthDate && (
-                        <span>{calculateAge(participant.birthDate)} нас</span>
+                      {(participant.birthDate || participant.dateOfBirth) && (
+                        <span>{calculateAge(participant.birthDate || participant.dateOfBirth)} нас</span>
+                      )}
+                      {participant.clubAffiliation && (
+                        <span>• {participant.clubAffiliation}</span>
                       )}
                     </div>
                   </div>
