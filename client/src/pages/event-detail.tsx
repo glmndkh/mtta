@@ -164,21 +164,6 @@ export default function EventDetail() {
     );
   }
 
-  // Check user registration status for any category
-  const { data: userRegistrations = [] } = useQuery({
-    queryKey: ["/api/registrations/me", tournament?.id],
-    queryFn: async () => {
-      if (!tournament?.id) return [];
-      const res = await fetch(`/api/registrations/me?tid=${tournament.id}`, {
-        credentials: 'include'
-      });
-      if (!res.ok) return [];
-      return res.json();
-    },
-    staleTime: 30 * 1000,
-    enabled: !!user && !!tournament?.id,
-  });
-
   const isUserRegistered = Array.isArray(userRegistrations) && userRegistrations.length > 0;
 
   const imageUrl = getImageUrl(tournament);
