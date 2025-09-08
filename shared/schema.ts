@@ -677,31 +677,3 @@ export const insertLeaguePlayerMatchSchema = createInsertSchema(leaguePlayerMatc
 });
 export type InsertLeaguePlayerMatch = z.infer<typeof insertLeaguePlayerMatchSchema>;
 export type LeaguePlayerMatch = typeof leaguePlayerMatches.$inferSelect;
-
-export {
-  users,
-  players,
-  clubs,
-  tournaments,
-  matches,
-  matchSets,
-  newsFeed,
-  memberships,
-  teams,
-  leagues,
-  tournamentParticipants,
-  achievements,
-  tournamentResults,
-  homepageSliders,
-  sponsors,
-  branches,
-  federationMembers,
-  nationalTeamPlayers,
-  judges,
-  clubCoaches,
-  pastChampions,
-  tournamentTeams,
-  tournamentTeamPlayers,
-  leagueMatches,
-  leaguePlayerMatches,
-};
