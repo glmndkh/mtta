@@ -1,0 +1,171 @@
+PROMPT 1 — “API/DB-ийг бэлэн болго: бүртгэлийг хадгалдаг, уншдаг болго”
+
+Зорилго: Тэмцээнд бүртгүүлэх урсгалыг сервер дээр бүрэн дэмжинэ. Одоогийн schema/route-уудтай зөрчилдэхгүй, хамгийн бага нэмэлттэй.
+
+Хязгаарлалт
+
+Одоо байгаа API-уудыг эвдэхгүй; нэр солихгүй.
+
+Зөвхөн шаардлагатай хамгийн бага шинэ endpoint нэм.
+
+Алдаа нуухгүй; амжилт ба алдааны статус кодыг зөв буцаа.
+
+Даалгавар
+
+Body parser асаа: JSON/URL-encoded body-г глобалаар идэвхжүүлсэн байх ёстой.
+
+DB схем баталгаажуул (Drizzle): tournaments, players, registrations хүснэгтүүд байна.
+
+registrations: id, tournament_id (FK), player_id (FK), category, created_at.
+
+UNIQUE: (player_id, tournament_id, category) давхардлыг хаана.
+
+POST /api/registrations (шинэ эсвэл засвар):
+
+Орж ирэх өгөгдөл: tournamentId, category.
+
+Player-ийг auth-оос тодорхойл (эсвэл түр төлөвлөгөөгөөр current user).
+
+Eligibility-г сервер дээр шалга:
+
+Хүйс: singles_men/doubles_men → male, singles_women/doubles_women → female, mixed_doubles → аль ч.
+
+Нас: тэмцээний startDate дээр тооц; eligibility.minAge/maxAge байвал мөрдөнө.
+
+Давхардал → 409; eligibility зөрчил → 400; амжилт → 201 + {id}.
+
+GET /api/registrations/me?tid=<tournamentId>:
+
+Одоогийн хэрэглэгч тухайн тэмцээнд ямар категориудаар бүртгэгдсэнийг буцаа (массив).
+
+GET /api/tournaments/:id/participants:
+
+Тухайн тэмцээний бүх оролцогчдын жагсаалтыг буцаа: player{fullName, gender, birthDate} + category.
+
+Сонголтоор ?category= фильтрийг дэмж.
+
+Лог ба алдаа: Бүх endpoint дээр амжилт/алдааг логлож, буцаасан статус код таарч байгаа эсэхийг шалга.
+
+Acceptance
+
+POST → 201; duplicate → 409; eligibility fail → 400.
+
+GET …/me → категориийн жагсаалт.
+
+GET …/participants → оролцогчдын жагсаалт (≥1 мөр, фильтр ажиллана).
+
+PROMPT 2 — “RegistrationForm-ыг profile-backed болго: зөвхөн ‘Оролцох төрөл’ сонгон бүртгүүлэх”
+
+Зорилго: Хэрэглэгчийн нэр/хүйс/төрсөн огноо системээс автоматаар авна. UI дээр зөвхөн төрөл сонгоод бүртгэнэ.
+
+Хязгаарлалт
+
+Server-оос профайл унших боломжтой бол ашигла; байхгүй бол useAuth()-ын өгөгдлөөс дутууг нөхөж үзүүл.
+
+Одоогийн дизайн, өнгийг хадгал; зөвхөн UX-г сайжруул.
+
+Даалгавар
+
+Профайл унших:
+
+Хэрэв боломжтой бол GET /api/players/me (эсвэл /api/me) → {fullName, gender, birthDate} ав.
+
+Нэвтрээгүй бол бүртгэл хийхийг зөвшөөрөхгүй; “Нэвтэрч бүртгүүлэх” CTA харуул.
+
+Eligibility UI шалгалт:
+
+Нас = birthDate-аар тэмцээний startDate дээр.
+
+Хүйсийн дүрмийг категориор автоматаар хэрэглэ; tournament.eligibility ирвэл ≥/≤ насны шалгууруудыг давхар мөрдөж үзэгдэлжүүл.
+
+Зөрчилд бол улаан анхааруулга; ‘Бүртгүүлэх’ disabled.
+
+Бүртгэл илгээх:
+
+Submit payload минимал: tournamentId, category.
+
+POST /api/registrations дууд; амжилтад success toast.
+
+React Query cache invalidate: өөрийн бүртгэлийн (/api/registrations/me) болон оролцогчдын (/api/tournaments/:id/participants) query-үүдийг хүчингүй болго.
+
+Амжилтын дараах UI төлөв:
+
+‘Бүртгүүлэх’ товчийг “Бүртгэгдсэн” болгож, идэвхгүй болго.
+
+Миний төрөл(үүд)-ийг чипсээр харуул.
+
+Acceptance
+
+Нэвтрээгүй хэрэглэгч бүртгүүлэх боломжгүй; нэвтэрсэн үед зөвхөн төрөл сонгоно.
+
+Eligible биш үед submit боломжгүй.
+
+Амжилтын дараа UI Registered төлөвт шилжинэ; тухайн төрөл чипсээр харагдана.
+
+PROMPT 3 — “Event Detail UI-г ‘Registered state’ + ‘Participants’ табтай болго”
+
+Зорилго: Бүртгүүлсний дараа дээрх хуудас шууд өөрчлөгдөж (CTA=“Бүртгэгдсэн”), оролцогчдын таб дээр таны нэр гардаг болгох.
+
+Хязгаарлалт
+
+Одоо байгаа таб бүтэц, sticky header-г хадгал.
+
+Даалгавар
+
+Registered state:
+
+Хуудас ачаалмагц GET /api/registrations/me?tid=<id> дуудаж, аль категориудаар бүртгэлтэйг ав.
+
+Хэрэв ≥1 бол Hero CTA-г “Бүртгэгдсэн” (secondary, disabled) болгож, доор “Миний төрөл: …” чипс харуул.
+
+Participants таб:
+
+GET /api/tournaments/:id/participants-ыг дүрслэнэ: avatar (initials OK), нэр, нас, gender icon, category chip.
+
+Дээр нь category чипсээр фильтр (All/MS/WS/MD/WD/XD).
+
+Loading skeleton, empty-state тайлбар.
+
+Realtime мэт шинэчлэл:
+
+Бүртгэл амжилттай болсны дараа participants query-нуудыг invalidate хийж шууд шинэчил.
+
+Acceptance
+
+Registered үед Hero CTA өөрчлөгдөнө, дахин бүртгэхгүй.
+
+Participants таб дээр таны нэр шууд гарч ирнэ.
+
+Фильтр ажиллана; мобайлд эвдрэлгүй.
+
+PROMPT 4 — “QA & Edge кейсүүдийг хаа”
+
+Зорилго: Урсгал бүх талдаа найдвартай.
+
+Даалгавар
+
+Duplicate guard: Нэг төрөлд дахин бүртгэх оролдлого → UI дээр тод мессэж, серверээс 409 ирнэ.
+
+Eligibility алдаа: Нас/хүйс тохирохгүй үед сервер 400 буцааж, UI улаан анхааруулга үзүүлнэ.
+
+Time-zone: Нас тооцоход тэмцээний startDate-ийг өдөрөөр normalization хийж (цагийн бүсийн зөрүү нөлөөлөхгүй) шалгана.
+
+A11y: CTA/Tab-д focus-visible ring; Registered badge-д aria-live="polite".
+
+Perf: Participants лист ≥200 үед лаглахгүй (виртуал/overflow стратеги).
+
+Acceptance
+
+201/400/409 урсгалууд тус бүр зөв UX-тэй.
+
+Lighthouse (desktop): A11y ≥ 90, Perf ≥ 85.
+
+PROMPT 5 — “Гүйцэтгэл ба гаргалгаа”
+
+Дууссаны дараа өгөх зүйлс
+
+Хийгдсэн өөрчлөлтийн товч changelog (файл/зам/ямар endpoint нэмсэн).
+
+Тест сценарийн тайлан (амжилт, eligibility fail, duplicate).
+
+Demo credentials/flow: нэвтрэх → тэмцээнд орох → төрөл сонгох → бүртгүүлэх → Registered state → Participants таб дээр харагдах.
