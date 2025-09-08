@@ -723,7 +723,7 @@ export class DatabaseStorage implements IStorage {
     const insertData = {
       ...tournamentData,
       updatedAt: new Date(),
-      // Ensure proper defaults for required fields
+      // Ensure defaults for required fields
       status: tournamentData.status || "registration",
       isPublished: tournamentData.isPublished ?? false,
       participationTypes: Array.isArray(tournamentData.participationTypes) 
@@ -863,9 +863,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTournamentParticipants(tournamentId: string): Promise<any[]> {
-    const result = await db
+    console.log(`Getting participants for tournament: ${tournamentId}`);
+
+    const participants = await db
       .select({
-        id: players.id,  // Return player ID instead of participation ID
+        id: tournamentParticipants.id,
+        playerId: tournamentParticipants.playerId,
         participationType: tournamentParticipants.participationType,
         registeredAt: tournamentParticipants.registeredAt,
         firstName: users.firstName,
@@ -878,12 +881,23 @@ export class DatabaseStorage implements IStorage {
         rank: players.rank,
       })
       .from(tournamentParticipants)
-      .innerJoin(players, eq(tournamentParticipants.playerId, players.id))
-      .innerJoin(users, eq(players.userId, users.id))
-      .where(eq(tournamentParticipants.tournamentId, tournamentId))
-      .orderBy(desc(tournamentParticipants.registeredAt));
+      .leftJoin(players, eq(tournamentParticipants.playerId, players.id))
+      .leftJoin(users, eq(players.userId, users.id))
+      .where(eq(tournamentParticipants.tournamentId, tournamentId));
 
-    return result;
+    console.log(`Found ${participants.length} participants for tournament ${tournamentId}`);
+
+    return participants.map(p => ({
+      id: p.id,
+      playerId: p.playerId,
+      participationType: p.participationType,
+      registeredAt: p.registeredAt,
+      playerName: `${p.firstName || ''} ${p.lastName || ''}`.trim() || 'Unknown Player',
+      playerEmail: p.email,
+      playerGender: p.gender,
+      playerRank: p.rank,
+      playerClub: p.clubAffiliation,
+    }));
   }
 
   async removeTournamentParticipant(

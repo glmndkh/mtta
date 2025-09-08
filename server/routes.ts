@@ -1281,15 +1281,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tournaments/:tournamentId/participants", async (req, res) => {
     try {
       const { category } = req.query;
-      let participants = await storage.getTournamentParticipants(
-        req.params.tournamentId,
-      );
+      const { tournamentId } = req.params;
+      
+      console.log(`Fetching participants for tournament: ${tournamentId}, category: ${category}`);
+      
+      let participants = await storage.getTournamentParticipants(tournamentId);
 
       // Filter by category if specified
       if (category && category !== 'all') {
         participants = participants.filter(p => p.participationType === category);
       }
 
+      console.log(`Returning ${participants.length} participants`);
       res.json(participants);
     } catch (e) {
       console.error("Error fetching tournament participants:", e);

@@ -161,6 +161,19 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
 
   const isRegistered = Array.isArray(userRegistrations) && userRegistrations.length > 0;
 
+  // Fetch participants for this tournament
+  const { data: participants = [] } = useQuery({
+    queryKey: ["/api/tournaments", event.id, "participants"],
+    queryFn: async () => {
+      const res = await fetch(`/api/tournaments/${event.id}/participants`, {
+        credentials: 'include'
+      });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    staleTime: 30 * 1000,
+  });
+
   return (
     <div className="relative h-[360px] w-full overflow-hidden rounded-2xl">
       {bg ? (
@@ -213,7 +226,7 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
                       ))}
                     </select>
                   )}
-                  
+
                   <Link href={`/events/${event.id}#register`}>
                     <Button className="px-6 py-2 rounded-full font-bold hover:bg-green-700">
                       БҮРТГҮҮЛЭХ
@@ -307,6 +320,11 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
             </div>
           )}
         </div>
+      </div>
+      {/* Display participants count */}
+      <div className="absolute top-4 right-4 flex items-center gap-2 text-sm text-white opacity-90">
+        <Users className="h-5 w-5" />
+        <span>{participants.length} оролцогч</span>
       </div>
     </div>
   );
