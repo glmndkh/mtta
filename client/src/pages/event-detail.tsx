@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -11,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Calendar, Users, Clock } from "lucide-react";
 import PageWithLoading from "@/components/PageWithLoading";
+import RegistrationForm from "@/components/RegistrationForm";
 
 interface Tournament {
   id: string;
@@ -31,6 +33,11 @@ interface Tournament {
   city?: string;
   country?: string;
   participationTypes: string[];
+  eligibility?: Record<string, { 
+    genders?: ("male"|"female")[]; 
+    minAge?: number; 
+    maxAge?: number;
+  }>;
 }
 
 export default function EventDetail() {
@@ -60,7 +67,7 @@ export default function EventDetail() {
     }
   }, [location, tournament]);
 
-  // Helper function to get image URL
+  // Helper function to get image URL with fallback order
   const getImageUrl = (tournament: Tournament): string => {
     const imageFields = [
       tournament.coverUrl,
@@ -72,7 +79,7 @@ export default function EventDetail() {
       tournament.image
     ];
     
-    const imageUrl = imageFields.find(url => url);
+    const imageUrl = imageFields.find(url => url && url.trim() !== '');
     
     if (!imageUrl) return '';
 
@@ -106,6 +113,7 @@ export default function EventDetail() {
     { id: 'players', label: 'Баг тамирчид' },
     { id: 'album', label: 'Альбом' },
     { id: 'about', label: 'Тэмцээний дэлгэрэнгүй' },
+    { id: 'register', label: 'Бүртгүүлэх' },
   ];
 
   if (isLoading) {
@@ -116,7 +124,7 @@ export default function EventDetail() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <Skeleton className="h-80 w-full rounded-2xl mb-8" />
             <div className="flex gap-4 mb-8">
-              {[1, 2, 3, 4, 5, 6].map(i => (
+              {[1, 2, 3, 4, 5, 6, 7].map(i => (
                 <Skeleton key={i} className="h-10 w-32" />
               ))}
             </div>
@@ -155,19 +163,24 @@ export default function EventDetail() {
         
         {/* Hero Section */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div 
-            className="relative h-[280px] md:h-[360px] rounded-2xl overflow-hidden"
-            style={{
-              backgroundImage: imageUrl 
-                ? `url(${imageUrl})` 
-                : 'linear-gradient(135deg, #6b7280 0%, #374151 100%)',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center'
-            }}
-          >
+          <div className="relative min-h-[260px] md:h-[360px] rounded-2xl overflow-hidden">
+            {imageUrl ? (
+              <img 
+                src={imageUrl}
+                alt={tournament.name}
+                className="absolute inset-0 w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement!.style.background = 'linear-gradient(135deg, #6b7280 0%, #374151 100%)';
+                }}
+              />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-500 to-gray-700"></div>
+            )}
+            
             <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/0"></div>
             
-            <div className="absolute left-6 bottom-6 text-white max-w-[70%]">
+            <div className="absolute left-4 bottom-4 md:left-6 md:bottom-6 text-white max-w-[90%] md:max-w-[70%]">
               <div className="mb-2">
                 <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
                   <Calendar className="w-3 h-3 mr-1" />
@@ -175,7 +188,7 @@ export default function EventDetail() {
                 </Badge>
               </div>
               
-              <h1 className="text-2xl md:text-3xl font-extrabold drop-shadow-lg mb-3 leading-tight">
+              <h1 className="text-2xl md:text-3xl font-extrabold drop-shadow-lg mb-3 leading-snug line-clamp-2">
                 {tournament.name}
               </h1>
               
@@ -204,8 +217,8 @@ export default function EventDetail() {
           </div>
 
           {/* Tabs Navigation */}
-          <div className="sticky top-16 z-10 bg-white border-b mt-8">
-            <div className="flex space-x-8 overflow-x-auto">
+          <div className="sticky top-16 z-10 bg-white/80 backdrop-blur border-b mt-8">
+            <div className="flex space-x-6 overflow-x-auto no-scrollbar px-2">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
@@ -216,11 +229,12 @@ export default function EventDetail() {
                       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }
                   }}
-                  className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
+                  className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-mtta-green focus-visible:ring-offset-2 ${
                     activeTab === tab.id
                       ? 'border-mtta-green text-mtta-green font-bold'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
+                  aria-current={activeTab === tab.id ? 'page' : undefined}
                 >
                   {tab.label}
                 </button>
@@ -232,7 +246,7 @@ export default function EventDetail() {
           <div className="py-8 space-y-16">
             
             {/* Overview */}
-            <section id="overview" tabIndex={-1} className="scroll-mt-24">
+            <section id="overview" tabIndex={-1} className="scroll-mt-24 md:scroll-mt-28">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Тойм</h2>
               <div className="prose max-w-none">
                 {tournament.description ? (
@@ -244,7 +258,7 @@ export default function EventDetail() {
             </section>
 
             {/* Groups */}
-            <section id="groups" tabIndex={-1} className="scroll-mt-24">
+            <section id="groups" tabIndex={-1} className="scroll-mt-24 md:scroll-mt-28">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Хэсгийн тоглолтууд</h2>
               <div className="text-center py-12">
                 <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -253,7 +267,7 @@ export default function EventDetail() {
             </section>
 
             {/* Schedule */}
-            <section id="schedule" tabIndex={-1} className="scroll-mt-24">
+            <section id="schedule" tabIndex={-1} className="scroll-mt-24 md:scroll-mt-28">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Хуваарь</h2>
               <div className="text-center py-12">
                 <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -262,7 +276,7 @@ export default function EventDetail() {
             </section>
 
             {/* Players */}
-            <section id="players" tabIndex={-1} className="scroll-mt-24">
+            <section id="players" tabIndex={-1} className="scroll-mt-24 md:scroll-mt-28">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Баг тамирчид</h2>
               <div className="text-center py-12">
                 <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -271,7 +285,7 @@ export default function EventDetail() {
             </section>
 
             {/* Album */}
-            <section id="album" tabIndex={-1} className="scroll-mt-24">
+            <section id="album" tabIndex={-1} className="scroll-mt-24 md:scroll-mt-28">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Альбом</h2>
               <div className="text-center py-12">
                 <div className="w-16 h-16 bg-gray-200 rounded mx-auto mb-4 flex items-center justify-center">
@@ -284,7 +298,7 @@ export default function EventDetail() {
             </section>
 
             {/* About */}
-            <section id="about" tabIndex={-1} className="scroll-mt-24">
+            <section id="about" tabIndex={-1} className="scroll-mt-24 md:scroll-mt-28">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Тэмцээний дэлгэрэнгүй</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
@@ -328,15 +342,9 @@ export default function EventDetail() {
             </section>
 
             {/* Registration Section */}
-            <section id="register" tabIndex={-1} className="scroll-mt-24">
+            <section id="register" tabIndex={-1} className="scroll-mt-24 md:scroll-mt-28">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Бүртгүүлэх</h2>
-              <div className="text-center py-12 bg-gray-50 rounded-lg">
-                <Clock className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 mb-4">Бүртгүүлэх систем удахгүй нэмэгдэх болно.</p>
-                <Button disabled className="bg-gray-300 text-gray-500 cursor-not-allowed">
-                  Удахгүй нээгдэх
-                </Button>
-              </div>
+              <RegistrationForm tournament={tournament} />
             </section>
 
           </div>

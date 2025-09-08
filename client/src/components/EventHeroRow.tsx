@@ -181,18 +181,24 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
           </div>
         )}
         {status === 'upcoming' ? (
-          <Link href={`/events/${event.id}#register`}>
-            <Button className="mt-4 px-6 py-2 rounded-full font-bold hover:bg-green-700">
-              БҮРТГҮҮЛЭХ
-            </Button>
-          </Link>
-        ) : (
-          <Link href={`/events/${event.id}#results`}>
-            <Button className="mt-4 px-4 py-2 rounded-full font-medium hover:bg-green-700">
-              Үр дүн
-            </Button>
-          </Link>
-        )}
+                <Link href={`/events/${event.id}#register`}>
+                  <Button className="mt-4 px-6 py-2 rounded-full font-bold hover:bg-green-700">
+                    БҮРТГҮҮЛЭХ
+                  </Button>
+                </Link>
+              ) : status === 'ongoing' ? (
+                <Link href={`/events/${event.id}#schedule`}>
+                  <Button className="mt-4 px-4 py-2 rounded-full font-medium hover:bg-green-700">
+                    Хуваарь
+                  </Button>
+                </Link>
+              ) : (
+                <Link href={`/events/${event.id}#results`}>
+                  <Button className="mt-4 px-4 py-2 rounded-full font-medium hover:bg-green-700">
+                    Үр дүн
+                  </Button>
+                </Link>
+              )}
       </div>
 
       {/* Right side countdown & categories */}
