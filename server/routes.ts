@@ -675,6 +675,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/players/top", async (_req, res) => {
+    try {
+      const players = await storage.getAllPlayers();
+      // Sort by wins and points
+      const topPlayers = players
+        .filter((p: any) => p.users && p.users.firstName)
+        .sort((a: any, b: any) => {
+          const aWins = a.players?.wins || 0;
+          const bWins = b.players?.wins || 0;
+          const aPoints = a.players?.points || 0;
+          const bPoints = b.players?.points || 0;
+          if (bWins !== aWins) return bWins - aWins;
+          return bPoints - aPoints;
+        })
+        .slice(0, 10)
+        .map((p: any) => ({
+          id: p.players?.id || p.id,
+          name: `${p.users?.firstName || ''} ${p.users?.lastName || ''}`.trim(),
+          wins: p.players?.wins || 0,
+          losses: p.players?.losses || 0,
+          points: p.players?.points || 0,
+          rank: p.players?.rank || 'Тодорхойгүй'
+        }));
+      res.json(topPlayers);
+    } catch (e) {
+      console.error("Error fetching top players:", e);
+      res.status(500).json({ message: "Тоглогчдын мэдээлэл авахад алдаа гарлаа" });
+    }
+  });
+
   // --------------
   // Clubs / Branches / Federation members / Judges
   // --------------
