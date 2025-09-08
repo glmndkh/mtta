@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
 
 interface Event {
   id: string;
