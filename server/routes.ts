@@ -1623,10 +1623,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await oss.downloadObject(objectFile, res);
     } catch (e) {
-      console.error("Error serving object:", e);
+      // Suppress repeated ObjectNotFoundError logs to reduce console spam
       if (e instanceof ObjectNotFoundError) {
         return res.status(404).json({ error: "File not found" });
       }
+      console.error("Error serving object:", e);
       return res.status(500).json({ error: "Internal server error" });
     }
   });
@@ -1640,7 +1641,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!file) return res.status(404).json({ error: "File not found" });
       await oss.downloadObject(file, res);
     } catch (e) {
-      console.error("Error searching for public object:", e);
+      // Only log non-404 errors to reduce console spam
+      if (!(e instanceof ObjectNotFoundError)) {
+        console.error("Error searching for public object:", e);
+      }
       return res.status(500).json({ error: "Internal server error" });
     }
   });
