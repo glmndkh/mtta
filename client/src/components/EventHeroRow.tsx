@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, MapPin, Users, Clock, Trophy, UserPlus, UserCheck } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
@@ -82,6 +83,22 @@ const formatPrize = (prize?: { amount: number; currency: string }) => {
   }).format(prize.amount);
 };
 
+const formatParticipationType = (type: string) => {
+  const typeMap: Record<string, string> = {
+    'singles_men': 'Эрэгтэй дан',
+    'singles_women': 'Эмэгтэй дан', 
+    'doubles_men': 'Эрэгтэй хос',
+    'doubles_women': 'Эмэгтэй хос',
+    'mixed_doubles': 'Холимог хос',
+    'MS': 'Эрэгтэй дан',
+    'WS': 'Эмэгтэй дан',
+    'MD': 'Эрэгтэй хос', 
+    'WD': 'Эмэгтэй хос',
+    'XD': 'Холимог хос'
+  };
+  return typeMap[type] || type;
+};
+
 function getCover(ev: Event) {
   const src =
     ev.coverUrl ??
@@ -108,6 +125,7 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
   );
   const [imgErr, setImgErr] = useState(false);
   const [showRegistration, setShowRegistration] = useState(false);
+  const [selectedParticipationType, setSelectedParticipationType] = useState<string>("");
 
   useEffect(() => {
     const update = () => {
@@ -197,24 +215,41 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
           </div>
         )}
         {status === 'upcoming' ? (
-                <Link href={`/events/${event.id}#register`}>
-                  <Button className="mt-4 px-6 py-2 rounded-full font-bold hover:bg-green-700">
-                    БҮРТГҮҮЛЭХ
-                  </Button>
-                </Link>
-              ) : status === 'ongoing' ? (
-                <Link href={`/events/${event.id}#schedule`}>
-                  <Button className="mt-4 px-4 py-2 rounded-full font-medium hover:bg-green-700">
-                    Хуваарь
-                  </Button>
-                </Link>
-              ) : (
-                <Link href={`/events/${event.id}#results`}>
-                  <Button className="mt-4 px-4 py-2 rounded-full font-medium hover:bg-green-700">
-                    Үр дүн
-                  </Button>
-                </Link>
-              )}
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Select value={selectedParticipationType} onValueChange={setSelectedParticipationType}>
+              <SelectTrigger className="w-full sm:w-48 bg-black/20 border-white/30 text-white">
+                <SelectValue placeholder="Оролцооны төрөл" />
+              </SelectTrigger>
+              <SelectContent>
+                {event.categories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {formatParticipationType(category)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Link href={`/events/${event.id}#register${selectedParticipationType ? `&type=${selectedParticipationType}` : ''}`}>
+              <Button 
+                className="px-6 py-2 rounded-full font-bold hover:bg-green-700 w-full sm:w-auto"
+                disabled={!selectedParticipationType}
+              >
+                БҮРТГҮҮЛЭХ
+              </Button>
+            </Link>
+          </div>
+        ) : status === 'ongoing' ? (
+          <Link href={`/events/${event.id}#schedule`}>
+            <Button className="mt-4 px-4 py-2 rounded-full font-medium hover:bg-green-700">
+              Хуваарь
+            </Button>
+          </Link>
+        ) : (
+          <Link href={`/events/${event.id}#results`}>
+            <Button className="mt-4 px-4 py-2 rounded-full font-medium hover:bg-green-700">
+              Үр дүн
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Right side countdown & categories */}
