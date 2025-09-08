@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -10,14 +9,21 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Calendar, Users, Clock } from "lucide-react";
+import { MapPin, Calendar, Users, Clock, Trophy, DollarSign } from "lucide-react";
 import PageWithLoading from "@/components/PageWithLoading";
 import RegistrationForm from "@/components/RegistrationForm";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EventHeroRow } from '@/components/EventHeroRow';
+import { LoadingAnimation } from '@/components/LoadingAnimation';
+import { ParticipantsTab } from '@/components/ParticipantsTab';
+import { queryClient } from '@/lib/queryClient';
 
 interface Tournament {
   id: string;
   name: string;
   description?: string;
+  richDescription?: string;
   startDate: string;
   endDate: string;
   location: string;
@@ -33,11 +39,16 @@ interface Tournament {
   city?: string;
   country?: string;
   participationTypes: string[];
-  eligibility?: Record<string, { 
-    genders?: ("male"|"female")[]; 
-    minAge?: number; 
+  eligibility?: Record<string, {
+    genders?: ("male"|"female")[];
+    minAge?: number;
     maxAge?: number;
   }>;
+  organizer?: string;
+  maxParticipants?: number;
+  entryFee?: string;
+  rules?: string;
+  prizes?: string;
 }
 
 export default function EventDetail() {
@@ -78,9 +89,9 @@ export default function EventDetail() {
       tournament.imageUrl,
       tournament.image
     ];
-    
+
     const imageUrl = imageFields.find(url => url && url.trim() !== '');
-    
+
     if (!imageUrl) return '';
 
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:')) {
@@ -98,11 +109,11 @@ export default function EventDetail() {
   const formatDateRange = (startDate: string, endDate: string): string => {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    
+
     if (start.toDateString() === end.toDateString()) {
       return format(start, 'yyyy.MM.dd', { locale: mn });
     }
-    
+
     return `${format(start, 'yyyy.MM.dd', { locale: mn })}–${format(end, 'yyyy.MM.dd', { locale: mn })}`;
   };
 
@@ -160,12 +171,12 @@ export default function EventDetail() {
     <PageWithLoading>
       <div className="min-h-screen">
         <Navigation />
-        
+
         {/* Hero Section */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="relative min-h-[260px] md:h-[360px] rounded-2xl overflow-hidden">
             {imageUrl ? (
-              <img 
+              <img
                 src={imageUrl}
                 alt={tournament.name}
                 className="absolute inset-0 w-full h-full object-cover"
@@ -177,9 +188,9 @@ export default function EventDetail() {
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-gray-500 to-gray-700"></div>
             )}
-            
+
             <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/0"></div>
-            
+
             <div className="absolute left-4 bottom-4 md:left-6 md:bottom-6 text-white max-w-[90%] md:max-w-[70%]">
               <div className="mb-2">
                 <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
@@ -187,19 +198,19 @@ export default function EventDetail() {
                   {formatDateRange(tournament.startDate, tournament.endDate)}
                 </Badge>
               </div>
-              
+
               <h1 className="text-2xl md:text-3xl font-extrabold drop-shadow-lg mb-3 leading-snug line-clamp-2">
                 {tournament.name}
               </h1>
-              
+
               {(venue || cityCountry) && (
                 <div className="flex items-center gap-2 mb-4 text-sm">
                   <MapPin className="w-4 h-4" />
                   <span>{[venue, cityCountry].filter(Boolean).join(' / ')}</span>
                 </div>
               )}
-              
-              <Button 
+
+              <Button
                 onClick={() => {
                   setActiveTab('register');
                   setTimeout(() => {
@@ -218,135 +229,166 @@ export default function EventDetail() {
 
           {/* Tabs Navigation */}
           <div className="sticky top-16 z-10 bg-white/80 backdrop-blur border-b mt-8">
-            <div className="flex space-x-6 overflow-x-auto no-scrollbar px-2">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    const element = document.getElementById(tab.id);
-                    if (element) {
-                      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                  }}
-                  className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-mtta-green focus-visible:ring-offset-2 ${
-                    activeTab === tab.id
-                      ? 'border-mtta-green text-mtta-green font-bold'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                  aria-current={activeTab === tab.id ? 'page' : undefined}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="overview">Ерөнхий</TabsTrigger>
+                <TabsTrigger value="participants">Оролцогчид</TabsTrigger>
+                <TabsTrigger value="results">Үр дүн</TabsTrigger>
+              </TabsList>
 
-          {/* Tab Content */}
-          <div className="py-8 space-y-16">
-            
-            {/* Overview */}
-            <section id="overview" tabIndex={-1} className="scroll-mt-24 md:scroll-mt-28">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Тойм</h2>
-              <div className="prose max-w-none">
-                {tournament.description ? (
-                  <p className="text-gray-600 leading-relaxed">{tournament.description}</p>
-                ) : (
-                  <p className="text-gray-500 italic">Тэмцээний тойм одоогоор бэлэн болоогүй байна.</p>
-                )}
+              {/* Tab Content */}
+              <div className="py-8 space-y-16">
+                <TabsContent value="overview" className="space-y-8">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Тэмцээний тухай</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {tournament.richDescription ? (
+                        <div
+                          className="prose prose-sm max-w-none dark:prose-invert"
+                          dangerouslySetInnerHTML={{ __html: tournament.richDescription }}
+                        />
+                      ) : (
+                        <p className="text-muted-foreground leading-relaxed">
+                          {tournament.description || "Тэмцээний дэлгэрэнгүй мэдээлэл оруулаагүй байна."}
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Ерөнхий мэдээлэл</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                              <p className="text-sm font-medium">Эхлэх огноо</p>
+                              <p className="text-sm text-muted-foreground">
+                                {format(new Date(tournament.startDate), "yyyy оны MM сарын dd", { locale: mn })}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                              <p className="text-sm font-medium">Дуусах огноо</p>
+                              <p className="text-sm text-muted-foreground">
+                                {format(new Date(tournament.endDate), "yyyy оны MM сарын dd", { locale: mn })}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                              <p className="text-sm font-medium">Байршил</p>
+                              <p className="text-sm text-muted-foreground">{tournament.location}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          {tournament.organizer && (
+                            <div className="flex items-center gap-3">
+                              <Users className="h-4 w-4 text-muted-foreground" />
+                              <div>
+                                <p className="text-sm font-medium">Зохион байгуулагч</p>
+                                <p className="text-sm text-muted-foreground">{tournament.organizer}</p>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-3">
+                            <Trophy className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                              <p className="text-sm font-medium">Хамгийн олон оролцогч</p>
+                              <p className="text-sm text-muted-foreground">{tournament.maxParticipants} хүн</p>
+                            </div>
+                          </div>
+
+                          {tournament.entryFee && tournament.entryFee !== "0" && (
+                            <div className="flex items-center gap-3">
+                              <DollarSign className="h-4 w-4 text-muted-foreground" />
+                              <div>
+                                <p className="text-sm font-medium">Оролцооны хураамж</p>
+                                <p className="text-sm text-muted-foreground">{tournament.entryFee}₮</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {tournament.participationTypes && tournament.participationTypes.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Оролцох ангилал</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex flex-wrap gap-2">
+                          {tournament.participationTypes.map((type) => (
+                            <Badge key={type} variant="secondary">
+                              {type}
+                            </Badge>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {tournament.rules && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Дүрэм журам</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                          {tournament.rules}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {tournament.prizes && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Шагнал урамшуулал</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                          {tournament.prizes}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="participants" className="space-y-6">
+                  <ParticipantsTab tournamentId={tournament.id} />
+                </TabsContent>
+
+                <TabsContent value="results" className="space-y-8">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Тэмцээний үр дүн</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-center py-12">
+                        <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-500">Тэмцээний үр дүнгүүд удахгүй нэмэгдэх болно.</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
               </div>
-            </section>
-
-            {/* Groups */}
-            <section id="groups" tabIndex={-1} className="scroll-mt-24 md:scroll-mt-28">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Хэсгийн тоглолтууд</h2>
-              <div className="text-center py-12">
-                <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">Хэсгийн тоглолтуудын мэдээлэл удахгүй нэмэгдэх болно.</p>
-              </div>
-            </section>
-
-            {/* Schedule */}
-            <section id="schedule" tabIndex={-1} className="scroll-mt-24 md:scroll-mt-28">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Хуваарь</h2>
-              <div className="text-center py-12">
-                <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">Тэмцээний хуваарь удахгүй нэмэгдэх болно.</p>
-              </div>
-            </section>
-
-            {/* Players */}
-            <section id="players" tabIndex={-1} className="scroll-mt-24 md:scroll-mt-28">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Баг тамирчид</h2>
-              <div className="text-center py-12">
-                <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">Оролцогч тамирчдын жагсаалт удахгүй нэмэгдэх болно.</p>
-              </div>
-            </section>
-
-            {/* Album */}
-            <section id="album" tabIndex={-1} className="scroll-mt-24 md:scroll-mt-28">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Альбом</h2>
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-200 rounded mx-auto mb-4 flex items-center justify-center">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <p className="text-gray-500">Тэмцээний зургийн цомог удахгүй нэмэгдэх болно.</p>
-              </div>
-            </section>
-
-            {/* About */}
-            <section id="about" tabIndex={-1} className="scroll-mt-24 md:scroll-mt-28">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Тэмцээний дэлгэрэнгүй</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">Үндсэн мэдээлэл</h3>
-                  <dl className="space-y-2">
-                    <div>
-                      <dt className="text-sm text-gray-500">Огноо:</dt>
-                      <dd className="text-sm font-medium">{formatDateRange(tournament.startDate, tournament.endDate)}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-sm text-gray-500">Байршил:</dt>
-                      <dd className="text-sm font-medium">{venue || 'Тодорхойгүй'}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-sm text-gray-500">Төлөв:</dt>
-                      <dd className="text-sm font-medium">
-                        <Badge variant={tournament.status === 'upcoming' ? 'default' : 'secondary'}>
-                          {tournament.status === 'upcoming' ? 'Удахгүй' : 
-                           tournament.status === 'ongoing' ? 'Явагдаж байгаа' : 'Дууссан'}
-                        </Badge>
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
-                
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">Оролцооны төрлүүд</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {tournament.participationTypes.map((type) => (
-                      <Badge key={type} variant="outline">
-                        {type === 'singles_men' ? 'Эрэгтэй дан' :
-                         type === 'singles_women' ? 'Эмэгтэй дан' :
-                         type === 'doubles_men' ? 'Эрэгтэй хос' :
-                         type === 'doubles_women' ? 'Эмэгтэй хос' :
-                         type === 'mixed_doubles' ? 'Холимог хос' : type}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Registration Section */}
-            <section id="register" tabIndex={-1} className="scroll-mt-24 md:scroll-mt-28">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Бүртгүүлэх</h2>
-              <RegistrationForm tournament={tournament} />
-            </section>
-
+            </Tabs>
           </div>
         </div>
       </div>

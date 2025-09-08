@@ -1008,6 +1008,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
+  // Registration endpoints
+  app.post("/api/registrations", requireAuth, async (req: any, res) => {
+    try {
+      const { tournamentId, category } = req.body;
+
+      if (!tournamentId || !category) {
+        return res.status(400).json({ message: "tournamentId болон category заавал оруулна уу" });
+      }
+
+      const userId = req.session.userId;
+      let player = await storage.getPlayerByUserId(userId);
+      if (!player) {
+        const user = await storage.getUser(userId);
+        if (!user) {
+          return res.status(400).json({ message: "Хэрэглэгч олдсонгүй" });
+        }
+        player = await storage.createPlayer({
+          userId,
+          dateOfBirth: user.dateOfBirth || new Date(),
+          rank: "Шинэ тоглогч",
+        });
+      }
+
+      // Check for existing registration with same category
+      const existing = await storage.getTournamentRegistrationByCategory(
+        tournamentId,
+        player.id,
+        category
+      );
+      if (existing) {
+        return res.status(409).json({ message: "Энэ категориар аль хэдийн бүртгүүлсэн байна" });
+      }
+
+      // Validate eligibility
+      try {
+        await validateTournamentEligibility(tournamentId, player.id, category);
+      } catch (err: any) {
+        const status = err.message === "Тэмцээн олдсонгүй" ? 404 : 400;
+        return res.status(status).json({ message: err.message });
+      }
+
+      const registration = await storage.registerForTournament({
+        tournamentId,
+        playerId: player.id,
+        participationType: category,
+      });
+
+      res.status(201).json({ id: registration.id, message: "Амжилттай бүртгүүллээ" });
+    } catch (e) {
+      console.error("Registration error:", e);
+      res.status(500).json({ message: "Бүртгүүлэхэд алдаа гарлаа" });
+    }
+  });
+
+  app.get("/api/registrations/me", requireAuth, async (req: any, res) => {
+    try {
+      const { tid: tournamentId } = req.query;
+      
+      if (!tournamentId) {
+        return res.status(400).json({ message: "Tournament ID заавал оруулна уу" });
+      }
+
+      const userId = req.session.userId;
+      const player = await storage.getPlayerByUserId(userId);
+      
+      if (!player) {
+        return res.json([]);
+      }
+
+      const registrations = await storage.getPlayerTournamentRegistrations(player.id);
+      const tournamentRegs = registrations
+        .filter(reg => reg.tournamentId === tournamentId)
+        .map(reg => reg.participationType);
+
+      res.json(tournamentRegs);
+    } catch (e) {
+      console.error("Error fetching user registrations:", e);
+      res.status(500).json({ message: "Бүртгэлийн мэдээлэл авахад алдаа гарлаа" });
+    }
+  });
+
   // Registration
   app.post(
     "/api/tournaments/:tournamentId/register",
@@ -1112,9 +1193,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/tournaments/:tournamentId/participants", async (req, res) => {
     try {
-      const participants = await storage.getTournamentParticipants(
+      const { category } = req.query;
+      let participants = await storage.getTournamentParticipants(
         req.params.tournamentId,
       );
+      
+      // Filter by category if specified
+      if (category && category !== 'all') {
+        participants = participants.filter(p => p.participationType === category);
+      }
+      
       res.json(participants);
     } catch (e) {
       console.error("Error fetching tournament participants:", e);

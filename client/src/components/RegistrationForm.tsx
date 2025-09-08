@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'wouter';
 import { Button } from "@/components/ui/button";
@@ -10,23 +9,36 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import { usePlayerProfile } from "@/hooks/usePlayerProfile";
 import { useAuth } from "@/hooks/useAuth";
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
 
 type RegistrationFormProps = {
   tournament: {
     id: string;
     startDate: string;
     participationTypes: string[];
-    eligibility?: Record<string, { 
-      genders?: ("male"|"female")[]; 
-      minAge?: number; 
+    eligibility?: Record<string, {
+      genders?: ("male"|"female")[];
+      minAge?: number;
       maxAge?: number;
     }>;
   };
+  onSuccess?: () => void;
 };
 
-export default function RegistrationForm({ tournament }: RegistrationFormProps) {
-  const { isAuthenticated } = useAuth();
-  const { profile, loading } = usePlayerProfile();
+export default function RegistrationForm({ tournament, onSuccess }: RegistrationFormProps) {
+  const { isAuthenticated, user } = useAuth();
+  const { data: profile, loading } = usePlayerProfile();
+
+  // Check user registration status
+  const { data: userRegistrations = [], refetch: refetchRegistrations } = useQuery({
+    queryKey: ["/api/registrations/me", { tid: tournament.id }],
+    enabled: !!user,
+  });
+
+  const isRegistered = userRegistrations.length > 0;
+
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -36,11 +48,11 @@ export default function RegistrationForm({ tournament }: RegistrationFormProps) 
     const start = new Date(startDate);
     let age = start.getFullYear() - birth.getFullYear();
     const monthDiff = start.getMonth() - birth.getMonth();
-    
+
     if (monthDiff < 0 || (monthDiff === 0 && start.getDate() < birth.getDate())) {
       age--;
     }
-    
+
     return age;
   };
 
@@ -48,7 +60,18 @@ export default function RegistrationForm({ tournament }: RegistrationFormProps) 
   const getParticipationTypeLabel = (type: string): string => {
     const labels: Record<string, string> = {
       'singles_men': 'Эрэгтэй дан',
-      'singles_women': 'Эмэгтэй дан', 
+      'singles_women': 'Эмэгтэй дан',
+      'doubles_men': 'Эрэгтэй хос',
+      'doubles_women': 'Эмэгтэй хос',
+      'mixed_doubles': 'Холимог хос'
+    };
+    return labels[type] || type;
+  };
+
+  const getCategoryLabel = (type: string): string => {
+    const labels: Record<string, string> = {
+      'singles_men': 'Эрэгтэй дан',
+      'singles_women': 'Эмэгтэй дан',
       'doubles_men': 'Эрэгтэй хос',
       'doubles_women': 'Эмэгтэй хос',
       'mixed_doubles': 'Холимог хос'
@@ -93,8 +116,40 @@ export default function RegistrationForm({ tournament }: RegistrationFormProps) 
     return { valid: true };
   };
 
-  const handleSubmit = async () => {
-    if (!selectedCategory || !profile) return;
+  const registerMutation = useMutation({
+    mutationFn: async (data: { category: string }) => {
+      const response = await fetch("/api/registrations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          tournamentId: tournament.id,
+          category: data.category,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Бүртгүүлэхэд алдаа гарлаа");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["/api/tournaments", tournament.id, "participants"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/registrations/me"],
+      });
+      refetchRegistrations();
+      onSuccess?.();
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCategory) return;
 
     const validation = validateEligibility(selectedCategory);
     if (!validation.valid) {
@@ -106,64 +161,7 @@ export default function RegistrationForm({ tournament }: RegistrationFormProps) 
       return;
     }
 
-    setIsSubmitting(true);
-
-    try {
-      const response = await fetch('/api/registrations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          tournamentId: tournament.id,
-          category: selectedCategory
-        }),
-      });
-
-      if (response.ok) {
-        toast({
-          title: "Амжилттай",
-          description: "Амжилттай бүртгүүллээ",
-        });
-        setSelectedCategory('');
-      } else {
-        const errorData = await response.json().catch(() => null);
-        const errorMessage = errorData?.message || 'Бүртгэл хийхэд алдаа гарлаа';
-        throw new Error(errorMessage);
-      }
-    } catch (error) {
-      console.error('Registration error:', error);
-      
-      // Show specific error message if available
-      if (error instanceof Error && error.message !== 'Registration failed') {
-        toast({
-          title: "Алдаа",
-          description: error.message,
-          variant: "destructive"
-        });
-      } else {
-        // Save to localStorage as fallback
-        const registrationData = {
-          tournamentId: tournament.id,
-          category: selectedCategory,
-          timestamp: new Date().toISOString(),
-          profile: {
-            fullName: profile.fullName,
-            gender: profile.gender,
-            age: calculateAge(profile.birthDate, tournament.startDate)
-          }
-        };
-        
-        localStorage.setItem(`reg-cache:${tournament.id}`, JSON.stringify(registrationData));
-        
-        toast({
-          title: "Анхааруулга",
-          description: "Бүртгэл түр хадгаллаа. Дараа дахин оролдоно уу.",
-        });
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
+    registerMutation.mutate({ category: selectedCategory });
   };
 
   // Not authenticated - show login CTA
@@ -256,42 +254,93 @@ export default function RegistrationForm({ tournament }: RegistrationFormProps) 
           </div>
         </div>
 
-        {/* Category Selection */}
-        <div>
-          <Label htmlFor="category">Оролцох төрөл *</Label>
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger>
-              <SelectValue placeholder="Оролцох төрөл сонгоно уу" />
-            </SelectTrigger>
-            <SelectContent>
-              {tournament.participationTypes.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {getParticipationTypeLabel(type)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Eligibility Warning */}
-        {selectedCategory && !validation.valid && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-3">
-            <p className="text-red-600 text-sm font-medium">
-              ⚠️ {validation.error}
-            </p>
+        {isRegistered ? (
+          <div className="space-y-4">
+            <div className="text-center p-6 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+              <h3 className="text-lg font-semibold text-green-800 dark:text-green-200 mb-2">
+                Амжилттай бүртгэгдлээ
+              </h3>
+              <p className="text-green-700 dark:text-green-300 mb-4">
+                Та энэ тэмцээнд бүртгэгдсэн байна
+              </p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {userRegistrations.map((category) => (
+                  <span
+                    key={category}
+                    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary text-primary-foreground"
+                  >
+                    {getCategoryLabel(category)}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <Button disabled className="w-full" variant="secondary">
+              Бүртгэгдсэн
+            </Button>
           </div>
-        )}
+        ) : (
+          <>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-foreground">
+                Оролцох төрөл сонгох
+              </h3>
 
-        {/* Submit Button */}
-        <div className="flex justify-end">
-          <Button 
-            onClick={handleSubmit}
-            disabled={!selectedCategory || !validation.valid || isSubmitting}
-            className="bg-mtta-green hover:bg-green-700 text-white font-bold px-8"
-          >
-            {isSubmitting ? 'Бүртгүүлж байна...' : 'Бүртгүүлэх'}
-          </Button>
-        </div>
+              <div className="grid grid-cols-1 gap-3">
+                {tournament.participationTypes?.map((type) => {
+                  const validation = validateEligibility(type);
+                  const isDisabled = !validation.valid;
+
+                  return (
+                    <div
+                      key={type}
+                      className={cn(
+                        "flex items-center space-x-3 p-4 rounded-lg border cursor-pointer transition-all",
+                        selectedCategory === type
+                          ? "border-primary bg-primary/5"
+                          : isDisabled
+                            ? "border-muted bg-muted/20 opacity-60 cursor-not-allowed"
+                            : "border-border hover:border-primary/50 hover:bg-accent/50",
+                      )}
+                      onClick={() => !isDisabled && setSelectedCategory(type)}
+                    >
+                      <input
+                        type="radio"
+                        name="participationType"
+                        value={type}
+                        checked={selectedCategory === type}
+                        onChange={() => !isDisabled && setSelectedCategory(type)}
+                        disabled={isDisabled}
+                        className="text-primary focus:ring-primary"
+                      />
+                      <div className="flex-1">
+                        <label className="text-sm font-medium text-foreground cursor-pointer">
+                          {getCategoryLabel(type)}
+                        </label>
+                        {validation.error && (
+                          <p className="text-xs text-destructive mt-1">
+                            {validation.error}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={
+                !selectedCategory ||
+                !validateEligibility(selectedCategory).valid ||
+                registerMutation.isPending
+              }
+            >
+              {registerMutation.isPending ? "Бүртгүүлж байна..." : "Бүртгүүлэх"}
+            </Button>
+          </>
+        )}
       </CardContent>
     </Card>
   );

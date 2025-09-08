@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { format } from "date-fns";
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Calendar, MapPin, Users, Clock, Trophy, UserPlus, UserCheck } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 
 interface Event {
   id: string;
@@ -102,6 +106,7 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
     "upcoming"
   );
   const [imgErr, setImgErr] = useState(false);
+  const [showRegistration, setShowRegistration] = useState(false);
 
   useEffect(() => {
     const update = () => {
@@ -143,6 +148,16 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
   const prize = formatPrize(event.prizePool);
 
   const bg = !imgErr ? getCover(event) : null;
+
+  const { user } = useAuth();
+
+  // Check user registration status
+  const { data: userRegistrations = [] } = useQuery({
+    queryKey: ["/api/registrations/me", { tid: event.id }],
+    enabled: !!user,
+  });
+
+  const isRegistered = userRegistrations.length > 0;
 
   return (
     <div className="relative h-[360px] w-full overflow-hidden rounded-2xl">

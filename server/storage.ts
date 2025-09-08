@@ -69,6 +69,7 @@ import {
   type InsertLeagueMatch,
   type LeaguePlayerMatch,
   type InsertLeaguePlayerMatch,
+  type TournamentParticipant,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, or } from "drizzle-orm";
@@ -802,14 +803,37 @@ export class DatabaseStorage implements IStorage {
     return registration;
   }
 
-  async getTournamentRegistration(tournamentId: string, playerId: string) {
+  async getTournamentRegistration(
+    tournamentId: string,
+    playerId: string,
+  ): Promise<TournamentParticipant | undefined> {
     const [registration] = await db
       .select()
       .from(tournamentParticipants)
-      .where(and(
-        eq(tournamentParticipants.tournamentId, tournamentId),
-        eq(tournamentParticipants.playerId, playerId)
-      ));
+      .where(
+        and(
+          eq(tournamentParticipants.tournamentId, tournamentId),
+          eq(tournamentParticipants.playerId, playerId),
+        ),
+      );
+    return registration;
+  }
+
+  async getTournamentRegistrationByCategory(
+    tournamentId: string,
+    playerId: string,
+    category: string,
+  ): Promise<TournamentParticipant | undefined> {
+    const [registration] = await db
+      .select()
+      .from(tournamentParticipants)
+      .where(
+        and(
+          eq(tournamentParticipants.tournamentId, tournamentId),
+          eq(tournamentParticipants.playerId, playerId),
+          eq(tournamentParticipants.participationType, category),
+        ),
+      );
     return registration;
   }
 
@@ -1599,7 +1623,7 @@ export class DatabaseStorage implements IStorage {
       // Reset all player stats to 0
       await db.update(players).set({ wins: 0, losses: 0, winPercentage: 0 });
 
-      // Get all published tournaments
+      // Get all published tournament results
       const publishedTournaments = await db
         .select({ id: tournaments.id })
         .from(tournaments)
