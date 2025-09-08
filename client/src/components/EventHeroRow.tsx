@@ -110,6 +110,15 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
   const [imgErr, setImgErr] = useState(false);
   const [showRegistration, setShowRegistration] = useState(false);
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on buttons or interactive elements
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'BUTTON' || target.tagName === 'SELECT' || target.closest('button') || target.closest('select')) {
+      return;
+    }
+    window.location.href = `/events/${event.id}`;
+  };
+
   useEffect(() => {
     const update = () => {
       const now = getNow(event.timezone);
@@ -184,7 +193,10 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
   });
 
   return (
-    <div className="relative h-[360px] w-full overflow-hidden rounded-2xl">
+    <div 
+      className="relative h-[360px] w-full overflow-hidden rounded-2xl cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl"
+      onClick={handleCardClick}
+    >
       {bg ? (
         <img
           src={bg}

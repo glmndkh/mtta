@@ -131,7 +131,9 @@ export default function Tournaments() {
           </div>
         ) : (
           mapped.map((t, idx) => (
-            <EventHeroRow key={t.id} event={t} priority={idx < 1} />
+            <div key={t.id} className="group">
+              <EventHeroRow event={t} priority={idx < 1} />
+            </div>
           ))
         )}
       </div>
