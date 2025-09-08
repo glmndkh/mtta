@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useLocation } from "wouter";
+import { useParams, useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
@@ -9,7 +9,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Calendar, Users, Clock, Trophy, DollarSign } from "lucide-react";
+import { MapPin, Calendar, Users, Clock, Trophy, DollarSign, ArrowLeft } from "lucide-react";
 import PageWithLoading from "@/components/PageWithLoading";
 import RegistrationForm from "@/components/RegistrationForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -192,85 +192,87 @@ export default function EventDetail() {
 
         {/* Hero Section */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="relative min-h-[260px] md:h-[360px] rounded-2xl overflow-hidden">
-            {imageUrl ? (
-              <img
-                src={imageUrl}
-                alt={tournament.name}
-                className="absolute inset-0 w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.parentElement!.style.background = 'linear-gradient(135deg, #6b7280 0%, #374151 100%)';
-                }}
-              />
-            ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-500 to-gray-700"></div>
-            )}
-
-            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/0"></div>
-
-            <div className="absolute left-4 bottom-4 md:left-6 md:bottom-6 text-white max-w-[90%] md:max-w-[70%]">
-              <div className="mb-2">
-                <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-                  <Calendar className="w-3 h-3 mr-1" />
-                  {formatDateRange(tournament.startDate, tournament.endDate)}
-                </Badge>
-              </div>
-
-              <h1 className="text-2xl md:text-3xl font-extrabold drop-shadow-lg mb-3 leading-snug line-clamp-2">
-                {tournament.name}
-              </h1>
-
-              {(venue || cityCountry) && (
-                <div className="flex items-center gap-2 mb-4 text-sm">
-                  <MapPin className="w-4 h-4" />
-                  <span>{[venue, cityCountry].filter(Boolean).join(' / ')}</span>
-                </div>
+          <Link href={`/tournaments/${tournament.id}`}>
+            <div className="relative min-h-[260px] md:h-[360px] rounded-2xl overflow-hidden cursor-pointer group">
+              {imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt={tournament.name}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.parentElement!.style.background = 'linear-gradient(135deg, #6b7280 0%, #374151 100%)';
+                  }}
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-500 to-gray-700"></div>
               )}
 
-              <div className="flex items-center gap-2">
-                {/* Category Selection Dropdown */}
-                {tournament.participationTypes && tournament.participationTypes.length > 0 && (
-                  <select
-                    className="rounded-full bg-white/20 text-white border border-white/30 px-3 py-2 text-sm font-medium backdrop-blur-sm focus:bg-white/30 focus:outline-none focus:ring-2 focus:ring-green-600"
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                  >
-                    <option value="" disabled>Ангилал сонгох</option>
-                    {tournament.participationTypes.map((type) => (
-                      <option key={type} value={type} className="text-gray-900">
-                        {type}
-                      </option>
-                    ))}
-                  </select>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/0"></div>
+
+              <div className="absolute left-4 bottom-4 md:left-6 md:bottom-6 text-white max-w-[90%] md:max-w-[70%]">
+                <div className="mb-2">
+                  <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                    <Calendar className="w-3 h-3 mr-1" />
+                    {formatDateRange(tournament.startDate, tournament.endDate)}
+                  </Badge>
+                </div>
+
+                <h1 className="text-2xl md:text-3xl font-extrabold drop-shadow-lg mb-3 leading-snug line-clamp-2">
+                  {tournament.name}
+                </h1>
+
+                {(venue || cityCountry) && (
+                  <div className="flex items-center gap-2 mb-4 text-sm">
+                    <MapPin className="w-4 h-4" />
+                    <span>{[venue, cityCountry].filter(Boolean).join(' / ')}</span>
+                  </div>
                 )}
 
-                {!isUserRegistered ? (
-                  <Button
-                    onClick={() => {
-                      setActiveTab('register');
-                      setTimeout(() => {
-                        const element = document.getElementById('register');
-                        if (element) {
-                          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }
-                      }, 100);
-                    }}
-                    className="bg-mtta-green hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg hover:shadow-xl transition-all duration-300"
-                  >
-                    Бүртгүүлэх
-                  </Button>
-                ) : (
-                  <Button
-                    disabled
-                    className="bg-green-600 text-white cursor-not-allowed font-bold py-3 px-8 rounded-full text-lg shadow-lg"
-                  >
-                    БҮРТГЭГДСЭН
-                  </Button>
-                )}
+                <div className="flex items-center gap-2">
+                  {/* Category Selection Dropdown */}
+                  {tournament.participationTypes && tournament.participationTypes.length > 0 && (
+                    <select
+                      className="rounded-full bg-white/20 text-white border border-white/30 px-3 py-2 text-sm font-medium backdrop-blur-sm focus:bg-white/30 focus:outline-none focus:ring-2 focus:ring-green-600"
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                    >
+                      <option value="" disabled>Ангилал сонгох</option>
+                      {tournament.participationTypes.map((type) => (
+                        <option key={type} value={type} className="text-gray-900">
+                          {type}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+
+                  {!isUserRegistered ? (
+                    <Button
+                      onClick={() => {
+                        setActiveTab('register');
+                        setTimeout(() => {
+                          const element = document.getElementById('register');
+                          if (element) {
+                            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }
+                        }, 100);
+                      }}
+                      className="bg-mtta-green hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      Бүртгүүлэх
+                    </Button>
+                  ) : (
+                    <Button
+                      disabled
+                      className="bg-green-600 text-white cursor-not-allowed font-bold py-3 px-8 rounded-full text-lg shadow-lg"
+                    >
+                      БҮРТГЭГДСЭН
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          </Link>
 
           {/* Tabs Navigation */}
           <div className="sticky top-16 z-10 bg-white/80 backdrop-blur border-b mt-8">
