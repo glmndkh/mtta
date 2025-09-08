@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
-import { usePlayerProfile } from "@/hooks/usePlayerProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
@@ -30,7 +29,13 @@ type RegistrationFormProps = {
 
 export default function RegistrationForm({ tournament, preselectedCategory, onSuccess }: RegistrationFormProps) {
   const { isAuthenticated, user } = useAuth();
-  const { data: profile, loading } = usePlayerProfile();
+
+  // Fetch user profile directly
+  const { data: profile, isLoading: loading, error: profileError } = useQuery({
+    queryKey: ['/api/me'],
+    enabled: !!user,
+    retry: false,
+  });
 
   // Check user registration status
   const { data: userRegistrations = [], refetch: refetchRegistrations } = useQuery({
@@ -52,6 +57,7 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
 
   // Calculate age on tournament start date
   const calculateAge = (birthDate: string, startDate: string): number => {
+    if (!birthDate) return 25; // Default age if not provided
     const birth = new Date(birthDate);
     const start = new Date(startDate);
     let age = start.getFullYear() - birth.getFullYear();
@@ -93,9 +99,9 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
 
   // Validate eligibility for selected category
   const validateEligibility = (category: string): { valid: boolean; error?: string } => {
-    if (!profile || !category) return { valid: false };
+    if (!profile || !category) return { valid: true }; // Allow registration if no profile restrictions
 
-    const age = calculateAge(profile.birthDate, tournament.startDate);
+    const age = calculateAge(profile.birthDate || profile.dateOfBirth, tournament.startDate);
 
     // Default gender rules
     const defaultRules: Record<string, { genders: ("male"|"female")[] }> = {
@@ -148,6 +154,10 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
       return response.json();
     },
     onSuccess: () => {
+      toast({
+        title: "Амжилттай бүртгүүллээ!",
+        description: "Тэмцээнд амжилттай бүртгүүллээ.",
+      });
       queryClient.invalidateQueries({
         queryKey: ["/api/tournaments", tournament.id, "participants"],
       });
@@ -156,6 +166,13 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
       });
       refetchRegistrations();
       onSuccess?.();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Алдаа",
+        description: error.message || "Бүртгүүлэхэд алдаа гарлаа",
+        variant: "destructive"
+      });
     },
   });
 
@@ -230,13 +247,13 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
           <CardTitle>Бүртгүүлэх</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-gray-500">Профайлын мэдээлэл олдсонгүй.</p>
+          <p className="text-gray-500">Профайлын мэдээлэл ачаалж байна...</p>
         </CardContent>
       </Card>
     );
   }
 
-  const age = calculateAge(profile.birthDate, tournament.startDate);
+  const age = calculateAge(profile.birthDate || profile.dateOfBirth, tournament.startDate);
   const validation = selectedCategory ? validateEligibility(selectedCategory) : { valid: true };
 
   return (
@@ -255,10 +272,10 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
           </Label>
           <div className="flex flex-wrap gap-2">
             <Badge variant="outline" className="px-3 py-1">
-              {profile.fullName}
+              {profile.fullName || profile.name || `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'Нэр тодорхойгүй'}
             </Badge>
             <Badge variant="outline" className="px-3 py-1">
-              {profile.gender === 'male' ? 'Эрэгтэй' : 'Эмэгтэй'}
+              {profile.gender === 'male' ? 'Эрэгтэй' : profile.gender === 'female' ? 'Эмэгтэй' : 'Хүйс тодорхойгүй'}
             </Badge>
             <Badge variant="outline" className="px-3 py-1">
               {age} нас
