@@ -179,16 +179,19 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
             PRIZE MONEY: {prize}
           </div>
         )}
-        <Link
-          to={
-            status === 'upcoming'
-              ? `/events/${event.id}`
-              : `/events/${event.id}#results`
-          }
-          className='mt-4 inline-block rounded-full bg-white text-gray-900 px-4 py-2 text-sm font-bold hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2'
-        >
-          {status === 'upcoming' ? 'БҮРТГҮҮЛЭХ' : 'Үр дүн'}
-        </Link>
+        {status === 'upcoming' ? (
+          <Link href={`/events/${event.id}#register`}>
+            <Button className="mt-4 px-6 py-2 rounded-full font-bold hover:bg-green-700">
+              БҮРТГҮҮЛЭХ
+            </Button>
+          </Link>
+        ) : (
+          <Link href={`/events/${event.id}#results`}>
+            <Button className="mt-4 px-4 py-2 rounded-full font-medium hover:bg-green-700">
+              Үр дүн
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Right side countdown & categories */}
@@ -267,4 +270,3 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
     </div>
   );
 }
-
