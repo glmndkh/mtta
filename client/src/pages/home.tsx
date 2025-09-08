@@ -168,6 +168,219 @@ export default function Home() {
   return (
     <PageWithLoading>
       <div className="min-h-screen">
+        {/* Hero Section */}
+        <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              {/* Left Content */}
+              <div className="space-y-8">
+                <div className="space-y-4">
+                  <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
+                    Монгольн<br />
+                    Ширээний Теннис
+                  </h1>
+                  <div className="h-1 w-16 bg-mtta-green"></div>
+                  <p className="text-xl text-gray-300 leading-relaxed">
+                    хуваарь,<br />
+                    бүртгэл, үр дүн,<br />
+                    чансаа нэг дор.
+                  </p>
+                </div>
+                
+                <div className="flex gap-4">
+                  <button className="bg-mtta-green hover:bg-green-600 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                    Бүртгүүлэх
+                  </button>
+                  <button className="border border-mtta-green text-mtta-green hover:bg-mtta-green hover:text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                    Бүртгүүлэх
+                  </button>
+                </div>
+              </div>
+
+              {/* Right Content - Tournament Schedule */}
+              <div className="space-y-4">
+                <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-4xl font-bold">15</span>
+                    <div className="text-right">
+                      <div className="text-sm text-gray-300">Sep</div>
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-300 mb-2">2025 Монгол Ширээний Теннисний Demo Тэмцээн</div>
+                  <div className="text-xs text-gray-400">📍 Монгол Ширээний Теннисний Холбооны Төв Заал</div>
+                </div>
+
+                <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-4xl font-bold">30</span>
+                    <div className="text-right">
+                      <div className="text-sm text-gray-300">Nov</div>
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-300 mb-2">asdf</div>
+                  <div className="text-xs text-gray-400">📍 өөн</div>
+                </div>
+
+                <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-4xl font-bold">1</span>
+                    <div className="text-right">
+                      <div className="text-sm text-gray-300">Feb</div>
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-300 mb-2">Улсын аварга</div>
+                  <div className="text-xs text-gray-400">📍 өөн</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tournament Cards Section */}
+        <div className="bg-gray-900 text-white py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-bold">Ойрын тэмцээнүүд</h2>
+              <button className="bg-mtta-green hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
+                Бүгдийг харах
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Tournament Card 1 */}
+              <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-mtta-green transition-colors">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold">2025 Монгол Ширээний Теннисний Demo Тэмцээн</h3>
+                  <span className="bg-mtta-green text-white px-2 py-1 rounded text-xs">Бүртгэл</span>
+                </div>
+                
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center text-sm text-gray-300">
+                    <span className="w-4 h-4 mr-2">📅</span>
+                    2025/09/15
+                  </div>
+                  <div className="flex items-center text-sm text-gray-300">
+                    <span className="w-4 h-4 mr-2">📍</span>
+                    Монгол Ширээний Теннисний Холбооны Төв За...
+                  </div>
+                </div>
+
+                <div className="flex gap-2 mb-4">
+                  <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs">MS</span>
+                  <span className="bg-pink-500 text-white px-2 py-1 rounded text-xs">WS</span>
+                  <span className="bg-green-500 text-white px-2 py-1 rounded text-xs">MD</span>
+                  <span className="bg-purple-500 text-white px-2 py-1 rounded text-xs">WD</span>
+                </div>
+              </div>
+
+              {/* Tournament Card 2 */}
+              <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-mtta-green transition-colors">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold">asdf</h3>
+                  <span className="bg-mtta-green text-white px-2 py-1 rounded text-xs">Бүртгэл</span>
+                </div>
+                
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center text-sm text-gray-300">
+                    <span className="w-4 h-4 mr-2">📅</span>
+                    2025/11/30
+                  </div>
+                  <div className="flex items-center text-sm text-gray-300">
+                    <span className="w-4 h-4 mr-2">📍</span>
+                    өөн
+                  </div>
+                </div>
+
+                <div className="flex gap-2 mb-4">
+                  <span className="bg-orange-500 text-white px-2 py-1 rounded text-xs">XD</span>
+                  <span className="bg-green-500 text-white px-2 py-1 rounded text-xs">MD</span>
+                  <span className="bg-green-500 text-white px-2 py-1 rounded text-xs">MD</span>
+                  <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs">MS</span>
+                </div>
+              </div>
+
+              {/* Tournament Card 3 */}
+              <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-mtta-green transition-colors">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold">Улсын аварга</h3>
+                  <span className="bg-mtta-green text-white px-2 py-1 rounded text-xs">Бүртгэл</span>
+                </div>
+                
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center text-sm text-gray-300">
+                    <span className="w-4 h-4 mr-2">📅</span>
+                    2026/02/01
+                  </div>
+                  <div className="flex items-center text-sm text-gray-300">
+                    <span className="w-4 h-4 mr-2">📍</span>
+                    өөн
+                  </div>
+                </div>
+
+                <div className="flex gap-2 mb-4">
+                  <span className="bg-orange-500 text-white px-2 py-1 rounded text-xs">XD</span>
+                  <span className="bg-green-500 text-white px-2 py-1 rounded text-xs">MD</span>
+                  <span className="bg-green-500 text-white px-2 py-1 rounded text-xs">MD</span>
+                  <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs">MS</span>
+                </div>
+              </div>
+
+              {/* Tournament Card 4 */}
+              <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-mtta-green transition-colors">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold">Улаанбаатар хотын аварга шалгаруулах тэмцээн 2025</h3>
+                  <span className="bg-mtta-green text-white px-2 py-1 rounded text-xs">Бүртгэл</span>
+                </div>
+                
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center text-sm text-gray-300">
+                    <span className="w-4 h-4 mr-2">📅</span>
+                    2025/09/14
+                  </div>
+                  <div className="flex items-center text-sm text-gray-300">
+                    <span className="w-4 h-4 mr-2">📍</span>
+                    Монгольн Ширээний Теннисний Холбооны спо...
+                  </div>
+                </div>
+
+                <div className="flex gap-2 mb-4">
+                  <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs">MS</span>
+                  <span className="bg-pink-500 text-white px-2 py-1 rounded text-xs">WS</span>
+                  <span className="bg-green-500 text-white px-2 py-1 rounded text-xs">MD</span>
+                </div>
+              </div>
+
+              {/* Tournament Card 5 */}
+              <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-mtta-green transition-colors">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold">Galmandakh Burmaa</h3>
+                  <span className="bg-mtta-green text-white px-2 py-1 rounded text-xs">Бүртгэл</span>
+                </div>
+                
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center text-sm text-gray-300">
+                    <span className="w-4 h-4 mr-2">📅</span>
+                    2025/03/08
+                  </div>
+                  <div className="flex items-center text-sm text-gray-300">
+                    <span className="w-4 h-4 mr-2">📍</span>
+                    Буда
+                  </div>
+                </div>
+
+                <div className="flex gap-2 mb-4">
+                  <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs">MS</span>
+                  <span className="bg-pink-500 text-white px-2 py-1 rounded text-xs">WS</span>
+                  <span className="bg-green-500 text-white px-2 py-1 rounded text-xs">MD</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <Navigation />
 
         {/* Hero Section */}
