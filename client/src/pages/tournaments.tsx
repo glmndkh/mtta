@@ -6,6 +6,10 @@ import { useQuery } from "@tanstack/react-query";
 import EventHeroRow from "@/components/EventHeroRow";
 import { Trophy } from "lucide-react";
 
+// Assuming these imports are needed for the mapping logic, though not directly used in the provided snippet:
+import { format } from 'date-fns';
+import { mn } from 'date-fns/locale';
+
 interface Tournament {
   id: string;
   name: string;
@@ -22,7 +26,18 @@ interface Tournament {
   backgroundImageUrl?: string;
   participationTypes?: string[];
   prizes?: string;
+  description?: string; // Added based on the changes snippet
+  fee?: number; // Added based on the changes snippet
 }
+
+// Assuming RegistrationStatus component is defined elsewhere and imported,
+// and it expects a tournamentId of type string.
+// Example placeholder for RegistrationStatus:
+// const RegistrationStatus = ({ tournamentId }: { tournamentId: string }) => {
+//   // ... component logic
+//   return <div>Registration Status for {tournamentId}</div>;
+// };
+
 
 export default function Tournaments() {
   const { data: tournaments = [], isLoading } = useQuery({
@@ -94,7 +109,21 @@ export default function Tournaments() {
           </div>
         ) : (
           mapped.map((t, idx) => (
-            <EventHeroRow key={t.id} event={t} priority={idx < 1} />
+            // The following snippet was modified to pass `tournament.id` instead of `tournament`
+            <div key={t.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">{t.name}</h3>
+                  <p className="text-gray-600 dark:text-gray-300 mb-2">{t.description}</p>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    <p>📅 {format(new Date(t.startDate), 'PPP', { locale: mn })}</p>
+                    <p>📍 {t.location}</p>
+                    <p>💰 {t.fee?.toLocaleString() || '0'} ₮</p>
+                  </div>
+                </div>
+                <RegistrationStatus tournamentId={t.id} />
+              </div>
+            </div>
           ))
         )}
       </div>
@@ -103,4 +132,3 @@ export default function Tournaments() {
     </PageWithLoading>
   );
 }
-
