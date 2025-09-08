@@ -590,7 +590,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const player = await storage.getPlayerByUserId(userId);
-      
+
       const profileData = {
         id: user.id,
         fullName: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
@@ -602,7 +602,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clubAffiliation: user.clubAffiliation,
         player: player
       };
-      
+
       res.json(profileData);
     } catch (e) {
       console.error("Error fetching player profile:", e);
@@ -617,7 +617,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) {
         return res.status(404).json({ message: "Хэрэглэгч олдсонгүй" });
       }
-      
+
       const profileData = {
         id: user.id,
         fullName: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
@@ -631,7 +631,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clubAffiliation: user.clubAffiliation,
         role: user.role
       };
-      
+
       res.json(profileData);
     } catch (e) {
       console.error("Error fetching user profile:", e);
@@ -1154,14 +1154,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/registrations/me", requireAuth, async (req: any, res) => {
     try {
       const { tid: tournamentId } = req.query;
-      
+
       if (!tournamentId) {
         return res.status(400).json({ message: "Tournament ID заавал оруулна уу" });
       }
 
       const userId = req.session.userId;
       const player = await storage.getPlayerByUserId(userId);
-      
+
       if (!player) {
         return res.json([]);
       }
@@ -1180,67 +1180,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Registration
   app.post(
-    "/api/tournaments/:tournamentId/register",
-    requireAuth,
+    "/api/tournaments/:id/register",
+    isAuthenticated,
     async (req: any, res) => {
       try {
-        const { tournamentId } = req.params;
-        const { participationType, playerId: bodyPlayerId } = req.body;
+        const tournamentId = req.params.id;
+        const user = req.user as any;
 
-        if (!participationType)
-          return res.status(400).json({ message: "participationType is required" });
+        if (!user?.id) {
+          return res.status(401).json({ message: "Unauthorized" });
+        }
 
-        let playerId = bodyPlayerId;
-        if (!playerId) {
-          const userId = req.session.userId;
-          let player = await storage.getPlayerByUserId(userId);
-          if (!player) {
-            const user = await storage.getUser(userId);
-            if (!user)
-              return res.status(400).json({ message: "Хэрэглэгч олдсонгүй" });
-            player = await storage.createPlayer({
-              userId,
-              dateOfBirth: user.dateOfBirth || new Date(),
-              rank: "Шинэ тоглогч",
+        // Check if user already registered
+        const existingRegistration = await storage.getTournamentRegistration(tournamentId, user.id);
+        if (existingRegistration) {
+          return res.status(400).json({ message: "Та аль хэдийн бүртгүүлсэн байна" });
+        }
+
+        // Get user's player profile - if not found, create one from user data
+        let playerProfile = await storage.getPlayerProfile(user.id);
+        if (!playerProfile) {
+          // Create a basic player profile from user information
+          const userData = await storage.getUserById(user.id);
+          if (userData) {
+            await storage.createPlayer({
+              id: user.id,
+              fullName: userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+              email: userData.email,
+              phone: userData.phone,
+              gender: userData.gender,
+              dateOfBirth: userData.dateOfBirth,
+              club: userData.club,
+              playingStyle: null,
+              strongHand: null,
+              coachName: null,
+              achievements: null,
+              profileImageUrl: userData.profileImageUrl
             });
+            playerProfile = await storage.getPlayerProfile(user.id);
           }
-          playerId = player.id;
-        } else {
-          const player = await storage.getPlayer(playerId);
-          if (!player)
-            return res.status(400).json({ message: "Тоглогч олдсонгүй" });
         }
 
-        try {
-          await validateTournamentEligibility(
+        if (!playerProfile) {
+          return res.status(400).json({ message: "Профайлын мэдээлэл үүсгэх боломжгүй байна" });
+        }
+
+        // Register for tournament
+        await storage.registerForTournament(tournamentId, user.id);
+
+        res.json({ 
+          message: "Амжилттай бүртгүүллээ",
+          registration: {
             tournamentId,
-            playerId,
-            participationType,
-          );
-        } catch (err: any) {
-          const status = err.message === "Тэмцээн олдсонгүй" ? 404 : 400;
-          return res.status(status).json({ message: err.message });
-        }
-
-        const existing = await storage.getTournamentRegistration(
-          tournamentId,
-          playerId,
-        );
-        if (existing)
-          return res
-            .status(400)
-            .json({ message: "Тэмцээнд аль хэдийн бүртгүүлсэн байна" });
-
-        const registration = await storage.registerForTournament({
-          tournamentId,
-          playerId,
-          participationType: participationType || "singles",
+            userId: user.id,
+            registeredAt: new Date()
+          }
         });
-
-        res.json({ message: "Амжилттай бүртгүүллээ", registration });
-      } catch (e) {
-        console.error("Tournament registration error:", e);
-        res.status(500).json({ message: "Бүртгүүлэхэд алдаа гарлаа" });
+      } catch (error) {
+        console.error("Error registering for tournament:", error);
+        res.status(500).json({ message: "Серверийн алдаа гарлаа" });
       }
     },
   );
@@ -1286,12 +1284,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let participants = await storage.getTournamentParticipants(
         req.params.tournamentId,
       );
-      
+
       // Filter by category if specified
       if (category && category !== 'all') {
         participants = participants.filter(p => p.participationType === category);
       }
-      
+
       res.json(participants);
     } catch (e) {
       console.error("Error fetching tournament participants:", e);
