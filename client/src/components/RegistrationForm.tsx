@@ -127,22 +127,40 @@ export default function RegistrationForm({ tournament }: RegistrationFormProps) 
         });
         setSelectedCategory('');
       } else {
-        throw new Error('Registration failed');
+        const errorData = await response.json().catch(() => null);
+        const errorMessage = errorData?.message || 'Бүртгэл хийхэд алдаа гарлаа';
+        throw new Error(errorMessage);
       }
     } catch (error) {
-      // Save to localStorage as fallback
-      const registrationData = {
-        tournamentId: tournament.id,
-        category: selectedCategory,
-        timestamp: new Date().toISOString()
-      };
+      console.error('Registration error:', error);
       
-      localStorage.setItem(`reg-cache:${tournament.id}`, JSON.stringify(registrationData));
-      
-      toast({
-        title: "Анхааруулга",
-        description: "Бүртгэл түр хадгаллаа",
-      });
+      // Show specific error message if available
+      if (error instanceof Error && error.message !== 'Registration failed') {
+        toast({
+          title: "Алдаа",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        // Save to localStorage as fallback
+        const registrationData = {
+          tournamentId: tournament.id,
+          category: selectedCategory,
+          timestamp: new Date().toISOString(),
+          profile: {
+            fullName: profile.fullName,
+            gender: profile.gender,
+            age: calculateAge(profile.birthDate, tournament.startDate)
+          }
+        };
+        
+        localStorage.setItem(`reg-cache:${tournament.id}`, JSON.stringify(registrationData));
+        
+        toast({
+          title: "Анхааруулга",
+          description: "Бүртгэл түр хадгаллаа. Дараа дахин оролдоно уу.",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }

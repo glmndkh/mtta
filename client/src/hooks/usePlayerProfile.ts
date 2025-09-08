@@ -27,8 +27,8 @@ export function usePlayerProfile() {
           return {
             id: data.id,
             fullName: data.fullName || data.name || 'Unknown',
-            gender: data.gender,
-            birthDate: data.birthDate
+            gender: data.gender || 'male',
+            birthDate: data.birthDate || '1990-01-01'
           };
         }
       } catch (error) {
@@ -43,8 +43,8 @@ export function usePlayerProfile() {
           return {
             id: data.id,
             fullName: data.fullName || data.name || 'Unknown',
-            gender: data.gender,
-            birthDate: data.birthDate
+            gender: data.gender || 'male',
+            birthDate: data.birthDate || '1990-01-01'
           };
         }
       } catch (error) {
@@ -65,6 +65,8 @@ export function usePlayerProfile() {
       return null;
     },
     enabled: isAuthenticated,
+    retry: false, // Don't retry on failure
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   return {
