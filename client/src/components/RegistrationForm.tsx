@@ -1,11 +1,15 @@
 
 import React, { useState } from 'react';
+import { Link } from 'wouter';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
+import { usePlayerProfile } from "@/hooks/usePlayerProfile";
+import { useAuth } from "@/hooks/useAuth";
 
 type RegistrationFormProps = {
   tournament: {
@@ -20,24 +24,10 @@ type RegistrationFormProps = {
   };
 };
 
-interface FormData {
-  lastName: string;
-  firstName: string;
-  gender: 'male' | 'female' | '';
-  birthDate: string;
-  participationType: string;
-}
-
 export default function RegistrationForm({ tournament }: RegistrationFormProps) {
-  const [formData, setFormData] = useState<FormData>({
-    lastName: '',
-    firstName: '',
-    gender: '',
-    birthDate: '',
-    participationType: ''
-  });
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const { isAuthenticated } = useAuth();
+  const { profile, loading } = usePlayerProfile();
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Calculate age on tournament start date
@@ -66,23 +56,11 @@ export default function RegistrationForm({ tournament }: RegistrationFormProps) 
     return labels[type] || type;
   };
 
-  // Validate eligibility
-  const validateEligibility = (): Record<string, string> => {
-    const newErrors: Record<string, string> = {};
+  // Validate eligibility for selected category
+  const validateEligibility = (category: string): { valid: boolean; error?: string } => {
+    if (!profile || !category) return { valid: false };
 
-    // Required fields
-    if (!formData.lastName.trim()) newErrors.lastName = 'Овог оруулна уу';
-    if (!formData.firstName.trim()) newErrors.firstName = 'Нэр оруулна уу';
-    if (!formData.gender) newErrors.gender = 'Хүйс сонгоно уу';
-    if (!formData.birthDate) newErrors.birthDate = 'Төрсөн огноо оруулна уу';
-    if (!formData.participationType) newErrors.participationType = 'Оролцох төрөл сонгоно уу';
-
-    if (Object.keys(newErrors).length > 0) {
-      return newErrors;
-    }
-
-    const age = calculateAge(formData.birthDate, tournament.startDate);
-    const selectedType = formData.participationType;
+    const age = calculateAge(profile.birthDate, tournament.startDate);
 
     // Default gender rules
     const defaultRules: Record<string, { genders: ("male"|"female")[] }> = {
@@ -94,42 +72,37 @@ export default function RegistrationForm({ tournament }: RegistrationFormProps) 
     };
 
     // Get eligibility rules (custom or default)
-    const eligibility = tournament.eligibility?.[selectedType] || defaultRules[selectedType];
+    const eligibility = tournament.eligibility?.[category] || defaultRules[category];
 
     if (eligibility) {
       // Gender check
-      if (eligibility.genders && !eligibility.genders.includes(formData.gender as "male"|"female")) {
+      if (eligibility.genders && !eligibility.genders.includes(profile.gender)) {
         const allowedGenders = eligibility.genders.map(g => g === 'male' ? 'эрэгтэй' : 'эмэгтэй').join(', ');
-        newErrors.gender = `Энэ төрөлд зөвхөн ${allowedGenders} оролцох боломжтой`;
+        return { valid: false, error: `Энэ төрөлд зөвхөн ${allowedGenders} оролцох боломжтой` };
       }
 
       // Age check
       if (eligibility.minAge && age < eligibility.minAge) {
-        newErrors.birthDate = `Хамгийн багадаа ${eligibility.minAge} настай байх ёстой`;
+        return { valid: false, error: `Хамгийн багадаа ${eligibility.minAge} настай байх ёстой` };
       }
       if (eligibility.maxAge && age > eligibility.maxAge) {
-        newErrors.birthDate = `Хамгийн ихдээ ${eligibility.maxAge} настай байх ёстой`;
+        return { valid: false, error: `Хамгийн ихдээ ${eligibility.maxAge} настай байх ёстой` };
       }
     }
 
-    return newErrors;
+    return { valid: true };
   };
 
-  const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
-  };
+  const handleSubmit = async () => {
+    if (!selectedCategory || !profile) return;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const validationErrors = validateEligibility();
-    setErrors(validationErrors);
-
-    if (Object.keys(validationErrors).length > 0) {
+    const validation = validateEligibility(selectedCategory);
+    if (!validation.valid) {
+      toast({
+        title: "Алдаа",
+        description: validation.error,
+        variant: "destructive"
+      });
       return;
     }
 
@@ -143,7 +116,7 @@ export default function RegistrationForm({ tournament }: RegistrationFormProps) 
         },
         body: JSON.stringify({
           tournamentId: tournament.id,
-          ...formData
+          category: selectedCategory
         }),
       });
 
@@ -152,14 +125,7 @@ export default function RegistrationForm({ tournament }: RegistrationFormProps) 
           title: "Амжилттай",
           description: "Амжилттай бүртгүүллээ",
         });
-        // Reset form
-        setFormData({
-          lastName: '',
-          firstName: '',
-          gender: '',
-          birthDate: '',
-          participationType: ''
-        });
+        setSelectedCategory('');
       } else {
         throw new Error('Registration failed');
       }
@@ -167,7 +133,7 @@ export default function RegistrationForm({ tournament }: RegistrationFormProps) 
       // Save to localStorage as fallback
       const registrationData = {
         tournamentId: tournament.id,
-        ...formData,
+        category: selectedCategory,
         timestamp: new Date().toISOString()
       };
       
@@ -175,93 +141,108 @@ export default function RegistrationForm({ tournament }: RegistrationFormProps) 
       
       toast({
         title: "Анхааруулга",
-        description: "Бүртгэл хадгалагдлаа (түр)",
-        variant: "default"
+        description: "Бүртгэл түр хадгаллаа",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const isFormValid = () => {
-    const validationErrors = validateEligibility();
-    return Object.keys(validationErrors).length === 0;
-  };
+  // Not authenticated - show login CTA
+  if (!isAuthenticated) {
+    return (
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader className="text-center">
+          <CardTitle>Бүртгүүлэх</CardTitle>
+          <CardDescription>
+            Тэмцээнд бүртгүүлэхийн тулд нэвтэрч орно уу
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="text-center">
+          <Link href={`/login?redirect=/events/${tournament.id}%23register`}>
+            <Button className="bg-mtta-green hover:bg-green-700 text-white font-bold px-8">
+              Нэвтэрч бүртгүүлэх
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Loading state
+  if (loading) {
+    return (
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle>Бүртгүүлэх</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-32" />
+            <div className="flex gap-2">
+              <Skeleton className="h-6 w-16" />
+              <Skeleton className="h-6 w-16" />
+              <Skeleton className="h-6 w-16" />
+            </div>
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle>Бүртгүүлэх</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-500">Профайлын мэдээлэл олдсонгүй.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const age = calculateAge(profile.birthDate, tournament.startDate);
+  const validation = selectedCategory ? validateEligibility(selectedCategory) : { valid: true };
 
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-lg border p-6">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="lastName">Овог *</Label>
-            <Input
-              id="lastName"
-              value={formData.lastName}
-              onChange={(e) => handleInputChange('lastName', e.target.value)}
-              placeholder="Овог оруулна уу"
-              className={errors.lastName ? 'border-red-500' : ''}
-            />
-            {errors.lastName && (
-              <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="firstName">Нэр *</Label>
-            <Input
-              id="firstName"
-              value={formData.firstName}
-              onChange={(e) => handleInputChange('firstName', e.target.value)}
-              placeholder="Нэр оруулна уу"
-              className={errors.firstName ? 'border-red-500' : ''}
-            />
-            {errors.firstName && (
-              <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="gender">Хүйс *</Label>
-            <Select value={formData.gender} onValueChange={(value) => handleInputChange('gender', value)}>
-              <SelectTrigger className={errors.gender ? 'border-red-500' : ''}>
-                <SelectValue placeholder="Хүйс сонгоно уу" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="male">Эрэгтэй</SelectItem>
-                <SelectItem value="female">Эмэгтэй</SelectItem>
-              </SelectContent>
-            </Select>
-            {errors.gender && (
-              <p className="text-red-500 text-sm mt-1">{errors.gender}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="birthDate">Төрсөн огноо *</Label>
-            <Input
-              id="birthDate"
-              type="date"
-              value={formData.birthDate}
-              onChange={(e) => handleInputChange('birthDate', e.target.value)}
-              className={errors.birthDate ? 'border-red-500' : ''}
-            />
-            {errors.birthDate && (
-              <p className="text-red-500 text-sm mt-1">{errors.birthDate}</p>
-            )}
-            {formData.birthDate && (
-              <p className="text-sm text-gray-600 mt-1">
-                Тэмцээний өдөр: {calculateAge(formData.birthDate, tournament.startDate)} нас
-              </p>
-            )}
-          </div>
-        </div>
-
+    <Card className="max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle>Бүртгүүлэх</CardTitle>
+        <CardDescription>
+          Тэмцээнд оролцох төрөл сонгоод бүртгүүлнэ үү
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Profile Information (Read-only) */}
         <div>
-          <Label htmlFor="participationType">Оролцох төрөл *</Label>
-          <Select value={formData.participationType} onValueChange={(value) => handleInputChange('participationType', value)}>
-            <SelectTrigger className={errors.participationType ? 'border-red-500' : ''}>
+          <Label className="text-sm font-medium text-gray-700 mb-3 block">
+            Таны мэдээлэл
+          </Label>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="outline" className="px-3 py-1">
+              {profile.fullName}
+            </Badge>
+            <Badge variant="outline" className="px-3 py-1">
+              {profile.gender === 'male' ? 'Эрэгтэй' : 'Эмэгтэй'}
+            </Badge>
+            <Badge variant="outline" className="px-3 py-1">
+              {age} нас
+            </Badge>
+          </div>
+        </div>
+
+        {/* Category Selection */}
+        <div>
+          <Label htmlFor="category">Оролцох төрөл *</Label>
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger>
               <SelectValue placeholder="Оролцох төрөл сонгоно уу" />
             </SelectTrigger>
             <SelectContent>
@@ -272,21 +253,28 @@ export default function RegistrationForm({ tournament }: RegistrationFormProps) 
               ))}
             </SelectContent>
           </Select>
-          {errors.participationType && (
-            <p className="text-red-500 text-sm mt-1">{errors.participationType}</p>
-          )}
         </div>
 
+        {/* Eligibility Warning */}
+        {selectedCategory && !validation.valid && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-3">
+            <p className="text-red-600 text-sm font-medium">
+              ⚠️ {validation.error}
+            </p>
+          </div>
+        )}
+
+        {/* Submit Button */}
         <div className="flex justify-end">
           <Button 
-            type="submit" 
-            disabled={!isFormValid() || isSubmitting}
+            onClick={handleSubmit}
+            disabled={!selectedCategory || !validation.valid || isSubmitting}
             className="bg-mtta-green hover:bg-green-700 text-white font-bold px-8"
           >
             {isSubmitting ? 'Бүртгүүлж байна...' : 'Бүртгүүлэх'}
           </Button>
         </div>
-      </form>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
