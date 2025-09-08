@@ -1,0 +1,126 @@
+“Event Detail-г сайжруул + Бүртгэл (нас/хүйсийн шалгалттай) нэм — UI ONLY”
+Хязгаарлалт
+
+❌ server/**, /api/** route/schema өөрчлөхгүй.
+
+✅ Зөвхөн client/src/** код, компонент, CSS/Tailwind.
+
+1) ШИНЭ КОМПОНЕНТ НЭМ
+
+Файл: client/src/components/RegistrationForm.tsx
+Зорилго: Тэмцээнд бүртгүүлэх UI — нас/хүйсийн eligibility шалгана.
+
+Шаардлага:
+
+Props:
+
+type RegistrationFormProps = {
+  tournament: {
+    id: string;
+    startDate: string;               // нас тооцоход ашиглана
+    participationTypes: string[];    // ["singles_men","singles_women","doubles_men","doubles_women","mixed_doubles"]
+    eligibility?: Record<string, { genders?: ("male"|"female")[]; minAge?: number; maxAge?: number }>;
+  };
+};
+
+
+Поля: Овог, нэр · Хүйс (male/female) · Төрсөн огноо (date) · Оролцох төрөл (participationTypes-оос).
+
+Нас тооцоо: ageOnStart = startDate-ын өдөр дээр.
+
+Дүрэм:
+
+singles_men/doubles_men → зөвшөөрөгдөх хүйс: male
+
+singles_women/doubles_women → female
+
+mixed_doubles → male/female хоёул
+
+Хэрэв eligibility[category] байвал minAge/maxAge/genders-ыг override.
+
+Шалгалт: төрсөн өдөр/төрөл/нэр бөглөгдсөн + нас/хүйс таарч байвал Enable “Бүртгүүлэх”.
+
+Submit:
+
+Эхэнд нь fetch('/api/registrations', {method:'POST', body: {...}}) оролдоно (байхгүй бол алдаа болно).
+
+Амжилтад toast “Амжилттай бүртгүүллээ”.
+
+Алдаанд: localStorage-д reg-cache:{tournament.id} түлхэж, toast “Бүртгэл хадгалагдлаа (түр)”.
+
+UI: Shadcn-ийн Input/Select/Button/Badge/Label ашигла. Алдаа мессэж улаанаар.
+
+2) ОДООХИ EventDetail-Д ИНТЕГРАЦ
+
+Файл: client/src/pages/event-detail.tsx
+
+Инпорт нэм:
+
+import RegistrationForm from "@/components/RegistrationForm";
+
+
+Hero UX сайжруулалт:
+
+Wrapper: relative min-h-[260px] md:h-[360px] rounded-2xl overflow-hidden
+
+Overlay: absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/0
+
+Зүүн блок: absolute left-4 bottom-4 md:left-6 md:bottom-6 text-white max-w-[90%] md:max-w-[70%]
+
+Огноо формат: yyyy.MM.dd–yyyy.MM.dd (таны formatDateRange-ыг хэрэглэ).
+
+“Бүртгүүлэх” дармагц #register руу smooth scroll (таны setActiveTab('register') + scrollIntoView-г үлдээгээрэй).
+
+Tabs мөрийг sticky + мобайл-д найрсаг:
+
+Container: sticky top-16 z-10 bg-white/80 backdrop-blur border-b mt-8
+
+Dotscroll: tabs wrapper-т overflow-x-auto no-scrollbar px-2
+
+Active tab: underline + bold, aria-current="page".
+
+#register хэсгийг шинэ формоор солино:
+
+<section id="register" tabIndex={-1} className="scroll-mt-24 md:scroll-mt-28">
+  <h2 className="text-2xl font-bold text-gray-900 mb-6">Бүртгүүлэх</h2>
+  <RegistrationForm tournament={tournament} />
+</section>
+
+
+Зургийн fallback логикт олон талбар шалгах:
+
+Дарааллаар хэрэглэ: coverUrl → backgroundImageUrl → backgroundUrl → background → heroImage → imageUrl → image.
+
+Харьцангуй бол "/" + src; onError → саарал градиент.
+
+Hash навигац: одоогийн useEffect-ийг үлдээ — дата ирсний дараа #register/#about… руу smooth scroll хийх.
+
+3) /events CTA SPA навигац (хэрэв хараахан байгаагүй бол)
+
+Файл: /events-ийн hero/row компонент
+
+Upcoming: <Link to={/events/${id}#register}>Бүртгүүлэх</Link>
+
+Ongoing/Past: <Link to={/events/${id}#results}>Үр дүн</Link>
+
+Reload хийхгүй.
+
+4) Мобайл сайжруулалт (UX polish)
+
+Hero title: text-2xl md:text-3xl font-extrabold leading-snug line-clamp-2
+
+Tabs: space-x-6, товчдад focus-visible:ring-2 ring-mtta-green ring-offset-2
+
+Section-ууд: scroll-mt-24 md:scroll-mt-28 — header-т дарагдахгүй.
+
+ACCEPTANCE (Done)
+
+ Event Detail hero: зураг + огноо + том гарчиг + байршил + “Бүртгүүлэх” товчтэй; мобайлд эвдрэхгүй.
+
+ Sticky tabs ажиллана; hash sync хийнэ; active tab тод.
+
+ “Бүртгүүлэх” хэсэгт нас/хүйсийн шалгалттай форм байна: буруу нөхцөлд улаан анхааруулга, зөв нөхцөлд идэвхтэй товч.
+
+ Submit амжилтад toast; сервергүй бол localStorage-д reg-cache болгон хадгалж toast үзүүлнэ.
+
+ /events-ээс CTA дээр дарахад reload-гүйгээр /events/:id#register руу орно
