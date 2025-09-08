@@ -1,0 +1,101 @@
+“Бүртгүүлэх → Event Detail (hero + tabs) — UI ONLY”
+
+Зорилго:
+/events дээрх “Бүртгүүлэх” дармагц reload-гүй /events/:id#register руу орно. Event Detail-ийн дээд хэсэг нь доорх зурагтай адил hero блоктой, доор нь tabs харагдана.
+
+Хязгаарлалт
+
+❌ server/**, /api/**, schema/endpoint-уудад өөрчлөлт ХИЙХГҮЙ.
+
+✅ Зөвхөн client/src/** (React + Tailwind) UI.
+
+Хаана өөрчлөх вэ
+
+client/src/components/EventHeroRow.tsx (CTA байрладаг бол)
+
+client/src/pages/EventsPage.tsx (шаардлагатай бол)
+
+client/src/pages/EventDetail.tsx (hero + tabs)
+
+client/src/router.tsx эсвэл client/src/main.tsx (route баталгаажуулах)
+
+Даалгавар
+1) CTA-г SPA навигац болго
+
+<a href> байвал React Router <Link> болго.
+
+Upcoming: to={/events/${ev.id}#register} label=“Бүртгүүлэх”
+
+Ongoing/Past: to={/events/${ev.id}#results} label=“Үр дүн”
+
+Роут байгаа эсэх:
+
+<Route path="/events/:id" element={<EventDetail/>}/>
+
+2) Event Detail — HERO блок (зурагтай адил)
+
+Background: event-аас дарааллаар сонго:
+coverUrl || backgroundUrl || background || heroImage || imageUrl || image
+
+Харьцангуй зам бол /${src}; onError → саарал gradient fallback.
+
+Дээрх зүүн талын контент:
+
+Огноо (format): YYYY.MM.DD–YYYY.MM.DD (ж: 2025.08.03–2025.08.04)
+
+Гарчиг (том, bold, 2 мөр хүртэл)
+
+Venue/Location: Он Клуб / Хот, Улс (байгаагаар нь)
+
+Primary CTA: “Бүртгүүлэх” → #register (smooth scroll)
+
+Стиль (Tailwind, санаа):
+
+Wrapper: relative h-[280px] md:h-[360px] rounded-2xl overflow-hidden
+
+Overlay: absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/0
+
+Left block: absolute left-6 bottom-6 text-white max-w-[70%]
+
+Title: text-2xl md:text-3xl font-extrabold drop-shadow
+
+Button: rounded-full bg-white text-gray-900 px-4 py-2 font-bold hover:bg-gray-100 focus:ring-2 focus:ring-green-600 focus:ring-offset-2
+
+3) Tabs мөр (hero-ийн доор)
+
+Доорх дарааллаар табууд үүсгэ:
+Тойм · Хэсгийн тоглолтууд · Хуваарь · Баг тамирчид · Альбом · Тэмцээний дэлгэрэнгүй
+
+Hash-sync: #overview, #groups, #schedule, #players, #album, #about, мөн #register.
+
+Sticky tabs (optional): position: sticky; top: 64px;
+
+Тухайн hash идэвхтэй үед underline + bold.
+
+Таб бүрт одоохондоо placeholder div-үүд; #register хэсэг заавал байна:
+
+<section id="register" tabIndex="-1" class="scroll-mt-24"></section>
+
+
+→ Hero-ийн “Бүртгүүлэх” дармагц smooth scroll-оор энэ хэсэгт очдог байх.
+
+4) Smooth scroll & countdown
+
+location.hash === '#register' бол өгөгдөл ирсний дараа:
+
+document.getElementById('register')?.scrollIntoView({behavior:'smooth', block:'start'});
+
+
+Хэрэв өмнө нь тоон countdown хийсэн бол хэвээр ажиллуул (сек тутмын update, LIVE/Past төлөв).
+
+Acceptance (Done)
+
+ “Бүртгүүлэх” дарвал reload-гүйгээр /events/:id#register руу орж, register хэсэгт smooth scroll-оор очно.
+
+ Event Detail-ийн дээд хэсэг background зураг + огноо + том гарчиг + venue + “Бүртгүүлэх” товчтой, зурагтай адил харагдана.
+
+ Доор нь Тойм · Хэсгийн тоглолтууд · Хуваарь · Баг тамирчид · Альбом · Тэмцээний дэлгэрэнгүй табууд харагдана, идэвхтэй таб underline-тай.
+
+ API/Server-д ямар ч өөрчлөлт хийгдээгүй.
+
+Микрокопи (MN): “Бүртгүүлэх”, “Тойм”, “Хэсгийн тоглолтууд”, “Хуваарь”, “Баг тамирчид”, “Альбом”, “Тэмцээний дэлгэрэнгүй”.
