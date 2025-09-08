@@ -197,11 +197,28 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
           </div>
         )}
         {status === 'upcoming' ? (
-                <Link href={`/events/${event.id}#register`}>
-                  <Button className="mt-4 px-6 py-2 rounded-full font-bold hover:bg-green-700">
-                    БҮРТГҮҮЛЭХ
-                  </Button>
-                </Link>
+                <div className="flex items-center gap-2 mt-4">
+                  {/* Category Selection Dropdown */}
+                  {event.participationTypes && event.participationTypes.length > 0 && (
+                    <select
+                      className="rounded-full bg-white/20 text-white border border-white/30 px-3 py-2 text-sm font-medium backdrop-blur-sm focus:bg-white/30 focus:outline-none focus:ring-2 focus:ring-green-600"
+                      defaultValue=""
+                    >
+                      <option value="" disabled>Ангилал сонгох</option>
+                      {event.participationTypes.map((type) => (
+                        <option key={type} value={type} className="text-gray-900">
+                          {type}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  
+                  <Link href={`/events/${event.id}#register`}>
+                    <Button className="px-6 py-2 rounded-full font-bold hover:bg-green-700">
+                      БҮРТГҮҮЛЭХ
+                    </Button>
+                  </Link>
+                </div>
               ) : status === 'ongoing' ? (
                 <Link href={`/events/${event.id}#schedule`}>
                   <Button className="mt-4 px-4 py-2 rounded-full font-medium hover:bg-green-700">

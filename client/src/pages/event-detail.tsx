@@ -210,20 +210,37 @@ export default function EventDetail() {
                 </div>
               )}
 
-              <Button
-                onClick={() => {
-                  setActiveTab('register');
-                  setTimeout(() => {
-                    const element = document.getElementById('register');
-                    if (element) {
-                      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                  }, 100);
-                }}
-                className="rounded-full bg-white text-gray-900 px-4 py-2 font-bold hover:bg-gray-100 focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
-              >
-                Бүртгүүлэх
-              </Button>
+              <div className="flex items-center gap-2">
+                {/* Category Selection Dropdown */}
+                {tournament.participationTypes && tournament.participationTypes.length > 0 && (
+                  <select
+                    className="rounded-full bg-white/20 text-white border border-white/30 px-3 py-2 text-sm font-medium backdrop-blur-sm focus:bg-white/30 focus:outline-none focus:ring-2 focus:ring-green-600"
+                    defaultValue=""
+                  >
+                    <option value="" disabled>Ангилал сонгох</option>
+                    {tournament.participationTypes.map((type) => (
+                      <option key={type} value={type} className="text-gray-900">
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                
+                <Button
+                  onClick={() => {
+                    setActiveTab('register');
+                    setTimeout(() => {
+                      const element = document.getElementById('register');
+                      if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }, 100);
+                  }}
+                  className="rounded-full bg-white text-gray-900 px-4 py-2 font-bold hover:bg-gray-100 focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+                >
+                  Бүртгүүлэх
+                </Button>
+              </div>
             </div>
           </div>
 
