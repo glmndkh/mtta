@@ -210,47 +210,56 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
       }
     }
 
-    setMatches(prev => prev.map(match =>
-      match.id === matchId 
-        ? { ...match, [position]: selectedPlayer, winner: undefined } // Clear winner when players change
-        : match
-    ));
+    setMatches(prev => {
+      const newMatches = prev.map(match =>
+        match.id === matchId
+          ? { ...match, [position]: selectedPlayer, winner: undefined } // Clear winner when players change
+          : match
+      );
+      const updatedMatch = newMatches.find(m => m.id === matchId)!;
+      return propagateResult(newMatches, updatedMatch);
+    });
   };
 
   // Handle score changes and determine winner
   const handleScoreChange = (matchId: string, scoreField: 'player1Score' | 'player2Score', value: string) => {
     setMatches(prev => {
-      return prev.map(match => {
+      let updatedMatch: Match | undefined;
+      const newMatches = prev.map(match => {
         if (match.id !== matchId) return match;
 
-        const updatedMatch = { ...match, [scoreField]: value };
+        const m = { ...match, [scoreField]: value };
 
         // Determine winner based on scores
-        const p1Score = parseInt(updatedMatch.player1Score || '0');
-        const p2Score = parseInt(updatedMatch.player2Score || '0');
+        const p1Score = parseInt(m.player1Score || '0');
+        const p2Score = parseInt(m.player2Score || '0');
 
         // Clear winner first
-        updatedMatch.winner = undefined;
+        m.winner = undefined;
 
         // Only set winner if both scores are valid and different
-        if (updatedMatch.player1Score && updatedMatch.player2Score && 
+        if (m.player1Score && m.player2Score &&
             p1Score !== p2Score && p1Score >= 0 && p2Score >= 0) {
-          if (p1Score > p2Score && updatedMatch.player1) {
-            updatedMatch.winner = updatedMatch.player1;
-          } else if (p2Score > p1Score && updatedMatch.player2) {
-            updatedMatch.winner = updatedMatch.player2;
+          if (p1Score > p2Score && m.player1) {
+            m.winner = m.player1;
+          } else if (p2Score > p1Score && m.player2) {
+            m.winner = m.player2;
           }
         }
 
-        return updatedMatch;
+        updatedMatch = m;
+        return m;
       });
+
+      return updatedMatch ? propagateResult(newMatches, updatedMatch) : newMatches;
     });
   };
 
   // Handle manual winner selection
   const handleWinnerSelection = (matchId: string, winnerId: string) => {
     setMatches(prev => {
-      return prev.map(match => {
+      let updatedMatch: Match | undefined;
+      const newMatches = prev.map(match => {
         if (match.id !== matchId) return match;
 
         let winner: Player | undefined;
@@ -260,9 +269,74 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
           winner = match.player2;
         }
 
-        return { ...match, winner };
+        const m = { ...match, winner };
+        updatedMatch = m;
+        return m;
       });
+
+      return updatedMatch ? propagateResult(newMatches, updatedMatch) : newMatches;
     });
+  };
+
+  // Update subsequent matches when a match result changes
+  const propagateResult = (matches: Match[], match: Match): Match[] => {
+    // Advance winner to next match
+    if (match.nextMatchId) {
+      const nextMatchIdx = matches.findIndex(m => m.id === match.nextMatchId);
+      if (nextMatchIdx !== -1) {
+        const nextMatch = { ...matches[nextMatchIdx] } as Match;
+
+        const currentRoundMatches = matches.filter(m => m.round === match.round && m.id !== 'third_place_playoff');
+        const matchIndex = currentRoundMatches.findIndex(m => m.id === match.id);
+        const nextPosition: 'player1' | 'player2' = matchIndex % 2 === 0 ? 'player1' : 'player2';
+
+        const participantIds = [match.player1?.id, match.player2?.id];
+
+        if (nextMatch.player1 && participantIds.includes(nextMatch.player1.id)) nextMatch.player1 = undefined;
+        if (nextMatch.player2 && participantIds.includes(nextMatch.player2.id)) nextMatch.player2 = undefined;
+
+        if (match.winner) {
+          nextMatch[nextPosition] = match.winner;
+        }
+
+        if (nextMatch.winner && participantIds.includes(nextMatch.winner.id)) {
+          nextMatch.winner = undefined;
+        }
+
+        matches[nextMatchIdx] = nextMatch;
+      }
+    }
+
+    // Handle third place match for semifinal losers
+    if (match.roundName === 'Хагас финал') {
+      const thirdIdx = matches.findIndex(m => m.id === 'third_place_playoff');
+      if (thirdIdx !== -1) {
+        const thirdMatch = { ...matches[thirdIdx] } as Match;
+        const participants = [match.player1, match.player2];
+
+        if (thirdMatch.player1 && participants.some(p => p?.id === thirdMatch.player1!.id)) {
+          thirdMatch.player1 = undefined;
+        }
+        if (thirdMatch.player2 && participants.some(p => p?.id === thirdMatch.player2!.id)) {
+          thirdMatch.player2 = undefined;
+        }
+        if (thirdMatch.winner && participants.some(p => p?.id === thirdMatch.winner!.id)) {
+          thirdMatch.winner = undefined;
+        }
+
+        const loser = match.winner
+          ? (match.player1?.id === match.winner.id ? match.player2 : match.player1)
+          : undefined;
+        if (loser) {
+          if (!thirdMatch.player1) thirdMatch.player1 = loser;
+          else if (!thirdMatch.player2) thirdMatch.player2 = loser;
+        }
+
+        matches[thirdIdx] = thirdMatch;
+      }
+    }
+
+    return matches;
   };
 
   // Advance all winners to next round
