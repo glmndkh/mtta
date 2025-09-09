@@ -72,7 +72,7 @@ import {
   type TournamentParticipant,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, sql, asc, ilike, exists, or, isNull, isNotNull, inArray } from "drizzle-orm";
+import { eq, desc, and, sql, or } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -544,21 +544,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllPlayers(): Promise<any[]> {
-    try {
-      console.log('Getting all players...');
-      const playersWithUsers = await db
-        .select()
-        .from(players)
-        .leftJoin(users, eq(players.userId, users.id))
-        .leftJoin(clubs, eq(players.clubId, clubs.id))
-        .where(isNotNull(users.id)); // Ensure user data exists
-
-      console.log(`Found ${playersWithUsers.length} players with valid user data`);
-      return playersWithUsers;
-    } catch (error) {
-      console.error('Error getting all players:', error);
-      throw error;
-    }
+    return await db
+      .select()
+      .from(players)
+      .leftJoin(users, eq(players.userId, users.id))
+      .leftJoin(clubs, eq(players.clubId, clubs.id));
   }
 
   async updatePlayer(id: string, playerData: Partial<InsertPlayer>): Promise<Player | undefined> {

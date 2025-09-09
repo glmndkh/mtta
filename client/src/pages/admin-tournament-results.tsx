@@ -79,14 +79,13 @@ interface TournamentResultsData {
 
 export default function AdminTournamentResultsPage() {
   const [match, params] = useRoute("/admin/tournament/:id/results/:type?");
-  const [fallbackMatch] = useRoute("/admin-tournament-results");
+  const [fallbackMatch] = useRoute("/admin/tournament-results");
   const [, setLocation] = useLocation();
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // State for editing
-  const [activeParticipationType, setActiveParticipationType] = useState<string>("");
   const [groupStageTables, setGroupStageTables] = useState<GroupStageTable[]>([]);
   const [knockoutMatches, setKnockoutMatches] = useState<KnockoutMatch[]>([]);
   const [finalRankings, setFinalRankings] = useState<FinalRanking[]>([]);
@@ -183,26 +182,96 @@ export default function AdminTournamentResultsPage() {
     setNewCategory('');
   };
 
-  // Set active participation type from tournament data
+  // Redirect to first participation type if none specified
   useEffect(() => {
-    if (tournament && tournament.participationTypes && !activeParticipationType) {
-      setActiveParticipationType(tournament.participationTypes[0] || "singles");
+    if (tournament && !participationType && tournament.participationTypes?.length) {
+      const firstType = tournament.participationTypes[0];
+      setLocation(`/admin/tournament/${tournamentId}/results/${firstType}`, { replace: true });
     }
-  }, [tournament, activeParticipationType]);
+  }, [tournament, participationType, tournamentId, setLocation]);
 
   // Load existing results into state
   useEffect(() => {
-    if (existingResults && activeParticipationType) {
-      const groupResults = existingResults.groupStageResults as Record<string, GroupStageTable[]> || {};
-      const knockoutRes = existingResults.knockoutResults as Record<string, KnockoutMatch[]> || {};
-      const finalRank = existingResults.finalRankings as Record<string, FinalRanking[]> || {};
+    if (existingResults && participationType) {
+      const groupResults = (existingResults.groupStageResults as Record<string, GroupStageTable[]> || {})[participationType] || [];
+      setGroupStageTables(groupResults);
+      const knockoutResultsByType = (existingResults.knockoutResults as Record<string, KnockoutMatch[]> || {})[participationType] || [];
+      setKnockoutMatches(knockoutResultsByType);
 
-      setGroupStageTables(groupResults[activeParticipationType] || []);
-      setKnockoutMatches(knockoutRes[activeParticipationType] || []);
-      setFinalRankings(finalRank[activeParticipationType] || []);
+      // Load final rankings or calculate from knockout matches if missing
+      const savedRankings = (existingResults.finalRankings as Record<string, FinalRanking[]> || {})[participationType] || [];
+      if (savedRankings.length > 0) {
+        setFinalRankings(savedRankings);
+      } else {
+        // Calculate from knockout matches if no rankings saved
+        const knockoutResults = knockoutResultsByType;
+        const calculatedRankings: FinalRanking[] = [];
+
+        console.log('Loading existing knockout results:', knockoutResults);
+        console.log('Available rounds:', knockoutResults.map(m => m.round));
+
+        // Look for final match - stored semifinals are actually the finals in this tournament structure
+        let finalMatch = knockoutResults.find(m => 
+          m.round === 'final' || 
+          m.round === 3 || 
+          (m as any).roundName === 'Финал'
+        );
+
+        // If no final match found, look in stored semifinals (which are actually finals)
+        if (!finalMatch) {
+          const storedSemifinals = knockoutResults.filter(m => m.round === 'semifinal');
+          console.log('Found stored semifinals (actually finals):', storedSemifinals);
+
+          // Filter out 3rd place playoff and find the actual final
+          const actualFinals = storedSemifinals.filter(m => m.id !== 'third_place_playoff');
+
+          if (actualFinals.length >= 1 && actualFinals[0]?.winner) {
+            // Use the first actual final match directly
+            finalMatch = actualFinals[0];
+            console.log('Using stored semifinal as final match:', finalMatch);
+          }
+        }
+
+        console.log('Found/created final match:', finalMatch);
+
+        if (finalMatch?.winner && finalMatch.player1 && finalMatch.player2) {
+          calculatedRankings.push({
+            position: 1,
+            playerId: finalMatch.winner.id,
+            playerName: finalMatch.winner.name
+          });
+
+          const finalLoser = finalMatch.player1.id === finalMatch.winner.id ? finalMatch.player2 : finalMatch.player1;
+          calculatedRankings.push({
+            position: 2,
+            playerId: finalLoser.id,
+            playerName: finalLoser.name
+          });
+
+          console.log('Existing final - Winner:', finalMatch.winner.name, 'Loser:', finalLoser.name);
+        }
+
+        const thirdPlaceMatch = knockoutResults.find(m => m.id === 'third_place_playoff');
+        console.log('Found existing 3rd place match:', thirdPlaceMatch);
+
+        if (thirdPlaceMatch?.winner) {
+          calculatedRankings.push({
+            position: 3,
+            playerId: thirdPlaceMatch.winner.id,
+            playerName: thirdPlaceMatch.winner.name
+          });
+
+          console.log('Existing 3rd place winner:', thirdPlaceMatch.winner.name);
+        }
+
+        console.log('Calculated rankings from existing data:', calculatedRankings);
+
+        setFinalRankings(calculatedRankings);
+      }
+
       setIsPublished(existingResults.isPublished || false);
     }
-  }, [existingResults, activeParticipationType]);
+  }, [existingResults, participationType]);
 
   // Save results mutation
   const saveResultsMutation = useMutation({
@@ -374,7 +443,7 @@ export default function AdminTournamentResultsPage() {
   // Helper functions for group stage
   const addGroupTable = () => {
     const newTable: GroupStageTable = {
-      groupName: `Групп ${String.fromCharCode(65 + groupStageTables.length)}`,
+      groupName: `Групп ${groupStageTables.length + 1}`,
       players: [],
       resultMatrix: [],
       standings: [],
@@ -385,12 +454,33 @@ export default function AdminTournamentResultsPage() {
   const removeGroupTable = (index: number) => {
     const updatedTables = groupStageTables.filter((_, i) => i !== index);
     setGroupStageTables(updatedTables);
+
+    // Force re-render to update available players
+    setTimeout(() => {
+      // This will trigger a re-calculation of available players
+      setGroupStageTables([...updatedTables]);
+    }, 0);
   };
 
   const updateGroupName = (index: number, name: string) => {
     const updated = [...groupStageTables];
     updated[index].groupName = name;
     setGroupStageTables(updated);
+  };
+
+  // Helper function to get all players already in groups
+  const getAllPlayersInGroups = (): string[] => {
+    const playerIds: string[] = [];
+    groupStageTables.forEach(group => {
+      group.players.forEach(player => {
+        // Add both id and playerId to avoid duplicates
+        if (player.id) playerIds.push(player.id);
+        if (player.playerId && player.playerId !== player.id) {
+          playerIds.push(player.playerId);
+        }
+      });
+    });
+    return playerIds;
   };
 
   // Function to remove a player from a group
@@ -409,88 +499,34 @@ export default function AdminTournamentResultsPage() {
     setGroupStageTables(updated);
   };
 
-  const addPlayerToGroup = (groupIndex: number) => {
-    // Get available players (registered participants + all players)
-    const availablePlayers = [
-      ...(participantsData || []), // Use participantsData directly
-      ...(allUsers || []).map(p => ({
-        id: p.id,
-        playerName: `${p.firstName || ''} ${p.lastName || ''}`.trim(),
-        playerEmail: p.email,
-        playerRank: p.rank,
-        playerClub: p.clubAffiliation
-      }))
-    ].filter((player, index, self) => 
-      player.playerName && 
-      self.findIndex(p => p.id === player.id) === index
-    );
+  const addPlayerToGroup = (tableIndex: number, player: { id: string; playerId?: string; name: string; club: string; wins?: number; losses?: number; points?: number }) => {
+    const updated = [...groupStageTables];
 
-    if (availablePlayers.length === 0) {
-      toast({
-        title: "Алдаа",
-        description: "Тамирчин олдсонгүй. Эхлээд тамирчид бүртгүүлнэ үү.",
-        variant: "destructive"
+    // Ensure we're adding to the correct table
+    if (updated[tableIndex]) {
+      updated[tableIndex].players.push({
+        id: player.id || player.playerId || '', // Use provided ID or playerId
+        name: player.name,
+        club: player.club,
+        wins: String(player.wins || ''), // Convert numbers back to string for UI
+        position: String(player.position || '')
       });
-      return;
-    }
 
-    // For now, use a simple prompt but show available players
-    const playerList = availablePlayers.map((p, i) => `${i + 1}. ${p.playerName}`).join('\n');
-    const selection = prompt(`Тамирчин сонгоно уу (дугаар оруулна уу):\n\n${playerList}`);
+      // Expand result matrix
+      const playerCount = updated[tableIndex].players.length;
+      // Ensure resultMatrix is properly sized
+      updated[tableIndex].resultMatrix = Array(playerCount).fill(null).map((_, rowIndex) => 
+        Array(playerCount).fill('').map((_, colIndex) => {
+          // Preserve existing results if possible when adding new player
+          if (rowIndex < (updated[tableIndex].resultMatrix.length || 0) && 
+              colIndex < (updated[tableIndex].resultMatrix[rowIndex]?.length || 0)) {
+            return updated[tableIndex].resultMatrix[rowIndex][colIndex];
+          }
+          return '';
+        })
+      );
 
-    if (selection) {
-      const playerIndex = parseInt(selection) - 1;
-      if (playerIndex >= 0 && playerIndex < availablePlayers.length) {
-        const selectedPlayer = availablePlayers[playerIndex];
-
-        const newResults = [...groupStageTables];
-        if (!newResults[groupIndex]) {
-          newResults[groupIndex] = {
-            groupName: `Групп ${String.fromCharCode(65 + groupIndex)}`,
-            players: [],
-            resultMatrix: []
-          };
-        }
-
-        // Check if player already exists in group
-        if (newResults[groupIndex].players.find(p => p.id === selectedPlayer.id)) {
-          toast({
-            title: "Алдаа",
-            description: "Энэ тамирчин аль хэдийн нэмэгдсэн байна",
-            variant: "destructive"
-          });
-          return;
-        }
-
-        newResults[groupIndex].players.push({
-          id: selectedPlayer.id,
-          name: selectedPlayer.playerName,
-          club: selectedPlayer.playerClub || '',
-          position: '',
-          wins: ''
-        });
-
-        // Expand result matrix
-        const playerCount = newResults[groupIndex].players.length;
-        newResults[groupIndex].resultMatrix = Array(playerCount).fill(null).map((_, i) => 
-          Array(playerCount).fill('').map((_, j) => 
-            i === j ? '*****' : (newResults[groupIndex].resultMatrix[i]?.[j] || '')
-          )
-        );
-
-        setGroupStageTables(newResults);
-
-        toast({
-          title: "Амжилттай",
-          description: `${selectedPlayer.playerName} нэмэгдлээ`,
-        });
-      } else {
-        toast({
-          title: "Алдаа",
-          description: "Буруу дугаар",
-          variant: "destructive"
-        });
-      }
+      setGroupStageTables(updated);
     }
   };
 
@@ -759,82 +795,6 @@ export default function AdminTournamentResultsPage() {
     return matches;
   };
 
-  // Add player autocomplete for knockout matches
-  const addKnockoutMatch = () => {
-    // Get available players
-    const availablePlayers = [
-      ...(participantsData || []), // Use participantsData directly
-      ...(allUsers || []).map(p => ({
-        id: p.id,
-        playerName: `${p.firstName || ''} ${p.lastName || ''}`.trim(),
-        playerEmail: p.email,
-        playerRank: p.rank,
-        playerClub: p.clubAffiliation
-      }))
-    ].filter((player, index, self) => 
-      player.playerName && 
-      self.findIndex(p => p.id === player.id) === index
-    );
-
-    if (availablePlayers.length < 2) {
-      toast({
-        title: "Алдаа",
-        description: "Хамгийн багадаа 2 тамирчин хэрэгтэй",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const playerList = availablePlayers.map((p, i) => `${i + 1}. ${p.playerName}`).join('\n');
-
-    const player1Selection = prompt(`Тоглогч 1 сонгоно уу:\n\n${playerList}`);
-    if (!player1Selection) return;
-
-    const player1Index = parseInt(player1Selection) - 1;
-    if (player1Index < 0 || player1Index >= availablePlayers.length) {
-      toast({
-        title: "Алдаа",
-        description: "Буруу дугаар",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const player2Selection = prompt(`Тоглогч 2 сонгоно уу:\n\n${playerList}`);
-    if (!player2Selection) return;
-
-    const player2Index = parseInt(player2Selection) - 1;
-    if (player2Index < 0 || player2Index >= availablePlayers.length || player2Index === player1Index) {
-      toast({
-        title: "Алдаа",
-        description: "Буруу дугаар эсвэл ижил тоглогч",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const player1 = availablePlayers[player1Index];
-    const player2 = availablePlayers[player2Index];
-
-    const newMatch: KnockoutMatch = {
-      id: `match_${Date.now()}`,
-      round: "1",
-      player1: { id: player1.id, name: player1.playerName },
-      player2: { id: player2.id, name: player2.playerName },
-      score: "",
-      winner: undefined,
-      position: { x: 0, y: knockoutMatches.length * 100 }
-    };
-
-    setKnockoutMatches([...knockoutMatches, newMatch]);
-
-    toast({
-      title: "Амжилттай",
-      description: `${player1.playerName} vs ${player2.playerName} тоглолт нэмэгдлээ`,
-    });
-  };
-
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -887,21 +847,29 @@ export default function AdminTournamentResultsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {allParticipationTypes.length > 0 ? (
           <>
-            {/* Participation Type Selector */}
-            {tournament && tournament.participationTypes && tournament.participationTypes.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-6">
-                {tournament.participationTypes.map((type) => (
-                  <Button
-                    key={type}
-                    variant={activeParticipationType === type ? "default" : "outline"}
-                    onClick={() => setActiveParticipationType(type)}
-                    className={activeParticipationType === type ? "bg-green-600 hover:bg-green-700" : ""}
-                  >
-                    {type}
-                  </Button>
-                ))}
-              </div>
-            )}
+            <div className="flex items-center mb-6">
+              <Tabs
+                value={participationType}
+                onValueChange={(val) => setLocation(`/admin/tournament/${tournamentId}/results/${val}`)}
+                className="flex-1"
+              >
+                <TabsList className="w-full flex flex-wrap">
+                  {allParticipationTypes.map((type) => (
+                    <TabsTrigger key={type} value={type} className="capitalize">
+                      {type.replace('_', ' ')}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+              <Button
+                variant="outline"
+                size="icon"
+                className="ml-2"
+                onClick={() => setAddCategoryOpen(true)}
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
 
             <Tabs defaultValue="knockout" className="space-y-6">
               <TabsList className="grid w-full grid-cols-2">
@@ -1303,7 +1271,7 @@ export default function AdminTournamentResultsPage() {
                                       ) : (
                                         <Input
                                           value={group.resultMatrix[playerIndex]?.[opponentIndex] || ''}
-                                          onChange={(e) => updateMatchResult(groupIndex, player1Index, player2Index, e.target.value)}
+                                          onChange={(e) => updateMatchResult(groupIndex, playerIndex, opponentIndex, e.target.value)}
                                           placeholder="3-1"
                                           className="w-full h-8 text-center text-xs"
                                         />
@@ -1353,7 +1321,7 @@ export default function AdminTournamentResultsPage() {
                           <h4 className="text-sm font-medium text-text-secondary">Тоглогч нэмэх</h4>
                           <div className="text-xs text-text-secondary">
                             {(() => {
-                              const totalRegistered = participantsData.length;
+                              const totalRegistered = participants.length;
                               const totalInGroups = groupStageTables.reduce((total, group) => total + group.players.length, 0);
                               return `${totalInGroups}/${totalRegistered} тоглогч группд орсон`;
                             })()}
@@ -1362,7 +1330,7 @@ export default function AdminTournamentResultsPage() {
 
                         {(() => {
                           // Recalculate available players each time
-                          const availablePlayers = participantsData.filter(participant => {
+                          const availablePlayers = participants.filter(participant => {
                             // Get all possible IDs for this participant
                             const participantIds = [
                               participant.id,
@@ -1387,7 +1355,7 @@ export default function AdminTournamentResultsPage() {
                           });
 
                           if (availablePlayers.length === 0) {
-                            const totalRegistered = participantsData.length;
+                            const totalRegistered = participants.length;
                             const totalInGroups = groupStageTables.reduce((total, group) => 
                               total + (group.players ? group.players.length : 0), 0
                             );
@@ -1446,7 +1414,15 @@ export default function AdminTournamentResultsPage() {
                                         `${selectedParticipant.firstName || ''} ${selectedParticipant.lastName || ''}`.trim() ||
                                         selectedParticipant.name || 'Нэр тодорхойгүй';
 
-                                      addPlayerToGroup(groupIndex); // Call the modified addPlayerToGroup
+                                      addPlayerToGroup(groupIndex, {
+                                        id: selectedParticipant.id || selectedParticipant.playerId || selectedParticipant.userId,
+                                        playerId: selectedParticipant.playerId || selectedParticipant.id,
+                                        name: participantName,
+                                        club: selectedParticipant.clubAffiliation || selectedParticipant.club || '',
+                                        wins: 0,
+                                        losses: 0,
+                                        points: 0
+                                      });
                                       setSelectedPlayerId(''); // Clear selection after adding
                                     }
                                   }
