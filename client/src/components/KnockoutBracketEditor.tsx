@@ -165,9 +165,14 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
   const getAvailableUsers = (matchId: string, position: 'player1' | 'player2') => {
     const selectedIds = getSelectedPlayerIds();
 
-    // Remove current match's other player from selected IDs for this position
+    // Remove current match's players from selected IDs so their names appear in the dropdown
     const currentMatch = matches.find(m => m.id === matchId);
     if (currentMatch) {
+      const currentPlayer = currentMatch[position];
+      if (currentPlayer?.id && currentPlayer.id !== 'lucky_draw') {
+        selectedIds.delete(currentPlayer.id);
+      }
+
       const otherPlayer = position === 'player1' ? currentMatch.player2 : currentMatch.player1;
       if (otherPlayer?.id && otherPlayer.id !== 'lucky_draw') {
         selectedIds.delete(otherPlayer.id);
