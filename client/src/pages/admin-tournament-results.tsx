@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { UserAutocomplete } from "@/components/UserAutocomplete";
 import { KnockoutBracketEditor } from "@/components/KnockoutBracketEditor";
+import { KnockoutBracket } from "@/components/KnockoutBracket";
 import type { Tournament, TournamentResults, TournamentParticipant, User } from "@shared/schema";
 import * as XLSX from 'xlsx';
 
@@ -1027,136 +1028,162 @@ export default function AdminTournamentResultsPage() {
                   </div>
                 )}
 
-                <KnockoutBracketEditor
-                  initialMatches={knockoutMatches.map(match => {
-                    // Map round values more comprehensively
-                    let roundNum = 1;
-                    let roundName = 'Дөрөвний финал';
+                <div className="space-y-6">
+                  {/* Tournament Bracket Display */}
+                  {knockoutMatches.length > 0 && (
+                    <div className="bg-white rounded-lg border p-4">
+                      <h4 className="text-lg font-semibold mb-4 text-gray-800">Шигшээ тоглолтын draw</h4>
+                      <KnockoutBracket
+                        matches={knockoutMatches.map(match => ({
+                          id: match.id,
+                          round: match.round === 'final' ? 3 : match.round === 'semifinal' ? 2 : 1,
+                          roundName: match.id === 'third_place_playoff' ? '3-р байрын тоглолт' :
+                                   match.round === 'final' ? 'Финал' :
+                                   match.round === 'semifinal' ? 'Хагас финал' : 'Дөрөвний финал',
+                          player1: match.player1,
+                          player2: match.player2,
+                          player1Score: match.player1Score,
+                          player2Score: match.player2Score,
+                          score: match.score,
+                          winner: match.winner,
+                          position: match.position
+                        }))}
+                      />
+                    </div>
+                  )}
 
-                    if (match.round === 'final' || match.round === 3) {
-                      roundNum = 3;
-                      roundName = 'Финал';
-                    } else if (match.round === 'semifinal' || match.round === 2) {
-                      // What was called "semifinal" is actually the final when only 4 players
-                      roundNum = 3;
-                      roundName = 'Финал';
-                    } else if (match.round === 'quarterfinal' || match.round === 1) {
-                      roundNum = 2;
-                      roundName = 'Хагас финал';
-                    }
+                  {/* Admin Editor */}
+                  <KnockoutBracketEditor
+                    initialMatches={knockoutMatches.map(match => {
+                      // Map round values more comprehensively
+                      let roundNum = 1;
+                      let roundName = 'Дөрөвний финал';
 
-                    // Special case for 3rd place playoff
-                    if (match.id === 'third_place_playoff') {
-                      roundNum = 3; // Same level as final
-                      roundName = '3-р байрын тоглолт';
-                    }
+                      if (match.round === 'final' || match.round === 3) {
+                        roundNum = 3;
+                        roundName = 'Финал';
+                      } else if (match.round === 'semifinal' || match.round === 2) {
+                        // What was called "semifinal" is actually the final when only 4 players
+                        roundNum = 3;
+                        roundName = 'Финал';
+                      } else if (match.round === 'quarterfinal' || match.round === 1) {
+                        roundNum = 2;
+                        roundName = 'Хагас финал';
+                      }
 
-                    return {
-                      id: match.id,
-                      round: roundNum,
-                      roundName: roundName,
-                      player1: match.player1,
-                      player2: match.player2,
-                      player1Score: match.player1Score,
-                      player2Score: match.player2Score,
-                      score: match.score,
-                      winner: match.winner,
-                      position: match.position
-                    };
-                  })}
-                  users={allUsers} // Pass allUsers, but logic inside will use participants
-                  qualifiedPlayers={getQualifiedPlayers()}
-                  onSave={(newMatches) => {
-                    // Convert back to original format and preserve individual scores
-                    const convertedMatches = newMatches.map(match => ({
-                      id: match.id,
-                      round: match.roundName === 'Финал' ? 'final' : 
-                             match.roundName === 'Хагас финал' ? 'semifinal' : 'quarterfinal',
-                      player1: match.player1,
-                      player2: match.player2,
-                      player1Score: match.player1Score,
-                      player2Score: match.player2Score,
-                      score: match.score || (match.player1Score && match.player2Score ? `${match.player1Score}-${match.player2Score}` : '') as string,
-                      winner: match.winner,
-                      position: match.position
-                    }));
-                    setKnockoutMatches(convertedMatches);
+                      // Special case for 3rd place playoff
+                      if (match.id === 'third_place_playoff') {
+                        roundNum = 3; // Same level as final
+                        roundName = '3-р байрын тоглолт';
+                      }
 
-                    // Calculate and update final rankings
-                    const newFinalRankings: FinalRanking[] = [];
+                      return {
+                        id: match.id,
+                        round: roundNum,
+                        roundName: roundName,
+                        player1: match.player1,
+                        player2: match.player2,
+                        player1Score: match.player1Score,
+                        player2Score: match.player2Score,
+                        score: match.score,
+                        winner: match.winner,
+                        position: match.position
+                      };
+                    })}
+                    users={allUsers} // Pass allUsers, but logic inside will use participants
+                    qualifiedPlayers={getQualifiedPlayers()}
+                    onSave={(newMatches) => {
+                      // Convert back to original format and preserve individual scores
+                      const convertedMatches = newMatches.map(match => ({
+                        id: match.id,
+                        round: match.roundName === 'Финал' ? 'final' : 
+                               match.roundName === 'Хагас финал' ? 'semifinal' : 'quarterfinal',
+                        player1: match.player1,
+                        player2: match.player2,
+                        player1Score: match.player1Score,
+                        player2Score: match.player2Score,
+                        score: match.score || (match.player1Score && match.player2Score ? `${match.player1Score}-${match.player2Score}` : '') as string,
+                        winner: match.winner,
+                        position: match.position
+                      }));
+                      setKnockoutMatches(convertedMatches);
 
-                    console.log('All matches for ranking calculation:', newMatches);
-                    console.log('Available roundNames:', newMatches.map(m => m.roundName));
+                      // Calculate and update final rankings
+                      const newFinalRankings: FinalRanking[] = [];
 
-                    // Find the REAL final match - should be the one with highest round number or specific ID
-                    const allFinals = newMatches.filter(m => m.roundName === 'Финал' && m.id !== 'third_place_playoff');
-                    console.log('All final matches found:', allFinals);
+                      console.log('All matches for ranking calculation:', newMatches);
+                      console.log('Available roundNames:', newMatches.map(m => m.roundName));
 
-                    // The real final is usually the one with the highest round number or most advanced position
-                    let finalMatch = allFinals.find(m => m.id.includes('match_2_') || m.id.includes('match_3_'));
+                      // Find the REAL final match - should be the one with highest round number or specific ID
+                      const allFinals = newMatches.filter(m => m.roundName === 'Финал' && m.id !== 'third_place_playoff');
+                      console.log('All final matches found:', allFinals);
 
-                    // If no advanced final found, try to find by position (rightmost on bracket)
-                    if (!finalMatch && allFinals.length > 0) {
-                      finalMatch = allFinals.reduce((latest, current) => {
-                        return (current.position.x > latest.position.x) ? current : latest;
-                      });
-                    }
+                      // The real final is usually the one with the highest round number or most advanced position
+                      let finalMatch = allFinals.find(m => m.id.includes('match_2_') || m.id.includes('match_3_'));
 
-                    console.log('Selected final match for rankings:', finalMatch);
-                    console.log('Final match players:', finalMatch?.player1?.name, 'vs', finalMatch?.player2?.name);
-                    console.log('Final match winner:', finalMatch?.winner?.name);
+                      // If no advanced final found, try to find by position (rightmost on bracket)
+                      if (!finalMatch && allFinals.length > 0) {
+                        finalMatch = allFinals.reduce((latest, current) => {
+                          return (current.position.x > latest.position.x) ? current : latest;
+                        });
+                      }
 
-                    if (finalMatch?.winner && finalMatch.player1 && finalMatch.player2) {
-                      // 1st place: final winner
-                      newFinalRankings.push({
-                        position: 1,
-                        playerId: finalMatch.winner.id,
-                        playerName: finalMatch.winner.name
-                      });
+                      console.log('Selected final match for rankings:', finalMatch);
+                      console.log('Final match players:', finalMatch?.player1?.name, 'vs', finalMatch?.player2?.name);
+                      console.log('Final match winner:', finalMatch?.winner?.name);
 
-                      // 2nd place: final loser (the other player in final) - ALWAYS from final match
-                      const finalLoser = finalMatch.player1.id === finalMatch.winner.id ? finalMatch.player2 : finalMatch.player1;
-                      newFinalRankings.push({
-                        position: 2,
-                        playerId: finalLoser.id,
-                        playerName: finalLoser.name
-                      });
-
-                      console.log('Final match results - Winner:', finalMatch.winner.name, 'Loser (2nd place):', finalLoser.name);
-                    } else if (finalMatch?.player1 && finalMatch?.player2 && !finalMatch.winner) {
-                      // If final has players but no winner yet, don't add rankings
-                      console.log('Final match has players but no winner determined yet');
-                    }
-
-                    // Find 3rd place playoff
-                    const thirdPlaceMatch = newMatches.find(m => m.id === 'third_place_playoff');
-                    console.log('Found 3rd place match:', thirdPlaceMatch);
-
-                    if (thirdPlaceMatch?.winner) {
-                      // Make sure 3rd place winner is not already in rankings (avoid duplicates)
-                      const alreadyRanked = newFinalRankings.some(r => r.playerId === thirdPlaceMatch.winner!.id);
-                      if (!alreadyRanked) {
-                        // 3rd place: 3rd place playoff winner
+                      if (finalMatch?.winner && finalMatch.player1 && finalMatch.player2) {
+                        // 1st place: final winner
                         newFinalRankings.push({
-                          position: 3,
-                          playerId: thirdPlaceMatch.winner.id,
-                          playerName: thirdPlaceMatch.winner.name
+                          position: 1,
+                          playerId: finalMatch.winner.id,
+                          playerName: finalMatch.winner.name
                         });
 
-                        console.log('3rd place winner:', thirdPlaceMatch.winner.name);
-                      } else {
-                        console.log('3rd place winner already ranked, skipping duplicate');
+                        // 2nd place: final loser (the other player in final) - ALWAYS from final match
+                        const finalLoser = finalMatch.player1.id === finalMatch.winner.id ? finalMatch.player2 : finalMatch.player1;
+                        newFinalRankings.push({
+                          position: 2,
+                          playerId: finalLoser.id,
+                          playerName: finalLoser.name
+                        });
+
+                        console.log('Final match results - Winner:', finalMatch.winner.name, 'Loser (2nd place):', finalLoser.name);
+                      } else if (finalMatch?.player1 && finalMatch?.player2 && !finalMatch.winner) {
+                        // If final has players but no winner yet, don't add rankings
+                        console.log('Final match has players but no winner determined yet');
                       }
-                    }
 
-                    console.log('Calculated final rankings:', newFinalRankings);
+                      // Find 3rd place playoff
+                      const thirdPlaceMatch = newMatches.find(m => m.id === 'third_place_playoff');
+                      console.log('Found 3rd place match:', thirdPlaceMatch);
 
-                    setFinalRankings(newFinalRankings);
+                      if (thirdPlaceMatch?.winner) {
+                        // Make sure 3rd place winner is not already in rankings (avoid duplicates)
+                        const alreadyRanked = newFinalRankings.some(r => r.playerId === thirdPlaceMatch.winner!.id);
+                        if (!alreadyRanked) {
+                          // 3rd place: 3rd place playoff winner
+                          newFinalRankings.push({
+                            position: 3,
+                            playerId: thirdPlaceMatch.winner.id,
+                            playerName: thirdPlaceMatch.winner.name
+                          });
 
-                    // Auto-save via existing mutation
-                    saveResultsMutation.mutate();
-                  }}
-                />
+                          console.log('3rd place winner:', thirdPlaceMatch.winner.name);
+                        } else {
+                          console.log('3rd place winner already ranked, skipping duplicate');
+                        }
+                      }
+
+                      console.log('Calculated final rankings:', newFinalRankings);
+
+                      setFinalRankings(newFinalRankings);
+
+                      // Auto-save via existing mutation
+                      saveResultsMutation.mutate();
+                    }}
+                  />
+                </div>
                 <div className="flex gap-2 mt-4">
                   <Button 
                     onClick={() => {
