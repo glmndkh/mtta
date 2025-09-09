@@ -1329,6 +1329,10 @@ export default function AdminTournamentResultsPage() {
                         </div>
 
                         {(() => {
+                          // Show all registered participants with better debugging
+                          console.log('All participants for group:', participants);
+                          console.log('Current group tables:', groupStageTables);
+
                           // Recalculate available players each time
                           const availablePlayers = participants.filter(participant => {
                             // Get all possible IDs for this participant
@@ -1346,93 +1350,143 @@ export default function AdminTournamentResultsPage() {
                               )
                             );
 
-                            // Check if participant has valid name data
-                            const hasValidName = participant.firstName && participant.lastName ||
+                            // More lenient name validation - accept if any name field exists
+                            const hasValidName = Boolean(
+                              participant.firstName || 
+                              participant.lastName || 
                               participant.playerName ||
-                              participant.name;
+                              participant.name ||
+                              participant.username
+                            );
+
+                            console.log('Checking participant:', {
+                              ids: participantIds,
+                              name: participant.firstName + ' ' + participant.lastName,
+                              isInGroup: isInAnyGroup,
+                              hasName: hasValidName
+                            });
 
                             return !isInAnyGroup && hasValidName;
                           });
 
-                          if (availablePlayers.length === 0) {
-                            const totalRegistered = participants.length;
-                            const totalInGroups = groupStageTables.reduce((total, group) => 
-                              total + (group.players ? group.players.length : 0), 0
-                            );
+                          const totalRegistered = participants.length;
+                          const totalInGroups = groupStageTables.reduce((total, group) => 
+                            total + (group.players ? group.players.length : 0), 0
+                          );
 
+                          console.log(`Available players: ${availablePlayers.length}, Total registered: ${totalRegistered}, In groups: ${totalInGroups}`);
+
+                          // Always show the registration stats
+                          const registrationStats = (
+                            <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+                              <div className="flex justify-between">
+                                <span>Бүртгэлтэй:</span>
+                                <span className="font-medium">{totalRegistered}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Группд орсон:</span>
+                                <span className="font-medium">{totalInGroups}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Боломжтой:</span>
+                                <span className="font-medium text-green-600">{availablePlayers.length}</span>
+                              </div>
+                            </div>
+                          );
+
+                          if (totalRegistered === 0) {
                             return (
                               <div className="text-center py-3 border-2 border-dashed border-border rounded-lg bg-card">
+                                {registrationStats}
                                 <p className="text-sm text-text-secondary mb-1">
-                                  {totalRegistered === 0 
-                                    ? "Тэмцээнд бүртгүүлсэн тоглогч байхгүй байна"
-                                    : totalInGroups === totalRegistered
-                                    ? "Бүх тоглогч группд хуваарилагдсан байна"
-                                    : "Энэ группд нэмэх боломжтой тоглогч байхгүй байна"
-                                  }
+                                  Тэмцээнд бүртгүүлсэн тоглогч байхгүй байна
                                 </p>
                                 <p className="text-xs text-text-secondary">
-                                  {totalInGroups > 0 && totalInGroups < totalRegistered && "Бусад группаас тоглогч хасаж энэ группд нэмэх боломжтой"}
+                                  Эхлээд тэмцээнд тоглогч бүртгүүлнэ үү
                                 </p>
-                                <p className="text-xs text-text-secondary mt-1">
-                                  Бүртгэлтэй: {totalRegistered}, Группд орсон: {totalInGroups}, Боломжтой: {totalRegistered - totalInGroups}
+                              </div>
+                            );
+                          }
+
+                          if (availablePlayers.length === 0 && totalInGroups === totalRegistered) {
+                            return (
+                              <div className="text-center py-3 border-2 border-dashed border-border rounded-lg bg-card">
+                                {registrationStats}
+                                <p className="text-sm text-text-secondary mb-1">
+                                  Бүх тоглогч группд хуваарилагдсан байна
+                                </p>
+                                <p className="text-xs text-text-secondary">
+                                  Бусад группаас тоглогч хасаж энэ группд нэмэх боломжтой
                                 </p>
                               </div>
                             );
                           }
 
                           return (
-                            <>
-                              <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
-                                <SelectTrigger className="flex-1 mb-2">
-                                  <SelectValue placeholder="Тоглогч сонгох" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {availablePlayers.map((participant) => {
-                                    const participantId = participant.id || participant.playerId || participant.userId;
-                                    const participantName = participant.playerName || 
-                                      `${participant.firstName || ''} ${participant.lastName || ''}`.trim() ||
-                                      participant.name || 'Нэр тодорхойгүй';
+                            <div>
+                              {registrationStats}
+                              {availablePlayers.length > 0 ? (
+                                <>
+                                  <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
+                                    <SelectTrigger className="flex-1 mb-2">
+                                      <SelectValue placeholder={`${availablePlayers.length} тоглогчоос сонгох`} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {availablePlayers.map((participant) => {
+                                        const participantId = participant.id || participant.playerId || participant.userId;
+                                        const participantName = participant.playerName || 
+                                          `${participant.firstName || ''} ${participant.lastName || ''}`.trim() ||
+                                          participant.name || participant.username || 'Нэр тодорхойгүй';
 
-                                    return (
-                                      <SelectItem key={participantId} value={participantId}>
-                                        {participantName}
-                                      </SelectItem>
-                                    );
-                                  })}
-                                </SelectContent>
-                              </Select>
-                              <Button
-                                onClick={() => {
-                                  if (selectedPlayerId) {
-                                    const selectedParticipant = availablePlayers.find(p => 
-                                      p.id === selectedPlayerId || 
-                                      p.playerId === selectedPlayerId || 
-                                      p.userId === selectedPlayerId
-                                    );
-                                    if (selectedParticipant) {
-                                      const participantName = selectedParticipant.playerName || 
-                                        `${selectedParticipant.firstName || ''} ${selectedParticipant.lastName || ''}`.trim() ||
-                                        selectedParticipant.name || 'Нэр тодорхойгүй';
+                                        return (
+                                          <SelectItem key={participantId} value={participantId}>
+                                            {participantName} {participant.clubAffiliation ? `(${participant.clubAffiliation})` : ''}
+                                          </SelectItem>
+                                        );
+                                      })}
+                                    </SelectContent>
+                                  </Select>
+                                  <Button
+                                    onClick={() => {
+                                      if (selectedPlayerId) {
+                                        const selectedParticipant = availablePlayers.find(p => 
+                                          p.id === selectedPlayerId || 
+                                          p.playerId === selectedPlayerId || 
+                                          p.userId === selectedPlayerId
+                                        );
+                                        if (selectedParticipant) {
+                                          const participantName = selectedParticipant.playerName || 
+                                            `${selectedParticipant.firstName || ''} ${selectedParticipant.lastName || ''}`.trim() ||
+                                            selectedParticipant.name || selectedParticipant.username || 'Нэр тодорхойгүй';
 
-                                      addPlayerToGroup(groupIndex, {
-                                        id: selectedParticipant.id || selectedParticipant.playerId || selectedParticipant.userId,
-                                        playerId: selectedParticipant.playerId || selectedParticipant.id,
-                                        name: participantName,
-                                        club: selectedParticipant.clubAffiliation || selectedParticipant.club || '',
-                                        wins: 0,
-                                        losses: 0,
-                                        points: 0
-                                      });
-                                      setSelectedPlayerId(''); // Clear selection after adding
-                                    }
-                                  }
-                                }}
-                                disabled={!selectedPlayerId}
-                                size="sm"
-                              >
-                                Нэмэх
-                              </Button>
-                            </>
+                                          addPlayerToGroup(groupIndex, {
+                                            id: selectedParticipant.id || selectedParticipant.playerId || selectedParticipant.userId,
+                                            playerId: selectedParticipant.playerId || selectedParticipant.id,
+                                            name: participantName,
+                                            club: selectedParticipant.clubAffiliation || selectedParticipant.club || '',
+                                            wins: 0,
+                                            losses: 0,
+                                            points: 0
+                                          });
+                                          setSelectedPlayerId(''); // Clear selection after adding
+                                        }
+                                      }
+                                    }}
+                                    disabled={!selectedPlayerId}
+                                    size="sm"
+                                    className="w-full"
+                                  >
+                                    Группд нэмэх
+                                  </Button>
+                                </>
+                              ) : (
+                                <div className="text-center py-2 text-sm text-text-secondary">
+                                  {totalRegistered > 0 ? 
+                                    "Бүх тоглогч аль хэдийн группд орсон байна" : 
+                                    "Боломжтой тоглогч байхгүй"}
+                                </div>
+                              )}
+                            </div>
                           );
                         })()}
                       </div>
