@@ -1383,6 +1383,49 @@ export default function AdminTournamentResultsPage() {
                           console.log('Current group tables:', groupStageTables);
 
                           // Recalculate available players each time
+                          // Helper function to get readable display label for participation type
+                          const getParticipationLabel = (type: string) => {
+                            try {
+                              const parsed = JSON.parse(type);
+                              let ageGroup = '';
+                              let category = '';
+                              
+                              if (parsed.age) {
+                                ageGroup = parsed.age;
+                              } else if (parsed.minAge && parsed.maxAge) {
+                                ageGroup = `${parsed.minAge}-${parsed.maxAge}`;
+                              } else if (parsed.minAge) {
+                                ageGroup = `${parsed.minAge}+`;
+                              } else if (parsed.maxAge) {
+                                ageGroup = `${parsed.maxAge}-`;
+                              }
+                              
+                              if (parsed.gender === 'male') {
+                                category = 'эр';
+                              } else if (parsed.gender === 'female') {
+                                category = 'эм';
+                              }
+                              
+                              return `${ageGroup} ${category}`.trim();
+                            } catch {
+                              // Handle string format categories
+                              if (type.includes('singles')) {
+                                const category = type.includes('men') ? 'Эрэгтэй дан' : 
+                                               type.includes('women') ? 'Эмэгтэй дан' : 'Дан';
+                                return category;
+                              } else if (type.includes('doubles')) {
+                                if (type.includes('mixed')) {
+                                  return 'Холимог хос';
+                                }
+                                const category = type.includes('men') ? 'Эрэгтэй хос' : 
+                                               type.includes('women') ? 'Эмэгтэй хос' : 'Хос';
+                                return category;
+                              }
+                              
+                              return type.replace('_', ' ');
+                            }
+                          };
+
                           const availablePlayers = participants.filter(participant => {
                             // Get all possible IDs for this participant
                             const participantIds = [
@@ -1489,7 +1532,7 @@ export default function AdminTournamentResultsPage() {
 
                                         return (
                                           <SelectItem key={participantId} value={participantId}>
-                                            {participantName} {participant.clubAffiliation ? `(${participant.clubAffiliation})` : ''}
+                                            {participantName} {participant.clubAffiliation ? `(${participant.clubAffiliation})` : ''} - {getParticipationLabel(participant.participationType || participationType || '')}
                                           </SelectItem>
                                         );
                                       })}
