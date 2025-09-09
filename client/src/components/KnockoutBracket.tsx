@@ -23,7 +23,7 @@ interface KnockoutBracketProps {
   onMatchClick?: (match: Match) => void;
 }
 
-function KnockoutBracket({ 
+export function KnockoutBracket({ 
   matches, 
   title = "Шигшээ тоглолт",
   onMatchClick 
