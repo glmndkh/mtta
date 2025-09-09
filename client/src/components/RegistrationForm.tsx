@@ -79,31 +79,63 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
     return age;
   };
 
-  // Get participation type label
+  // Parse participation type for age-based categories
+  const parseParticipationType = (type: string) => {
+    try {
+      // Try to parse as JSON first
+      const parsed = JSON.parse(type);
+      return parsed;
+    } catch {
+      // If not JSON, treat as legacy string format
+      return { category: type, gender: 'male' };
+    }
+  };
+
+  // Get participation type label for age-based categories
   const getParticipationTypeLabel = (type: string): string => {
-    const labels: Record<string, string> = {
-      'singles_men': 'Эрэгтэй дан',
-      'singles_women': 'Эмэгтэй дан',
-      'doubles_men': 'Эрэгтэй хос',
-      'doubles_women': 'Эмэгтэй хос',
-      'mixed_doubles': 'Холимог хос',
-      'singles': 'Дан',
-      'doubles': 'Хос',
-      'team': 'Баг',
-      'individual': 'Хувь хүн'
-    };
-    return labels[type] || type;
+    try {
+      const parsed = parseParticipationType(type);
+      
+      if (parsed.age) {
+        const genderLabel = parsed.gender === 'female' ? 'Эмэгтэй' : 'Эрэгтэй';
+        return `${parsed.age} нас (${genderLabel})`;
+      }
+      
+      if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
+        const genderLabel = parsed.gender === 'female' ? 'Эмэгтэй' : 'Эрэгтэй';
+        return `${parsed.minAge}-${parsed.maxAge} нас (${genderLabel})`;
+      }
+      
+      if (parsed.minAge !== undefined) {
+        const genderLabel = parsed.gender === 'female' ? 'Эмэгтэй' : 'Эрэгтэй';
+        return `${parsed.minAge}+ нас (${genderLabel})`;
+      }
+      
+      if (parsed.maxAge !== undefined) {
+        const genderLabel = parsed.gender === 'female' ? 'Эмэгтэй' : 'Эрэгтэй';
+        return `${parsed.maxAge} хүртэл (${genderLabel})`;
+      }
+      
+      // Fallback to legacy labels
+      const labels: Record<string, string> = {
+        'singles_men': 'Эрэгтэй дан',
+        'singles_women': 'Эмэгтэй дан',
+        'doubles_men': 'Эрэгтэй хос',
+        'doubles_women': 'Эмэгтэй хос',
+        'mixed_doubles': 'Холимог хос',
+        'singles': 'Дан',
+        'doubles': 'Хос',
+        'team': 'Баг',
+        'individual': 'Хувь хүн'
+      };
+      return labels[parsed.category || type] || type;
+    } catch {
+      return type;
+    }
   };
 
   const getCategoryLabel = (type: string): string => {
-    const labels: Record<string, string> = {
-      'singles_men': 'Эрэгтэй дан',
-      'singles_women': 'Эмэгтэй дан',
-      'doubles_men': 'Эрэгтэй хос',
-      'doubles_women': 'Эмэгтэй хос',
-      'mixed_doubles': 'Холимог хос'
-    };
-    return labels[type] || type;
+    return getParticipationTypeLabel(type);
   };
 
   // Validate eligibility for selected category
@@ -112,32 +144,44 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
 
     const age = calculateAge(profile.birthDate || profile.dateOfBirth, tournament.startDate);
 
-    // Default gender rules
-    const defaultRules: Record<string, { genders: ("male"|"female")[] }> = {
-      'singles_men': { genders: ['male'] },
-      'doubles_men': { genders: ['male'] },
-      'singles_women': { genders: ['female'] },
-      'doubles_women': { genders: ['female'] },
-      'mixed_doubles': { genders: ['male', 'female'] }
-    };
-
-    // Get eligibility rules (custom or default)
-    const eligibility = tournament.eligibility?.[category] || defaultRules[category];
-
-    if (eligibility) {
+    try {
+      const parsed = parseParticipationType(category);
+      
       // Gender check
-      if (eligibility.genders && !eligibility.genders.includes(profile.gender)) {
-        const allowedGenders = eligibility.genders.map(g => g === 'male' ? 'эрэгтэй' : 'эмэгтэй').join(', ');
-        return { valid: false, error: `Энэ төрөлд зөвхөн ${allowedGenders} оролцох боломжтой` };
+      if (parsed.gender && profile.gender && parsed.gender !== profile.gender) {
+        const requiredGender = parsed.gender === 'male' ? 'эрэгтэй' : 'эмэгтэй';
+        return { valid: false, error: `Энэ төрөлд зөвхөн ${requiredGender} оролцох боломжтой` };
       }
 
-      // Age check
-      if (eligibility.minAge && age < eligibility.minAge) {
-        return { valid: false, error: `Хамгийн багадаа ${eligibility.minAge} настай байх ёстой` };
+      // Age checks
+      if (parsed.minAge && age < parsed.minAge) {
+        return { valid: false, error: `Хамгийн багадаа ${parsed.minAge} настай байх ёстой` };
       }
-      if (eligibility.maxAge && age > eligibility.maxAge) {
-        return { valid: false, error: `Хамгийн ихдээ ${eligibility.maxAge} настай байх ёстой` };
+      
+      if (parsed.maxAge && age > parsed.maxAge) {
+        return { valid: false, error: `Хамгийн ихдээ ${parsed.maxAge} настай байх ёстой` };
       }
+
+      // Legacy tournament eligibility rules fallback
+      const eligibility = tournament.eligibility?.[category];
+      if (eligibility) {
+        // Gender check for legacy format
+        if (eligibility.genders && !eligibility.genders.includes(profile.gender)) {
+          const allowedGenders = eligibility.genders.map(g => g === 'male' ? 'эрэгтэй' : 'эмэгтэй').join(', ');
+          return { valid: false, error: `Энэ төрөлд зөвхөн ${allowedGenders} оролцох боломжтой` };
+        }
+
+        // Age check for legacy format
+        if (eligibility.minAge && age < eligibility.minAge) {
+          return { valid: false, error: `Хамгийн багадаа ${eligibility.minAge} настай байх ёстой` };
+        }
+        if (eligibility.maxAge && age > eligibility.maxAge) {
+          return { valid: false, error: `Хамгийн ихдээ ${eligibility.maxAge} настай байх ёстой` };
+        }
+      }
+
+    } catch (error) {
+      console.error('Error parsing category:', error);
     }
 
     return { valid: true };

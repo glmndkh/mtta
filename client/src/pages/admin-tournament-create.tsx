@@ -50,9 +50,10 @@ export default function AdminTournamentCreate() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [ageCategory, setAgeCategory] = useState("");
+  const [minAge, setMinAge] = useState("");
+  const [maxAge, setMaxAge] = useState("");
   const [gender, setGender] = useState("male");
-  const [participationCategories, setParticipationCategories] = useState<string[]>([]);
+  const [participationCategories, setParticipationCategories] = useState<any[]>([]);
   const [richDescription, setRichDescription] = useState("");
   const [previewMode, setPreviewMode] = useState(false);
   const [backgroundImageUrl, setBackgroundImageUrl] = useState("");
@@ -75,7 +76,7 @@ export default function AdminTournamentCreate() {
 
   const ratingOptions = [
     "Beginner",
-    "Intermediate", 
+    "Intermediate",
     "Advanced",
     "Expert",
     "Professional"
@@ -165,7 +166,7 @@ export default function AdminTournamentCreate() {
       setRegulationDocumentUrl(objectPath);
       form.setValue("regulationDocumentUrl", objectPath);
       toast({
-        title: "Амжилттай", 
+        title: "Амжилттай",
         description: "Журмын баримт бичиг амжилттай хуулагдлаа",
       });
     }
@@ -221,19 +222,62 @@ export default function AdminTournamentCreate() {
   };
 
   const addParticipationCategory = () => {
-    if (!ageCategory.trim()) return;
-    const label = `${ageCategory.trim()} ${
-      gender === "male" ? "эрэгтэй" : gender === "female" ? "эмэгтэй" : "бусад"
-    }`;
-    if (!participationCategories.includes(label)) {
-      setParticipationCategories([...participationCategories, label]);
+    if (!minAge && !maxAge) {
+      toast({
+        title: "Алдаа",
+        description: "Хамгийн багадаа нэг нас оруулна уу",
+        variant: "destructive",
+      });
+      return;
     }
-    setAgeCategory("");
+
+    const category = {
+      minAge: minAge ? parseInt(minAge) : null,
+      maxAge: maxAge ? parseInt(maxAge) : null,
+      gender,
+    };
+
+    // Create JSON string format for the category
+    const categoryString = JSON.stringify(category);
+
+    setParticipationCategories([...participationCategories, category]);
+
+    // Update form participationTypes with JSON string
+    const currentTypes = form.getValues("participationTypes") || [];
+    form.setValue("participationTypes", [...currentTypes, categoryString]);
+
+    setMinAge("");
+    setMaxAge("");
   };
 
-  const removeParticipationCategory = (label: string) => {
-    setParticipationCategories(participationCategories.filter((t) => t !== label));
+  const removeParticipationCategory = (categoryToRemove: any) => {
+    setParticipationCategories(participationCategories.filter((t) => t !== categoryToRemove));
+
+    const currentTypes = form.getValues("participationTypes") || [];
+    const updatedTypes = currentTypes.filter(type => type !== JSON.stringify(categoryToRemove));
+    form.setValue("participationTypes", updatedTypes);
   };
+
+  const formatCategoryLabel = (category: any) => {
+    let label = "";
+    if (category.minAge !== null && category.maxAge !== null) {
+      label += `${category.minAge}–${category.maxAge}`;
+    } else if (category.minAge !== null) {
+      label += `${category.minAge}+`;
+    } else if (category.maxAge !== null) {
+      label += `Under ${category.maxAge}`;
+    }
+
+    if (category.gender === "male") {
+      label += " (Эрэгтэй)";
+    } else if (category.gender === "female") {
+      label += " (Эмэгтэй)";
+    } else if (category.gender === "other") {
+      label += " (Бусад)";
+    }
+    return label;
+  };
+
 
   if (isLoading) {
     return (
@@ -293,7 +337,7 @@ export default function AdminTournamentCreate() {
                     {form.getValues('description') || 'Тэмцээний товч тайлбар'}
                   </p>
                   {richDescription && (
-                    <div 
+                    <div
                       className="prose max-w-none mb-6"
                       dangerouslySetInnerHTML={{ __html: richDescription }}
                     />
@@ -343,12 +387,12 @@ export default function AdminTournamentCreate() {
                   <div>
                     <h3 className="font-medium mb-2">Оролцооны төрлүүд:</h3>
                     <div className="flex flex-wrap gap-2">
-                      {participationCategories.length > 0 ? participationCategories.map((type: string) => (
+                      {participationCategories.length > 0 ? participationCategories.map((type: any, index: number) => (
                         <span
-                          key={type}
+                          key={index}
                           className="px-3 py-1 bg-mtta-green text-white rounded-full text-sm"
                         >
-                          {type}
+                          {formatCategoryLabel(type)}
                         </span>
                       )) : (
                         <span className="text-gray-500 text-sm">Ангилал нэмээгүй байна</span>
@@ -377,11 +421,11 @@ export default function AdminTournamentCreate() {
                         )}
                       </div>
                     )}
-                    
+
                     <div className="mt-4">
                       <span className={`px-2 py-1 rounded text-sm ${
-                        form.getValues('isPublished') 
-                          ? 'bg-green-100 text-green-800' 
+                        form.getValues('isPublished')
+                          ? 'bg-green-100 text-green-800'
                           : 'bg-yellow-100 text-yellow-800'
                       }`}>
                         {form.getValues('isPublished') ? 'Нийтлэгдсэн' : 'Ноорог'}
@@ -425,8 +469,8 @@ export default function AdminTournamentCreate() {
                           <FormItem>
                             <FormLabel>Товч тайлбар</FormLabel>
                             <FormControl>
-                              <Textarea 
-                                {...field} 
+                              <Textarea
+                                {...field}
                                 placeholder="Тэмцээний товч тайлбар..."
                                 rows={3}
                               />
@@ -533,8 +577,8 @@ export default function AdminTournamentCreate() {
                           <FormItem>
                             <FormLabel>Дэлгэрэнгүй хуваарь</FormLabel>
                             <FormControl>
-                              <Textarea 
-                                {...field} 
+                              <Textarea
+                                {...field}
                                 placeholder="Өдрийн хуваарь, тоглолтын цагийн хуваарь..."
                                 rows={4}
                               />
@@ -559,8 +603,8 @@ export default function AdminTournamentCreate() {
                           <FormItem>
                             <FormLabel>Дүрэм журам</FormLabel>
                             <FormControl>
-                              <Textarea 
-                                {...field} 
+                              <Textarea
+                                {...field}
                                 placeholder="Тэмцээний дүрэм журам..."
                                 rows={4}
                               />
@@ -577,8 +621,8 @@ export default function AdminTournamentCreate() {
                           <FormItem>
                             <FormLabel>Шагнал урамшуулал</FormLabel>
                             <FormControl>
-                              <Textarea 
-                                {...field} 
+                              <Textarea
+                                {...field}
                                 placeholder="1-р байр: 500,000₮, 2-р байр: 300,000₮..."
                                 rows={3}
                               />
@@ -595,8 +639,8 @@ export default function AdminTournamentCreate() {
                           <FormItem>
                             <FormLabel>Оролцооны шаардлага</FormLabel>
                             <FormControl>
-                              <Textarea 
-                                {...field} 
+                              <Textarea
+                                {...field}
                                 placeholder="Насны хязгаар, клубын гишүүнчлэл гэх мэт..."
                                 rows={3}
                               />
@@ -613,8 +657,8 @@ export default function AdminTournamentCreate() {
                           <FormItem>
                             <FormLabel>Холбоо барих мэдээлэл</FormLabel>
                             <FormControl>
-                              <Textarea 
-                                {...field} 
+                              <Textarea
+                                {...field}
                                 placeholder="Утас: +976 9999-9999, И-мэйл: info@mtta.mn"
                                 rows={2}
                               />
@@ -688,9 +732,9 @@ export default function AdminTournamentCreate() {
                           <FormItem>
                             <FormLabel>Хамгийн их оролцогч *</FormLabel>
                             <FormControl>
-                              <Input 
-                                {...field} 
-                                type="number" 
+                              <Input
+                                {...field}
+                                type="number"
                                 min="1"
                                 onChange={e => field.onChange(parseInt(e.target.value))}
                               />
@@ -707,9 +751,9 @@ export default function AdminTournamentCreate() {
                           <FormItem>
                             <FormLabel>Оролцооны төлбөр (₮)</FormLabel>
                             <FormControl>
-                              <Input 
-                                {...field} 
-                                type="number" 
+                              <Input
+                                {...field}
+                                type="number"
                                 min="0"
                                 onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
                               />
@@ -811,7 +855,7 @@ export default function AdminTournamentCreate() {
                   {/* Participation Categories */}
                   <Card>
                     <CardHeader>
-                      <CardTitle>Нас, хүйсийн ангилал</CardTitle>
+                      <CardTitle>Насны ангилал</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <FormField
@@ -821,9 +865,9 @@ export default function AdminTournamentCreate() {
                           <FormItem>
                             <FormLabel>Ангиллууд *</FormLabel>
                             <div className="space-y-2">
-                              {participationCategories.map((type) => (
-                                <div key={type} className="flex items-center space-x-2">
-                                  <span className="text-sm">{type}</span>
+                              {participationCategories.map((type, index) => (
+                                <div key={index} className="flex items-center space-x-2">
+                                  <span className="text-sm">{formatCategoryLabel(type)}</span>
                                   <Button
                                     type="button"
                                     variant="ghost"
@@ -848,9 +892,22 @@ export default function AdminTournamentCreate() {
 
                       <div className="flex space-x-2">
                         <Input
-                          value={ageCategory}
-                          onChange={(e) => setAgeCategory(e.target.value)}
-                          placeholder="Жишээ: 8-аас доош"
+                          value={minAge}
+                          onChange={(e) => setMinAge(e.target.value)}
+                          placeholder="Насны доод хязгаар"
+                          type="number"
+                          min="0"
+                          onKeyPress={(e) =>
+                            e.key === "Enter" &&
+                            (e.preventDefault(), addParticipationCategory())
+                          }
+                        />
+                        <Input
+                          value={maxAge}
+                          onChange={(e) => setMaxAge(e.target.value)}
+                          placeholder="Насны дээд хязгаар"
+                          type="number"
+                          min="0"
                           onKeyPress={(e) =>
                             e.key === "Enter" &&
                             (e.preventDefault(), addParticipationCategory())
@@ -871,7 +928,7 @@ export default function AdminTournamentCreate() {
                           variant="outline"
                           size="sm"
                           onClick={addParticipationCategory}
-                          disabled={!ageCategory.trim()}
+                          disabled={!minAge && !maxAge}
                         >
                           <Plus className="h-4 w-4" />
                         </Button>

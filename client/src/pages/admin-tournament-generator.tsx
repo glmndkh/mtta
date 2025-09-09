@@ -275,13 +275,30 @@ export default function AdminTournamentGenerator() {
   // Participation type management
 
   const addParticipationCategory = () => {
-    if (minAge === "" && maxAge === "") return;
-    const cat = {
-      minAge: minAge === "" ? null : parseInt(minAge, 10),
-      maxAge: maxAge === "" ? null : parseInt(maxAge, 10),
+    if (!minAge && !maxAge) {
+      toast({
+        title: "Алдаа",
+        description: "Хамгийн багадаа нэг нас оруулна уу",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const category = {
+      minAge: minAge ? parseInt(minAge) : null,
+      maxAge: maxAge ? parseInt(maxAge) : null,
       gender,
     };
-    setParticipationCategories([...participationCategories, cat]);
+
+    // Create JSON string format for the category
+    const categoryString = JSON.stringify(category);
+
+    setParticipationCategories([...participationCategories, category]);
+
+    // Update form participationTypes with JSON string
+    const currentTypes = form.getValues("participationTypes") || [];
+    form.setValue("participationTypes", [...currentTypes, categoryString]);
+
     setMinAge("");
     setMaxAge("");
   };
@@ -729,7 +746,16 @@ export default function AdminTournamentGenerator() {
                               {`${label} ${cat.gender === 'male' ? 'эрэгтэй' : 'эмэгтэй'}`}
                               <button
                                 type="button"
-                                onClick={() => removeParticipationCategory(idx)}
+                                onClick={() => {
+                                  const newCategories = participationCategories.filter((_, i) => i !== idx);
+                                  setParticipationCategories(newCategories);
+
+                                  // Update form participationTypes by removing the corresponding JSON string
+                                  const categoryString = JSON.stringify(cat);
+                                  const currentTypes = form.getValues("participationTypes") || [];
+                                  const updatedTypes = currentTypes.filter(type => type !== categoryString);
+                                  form.setValue("participationTypes", updatedTypes);
+                                }}
                                 className="ml-2 text-blue-600 hover:text-blue-800"
                               >
                                 <X className="h-3 w-3" />
