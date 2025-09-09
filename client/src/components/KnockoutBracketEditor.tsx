@@ -72,30 +72,64 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     
     console.log(`Generating bracket for ${playerCount} players. Need ${byeCount} byes for power of 2: ${powerOf2}`);
     
-    // For 12 players: need 4 byes to make 16
-    // First round will have 8 matches: 4 with byes (automatic wins), 4 regular matches
-    const firstRoundMatches = powerOf2 / 2;
+    // Calculate the number of rounds needed
+    const rounds = Math.ceil(Math.log2(powerOf2));
     const ROUND_WIDTH = 350;
     const START_Y = 80;
-    
-    for (let i = 0; i < firstRoundMatches; i++) {
-      const hasBye = i < byeCount;
-      newMatches.push({
-        id: `round-1-match-${i + 1}`,
-        round: 1,
-        position: { x: 0, y: START_Y + i * 120 },
-        player1: hasBye ? null : null,
-        player2: hasBye ? { id: 'bye', name: 'BYE' } : null,
-        winner: hasBye ? null : null, // Will be set when player1 is assigned
-        score: hasBye ? '3-0' : undefined
-      });
+
+    for (let round = 1; round <= rounds; round++) {
+      const matchesInRound = Math.pow(2, rounds - round);
+      const roundName = getRoundName(matchesInRound);
+
+      for (let matchIndex = 0; matchIndex < matchesInRound; matchIndex++) {
+        const verticalSpacing = Math.pow(2, round) * 120;
+        const centerOffset = (matchesInRound - 1) * verticalSpacing / 2;
+        const yPosition = START_Y + (matchIndex * verticalSpacing) - centerOffset + (round * 50);
+
+        const match: Match = {
+          id: `match_${round}_${matchIndex}`,
+          round,
+          roundName,
+          position: {
+            x: 50 + (round - 1) * ROUND_WIDTH,
+            y: Math.max(yPosition, 60)
+          }
+        };
+
+        // Set next match connection
+        if (round < rounds) {
+          const nextMatchIndex = Math.floor(matchIndex / 2);
+          match.nextMatchId = `match_${round + 1}_${nextMatchIndex}`;
+        }
+
+        // For first round, add bye logic
+        if (round === 1 && matchIndex < byeCount) {
+          match.player2 = { id: 'bye', name: 'BYE' };
+        }
+
+        newMatches.push(match);
+      }
     }
-    
-    return { matches: newMatches, totalRounds: Math.ceil(Math.log2(powerOf2)) };
+
+    // Add 3rd place playoff match
+    if (rounds >= 2) {
+      const thirdPlaceMatch: Match = {
+        id: 'third_place_playoff',
+        round: rounds,
+        roundName: '3-р байрын тоглолт',
+        position: {
+          x: 200 + (rounds - 2) * ROUND_WIDTH / 2,
+          y: START_Y + 450
+        }
+      };
+      newMatches.push(thirdPlaceMatch);
+    }
+
+    return newMatches.sort((a, b) => a.round - b.round || a.position!.y - b.position!.y);
   }, []);
 
   // Generate tournament bracket structure
-  const generateBracket = useCallback((playerCount: number) => {
+  const generateBracket = useCallback((playerCount: number): Match[] => {
     // Handle bye matches first
     if (playerCount > 0 && !isPowerOfTwo(playerCount)) {
       return generateByeMatches(playerCount);
