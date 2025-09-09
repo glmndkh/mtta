@@ -1,4 +1,3 @@
-
 import React from 'react';
 import './knockout.css';
 
@@ -24,11 +23,11 @@ interface KnockoutBracketProps {
   onMatchClick?: (match: Match) => void;
 }
 
-const KnockoutBracket: React.FC<KnockoutBracketProps> = ({ 
+function KnockoutBracket({ 
   matches, 
   title = "Шигшээ тоглолт",
   onMatchClick 
-}) => {
+}: KnockoutBracketProps) {
   // Group matches by round
   const matchesByRound = matches.reduce((acc, match) => {
     if (!acc[match.round]) {
@@ -63,14 +62,14 @@ const KnockoutBracket: React.FC<KnockoutBracketProps> = ({
       <div className="tournament-header">
         <h2>{title}</h2>
       </div>
-      
+
       <div className="bracket-container">
         {rounds.map((round) => (
           <div key={round} className="round-column">
             <div className="round-header">
               <h3>{getRoundTitle(round, rounds.length)}</h3>
             </div>
-            
+
             <div className="matches-container">
               {matchesByRound[round]
                 .sort((a, b) => a.position - b.position)
@@ -89,9 +88,9 @@ const KnockoutBracket: React.FC<KnockoutBracketProps> = ({
                           {getScoreDisplay(match.score1)}
                         </div>
                       </div>
-                      
+
                       <div className="vs-divider">VS</div>
-                      
+
                       <div className={`player-row ${match.winner?.id === match.player2?.id ? 'winner' : ''}`}>
                         <div className="player-name">
                           {getPlayerDisplay(match.player2)}
@@ -101,7 +100,7 @@ const KnockoutBracket: React.FC<KnockoutBracketProps> = ({
                         </div>
                       </div>
                     </div>
-                    
+
                     {round < rounds.length && (
                       <div className="connector-line"></div>
                     )}
