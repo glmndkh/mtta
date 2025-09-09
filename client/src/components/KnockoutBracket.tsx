@@ -24,6 +24,12 @@ interface KnockoutBracketProps {
   matches: BracketMatch[];
   onPlayerClick?: (playerId: string) => void;
   onMatchClick?: (matchId: string) => void;
+  /**
+   * Optional externally controlled selected match ID. When provided the
+   * corresponding match will be visually highlighted. If not provided the
+   * component will manage its own selection state.
+   */
+  selectedMatchId?: string;
 }
 
 function getRoundOrder(roundName: string): number {
@@ -39,9 +45,16 @@ function getRoundOrder(roundName: string): number {
   return roundMap[roundName] || 99;
 }
 
-export function KnockoutBracket({ matches, onPlayerClick, onMatchClick }: KnockoutBracketProps) {
+export function KnockoutBracket({ matches, onPlayerClick, onMatchClick, selectedMatchId }: KnockoutBracketProps) {
+  const [internalSelected, setInternalSelected] = React.useState<string | null>(null);
+
   const handlePlayerClick = (id?: string) => {
     if (id && onPlayerClick) onPlayerClick(id);
+  };
+
+  const handleMatchClick = (id: string) => {
+    setInternalSelected(id);
+    onMatchClick?.(id);
   };
 
   // Group matches by round name and sort by round order
@@ -81,16 +94,17 @@ export function KnockoutBracket({ matches, onPlayerClick, onMatchClick }: Knocko
                   const isPlayer1Winner = match.winner?.id === match.player1?.id;
                   const isPlayer2Winner = match.winner?.id === match.player2?.id;
 
+                  const isSelected = (selectedMatchId ?? internalSelected) === match.id;
                   return (
                     <div
                       key={match.id}
-                      className={`bracket-match ${isLastRound ? 'final-match' : ''}`}
+                      className={`bracket-match ${isLastRound ? 'final-match' : ''} ${isSelected ? 'selected' : ''}`}
                       style={{
                         '--match-index': matchIndex,
                         '--round-index': roundIndex,
                         '--total-matches': roundMatches.length
                       } as React.CSSProperties}
-                      onClick={() => onMatchClick?.(match.id)}
+                      onClick={() => handleMatchClick(match.id)}
                     >
                       {/* Player 1 */}
                       <div 
@@ -145,9 +159,14 @@ export function KnockoutBracket({ matches, onPlayerClick, onMatchClick }: Knocko
             const isPlayer1Winner = match.winner?.id === match.player1?.id;
             const isPlayer2Winner = match.winner?.id === match.player2?.id;
 
+            const isSelected = (selectedMatchId ?? internalSelected) === match.id;
             return (
-              <div key={match.id} className="bracket-match third-place-match">
-                <div 
+              <div
+                key={match.id}
+                className={`bracket-match third-place-match ${isSelected ? 'selected' : ''}`}
+                onClick={() => handleMatchClick(match.id)}
+              >
+                <div
                   className={`bracket-team team-top ${isPlayer1Winner ? 'winner' : ''}`}
                   onClick={() => handlePlayerClick(match.player1?.id)}
                 >
@@ -157,7 +176,7 @@ export function KnockoutBracket({ matches, onPlayerClick, onMatchClick }: Knocko
                   <span className="team-score">{score1 || "-"}</span>
                 </div>
 
-                <div 
+                <div
                   className={`bracket-team team-bottom ${isPlayer2Winner ? 'winner' : ''}`}
                   onClick={() => handlePlayerClick(match.player2?.id)}
                 >

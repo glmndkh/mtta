@@ -89,6 +89,8 @@ export default function AdminTournamentResultsPage() {
   // State for editing
   const [groupStageTables, setGroupStageTables] = useState<GroupStageTable[]>([]);
   const [knockoutMatches, setKnockoutMatches] = useState<KnockoutMatch[]>([]);
+  // Track which bracket match is selected to sync bracket view and editor
+  const [selectedBracketMatchId, setSelectedBracketMatchId] = useState<string | null>(null);
   const [finalRankings, setFinalRankings] = useState<FinalRanking[]>([]);
   const [isPublished, setIsPublished] = useState(false);
   const [customParticipationTypes, setCustomParticipationTypes] = useState<string[]>([]);
@@ -1051,7 +1053,9 @@ export default function AdminTournamentResultsPage() {
                             winner: match.winner,
                             position: match.position
                           }))}
+                          selectedMatchId={selectedBracketMatchId || undefined}
                           onMatchClick={(id) => {
+                            setSelectedBracketMatchId(id);
                             const el = document.getElementById(`match-editor-${id}`);
                             if (el) {
                               el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1102,6 +1106,8 @@ export default function AdminTournamentResultsPage() {
                     })}
                     users={allUsers} // Pass allUsers, but logic inside will use participants
                     qualifiedPlayers={getQualifiedPlayers()}
+                    selectedMatchId={selectedBracketMatchId || undefined}
+                    onMatchSelect={setSelectedBracketMatchId}
                     onSave={(newMatches) => {
                       // Convert back to original format and preserve individual scores
                       const convertedMatches = newMatches.map(match => ({

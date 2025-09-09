@@ -90,6 +90,12 @@
   box-shadow: 0 8px 32px rgba(255, 215, 0, 0.2);
 }
 
+/* Highlight selected match */
+.bracket-match.selected {
+  border-color: rgba(0, 255, 136, 0.8);
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+}
+
 .bracket-team {
   display: flex;
   align-items: center;
