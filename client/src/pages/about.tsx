@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { History, Target, Users, Award, CalendarIcon, Trophy, Globe } from "lucide-react";
+import { History, Target, Users, Award, CalendarIcon, Trophy, Globe, Mountain, Eye, HandHeart, ChevronDown, Star, Medal, Crown } from "lucide-react";
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import { useQuery } from "@tanstack/react-query";
@@ -18,23 +17,8 @@ const getImageUrl = (path: string): string => {
 };
 
 const AboutPage = () => {
-  const [activeTab, setActiveTab] = useState("history");
   const { data: members = [] } = useQuery<any[]>({ queryKey: ["/api/federation-members"] });
   const { t } = useLanguage();
-
-  // Handle URL hash changes to switch tabs
-  useEffect(() => {
-    const hash = window.location.hash.replace('#', '');
-    if (hash && ['history', 'goals', 'management'].includes(hash)) {
-      setActiveTab(hash);
-    }
-  }, []);
-
-  // Update URL hash when tab changes
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    window.history.pushState(null, '', `#${value}`);
-  };
 
   return (
     <PageWithLoading>
@@ -43,399 +27,325 @@ const AboutPage = () => {
 
         <div className="container mx-auto px-4 py-8">
           {/* Page Header */}
-          <div className="text-center mb-12">
+          <div className="text-center mb-16">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 glow-text">
-              {t('about.title')}
+              Бидний тухай
             </h1>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              {t('about.subtitle')}
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
+              Монголын ширээний теннисний холбоо - Спортын хөгжил, залуусын сургалт, олон улсын хамтын ажиллагаа
             </p>
-            <Separator className="my-8" />
+            <div className="flex justify-center">
+              <ChevronDown className="w-8 h-8 text-green-400 animate-bounce" />
+            </div>
           </div>
 
-          {/* Navigation Tabs */}
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-8 bg-gray-800 border-gray-700 sticky top-16 z-30">
-              <TabsTrigger 
-                value="history" 
-                className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300 text-xs md:text-sm px-1 md:px-3"
-              >
-                <History className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                <span className="hidden sm:inline">{t('about.introduction')}</span>
-                <span className="sm:hidden">{t('about.introduction').substring(0, 4)}</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="goals" 
-                className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300 text-xs md:text-sm px-1 md:px-3"
-              >
-                <Target className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                <span className="hidden sm:inline">{t('about.goals')}</span>
-                <span className="sm:hidden">{t('about.goals').substring(0, 4)}</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="management" 
-                className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300 text-xs md:text-sm px-1 md:px-3"
-              >
-                <Users className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                <span className="hidden sm:inline">{t('about.history')}</span>
-                <span className="sm:hidden">{t('about.history').substring(0, 4)}</span>
-              </TabsTrigger>
-            </TabsList>
-
-            {/* History Tab */}
-            <TabsContent value="history" id="history">
-              <Card className="card-dark">
-                <CardHeader>
-                  <CardTitle className="text-2xl text-white flex items-center">
-                    <History className="w-6 h-6 mr-3 text-green-400" />
-                    {t('about.introduction')}
-                  </CardTitle>
-                  <CardDescription className="text-gray-300">
-                    {t('about.subtitle')}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="text-gray-300 space-y-6">
-                  {/* Presidential Greeting Section */}
-                  <div className="bg-gray-800 p-6 rounded-lg border border-green-400/20">
-                    <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
-                      <Award className="w-5 h-5 mr-2 text-green-400" />
-                      {t('about.presidentGreeting')}
-                    </h3>
-                    <div className="flex flex-col md:flex-row gap-6 items-start">
-                      <div className="flex-shrink-0">
-                        <img 
-                          src="objects/uploads/president-gantulga.jpg"
-                          alt="Ц. Гантулга"
-                          className="w-32 h-40 object-cover rounded-lg border-2 border-green-400/30"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            console.error('President image failed to load:', target.src);
-
-                            if (!target.hasAttribute('data-fallback-tried')) {
-                              target.setAttribute('data-fallback-tried', 'true');
-                              // Try alternative paths
-                              target.src = 'uploads/president-gantulga.jpg';
-                            } else if (!target.hasAttribute('data-fallback-2-tried')) {
-                              target.setAttribute('data-fallback-2-tried', 'true');
-                              // Try direct path from public folder
-                              target.src = '/objects/uploads/president-gantulga.jpg';
-                            } else {
-                              target.style.display = 'none';
-                              const container = target.parentElement;
-                              if (container && !container.querySelector('.fallback-text')) {
-                                const fallback = document.createElement('div');
-                                fallback.className = 'fallback-text w-32 h-40 bg-gray-200 dark:bg-gray-700 rounded-lg border-2 border-green-400/30 flex items-center justify-center text-xs text-gray-500';
-                                fallback.textContent = 'Зураг байхгүй';
-                                container.appendChild(fallback);
-                              }
-                            }
-                          }}
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <p className="leading-relaxed text-gray-300 italic">
-                          "{t('about.presidentGreetingText')}"
-                        </p>
-                        <p className="mt-4 text-green-400 font-semibold">
-                          - Ц. Гантулга, Монголын ширээний теннисний холбооны ерөнхийлөгч
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-xl font-semibold text-white mb-3">{t('about.federationTitle')}</h3>
-                    <p className="leading-relaxed">
-                      {t('about.federationDesc')}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-white mb-3">{t('about.goalsTitle')}</h3>
-                    <p className="leading-relaxed">
-                      {t('about.goalsDesc')}
-                    </p>
-                  </div>
-                  <div className="grid md:grid-cols-2 gap-4 mt-6">
-                    <div className="bg-gray-800 p-4 rounded-lg">
-                      <h4 className="font-semibold text-green-400 mb-2">{t('about.established')}</h4>
-                      <p>1965</p>
-                    </div>
-                    <div className="bg-gray-800 p-4 rounded-lg">
-                      <h4 className="font-semibold text-green-400 mb-2">{t('about.memberCount')}</h4>
-                      <p>500+ athletes</p>
-                    </div>
-                    <div className="bg-gray-800 p-4 rounded-lg">
-                      <h4 className="font-semibold text-green-400 mb-2">{t('about.clubs')}</h4>
-                      <p>15+ clubs</p>
-                    </div>
-                    <div className="bg-gray-800 p-4 rounded-lg">
-                      <h4 className="font-semibold text-green-400 mb-2">{t('about.international')}</h4>
-                      <p>ITTF Member</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Goals Tab */}
-            <TabsContent value="goals" id="goals">
-              <Card className="card-dark">
-                <CardHeader>
-                  <CardTitle className="text-2xl text-white flex items-center">
-                    <Target className="w-6 h-6 mr-3 text-green-400" />
-                    {t('about.goals')}
-                  </CardTitle>
-                  <CardDescription className="text-gray-300">
-                    {t('about.strategicGoals')}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="text-gray-300 space-y-6">
-                  <div className="grid gap-6">
-                    <div className="bg-gray-800 p-6 rounded-lg">
-                      <h3 className="text-xl font-semibold text-white mb-3 flex items-center">
-                        <Badge variant="outline" className="mr-3 border-green-400 text-green-400">01</Badge>
-                        {t('about.sportDevelopment')}
-                      </h3>
-                      <p className="leading-relaxed">
-                        {t('about.sportDevelopmentDesc')}
-                      </p>
-                    </div>
-
-                    <div className="bg-gray-800 p-6 rounded-lg">
-                      <h3 className="text-xl font-semibold text-white mb-3 flex items-center">
-                        <Badge variant="outline" className="mr-3 border-green-400 text-green-400">02</Badge>
-                        {t('about.youthDevelopment')}
-                      </h3>
-                      <p className="leading-relaxed">
-                        {t('about.youthDevelopmentDesc')}
-                      </p>
-                    </div>
-
-                    <div className="bg-gray-800 p-6 rounded-lg">
-                      <h3 className="text-xl font-semibold text-white mb-3 flex items-center">
-                        <Badge variant="outline" className="mr-3 border-green-400 text-green-400">03</Badge>
-                        {t('about.internationalCooperation')}
-                      </h3>
-                      <p className="leading-relaxed">
-                        {t('about.internationalCooperationDesc')}
-                      </p>
-                    </div>
-
-                    <div className="bg-gray-800 p-6 rounded-lg">
-                      <h3 className="text-xl font-semibold text-white mb-3 flex items-center">
-                        <Badge variant="outline" className="mr-3 border-green-400 text-green-400">04</Badge>
-                        {t('about.infrastructureDevelopment')}
-                      </h3>
-                      <p className="leading-relaxed">
-                        {t('about.infrastructureDevelopmentDesc')}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Management Tab - Timeline */}
-            <TabsContent value="management" id="management">
-              <Card className="card-dark">
-                <CardHeader>
-                  <CardTitle className="text-2xl text-white flex items-center">
-                    <Users className="w-6 h-6 mr-3 text-green-400" />
-                    {t('about.history')}
-                  </CardTitle>
-                  <CardDescription className="text-gray-300">
-                    {t('about.historicalMilestones')}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="text-gray-300">
-                  {/* Legend */}
-                  <div className="flex flex-wrap justify-center gap-4 mb-12">
-                    <Badge className="bg-green-600 text-white">
-                      <Users className="w-4 h-4 mr-1" />
-                      {t('timeline.categories.foundation')}
-                    </Badge>
-                    <Badge className="bg-yellow-600 text-white">
-                      <Award className="w-4 h-4 mr-1" />
-                      {t('timeline.categories.achievement')}
-                    </Badge>
-                    <Badge className="bg-blue-600 text-white">
-                      <Globe className="w-4 h-4 mr-1" />
-                      {t('timeline.categories.international')}
-                    </Badge>
-                    <Badge className="bg-purple-600 text-white">
-                      <Trophy className="w-4 h-4 mr-1" />
-                      {t('timeline.categories.development')}
-                    </Badge>
-                  </div>
-
-                  {/* Timeline */}
-                  <div className="relative">
-                    {/* Central timeline line */}
-                    <div className="absolute left-1/2 transform -translate-x-1/2 w-1 bg-gradient-to-b from-green-400 via-green-500 to-green-600 h-full rounded-full shadow-lg"></div>
-
-                    <div className="space-y-12">
-                      {[
-                        {
-                          year: '1965',
-                          titleKey: 'timeline.1965.title',
-                          descriptionKey: 'timeline.1965.description',
-                          category: 'foundation',
-                          icon: <Users className="w-5 h-5" />
-                        },
-                        {
-                          year: '1971',
-                          titleKey: 'timeline.1971.title',
-                          descriptionKey: 'timeline.1971.description',
-                          category: 'international',
-                          icon: <Globe className="w-5 h-5" />
-                        },
-                        {
-                          year: '1980',
-                          titleKey: 'timeline.1980.title',
-                          descriptionKey: 'timeline.1980.description',
-                          category: 'development',
-                          icon: <Trophy className="w-5 h-5" />
-                        },
-                        {
-                          year: '1990',
-                          titleKey: 'timeline.1990.title',
-                          descriptionKey: 'timeline.1990.description',
-                          category: 'achievement',
-                          icon: <Award className="w-5 h-5" />
-                        },
-                        {
-                          year: '2000',
-                          titleKey: 'timeline.2000.title',
-                          descriptionKey: 'timeline.2000.description',
-                          category: 'development',
-                          icon: <Users className="w-5 h-5" />
-                        },
-                        {
-                          year: '2008',
-                          titleKey: 'timeline.2008.title',
-                          descriptionKey: 'timeline.2008.description',
-                          category: 'achievement',
-                          icon: <Trophy className="w-5 h-5" />
-                        },
-                        {
-                          year: '2012',
-                          titleKey: 'timeline.2012.title',
-                          descriptionKey: 'timeline.2012.description',
-                          category: 'international',
-                          icon: <Globe className="w-5 h-5" />
-                        },
-                        {
-                          year: '2016',
-                          titleKey: 'timeline.2016.title',
-                          descriptionKey: 'timeline.2016.description',
-                          category: 'development',
-                          icon: <Users className="w-5 h-5" />
-                        },
-                        {
-                          year: '2020',
-                          titleKey: 'timeline.2020.title',
-                          descriptionKey: 'timeline.2020.description',
-                          category: 'achievement',
-                          icon: <Award className="w-5 h-5" />
-                        },
-                        {
-                          year: '2024',
-                          titleKey: 'timeline.2024.title',
-                          descriptionKey: 'timeline.2024.description',
-                          category: 'development',
-                          icon: <Trophy className="w-5 h-5" />
-                        }
-                      ].map((event, index) => {
-                        const isLeft = index % 2 === 0;
-                        const getCategoryColor = (category: string, isDark: boolean) => {
-                          const colors = {
-                            foundation: isDark ? 'bg-green-600 text-white' : 'bg-green-100 text-green-800',
-                            achievement: isDark ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-800',
-                            international: isDark ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800',
-                            development: isDark ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-800'
-                          };
-                          return colors[category] || colors.development;
-                        };
-                        const getCategoryBorder = (category: string) => {
-                          const borders = {
-                            foundation: 'border-green-400',
-                            achievement: 'border-yellow-400',
-                            international: 'border-blue-400',
-                            development: 'border-purple-400'
-                          };
-                          return borders[category] || borders.development;
-                        };
-                        
-                        return (
-                          <div key={event.year} className="relative flex items-center">
-                            {/* Year marker on timeline */}
-                            <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
-                              <div className={`w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-green-600 border-4 border-white shadow-xl flex items-center justify-center ${getCategoryBorder(event.category)}`}>
-                                <div className="text-center">
-                                  <div className="text-white font-bold text-sm leading-tight">{event.year}</div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Event card */}
-                            <div className={`w-full ${isLeft ? 'pr-16 text-right' : 'pl-16 text-left'}`}>
-                              <div className={`inline-block ${isLeft ? '' : 'ml-auto'}`}>
-                                <Card className={`bg-gray-800 border-gray-700 max-w-md ${isLeft ? 'ml-auto' : ''} hover:scale-105 transition-transform duration-300`}>
-                                  <CardHeader className="pb-3">
-                                    <div className={`flex items-center gap-3 ${isLeft ? 'flex-row-reverse' : 'flex-row'}`}>
-                                      <div className={`p-2 rounded-full ${getCategoryColor(event.category, true)}`}>
-                                        {event.icon}
-                                      </div>
-                                      <div className={isLeft ? 'text-right' : 'text-left'}>
-                                        <CardTitle className="text-lg text-white flex items-center gap-2">
-                                          <CalendarIcon className="w-4 h-4 text-green-400" />
-                                          {t(event.titleKey)}
-                                        </CardTitle>
-                                        <Badge variant="outline" className={`mt-1 ${getCategoryColor(event.category, false)}`}>
-                                          {t(`timeline.categories.${event.category}`)}
-                                        </Badge>
-                                      </div>
-                                    </div>
-                                  </CardHeader>
-                                  <CardContent>
-                                    <CardDescription className="text-gray-300 leading-relaxed">
-                                      {t(event.descriptionKey)}
-                                    </CardDescription>
-                                  </CardContent>
-                                </Card>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Footer statistics */}
-                  <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-green-400">60+</div>
-                      <div className="text-gray-300 text-sm">{t('timeline.stats.years')}</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-green-400">500+</div>
-                      <div className="text-gray-300 text-sm">{t('timeline.stats.athletes')}</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-green-400">15+</div>
-                      <div className="text-gray-300 text-sm">{t('timeline.stats.clubs')}</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-green-400">100+</div>
-                      <div className="text-gray-300 text-sm">{t('timeline.stats.tournaments')}</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
+          {/* Mission, Vision, Values Section */}
+          <section className="mb-20">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-white mb-4">Эрхэм зорилго</h2>
+              <div className="w-20 h-1 bg-green-400 mx-auto"></div>
+            </div>
             
-          </Tabs>
+            <div className="grid md:grid-cols-3 gap-8 mb-12">
+              {/* Vision */}
+              <Card className="card-dark text-center p-6">
+                <CardContent className="pt-6">
+                  <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Mountain className="w-10 h-10 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-blue-600 dark:text-blue-400 mb-4">ЭРХЭМ ЗОРИЛГО</h3>
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                    Монголын ширээний теннисний холбоо нь спортын хөгжил, тамирчдын сургалт, дэмжлэгт чиглэсэн үйл ажиллагаа явуулж, олон улсын хамтын ажиллагааг хөгжүүлнэ.
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Mission */}
+              <Card className="card-dark text-center p-6">
+                <CardContent className="pt-6">
+                  <div className="w-20 h-20 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Eye className="w-10 h-10 text-green-600 dark:text-green-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-green-600 dark:text-green-400 mb-4">АЛСЫН ХАРАА</h3>
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                    Монгол тамирчдыг олон улсын түвшинд тэмцэж, дэлхийн аварга болж, ширээний теннисийг Монголд түгээмэл спорт болгох зорилготой.
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Values */}
+              <Card className="card-dark text-center p-6">
+                <CardContent className="pt-6">
+                  <div className="w-20 h-20 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <HandHeart className="w-10 h-10 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-orange-600 dark:text-orange-400 mb-4">ҮНЭТ ЗҮЙЛС</h3>
+                  <div className="text-left">
+                    <div className="flex items-center mb-2">
+                      <div className="w-2 h-2 bg-orange-400 rounded-full mr-3"></div>
+                      <span className="text-gray-300">Спортын ёс зүй</span>
+                    </div>
+                    <div className="flex items-center mb-2">
+                      <div className="w-2 h-2 bg-orange-400 rounded-full mr-3"></div>
+                      <span className="text-gray-300">Хамтын ажиллагаа</span>
+                    </div>
+                    <div className="flex items-center mb-2">
+                      <div className="w-2 h-2 bg-orange-400 rounded-full mr-3"></div>
+                      <span className="text-gray-300">Залуусын дэмжлэг</span>
+                    </div>
+                    <div className="flex items-center mb-2">
+                      <div className="w-2 h-2 bg-orange-400 rounded-full mr-3"></div>
+                      <span className="text-gray-300">Олон улсын стандарт</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-2 h-2 bg-orange-400 rounded-full mr-3"></div>
+                      <span className="text-gray-300">Тэргүүлэх арга барил</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+
+          {/* Strategic Goals Section */}
+          <section className="mb-20">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-white mb-4">Стратегийн зорилтууд</h2>
+              <div className="w-20 h-1 bg-green-400 mx-auto"></div>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-8">
+              <Card className="card-dark text-center p-6">
+                <CardContent className="pt-6">
+                  <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Users className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <h4 className="text-lg font-semibold text-white mb-2">Спортын хөгжүүлэлт</h4>
+                  <p className="text-gray-300 text-sm leading-relaxed">
+                    Ширээний теннисийг Монголд өргөн дэлгэрүүлж, бүх насны иргэдэд энэ спортыг дэмжиж, тамирчдын техникийг сайжруулах
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="card-dark text-center p-6">
+                <CardContent className="pt-6">
+                  <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Users className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <h4 className="text-lg font-semibold text-white mb-2">Залуусын сургалт</h4>
+                  <p className="text-gray-300 text-sm leading-relaxed">
+                    Залуу тамирчдыг олон улсын түвшинд бэлтгэж, дасгалжуулагчдын чадвар дээшлүүлэх сургалтыг зохион байгуулах
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="card-dark text-center p-6">
+                <CardContent className="pt-6">
+                  <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Users className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <h4 className="text-lg font-semibold text-white mb-2">Олон улсын хамтын ажиллагаа</h4>
+                  <p className="text-gray-300 text-sm leading-relaxed">
+                    ITTF болон бусад олон улсын байгууллагуудтай хамтын ажиллагааг өргөжүүлж, тамирчдын солилцоог дэмжих
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+
+          {/* Timeline Section */}
+          <section className="mb-20">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-white mb-4">Он цагийн хэлхээс</h2>
+              <div className="w-20 h-1 bg-green-400 mx-auto mb-8"></div>
+              <p className="text-gray-300 max-w-2xl mx-auto">
+                Монголын ширээний теннисний холбооны түүхэн замнал - 1965 онд анх байгуулагдсанаас өнөөг хүртэл спортын хөгжилд оруулсан хувь нэмэр.
+              </p>
+            </div>
+            
+            {/* Timeline with horizontal scroll */}
+            <div className="relative">
+              <div className="flex overflow-x-auto pb-4 space-x-8">
+                {[
+                  { year: '1965', title: 'Холбоо байгуулагдсан', description: 'Монголын ширээний теннисний холбоо анх байгуулагдав', category: 'foundation' },
+                  { year: '1970', title: 'Эхний тэмцээн', description: 'Улсын хэмжээний анхны ширээний теннисний тэмцээн зохион байгуулав', category: 'achievement' },
+                  { year: '1990', title: 'ITTF-д элссэн', description: 'Олон улсын ширээний теннисний холбооны гишүүн болсон', category: 'international' },
+                  { year: '1993', title: 'Дэлхийн аварга', description: 'Анхны олон улсын тэмцээнд оролцов', category: 'international' },
+                  { year: '1994', title: 'Азийн наадам', description: 'Азийн наадамд анх удаа оролцлоо', category: 'achievement' },
+                  { year: '1996', title: 'Сургалтын төв', description: 'Үндэсний сургалтын төвийг байгуулсан', category: 'development' },
+                  { year: '1997', title: 'Залуучуудын хөтөлбөр', description: 'Залуучуудын хөгжлийн хөтөлбөр эхэлсэн', category: 'development' },
+                  { year: '1998', title: 'Эмэгтэйчүүдийн спорт', description: 'Эмэгтэйчүүдийн ширээний теннисийг хөгжүүлэх хөтөлбөр', category: 'development' },
+                  { year: '2000', title: 'Олон улсын харилцаа', description: 'Өмнөд Солонгос, Хятадтай хамтын ажиллагаа эхэлсэн', category: 'international' }
+                ].map((event, index) => (
+                  <div key={event.year} className="flex-shrink-0 w-80">
+                    <div className="relative">
+                      <div className="flex items-center mb-4">
+                        <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm mr-4">
+                          {event.year}
+                        </div>
+                        <div className="flex-1 h-0.5 bg-gray-600"></div>
+                      </div>
+                      <Card className="card-dark">
+                        <CardContent className="p-6">
+                          <h3 className="text-white font-semibold mb-2">{event.title}</h3>
+                          <p className="text-gray-300 text-sm leading-relaxed">{event.description}</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Leadership Section */}
+          <section className="mb-20">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-white mb-4">Удирдлагын баг</h2>
+              <div className="w-20 h-1 bg-green-400 mx-auto"></div>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-8">
+              <Card className="card-dark text-center">
+                <CardContent className="p-6">
+                  <div className="w-24 h-24 bg-gray-600 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <Users className="w-12 h-12 text-gray-300" />
+                  </div>
+                  <h3 className="text-white font-semibold text-lg mb-2">Ц. Гантулга</h3>
+                  <p className="text-green-400 text-sm mb-2">Ерөнхийлөгч</p>
+                  <p className="text-gray-300 text-xs">Монголын ширээний теннисний хөгжилд 25 жил ажилласан туршлагатай</p>
+                </CardContent>
+              </Card>
+
+              <Card className="card-dark text-center">
+                <CardContent className="p-6">
+                  <div className="w-24 h-24 bg-gray-600 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <Users className="w-12 h-12 text-gray-300" />
+                  </div>
+                  <h3 className="text-white font-semibold text-lg mb-2">Б. Мөнхбат</h3>
+                  <p className="text-green-400 text-sm mb-2">Гүйцэтгэх захирал</p>
+                  <p className="text-gray-300 text-xs">Олон улсын тэмцээн, төсөл хэрэгжүүлэх чиглэлийг удирддаг</p>
+                </CardContent>
+              </Card>
+
+              <Card className="card-dark text-center">
+                <CardContent className="p-6">
+                  <div className="w-24 h-24 bg-gray-600 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <Users className="w-12 h-12 text-gray-300" />
+                  </div>
+                  <h3 className="text-white font-semibold text-lg mb-2">Д. Энхтүүшин</h3>
+                  <p className="text-green-400 text-sm mb-2">Сургалтын албаны дарга</p>
+                  <p className="text-gray-300 text-xs">Багш, дасгалжуулагчдын сургалт, арга зүйн ажилыг удирддаг</p>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+
+          {/* Organizational Structure Section */}
+          <section className="mb-20">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-white mb-4">Бүтэц, зохион байгуулалт</h2>
+              <div className="w-20 h-1 bg-green-400 mx-auto"></div>
+            </div>
+            
+            <div className="bg-gray-900 p-8 rounded-lg">
+              <div className="flex flex-col items-center space-y-8">
+                {/* Top Level */}
+                <div className="flex flex-wrap justify-center gap-4">
+                  <div className="bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-medium">
+                    Их хурал
+                  </div>
+                  <div className="bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-medium">
+                    Удирдах зөвлөл
+                  </div>
+                  <div className="bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-medium">
+                    Тэргүүлэгч
+                  </div>
+                </div>
+
+                {/* Connecting Lines */}
+                <div className="w-px h-8 bg-gray-600"></div>
+
+                {/* Middle Level */}
+                <div className="bg-purple-600 text-white px-6 py-3 rounded-lg text-center font-medium">
+                  Ерөнхийлөгч
+                </div>
+
+                <div className="w-px h-8 bg-gray-600"></div>
+
+                {/* Executive Level */}
+                <div className="bg-orange-500 text-white px-4 py-2 rounded text-center font-medium">
+                  Ажлын захирал
+                </div>
+
+                {/* Department Level */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
+                  <div className="bg-gray-700 p-4 rounded-lg text-center">
+                    <div className="text-purple-400 font-medium mb-2">Спортын хөгжлийн алба</div>
+                    <div className="text-gray-300 text-sm space-y-1">
+                      <div>Тамирчдын бэлтгэлийн хэлтэс</div>
+                      <div>Тэмцээний зохион байгуулалтын хэлтэс</div>
+                      <div>Дасгалжуулагчдын сургалтын хэлтэс</div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-700 p-4 rounded-lg text-center">
+                    <div className="text-pink-400 font-medium mb-2">Олон улсын харилцааны алба</div>
+                    <div className="text-gray-300 text-sm space-y-1">
+                      <div>ITTF-тэй харилцах хэлтэс</div>
+                      <div>Азийн холбооны харилцааны хэлтэс</div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-700 p-4 rounded-lg text-center">
+                    <div className="text-green-400 font-medium mb-2">Залуучуудын спортын алба</div>
+                    <div className="text-gray-300 text-sm space-y-1">
+                      <div>Сургуулийн спортын хэлтэс</div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-700 p-4 rounded-lg text-center">
+                    <div className="text-blue-400 font-medium mb-2">Захиргааны алба</div>
+                  </div>
+                </div>
+
+                {/* Bottom Level */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+                  <div className="bg-orange-600 p-4 rounded text-center">
+                    <div className="text-white font-medium mb-2">Клубуудын харилцааны алба</div>
+                    <div className="text-gray-200 text-sm">Холбооны гишүүд клубуудтай харилцах</div>
+                  </div>
+
+                  <div className="bg-orange-600 p-4 rounded text-center">
+                    <div className="text-white font-medium mb-2">Олон нийтийн харилцааны алба</div>
+                    <div className="text-gray-200 text-sm">Хэвлэл мэдээлэл, сурталчилгаа</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Stats Section */}
+          <section className="mb-20">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="text-center">
+                <div className="text-4xl font-bold text-green-400 mb-2">60+</div>
+                <div className="text-gray-300">Жилийн туршлага</div>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl font-bold text-green-400 mb-2">500+</div>
+                <div className="text-gray-300">Тамирчин</div>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl font-bold text-green-400 mb-2">15+</div>
+                <div className="text-gray-300">Клуб</div>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl font-bold text-green-400 mb-2">100+</div>
+                <div className="text-gray-300">Тэмцээн</div>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </PageWithLoading>
