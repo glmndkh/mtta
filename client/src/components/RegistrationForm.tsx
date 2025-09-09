@@ -98,22 +98,22 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
       
       if (parsed.age) {
         const genderLabel = parsed.gender === 'female' ? 'Эмэгтэй' : 'Эрэгтэй';
-        return `${parsed.age} нас (${genderLabel})`;
+        return `${parsed.age} нас ${genderLabel}`;
       }
       
       if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
         const genderLabel = parsed.gender === 'female' ? 'Эмэгтэй' : 'Эрэгтэй';
-        return `${parsed.minAge}-${parsed.maxAge} нас (${genderLabel})`;
+        return `${parsed.minAge}–${parsed.maxAge} нас ${genderLabel}`;
       }
       
       if (parsed.minAge !== undefined) {
         const genderLabel = parsed.gender === 'female' ? 'Эмэгтэй' : 'Эрэгтэй';
-        return `${parsed.minAge}+ нас (${genderLabel})`;
+        return `${parsed.minAge}+ нас ${genderLabel}`;
       }
       
       if (parsed.maxAge !== undefined) {
         const genderLabel = parsed.gender === 'female' ? 'Эмэгтэй' : 'Эрэгтэй';
-        return `${parsed.maxAge} хүртэл (${genderLabel})`;
+        return `${parsed.maxAge} хүртэл ${genderLabel}`;
       }
       
       // Fallback to legacy labels

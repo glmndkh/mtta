@@ -94,10 +94,11 @@ export default function AdminTournamentResultsPage() {
   const [addCategoryOpen, setAddCategoryOpen] = useState(false);
   const [newCategory, setNewCategory] = useState("");
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>(''); // State to hold selected player ID for adding to group
+  const [participationType, setParticipationType] = useState<string | undefined>(undefined);
+
 
   // Check if we have a tournament ID, if not show tournament selection
   const tournamentId = params?.id;
-  const participationType = params?.type as string | undefined;
   const isOnFallbackRoute = fallbackMatch && !tournamentId;
 
   // Fetch all tournaments for selection page
@@ -121,7 +122,23 @@ export default function AdminTournamentResultsPage() {
   const participants = participationType
     ? participantsData.filter(p => p.participationType === participationType)
     : participantsData;
-  const allParticipationTypes = [...(tournament?.participationTypes || []), ...customParticipationTypes];
+  const allParticipationTypes = tournament?.participationTypes || [];
+
+  // Filter out doubles and mixed categories for results entry
+  const filteredParticipationTypes = allParticipationTypes.filter((type) => {
+    const lowerType = type.toLowerCase();
+    return !lowerType.includes('хос') && 
+           !lowerType.includes('doubles') && 
+           !lowerType.includes('mixed') &&
+           !lowerType.includes('холимог');
+  });
+
+  // Initialize with first filtered type if available
+  useEffect(() => {
+    if (filteredParticipationTypes.length > 0 && !participationType) {
+      setParticipationType(filteredParticipationTypes[0]);
+    }
+  }, [filteredParticipationTypes, participationType]);
 
   // Fetch existing results
   const { data: existingResults, error: resultsError } = useQuery<TournamentResults>({
@@ -628,7 +645,36 @@ export default function AdminTournamentResultsPage() {
     return qualified;
   };
 
+  // Helper function to get readable display label for participation type
+  const getCategoryLabel = (type: string): string => {
+    try {
+      const parsed = JSON.parse(type);
 
+      if (parsed.minAge !== undefined || parsed.maxAge !== undefined) {
+        const genderLabel = parsed.gender === 'female' ? 'Эмэгтэй' : 'Эрэгтэй';
+
+        if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
+          return `${parsed.minAge}-${parsed.maxAge} нас ${genderLabel}`;
+        } else if (parsed.minAge !== undefined) {
+          return `${parsed.minAge}+ нас ${genderLabel}`;
+        } else if (parsed.maxAge !== undefined) {
+          return `${parsed.maxAge} хүртэл ${genderLabel}`;
+        }
+      }
+
+      // Fallback to legacy labels (only for singles/individual categories)
+      const labels: Record<string, string> = {
+        'singles_men': 'Эрэгтэй дан',
+        'singles_women': 'Эмэгтэй дан',
+        'singles': 'Дан',
+        'team': 'Баг',
+        'individual': 'Хувь хүн'
+      };
+      return labels[parsed.category || type] || type;
+    } catch {
+      return type;
+    }
+  };
 
   // Helper functions for final rankings
   const addRanking = () => {
@@ -850,64 +896,19 @@ export default function AdminTournamentResultsPage() {
             <div className="flex items-center mb-6">
               <Tabs
                 value={participationType}
-                onValueChange={(val) => setLocation(`/admin/tournament/${tournamentId}/results/${val}`)}
-                className="flex-1"
+                onValueChange={setParticipationType}
+                className="w-full"
               >
-                <TabsList className="w-full flex flex-wrap bg-card">
-                  {allParticipationTypes.map((type) => {
-                    // Parse tournament type to extract age group and category
-                    const getDisplayLabel = (type: string) => {
-                      // Handle JSON format categories (e.g., {"minAge":18,"maxAge":35,"gender":"male"})
-                      try {
-                        const parsed = JSON.parse(type);
-                        let ageGroup = '';
-                        let category = '';
-                        
-                        if (parsed.minAge && parsed.maxAge) {
-                          ageGroup = `${parsed.minAge}-${parsed.maxAge}`;
-                        } else if (parsed.minAge) {
-                          ageGroup = `${parsed.minAge}+`;
-                        } else if (parsed.maxAge) {
-                          ageGroup = `${parsed.maxAge}-`;
-                        }
-                        
-                        if (parsed.gender === 'male') {
-                          category = 'Эр';
-                        } else if (parsed.gender === 'female') {
-                          category = 'Эм';
-                        }
-                        
-                        return `${ageGroup} ${category}`.trim();
-                      } catch {
-                        // Handle string format categories
-                        if (type.includes('singles')) {
-                          const category = type.includes('men') ? 'Эрэгтэй дан' : 
-                                         type.includes('women') ? 'Эмэгтэй дан' : 'Дан';
-                          return category;
-                        } else if (type.includes('doubles')) {
-                          if (type.includes('mixed')) {
-                            return 'Холимог хос';
-                          }
-                          const category = type.includes('men') ? 'Эрэгтэй хос' : 
-                                         type.includes('women') ? 'Эмэгтэй хос' : 'Хос';
-                          return category;
-                        }
-                        
-                        // For age-based categories like "40-49 эр"
-                        return type.replace('_', ' ');
-                      }
-                    };
-
-                    return (
-                      <TabsTrigger 
-                        key={type} 
-                        value={type} 
-                        className="px-3 py-2 text-sm font-medium data-[state=active]:bg-green-600 data-[state=active]:text-white text-text-secondary hover:text-text-primary"
-                      >
-                        {getDisplayLabel(type)}
-                      </TabsTrigger>
-                    );
-                  })}
+                <TabsList className="grid w-full grid-cols-1 lg:grid-cols-4 gap-2">
+                  {filteredParticipationTypes.map((type) => (
+                    <TabsTrigger
+                      key={type}
+                      value={type}
+                      className="text-sm font-medium px-4 py-2"
+                    >
+                      {getCategoryLabel(type)}
+                    </TabsTrigger>
+                  ))}
                 </TabsList>
               </Tabs>
               <Button
@@ -1389,7 +1390,7 @@ export default function AdminTournamentResultsPage() {
                               const parsed = JSON.parse(type);
                               let ageGroup = '';
                               let category = '';
-                              
+
                               if (parsed.age) {
                                 ageGroup = parsed.age;
                               } else if (parsed.minAge && parsed.maxAge) {
@@ -1399,13 +1400,13 @@ export default function AdminTournamentResultsPage() {
                               } else if (parsed.maxAge) {
                                 ageGroup = `${parsed.maxAge}-`;
                               }
-                              
+
                               if (parsed.gender === 'male') {
                                 category = 'эр';
                               } else if (parsed.gender === 'female') {
                                 category = 'эм';
                               }
-                              
+
                               return `${ageGroup} ${category}`.trim();
                             } catch {
                               // Handle string format categories
@@ -1421,7 +1422,7 @@ export default function AdminTournamentResultsPage() {
                                                type.includes('women') ? 'Эмэгтэй хос' : 'Хос';
                                 return category;
                               }
-                              
+
                               return type.replace('_', ' ');
                             }
                           };
@@ -1608,8 +1609,12 @@ export default function AdminTournamentResultsPage() {
         </Tabs>
           </>
         ) : (
-          <div className="text-center text-text-secondary">
-            Тэмцээнд төрөл нэмээгүй байна. <a href="/admin/generator" className="text-blue-500 underline">Төрөл нэмэх</a>
+          <div className="text-center py-12">
+            <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Дан тэмцээний ангилал олдсонгүй</h3>
+            <p className="text-gray-500">
+              Энэ тэмцээнд зөвхөн хос/холимог хосын ангилал байна. Үр дүн оруулах боломжгүй.
+            </p>
           </div>
         )}
       </div>
