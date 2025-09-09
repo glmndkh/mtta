@@ -39,6 +39,59 @@ const AboutPage = () => {
             </div>
           </div>
 
+          {/* President's Greeting Section */}
+          <section className="mb-20">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-white mb-4">Ерөнхийлөгчийн мэндчилгээ</h2>
+              <div className="w-20 h-1 bg-green-400 mx-auto"></div>
+            </div>
+            
+            <div className="max-w-4xl mx-auto">
+              <Card className="card-dark p-8">
+                <CardContent className="flex flex-col md:flex-row items-center gap-8">
+                  <div className="flex-shrink-0">
+                    <div className="w-48 h-64 overflow-hidden rounded-2xl shadow-xl">
+                      <img 
+                        src="/objects/uploads/president-gantulga.jpg" 
+                        alt="Ерөнхийлөгч Ц. Гантулга"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/objects/uploads/placeholder-president.png';
+                        }}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 text-center md:text-left">
+                    <h3 className="text-2xl font-bold text-white mb-2">Ц. Гантулга</h3>
+                    <p className="text-green-400 text-lg mb-6">Монголын Ширээний Теннисний Холбооны Ерөнхийлөгч</p>
+                    
+                    <div className="text-gray-300 leading-relaxed space-y-4">
+                      <p>
+                        Эрхэм хүндэт тамирчид, дасгалжуулагчид, ширээний теннисийн спортыг дэмжигч бүхэнд мэндчилж байна.
+                      </p>
+                      <p>
+                        Монголын ширээний теннисний холбоо нь 1965 онд байгуулагдсанаас хойш спортын хөгжил, тамирчдын 
+                        сургалт дэмжлэгт чиглэсэн олон ажил хэрэгжүүлж ирсэн. Бид залуу үеийнхэнд энэ спортыг 
+                        дэлгэрүүлэх, олон улсын түвшинд өрсөлдөх чадвартай тамирчид бэлтгэхэд анхаарч ажиллаж байна.
+                      </p>
+                      <p>
+                        Манай холбоо нь ITTF болон Азийн ширээний теннисний холбооны идэвхтэй гишүүн болж, 
+                        олон улсын хамтын ажиллагааг өргөжүүлэн хөгжиж байна. Цаашид та бүхний дэмжлэгтэйгээр 
+                        Монголын ширээний теннисийг илүү өндөр түвшинд хүргэхийн төлөө хамтран ажиллацгаая.
+                      </p>
+                    </div>
+                    
+                    <div className="mt-6 text-right">
+                      <div className="text-white font-semibold">Хүндэтгэсэн,</div>
+                      <div className="text-green-400 font-bold text-lg">Ц. Гантулга</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+
           {/* Mission, Vision, Values Section */}
           <section className="mb-20">
             <div className="text-center mb-12">
