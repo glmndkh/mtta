@@ -45,6 +45,32 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
   const svgRef = useRef<SVGSVGElement>(null);
   const { toast } = useToast();
 
+  // Function to delete a match
+  const handleDeleteMatch = (matchId: string) => {
+    setMatches(prev => prev.filter(match => match.id !== matchId));
+  };
+
+  // Function to handle player changes in select dropdowns
+  const handlePlayerChange = (matchId: string, position: 'player1' | 'player2', playerId: string) => {
+    let selectedPlayer: Player | undefined;
+
+    if (playerId === 'lucky_draw') {
+      selectedPlayer = { id: 'lucky_draw', name: 'Lucky draw' };
+    } else if (playerId) {
+      const player = users.find(u => u.id === playerId);
+      if (player) {
+        selectedPlayer = {
+          id: player.id,
+          name: `${player.firstName || ''} ${player.lastName || ''}`.trim()
+        };
+      }
+    }
+
+    setMatches(prev => prev.map(match =>
+      match.id === matchId ? { ...match, [position]: selectedPlayer } : match
+    ));
+  };
+
   // Update matches when initialMatches changes
   useEffect(() => {
     if (initialMatches && initialMatches.length > 0) {
@@ -56,21 +82,21 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
   const generateBracket = useCallback((playerCount: number) => {
     const rounds = Math.ceil(Math.log2(playerCount));
     const newMatches: Match[] = [];
-    
+
     // Asymmetric positioning - each round moves toward center/right
     const ROUND_WIDTH = 350;  // Wider spacing between rounds
     const START_Y = 80;
-    
+
     for (let round = 1; round <= rounds; round++) {
       const matchesInRound = Math.pow(2, rounds - round);
       const roundName = getRoundName(matchesInRound);
-      
+
       for (let matchIndex = 0; matchIndex < matchesInRound; matchIndex++) {
         // Asymmetric Y positioning - matches converge toward center as rounds progress
         const verticalSpacing = Math.pow(2, round) * 120; // Increasing spacing per round
         const centerOffset = (matchesInRound - 1) * verticalSpacing / 2; // Center the group
         const yPosition = START_Y + (matchIndex * verticalSpacing) - centerOffset + (round * 50);
-        
+
         const match: Match = {
           id: `match_${round}_${matchIndex}`,
           round,
@@ -80,17 +106,34 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
             y: Math.max(yPosition, 60) // Ensure minimum Y position
           }
         };
-        
+
         // Set next match connection for progression
         if (round < rounds) {
           const nextMatchIndex = Math.floor(matchIndex / 2);
           match.nextMatchId = `match_${round + 1}_${nextMatchIndex}`;
+
+          // Auto-advance winners from group stage if applicable
+          if (round === 1 && qualifiedPlayers.length > 0) {
+            const playerIndex = matchIndex * 2;
+            if (playerIndex < qualifiedPlayers.length) {
+              match.player1 = {
+                id: qualifiedPlayers[playerIndex].id,
+                name: qualifiedPlayers[playerIndex].name
+              };
+            }
+            if (playerIndex + 1 < qualifiedPlayers.length) {
+              match.player2 = {
+                id: qualifiedPlayers[playerIndex + 1].id,
+                name: qualifiedPlayers[playerIndex + 1].name
+              };
+            }
+          }
         }
-        
+
         newMatches.push(match);
       }
     }
-    
+
     // Add 3rd place playoff match - positioned separately at bottom center
     if (rounds >= 2) {
       const thirdPlaceMatch: Match = {
@@ -104,9 +147,9 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
       };
       newMatches.push(thirdPlaceMatch);
     }
-    
-    return newMatches;
-  }, []);
+
+    return newMatches.sort((a, b) => a.round - b.round || a.position!.y - b.position!.y);
+  }, [qualifiedPlayers]);
 
   const getRoundName = (matchCount: number): string => {
     switch (matchCount) {
@@ -143,7 +186,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
   // Get players already selected in other matches
   const getSelectedPlayerIds = (currentMatchId: string, currentPosition?: string) => {
     const selectedIds = new Set<string>();
-    
+
     matches.forEach(match => {
       if (match.id === currentMatchId) {
         // For current match, exclude the other position
@@ -162,14 +205,14 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
         }
       }
     });
-    
+
     return selectedIds;
   };
 
   // Get available players for a specific match and position (only qualified players)
   const getAvailableUsers = (matchId: string, position: 'player1' | 'player2') => {
     const selectedIds = getSelectedPlayerIds(matchId, position);
-    
+
     // Convert qualified players to user format and filter out already selected ones
     const qualifiedAsUsers = qualifiedPlayers.map(qp => {
       // Find the corresponding user data
@@ -182,38 +225,38 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
         phone: ''
       };
     });
-    
+
     return qualifiedAsUsers.filter(user => !selectedIds.has(user.id));
   };
 
   // Handle manual player selection from dropdown
   const handlePlayerSelect = (matchId: string, position: 'player1' | 'player2', playerId: string) => {
     let selectedPlayer: Player | undefined;
-    
+
     if (playerId === 'lucky_draw') {
       selectedPlayer = { id: 'lucky_draw', name: 'Lucky draw' };
     } else {
       // Find player in qualified players first, then fallback to users
       const qualifiedPlayer = qualifiedPlayers.find(qp => qp.id === playerId);
       if (qualifiedPlayer) {
-        selectedPlayer = { 
-          id: qualifiedPlayer.id, 
+        selectedPlayer = {
+          id: qualifiedPlayer.id,
           name: qualifiedPlayer.name
         };
       } else {
         const user = users.find(u => u.id === playerId);
         if (user) {
-          selectedPlayer = { 
-            id: user.id, 
-            name: `${user.firstName || ''} ${user.lastName || ''}`.trim() 
+          selectedPlayer = {
+            id: user.id,
+            name: `${user.firstName || ''} ${user.lastName || ''}`.trim()
           };
         }
       }
     }
-    
+
     if (selectedPlayer) {
-      setMatches(prev => prev.map(match => 
-        match.id === matchId 
+      setMatches(prev => prev.map(match =>
+        match.id === matchId
           ? { ...match, [position]: selectedPlayer }
           : match
       ));
@@ -225,21 +268,21 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     setMatches(prev => {
       const newMatches = prev.map(match => {
         if (match.id !== matchId) return match;
-        
+
         const updatedMatch = { ...match, [scoreField]: value };
-        
+
         // Auto-determine winner based on scores
         const p1Score = parseInt(updatedMatch.player1Score || '0');
         const p2Score = parseInt(updatedMatch.player2Score || '0');
-        
+
         if (p1Score > 0 && p2Score > 0 && p1Score !== p2Score) {
           const winner = p1Score > p2Score ? updatedMatch.player1 : updatedMatch.player2;
           updatedMatch.winner = winner;
         }
-        
+
         return updatedMatch;
       });
-      
+
       // Find the updated match and advance winner if needed
       const updatedMatch = newMatches.find(m => m.id === matchId);
       if (updatedMatch?.winner && updatedMatch.nextMatchId) {
@@ -247,13 +290,13 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
         const currentRoundMatches = newMatches.filter(m => m.round === updatedMatch.round);
         const matchIndex = currentRoundMatches.findIndex(m => m.id === updatedMatch.id);
         const nextPosition = matchIndex % 2 === 0 ? 'player1' : 'player2';
-        
-        const finalMatches = newMatches.map(m => 
-          m.id === updatedMatch.nextMatchId 
+
+        const finalMatches = newMatches.map(m =>
+          m.id === updatedMatch.nextMatchId
             ? { ...m, [nextPosition]: updatedMatch.winner }
             : m
         );
-        
+
         // Also handle 3rd place playoff for semifinal losers
         if (updatedMatch.roundName === 'Хагас финал') {
           const loser = updatedMatch.player1?.id === updatedMatch.winner.id ? updatedMatch.player2 : updatedMatch.player1;
@@ -262,17 +305,17 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
             if (thirdPlaceMatch) {
               // Only add if this loser is not already in the 3rd place match
               const loserAlreadyAdded = thirdPlaceMatch.player1?.id === loser.id || thirdPlaceMatch.player2?.id === loser.id;
-              
+
               if (!loserAlreadyAdded) {
                 if (!thirdPlaceMatch.player1) {
-                  return finalMatches.map(m => 
-                    m.id === 'third_place_playoff' 
+                  return finalMatches.map(m =>
+                    m.id === 'third_place_playoff'
                       ? { ...m, player1: loser }
                       : m
                   );
                 } else if (!thirdPlaceMatch.player2) {
-                  return finalMatches.map(m => 
-                    m.id === 'third_place_playoff' 
+                  return finalMatches.map(m =>
+                    m.id === 'third_place_playoff'
                       ? { ...m, player2: loser }
                       : m
                   );
@@ -281,15 +324,15 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
             }
           }
         }
-        
+
         toast({
           title: "Ялагч дараагийн шатанд шилжлээ",
           description: `${updatedMatch.winner.name} автоматаар дараагийн тоглолтонд орлоо`
         });
-        
+
         return finalMatches;
       }
-      
+
       return newMatches;
     });
   };
@@ -299,26 +342,26 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     setMatches(prev => {
       const match = prev.find(m => m.id === matchId);
       if (!match) return prev;
-      
+
       const winner = winnerId === match.player1?.id ? match.player1 :
                      winnerId === match.player2?.id ? match.player2 : undefined;
-      
-      const newMatches = prev.map(m => 
+
+      const newMatches = prev.map(m =>
         m.id === matchId ? { ...m, winner } : m
       );
-      
+
       // Auto-advance winner to next round and handle 3rd place playoff
       if (winner && match.nextMatchId) {
         const currentRoundMatches = newMatches.filter(m => m.round === match.round);
         const matchIndex = currentRoundMatches.findIndex(m => m.id === match.id);
         const nextPosition = matchIndex % 2 === 0 ? 'player1' : 'player2';
-        
-        let finalMatches = newMatches.map(m => 
-          m.id === match.nextMatchId 
+
+        let finalMatches = newMatches.map(m =>
+          m.id === match.nextMatchId
             ? { ...m, [nextPosition]: winner }
             : m
         );
-        
+
         // Handle 3rd place playoff for semifinal losers
         if (match.roundName === 'Хагас финал') {
           const loser = match.player1?.id === winner.id ? match.player2 : match.player1;
@@ -327,17 +370,17 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
             if (thirdPlaceMatch) {
               // Only add if this loser is not already in the 3rd place match
               const loserAlreadyAdded = thirdPlaceMatch.player1?.id === loser.id || thirdPlaceMatch.player2?.id === loser.id;
-              
+
               if (!loserAlreadyAdded) {
                 if (!thirdPlaceMatch.player1) {
-                  finalMatches = finalMatches.map(m => 
-                    m.id === 'third_place_playoff' 
+                  finalMatches = finalMatches.map(m =>
+                    m.id === 'third_place_playoff'
                       ? { ...m, player1: loser }
                       : m
                   );
                 } else if (!thirdPlaceMatch.player2) {
-                  finalMatches = finalMatches.map(m => 
-                    m.id === 'third_place_playoff' 
+                  finalMatches = finalMatches.map(m =>
+                    m.id === 'third_place_playoff'
                       ? { ...m, player2: loser }
                       : m
                   );
@@ -346,15 +389,15 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
             }
           }
         }
-        
+
         toast({
           title: "Ялагч дараагийн шатанд шилжлээ",
           description: `${winner.name} автоматаар дараагийн тоглолтонд орлоо`
         });
-        
+
         return finalMatches;
       }
-      
+
       return newMatches;
     });
   };
@@ -362,19 +405,19 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
   // Advance winner to next round and handle 3rd place playoff
   const advanceWinnerToNextRound = (match: Match) => {
     if (!match.winner || !match.nextMatchId) return;
-    
+
     // Determine which position in next match
     const currentRoundMatches = matches.filter(m => m.round === match.round);
     const matchIndex = currentRoundMatches.findIndex(m => m.id === match.id);
     const nextPosition = matchIndex % 2 === 0 ? 'player1' : 'player2';
-    
+
     setMatches(prev => {
-      const newMatches = prev.map(m => 
-        m.id === match.nextMatchId 
+      const newMatches = prev.map(m =>
+        m.id === match.nextMatchId
           ? { ...m, [nextPosition]: match.winner }
           : m
       );
-      
+
       // If this is a semifinal match, add loser to 3rd place playoff
       if (match.roundName === 'Хагас финал') {
         const loser = match.player1?.id === match.winner.id ? match.player2 : match.player1;
@@ -383,18 +426,18 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
           if (thirdPlaceMatch) {
             // Only add if this loser is not already in the 3rd place match
             const loserAlreadyAdded = thirdPlaceMatch.player1?.id === loser.id || thirdPlaceMatch.player2?.id === loser.id;
-            
+
             if (!loserAlreadyAdded) {
               // Add loser to first available position in 3rd place match
               if (!thirdPlaceMatch.player1) {
-                return newMatches.map(m => 
-                  m.id === 'third_place_playoff' 
+                return newMatches.map(m =>
+                  m.id === 'third_place_playoff'
                     ? { ...m, player1: loser }
                     : m
                 );
               } else if (!thirdPlaceMatch.player2) {
-                return newMatches.map(m => 
-                  m.id === 'third_place_playoff' 
+                return newMatches.map(m =>
+                  m.id === 'third_place_playoff'
                     ? { ...m, player2: loser }
                     : m
                 );
@@ -403,10 +446,10 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
           }
         }
       }
-      
+
       return newMatches;
     });
-    
+
     toast({
       title: "Ялагч дараагийн шатанд шилжлээ",
       description: `${match.winner.name} автоматаар дараагийн тоглолтонд орлоо`
@@ -415,8 +458,8 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
 
   // Update match data
   const updateMatch = (matchId: string, field: keyof Match, value: any) => {
-    setMatches(prev => prev.map(match => 
-      match.id === matchId 
+    setMatches(prev => prev.map(match =>
+      match.id === matchId
         ? { ...match, [field]: value }
         : match
     ));
@@ -425,7 +468,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
   // Calculate final tournament rankings
   const getFinalRankings = () => {
     const rankings = [];
-    
+
     // Find final match
     const finalMatch = matches.find(m => m.roundName === 'Финал');
     if (finalMatch?.winner) {
@@ -435,7 +478,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
         player: finalMatch.winner,
         medal: '🥇'
       });
-      
+
       // 2nd place: final loser
       const finalLoser = finalMatch.player1?.id === finalMatch.winner.id ? finalMatch.player2 : finalMatch.player1;
       if (finalLoser) {
@@ -446,7 +489,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
         });
       }
     }
-    
+
     // Find 3rd place playoff
     const thirdPlaceMatch = matches.find(m => m.id === 'third_place_playoff');
     if (thirdPlaceMatch?.winner) {
@@ -457,7 +500,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
         medal: '🥉'
       });
     }
-    
+
     return rankings;
   };
 
@@ -467,15 +510,15 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
   const renderConnections = () => {
     return matches.map(match => {
       if (!match.nextMatchId) return null;
-      
+
       const nextMatch = matches.find(m => m.id === match.nextMatchId);
       if (!nextMatch) return null;
-      
+
       const x1 = match.position.x + 256; // Updated match box width (w-64)
       const y1 = match.position.y + 70; // Center of match box
       const x2 = nextMatch.position.x;
       const y2 = nextMatch.position.y + 70;
-      
+
       return (
         <line
           key={`line-${match.id}`}
@@ -510,7 +553,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
             </Button>
           </div>
         </div>
-        
+
         {/* Player Selection Info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Qualified Players Info */}
@@ -530,7 +573,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
               </div>
             </div>
           )}
-          
+
           {/* Player Selection Status */}
           <div>
             <h4 className="font-medium mb-2">Тоглогч сонголтын төлөв</h4>
@@ -561,132 +604,111 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
       {/* Bracket Visualization */}
       <div className="relative">
         {matches.length > 0 ? (
-          <div
-            ref={containerRef}
-            className="relative bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border border-gray-700 rounded-lg p-3 md:p-6 overflow-auto text-gray-100"
-            style={{
-              minHeight: '800px',
-              minWidth: '1200px'
-            }}
-          >
-            {/* SVG for connection lines */}
-            <svg 
-              ref={svgRef}
-              className="absolute inset-0 w-full h-full pointer-events-none"
-              style={{ zIndex: 1, minHeight: '1200px', minWidth: '1500px' }}
-            >
-              {renderConnections()}
-            </svg>
+          <div className="space-y-4 bg-gray-800 border border-gray-600 rounded-lg p-4 max-h-[500px] overflow-y-auto">
+            <h3 className="text-lg font-medium text-gray-100 mb-3 sticky top-0 bg-gray-800 py-2 border-b border-gray-600">
+              Шигшээ тоглолт засах ({matches.length} тоглолт)
+            </h3>
 
-            {/* Compact Match Cards */}
-            {matches.map(match => (
-              <div
-                key={match.id}
-                className="absolute bg-gray-800 border-2 border-gray-600 rounded-lg p-3 w-64 md:w-72 min-h-[180px] shadow-lg hover:shadow-xl transition-shadow text-gray-100"
-                style={{
-                  left: match.position.x,
-                  top: match.position.y,
-                  zIndex: 10
-                }}
-              >
-                {/* Match Header */}
-                <div className="flex items-center justify-between mb-2">
-                  <Badge variant="outline" className="text-xs px-1 py-0">
-                    {match.roundName}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setMatches(prev => prev.filter(m => m.id !== match.id))}
-                    className="h-5 w-5 p-0 text-red-500 hover:text-red-700"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>
+            {/* Group by rounds for better organization */}
+            {Array.from(new Set(matches.map(m => m.roundName))).map(roundName => (
+              <div key={roundName} className="space-y-3">
+                <h4 className="text-md font-medium text-green-400 bg-gray-900 px-3 py-1 rounded">
+                  {roundName}
+                </h4>
 
-                {/* Player 1 Selection with Score */}
-                <div className="mb-2 flex gap-2 items-center">
-                  <select
-                    className={`flex-1 p-1 border rounded text-xs ${
-                      match.player1Score && match.player2Score &&
-                      parseInt(match.player1Score) > parseInt(match.player2Score) ?
-                      'bg-green-600 border-green-400 text-white' : 'bg-gray-700 border-gray-600 text-gray-200'
-                    }`}
-                    value={match.player1?.id || ''}
-                    onChange={(e) => handlePlayerSelect(match.id, 'player1', e.target.value)}
-                  >
-                    {!match.player1 && <option value="">Тоглогч 1 сонгох</option>}
-                    {!match.player1 && <option value="lucky_draw">🎲 Lucky draw</option>}
-                    {match.player1?.id === 'lucky_draw' && (
-                      <option value="lucky_draw">🎲 Lucky draw</option>
-                    )}
-                    {match.player1 && match.player1.id !== 'lucky_draw' && (
-                      <option value={match.player1.id}>{match.player1.name}</option>
-                    )}
-                    {getAvailableUsers(match.id, 'player1').map(user => (
-                      <option key={`${match.id}-p1-${user.id}`} value={user.id}>
-                        {user.firstName} {user.lastName}
-                      </option>
-                    ))}
-                  </select>
-                  <Input
-                    placeholder="0"
-                    value={match.player1Score || ''}
-                    onChange={(e) => handleScoreChange(match.id, 'player1Score', e.target.value)}
-                    className="w-12 text-center text-sm h-7 bg-gray-900 border-gray-600 text-gray-100"
-                    type="number"
-                    min="0"
-                    max="9"
-                  />
-                </div>
-
-                {/* VS Divider */}
-                <div className="text-center text-xs text-gray-400 my-1">VS</div>
-
-                {/* Player 2 Selection with Score */}
-                <div className="mb-2 flex gap-2 items-center">
-                  <select
-                    className={`flex-1 p-1 border rounded text-xs ${
-                      match.player1Score && match.player2Score &&
-                      parseInt(match.player2Score) > parseInt(match.player1Score) ?
-                      'bg-green-600 border-green-400 text-white' : 'bg-gray-700 border-gray-600 text-gray-200'
-                    }`}
-                    value={match.player2?.id || ''}
-                    onChange={(e) => handlePlayerSelect(match.id, 'player2', e.target.value)}
-                  >
-                    {!match.player2 && <option value="">Тоглогч 2 сонгох</option>}
-                    {!match.player2 && <option value="lucky_draw">🎲 Lucky draw</option>}
-                    {match.player2?.id === 'lucky_draw' && (
-                      <option value="lucky_draw">🎲 Lucky draw</option>
-                    )}
-                    {match.player2 && match.player2.id !== 'lucky_draw' && (
-                      <option value={match.player2.id}>{match.player2.name}</option>
-                    )}
-                    {getAvailableUsers(match.id, 'player2').map(user => (
-                      <option key={`${match.id}-p2-${user.id}`} value={user.id}>
-                        {user.firstName} {user.lastName}
-                      </option>
-                    ))}
-                  </select>
-                  <Input
-                    placeholder="0"
-                    value={match.player2Score || ''}
-                    onChange={(e) => handleScoreChange(match.id, 'player2Score', e.target.value)}
-                    className="w-12 text-center text-sm h-7 bg-gray-900 border-gray-600 text-gray-100"
-                    type="number"
-                    min="0"
-                    max="9"
-                  />
-                </div>
-
-                {/* Compact Score Display */}
-                {(match.player1Score && match.player2Score) && (
-                  <div className="text-center mt-2 pt-2 border-t border-gray-600">
-                    <div className="text-sm font-medium text-gray-100">
-                      {match.player1Score} - {match.player2Score}
+                {matches.filter(m => m.roundName === roundName).map((match, index) => (
+                  <div key={match.id} className="bg-gray-700 rounded-lg p-4 border border-gray-600 hover:border-green-500 transition-colors">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-medium text-gray-200">
+                        Тоглолт #{index + 1}
+                      </span>
+                      <Button
+                        onClick={() => handleDeleteMatch(match.id)}
+                        size="sm"
+                        variant="outline"
+                        className="text-red-400 border-red-400 hover:bg-red-900/20 h-7"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
                     </div>
+
+                    {/* Player 1 */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <select
+                        value={match.player1?.id || ''}
+                        onChange={(e) => handlePlayerChange(match.id, 'player1', e.target.value)}
+                        className="flex-1 bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm text-gray-100 focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                      >
+                        <option value="">Тоглогч 1 сонгох</option>
+                        {users.map((user) => (
+                          <option key={`${match.id}-p1-${user.id}`} value={user.id}>
+                            {user.firstName} {user.lastName}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="flex flex-col items-center">
+                        <Input
+                          placeholder="0"
+                          value={match.player1Score || ''}
+                          onChange={(e) => handleScoreChange(match.id, 'player1Score', e.target.value)}
+                          className="w-16 text-center text-sm h-8 bg-gray-900 border-gray-600 text-gray-100 focus:border-green-500"
+                          type="number"
+                          min="0"
+                          max="9"
+                        />
+                      </div>
+                    </div>
+
+                    {/* VS Divider */}
+                    <div className="text-center text-gray-400 text-xs font-bold mb-3">VS</div>
+
+                    {/* Player 2 */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <select
+                        value={match.player2?.id || ''}
+                        onChange={(e) => handlePlayerChange(match.id, 'player2', e.target.value)}
+                        className="flex-1 bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm text-gray-100 focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                      >
+                        <option value="">Тоглогч 2 сонгох</option>
+                        {users.map((user) => (
+                          <option key={`${match.id}-p2-${user.id}`} value={user.id}>
+                            {user.firstName} {user.lastName}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="flex flex-col items-center">
+                        <Input
+                          placeholder="0"
+                          value={match.player2Score || ''}
+                          onChange={(e) => handleScoreChange(match.id, 'player2Score', e.target.value)}
+                          className="w-16 text-center text-sm h-8 bg-gray-900 border-gray-600 text-gray-100 focus:border-green-500"
+                          type="number"
+                          min="0"
+                          max="9"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Score Display and Winner */}
+                    {(match.player1Score && match.player2Score) && (
+                      <div className="text-center mt-3 pt-3 border-t border-gray-600">
+                        <div className="text-lg font-bold text-white mb-1">
+                          {match.player1Score} - {match.player2Score}
+                        </div>
+                        {parseInt(match.player1Score) !== parseInt(match.player2Score) && (
+                          <div className="text-xs text-green-400">
+                            Ялагч: {parseInt(match.player1Score) > parseInt(match.player2Score) ?
+                              (match.player1 ? `${match.player1.name}` : 'Тоглогч 1') :
+                              (match.player2 ? `${match.player2.name}` : 'Тоглогч 2')
+                            }
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                )}
+                ))}
               </div>
             ))}
           </div>
@@ -696,11 +718,11 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
             <p className="text-gray-400 mb-4">
               Дээрх "Хоосон шигшээ үүсгэх" товчийг дарж эхлэнэ үү
             </p>
-            <Button 
-              onClick={createEmptyBracket} 
+            <Button
+              onClick={createEmptyBracket}
               disabled={qualifiedPlayers.length < 4}
             >
-              {qualifiedPlayers.length >= 4 
+              {qualifiedPlayers.length >= 4
                 ? `${qualifiedPlayers.length} тоглогчийн хоосон шигшээ үүсгэх`
                 : `Хоосон шигшээ үүсгэх (${qualifiedPlayers.length}/4 тоглогч)`
               }
