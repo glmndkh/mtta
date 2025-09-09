@@ -53,6 +53,7 @@ export function KnockoutBracket({
 
   const getPlayerDisplay = (player: Player | null | undefined) => {
     if (!player) return 'Тоглогч сонгох';
+    if (player.name === 'BYE' || player.name === 'Lucky Draw') return '🍀 Lucky Draw';
     return player.name;
   };
 
@@ -88,18 +89,20 @@ export function KnockoutBracket({
                           {getPlayerDisplay(match.player1)}
                         </div>
                         <div className="player-score">
-                          {getScoreDisplay(match.score1)}
+                          {(match.player1?.name === 'BYE' || match.player2?.name === 'BYE') ? '3' : getScoreDisplay(match.score1)}
                         </div>
                       </div>
 
-                      <div className="vs-divider">VS</div>
+                      <div className="vs-divider">
+                        {(match.player1?.name === 'BYE' || match.player2?.name === 'BYE') ? '🍀' : 'VS'}
+                      </div>
 
                       <div className={`player-row ${match.winner?.id === match.player2?.id ? 'winner' : ''}`}>
                         <div className="player-name">
                           {getPlayerDisplay(match.player2)}
                         </div>
                         <div className="player-score">
-                          {getScoreDisplay(match.score2)}
+                          {(match.player1?.name === 'BYE' || match.player2?.name === 'BYE') ? '0' : getScoreDisplay(match.score2)}
                         </div>
                       </div>
                     </div>

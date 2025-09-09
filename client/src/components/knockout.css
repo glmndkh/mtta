@@ -235,4 +235,22 @@
   --text-secondary: #e2e8f0;
   --accent-color: #10b981;
   --hover-color: #059669;
+  --lucky-color: #f59e0b;
+}
+
+/* Lucky draw/bye match styling */
+.vs-divider:contains("🍀") {
+  background: linear-gradient(45deg, var(--lucky-color), #fbbf24);
+  color: white;
+  font-weight: bold;
+  animation: luckyGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes luckyGlow {
+  0% {
+    box-shadow: 0 0 5px var(--lucky-color);
+  }
+  100% {
+    box-shadow: 0 0 15px var(--lucky-color), 0 0 25px var(--lucky-color);
+  }
 }

@@ -41,6 +41,10 @@ interface BracketEditorProps {
   onMatchSelect?: (matchId: string) => void;
 }
 
+const isPowerOfTwo = (n: number): boolean => {
+  return n > 0 && (n & (n - 1)) === 0;
+};
+
 export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
   initialMatches = [],
   users,
@@ -60,8 +64,43 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     }
   }, [initialMatches]);
 
+  // Generate bye matches for uneven player counts
+  const generateByeMatches = useCallback((playerCount: number) => {
+    const powerOf2 = Math.pow(2, Math.ceil(Math.log2(playerCount)));
+    const byeCount = powerOf2 - playerCount;
+    const newMatches: Match[] = [];
+    
+    console.log(`Generating bracket for ${playerCount} players. Need ${byeCount} byes for power of 2: ${powerOf2}`);
+    
+    // For 12 players: need 4 byes to make 16
+    // First round will have 8 matches: 4 with byes (automatic wins), 4 regular matches
+    const firstRoundMatches = powerOf2 / 2;
+    const ROUND_WIDTH = 350;
+    const START_Y = 80;
+    
+    for (let i = 0; i < firstRoundMatches; i++) {
+      const hasBye = i < byeCount;
+      newMatches.push({
+        id: `round-1-match-${i + 1}`,
+        round: 1,
+        position: { x: 0, y: START_Y + i * 120 },
+        player1: hasBye ? null : null,
+        player2: hasBye ? { id: 'bye', name: 'BYE' } : null,
+        winner: hasBye ? null : null, // Will be set when player1 is assigned
+        score: hasBye ? '3-0' : undefined
+      });
+    }
+    
+    return { matches: newMatches, totalRounds: Math.ceil(Math.log2(powerOf2)) };
+  }, []);
+
   // Generate tournament bracket structure
   const generateBracket = useCallback((playerCount: number) => {
+    // Handle bye matches first
+    if (playerCount > 0 && !isPowerOfTwo(playerCount)) {
+      return generateByeMatches(playerCount);
+    }
+    
     // Calculate the number of rounds needed
     const powerOf2 = Math.pow(2, Math.ceil(Math.log2(playerCount)));
     const rounds = Math.ceil(Math.log2(powerOf2));
