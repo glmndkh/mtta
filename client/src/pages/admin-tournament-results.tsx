@@ -1272,17 +1272,17 @@ export default function AdminTournamentResultsPage() {
                         <div className="overflow-x-auto">
                           <table className="w-full border-collapse border border-border">
                             <thead>
-                              <tr className="bg-yellow-100 text-text-primary">
-                                <th className="border border-border p-2 text-sm font-bold">№</th>
-                                <th className="border border-border p-2 text-sm font-bold">Нэрс</th>
-                                <th className="border border-border p-2 text-sm font-bold">Клуб</th>
+                              <tr className="bg-green-600 text-white">
+                                <th className="border border-border p-2 text-sm font-bold text-white">№</th>
+                                <th className="border border-border p-2 text-sm font-bold text-white">Нэрс</th>
+                                <th className="border border-border p-2 text-sm font-bold text-white">Клуб</th>
                                 {group.players.map((player, index) => (
-                                  <th key={index} className="border border-border p-2 text-sm font-bold w-16">
+                                  <th key={index} className="border border-border p-2 text-sm font-bold w-16 text-white">
                                     {index + 1}
                                   </th>
                                 ))}
-                                <th className="border border-border p-2 text-sm font-bold">Өгсөн</th>
-                                <th className="border border-border p-2 text-sm font-bold">Байр</th>
+                                <th className="border border-border p-2 text-sm font-bold text-white">Өгсөн</th>
+                                <th className="border border-border p-2 text-sm font-bold text-white">Байр</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1294,7 +1294,7 @@ export default function AdminTournamentResultsPage() {
                                   <td className="border border-border p-2">
                                     <div className="flex items-center justify-between">
                                       <button 
-                                        className="text-link hover:underline cursor-pointer flex-1 text-left"
+                                        className="text-white hover:text-gray-200 cursor-pointer flex-1 text-left font-medium"
                                         onClick={() => setLocation(`/${player.playerId ? `profile/${player.playerId}` : `profile/${player.id}`}`)}
                                       >
                                         {player.name}
