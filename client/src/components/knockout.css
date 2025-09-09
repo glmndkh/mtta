@@ -1,9 +1,9 @@
 
 .tournament-bracket-container {
-  background: #fff;
+  background: #111827;
   min-height: 100vh;
   padding: 2rem;
-  color: #111;
+  color: #f9fafb;
   overflow-x: auto;
   overflow-y: auto;
 }
@@ -36,7 +36,7 @@
   font-size: 0.9rem;
   font-weight: 600;
   text-transform: uppercase;
-  color: #555;
+  color: #9ca3af;
   margin: 0;
 }
 
@@ -55,13 +55,13 @@
   display: flex;
   flex-direction: column;
   width: 250px;
-  border: 1px solid #ddd;
-  background: #fff;
+  border: 1px solid #374151;
+  background: #1f2937;
 }
 
 /* Highlight selected match */
 .bracket-match.selected {
-  border-color: #1976d2;
+  border-color: #10b981;
 }
 
 .bracket-team {
@@ -73,25 +73,25 @@
   padding: 0 0.75rem;
   position: relative;
   cursor: pointer;
-  background: #fff;
+  background: #1f2937;
 }
 
 .bracket-team:hover {
-  background: #f5f5f5;
+  background: #374151;
 }
 
 .bracket-team.winner .team-name,
 .bracket-team.winner .team-score {
-  color: #d32f2f;
+  color: #10b981;
   font-weight: 600;
 }
 
 .team-top {
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #374151;
 }
 
 .team-name {
-  color: #111;
+  color: #f9fafb;
   font-size: 0.85rem;
   font-weight: 500;
   text-overflow: ellipsis;
@@ -102,7 +102,7 @@
 }
 
 .team-score {
-  color: #555;
+  color: #9ca3af;
   font-size: 0.85rem;
   font-weight: 600;
   min-width: 20px;
@@ -118,7 +118,7 @@
 }
 
 .connector-line {
-  background: #ccc;
+  background: #374151;
   position: absolute;
 }
 
@@ -144,7 +144,7 @@
   top: 50%;
   width: 2rem;
   height: 1px;
-  background: #ccc;
+  background: #374151;
   transform: translateY(-50%);
 }
 
@@ -156,27 +156,28 @@
   top: 30%;
   bottom: 30%;
   width: 1px;
-  background: #ccc;
+  background: #374151;
 }
 
 /* Third Place Bracket */
 .third-place-bracket {
   margin-top: 4rem;
   padding-top: 2rem;
-  border-top: 1px solid #ddd;
+  border-top: 1px solid #374151;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: #fff;
+  background: #111827;
   padding: 2rem;
 }
 
 .third-place-match {
-  border: 1px solid #ddd;
+  border: 1px solid #374151;
+  background: #1f2937;
 }
 
 .third-place-bracket .round-header h3 {
-  color: #555;
+  color: #9ca3af;
   background: none;
 }
 
@@ -279,13 +280,13 @@
 
 /* Final match styling */
 .final-match .bracket-team.winner {
-  background: #fff;
+  background: #1f2937;
   border-left: none;
   box-shadow: none;
 }
 
 .final-match .bracket-team.winner .team-name,
 .final-match .bracket-team.winner .team-score {
-  color: #d32f2f;
+  color: #10b981;
   text-shadow: none;
 }
