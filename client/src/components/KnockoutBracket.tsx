@@ -23,6 +23,7 @@ interface BracketMatch {
 interface KnockoutBracketProps {
   matches: BracketMatch[];
   onPlayerClick?: (playerId: string) => void;
+  onMatchClick?: (matchId: string) => void;
 }
 
 function getRoundOrder(roundName: string): number {
@@ -38,7 +39,7 @@ function getRoundOrder(roundName: string): number {
   return roundMap[roundName] || 99;
 }
 
-export function KnockoutBracket({ matches, onPlayerClick }: KnockoutBracketProps) {
+export function KnockoutBracket({ matches, onPlayerClick, onMatchClick }: KnockoutBracketProps) {
   const handlePlayerClick = (id?: string) => {
     if (id && onPlayerClick) onPlayerClick(id);
   };
@@ -81,14 +82,15 @@ export function KnockoutBracket({ matches, onPlayerClick }: KnockoutBracketProps
                   const isPlayer2Winner = match.winner?.id === match.player2?.id;
 
                   return (
-                    <div 
-                      key={match.id} 
+                    <div
+                      key={match.id}
                       className={`bracket-match ${isLastRound ? 'final-match' : ''}`}
                       style={{
                         '--match-index': matchIndex,
                         '--round-index': roundIndex,
                         '--total-matches': roundMatches.length
                       } as React.CSSProperties}
+                      onClick={() => onMatchClick?.(match.id)}
                     >
                       {/* Player 1 */}
                       <div 

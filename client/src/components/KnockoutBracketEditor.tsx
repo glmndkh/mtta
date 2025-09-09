@@ -450,7 +450,11 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                 </h4>
 
                 {matches.filter(m => m.roundName === roundName).map((match, index) => (
-                  <div key={match.id} className="bg-gray-700 rounded-lg p-4 border border-gray-600 hover:border-green-500 transition-colors">
+                  <div
+                    key={match.id}
+                    id={`match-editor-${match.id}`}
+                    className="bg-gray-700 rounded-lg p-4 border border-gray-600 hover:border-green-500 transition-colors"
+                  >
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-sm font-medium text-gray-200">
                         Тоглолт #{index + 1}

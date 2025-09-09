@@ -1051,6 +1051,12 @@ export default function AdminTournamentResultsPage() {
                             winner: match.winner,
                             position: match.position
                           }))}
+                          onMatchClick={(id) => {
+                            const el = document.getElementById(`match-editor-${id}`);
+                            if (el) {
+                              el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                          }}
                         />
                       </div>
                     </div>
