@@ -112,7 +112,7 @@ export function KnockoutBracket({ matches, onPlayerClick, onMatchClick, selected
                         onClick={() => handlePlayerClick(match.player1?.id)}
                       >
                         <span className="team-name">
-                          {match.player1?.name || "TBD"}
+                          {match.player1?.name || "Тоглогч сонгох"}
                         </span>
                         <span className="team-score">{score1 || "-"}</span>
                       </div>
@@ -123,7 +123,7 @@ export function KnockoutBracket({ matches, onPlayerClick, onMatchClick, selected
                         onClick={() => handlePlayerClick(match.player2?.id)}
                       >
                         <span className="team-name">
-                          {match.player2?.name || "TBD"}
+                          {match.player2?.name || "Тоглогч сонгох"}
                         </span>
                         <span className="team-score">{score2 || "-"}</span>
                       </div>
@@ -171,7 +171,7 @@ export function KnockoutBracket({ matches, onPlayerClick, onMatchClick, selected
                   onClick={() => handlePlayerClick(match.player1?.id)}
                 >
                   <span className="team-name">
-                    {match.player1?.name || "TBD"}
+                    {match.player1?.name || "Тоглогч сонгох"}
                   </span>
                   <span className="team-score">{score1 || "-"}</span>
                 </div>
@@ -181,7 +181,7 @@ export function KnockoutBracket({ matches, onPlayerClick, onMatchClick, selected
                   onClick={() => handlePlayerClick(match.player2?.id)}
                 >
                   <span className="team-name">
-                    {match.player2?.name || "TBD"}
+                    {match.player2?.name || "Тоглогч сонгох"}
                   </span>
                   <span className="team-score">{score2 || "-"}</span>
                 </div>
