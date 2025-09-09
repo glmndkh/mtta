@@ -449,6 +449,71 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     });
   };
 
+  // Auto-advance all winners to next round
+  const advanceAllWinners = () => {
+    let advancedCount = 0;
+    
+    setMatches(prev => {
+      const newMatches = [...prev];
+      
+      // Process matches by round order to ensure proper advancement
+      const sortedMatches = newMatches.sort((a, b) => a.round - b.round);
+      
+      sortedMatches.forEach(match => {
+        if (match.winner && match.nextMatchId) {
+          // Find the next match
+          const nextMatch = newMatches.find(m => m.id === match.nextMatchId);
+          if (nextMatch) {
+            // Determine which position in next match
+            const currentRoundMatches = newMatches.filter(m => m.round === match.round);
+            const matchIndex = currentRoundMatches.findIndex(m => m.id === match.id);
+            const nextPosition = matchIndex % 2 === 0 ? 'player1' : 'player2';
+            
+            // Only advance if the position is empty
+            if (!nextMatch[nextPosition]) {
+              nextMatch[nextPosition] = match.winner;
+              advancedCount++;
+              
+              // Handle 3rd place playoff for semifinal losers
+              if (match.roundName === 'Хагас финал') {
+                const loser = match.player1?.id === match.winner.id ? match.player2 : match.player1;
+                if (loser) {
+                  const thirdPlaceMatch = newMatches.find(m => m.id === 'third_place_playoff');
+                  if (thirdPlaceMatch) {
+                    const loserAlreadyAdded = thirdPlaceMatch.player1?.id === loser.id || thirdPlaceMatch.player2?.id === loser.id;
+                    
+                    if (!loserAlreadyAdded) {
+                      if (!thirdPlaceMatch.player1) {
+                        thirdPlaceMatch.player1 = loser;
+                      } else if (!thirdPlaceMatch.player2) {
+                        thirdPlaceMatch.player2 = loser;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+      
+      return newMatches;
+    });
+    
+    if (advancedCount > 0) {
+      toast({
+        title: "Хожигчид шилжлээ",
+        description: `${advancedCount} хожигч дараагийн шатанд автоматаар шилжлээ`
+      });
+    } else {
+      toast({
+        title: "Шилжүүлэх хожигч алга",
+        description: "Шилжүүлэх боломжтой хожигч олдсонгүй",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Update match data
   const updateMatch = (matchId: string, field: keyof Match, value: any) => {
     setMatches(prev => prev.map(match =>
@@ -535,6 +600,14 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
           <div className="flex gap-2">
             <Button onClick={createEmptyBracket} disabled={qualifiedPlayers.length < 4}>
               Хоосон шигшээ үүсгэх
+            </Button>
+            <Button 
+              onClick={advanceAllWinners} 
+              disabled={matches.length === 0}
+              variant="secondary"
+            >
+              <Trophy className="w-4 h-4 mr-2" />
+              Хожигчдыг шилжүүлэх
             </Button>
             <Button onClick={() => onSave(matches)} variant="outline">
               <Save className="w-4 h-4 mr-2" />
