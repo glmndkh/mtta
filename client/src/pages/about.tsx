@@ -56,7 +56,13 @@ const AboutPage = () => {
                         alt="Ерөнхийлөгч Ц. Гантулга"
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/objects/uploads/placeholder-president.png';
+                          const target = e.target as HTMLImageElement;
+                          if (!target.hasAttribute('data-fallback-tried')) {
+                            target.setAttribute('data-fallback-tried', 'true');
+                            target.src = '/uploads/president-gantulga.jpg';
+                          } else {
+                            target.style.display = 'none';
+                          }
                         }}
                       />
                     </div>
