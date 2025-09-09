@@ -42,13 +42,22 @@ export function KnockoutBracket({
     .sort((a, b) => a - b);
 
   const getRoundTitle = (round: number, totalRounds: number) => {
-    if (round === totalRounds) return 'ФИНАЛ';
-    if (round === totalRounds - 1) return 'ХАГАС ФИНАЛ';
-    if (round === totalRounds - 2) return 'ДӨРӨВНИЙ ФИНАЛ';
-    if (round === totalRounds - 3) return '1/8 ФИНАЛ';
-    if (round === totalRounds - 4) return '1/16 ФИНАЛ';
-    if (round === totalRounds - 5) return '1/32 ФИНАЛ';
-    return `1/${Math.pow(2, totalRounds - round + 1)} ФИНАЛ`;
+    const matchesInRound = Math.pow(2, totalRounds - round);
+    
+    switch (matchesInRound) {
+      case 1: return 'ФИНАЛ';
+      case 2: return 'ХАГАС ФИНАЛ';
+      case 4: return 'ДӨРӨВНИЙ ФИНАЛ';
+      case 8: return '1/8 ФИНАЛ';
+      case 16: return '1/16 ФИНАЛ';
+      case 32: return '1/32 ФИНАЛ';
+      case 64: return '1/64 ФИНАЛ';
+      default: 
+        if (matchesInRound > 1) {
+          return `1/${matchesInRound * 2} ФИНАЛ`;
+        }
+        return `${matchesInRound} ТОГЛОЛТ`;
+    }
   };
 
   const getPlayerDisplay = (player: Player | null | undefined) => {

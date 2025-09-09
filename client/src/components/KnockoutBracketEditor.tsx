@@ -66,6 +66,10 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
 
   // Generate bye matches for uneven player counts
   const generateByeMatches = useCallback((playerCount: number) => {
+    if (playerCount < 4) {
+      return [];
+    }
+
     const powerOf2 = Math.pow(2, Math.ceil(Math.log2(playerCount)));
     const byeCount = powerOf2 - playerCount;
     const newMatches: Match[] = [];
@@ -80,6 +84,8 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     for (let round = 1; round <= rounds; round++) {
       const matchesInRound = Math.pow(2, rounds - round);
       const roundName = getRoundName(matchesInRound);
+
+      console.log(`Round ${round}: ${matchesInRound} matches, called "${roundName}"`);
 
       for (let matchIndex = 0; matchIndex < matchesInRound; matchIndex++) {
         const verticalSpacing = Math.pow(2, round) * 120;
@@ -130,67 +136,9 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
 
   // Generate tournament bracket structure
   const generateBracket = useCallback((playerCount: number): Match[] => {
-    // Handle bye matches first
-    if (playerCount > 0 && !isPowerOfTwo(playerCount)) {
-      return generateByeMatches(playerCount);
-    }
-    
-    // Calculate the number of rounds needed
-    const powerOf2 = Math.pow(2, Math.ceil(Math.log2(playerCount)));
-    const rounds = Math.ceil(Math.log2(powerOf2));
-    const newMatches: Match[] = [];
-    const ROUND_WIDTH = 350;
-    const START_Y = 80;
-
-    console.log(`Generating bracket for ${playerCount} players, ${rounds} rounds, power of 2: ${powerOf2}`);
-
-    for (let round = 1; round <= rounds; round++) {
-      const matchesInRound = Math.pow(2, rounds - round);
-      const roundName = getRoundName(matchesInRound);
-
-      console.log(`Round ${round}: ${matchesInRound} matches, called "${roundName}"`);
-
-      for (let matchIndex = 0; matchIndex < matchesInRound; matchIndex++) {
-        const verticalSpacing = Math.pow(2, round) * 120;
-        const centerOffset = (matchesInRound - 1) * verticalSpacing / 2;
-        const yPosition = START_Y + (matchIndex * verticalSpacing) - centerOffset + (round * 50);
-
-        const match: Match = {
-          id: `match_${round}_${matchIndex}`,
-          round,
-          roundName,
-          position: {
-            x: 50 + (round - 1) * ROUND_WIDTH,
-            y: Math.max(yPosition, 60)
-          }
-        };
-
-        // Set next match connection
-        if (round < rounds) {
-          const nextMatchIndex = Math.floor(matchIndex / 2);
-          match.nextMatchId = `match_${round + 1}_${nextMatchIndex}`;
-        }
-
-        newMatches.push(match);
-      }
-    }
-
-    // Add 3rd place playoff match
-    if (rounds >= 2) {
-      const thirdPlaceMatch: Match = {
-        id: 'third_place_playoff',
-        round: rounds,
-        roundName: '3-р байрын тоглолт',
-        position: {
-          x: 200 + (rounds - 2) * ROUND_WIDTH / 2,
-          y: START_Y + 450
-        }
-      };
-      newMatches.push(thirdPlaceMatch);
-    }
-
-    return newMatches.sort((a, b) => a.round - b.round || a.position!.y - b.position!.y);
-  }, []);
+    // Always use bye matches for proper bracket generation
+    return generateByeMatches(playerCount);
+  }, [generateByeMatches]);
 
   const getRoundName = (matchCount: number): string => {
     switch (matchCount) {
