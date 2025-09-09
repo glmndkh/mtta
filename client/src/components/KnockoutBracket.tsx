@@ -1,3 +1,4 @@
+
 import React from "react";
 import "./knockout.css";
 
@@ -59,66 +60,77 @@ export function KnockoutBracket({ matches, onPlayerClick }: KnockoutBracketProps
 
   return (
     <div className="tournament-bracket-container">
-      <div className="bracket">
+      <div className="bracket-grid">
         {sortedRounds.map((roundName, roundIndex) => {
           const roundMatches = roundGroups.get(roundName)!;
+          const isLastRound = roundIndex === sortedRounds.length - 1;
 
           return (
-            <div key={roundName} className="column">
+            <div key={roundName} className={`bracket-round round-${roundIndex}`}>
               <div className="round-header">
                 <h3>{roundName}</h3>
               </div>
 
-              {roundMatches.map((match, matchIndex) => {
-                const [score1, score2] = match.score
-                  ? match.score.split("-").map((s) => s.trim())
-                  : [match.player1Score || "", match.player2Score || ""];
+              <div className="matches-container">
+                {roundMatches.map((match, matchIndex) => {
+                  const [score1, score2] = match.score
+                    ? match.score.split("-").map((s) => s.trim())
+                    : [match.player1Score || "", match.player2Score || ""];
 
-                const isPlayer1Winner = match.winner?.id === match.player1?.id;
-                const isPlayer2Winner = match.winner?.id === match.player2?.id;
+                  const isPlayer1Winner = match.winner?.id === match.player1?.id;
+                  const isPlayer2Winner = match.winner?.id === match.player2?.id;
 
-                return (
-                  <div key={match.id} className="match">
-                    {/* Player 1 */}
+                  return (
                     <div 
-                      className={`team match-top ${isPlayer1Winner ? 'winner' : ''}`}
-                      onClick={() => handlePlayerClick(match.player1?.id)}
+                      key={match.id} 
+                      className={`bracket-match ${isLastRound ? 'final-match' : ''}`}
+                      style={{
+                        '--match-index': matchIndex,
+                        '--round-index': roundIndex,
+                        '--total-matches': roundMatches.length
+                      } as React.CSSProperties}
                     >
-                      <span className="player-name">
-                        {match.player1?.name || "TBD"}
-                      </span>
-                      <span className="score">{score1 || "-"}</span>
-                    </div>
-
-                    {/* Player 2 */}
-                    <div 
-                      className={`team match-bottom ${isPlayer2Winner ? 'winner' : ''}`}
-                      onClick={() => handlePlayerClick(match.player2?.id)}
-                    >
-                      <span className="player-name">
-                        {match.player2?.name || "TBD"}
-                      </span>
-                      <span className="score">{score2 || "-"}</span>
-                    </div>
-
-                    {/* Connecting lines - only show if not the final round */}
-                    {roundIndex < sortedRounds.length - 1 && (
-                      <div className="match-lines">
-                        <div className="line one"></div>
-                        <div className="line two"></div>
+                      {/* Player 1 */}
+                      <div 
+                        className={`bracket-team team-top ${isPlayer1Winner ? 'winner' : ''}`}
+                        onClick={() => handlePlayerClick(match.player1?.id)}
+                      >
+                        <span className="team-name">
+                          {match.player1?.name || "TBD"}
+                        </span>
+                        <span className="team-score">{score1 || "-"}</span>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+
+                      {/* Player 2 */}
+                      <div 
+                        className={`bracket-team team-bottom ${isPlayer2Winner ? 'winner' : ''}`}
+                        onClick={() => handlePlayerClick(match.player2?.id)}
+                      >
+                        <span className="team-name">
+                          {match.player2?.name || "TBD"}
+                        </span>
+                        <span className="team-score">{score2 || "-"}</span>
+                      </div>
+
+                      {/* Connecting lines to next round */}
+                      {!isLastRound && (
+                        <div className="bracket-connector">
+                          <div className="connector-line horizontal"></div>
+                          <div className="connector-line vertical"></div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           );
         })}
       </div>
 
-      {/* Third Place Match - shown separately below */}
+      {/* Third Place Match - positioned below the bracket */}
       {thirdPlaceMatches.length > 0 && (
-        <div className="third-place-section">
+        <div className="third-place-bracket">
           <div className="round-header">
             <h3>3-р байрын тоглолт</h3>
           </div>
@@ -132,25 +144,25 @@ export function KnockoutBracket({ matches, onPlayerClick }: KnockoutBracketProps
             const isPlayer2Winner = match.winner?.id === match.player2?.id;
 
             return (
-              <div key={match.id} className="match third-place-match">
+              <div key={match.id} className="bracket-match third-place-match">
                 <div 
-                  className={`team match-top ${isPlayer1Winner ? 'winner' : ''}`}
+                  className={`bracket-team team-top ${isPlayer1Winner ? 'winner' : ''}`}
                   onClick={() => handlePlayerClick(match.player1?.id)}
                 >
-                  <span className="player-name">
+                  <span className="team-name">
                     {match.player1?.name || "TBD"}
                   </span>
-                  <span className="score">{score1 || "-"}</span>
+                  <span className="team-score">{score1 || "-"}</span>
                 </div>
 
                 <div 
-                  className={`team match-bottom ${isPlayer2Winner ? 'winner' : ''}`}
+                  className={`bracket-team team-bottom ${isPlayer2Winner ? 'winner' : ''}`}
                   onClick={() => handlePlayerClick(match.player2?.id)}
                 >
-                  <span className="player-name">
+                  <span className="team-name">
                     {match.player2?.name || "TBD"}
                   </span>
-                  <span className="score">{score2 || "-"}</span>
+                  <span className="team-score">{score2 || "-"}</span>
                 </div>
               </div>
             );

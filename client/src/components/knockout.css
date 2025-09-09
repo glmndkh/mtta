@@ -5,30 +5,38 @@
   padding: 2rem;
   color: white;
   overflow-x: auto;
+  overflow-y: auto;
 }
 
-.bracket {
+.bracket-grid {
   display: flex;
   flex-direction: row;
-  position: relative;
-  gap: 3rem;
+  gap: 4rem;
   min-width: max-content;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-start;
+  align-items: flex-start;
   padding: 2rem 0;
+  position: relative;
 }
 
-.column {
+.bracket-round {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  gap: 1rem;
+  min-width: 280px;
+  position: relative;
 }
 
 .round-header {
   margin-bottom: 2rem;
   text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(26, 26, 46, 0.95);
+  padding: 1rem;
+  border-radius: 1rem;
+  backdrop-filter: blur(10px);
 }
 
 .round-header h3 {
@@ -47,73 +55,86 @@
   background-clip: padding-box, border-box;
 }
 
-.match {
+.matches-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  position: relative;
+  height: 100%;
+  justify-content: space-around;
+  min-height: 600px;
+}
+
+.bracket-match {
   position: relative;
   display: flex;
   flex-direction: column;
-  min-width: 280px;
-  max-width: 280px;
-  margin: 1.5rem 0;
-  border-radius: 8px;
+  width: 280px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 255, 136, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 255, 136, 0.15);
   transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
 }
 
-.match:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 48px rgba(0, 255, 136, 0.2);
+.bracket-match:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(0, 255, 136, 0.25);
+  border-color: rgba(0, 255, 136, 0.4);
 }
 
-.team {
+.bracket-match.final-match {
+  border: 2px solid rgba(255, 215, 0, 0.6);
+  box-shadow: 0 8px 32px rgba(255, 215, 0, 0.2);
+}
+
+.bracket-team {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  height: 50px;
-  padding: 0 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  height: 60px;
+  padding: 0 1.5rem;
   position: relative;
   cursor: pointer;
   transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.03);
 }
 
-.team:hover {
+.bracket-team:hover {
   background: rgba(0, 255, 136, 0.1);
-  border-color: rgba(0, 255, 136, 0.3);
 }
 
-.team.winner {
-  background: rgba(0, 255, 136, 0.15);
-  border-color: #00ff88;
-  box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+.bracket-team.winner {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 204, 255, 0.1));
+  border-left: 4px solid #00ff88;
 }
 
-.team.winner .player-name {
+.bracket-team.winner .team-name {
   color: #00ff88;
   font-weight: bold;
 }
 
-.team.winner .score {
+.bracket-team.winner .team-score {
   color: #00ff88;
   font-weight: bold;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
 }
 
-.match-top {
-  border-radius: 8px 8px 0 0;
-  border-bottom: none;
+.team-top {
+  border-radius: 12px 12px 0 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.match-bottom {
-  border-radius: 0 0 8px 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+.team-bottom {
+  border-radius: 0 0 12px 12px;
 }
 
-.player-name {
+.team-name {
   color: #ffffff;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 500;
   text-overflow: ellipsis;
   overflow: hidden;
@@ -122,58 +143,95 @@
   margin-right: 1rem;
 }
 
-.score {
+.team-score {
   color: #cccccc;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: bold;
-  min-width: 30px;
+  min-width: 40px;
   text-align: center;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 0.25rem 0.5rem;
 }
 
-/* Connecting Lines */
-.match-lines {
+/* Bracket Connectors */
+.bracket-connector {
   position: absolute;
+  right: -2rem;
   top: 50%;
-  right: -48px;
+  transform: translateY(-50%);
+  z-index: 5;
+}
+
+.connector-line {
+  background: linear-gradient(45deg, #00ff88, #00ccff);
+  opacity: 0.8;
+  position: absolute;
+}
+
+.connector-line.horizontal {
+  width: 2rem;
+  height: 3px;
+  right: 0;
+  top: -1.5px;
+  border-radius: 2px;
+}
+
+.connector-line.vertical {
+  width: 3px;
+  height: calc(2rem + 60px);
+  right: -1.5px;
+  top: -30px;
+  border-radius: 2px;
+}
+
+/* Advanced connecting lines for multi-round brackets */
+.bracket-round:not(:last-child) .bracket-match::after {
+  content: '';
+  position: absolute;
+  right: -2rem;
+  top: 50%;
+  width: 2rem;
+  height: 3px;
+  background: linear-gradient(45deg, #00ff88, #00ccff);
+  opacity: 0.8;
+  transform: translateY(-50%);
+  border-radius: 2px;
+}
+
+/* Vertical connectors between matches in same round */
+.bracket-round:not(:last-child) .matches-container::before {
+  content: '';
+  position: absolute;
+  right: -2rem;
+  top: 30%;
+  bottom: 30%;
+  width: 3px;
+  background: linear-gradient(to bottom, #00ff88, #00ccff);
+  opacity: 0.6;
+  border-radius: 2px;
   z-index: 1;
 }
 
-.line {
-  background: linear-gradient(45deg, #00ff88, #00ccff);
-  position: absolute;
-  opacity: 0.8;
-}
-
-.line.one {
-  height: 2px;
-  width: 48px;
-  transform: translateY(-1px);
-}
-
-.line.two {
-  height: 100px;
-  width: 2px;
-  left: 46px;
-  transform: translateY(-50px);
-}
-
-/* Third Place Section */
-.third-place-section {
-  margin-top: 3rem;
+/* Third Place Bracket */
+.third-place-bracket {
+  margin-top: 4rem;
   padding-top: 2rem;
-  border-top: 2px solid rgba(255, 165, 0, 0.3);
+  border-top: 3px solid rgba(255, 165, 0, 0.4);
   display: flex;
   flex-direction: column;
   align-items: center;
+  background: linear-gradient(135deg, rgba(255, 165, 0, 0.05), rgba(255, 140, 0, 0.05));
+  border-radius: 2rem;
+  padding: 2rem;
 }
 
 .third-place-match {
-  margin: 0;
-  border: 2px solid rgba(255, 165, 0, 0.5);
-  box-shadow: 0 8px 32px rgba(255, 165, 0, 0.1);
+  border: 2px solid rgba(255, 165, 0, 0.6);
+  box-shadow: 0 8px 32px rgba(255, 165, 0, 0.2);
 }
 
-.third-place-section .round-header h3 {
+.third-place-bracket .round-header h3 {
   background: linear-gradient(45deg, #ffa500, #ff8c00);
   background-clip: text;
   -webkit-background-clip: text;
@@ -183,46 +241,115 @@
 }
 
 /* Responsive Design */
+@media (max-width: 1200px) {
+  .bracket-grid {
+    gap: 3rem;
+  }
+  
+  .bracket-match {
+    width: 240px;
+  }
+  
+  .team-name {
+    font-size: 0.9rem;
+  }
+}
+
 @media (max-width: 768px) {
   .tournament-bracket-container {
     padding: 1rem;
   }
   
-  .bracket {
+  .bracket-grid {
     gap: 2rem;
-    padding: 1rem 0;
   }
   
-  .match {
-    min-width: 240px;
-    max-width: 240px;
+  .bracket-match {
+    width: 220px;
   }
   
-  .line.one {
-    width: 32px;
+  .bracket-team {
+    height: 50px;
+    padding: 0 1rem;
   }
   
-  .line.two {
-    left: 30px;
+  .team-name {
+    font-size: 0.85rem;
   }
   
-  .match-lines {
-    right: -32px;
+  .team-score {
+    font-size: 1rem;
+    min-width: 35px;
+  }
+  
+  .connector-line.horizontal {
+    width: 1.5rem;
+  }
+  
+  .bracket-connector {
+    right: -1.5rem;
   }
 }
 
 @media (max-width: 480px) {
-  .match {
-    min-width: 200px;
-    max-width: 200px;
+  .bracket-match {
+    width: 200px;
   }
   
-  .player-name {
-    font-size: 0.85rem;
-  }
-  
-  .team {
+  .bracket-team {
     height: 45px;
     padding: 0 0.75rem;
   }
+  
+  .team-name {
+    font-size: 0.8rem;
+  }
+  
+  .round-header h3 {
+    font-size: 1rem;
+  }
+}
+
+/* Animation for bracket loading */
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.bracket-round {
+  animation: slideInFromLeft 0.6s ease-out;
+  animation-delay: calc(var(--round-index, 0) * 0.2s);
+}
+
+.bracket-match {
+  animation: slideInFromLeft 0.4s ease-out;
+  animation-delay: calc((var(--round-index, 0) * 0.2s) + (var(--match-index, 0) * 0.1s));
+}
+
+/* Glow effect for winners */
+.bracket-team.winner {
+  box-shadow: 
+    inset 0 0 20px rgba(0, 255, 136, 0.2),
+    0 0 20px rgba(0, 255, 136, 0.1);
+}
+
+/* Enhanced final match styling */
+.final-match .bracket-team.winner {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 165, 0, 0.2));
+  border-left: 4px solid #ffd700;
+  box-shadow: 
+    inset 0 0 20px rgba(255, 215, 0, 0.3),
+    0 0 30px rgba(255, 215, 0, 0.2);
+}
+
+.final-match .bracket-team.winner .team-name,
+.final-match .bracket-team.winner .team-score {
+  color: #ffd700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
 }
