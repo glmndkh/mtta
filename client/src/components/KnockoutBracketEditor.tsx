@@ -57,12 +57,11 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     if (playerId === 'lucky_draw') {
       selectedPlayer = { id: 'lucky_draw', name: 'Lucky draw' };
     } else if (playerId) {
-      // Only find player in qualified players
-      const qualifiedPlayer = qualifiedPlayers.find(qp => qp.id === playerId);
-      if (qualifiedPlayer) {
+      const player = users.find(u => u.id === playerId);
+      if (player) {
         selectedPlayer = {
-          id: qualifiedPlayer.id,
-          name: qualifiedPlayer.name
+          id: player.id,
+          name: `${player.firstName || ''} ${player.lastName || ''}`.trim()
         };
       }
     }
@@ -237,13 +236,21 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     if (playerId === 'lucky_draw') {
       selectedPlayer = { id: 'lucky_draw', name: 'Lucky draw' };
     } else {
-      // Only find player in qualified players
+      // Find player in qualified players first, then fallback to users
       const qualifiedPlayer = qualifiedPlayers.find(qp => qp.id === playerId);
       if (qualifiedPlayer) {
         selectedPlayer = {
           id: qualifiedPlayer.id,
           name: qualifiedPlayer.name
         };
+      } else {
+        const user = users.find(u => u.id === playerId);
+        if (user) {
+          selectedPlayer = {
+            id: user.id,
+            name: `${user.firstName || ''} ${user.lastName || ''}`.trim()
+          };
+        }
       }
     }
 
