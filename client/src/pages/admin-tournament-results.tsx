@@ -853,12 +853,61 @@ export default function AdminTournamentResultsPage() {
                 onValueChange={(val) => setLocation(`/admin/tournament/${tournamentId}/results/${val}`)}
                 className="flex-1"
               >
-                <TabsList className="w-full flex flex-wrap">
-                  {allParticipationTypes.map((type) => (
-                    <TabsTrigger key={type} value={type} className="capitalize">
-                      {type.replace('_', ' ')}
-                    </TabsTrigger>
-                  ))}
+                <TabsList className="w-full flex flex-wrap bg-card">
+                  {allParticipationTypes.map((type) => {
+                    // Parse tournament type to extract age group and category
+                    const getDisplayLabel = (type: string) => {
+                      // Handle JSON format categories (e.g., {"minAge":18,"maxAge":35,"gender":"male"})
+                      try {
+                        const parsed = JSON.parse(type);
+                        let ageGroup = '';
+                        let category = '';
+                        
+                        if (parsed.minAge && parsed.maxAge) {
+                          ageGroup = `${parsed.minAge}-${parsed.maxAge}`;
+                        } else if (parsed.minAge) {
+                          ageGroup = `${parsed.minAge}+`;
+                        } else if (parsed.maxAge) {
+                          ageGroup = `${parsed.maxAge}-`;
+                        }
+                        
+                        if (parsed.gender === 'male') {
+                          category = 'Эр';
+                        } else if (parsed.gender === 'female') {
+                          category = 'Эм';
+                        }
+                        
+                        return `${ageGroup} ${category}`.trim();
+                      } catch {
+                        // Handle string format categories
+                        if (type.includes('singles')) {
+                          const category = type.includes('men') ? 'Эрэгтэй дан' : 
+                                         type.includes('women') ? 'Эмэгтэй дан' : 'Дан';
+                          return category;
+                        } else if (type.includes('doubles')) {
+                          if (type.includes('mixed')) {
+                            return 'Холимог хос';
+                          }
+                          const category = type.includes('men') ? 'Эрэгтэй хос' : 
+                                         type.includes('women') ? 'Эмэгтэй хос' : 'Хос';
+                          return category;
+                        }
+                        
+                        // For age-based categories like "40-49 эр"
+                        return type.replace('_', ' ');
+                      }
+                    };
+
+                    return (
+                      <TabsTrigger 
+                        key={type} 
+                        value={type} 
+                        className="px-3 py-2 text-sm font-medium data-[state=active]:bg-green-600 data-[state=active]:text-white text-text-secondary hover:text-text-primary"
+                      >
+                        {getDisplayLabel(type)}
+                      </TabsTrigger>
+                    );
+                  })}
                 </TabsList>
               </Tabs>
               <Button
