@@ -1029,26 +1029,30 @@ export default function AdminTournamentResultsPage() {
                 )}
 
                 <div className="space-y-6">
-                  {/* Tournament Bracket Display */}
+                  {/* Tournament Bracket Display - Traditional Style */}
                   {knockoutMatches.length > 0 && (
-                    <div className="bg-white rounded-lg border p-4">
-                      <h4 className="text-lg font-semibold mb-4 text-gray-800">Шигшээ тоглолтын draw</h4>
-                      <KnockoutBracket
-                        matches={knockoutMatches.map(match => ({
-                          id: match.id,
-                          round: match.round === 'final' ? 3 : match.round === 'semifinal' ? 2 : 1,
-                          roundName: match.id === 'third_place_playoff' ? '3-р байрын тоглолт' :
-                                   match.round === 'final' ? 'Финал' :
-                                   match.round === 'semifinal' ? 'Хагас финал' : 'Дөрөвний финал',
-                          player1: match.player1,
-                          player2: match.player2,
-                          player1Score: match.player1Score,
-                          player2Score: match.player2Score,
-                          score: match.score,
-                          winner: match.winner,
-                          position: match.position
-                        }))}
-                      />
+                    <div className="bg-gray-900 rounded-lg border border-gray-700 p-6">
+                      <h4 className="text-xl font-semibold mb-6 text-center text-white bg-gray-800 py-3 rounded-lg">
+                        🏆 Шигшээ тоглолтын хүснэгт
+                      </h4>
+                      <div className="bg-white rounded-lg p-4">
+                        <KnockoutBracket
+                          matches={knockoutMatches.map(match => ({
+                            id: match.id,
+                            round: match.round === 'final' ? 3 : match.round === 'semifinal' ? 2 : 1,
+                            roundName: match.id === 'third_place_playoff' ? '3-р байрын тоглолт' :
+                                     match.round === 'final' ? 'Финал' :
+                                     match.round === 'semifinal' ? 'Хагас финал' : 'Дөрөвний финал',
+                            player1: match.player1,
+                            player2: match.player2,
+                            player1Score: match.player1Score,
+                            player2Score: match.player2Score,
+                            score: match.score,
+                            winner: match.winner,
+                            position: match.position
+                          }))}
+                        />
+                      </div>
                     </div>
                   )}
 
