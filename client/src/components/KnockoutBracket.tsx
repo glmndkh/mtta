@@ -1,195 +1,118 @@
 
-import React from "react";
-import "./knockout.css";
+import React from 'react';
+import './knockout.css';
 
 interface Player {
   id: string;
   name: string;
 }
 
-interface BracketMatch {
+interface Match {
   id: string;
-  round: number | string;
-  roundName?: string;
-  player1?: Player;
-  player2?: Player;
-  player1Score?: string;
-  player2Score?: string;
-  score?: string;
-  winner?: Player;
-  position?: { x: number; y: number };
+  player1?: Player | null;
+  player2?: Player | null;
+  winner?: Player | null;
+  round: number;
+  position: number;
+  score1?: number;
+  score2?: number;
 }
 
 interface KnockoutBracketProps {
-  matches: BracketMatch[];
-  onPlayerClick?: (playerId: string) => void;
-  onMatchClick?: (matchId: string) => void;
-  /**
-   * Optional externally controlled selected match ID. When provided the
-   * corresponding match will be visually highlighted. If not provided the
-   * component will manage its own selection state.
-   */
-  selectedMatchId?: string;
+  matches: Match[];
+  title?: string;
+  onMatchClick?: (match: Match) => void;
 }
 
-function getRoundOrder(roundName: string): number {
-  const roundMap: Record<string, number> = {
-    "1/32 финал": 1,
-    "1/16 финал": 2,
-    "1/8 финал": 3,
-    "Дөрөвний финал": 4,
-    "Хагас финал": 5,
-    "Финал": 6,
-    "3-р байрын тоглолт": 7,
+const KnockoutBracket: React.FC<KnockoutBracketProps> = ({ 
+  matches, 
+  title = "Шигшээ тоглолт",
+  onMatchClick 
+}) => {
+  // Group matches by round
+  const matchesByRound = matches.reduce((acc, match) => {
+    if (!acc[match.round]) {
+      acc[match.round] = [];
+    }
+    acc[match.round].push(match);
+    return acc;
+  }, {} as Record<number, Match[]>);
+
+  const rounds = Object.keys(matchesByRound)
+    .map(Number)
+    .sort((a, b) => a - b);
+
+  const getRoundTitle = (round: number, totalRounds: number) => {
+    if (round === totalRounds) return 'ФИНАЛ';
+    if (round === totalRounds - 1) return 'ХАГАС ФИНАЛ';
+    if (round === totalRounds - 2) return 'ДӨРӨВНИЙ ФИНАЛ';
+    return `${round} дугаар тойрог`;
   };
-  return roundMap[roundName] || 99;
-}
 
-export function KnockoutBracket({ matches, onPlayerClick, onMatchClick, selectedMatchId }: KnockoutBracketProps) {
-  const [internalSelected, setInternalSelected] = React.useState<string | null>(null);
-
-  const handlePlayerClick = (id?: string) => {
-    if (id && onPlayerClick) onPlayerClick(id);
+  const getPlayerDisplay = (player: Player | null | undefined) => {
+    if (!player) return 'Тоглогч сонгох';
+    return player.name;
   };
 
-  const handleMatchClick = (id: string) => {
-    setInternalSelected(id);
-    onMatchClick?.(id);
+  const getScoreDisplay = (score: number | undefined) => {
+    return score !== undefined ? score : '-';
   };
-
-  // Group matches by round name and sort by round order
-  const roundGroups = new Map<string, BracketMatch[]>();
-  matches.forEach((match) => {
-    const roundName = match.roundName || "Unknown";
-    if (!roundGroups.has(roundName)) roundGroups.set(roundName, []);
-    roundGroups.get(roundName)!.push(match);
-  });
-
-  const sortedRounds = Array.from(roundGroups.keys())
-    .filter(round => round !== "3-р байрын тоглолт")
-    .sort((a, b) => getRoundOrder(a) - getRoundOrder(b));
-
-  // Find third place match separately
-  const thirdPlaceMatches = roundGroups.get("3-р байрын тоглолт") || [];
 
   return (
-    <div className="tournament-bracket-container">
-      <div className="bracket-grid">
-        {sortedRounds.map((roundName, roundIndex) => {
-          const roundMatches = roundGroups.get(roundName)!;
-          const isLastRound = roundIndex === sortedRounds.length - 1;
-
-          return (
-            <div key={roundName} className={`bracket-round round-${roundIndex}`}>
-              <div className="round-header">
-                <h3>{roundName}</h3>
-              </div>
-
-              <div className="matches-container">
-                {roundMatches.map((match, matchIndex) => {
-                  const [score1, score2] = match.score
-                    ? match.score.split("-").map((s) => s.trim())
-                    : [match.player1Score || "", match.player2Score || ""];
-
-                  const isPlayer1Winner = match.winner?.id === match.player1?.id;
-                  const isPlayer2Winner = match.winner?.id === match.player2?.id;
-
-                  const isSelected = (selectedMatchId ?? internalSelected) === match.id;
-                  return (
-                    <div
-                      key={match.id}
-                      className={`bracket-match ${isLastRound ? 'final-match' : ''} ${isSelected ? 'selected' : ''}`}
-                      style={{
-                        '--match-index': matchIndex,
-                        '--round-index': roundIndex,
-                        '--total-matches': roundMatches.length
-                      } as React.CSSProperties}
-                      onClick={() => handleMatchClick(match.id)}
-                    >
-                      {/* Player 1 */}
-                      <div 
-                        className={`bracket-team team-top ${isPlayer1Winner ? 'winner' : ''}`}
-                        onClick={() => handlePlayerClick(match.player1?.id)}
-                      >
-                        <span className="team-name">
-                          {match.player1?.name || "Тоглогч сонгох"}
-                        </span>
-                        <span className="team-score">{score1 || "-"}</span>
-                      </div>
-
-                      {/* Player 2 */}
-                      <div 
-                        className={`bracket-team team-bottom ${isPlayer2Winner ? 'winner' : ''}`}
-                        onClick={() => handlePlayerClick(match.player2?.id)}
-                      >
-                        <span className="team-name">
-                          {match.player2?.name || "Тоглогч сонгох"}
-                        </span>
-                        <span className="team-score">{score2 || "-"}</span>
-                      </div>
-
-                      {/* Connecting lines to next round */}
-                      {!isLastRound && (
-                        <div className="bracket-connector">
-                          <div className="connector-line horizontal"></div>
-                          <div className="connector-line vertical"></div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
+    <div className="knockout-tournament">
+      <div className="tournament-header">
+        <h2>{title}</h2>
       </div>
-
-      {/* Third Place Match - positioned below the bracket */}
-      {thirdPlaceMatches.length > 0 && (
-        <div className="third-place-bracket">
-          <div className="round-header">
-            <h3>3-р байрын тоглолт</h3>
+      
+      <div className="bracket-container">
+        {rounds.map((round) => (
+          <div key={round} className="round-column">
+            <div className="round-header">
+              <h3>{getRoundTitle(round, rounds.length)}</h3>
+            </div>
+            
+            <div className="matches-container">
+              {matchesByRound[round]
+                .sort((a, b) => a.position - b.position)
+                .map((match) => (
+                  <div 
+                    key={match.id} 
+                    className={`match-box ${onMatchClick ? 'clickable' : ''}`}
+                    onClick={() => onMatchClick?.(match)}
+                  >
+                    <div className="match-content">
+                      <div className={`player-row ${match.winner?.id === match.player1?.id ? 'winner' : ''}`}>
+                        <div className="player-name">
+                          {getPlayerDisplay(match.player1)}
+                        </div>
+                        <div className="player-score">
+                          {getScoreDisplay(match.score1)}
+                        </div>
+                      </div>
+                      
+                      <div className="vs-divider">VS</div>
+                      
+                      <div className={`player-row ${match.winner?.id === match.player2?.id ? 'winner' : ''}`}>
+                        <div className="player-name">
+                          {getPlayerDisplay(match.player2)}
+                        </div>
+                        <div className="player-score">
+                          {getScoreDisplay(match.score2)}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {round < rounds.length && (
+                      <div className="connector-line"></div>
+                    )}
+                  </div>
+                ))}
+            </div>
           </div>
-
-          {thirdPlaceMatches.map((match) => {
-            const [score1, score2] = match.score
-              ? match.score.split("-").map((s) => s.trim())
-              : [match.player1Score || "", match.player2Score || ""];
-
-            const isPlayer1Winner = match.winner?.id === match.player1?.id;
-            const isPlayer2Winner = match.winner?.id === match.player2?.id;
-
-            const isSelected = (selectedMatchId ?? internalSelected) === match.id;
-            return (
-              <div
-                key={match.id}
-                className={`bracket-match third-place-match ${isSelected ? 'selected' : ''}`}
-                onClick={() => handleMatchClick(match.id)}
-              >
-                <div
-                  className={`bracket-team team-top ${isPlayer1Winner ? 'winner' : ''}`}
-                  onClick={() => handlePlayerClick(match.player1?.id)}
-                >
-                  <span className="team-name">
-                    {match.player1?.name || "Тоглогч сонгох"}
-                  </span>
-                  <span className="team-score">{score1 || "-"}</span>
-                </div>
-
-                <div
-                  className={`bracket-team team-bottom ${isPlayer2Winner ? 'winner' : ''}`}
-                  onClick={() => handlePlayerClick(match.player2?.id)}
-                >
-                  <span className="team-name">
-                    {match.player2?.name || "Тоглогч сонгох"}
-                  </span>
-                  <span className="team-score">{score2 || "-"}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
-}
+};
+
+export default KnockoutBracket;
