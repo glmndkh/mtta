@@ -57,11 +57,12 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     if (playerId === 'lucky_draw') {
       selectedPlayer = { id: 'lucky_draw', name: 'Lucky draw' };
     } else if (playerId) {
-      const player = users.find(u => u.id === playerId);
-      if (player) {
+      // Only find player in qualified players
+      const qualifiedPlayer = qualifiedPlayers.find(qp => qp.id === playerId);
+      if (qualifiedPlayer) {
         selectedPlayer = {
-          id: player.id,
-          name: `${player.firstName || ''} ${player.lastName || ''}`.trim()
+          id: qualifiedPlayer.id,
+          name: qualifiedPlayer.name
         };
       }
     }
@@ -236,21 +237,13 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     if (playerId === 'lucky_draw') {
       selectedPlayer = { id: 'lucky_draw', name: 'Lucky draw' };
     } else {
-      // Find player in qualified players first, then fallback to users
+      // Only find player in qualified players
       const qualifiedPlayer = qualifiedPlayers.find(qp => qp.id === playerId);
       if (qualifiedPlayer) {
         selectedPlayer = {
           id: qualifiedPlayer.id,
           name: qualifiedPlayer.name
         };
-      } else {
-        const user = users.find(u => u.id === playerId);
-        if (user) {
-          selectedPlayer = {
-            id: user.id,
-            name: `${user.firstName || ''} ${user.lastName || ''}`.trim()
-          };
-        }
       }
     }
 
@@ -641,7 +634,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                         className="flex-1 bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm text-gray-100 focus:border-green-500 focus:ring-1 focus:ring-green-500"
                       >
                         <option value="">Тоглогч 1 сонгох</option>
-                        {users.map((user) => (
+                        {getAvailableUsers(match.id, 'player1').map((user) => (
                           <option key={`${match.id}-p1-${user.id}`} value={user.id}>
                             {user.firstName} {user.lastName}
                           </option>
@@ -672,7 +665,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                         className="flex-1 bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm text-gray-100 focus:border-green-500 focus:ring-1 focus:ring-green-500"
                       >
                         <option value="">Тоглогч 2 сонгох</option>
-                        {users.map((user) => (
+                        {getAvailableUsers(match.id, 'player2').map((user) => (
                           <option key={`${match.id}-p2-${user.id}`} value={user.id}>
                             {user.firstName} {user.lastName}
                           </option>
