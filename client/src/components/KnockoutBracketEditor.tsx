@@ -696,11 +696,15 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
             <p className="text-gray-400 mb-4">
               Дээрх "Хоосон шигшээ үүсгэх" товчийг дарж эхлэнэ үү
             </p>
-            {qualifiedPlayers.length >= 4 && (
-              <Button onClick={createEmptyBracket}>
-                {qualifiedPlayers.length} тоглогчийн хоосон шигшээ үүсгэх
-              </Button>
-            )}
+            <Button 
+              onClick={createEmptyBracket} 
+              disabled={qualifiedPlayers.length < 4}
+            >
+              {qualifiedPlayers.length >= 4 
+                ? `${qualifiedPlayers.length} тоглогчийн хоосон шигшээ үүсгэх`
+                : `Хоосон шигшээ үүсгэх (${qualifiedPlayers.length}/4 тоглогч)`
+              }
+            </Button>
           </div>
         )}
       </div>

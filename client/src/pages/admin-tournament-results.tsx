@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Trash2, Save, Users, Trophy, Target, Download, Upload, FileSpreadsheet } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, Users, Trophy, Target, Download, Upload, FileSpreadsheet, RotateCcw } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -501,7 +501,7 @@ export default function AdminTournamentResultsPage() {
 
   const addPlayerToGroup = (tableIndex: number, player: { id: string; playerId?: string; name: string; club: string; wins?: number; losses?: number; points?: number }) => {
     const updated = [...groupStageTables];
-    
+
     // Ensure we're adding to the correct table
     if (updated[tableIndex]) {
       updated[tableIndex].players.push({
@@ -761,6 +761,38 @@ export default function AdminTournamentResultsPage() {
     reader.readAsArrayBuffer(file);
     // Reset file input
     event.target.value = '';
+  };
+
+  // Function to generate a bracket structure
+  const generateBracket = (numPlayers: number): KnockoutMatch[] => {
+    const matches: KnockoutMatch[] = [];
+    let currentRoundMatches = numPlayers;
+    let currentRound = 1;
+    let xOffset = 0;
+
+    // Ensure number of players is a power of 2 for simplicity, pad with byes if necessary
+    // For now, we'll assume the KnockoutBracketEditor handles non-power-of-2,
+    // but a more robust solution would pad with 'Bye' players.
+
+    // Simplified bracket generation: Assume 4 players for initial bracket
+    if (numPlayers === 4) {
+      matches.push(
+        { id: 'match_1', round: 'quarterfinal', player1: undefined, player2: undefined, position: { x: 0, y: 0 } },
+        { id: 'match_2', round: 'quarterfinal', player1: undefined, player2: undefined, position: { x: 0, y: 1 } },
+        { id: 'match_3', round: 'semifinal', player1: undefined, player2: undefined, position: { x: 200, y: 0.5 } }, // Positioned between match 1 and 2
+        { id: 'third_place_playoff', round: 'semifinal', player1: undefined, player2: undefined, position: { x: 200, y: 1.5 } }, // Positioned below semifinal
+        { id: 'match_4', round: 'final', player1: undefined, player2: undefined, position: { x: 400, y: 1 } } // Positioned after semifinal
+      );
+    } else {
+      // For other numbers of players, a more complex algorithm is needed.
+      // This placeholder just creates a single final match.
+      matches.push(
+        { id: 'match_final_placeholder', round: 'final', player1: undefined, player2: undefined, position: { x: 200, y: 1 } }
+      );
+      console.warn(`Bracket generation for ${numPlayers} players is simplified. A full implementation would handle padding and dynamic round generation.`);
+    }
+
+    return matches;
   };
 
   return (
@@ -1075,6 +1107,37 @@ export default function AdminTournamentResultsPage() {
                     saveResultsMutation.mutate();
                   }}
                 />
+                <div className="flex gap-2 mt-4">
+                  <Button 
+                    onClick={() => {
+                      const qualifiedPlayers = getQualifiedPlayers();
+                      if (qualifiedPlayers.length >= 4) {
+                        const bracket = generateBracket(qualifiedPlayers.length);
+                        setKnockoutMatches(bracket);
+                        toast({
+                          title: "Шигшээ тоглолт үүсгэгдлээ",
+                          description: `${qualifiedPlayers.length} тоглогчийн хоосон шигшээ тоглолт үүсгэгдлээ`
+                        });
+                      } else {
+                        toast({
+                          title: "Хангалтгүй тоглогч",
+                          description: "Дор хаяж 4 тоглогч шаардлагатай",
+                          variant: "destructive"
+                        });
+                      }
+                    }} 
+                    disabled={getQualifiedPlayers().length < 4}
+                  >
+                    {getQualifiedPlayers().length >= 4 
+                      ? "Хоосон шигшээ үүсгэх"
+                      : `Шигшээ үүсгэх (${getQualifiedPlayers().length}/4)`
+                    }
+                  </Button>
+                  <Button onClick={() => setKnockoutMatches([])} variant="destructive" size="sm">
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Цэвэрлэх
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -1329,7 +1392,7 @@ export default function AdminTournamentResultsPage() {
                                     const participantName = participant.playerName || 
                                       `${participant.firstName || ''} ${participant.lastName || ''}`.trim() ||
                                       participant.name || 'Нэр тодорхойгүй';
-                                    
+
                                     return (
                                       <SelectItem key={participantId} value={participantId}>
                                         {participantName}
@@ -1350,7 +1413,7 @@ export default function AdminTournamentResultsPage() {
                                       const participantName = selectedParticipant.playerName || 
                                         `${selectedParticipant.firstName || ''} ${selectedParticipant.lastName || ''}`.trim() ||
                                         selectedParticipant.name || 'Нэр тодорхойгүй';
-                                      
+
                                       addPlayerToGroup(groupIndex, {
                                         id: selectedParticipant.id || selectedParticipant.playerId || selectedParticipant.userId,
                                         playerId: selectedParticipant.playerId || selectedParticipant.id,
