@@ -634,6 +634,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                         className="flex-1 bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm text-gray-100 focus:border-green-500 focus:ring-1 focus:ring-green-500"
                       >
                         <option value="">Тоглогч 1 сонгох</option>
+                        <option value="lucky_draw">🎲 Lucky Draw</option>
                         {getAvailableUsers(match.id, 'player1').map((user) => (
                           <option key={`${match.id}-p1-${user.id}`} value={user.id}>
                             {user.firstName} {user.lastName}
@@ -665,6 +666,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                         className="flex-1 bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm text-gray-100 focus:border-green-500 focus:ring-1 focus:ring-green-500"
                       >
                         <option value="">Тоглогч 2 сонгох</option>
+                        <option value="lucky_draw">🎲 Lucky Draw</option>
                         {getAvailableUsers(match.id, 'player2').map((user) => (
                           <option key={`${match.id}-p2-${user.id}`} value={user.id}>
                             {user.firstName} {user.lastName}
