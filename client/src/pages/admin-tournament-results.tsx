@@ -325,6 +325,8 @@ export default function AdminTournamentResultsPage() {
         title: "Амжилттай хадгалагдлаа",
         description: "Тэмцээний үр дүн амжилттай шинэчлэгдлээ",
       });
+      // Refresh tournament info and results views
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', tournamentId] });
       queryClient.invalidateQueries({ queryKey: ['/api/tournaments', tournamentId, 'results'] });
     },
     onError: () => {
