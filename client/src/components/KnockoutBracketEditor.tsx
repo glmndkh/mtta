@@ -30,17 +30,27 @@ interface BracketEditorProps {
   users: any[];
   onSave: (matches: Match[]) => void;
   qualifiedPlayers?: { id: string; name: string; groupName: string; position: number }[];
+  /**
+   * Currently selected match ID for highlighting from parent components.
+   */
+  selectedMatchId?: string;
+  /**
+   * Callback invoked when a match card in the editor is clicked.
+   * Can be used by parent components to sync selection with other views.
+   */
+  onMatchSelect?: (matchId: string) => void;
 }
 
 export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
   initialMatches = [],
   users,
   onSave,
-  qualifiedPlayers = []
+  qualifiedPlayers = [],
+  selectedMatchId,
+  onMatchSelect
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [matches, setMatches] = useState<Match[]>(initialMatches);
-  const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Update matches when initialMatches changes
@@ -453,7 +463,12 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                   <div
                     key={match.id}
                     id={`match-editor-${match.id}`}
-                    className="bg-gray-700 rounded-lg p-4 border border-gray-600 hover:border-green-500 transition-colors"
+                    onClick={() => onMatchSelect?.(match.id)}
+                    className={`bg-gray-700 rounded-lg p-4 border transition-colors cursor-pointer ${
+                      selectedMatchId === match.id
+                        ? 'border-green-400 ring-2 ring-green-500'
+                        : 'border-gray-600 hover:border-green-500'
+                    }`}
                   >
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-sm font-medium text-gray-200">
