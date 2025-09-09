@@ -62,14 +62,20 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
 
   // Generate tournament bracket structure
   const generateBracket = useCallback((playerCount: number) => {
-    const rounds = Math.ceil(Math.log2(playerCount));
+    // Calculate the number of rounds needed
+    const powerOf2 = Math.pow(2, Math.ceil(Math.log2(playerCount)));
+    const rounds = Math.ceil(Math.log2(powerOf2));
     const newMatches: Match[] = [];
     const ROUND_WIDTH = 350;
     const START_Y = 80;
 
+    console.log(`Generating bracket for ${playerCount} players, ${rounds} rounds, power of 2: ${powerOf2}`);
+
     for (let round = 1; round <= rounds; round++) {
       const matchesInRound = Math.pow(2, rounds - round);
       const roundName = getRoundName(matchesInRound);
+
+      console.log(`Round ${round}: ${matchesInRound} matches, called "${roundName}"`);
 
       for (let matchIndex = 0; matchIndex < matchesInRound; matchIndex++) {
         const verticalSpacing = Math.pow(2, round) * 120;
@@ -122,7 +128,11 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
       case 16: return '1/16 финал';
       case 32: return '1/32 финал';
       case 64: return '1/64 финал';
-      default: return `${matchCount} тоглолт`;
+      default: 
+        if (matchCount > 1) {
+          return `1/${matchCount * 2} финал`;
+        }
+        return `${matchCount} тоглолт`;
     }
   };
 

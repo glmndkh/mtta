@@ -45,7 +45,10 @@ export function KnockoutBracket({
     if (round === totalRounds) return 'ФИНАЛ';
     if (round === totalRounds - 1) return 'ХАГАС ФИНАЛ';
     if (round === totalRounds - 2) return 'ДӨРӨВНИЙ ФИНАЛ';
-    return `${round} дугаар тойрог`;
+    if (round === totalRounds - 3) return '1/8 ФИНАЛ';
+    if (round === totalRounds - 4) return '1/16 ФИНАЛ';
+    if (round === totalRounds - 5) return '1/32 ФИНАЛ';
+    return `1/${Math.pow(2, totalRounds - round + 1)} ФИНАЛ`;
   };
 
   const getPlayerDisplay = (player: Player | null | undefined) => {
