@@ -473,7 +473,11 @@ export default function AdminTournamentResultsPage() {
     const playerIds: string[] = [];
     groupStageTables.forEach(group => {
       group.players.forEach(player => {
-        playerIds.push(player.id);
+        // Add both id and playerId to avoid duplicates
+        if (player.id) playerIds.push(player.id);
+        if (player.playerId && player.playerId !== player.id) {
+          playerIds.push(player.playerId);
+        }
       });
     });
     return playerIds;
@@ -1264,14 +1268,27 @@ export default function AdminTournamentResultsPage() {
                         {(() => {
                           // Recalculate available players each time
                           const availablePlayers = participants.filter(participant => {
+                            // Get all possible IDs for this participant
+                            const participantIds = [
+                              participant.id,
+                              participant.playerId,
+                              participant.userId
+                            ].filter(Boolean);
+
                             // Check if player is already in ANY group in this tournament
                             const isInAnyGroup = groupStageTables.some(anyGroup => 
-                              anyGroup.players && anyGroup.players.some(gp => gp.id === participant.id || gp.playerId === participant.playerId)
+                              anyGroup.players && anyGroup.players.some(gp => 
+                                participantIds.includes(gp.id) || 
+                                participantIds.includes(gp.playerId)
+                              )
                             );
 
-                            const isValidParticipant = participant.firstName && participant.lastName;
+                            // Check if participant has valid name data
+                            const hasValidName = participant.firstName && participant.lastName ||
+                              participant.playerName ||
+                              participant.name;
 
-                            return !isInAnyGroup && isValidParticipant;
+                            return !isInAnyGroup && hasValidName;
                           });
 
                           if (availablePlayers.length === 0) {
@@ -1307,25 +1324,38 @@ export default function AdminTournamentResultsPage() {
                                   <SelectValue placeholder="Тоглогч сонгох" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {availablePlayers.map((participant) => (
-                                    <SelectItem key={participant.id || participant.playerId} value={participant.id || participant.playerId}>
-                                      {participant.playerName || `${participant.firstName || ''} ${participant.lastName || ''}`.trim()}
-                                    </SelectItem>
-                                  ))}
+                                  {availablePlayers.map((participant) => {
+                                    const participantId = participant.id || participant.playerId || participant.userId;
+                                    const participantName = participant.playerName || 
+                                      `${participant.firstName || ''} ${participant.lastName || ''}`.trim() ||
+                                      participant.name || 'Нэр тодорхойгүй';
+                                    
+                                    return (
+                                      <SelectItem key={participantId} value={participantId}>
+                                        {participantName}
+                                      </SelectItem>
+                                    );
+                                  })}
                                 </SelectContent>
                               </Select>
                               <Button
                                 onClick={() => {
                                   if (selectedPlayerId) {
                                     const selectedParticipant = availablePlayers.find(p => 
-                                      p.id === selectedPlayerId || p.playerId === selectedPlayerId
+                                      p.id === selectedPlayerId || 
+                                      p.playerId === selectedPlayerId || 
+                                      p.userId === selectedPlayerId
                                     );
                                     if (selectedParticipant) {
+                                      const participantName = selectedParticipant.playerName || 
+                                        `${selectedParticipant.firstName || ''} ${selectedParticipant.lastName || ''}`.trim() ||
+                                        selectedParticipant.name || 'Нэр тодорхойгүй';
+                                      
                                       addPlayerToGroup(groupIndex, {
-                                        id: selectedParticipant.id || selectedParticipant.playerId,
-                                        playerId: selectedParticipant.playerId,
-                                        name: selectedParticipant.playerName || `${selectedParticipant.firstName || ''} ${selectedParticipant.lastName || ''}`.trim(),
-                                        club: selectedParticipant.clubAffiliation || '', // Assuming clubAffiliation from participant
+                                        id: selectedParticipant.id || selectedParticipant.playerId || selectedParticipant.userId,
+                                        playerId: selectedParticipant.playerId || selectedParticipant.id,
+                                        name: participantName,
+                                        club: selectedParticipant.clubAffiliation || selectedParticipant.club || '',
                                         wins: 0,
                                         losses: 0,
                                         points: 0
