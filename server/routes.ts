@@ -737,9 +737,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/players/top", async (_req, res) => {
     try {
       const players = await storage.getAllPlayers();
+      console.log('Raw players data:', players.slice(0, 2)); // Log first 2 for debugging
+      
       // Sort by wins and points
       const topPlayers = players
-        .filter((p: any) => p.users && p.users.firstName)
+        .filter((p: any) => p.users && (p.users.firstName || p.users.lastName))
         .sort((a: any, b: any) => {
           const aWins = a.players?.wins || 0;
           const bWins = b.players?.wins || 0;
@@ -750,13 +752,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .slice(0, 10)
         .map((p: any) => ({
-          id: p.players?.id || p.id,
-          name: `${p.users?.firstName || ''} ${p.users?.lastName || ''}`.trim(),
+          id: p.players?.id || p.users?.id,
+          name: `${p.users?.firstName || ''} ${p.users?.lastName || ''}`.trim() || 'Нэргүй тоглогч',
           wins: p.players?.wins || 0,
           losses: p.players?.losses || 0,
           points: p.players?.points || 0,
           rank: p.players?.rank || 'Тодорхойгүй'
         }));
+      
+      console.log(`Returning ${topPlayers.length} top players`);
       res.json(topPlayers);
     } catch (e) {
       console.error("Error fetching top players:", e);

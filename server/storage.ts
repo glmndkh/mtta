@@ -547,12 +547,10 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log('Getting all players...');
       const playersWithUsers = await db
-        .select({
-          players: players,
-          users: users,
-        })
+        .select()
         .from(players)
         .leftJoin(users, eq(players.userId, users.id))
+        .leftJoin(clubs, eq(players.clubId, clubs.id))
         .where(isNotNull(users.id)); // Ensure user data exists
 
       console.log(`Found ${playersWithUsers.length} players with valid user data`);
