@@ -41,36 +41,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [matches, setMatches] = useState<Match[]>(initialMatches);
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
-  const [draggedPlayer, setDraggedPlayer] = useState<Player | null>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
   const { toast } = useToast();
-
-  // Function to delete a match
-  const handleDeleteMatch = (matchId: string) => {
-    setMatches(prev => prev.filter(match => match.id !== matchId));
-  };
-
-  // Function to handle player changes in select dropdowns
-  const handlePlayerChange = (matchId: string, position: 'player1' | 'player2', playerId: string) => {
-    let selectedPlayer: Player | undefined;
-
-    if (playerId === 'lucky_draw') {
-      selectedPlayer = { id: 'lucky_draw', name: 'Lucky draw' };
-    } else if (playerId) {
-      // Only find player in qualified players
-      const qualifiedPlayer = qualifiedPlayers.find(qp => qp.id === playerId);
-      if (qualifiedPlayer) {
-        selectedPlayer = {
-          id: qualifiedPlayer.id,
-          name: qualifiedPlayer.name
-        };
-      }
-    }
-
-    setMatches(prev => prev.map(match =>
-      match.id === matchId ? { ...match, [position]: selectedPlayer } : match
-    ));
-  };
 
   // Update matches when initialMatches changes
   useEffect(() => {
@@ -79,13 +50,11 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     }
   }, [initialMatches]);
 
-  // Generate asymmetric tournament bracket structure with proper tree layout
+  // Generate tournament bracket structure
   const generateBracket = useCallback((playerCount: number) => {
     const rounds = Math.ceil(Math.log2(playerCount));
     const newMatches: Match[] = [];
-
-    // Asymmetric positioning - each round moves toward center/right
-    const ROUND_WIDTH = 350;  // Wider spacing between rounds
+    const ROUND_WIDTH = 350;
     const START_Y = 80;
 
     for (let round = 1; round <= rounds; round++) {
@@ -93,9 +62,8 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
       const roundName = getRoundName(matchesInRound);
 
       for (let matchIndex = 0; matchIndex < matchesInRound; matchIndex++) {
-        // Asymmetric Y positioning - matches converge toward center as rounds progress
-        const verticalSpacing = Math.pow(2, round) * 120; // Increasing spacing per round
-        const centerOffset = (matchesInRound - 1) * verticalSpacing / 2; // Center the group
+        const verticalSpacing = Math.pow(2, round) * 120;
+        const centerOffset = (matchesInRound - 1) * verticalSpacing / 2;
         const yPosition = START_Y + (matchIndex * verticalSpacing) - centerOffset + (round * 50);
 
         const match: Match = {
@@ -103,54 +71,37 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
           round,
           roundName,
           position: {
-            x: 50 + (round - 1) * ROUND_WIDTH, // Each round moves right
-            y: Math.max(yPosition, 60) // Ensure minimum Y position
+            x: 50 + (round - 1) * ROUND_WIDTH,
+            y: Math.max(yPosition, 60)
           }
         };
 
-        // Set next match connection for progression
+        // Set next match connection
         if (round < rounds) {
           const nextMatchIndex = Math.floor(matchIndex / 2);
           match.nextMatchId = `match_${round + 1}_${nextMatchIndex}`;
-
-          // Auto-advance winners from group stage if applicable
-          if (round === 1 && qualifiedPlayers.length > 0) {
-            const playerIndex = matchIndex * 2;
-            if (playerIndex < qualifiedPlayers.length) {
-              match.player1 = {
-                id: qualifiedPlayers[playerIndex].id,
-                name: qualifiedPlayers[playerIndex].name
-              };
-            }
-            if (playerIndex + 1 < qualifiedPlayers.length) {
-              match.player2 = {
-                id: qualifiedPlayers[playerIndex + 1].id,
-                name: qualifiedPlayers[playerIndex + 1].name
-              };
-            }
-          }
         }
 
         newMatches.push(match);
       }
     }
 
-    // Add 3rd place playoff match - positioned separately at bottom center
+    // Add 3rd place playoff match
     if (rounds >= 2) {
       const thirdPlaceMatch: Match = {
         id: 'third_place_playoff',
         round: rounds,
         roundName: '3-р байрын тоглолт',
         position: {
-          x: 200 + (rounds - 2) * ROUND_WIDTH / 2, // Center horizontally between semifinals and final
-          y: START_Y + 450 // Well below other matches
+          x: 200 + (rounds - 2) * ROUND_WIDTH / 2,
+          y: START_Y + 450
         }
       };
       newMatches.push(thirdPlaceMatch);
     }
 
     return newMatches.sort((a, b) => a.round - b.round || a.position!.y - b.position!.y);
-  }, [qualifiedPlayers]);
+  }, []);
 
   const getRoundName = (matchCount: number): string => {
     switch (matchCount) {
@@ -165,7 +116,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     }
   };
 
-  // Create empty bracket structure without auto-populating players
+  // Create empty bracket structure
   const createEmptyBracket = useCallback(() => {
     if (qualifiedPlayers.length < 4) {
       toast({
@@ -182,41 +133,39 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
       title: "Шигшээ тоглолт үүсгэгдлээ",
       description: `${qualifiedPlayers.length} тоглогчийн хоосон шигшээ тоглолт үүсгэгдлээ`
     });
-  }, [qualifiedPlayers, generateBracket]);
+  }, [qualifiedPlayers, generateBracket, toast]);
 
-  // Get players already selected in other matches
-  const getSelectedPlayerIds = (currentMatchId: string, currentPosition?: string) => {
+  // Get all selected player IDs to prevent duplicates
+  const getSelectedPlayerIds = (): Set<string> => {
     const selectedIds = new Set<string>();
 
     matches.forEach(match => {
-      if (match.id === currentMatchId) {
-        // For current match, exclude the other position
-        if (currentPosition === 'player1' && match.player2?.id && match.player2.id !== 'lucky_draw') {
-          selectedIds.add(match.player2.id);
-        } else if (currentPosition === 'player2' && match.player1?.id && match.player1.id !== 'lucky_draw') {
-          selectedIds.add(match.player1.id);
-        }
-      } else {
-        // For other matches, exclude all selected players
-        if (match.player1?.id && match.player1.id !== 'lucky_draw') {
-          selectedIds.add(match.player1.id);
-        }
-        if (match.player2?.id && match.player2.id !== 'lucky_draw') {
-          selectedIds.add(match.player2.id);
-        }
+      if (match.player1?.id && match.player1.id !== 'lucky_draw') {
+        selectedIds.add(match.player1.id);
+      }
+      if (match.player2?.id && match.player2.id !== 'lucky_draw') {
+        selectedIds.add(match.player2.id);
       }
     });
 
     return selectedIds;
   };
 
-  // Get available players for a specific match and position (only qualified players)
+  // Get available players for a specific match position
   const getAvailableUsers = (matchId: string, position: 'player1' | 'player2') => {
-    const selectedIds = getSelectedPlayerIds(matchId, position);
+    const selectedIds = getSelectedPlayerIds();
 
-    // Convert qualified players to user format and filter out already selected ones
+    // Remove current match's other player from selected IDs for this position
+    const currentMatch = matches.find(m => m.id === matchId);
+    if (currentMatch) {
+      const otherPlayer = position === 'player1' ? currentMatch.player2 : currentMatch.player1;
+      if (otherPlayer?.id && otherPlayer.id !== 'lucky_draw') {
+        selectedIds.delete(otherPlayer.id);
+      }
+    }
+
+    // Convert qualified players to user format and filter out selected ones
     const qualifiedAsUsers = qualifiedPlayers.map(qp => {
-      // Find the corresponding user data
       const user = users.find(u => u.id === qp.id);
       return user || {
         id: qp.id,
@@ -230,14 +179,13 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     return qualifiedAsUsers.filter(user => !selectedIds.has(user.id));
   };
 
-  // Handle manual player selection from dropdown
-  const handlePlayerSelect = (matchId: string, position: 'player1' | 'player2', playerId: string) => {
+  // Handle player selection
+  const handlePlayerChange = (matchId: string, position: 'player1' | 'player2', playerId: string) => {
     let selectedPlayer: Player | undefined;
 
     if (playerId === 'lucky_draw') {
       selectedPlayer = { id: 'lucky_draw', name: 'Lucky draw' };
-    } else {
-      // Only find player in qualified players
+    } else if (playerId) {
       const qualifiedPlayer = qualifiedPlayers.find(qp => qp.id === playerId);
       if (qualifiedPlayer) {
         selectedPlayer = {
@@ -247,259 +195,110 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
       }
     }
 
-    if (selectedPlayer) {
-      setMatches(prev => prev.map(match =>
-        match.id === matchId
-          ? { ...match, [position]: selectedPlayer }
-          : match
-      ));
-    }
+    setMatches(prev => prev.map(match =>
+      match.id === matchId 
+        ? { ...match, [position]: selectedPlayer, winner: undefined } // Clear winner when players change
+        : match
+    ));
   };
 
-  // Handle score changes and auto-determine winner
+  // Handle score changes and determine winner
   const handleScoreChange = (matchId: string, scoreField: 'player1Score' | 'player2Score', value: string) => {
     setMatches(prev => {
-      const newMatches = prev.map(match => {
+      return prev.map(match => {
         if (match.id !== matchId) return match;
 
         const updatedMatch = { ...match, [scoreField]: value };
 
-        // Auto-determine winner based on scores
+        // Determine winner based on scores
         const p1Score = parseInt(updatedMatch.player1Score || '0');
         const p2Score = parseInt(updatedMatch.player2Score || '0');
 
-        if (p1Score > 0 && p2Score > 0 && p1Score !== p2Score) {
-          const winner = p1Score > p2Score ? updatedMatch.player1 : updatedMatch.player2;
-          updatedMatch.winner = winner;
+        // Clear winner first
+        updatedMatch.winner = undefined;
+
+        // Only set winner if both scores are valid and different
+        if (updatedMatch.player1Score && updatedMatch.player2Score && 
+            p1Score !== p2Score && p1Score >= 0 && p2Score >= 0) {
+          if (p1Score > p2Score && updatedMatch.player1) {
+            updatedMatch.winner = updatedMatch.player1;
+          } else if (p2Score > p1Score && updatedMatch.player2) {
+            updatedMatch.winner = updatedMatch.player2;
+          }
         }
 
         return updatedMatch;
       });
-
-      // Find the updated match and advance winner if needed
-      const updatedMatch = newMatches.find(m => m.id === matchId);
-      if (updatedMatch?.winner && updatedMatch.nextMatchId) {
-        // Auto-advance winner to next round
-        const currentRoundMatches = newMatches.filter(m => m.round === updatedMatch.round);
-        const matchIndex = currentRoundMatches.findIndex(m => m.id === updatedMatch.id);
-        const nextPosition = matchIndex % 2 === 0 ? 'player1' : 'player2';
-
-        const finalMatches = newMatches.map(m =>
-          m.id === updatedMatch.nextMatchId
-            ? { ...m, [nextPosition]: updatedMatch.winner }
-            : m
-        );
-
-        // Also handle 3rd place playoff for semifinal losers
-        if (updatedMatch.roundName === 'Хагас финал') {
-          const loser = updatedMatch.player1?.id === updatedMatch.winner.id ? updatedMatch.player2 : updatedMatch.player1;
-          if (loser) {
-            const thirdPlaceMatch = finalMatches.find(m => m.id === 'third_place_playoff');
-            if (thirdPlaceMatch) {
-              // Only add if this loser is not already in the 3rd place match
-              const loserAlreadyAdded = thirdPlaceMatch.player1?.id === loser.id || thirdPlaceMatch.player2?.id === loser.id;
-
-              if (!loserAlreadyAdded) {
-                if (!thirdPlaceMatch.player1) {
-                  return finalMatches.map(m =>
-                    m.id === 'third_place_playoff'
-                      ? { ...m, player1: loser }
-                      : m
-                  );
-                } else if (!thirdPlaceMatch.player2) {
-                  return finalMatches.map(m =>
-                    m.id === 'third_place_playoff'
-                      ? { ...m, player2: loser }
-                      : m
-                  );
-                }
-              }
-            }
-          }
-        }
-
-        toast({
-          title: "Ялагч дараагийн шатанд шилжлээ",
-          description: `${updatedMatch.winner.name} автоматаар дараагийн тоглолтонд орлоо`
-        });
-
-        return finalMatches;
-      }
-
-      return newMatches;
     });
   };
 
   // Handle manual winner selection
   const handleWinnerSelection = (matchId: string, winnerId: string) => {
     setMatches(prev => {
-      const match = prev.find(m => m.id === matchId);
-      if (!match) return prev;
+      return prev.map(match => {
+        if (match.id !== matchId) return match;
 
-      const winner = winnerId === match.player1?.id ? match.player1 :
-                     winnerId === match.player2?.id ? match.player2 : undefined;
+        let winner: Player | undefined;
+        if (winnerId === match.player1?.id && match.player1) {
+          winner = match.player1;
+        } else if (winnerId === match.player2?.id && match.player2) {
+          winner = match.player2;
+        }
 
-      const newMatches = prev.map(m =>
-        m.id === matchId ? { ...m, winner } : m
-      );
+        return { ...match, winner };
+      });
+    });
+  };
 
-      // Auto-advance winner to next round and handle 3rd place playoff
-      if (winner && match.nextMatchId) {
-        const currentRoundMatches = newMatches.filter(m => m.round === match.round);
+  // Advance all winners to next round
+  const advanceAllWinners = () => {
+    let advancedCount = 0;
+
+    setMatches(prev => {
+      const newMatches = [...prev];
+
+      // Sort matches by round to process in correct order
+      const sortedMatches = newMatches
+        .filter(m => m.winner && m.nextMatchId)
+        .sort((a, b) => a.round - b.round);
+
+      sortedMatches.forEach(match => {
+        if (!match.winner || !match.nextMatchId) return;
+
+        const nextMatch = newMatches.find(m => m.id === match.nextMatchId);
+        if (!nextMatch) return;
+
+        // Determine position in next match
+        const currentRoundMatches = newMatches.filter(m => m.round === match.round && m.id !== 'third_place_playoff');
         const matchIndex = currentRoundMatches.findIndex(m => m.id === match.id);
         const nextPosition = matchIndex % 2 === 0 ? 'player1' : 'player2';
 
-        let finalMatches = newMatches.map(m =>
-          m.id === match.nextMatchId
-            ? { ...m, [nextPosition]: winner }
-            : m
-        );
+        // Only advance if position is empty
+        if (!nextMatch[nextPosition]) {
+          nextMatch[nextPosition] = match.winner;
+          nextMatch.winner = undefined; // Clear any previous winner
+          advancedCount++;
 
-        // Handle 3rd place playoff for semifinal losers
-        if (match.roundName === 'Хагас финал') {
-          const loser = match.player1?.id === winner.id ? match.player2 : match.player1;
-          if (loser) {
-            const thirdPlaceMatch = finalMatches.find(m => m.id === 'third_place_playoff');
-            if (thirdPlaceMatch) {
-              // Only add if this loser is not already in the 3rd place match
-              const loserAlreadyAdded = thirdPlaceMatch.player1?.id === loser.id || thirdPlaceMatch.player2?.id === loser.id;
-
-              if (!loserAlreadyAdded) {
+          // Handle 3rd place playoff for semifinal losers
+          if (match.roundName === 'Хагас финал') {
+            const loser = match.player1?.id === match.winner.id ? match.player2 : match.player1;
+            if (loser) {
+              const thirdPlaceMatch = newMatches.find(m => m.id === 'third_place_playoff');
+              if (thirdPlaceMatch) {
                 if (!thirdPlaceMatch.player1) {
-                  finalMatches = finalMatches.map(m =>
-                    m.id === 'third_place_playoff'
-                      ? { ...m, player1: loser }
-                      : m
-                  );
+                  thirdPlaceMatch.player1 = loser;
                 } else if (!thirdPlaceMatch.player2) {
-                  finalMatches = finalMatches.map(m =>
-                    m.id === 'third_place_playoff'
-                      ? { ...m, player2: loser }
-                      : m
-                  );
-                }
-              }
-            }
-          }
-        }
-
-        toast({
-          title: "Ялагч дараагийн шатанд шилжлээ",
-          description: `${winner.name} автоматаар дараагийн тоглолтонд орлоо`
-        });
-
-        return finalMatches;
-      }
-
-      return newMatches;
-    });
-  };
-
-  // Advance winner to next round and handle 3rd place playoff
-  const advanceWinnerToNextRound = (match: Match) => {
-    if (!match.winner || !match.nextMatchId) return;
-
-    // Determine which position in next match
-    const currentRoundMatches = matches.filter(m => m.round === match.round);
-    const matchIndex = currentRoundMatches.findIndex(m => m.id === match.id);
-    const nextPosition = matchIndex % 2 === 0 ? 'player1' : 'player2';
-
-    setMatches(prev => {
-      const newMatches = prev.map(m =>
-        m.id === match.nextMatchId
-          ? { ...m, [nextPosition]: match.winner }
-          : m
-      );
-
-      // If this is a semifinal match, add loser to 3rd place playoff
-      if (match.roundName === 'Хагас финал') {
-        const loser = match.player1?.id === match.winner.id ? match.player2 : match.player1;
-        if (loser) {
-          const thirdPlaceMatch = newMatches.find(m => m.id === 'third_place_playoff');
-          if (thirdPlaceMatch) {
-            // Only add if this loser is not already in the 3rd place match
-            const loserAlreadyAdded = thirdPlaceMatch.player1?.id === loser.id || thirdPlaceMatch.player2?.id === loser.id;
-
-            if (!loserAlreadyAdded) {
-              // Add loser to first available position in 3rd place match
-              if (!thirdPlaceMatch.player1) {
-                return newMatches.map(m =>
-                  m.id === 'third_place_playoff'
-                    ? { ...m, player1: loser }
-                    : m
-                );
-              } else if (!thirdPlaceMatch.player2) {
-                return newMatches.map(m =>
-                  m.id === 'third_place_playoff'
-                    ? { ...m, player2: loser }
-                    : m
-                );
-              }
-            }
-          }
-        }
-      }
-
-      return newMatches;
-    });
-
-    toast({
-      title: "Ялагч дараагийн шатанд шилжлээ",
-      description: `${match.winner.name} автоматаар дараагийн тоглолтонд орлоо`
-    });
-  };
-
-  // Auto-advance all winners to next round
-  const advanceAllWinners = () => {
-    let advancedCount = 0;
-    
-    setMatches(prev => {
-      const newMatches = [...prev];
-      
-      // Process matches by round order to ensure proper advancement
-      const sortedMatches = newMatches.sort((a, b) => a.round - b.round);
-      
-      sortedMatches.forEach(match => {
-        if (match.winner && match.nextMatchId) {
-          // Find the next match
-          const nextMatch = newMatches.find(m => m.id === match.nextMatchId);
-          if (nextMatch) {
-            // Determine which position in next match
-            const currentRoundMatches = newMatches.filter(m => m.round === match.round);
-            const matchIndex = currentRoundMatches.findIndex(m => m.id === match.id);
-            const nextPosition = matchIndex % 2 === 0 ? 'player1' : 'player2';
-            
-            // Only advance if the position is empty
-            if (!nextMatch[nextPosition]) {
-              nextMatch[nextPosition] = match.winner;
-              advancedCount++;
-              
-              // Handle 3rd place playoff for semifinal losers
-              if (match.roundName === 'Хагас финал') {
-                const loser = match.player1?.id === match.winner.id ? match.player2 : match.player1;
-                if (loser) {
-                  const thirdPlaceMatch = newMatches.find(m => m.id === 'third_place_playoff');
-                  if (thirdPlaceMatch) {
-                    const loserAlreadyAdded = thirdPlaceMatch.player1?.id === loser.id || thirdPlaceMatch.player2?.id === loser.id;
-                    
-                    if (!loserAlreadyAdded) {
-                      if (!thirdPlaceMatch.player1) {
-                        thirdPlaceMatch.player1 = loser;
-                      } else if (!thirdPlaceMatch.player2) {
-                        thirdPlaceMatch.player2 = loser;
-                      }
-                    }
-                  }
+                  thirdPlaceMatch.player2 = loser;
                 }
               }
             }
           }
         }
       });
-      
+
       return newMatches;
     });
-    
+
     if (advancedCount > 0) {
       toast({
         title: "Хожигчид шилжлээ",
@@ -514,30 +313,23 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     }
   };
 
-  // Update match data
-  const updateMatch = (matchId: string, field: keyof Match, value: any) => {
-    setMatches(prev => prev.map(match =>
-      match.id === matchId
-        ? { ...match, [field]: value }
-        : match
-    ));
+  // Delete match function
+  const handleDeleteMatch = (matchId: string) => {
+    setMatches(prev => prev.filter(match => match.id !== matchId));
   };
 
-  // Calculate final tournament rankings
+  // Get final rankings
   const getFinalRankings = () => {
     const rankings = [];
 
-    // Find final match
     const finalMatch = matches.find(m => m.roundName === 'Финал');
     if (finalMatch?.winner) {
-      // 1st place: final winner
       rankings.push({
         position: 1,
         player: finalMatch.winner,
         medal: '🥇'
       });
 
-      // 2nd place: final loser
       const finalLoser = finalMatch.player1?.id === finalMatch.winner.id ? finalMatch.player2 : finalMatch.player1;
       if (finalLoser) {
         rankings.push({
@@ -548,10 +340,8 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
       }
     }
 
-    // Find 3rd place playoff
     const thirdPlaceMatch = matches.find(m => m.id === 'third_place_playoff');
     if (thirdPlaceMatch?.winner) {
-      // 3rd place: 3rd place playoff winner
       rankings.push({
         position: 3,
         player: thirdPlaceMatch.winner,
@@ -560,35 +350,6 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     }
 
     return rankings;
-  };
-
-
-
-  // Render connection lines
-  const renderConnections = () => {
-    return matches.map(match => {
-      if (!match.nextMatchId) return null;
-
-      const nextMatch = matches.find(m => m.id === match.nextMatchId);
-      if (!nextMatch) return null;
-
-      const x1 = match.position.x + 256; // Updated match box width (w-64)
-      const y1 = match.position.y + 70; // Center of match box
-      const x2 = nextMatch.position.x;
-      const y2 = nextMatch.position.y + 70;
-
-      return (
-        <line
-          key={`line-${match.id}`}
-          x1={x1}
-          y1={y1}
-          x2={x2}
-          y2={y2}
-          stroke="#03d9ce"
-          strokeWidth="2"
-        />
-      );
-    });
   };
 
   return (
@@ -622,7 +383,6 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
 
         {/* Player Selection Info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Qualified Players Info */}
           {qualifiedPlayers.length > 0 && (
             <div>
               <h4 className="font-medium mb-2">Шалгарсан тоглогчид ({qualifiedPlayers.length})</h4>
@@ -640,17 +400,12 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
             </div>
           )}
 
-          {/* Player Selection Status */}
           <div>
             <h4 className="font-medium mb-2">Тоглогч сонголтын төлөв</h4>
             <div className="text-sm space-y-1">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-blue-50 border rounded"></div>
-                <span className="text-gray-600">Тоглогч 1 сонгох</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-red-50 border rounded"></div>
-                <span className="text-gray-600">Тоглогч 2 сонгох</span>
+                <span className="text-gray-600">Тоглогч сонгох</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs">🎲</span>
@@ -664,8 +419,21 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
         </div>
       </div>
 
-      {/* Final Rankings */}
-
+      {/* Final Rankings Display */}
+      {getFinalRankings().length > 0 && (
+        <div className="mb-6 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border">
+          <h4 className="font-semibold mb-3 text-center">🏆 Эцсийн байрлал</h4>
+          <div className="flex justify-center gap-6">
+            {getFinalRankings().map((ranking) => (
+              <div key={ranking.position} className="text-center">
+                <div className="text-2xl mb-1">{ranking.medal}</div>
+                <div className="font-medium">{ranking.position}-р байр</div>
+                <div className="text-sm text-gray-600">{ranking.player.name}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Bracket Visualization */}
       <div className="relative">
@@ -675,7 +443,6 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
               Шигшээ тоглолт засах ({matches.length} тоглолт)
             </h3>
 
-            {/* Group by rounds for better organization */}
             {Array.from(new Set(matches.map(m => m.roundName))).map(roundName => (
               <div key={roundName} className="space-y-3">
                 <h4 className="text-md font-medium text-green-400 bg-gray-900 px-3 py-1 rounded">
@@ -714,17 +481,15 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                           </option>
                         ))}
                       </select>
-                      <div className="flex flex-col items-center">
-                        <Input
-                          placeholder="0"
-                          value={match.player1Score || ''}
-                          onChange={(e) => handleScoreChange(match.id, 'player1Score', e.target.value)}
-                          className="w-16 text-center text-sm h-8 bg-gray-900 border-gray-600 text-gray-100 focus:border-green-500"
-                          type="number"
-                          min="0"
-                          max="9"
-                        />
-                      </div>
+                      <Input
+                        placeholder="0"
+                        value={match.player1Score || ''}
+                        onChange={(e) => handleScoreChange(match.id, 'player1Score', e.target.value)}
+                        className="w-16 text-center text-sm h-8 bg-gray-900 border-gray-600 text-gray-100 focus:border-green-500"
+                        type="number"
+                        min="0"
+                        max="9"
+                      />
                     </div>
 
                     {/* VS Divider */}
@@ -746,31 +511,42 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                           </option>
                         ))}
                       </select>
-                      <div className="flex flex-col items-center">
-                        <Input
-                          placeholder="0"
-                          value={match.player2Score || ''}
-                          onChange={(e) => handleScoreChange(match.id, 'player2Score', e.target.value)}
-                          className="w-16 text-center text-sm h-8 bg-gray-900 border-gray-600 text-gray-100 focus:border-green-500"
-                          type="number"
-                          min="0"
-                          max="9"
-                        />
-                      </div>
+                      <Input
+                        placeholder="0"
+                        value={match.player2Score || ''}
+                        onChange={(e) => handleScoreChange(match.id, 'player2Score', e.target.value)}
+                        className="w-16 text-center text-sm h-8 bg-gray-900 border-gray-600 text-gray-100 focus:border-green-500"
+                        type="number"
+                        min="0"
+                        max="9"
+                      />
                     </div>
 
-                    {/* Score Display and Winner */}
+                    {/* Winner Selection */}
+                    {match.player1 && match.player2 && (
+                      <div className="mt-3 pt-3 border-t border-gray-600">
+                        <label className="text-xs text-gray-400 mb-2 block">Ялагч сонгох:</label>
+                        <select
+                          value={match.winner?.id || ''}
+                          onChange={(e) => handleWinnerSelection(match.id, e.target.value)}
+                          className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm text-gray-100 focus:border-green-500"
+                        >
+                          <option value="">Ялагч сонгоогүй</option>
+                          <option value={match.player1.id}>{match.player1.name}</option>
+                          <option value={match.player2.id}>{match.player2.name}</option>
+                        </select>
+                      </div>
+                    )}
+
+                    {/* Score Display */}
                     {(match.player1Score && match.player2Score) && (
                       <div className="text-center mt-3 pt-3 border-t border-gray-600">
                         <div className="text-lg font-bold text-white mb-1">
                           {match.player1Score} - {match.player2Score}
                         </div>
-                        {parseInt(match.player1Score) !== parseInt(match.player2Score) && (
+                        {match.winner && (
                           <div className="text-xs text-green-400">
-                            Ялагч: {parseInt(match.player1Score) > parseInt(match.player2Score) ?
-                              (match.player1 ? `${match.player1.name}` : 'Тоглогч 1') :
-                              (match.player2 ? `${match.player2.name}` : 'Тоглогч 2')
-                            }
+                            Ялагч: {match.winner.name}
                           </div>
                         )}
                       </div>
