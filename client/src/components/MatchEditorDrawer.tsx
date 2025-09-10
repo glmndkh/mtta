@@ -105,7 +105,7 @@ export function MatchEditorDrawer({
       // Parse existing result
       if (match.winner && match.score) {
         if (match.score === 'BYE') {
-          setWinner('');
+          setWinner('none');
         } else if (match.score.includes('W.O.')) {
           setWinner('WO');
         } else if (match.score.includes('RET')) {
