@@ -161,57 +161,74 @@ export default function PastChampions() {
                   </div>
 
                   {/* Champions Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {champions.map((champion, index) => (
-                      <Card 
+                      <div 
                         key={champion.id} 
-                        className="card-dark hover:shadow-2xl transition-all duration-500 hover:scale-105 group animate-float-slow"
+                        className="relative group cursor-pointer overflow-hidden rounded-lg bg-gray-900 hover:shadow-2xl transition-all duration-500 hover:scale-105 animate-float-slow"
                         style={{
                           animationDelay: `${index * 200}ms`,
-                          animationDuration: `${3 + (index % 3)}s`
+                          animationDuration: `${3 + (index % 3)}s`,
+                          aspectRatio: '3/4'
                         }}
                       >
-                        <CardHeader className="text-center pb-2">
-                          <div className="relative mx-auto mb-4">
-                            <Avatar className="w-24 h-24 ring-4 ring-yellow-400 ring-offset-4 ring-offset-gray-800">
-                              <AvatarImage 
-                                src={champion.imageUrl} 
-                                className="object-cover"
-                              />
-                              <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-gray-800 text-2xl font-bold">
+                        {/* Full-bleed player photo */}
+                        <div className="absolute inset-0">
+                          {champion.imageUrl ? (
+                            <img 
+                              src={champion.imageUrl} 
+                              alt={champion.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
+                              <div className="text-6xl font-bold text-gray-400">
                                 {champion.name.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                            {/* Crown icon overlay */}
-                            <div className="absolute -top-2 -right-2 bg-yellow-400 rounded-full p-1">
-                              <Crown className="w-6 h-6 text-gray-800" />
+                              </div>
                             </div>
-                          </div>
-                          <CardTitle className="text-white text-xl mb-2">
-                            {champion.name}
-                          </CardTitle>
-                          <div className="flex items-center justify-center space-x-2 mb-2">
-                            <Badge className="bg-yellow-600 text-white">
-                              {champion.year}
-                            </Badge>
-                            <span className="text-2xl">{getGenderIcon(champion.gender)}</span>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="text-center pt-0">
-                          {champion.championType && (
+                          )}
+                        </div>
+
+                        {/* Crown icon overlay */}
+                        <div className="absolute top-4 right-4 bg-yellow-400 rounded-full p-2 shadow-lg">
+                          <Crown className="w-5 h-5 text-gray-800" />
+                        </div>
+
+                        {/* Champion type badge */}
+                        {champion.championType && (
+                          <div className="absolute top-4 left-4">
                             <Badge 
-                              className={`${getChampionTypeColor(champion.championType)} text-white mb-3`}
+                              className={`${getChampionTypeColor(champion.championType)} text-white shadow-lg`}
                             >
                               {champion.championType}
                             </Badge>
-                          )}
-                          <div className="flex justify-center items-center space-x-1 text-yellow-400">
-                            <Trophy className="w-4 h-4" />
-                            <Medal className="w-4 h-4" />
-                            <Trophy className="w-4 h-4" />
                           </div>
-                        </CardContent>
-                      </Card>
+                        )}
+
+                        {/* Bottom green gradient band */}
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-green-600 via-green-500/90 to-transparent px-4 py-6">
+                          <div className="text-white">
+                            <h3 className="text-lg font-bold mb-1 drop-shadow-lg">
+                              {champion.name}
+                            </h3>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <Badge className="bg-white/20 text-white border-white/30">
+                                  {champion.year}
+                                </Badge>
+                                <span className="text-xl">{getGenderIcon(champion.gender)}</span>
+                              </div>
+                              <div className="flex items-center space-x-1 text-yellow-300">
+                                <Trophy className="w-4 h-4" />
+                                <Medal className="w-4 h-4" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Hover overlay */}
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      </div>
                     ))}
                   </div>
                 </section>
