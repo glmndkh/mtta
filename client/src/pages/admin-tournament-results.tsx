@@ -604,17 +604,7 @@ export default function AdminTournamentResultsPage() {
     }
   };
 
-  const updateMatchResult = (groupIndex: number, player1Index: number, player2Index: number, score: string) => {
-    const updated = [...groupStageTables];
-    // Ensure the score is updated correctly
-    if (updated[groupIndex] && updated[groupIndex].resultMatrix) {
-      updated[groupIndex].resultMatrix[player1Index][player2Index] = score;
-
-      // Calculate standings
-      calculateGroupStandings(updated[groupIndex]);
-      setGroupStageTables(updated);
-    }
-  };
+  
 
   const calculateGroupStandings = (group: GroupStageTable) => {
     const standings = group.players.map((player, playerIndex) => {
@@ -1486,7 +1476,14 @@ export default function AdminTournamentResultsPage() {
                                       ) : (
                                         <Input
                                           value={group.resultMatrix[playerIndex]?.[opponentIndex] || ''}
-                                          onChange={(e) => updateMatchResult(groupIndex, player1Index, player2Index, e.target.value)}
+                                          onChange={(e) => {
+                                            const updated = [...groupStageTables];
+                                            if (updated[groupIndex] && updated[groupIndex].resultMatrix) {
+                                              updated[groupIndex].resultMatrix[playerIndex][opponentIndex] = e.target.value;
+                                              calculateGroupStandings(updated[groupIndex]);
+                                              setGroupStageTables(updated);
+                                            }
+                                          }}
                                           placeholder="3-1"
                                           className="w-full h-8 text-center text-xs"
                                         />
