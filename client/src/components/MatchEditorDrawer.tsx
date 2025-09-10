@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -98,7 +97,7 @@ export function MatchEditorDrawer({
     if (match) {
       setPlayerA(match.player1 || null);
       setPlayerB(match.player2 || null);
-      
+
       // Parse existing result
       if (match.winner && match.score) {
         if (match.score === 'BYE') {
@@ -109,13 +108,13 @@ export function MatchEditorDrawer({
           setWinner('RET');
         } else {
           setWinner(match.winner.id === match.player1?.id ? 'A' : 'B');
-          
+
           // Parse series score
           const scoreParts = match.score.split('-');
           if (scoreParts.length === 2) {
             setSetsWonA(parseInt(scoreParts[0]) || 0);
             setSetsWonB(parseInt(scoreParts[1]) || 0);
-            
+
             // Determine best-of from score
             const maxSets = Math.max(parseInt(scoreParts[0]) || 0, parseInt(scoreParts[1]) || 0);
             setBestOf(maxSets >= 4 ? 7 : 5);
@@ -194,7 +193,7 @@ export function MatchEditorDrawer({
       const validOption = seriesOptions.find(opt => 
         opt.setsA === setsWonA && opt.setsB === setsWonB && opt.winner === winner
       );
-      
+
       if (!validOption) {
         newErrors.push(`${currentSeries} оноо нь ${winner} тоглогчийн ялалттай зөрчилдөж байна`);
       }
@@ -219,7 +218,7 @@ export function MatchEditorDrawer({
     const tempA = playerA;
     setPlayerA(playerB);
     setPlayerB(tempA);
-    
+
     // Also swap winner if set
     if (winner === 'A') setWinner('B');
     else if (winner === 'B') setWinner('A');
@@ -265,7 +264,7 @@ export function MatchEditorDrawer({
 
   const handleWinnerChange = (newWinner: string) => {
     setWinner(newWinner as 'A' | 'B' | 'WO' | 'RET' | 'none');
-    
+
     // Auto-set series for special cases
     if (newWinner === 'WO' || newWinner === 'RET') {
       if (bestOf === 5) {
@@ -403,7 +402,7 @@ export function MatchEditorDrawer({
           {/* Players Section */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Тоглогчид</h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Player A */}
               <div className="space-y-2">
@@ -437,7 +436,6 @@ export function MatchEditorDrawer({
                             onSelect={() => {
                               setPlayerA(player);
                               setPlayerAOpen(false);
-                              setPlayerASearch('');
                             }}
                           >
                             {player.name}
@@ -481,7 +479,6 @@ export function MatchEditorDrawer({
                             onSelect={() => {
                               setPlayerB(player);
                               setPlayerBOpen(false);
-                              setPlayerBSearch('');
                             }}
                           >
                             {player.name}
@@ -514,7 +511,7 @@ export function MatchEditorDrawer({
           {/* Result Section */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Үр дүн</h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Ялагч</Label>
