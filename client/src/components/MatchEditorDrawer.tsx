@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Drawer,
@@ -29,7 +29,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 
 interface Player {
   id: string;
-  name: string;
+  name?: string; // Make name optional
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
 }
 
 interface Match {
@@ -458,13 +462,25 @@ export function MatchEditorDrawer({
 
   if (!match) return null;
 
-  const filteredPlayersA = availablePlayers.filter(player =>
-    player.name.toLowerCase().includes(playerASearch.toLowerCase())
-  );
+  const filteredPlayersA = useMemo(() => {
+    if (!playerASearch.trim()) return availablePlayers;
+    return availablePlayers.filter(player => {
+      const playerName = player.name || player.fullName || `${player.firstName || ''} ${player.lastName || ''}`.trim();
+      const playerEmail = player.email || '';
+      return playerName.toLowerCase().includes(playerASearch.toLowerCase()) ||
+             playerEmail.toLowerCase().includes(playerASearch.toLowerCase());
+    });
+  }, [availablePlayers, playerASearch]);
 
-  const filteredPlayersB = availablePlayers.filter(player =>
-    player.name.toLowerCase().includes(playerBSearch.toLowerCase())
-  );
+  const filteredPlayersB = useMemo(() => {
+    if (!playerBSearch.trim()) return availablePlayers;
+    return availablePlayers.filter(player => {
+      const playerName = player.name || player.fullName || `${player.firstName || ''} ${player.lastName || ''}`.trim();
+      const playerEmail = player.email || '';
+      return playerName.toLowerCase().includes(playerBSearch.toLowerCase()) ||
+             playerEmail.toLowerCase().includes(playerBSearch.toLowerCase());
+    });
+  }, [availablePlayers, playerBSearch]);
 
   return (
     <Drawer open={isOpen} onOpenChange={onClose}>
@@ -493,7 +509,7 @@ export function MatchEditorDrawer({
                 <Popover open={playerAOpen} onOpenChange={setPlayerAOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-start">
-                      {playerA ? playerA.name : "Тоглогч сонгох"}
+                      {playerA ? playerA.name || playerA.firstName || 'Тоглогч сонгох' : "Тоглогч сонгох"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-80 p-0">
@@ -521,7 +537,7 @@ export function MatchEditorDrawer({
                               setPlayerAOpen(false);
                             }}
                           >
-                            {player.name}
+                            {player.name || player.firstName || player.id}
                           </CommandItem>
                         ))}
                       </CommandGroup>
@@ -536,7 +552,7 @@ export function MatchEditorDrawer({
                 <Popover open={playerBOpen} onOpenChange={setPlayerBOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-start">
-                      {playerB ? playerB.name : "Тоглогч сонгох"}
+                      {playerB ? playerB.name || playerB.firstName || 'Тоглогч сонгох' : "Тоглогч сонгох"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-80 p-0">
@@ -564,7 +580,7 @@ export function MatchEditorDrawer({
                               setPlayerBOpen(false);
                             }}
                           >
-                            {player.name}
+                            {player.name || player.firstName || player.id}
                           </CommandItem>
                         ))}
                       </CommandGroup>
