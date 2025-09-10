@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
-import { MatchEditorDrawer } from './MatchEditorDrawer';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import './knockout.css';
@@ -43,12 +42,16 @@ export function KnockoutBracket({
   onPlayerClick,
   availablePlayers = []
 }: KnockoutBracketProps) {
-  const [editingMatch, setEditingMatch] = useState<Match | null>(null);
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [localMatches, setLocalMatches] = useState<Match[]>(matches);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState<string>('');
+  // Update local matches when props change
+  React.useEffect(() => {
+    setLocalMatches(matches);
+  }, [matches]);
+
   // Group matches by round
-  const matchesByRound = matches.reduce((acc, match) => {
+  const matchesByRound = localMatches.reduce((acc, match) => {
     if (!acc[match.round]) {
       acc[match.round] = [];
     }
@@ -91,9 +94,37 @@ export function KnockoutBracket({
 
   const [, setLocation] = useLocation();
 
-  const openEditor = (match: Match) => {
-    setEditingMatch(match);
-    setIsEditorOpen(true);
+  // Determine winner based on scores
+  const determineWinner = (match: Match): Player | null => {
+    if (!match.player1 || !match.player2) return null;
+    if (match.player1.name === 'BYE') return match.player2;
+    if (match.player2.name === 'BYE') return match.player1;
+    
+    const score1 = match.score1 || 0;
+    const score2 = match.score2 || 0;
+    
+    if (score1 > score2) return match.player1;
+    if (score2 > score1) return match.player2;
+    return null; // Tie or no scores
+  };
+
+  // Advance winner to next match
+  const advanceWinner = (currentMatch: Match, winner: Player) => {
+    if (!currentMatch.nextMatchId) return;
+    
+    const updatedMatches = localMatches.map(match => {
+      if (match.id === currentMatch.nextMatchId) {
+        // Determine which player position to fill based on source match
+        const isFirstSource = match.sourceMatchIds?.[0] === currentMatch.id;
+        return {
+          ...match,
+          [isFirstSource ? 'player1' : 'player2']: winner
+        };
+      }
+      return match;
+    });
+    
+    setLocalMatches(updatedMatches);
   };
 
   const handlePlayerClick = (
@@ -102,10 +133,6 @@ export function KnockoutBracket({
     event: React.MouseEvent
   ) => {
     event.stopPropagation();
-    if (isAdmin) {
-      openEditor(match);
-      return;
-    }
     if (!player) return;
 
     if (onPlayerClick) {
@@ -117,16 +144,13 @@ export function KnockoutBracket({
   };
 
   const handleMatchClick = (match: Match) => {
+    // Match box is now always clickable for editing in admin mode
     if (isAdmin) {
-      openEditor(match);
+      // Enable editing mode for this match
+      console.log('Match clicked for editing:', match.id);
     } else {
       onMatchClick?.(match);
     }
-  };
-
-  const handleCloseEditor = () => {
-    setIsEditorOpen(false);
-    setEditingMatch(null);
   };
 
   const startEdit = (fieldId: string, currentValue: string) => {
@@ -136,10 +160,38 @@ export function KnockoutBracket({
   };
 
   const saveEdit = (matchId: string, field: string, value: string) => {
-    // Here you would typically call an API to update the match
-    console.log('Saving edit:', { matchId, field, value });
+    const updatedMatches = localMatches.map(match => {
+      if (match.id === matchId) {
+        const updatedMatch = { ...match };
+        
+        if (field === 'player1' || field === 'player2') {
+          const selectedPlayer = availablePlayers.find(p => p.name === value || p.id === value);
+          if (selectedPlayer) {
+            updatedMatch[field as 'player1' | 'player2'] = selectedPlayer;
+          }
+        } else if (field === 'score1' || field === 'score2') {
+          updatedMatch[field as 'score1' | 'score2'] = parseInt(value) || 0;
+          
+          // Update winner and advance to next round
+          const winner = determineWinner(updatedMatch);
+          if (winner) {
+            updatedMatch.winner = winner;
+            updatedMatch.status = 'finished';
+            advanceWinner(updatedMatch, winner);
+          }
+        }
+        
+        return updatedMatch;
+      }
+      return match;
+    });
+    
+    setLocalMatches(updatedMatches);
     setEditingField(null);
     setEditingValue('');
+    
+    // Call API to save changes
+    console.log('Saving edit:', { matchId, field, value });
   };
 
   const cancelEdit = () => {
@@ -166,8 +218,9 @@ export function KnockoutBracket({
                 .map((match) => (
                   <div
                     key={match.id}
-                    className={`match-box ${isAdmin || onMatchClick ? 'clickable' : ''} relative`}
+                    className="match-box clickable relative"
                     onClick={() => handleMatchClick(match)}
+                    title={isAdmin ? 'Тоглогч болон оноо оруулахын тулд дарна уу' : undefined}
                   >
                     <div className="match-content">
                       <div className={`player-row ${match.winner?.id === match.player1?.id ? 'winner' : ''}`}>
@@ -339,15 +392,6 @@ export function KnockoutBracket({
         ))}
       </div>
 
-      {/* Match Editor Drawer */}
-      <MatchEditorDrawer
-        match={editingMatch}
-        isOpen={isEditorOpen}
-        onClose={handleCloseEditor}
-        availablePlayers={availablePlayers}
-        allMatches={matches}
-        bestOfDefault={5}
-      />
     </div>
   );
 };
