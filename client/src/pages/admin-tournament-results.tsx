@@ -110,6 +110,7 @@ export default function AdminTournamentResultsPage() {
 
   // Check if we have a tournament ID, if not show tournament selection
   const tournamentId = params?.id;
+  const urlParticipationType = params?.type ? decodeURIComponent(params.type) : undefined;
   const isOnFallbackRoute = fallbackMatch && !tournamentId;
 
   // Fetch all tournaments for selection page
@@ -144,12 +145,14 @@ export default function AdminTournamentResultsPage() {
            !lowerType.includes('холимог');
   });
 
-  // Initialize with first filtered type if available
+  // Initialize with URL parameter or first filtered type if available
   useEffect(() => {
-    if (filteredParticipationTypes.length > 0 && !participationType) {
+    if (urlParticipationType && filteredParticipationTypes.includes(urlParticipationType)) {
+      setParticipationType(urlParticipationType);
+    } else if (filteredParticipationTypes.length > 0 && !participationType) {
       setParticipationType(filteredParticipationTypes[0]);
     }
-  }, [filteredParticipationTypes, participationType]);
+  }, [filteredParticipationTypes, participationType, urlParticipationType]);
 
   // Fetch existing results
   const { data: existingResults, isLoading: resultsLoading, error: resultsError } = useQuery<TournamentResults>({
@@ -209,18 +212,18 @@ export default function AdminTournamentResultsPage() {
     setKnockoutMatches(knockout);
     setFinalRankings([]);
     setCustomParticipationTypes(prev => [...prev, category]);
-    setLocation(`/admin/tournament/${tournamentId}/results/${category}`);
+    setLocation(`/admin/tournament/${tournamentId}/results/${encodeURIComponent(category)}`);
     setAddCategoryOpen(false);
     setNewCategory('');
   };
 
   // Redirect to first participation type if none specified
   useEffect(() => {
-    if (tournament && !participationType && tournament.participationTypes?.length) {
+    if (tournament && !participationType && !urlParticipationType && tournament.participationTypes?.length) {
       const firstType = tournament.participationTypes[0];
-      setLocation(`/admin/tournament/${tournamentId}/results/${firstType}`, { replace: true });
+      setLocation(`/admin/tournament/${tournamentId}/results/${encodeURIComponent(firstType)}`, { replace: true });
     }
-  }, [tournament, participationType, tournamentId, setLocation]);
+  }, [tournament, participationType, urlParticipationType, tournamentId, setLocation]);
 
   // Load existing results into state
   useEffect(() => {
@@ -895,6 +898,11 @@ export default function AdminTournamentResultsPage() {
 
   // C) Handle match click for in-bracket results
   const handleMatchClick = (matchId: string) => {
+    // Prevent unwanted modal opening if already open
+    if (resultModalOpen) {
+      return;
+    }
+    
     const match = knockoutMatches.find(m => m.id === matchId);
     if (!match || !match.player1 || !match.player2) {
       toast({
@@ -1248,7 +1256,10 @@ export default function AdminTournamentResultsPage() {
             <div className="flex items-center mb-6">
               <Tabs
                 value={participationType}
-                onValueChange={setParticipationType}
+                onValueChange={(value) => {
+                  setParticipationType(value);
+                  setLocation(`/admin/tournament/${tournamentId}/results/${encodeURIComponent(value)}`, { replace: true });
+                }}
                 className="w-full"
               >
                 <TabsList className="grid w-full grid-cols-1 lg:grid-cols-4 gap-2">
