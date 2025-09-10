@@ -86,7 +86,7 @@ export function KnockoutBracket({
 
             <div className="matches-container">
               {matchesByRound[round]
-                .sort((a, b) => a.position.y - b.position.y)
+                .sort((a, b) => (a.position?.y || 0) - (b.position?.y || 0))
                 .map((match) => (
                   <div 
                     key={match.id} 
