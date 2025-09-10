@@ -282,19 +282,34 @@ export function MatchEditorDrawer({
     mutationFn: async (data: { playerAId: string | null; playerBId: string | null }) => {
       const response = await fetch(`/api/matches/${match?.id}/players`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
         body: JSON.stringify({
           playerAId: data.playerAId,
           playerBId: data.playerBId,
           override: true
         }),
       });
-      if (!response.ok) throw new Error('Failed to update players');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update players');
+      }
       return response.json();
     },
     onSuccess: () => {
+      console.log('Players updated successfully, invalidating queries...');
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments'] });
       queryClient.invalidateQueries({ queryKey: ['matches'] });
-      queryClient.invalidateQueries({ queryKey: ['tournaments'] });
+      // Force refetch tournament results
+      if (tournamentId) {
+        queryClient.invalidateQueries({ queryKey: ['/api/tournaments', tournamentId, 'results'] });
+        queryClient.refetchQueries({ queryKey: ['/api/tournaments', tournamentId, 'results'] });
+      }
+    },
+    onError: (error: any) => {
+      console.error('Error updating players:', error);
     }
   });
 
@@ -307,15 +322,30 @@ export function MatchEditorDrawer({
     }) => {
       const response = await fetch(`/api/matches/${match?.id}/result-summary`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error('Failed to update result');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update result');
+      }
       return response.json();
     },
     onSuccess: () => {
+      console.log('Result updated successfully, invalidating queries...');
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments'] });
       queryClient.invalidateQueries({ queryKey: ['matches'] });
-      queryClient.invalidateQueries({ queryKey: ['tournaments'] });
+      // Force refetch tournament results
+      if (tournamentId) {
+        queryClient.invalidateQueries({ queryKey: ['/api/tournaments', tournamentId, 'results'] });
+        queryClient.refetchQueries({ queryKey: ['/api/tournaments', tournamentId, 'results'] });
+      }
+    },
+    onError: (error: any) => {
+      console.error('Error updating result:', error);
     }
   });
 
@@ -331,38 +361,56 @@ export function MatchEditorDrawer({
     }
 
     try {
+      let hasChanges = false;
+
       // Update players if changed
       const playersChanged = 
         playerA?.id !== match?.player1?.id || 
         playerB?.id !== match?.player2?.id;
 
       if (playersChanged) {
+        console.log('Updating players:', { playerA: playerA?.name, playerB: playerB?.name });
         await updatePlayersMutation.mutateAsync({
           playerAId: playerA?.id === 'bye' ? null : playerA?.id || null,
           playerBId: playerB?.id === 'bye' ? null : playerB?.id || null,
         });
+        hasChanges = true;
       }
 
       // Update result if set
       if (winner && winner !== 'none') {
+        console.log('Updating result:', { winner, bestOf, setsWonA, setsWonB });
         await updateResultMutation.mutateAsync({
           winner: winner as 'A' | 'B' | 'WO' | 'RET',
           bestOf,
           setsWonA,
           setsWonB,
         });
+        hasChanges = true;
       }
 
-      toast({
-        title: "Амжилттай",
-        description: "Матч амжилттай шинэчлэгдлээ",
-      });
+      if (hasChanges) {
+        toast({
+          title: "Амжилттай",
+          description: "Матч амжилттай шинэчлэгдлээ",
+        });
 
-      onClose();
-    } catch (error) {
+        // Give some time for the mutations to complete before closing
+        setTimeout(() => {
+          onClose();
+        }, 500);
+      } else {
+        toast({
+          title: "Мэдээлэл",
+          description: "Өөрчлөлт байхгүй байна",
+        });
+        onClose();
+      }
+    } catch (error: any) {
+      console.error('Save error:', error);
       toast({
         title: "Алдаа",
-        description: "Матч шинэчлэхэд алдаа гарлаа",
+        description: error.message || "Матч шинэчлэхэд алдаа гарлаа",
         variant: "destructive"
       });
     }

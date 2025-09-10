@@ -1453,16 +1453,141 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update match players
+  app.put('/api/matches/:matchId/players', requireAuth, async (req: any, res) => {
+    try {
+      const { matchId } = req.params;
+      const { playerAId, playerBId, override } = req.body;
+
+      console.log(`Updating match ${matchId} players:`, { playerAId, playerBId });
+
+      // For now, we'll update tournament results directly
+      // In a real implementation, you'd have a matches table
+      
+      // Find the tournament this match belongs to
+      const tournaments = await storage.getTournaments();
+      let targetTournament = null;
+      let targetResults = null;
+
+      for (const tournament of tournaments) {
+        const results = await storage.getTournamentResults(tournament.id);
+        if (results?.knockoutResults) {
+          const knockoutResults = results.knockoutResults as any;
+          for (const category in knockoutResults) {
+            const matches = knockoutResults[category] || [];
+            const match = matches.find((m: any) => m.id === matchId);
+            if (match) {
+              targetTournament = tournament;
+              targetResults = results;
+              
+              // Update the match players
+              if (playerAId) {
+                const playerA = await storage.getUser(playerAId);
+                if (playerA) {
+                  match.player1 = {
+                    id: playerA.id,
+                    name: `${playerA.firstName} ${playerA.lastName}`
+                  };
+                }
+              } else {
+                match.player1 = null;
+              }
+
+              if (playerBId) {
+                const playerB = await storage.getUser(playerBId);
+                if (playerB) {
+                  match.player2 = {
+                    id: playerB.id,
+                    name: `${playerB.firstName} ${playerB.lastName}`
+                  };
+                }
+              } else {
+                match.player2 = null;
+              }
+
+              // Save updated results
+              await storage.upsertTournamentResults({
+                tournamentId: tournament.id,
+                groupStageResults: results.groupStageResults,
+                knockoutResults: results.knockoutResults,
+                finalRankings: results.finalRankings,
+                isPublished: results.isPublished
+              });
+
+              console.log(`Updated match ${matchId} players successfully`);
+              return res.json({ success: true, message: 'Match players updated' });
+            }
+          }
+        }
+      }
+
+      res.status(404).json({ message: 'Match not found' });
+    } catch (error) {
+      console.error('Error updating match players:', error);
+      res.status(500).json({ message: 'Failed to update match players' });
+    }
+  });
+
   // Update match result
-  app.put('/api/matches/:matchId/result-summary', async (req: Request, res: Response) => {
+  app.put('/api/matches/:matchId/result-summary', requireAuth, async (req: any, res) => {
     try {
       const { matchId } = req.params;
       const { winner, bestOf, setsWonA, setsWonB } = req.body;
 
-      // TODO: Implement match result update logic
-      // This would update the knockout match result and propagate winners
+      console.log(`Updating match ${matchId} result:`, { winner, bestOf, setsWonA, setsWonB });
 
-      res.json({ success: true, message: 'Match result updated' });
+      // Find the tournament this match belongs to
+      const tournaments = await storage.getTournaments();
+      let targetTournament = null;
+      let targetResults = null;
+
+      for (const tournament of tournaments) {
+        const results = await storage.getTournamentResults(tournament.id);
+        if (results?.knockoutResults) {
+          const knockoutResults = results.knockoutResults as any;
+          for (const category in knockoutResults) {
+            const matches = knockoutResults[category] || [];
+            const match = matches.find((m: any) => m.id === matchId);
+            if (match) {
+              targetTournament = tournament;
+              targetResults = results;
+              
+              // Update the match result
+              if (winner === 'A' && match.player1) {
+                match.winner = match.player1;
+              } else if (winner === 'B' && match.player2) {
+                match.winner = match.player2;
+              }
+
+              // Update score
+              if (winner === 'WO') {
+                match.score = 'W.O.';
+              } else if (winner === 'RET') {
+                match.score = 'RET';
+              } else {
+                match.score = `${setsWonA}-${setsWonB}`;
+              }
+
+              match.player1Score = setsWonA.toString();
+              match.player2Score = setsWonB.toString();
+
+              // Save updated results
+              await storage.upsertTournamentResults({
+                tournamentId: tournament.id,
+                groupStageResults: results.groupStageResults,
+                knockoutResults: results.knockoutResults,
+                finalRankings: results.finalRankings,
+                isPublished: results.isPublished
+              });
+
+              console.log(`Updated match ${matchId} result successfully`);
+              return res.json({ success: true, message: 'Match result updated' });
+            }
+          }
+        }
+      }
+
+      res.status(404).json({ message: 'Match not found' });
     } catch (error) {
       console.error('Error updating match result:', error);
       res.status(500).json({ message: 'Failed to update match result' });

@@ -76,6 +76,10 @@ export default function TournamentResultsPage() {
   const { data: results, isLoading: resultsLoading } = useQuery<TournamentResults>({
     queryKey: ['/api/tournaments', params?.id, 'results'],
     enabled: !!params?.id,
+    staleTime: 0, // Always refetch to get latest data
+    cacheTime: 0, // Don't cache results
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   const [activeType, setActiveType] = useState<string>("");
