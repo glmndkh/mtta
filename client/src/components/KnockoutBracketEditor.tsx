@@ -56,6 +56,8 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [matches, setMatches] = useState<Match[]>(initialMatches);
   const { toast } = useToast();
+  
+  const WIN_TARGET = 3; // Points needed to win
 
   // Update matches when initialMatches changes
   useEffect(() => {
@@ -169,7 +171,8 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     }
 
     const bracket = generateBracket(qualifiedPlayers.length);
-    setMatches(bracket);
+    const resolved = autoResolveByes(bracket);
+    setMatches(resolved);
     toast({
       title: "Шигшээ тоглолт үүсгэгдлээ",
       description: `${qualifiedPlayers.length} тоглогчийн хоосон шигшээ тоглолт үүсгэгдлээ`
@@ -231,6 +234,8 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
 
     if (playerId === 'lucky_draw') {
       selectedPlayer = { id: 'lucky_draw', name: 'Lucky draw' };
+    } else if (playerId === 'bye') {
+      selectedPlayer = { id: 'bye', name: 'BYE' };
     } else if (playerId) {
       const qualifiedPlayer = qualifiedPlayers.find(qp => qp.id === playerId);
       if (qualifiedPlayer) {
@@ -242,13 +247,16 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     }
 
     setMatches(prev => {
-      const newMatches = prev.map(match =>
+      const afterPick = prev.map(match =>
         match.id === matchId
           ? { ...match, [position]: selectedPlayer, winner: undefined } // Clear winner when players change
           : match
       );
-      const updatedMatch = newMatches.find(m => m.id === matchId)!;
-      return propagateResult(newMatches, updatedMatch);
+      const updatedMatch = afterPick.find(m => m.id === matchId)!;
+
+      // If the updated match has a BYE participant, auto resolve now
+      const maybeResolved = autoResolveByes(afterPick);
+      return propagateResult(maybeResolved, updatedMatch);
     });
   };
 
@@ -256,33 +264,37 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
   const handleScoreChange = (matchId: string, scoreField: 'player1Score' | 'player2Score', value: string) => {
     setMatches(prev => {
       let updatedMatch: Match | undefined;
+
       const newMatches = prev.map(match => {
         if (match.id !== matchId) return match;
 
         const m = { ...match, [scoreField]: value };
 
-        // Determine winner based on scores
-        const p1Score = parseInt(m.player1Score || '0');
-        const p2Score = parseInt(m.player2Score || '0');
+        // Normalize & check presence
+        const hasP1 = m.player1Score !== undefined && m.player1Score !== '';
+        const hasP2 = m.player2Score !== undefined && m.player2Score !== '';
+        const p1 = hasP1 ? Math.max(0, parseInt(String(m.player1Score), 10)) : 0;
+        const p2 = hasP2 ? Math.max(0, parseInt(String(m.player2Score), 10)) : 0;
 
-        // Clear winner first
+        // Always clear winner first
         m.winner = undefined;
 
-        // Only set winner if both scores are valid and different
-        if (m.player1Score && m.player2Score &&
-            p1Score !== p2Score && p1Score >= 0 && p2Score >= 0) {
-          if (p1Score > p2Score && m.player1) {
-            m.winner = m.player1;
-          } else if (p2Score > p1Score && m.player2) {
-            m.winner = m.player2;
-          }
+        // Decide winner in three cases:
+        // 1) One reaches WIN_TARGET and leads (even if the other score is blank)
+        // 2) Both present, non-equal
+        // 3) Prevent ties/negatives by guards above
+        if ((hasP1 && p1 >= WIN_TARGET && (!hasP2 || p1 > p2)) && m.player1) {
+          m.winner = m.player1;
+        } else if ((hasP2 && p2 >= WIN_TARGET && (!hasP1 || p2 > p1)) && m.player2) {
+          m.winner = m.player2;
+        } else if (hasP1 && hasP2 && p1 !== p2 && p1 >= 0 && p2 >= 0) {
+          m.winner = (p1 > p2 ? m.player1 : m.player2);
         }
 
         updatedMatch = m;
         return m;
       });
 
-      // Automatically propagate the winner if one is determined
       return updatedMatch ? propagateResult(newMatches, updatedMatch) : newMatches;
     });
   };
@@ -309,6 +321,41 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
       // Automatically propagate the manually selected winner
       return updatedMatch ? propagateResult(newMatches, updatedMatch) : newMatches;
     });
+  };
+
+  // Auto-resolve BYE matches
+  const autoResolveByes = (arr: Match[]) => {
+    let matchesCopy = [...arr];
+
+    const resolve = (m: Match) => {
+      if (!m.player1 || !m.player2) return matchesCopy;
+
+      // If one side is BYE, the other wins immediately
+      const p1Bye = m.player1.id === 'bye';
+      const p2Bye = m.player2.id === 'bye';
+
+      if (p1Bye && !p2Bye && m.player2) {
+        const resolved = { ...m, winner: m.player2, player1Score: '0', player2Score: String(WIN_TARGET) };
+        matchesCopy = propagateResult(
+          matchesCopy.map(mm => (mm.id === m.id ? resolved : mm)),
+          resolved
+        );
+      } else if (p2Bye && !p1Bye && m.player1) {
+        const resolved = { ...m, winner: m.player1, player1Score: String(WIN_TARGET), player2Score: '0' };
+        matchesCopy = propagateResult(
+          matchesCopy.map(mm => (mm.id === m.id ? resolved : mm)),
+          resolved
+        );
+      }
+
+      return matchesCopy;
+    };
+
+    matchesCopy
+      .filter(m => m.roundName !== '3-р байрын тоглолт')
+      .forEach(resolve);
+
+    return matchesCopy;
   };
 
   // Update subsequent matches when a match result changes
@@ -624,7 +671,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                         value={match.player1Score || ''}
                         onChange={(e) => handleScoreChange(match.id, 'player1Score', e.target.value)}
                         min="0"
-                        max="3"
+                        max={WIN_TARGET}
                       />
                     </div>
 
@@ -644,7 +691,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                         value={match.player2Score || ''}
                         onChange={(e) => handleScoreChange(match.id, 'player2Score', e.target.value)}
                         min="0"
-                        max="3"
+                        max={WIN_TARGET}
                       />
                     </div>
                   </div>
