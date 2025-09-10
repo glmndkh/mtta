@@ -26,9 +26,11 @@ interface GroupStageGroup {
 
 interface KnockoutMatch {
   id: string;
-  round: string;
+  round: number;
   player1?: { id: string; name: string };
   player2?: { id: string; name: string };
+  player1Score?: string;
+  player2Score?: string;
   score?: string;
   winner?: { id: string; name: string };
   position: { x: number; y: number };
@@ -428,7 +430,18 @@ interface Participant {
             {/* Knockout */}
             <TabsContent value="knockout">
               {knockoutResults.length > 0 ? (
-                <KnockoutBracket matches={knockoutResults} />
+                <KnockoutBracket
+                  matches={knockoutResults.map(match => ({
+                    id: match.id,
+                    round: match.round,
+                    player1: match.player1,
+                    player2: match.player2,
+                    winner: match.winner,
+                    score1: match.player1Score ? parseInt(match.player1Score, 10) : undefined,
+                    score2: match.player2Score ? parseInt(match.player2Score, 10) : undefined,
+                    position: match.position
+                  }))}
+                />
               ) : (
                 <div className="text-center text-gray-400 py-8">Нугалааны мэдээлэл алга.</div>
               )}

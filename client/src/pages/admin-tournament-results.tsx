@@ -48,7 +48,7 @@ interface GroupStageTable {
 
 interface KnockoutMatch {
   id: string;
-  round: string;
+  round: number;
   player1?: { id: string; name: string };
   player2?: { id: string; name: string };
   player1Score?: string;
@@ -187,7 +187,7 @@ export default function AdminTournamentResultsPage() {
     for (let i = 0; i < players.length; i += 2) {
       knockout.push({
         id: `match_${i / 2 + 1}`,
-        round: 'quarterfinal',
+        round: 1,
         player1: players[i],
         player2: players[i + 1],
         position: { x: 0, y: i / 2 },
@@ -230,27 +230,9 @@ export default function AdminTournamentResultsPage() {
         console.log('Loading existing knockout results:', knockoutResults);
         console.log('Available rounds:', knockoutResults.map(m => m.round));
 
-        // Look for final match - stored semifinals are actually the finals in this tournament structure
-        let finalMatch = knockoutResults.find(m => 
-          m.round === 'final' || 
-          m.round === 3 || 
-          (m as any).roundName === 'Финал'
-        );
-
-        // If no final match found, look in stored semifinals (which are actually finals)
-        if (!finalMatch) {
-          const storedSemifinals = knockoutResults.filter(m => m.round === 'semifinal');
-          console.log('Found stored semifinals (actually finals):', storedSemifinals);
-
-          // Filter out 3rd place playoff and find the actual final
-          const actualFinals = storedSemifinals.filter(m => m.id !== 'third_place_playoff');
-
-          if (actualFinals.length >= 1 && actualFinals[0]?.winner) {
-            // Use the first actual final match directly
-            finalMatch = actualFinals[0];
-            console.log('Using stored semifinal as final match:', finalMatch);
-          }
-        }
+        // Look for final match - match with highest round (excluding 3rd place)
+        const finalRound = Math.max(...knockoutResults.map(m => m.round), 0);
+        const finalMatch = knockoutResults.find(m => m.round === finalRound && m.id !== 'third_place_playoff');
 
         console.log('Found/created final match:', finalMatch);
 
@@ -783,7 +765,7 @@ export default function AdminTournamentResultsPage() {
 
           const importedMatches: KnockoutMatch[] = jsonData.map((row: any, index) => ({
             id: `imported_${Date.now()}_${index}`,
-            round: row['Шат'] || 'quarterfinal',
+            round: typeof row['Шат'] === 'number' ? row['Шат'] : parseInt(row['Шат']) || 1,
             player1: row['Тоглогч 1'] ? { id: `temp_${Date.now()}_1_${index}`, name: row['Тоглогч 1'] } : undefined,
             player2: row['Тоглогч 2'] ? { id: `temp_${Date.now()}_2_${index}`, name: row['Тоглогч 2'] } : undefined,
             score: row['Оноо'] || '',
@@ -814,36 +796,67 @@ export default function AdminTournamentResultsPage() {
     event.target.value = '';
   };
 
-  // Function to generate a bracket structure
-  const generateBracket = (numPlayers: number): KnockoutMatch[] => {
+  // Helper to get round display name
+  const getRoundName = (matchCount: number): string => {
+    switch (matchCount) {
+      case 1: return 'Финал';
+      case 2: return 'Хагас финал';
+      case 4: return 'Дөрөвний финал';
+      case 8: return '1/8 финал';
+      case 16: return '1/16 финал';
+      case 32: return '1/32 финал';
+      case 64: return '1/64 финал';
+      default:
+        return `1/${matchCount * 2} финал`;
+    }
+  };
+
+  // Function to generate a bracket structure for any player count
+  const generateBracket = (playerCount: number): KnockoutMatch[] => {
+    if (playerCount < 2) return [];
+
+    const powerOf2 = Math.pow(2, Math.ceil(Math.log2(playerCount)));
+    const rounds = Math.ceil(Math.log2(powerOf2));
+    const byeCount = powerOf2 - playerCount;
+
+    const ROUND_WIDTH = 350;
+    const START_Y = 80;
     const matches: KnockoutMatch[] = [];
-    let currentRoundMatches = numPlayers;
-    let currentRound = 1;
-    let xOffset = 0;
 
-    // Ensure number of players is a power of 2 for simplicity, pad with byes if necessary
-    // For now, we'll assume the KnockoutBracketEditor handles non-power-of-2,
-    // but a more robust solution would pad with 'Bye' players.
+    for (let round = 1; round <= rounds; round++) {
+      const matchesInRound = Math.pow(2, rounds - round);
 
-    // Simplified bracket generation: Assume 4 players for initial bracket
-    if (numPlayers === 4) {
-      matches.push(
-        { id: 'match_1', round: 'quarterfinal', player1: undefined, player2: undefined, position: { x: 0, y: 0 } },
-        { id: 'match_2', round: 'quarterfinal', player1: undefined, player2: undefined, position: { x: 0, y: 1 } },
-        { id: 'match_3', round: 'semifinal', player1: undefined, player2: undefined, position: { x: 200, y: 0.5 } }, // Positioned between match 1 and 2
-        { id: 'third_place_playoff', round: 'semifinal', player1: undefined, player2: undefined, position: { x: 200, y: 1.5 } }, // Positioned below semifinal
-        { id: 'match_4', round: 'final', player1: undefined, player2: undefined, position: { x: 400, y: 1 } } // Positioned after semifinal
-      );
-    } else {
-      // For other numbers of players, a more complex algorithm is needed.
-      // This placeholder just creates a single final match.
-      matches.push(
-        { id: 'match_final_placeholder', round: 'final', player1: undefined, player2: undefined, position: { x: 200, y: 1 } }
-      );
-      console.warn(`Bracket generation for ${numPlayers} players is simplified. A full implementation would handle padding and dynamic round generation.`);
+      for (let matchIndex = 0; matchIndex < matchesInRound; matchIndex++) {
+        const verticalSpacing = Math.pow(2, round) * 120;
+        const centerOffset = (matchesInRound - 1) * verticalSpacing / 2;
+        const yPosition = START_Y + (matchIndex * verticalSpacing) - centerOffset + (round * 50);
+
+        const match: KnockoutMatch = {
+          id: `match_${round}_${matchIndex}`,
+          round,
+          position: {
+            x: 50 + (round - 1) * ROUND_WIDTH,
+            y: Math.max(yPosition, 60)
+          }
+        };
+
+        if (round === 1 && matchIndex < byeCount) {
+          match.player2 = { id: 'bye', name: 'BYE' };
+        }
+
+        matches.push(match);
+      }
     }
 
-    return matches;
+    if (rounds >= 2) {
+      matches.push({
+        id: 'third_place_playoff',
+        round: rounds,
+        position: { x: 200 + (rounds - 2) * ROUND_WIDTH / 2, y: START_Y + 450 }
+      });
+    }
+
+    return matches.sort((a, b) => a.round - b.round || a.position.y - b.position.y);
   };
 
   return (
@@ -1043,16 +1056,12 @@ export default function AdminTournamentResultsPage() {
                         <KnockoutBracket
                           matches={knockoutMatches.map(match => ({
                             id: match.id,
-                            round: match.round === 'final' ? 3 : match.round === 'semifinal' ? 2 : 1,
-                            roundName: match.id === 'third_place_playoff' ? '3-р байрын тоглолт' :
-                                     match.round === 'final' ? 'Финал' :
-                                     match.round === 'semifinal' ? 'Хагас финал' : 'Дөрөвний финал',
+                            round: match.round,
                             player1: match.player1,
                             player2: match.player2,
-                            player1Score: match.player1Score,
-                            player2Score: match.player2Score,
-                            score: match.score,
                             winner: match.winner,
+                            score1: match.player1Score ? parseInt(match.player1Score, 10) : undefined,
+                            score2: match.player2Score ? parseInt(match.player2Score, 10) : undefined,
                             position: match.position
                           }))}
                           selectedMatchId={selectedBracketMatchId || undefined}
@@ -1070,33 +1079,14 @@ export default function AdminTournamentResultsPage() {
 
                   {/* Admin Editor */}
                   <KnockoutBracketEditor
-                    initialMatches={knockoutMatches.map(match => {
-                      // Map round values more comprehensively
-                      let roundNum = 1;
-                      let roundName = 'Дөрөвний финал';
-
-                      if (match.round === 'final' || match.round === 3) {
-                        roundNum = 3;
-                        roundName = 'Финал';
-                      } else if (match.round === 'semifinal' || match.round === 2) {
-                        // What was called "semifinal" is actually the final when only 4 players
-                        roundNum = 3;
-                        roundName = 'Финал';
-                      } else if (match.round === 'quarterfinal' || match.round === 1) {
-                        roundNum = 2;
-                        roundName = 'Хагас финал';
-                      }
-
-                      // Special case for 3rd place playoff
-                      if (match.id === 'third_place_playoff') {
-                        roundNum = 3; // Same level as final
-                        roundName = '3-р байрын тоглолт';
-                      }
-
-                      return {
+                    initialMatches={(() => {
+                      const totalRounds = Math.max(...knockoutMatches.map(m => m.round), 0);
+                      return knockoutMatches.map(match => ({
                         id: match.id,
-                        round: roundNum,
-                        roundName: roundName,
+                        round: match.round,
+                        roundName: match.id === 'third_place_playoff'
+                          ? '3-р байрын тоглолт'
+                          : getRoundName(Math.pow(2, totalRounds - match.round)),
                         player1: match.player1,
                         player2: match.player2,
                         player1Score: match.player1Score,
@@ -1104,8 +1094,8 @@ export default function AdminTournamentResultsPage() {
                         score: match.score,
                         winner: match.winner,
                         position: match.position
-                      };
-                    })}
+                      }));
+                    })()}
                     users={allUsers} // Pass allUsers, but logic inside will use participants
                     qualifiedPlayers={getQualifiedPlayers()}
                     selectedMatchId={selectedBracketMatchId || undefined}
@@ -1114,8 +1104,7 @@ export default function AdminTournamentResultsPage() {
                       // Convert back to original format and preserve individual scores
                       const convertedMatches = newMatches.map(match => ({
                         id: match.id,
-                        round: match.roundName === 'Финал' ? 'final' : 
-                               match.roundName === 'Хагас финал' ? 'semifinal' : 'quarterfinal',
+                        round: match.round,
                         player1: match.player1,
                         player2: match.player2,
                         player1Score: match.player1Score,
