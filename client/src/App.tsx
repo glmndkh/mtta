@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -122,13 +123,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <LanguageProvider>
-          <Router>
+          <TooltipProvider>
             <div className="glow-bg"></div>
             <div className="main-bg">
               <Toaster />
               <Router />
             </div>
-          </Router>
+          </TooltipProvider>
         </LanguageProvider>
       </ThemeProvider>
     </QueryClientProvider>
