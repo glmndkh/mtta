@@ -1,0 +1,170 @@
+You’re close. No obvious runtime errors jump out, but two logic gaps block your “auto-advance on score entry” goal:
+
+1. **Winner only set when *both* scores exist.**
+   In `handleScoreChange` you require `m.player1Score && m.player2Score` before assigning a winner, so nothing advances when just one score is entered.
+
+2. **BYE/lucky-draw cases aren’t auto-resolved.**
+   You create BYEs, but you never mark the other player as winner and propagate.
+
+Below are tight drops you can paste in with minimal blast radius.
+
+---
+
+### A. Add a win target and fix `handleScoreChange`
+
+Put this near the top of the component (under hooks):
+
+```ts
+const WIN_TARGET = 3; // sets won needed; adjust as needed
+```
+
+Replace your `handleScoreChange` with this version (only the inner winner logic changes):
+
+```ts
+const handleScoreChange = (matchId: string, scoreField: 'player1Score' | 'player2Score', value: string) => {
+  setMatches(prev => {
+    let updatedMatch: Match | undefined;
+
+    const newMatches = prev.map(match => {
+      if (match.id !== matchId) return match;
+
+      const m = { ...match, [scoreField]: value };
+
+      // Normalize & check presence
+      const hasP1 = m.player1Score !== undefined && m.player1Score !== '';
+      const hasP2 = m.player2Score !== undefined && m.player2Score !== '';
+      const p1 = hasP1 ? Math.max(0, parseInt(String(m.player1Score), 10)) : 0;
+      const p2 = hasP2 ? Math.max(0, parseInt(String(m.player2Score), 10)) : 0;
+
+      // Always clear winner first
+      m.winner = undefined;
+
+      // Decide winner in three cases:
+      // 1) One reaches WIN_TARGET and leads (even if the other score is blank)
+      // 2) Both present, non-equal
+      // 3) Prevent ties/negatives by guards above
+      if ((hasP1 && p1 >= WIN_TARGET && (!hasP2 || p1 > p2)) && m.player1) {
+        m.winner = m.player1;
+      } else if ((hasP2 && p2 >= WIN_TARGET && (!hasP1 || p2 > p1)) && m.player2) {
+        m.winner = m.player2;
+      } else if (hasP1 && hasP2 && p1 !== p2 && p1 >= 0 && p2 >= 0) {
+        m.winner = (p1 > p2 ? m.player1 : m.player2);
+      }
+
+      updatedMatch = m;
+      return m;
+    });
+
+    return updatedMatch ? propagateResult(newMatches, updatedMatch) : newMatches;
+  });
+};
+```
+
+Also, update your score inputs to respect the same target:
+
+```tsx
+<Input type="number" min="0" max={WIN_TARGET} ... />
+```
+
+---
+
+### B. Auto-advance BYE (and optional Lucky draw)
+
+Add a helper and call it after generating or editing matches:
+
+```ts
+const autoResolveByes = (arr: Match[]) => {
+  let matchesCopy = [...arr];
+
+  const resolve = (m: Match) => {
+    if (!m.player1 || !m.player2) return matchesCopy;
+
+    // If one side is BYE, the other wins immediately
+    const p1Bye = m.player1.id === 'bye';
+    const p2Bye = m.player2.id === 'bye';
+
+    if (p1Bye && !p2Bye && m.player2) {
+      const resolved = { ...m, winner: m.player2, player1Score: '0', player2Score: String(WIN_TARGET) };
+      matchesCopy = propagateResult(
+        matchesCopy.map(mm => (mm.id === m.id ? resolved : mm)),
+        resolved
+      );
+    } else if (p2Bye && !p1Bye && m.player1) {
+      const resolved = { ...m, winner: m.player1, player1Score: String(WIN_TARGET), player2Score: '0' };
+      matchesCopy = propagateResult(
+        matchesCopy.map(mm => (mm.id === m.id ? resolved : mm)),
+        resolved
+      );
+    }
+
+    return matchesCopy;
+  };
+
+  matchesCopy
+    .filter(m => m.roundName !== '3-р байрын тоглолт')
+    .forEach(resolve);
+
+  return matchesCopy;
+};
+```
+
+Use it right after creating the bracket:
+
+```ts
+const createEmptyBracket = useCallback(() => {
+  if (qualifiedPlayers.length < 4) {
+    toast({ title: "Хангалтгүй тоглогч", description: "Дор хаяж 4 тоглогч шаардлагатай", variant: "destructive" });
+    return;
+  }
+  const bracket = generateBracket(qualifiedPlayers.length);
+  const resolved = autoResolveByes(bracket);
+  setMatches(resolved);
+  toast({ title: "Шигшээ тоглолт үүсгэгдлээ", description: `${qualifiedPlayers.length} тоглогчийн хоосон шигшээ тоглолт үүсгэгдлээ` });
+}, [qualifiedPlayers, generateBracket, toast]);
+```
+
+…and when a player is changed to/from BYE (or Lucky draw), resolve immediately:
+
+```ts
+const handlePlayerChange = (matchId: string, position: 'player1' | 'player2', playerId: string) => {
+  let selectedPlayer: Player | undefined;
+
+  if (playerId === 'lucky_draw') {
+    selectedPlayer = { id: 'lucky_draw', name: 'Lucky draw' };
+  } else if (playerId === 'bye') {
+    selectedPlayer = { id: 'bye', name: 'BYE' };
+  } else if (playerId) {
+    const qp = qualifiedPlayers.find(q => q.id === playerId);
+    if (qp) selectedPlayer = { id: qp.id, name: qp.name };
+  }
+
+  setMatches(prev => {
+    const afterPick = prev.map(m =>
+      m.id === matchId ? { ...m, [position]: selectedPlayer, winner: undefined } : m
+    );
+    const updatedMatch = afterPick.find(m => m.id === matchId)!;
+
+    // If the updated match has a BYE participant, auto resolve now
+    const maybeResolved = autoResolveByes(afterPick);
+    return propagateResult(maybeResolved, updatedMatch);
+  });
+};
+```
+
+> If you don’t want admins to *manually* pick BYE, drop the `'bye'` branch above; the `autoResolveByes` after bracket creation is still enough.
+
+---
+
+### C. (Optional) Clear downstream when participants change
+
+You already clear the *next match* winner if it was one of the just-updated participants. If you see odd carryovers deeper in the tree, add a small DFS to clear all downstream dependents when a feeder match changes. For now, your single-hop clear is OK.
+
+---
+
+### D. Text nit
+
+Your “advance all winners” toast says “Хожигчдыг шилжүүлэх” (winners), but your code comment mentions losers for the 3rd place logic—functionality is correct; just the wording is a bit confusing.
+
+---
+
+With A + B, the moment a player hits `WIN_TARGET` (e.g., 3–x), or as soon as both scores are non-equal, the winner is set and **propagated automatically**—and BYE rounds resolve themselves without manual clicks.
