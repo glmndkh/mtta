@@ -430,7 +430,7 @@ export default function AdminTournamentResultsPage() {
               onClick={() => setLocation('/admin/tournaments')}
               variant="outline"
             >
-              Тэмцээний жагсаалт руу буцах
+              Тэмцээнний жагсаалт руу буцах
             </Button>
             <Button 
               onClick={() => setLocation('/admin/tournament-results')}

@@ -556,6 +556,130 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
       )}
 
       
+    {/* Individual Match Editors */}
+      {matches.length > 0 && (
+        <div className="mt-8">
+          <h3 className="text-lg font-semibold mb-4">Тоглолтын засвар</h3>
+          <div className="grid gap-4">
+            {matches.map((match) => (
+              <Card 
+                key={match.id} 
+                className={`${selectedMatchId === match.id ? 'ring-2 ring-blue-500' : ''}`}
+                id={`match-editor-${match.id}`}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{match.roundName}</Badge>
+                      {match.id === 'third_place_playoff' && (
+                        <Badge variant="secondary">3-р байр</Badge>
+                      )}
+                      {getFinalRankings().some(r => r.player.id === match.winner?.id) && (
+                        <Badge className="bg-yellow-500">
+                          {getFinalRankings().find(r => r.player.id === match.winner?.id)?.medal}
+                        </Badge>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteMatch(match.id)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Player 1 */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Тоглогч 1</label>
+                      <UserAutocomplete
+                        users={getAvailableUsers(match.id, 'player1')}
+                        value={match.player1?.id || ''}
+                        onChange={(playerId) => handlePlayerChange(match.id, 'player1', playerId)}
+                        placeholder="Тоглогч сонгох"
+                        includeSpecialOptions={true}
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Оноо"
+                        value={match.player1Score || ''}
+                        onChange={(e) => handleScoreChange(match.id, 'player1Score', e.target.value)}
+                        min="0"
+                        max="3"
+                      />
+                    </div>
+
+                    {/* Player 2 */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Тоглогч 2</label>
+                      <UserAutocomplete
+                        users={getAvailableUsers(match.id, 'player2')}
+                        value={match.player2?.id || ''}
+                        onChange={(playerId) => handlePlayerChange(match.id, 'player2', playerId)}
+                        placeholder="Тоглогч сонгох"
+                        includeSpecialOptions={true}
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Оноо"
+                        value={match.player2Score || ''}
+                        onChange={(e) => handleScoreChange(match.id, 'player2Score', e.target.value)}
+                        min="0"
+                        max="3"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Winner Selection */}
+                  {match.player1 && match.player2 && (
+                    <div className="mt-4">
+                      <label className="text-sm font-medium mb-2 block">Ялагч (гараар сонгох)</label>
+                      <div className="flex gap-2">
+                        <Button
+                          variant={match.winner?.id === match.player1.id ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleWinnerSelection(match.id, match.player1!.id)}
+                        >
+                          {match.player1.name}
+                        </Button>
+                        <Button
+                          variant={match.winner?.id === match.player2.id ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleWinnerSelection(match.id, match.player2!.id)}
+                        >
+                          {match.player2.name}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleWinnerSelection(match.id, '')}
+                        >
+                          Цэвэрлэх
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Match Status */}
+                  <div className="mt-3 text-sm text-gray-500">
+                    {match.winner ? (
+                      <span className="text-green-600 font-medium">
+                        Ялагч: {match.winner.name}
+                      </span>
+                    ) : match.player1 && match.player2 ? (
+                      <span>Үр дүн оруулаагүй</span>
+                    ) : (
+                      <span>Тоглогчид сонгоогүй</span>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
