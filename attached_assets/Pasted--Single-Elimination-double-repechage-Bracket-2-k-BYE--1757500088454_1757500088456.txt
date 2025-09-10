@@ -1,0 +1,122 @@
+Хязгаарлалт
+
+Single Elimination л дэмжинэ (double/repechage биш).
+
+Bracket үргэлж 2^k (дутахаар BYE).
+
+Summary-only үр дүн: winner + series (ж: 3–0, 3–1, 3–2 / 4–0…); сетийн оноо хадгалахгүй.
+
+Одоо буй API/DB-г эвдэхгүй; байхгүй бол хамгийн бага шинэ endpoint нэм.
+
+A) “Match cards” хэсгийг устга
+
+Admin Results хуудсан дээрх тоглолт тус бүрийн том картууд, point/set мөрүүд, “оноо оруулах” тусдаа блокийг DOM-оос бүрэн ав.
+
+Зөвхөн Bracket View үлдэнэ.
+
+Acceptance: Admin Results хуудсанд зөвхөн bracket, queue/toolbar л харагдана.
+
+B) “Groups → Knockout” генератор (wizard)
+
+Эхлүүлэх товч: “Группаас bracket үүсгэх”.
+Шаардлага: бүх группийн тоглолтууд дууссан (status=finished) үед идэвхтэй.
+
+Тохиргоо (диалог):
+
+Qualifiers per group (k): 1,2,3,4… (default = tournament.config.qualifiersPerGroup).
+
+Seeding policy:
+
+Cross (default) — A1 vs B2, B1 vs A2, C1 vs D2, D1 vs C2 …
+
+Snake — 1-р байруудыг seed 1..G, 2-р байруудыг seed G+1..2G (serpentine), г.м.
+
+Best-of: 5 (default) / 7.
+
+Алгоритм:
+
+Групп бүрээс эхний k = qualifiers жагсаалтыг ав.
+
+Нийт Q = Σ |qualifiers|.
+
+N = 2^ceil(log2(Q)); дутууг BYE.
+
+Сонгосон policy-гоор seed жагсаалт үүсгээд стандарт bracket placement-д (8: 1–8, 4–5, 3–6, 2–7; 16: 1–16, 8–9, 5–12, …) байршуул.
+
+BYE-г өндөр seed-үүдэд оноо (эхний тойрогт шууд гаргана).
+
+Match граф: id, round, indexInRound, playerA, playerB, nextMatchId, nextSlot.
+
+Locking: Bracket үүссэний дараа locked=false. Ямар нэг match хадгалагдмагц locked=true болж дахин generate-ийг блокло.
+
+Acceptance: Q-оос үл хамааран bracket 2^k болж, seed1&seed2 зөвхөн финалд таарах байрлалтай; BYE автоматаар оноогдоно.
+
+C) In-Bracket Results (summary-only) — админ шууд bracket дээр оруулна
+
+Match click = Result Drawer/Modal:
+
+Winner: A | B | (optional) W.O. | RET
+
+Best-of: 5 | 7 (pre-filled from bracket config)
+
+Series:
+
+BO5 → 3–0, 3–1, 3–2
+
+BO7 → 4–0, 4–1, 4–2, 4–3
+
+Валидаци: сонгосон winner-тэй зөрчилдсөн series-ийг зөвшөөрөхгүй. W.O./RET → series-ийг автоматаар 3–0/4–0 lock.
+
+Save / Save & Next / Clear:
+
+Save дээр: энэ match-ийн winnerId, setsWonA/B, bestOf, resultType хадгал.
+
+nextMatchId байвал winner-ийг nextSlot руу шууд байршуул, дараагийн match-ийн статусыг scheduled-д шилжүүл.
+
+React Query invalidate (эсвэл эквивалент): bracket/matches cache.
+
+Save & Next → queue-ийн дараагийн match-ийг нээнэ.
+
+BYE handling: BYE-тай матчийг автоматаар “finished” болгон winner-ийг дамжуул (UI дээр ямар ч оролт шаардахгүй).
+
+Acceptance: Match нээхэд зөвхөн winner + series сонгоод хадгална; хадгалсантай зэрэгцэн дараагийн тоглолтын оролцогч шууд гарч ирнэ.
+
+D) Public “DRAW/Bracket” харагдац
+
+Багана бүр = round (R32→R16→QF→SF→F).
+
+Box дотор: Дээд = Player A, Доод = Player B; ялагч bold.
+
+Баруун доод буланд жижиг чип: 3–0/3–1/…; pending бол “VS”.
+
+W.O./RET бол чип дээр тусгай тэмдэг (ж: W.O.).
+
+BYE box-ууд саарал “BYE”.
+
+Acceptance: Bracket дээр series чип л харагдана; сетийн задлал байхгүй.
+
+E) Endpoints (хэрэв хэрэгтэй бол хамгийн бага нэмэлт)
+
+POST /api/tournaments/:id/bracket/generate-from-groups
+Body: { qualifiersPerGroup, seeding: 'cross'|'snake', bestOf }
+→ группийн standings-оос автоматаар bracket үүсгээд граф буцаа.
+
+PUT /api/matches/:id/result-summary
+Body: { winner: 'A'|'B', bestOf: 5|7, setsWonA, setsWonB, resultType?: 'WO'|'RET' }
+→ хадгалаад winner-ийг дараагийн тоглолт руу дамжуул.
+
+GET /api/tournaments/:id/knockout → bracket граф уншина.
+
+Acceptance: 201/200 зөв буцна; regenerate зөвхөн locked=false үед.
+
+F) QA / шалгалт (заавал)
+
+Групп A,B (по 4): k=2 → Q=4 → N=4 → bracket (SF→F): A1–B2, B1–A2 (Cross).
+
+Групп A–D (по 4): k=2 → Q=8 → 1–8, 4–5, 3–6, 2–7 (Snake/Cross-ын дүрмийн дагуу зөв).
+
+Q=5/6/12/17 тохиолдол: N=8/8/16/32; BYE өндөр seed-үүдэд оноогдож автоматаар дамжин, UI эвдрэхгүй.
+
+Match хадгалахад дараагийн тойрогт нэн даруй оролцогч гарч ирнэ; regenerate блоклогдоно.
+
+Public DRAW дээр series чип зөв (3–0/3–1/…).
