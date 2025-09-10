@@ -38,7 +38,7 @@ export default function NationalTeamPage() {
                     className="w-full h-48 object-contain bg-gray-100"
                   />
                 )}
-                <CardContent className="p-4 bg-gradient-to-r from-orange-700 to-red-700 text-white">
+                <CardContent className="p-4 bg-gradient-to-r from-green-700 to-green-600 text-white">
                   <div className="flex flex-col">
                     <span className="text-xl font-semibold">
                       {player.firstName} {player.lastName}
