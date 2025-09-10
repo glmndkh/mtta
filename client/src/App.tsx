@@ -94,19 +94,43 @@ function Router() {
 }
 
 function App() {
+  // Add global error handler for unhandled runtime errors
+  // and unhandled promise rejections to prevent app crashes.
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error('Runtime error caught:', event.error);
+      // Prevent the error from breaking the app
+      event.preventDefault();
+    };
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error('Unhandled promise rejection:', event.reason);
+      // Prevent the error from breaking the app
+      event.preventDefault();
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
-      <LanguageProvider>
-        <ThemeProvider>
-          <TooltipProvider>
+      <ThemeProvider>
+        <LanguageProvider>
+          <Router>
             <div className="glow-bg"></div>
             <div className="main-bg">
               <Toaster />
               <Router />
             </div>
-          </TooltipProvider>
-        </ThemeProvider>
-      </LanguageProvider>
+          </Router>
+        </LanguageProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
