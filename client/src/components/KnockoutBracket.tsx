@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLocation } from 'wouter';
 import './knockout.css';
 
 interface Player {
@@ -22,12 +23,16 @@ interface KnockoutBracketProps {
   title?: string;
   onMatchClick?: (match: Match) => void;
   selectedMatchId?: string;
+  isAdmin?: boolean;
+  onPlayerClick?: (playerId: string) => void;
 }
 
 export function KnockoutBracket({ 
   matches, 
   title = "Шигшээ тоглолт",
-  onMatchClick 
+  onMatchClick,
+  isAdmin = false,
+  onPlayerClick
 }: KnockoutBracketProps) {
   // Group matches by round
   const matchesByRound = matches.reduce((acc, match) => {
@@ -71,6 +76,21 @@ export function KnockoutBracket({
     return score !== undefined ? score : '-';
   };
 
+  const [, setLocation] = useLocation();
+
+  const handlePlayerClick = (player: Player | null | undefined, event: React.MouseEvent) => {
+    if (!player || !isAdmin) return;
+    
+    event.stopPropagation(); // Prevent match click when clicking player name
+    
+    if (onPlayerClick) {
+      onPlayerClick(player.id);
+    } else {
+      // Default navigation to player profile
+      setLocation(`/profile/${player.id}`);
+    }
+  };
+
   return (
     <div className="knockout-tournament">
       <div className="tournament-header">
@@ -95,7 +115,11 @@ export function KnockoutBracket({
                   >
                     <div className="match-content">
                       <div className={`player-row ${match.winner?.id === match.player1?.id ? 'winner' : ''}`}>
-                        <div className="player-name">
+                        <div 
+                          className={`player-name ${isAdmin && match.player1 && match.player1.name !== 'BYE' ? 'player-clickable' : ''}`}
+                          onClick={(e) => handlePlayerClick(match.player1, e)}
+                          title={isAdmin && match.player1 && match.player1.name !== 'BYE' ? 'Тоглогчийн профайл харах' : undefined}
+                        >
                           {getPlayerDisplay(match.player1)}
                         </div>
                         <div className="player-score">
@@ -108,7 +132,11 @@ export function KnockoutBracket({
                       </div>
 
                       <div className={`player-row ${match.winner?.id === match.player2?.id ? 'winner' : ''}`}>
-                        <div className="player-name">
+                        <div 
+                          className={`player-name ${isAdmin && match.player2 && match.player2.name !== 'BYE' ? 'player-clickable' : ''}`}
+                          onClick={(e) => handlePlayerClick(match.player2, e)}
+                          title={isAdmin && match.player2 && match.player2.name !== 'BYE' ? 'Тоглогчийн профайл харах' : undefined}
+                        >
                           {getPlayerDisplay(match.player2)}
                         </div>
                         <div className="player-score">
