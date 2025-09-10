@@ -109,10 +109,10 @@ export function KnockoutBracket({
   };
 
   // Advance winner to next match
-  const advanceWinner = (currentMatch: Match, winner: Player) => {
-    if (!currentMatch.nextMatchId) return;
+  const advanceWinner = (matches: Match[], currentMatch: Match, winner: Player): Match[] => {
+    if (!currentMatch.nextMatchId) return matches;
     
-    const updatedMatches = localMatches.map(match => {
+    return matches.map(match => {
       if (match.id === currentMatch.nextMatchId) {
         // Determine which player position to fill based on source match
         const isFirstSource = match.sourceMatchIds?.[0] === currentMatch.id;
@@ -123,8 +123,6 @@ export function KnockoutBracket({
       }
       return match;
     });
-    
-    setLocalMatches(updatedMatches);
   };
 
   const handlePlayerClick = (
@@ -160,7 +158,7 @@ export function KnockoutBracket({
   };
 
   const saveEdit = (matchId: string, field: string, value: string) => {
-    const updatedMatches = localMatches.map(match => {
+    let updatedMatches = localMatches.map(match => {
       if (match.id === matchId) {
         const updatedMatch = { ...match };
         
@@ -177,7 +175,6 @@ export function KnockoutBracket({
           if (winner) {
             updatedMatch.winner = winner;
             updatedMatch.status = 'finished';
-            advanceWinner(updatedMatch, winner);
           }
         }
         
@@ -185,6 +182,12 @@ export function KnockoutBracket({
       }
       return match;
     });
+
+    // Handle winner advancement after match update
+    const currentMatch = updatedMatches.find(m => m.id === matchId);
+    if (currentMatch && currentMatch.winner && (field === 'score1' || field === 'score2')) {
+      updatedMatches = advanceWinner(updatedMatches, currentMatch, currentMatch.winner);
+    }
     
     setLocalMatches(updatedMatches);
     setEditingField(null);
