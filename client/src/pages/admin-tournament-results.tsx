@@ -606,7 +606,7 @@ export default function AdminTournamentResultsPage() {
 
   
 
-  const updateMatchResult = (groupIndex: number, playerIndex: number, opponentIndex: number, score: string) => {
+  const updateGroupMatchResult = (groupIndex: number, playerIndex: number, opponentIndex: number, score: string) => {
     const updated = [...groupStageTables];
     if (updated[groupIndex] && updated[groupIndex].resultMatrix) {
       updated[groupIndex].resultMatrix[playerIndex][opponentIndex] = score;
@@ -1485,7 +1485,7 @@ export default function AdminTournamentResultsPage() {
                                       ) : (
                                         <Input
                                           value={group.resultMatrix[playerIndex]?.[opponentIndex] || ''}
-                                          onChange={(e) => updateMatchResult(groupIndex, playerIndex, opponentIndex, e.target.value)}
+                                          onChange={(e) => updateGroupMatchResult(groupIndex, playerIndex, opponentIndex, e.target.value)}
                                           placeholder="3-1"
                                           className="w-full h-8 text-center text-xs"
                                         />
