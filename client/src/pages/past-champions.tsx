@@ -165,10 +165,8 @@ export default function PastChampions() {
                     {champions.map((champion, index) => (
                       <div 
                         key={champion.id} 
-                        className="relative group cursor-pointer overflow-hidden rounded-lg bg-gray-900 hover:shadow-2xl transition-all duration-500 hover:scale-105 animate-float-slow"
+                        className="relative group cursor-pointer overflow-hidden rounded-lg bg-gray-900"
                         style={{
-                          animationDelay: `${index * 200}ms`,
-                          animationDuration: `${3 + (index % 3)}s`,
                           aspectRatio: '3/4'
                         }}
                       >
@@ -227,7 +225,7 @@ export default function PastChampions() {
                         </div>
 
                         {/* Hover overlay */}
-                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="absolute inset-0 bg-black/20 opacity-0" />
                       </div>
                     ))}
                   </div>
@@ -238,18 +236,7 @@ export default function PastChampions() {
         </div>
       </div>
 
-      {/* Custom CSS for floating animation */}
-      <style jsx>{`
-        @keyframes float-slow {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          25% { transform: translateY(-10px) rotate(1deg); }
-          50% { transform: translateY(-5px) rotate(0deg); }
-          75% { transform: translateY(-15px) rotate(-1deg); }
-        }
-        .animate-float-slow {
-          animation: float-slow 4s ease-in-out infinite;
-        }
-      `}</style>
+      
     </PageWithLoading>
   );
 }
