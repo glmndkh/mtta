@@ -21,7 +21,8 @@ import {
   ChevronRight, 
   X, 
   AlertTriangle,
-  Search
+  Search,
+  Trash2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
@@ -242,6 +243,15 @@ export function MatchEditorDrawer({
         setPlayerB(sourceMatches[1].winner);
       }
     }
+  };
+
+  const clearAll = () => {
+    setPlayerA(null);
+    setPlayerB(null);
+    setWinner('none');
+    setSetsWonA(0);
+    setSetsWonB(0);
+    setBestOf(bestOfDefault);
   };
 
   const handleSeriesSelect = (series: string) => {
@@ -493,6 +503,10 @@ export function MatchEditorDrawer({
               <Button variant="outline" size="sm" onClick={resetToSource}>
                 <RotateCcw className="w-4 h-4 mr-2" />
                 Анхны байдалд буцаах
+              </Button>
+              <Button variant="outline" size="sm" onClick={clearAll} className="text-red-600 hover:text-red-700">
+                <Trash2 className="w-4 h-4 mr-2" />
+                Цэвэрлэх
               </Button>
             </div>
           </div>
