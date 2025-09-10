@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
 import { MatchEditorDrawer } from './MatchEditorDrawer';
+import { Input } from './ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import './knockout.css';
 
 interface Player {
@@ -43,6 +45,8 @@ export function KnockoutBracket({
 }: KnockoutBracketProps) {
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState<string>('');
   // Group matches by round
   const matchesByRound = matches.reduce((acc, match) => {
     if (!acc[match.round]) {
@@ -125,6 +129,24 @@ export function KnockoutBracket({
     setEditingMatch(null);
   };
 
+  const startEdit = (fieldId: string, currentValue: string) => {
+    if (!isAdmin) return;
+    setEditingField(fieldId);
+    setEditingValue(currentValue);
+  };
+
+  const saveEdit = (matchId: string, field: string, value: string) => {
+    // Here you would typically call an API to update the match
+    console.log('Saving edit:', { matchId, field, value });
+    setEditingField(null);
+    setEditingValue('');
+  };
+
+  const cancelEdit = () => {
+    setEditingField(null);
+    setEditingValue('');
+  };
+
   return (
     <div className="knockout-tournament">
       <div className="tournament-header">
@@ -149,15 +171,79 @@ export function KnockoutBracket({
                   >
                     <div className="match-content">
                       <div className={`player-row ${match.winner?.id === match.player1?.id ? 'winner' : ''}`}>
-                        <div
-                          className={`player-name ${match.player1 && !isAdmin && match.player1.name !== 'BYE' ? 'player-clickable' : ''}`}
-                          onClick={(e) => handlePlayerClick(match.player1, match, e)}
-                          title={!isAdmin && match.player1 && match.player1.name !== 'BYE' ? 'Тоглогчийн профайл харах' : undefined}
-                        >
-                          {getPlayerDisplay(match.player1)}
+                        <div className="player-name">
+                          {isAdmin && editingField === `${match.id}_player1` ? (
+                            <Select
+                              value={editingValue}
+                              onValueChange={(value) => {
+                                const selectedPlayer = availablePlayers.find(p => p.id === value);
+                                if (selectedPlayer) {
+                                  saveEdit(match.id, 'player1', selectedPlayer.name);
+                                }
+                              }}
+                              onOpenChange={(open) => {
+                                if (!open) cancelEdit();
+                              }}
+                            >
+                              <SelectTrigger className="w-full h-8 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availablePlayers.map((player) => (
+                                  <SelectItem key={player.id} value={player.id}>
+                                    {player.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <div
+                              className={`${match.player1 && !isAdmin && match.player1.name !== 'BYE' ? 'player-clickable' : ''} ${isAdmin ? 'cursor-pointer hover:bg-gray-100 px-1 rounded' : ''}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isAdmin) {
+                                  startEdit(`${match.id}_player1`, match.player1?.name || '');
+                                } else {
+                                  handlePlayerClick(match.player1, match, e);
+                                }
+                              }}
+                              title={isAdmin ? 'Тоглогч солих' : (!isAdmin && match.player1 && match.player1.name !== 'BYE' ? 'Тоглогчийн профайл харах' : undefined)}
+                            >
+                              {getPlayerDisplay(match.player1)}
+                            </div>
+                          )}
                         </div>
                         <div className="player-score">
-                          {(match.player1?.name === 'BYE' || match.player2?.name === 'BYE') ? '3' : getScoreDisplay(match.score1)}
+                          {isAdmin && editingField === `${match.id}_score1` ? (
+                            <Input
+                              type="number"
+                              value={editingValue}
+                              onChange={(e) => setEditingValue(e.target.value)}
+                              onBlur={() => saveEdit(match.id, 'score1', editingValue)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  saveEdit(match.id, 'score1', editingValue);
+                                } else if (e.key === 'Escape') {
+                                  cancelEdit();
+                                }
+                              }}
+                              className="w-12 h-6 text-xs text-center"
+                              autoFocus
+                            />
+                          ) : (
+                            <div
+                              className={`${isAdmin ? 'cursor-pointer hover:bg-gray-100 px-1 rounded' : ''}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isAdmin && match.player1?.name !== 'BYE' && match.player2?.name !== 'BYE') {
+                                  startEdit(`${match.id}_score1`, String(match.score1 || 0));
+                                }
+                              }}
+                              title={isAdmin ? 'Оноо засах' : undefined}
+                            >
+                              {(match.player1?.name === 'BYE' || match.player2?.name === 'BYE') ? '3' : getScoreDisplay(match.score1)}
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -166,15 +252,79 @@ export function KnockoutBracket({
                       </div>
 
                       <div className={`player-row ${match.winner?.id === match.player2?.id ? 'winner' : ''}`}>
-                        <div
-                          className={`player-name ${match.player2 && !isAdmin && match.player2.name !== 'BYE' ? 'player-clickable' : ''}`}
-                          onClick={(e) => handlePlayerClick(match.player2, match, e)}
-                          title={!isAdmin && match.player2 && match.player2.name !== 'BYE' ? 'Тоглогчийн профайл харах' : undefined}
-                        >
-                          {getPlayerDisplay(match.player2)}
+                        <div className="player-name">
+                          {isAdmin && editingField === `${match.id}_player2` ? (
+                            <Select
+                              value={editingValue}
+                              onValueChange={(value) => {
+                                const selectedPlayer = availablePlayers.find(p => p.id === value);
+                                if (selectedPlayer) {
+                                  saveEdit(match.id, 'player2', selectedPlayer.name);
+                                }
+                              }}
+                              onOpenChange={(open) => {
+                                if (!open) cancelEdit();
+                              }}
+                            >
+                              <SelectTrigger className="w-full h-8 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availablePlayers.map((player) => (
+                                  <SelectItem key={player.id} value={player.id}>
+                                    {player.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <div
+                              className={`${match.player2 && !isAdmin && match.player2.name !== 'BYE' ? 'player-clickable' : ''} ${isAdmin ? 'cursor-pointer hover:bg-gray-100 px-1 rounded' : ''}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isAdmin) {
+                                  startEdit(`${match.id}_player2`, match.player2?.name || '');
+                                } else {
+                                  handlePlayerClick(match.player2, match, e);
+                                }
+                              }}
+                              title={isAdmin ? 'Тоглогч солих' : (!isAdmin && match.player2 && match.player2.name !== 'BYE' ? 'Тоглогчийн профайл харах' : undefined)}
+                            >
+                              {getPlayerDisplay(match.player2)}
+                            </div>
+                          )}
                         </div>
                         <div className="player-score">
-                          {(match.player1?.name === 'BYE' || match.player2?.name === 'BYE') ? '0' : getScoreDisplay(match.score2)}
+                          {isAdmin && editingField === `${match.id}_score2` ? (
+                            <Input
+                              type="number"
+                              value={editingValue}
+                              onChange={(e) => setEditingValue(e.target.value)}
+                              onBlur={() => saveEdit(match.id, 'score2', editingValue)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  saveEdit(match.id, 'score2', editingValue);
+                                } else if (e.key === 'Escape') {
+                                  cancelEdit();
+                                }
+                              }}
+                              className="w-12 h-6 text-xs text-center"
+                              autoFocus
+                            />
+                          ) : (
+                            <div
+                              className={`${isAdmin ? 'cursor-pointer hover:bg-gray-100 px-1 rounded' : ''}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isAdmin && match.player1?.name !== 'BYE' && match.player2?.name !== 'BYE') {
+                                  startEdit(`${match.id}_score2`, String(match.score2 || 0));
+                                }
+                              }}
+                              title={isAdmin ? 'Оноо засах' : undefined}
+                            >
+                              {(match.player1?.name === 'BYE' || match.player2?.name === 'BYE') ? '0' : getScoreDisplay(match.score2)}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
