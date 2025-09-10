@@ -43,9 +43,11 @@ interface GroupStageGroup {
 
 interface KnockoutMatch {
   id: string;
-  round: string;
+  round: number;
   player1?: { id: string; name: string };
   player2?: { id: string; name: string };
+  player1Score?: string;
+  player2Score?: string;
   score?: string;
   winner?: { id: string; name: string };
   position: { x: number; y: number };
@@ -260,8 +262,16 @@ export default function TournamentResultsPage() {
                   </CardHeader>
                   <CardContent>
                     <KnockoutBracket
-                      matches={knockoutResults}
-                      onPlayerClick={navigateToProfile}
+                      matches={knockoutResults.map(match => ({
+                        id: match.id,
+                        round: match.round,
+                        player1: match.player1,
+                        player2: match.player2,
+                        winner: match.winner,
+                        score1: match.player1Score ? parseInt(match.player1Score, 10) : undefined,
+                        score2: match.player2Score ? parseInt(match.player2Score, 10) : undefined,
+                        position: match.position
+                      }))}
                     />
                   </CardContent>
                 </Card>
@@ -410,11 +420,11 @@ export default function TournamentResultsPage() {
                 <div className="space-y-6">
                   {/* Semifinals */}
                   {(() => {
-                    const semifinals = knockoutResults.filter(match => 
-                      match.round === "Хагас финал" || match.round === "1" || 
-                      (match.id && (match.id.includes('match_1_') || match.round.includes('финал')))
+                    const totalRounds = Math.max(...knockoutResults.map(m => m.round), 0);
+                    const semifinals = knockoutResults.filter(match =>
+                      match.round === totalRounds - 1 && match.id !== 'third_place_playoff'
                     );
-                    
+
                     if (semifinals.length > 0) {
                       return (
                         <Card className="card-dark border-l-4 border-l-orange-500">
@@ -475,11 +485,11 @@ export default function TournamentResultsPage() {
 
                   {/* Finals */}
                   {(() => {
-                    const finals = knockoutResults.filter(match => 
-                      match.round === "Финал" || match.round === "2" || 
-                      (match.id && match.id.includes('match_2_0'))
+                    const totalRounds = Math.max(...knockoutResults.map(m => m.round), 0);
+                    const finals = knockoutResults.filter(match =>
+                      match.round === totalRounds && match.id !== 'third_place_playoff'
                     );
-                    
+
                     if (finals.length > 0) {
                       return (
                         <Card className="card-dark border-l-4 border-l-yellow-500 bg-gradient-to-r from-yellow-900/20 to-amber-900/20">
@@ -546,8 +556,8 @@ export default function TournamentResultsPage() {
 
                   {/* Third Place Playoff */}
                   {(() => {
-                    const thirdPlace = knockoutResults.filter(match => 
-                      match.round === "3-р байрын тоглолт" || match.id === "third_place_playoff"
+                    const thirdPlace = knockoutResults.filter(match =>
+                      match.id === "third_place_playoff"
                     );
                     
                     if (thirdPlace.length > 0) {

@@ -74,6 +74,21 @@ import {
 import { db } from "./db";
 import { eq, desc, and, sql, or } from "drizzle-orm";
 
+const getRoundTitle = (round: number, totalRounds: number): string => {
+  const matchesInRound = Math.pow(2, totalRounds - round);
+  switch (matchesInRound) {
+    case 1: return 'Финал';
+    case 2: return 'Хагас финал';
+    case 4: return 'Дөрөвний финал';
+    case 8: return '1/8 финал';
+    case 16: return '1/16 финал';
+    case 32: return '1/32 финал';
+    case 64: return '1/64 финал';
+    default:
+      return `1/${matchesInRound * 2} финал`;
+  }
+};
+
 export interface IStorage {
   // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
@@ -1587,6 +1602,7 @@ export class DatabaseStorage implements IStorage {
           }
 
           if (Array.isArray(knockoutData)) {
+            const totalRounds = Math.max(...knockoutData.map((m: any) => m.round || 0));
             for (const match of knockoutData) {
               if (match.player1 && match.player2 && match.winner) {
                 // Find player IDs
@@ -1748,6 +1764,7 @@ export class DatabaseStorage implements IStorage {
           }
 
           if (Array.isArray(knockoutData)) {
+            const totalRounds = Math.max(...knockoutData.map((m: any) => m.round || 0));
             for (const match of knockoutData) {
               let isPlayerInMatch = false;
               let isPlayer1 = false;
@@ -1777,7 +1794,7 @@ export class DatabaseStorage implements IStorage {
 
                 tournamentMatches.push({
                   tournament: result.tournament,
-                  stage: `Шилжилтийн шат - ${match.round || 'Тодорхойгүй'}`,
+                  stage: `Шилжилтийн шат - ${getRoundTitle(match.round || 0, totalRounds)}`,
                   opponent: opponent,
                   result: match.score,
                   isWinner: isWinner,
@@ -1908,6 +1925,7 @@ export class DatabaseStorage implements IStorage {
 
             // Parse knockout matches
             if (Array.isArray(knockoutData)) {
+              const totalRounds = Math.max(...knockoutData.map((m: any) => m.round || 0));
               knockoutData.forEach((match: any) => {
                 if (match.player1?.id === playerId || match.player1?.id === userId ||
                     match.player2?.id === playerId || match.player2?.id === userId) {
@@ -1923,13 +1941,9 @@ export class DatabaseStorage implements IStorage {
                   }
 
                   // Determine match type for knockout
-                  let matchType = match.round || 'knockout';
-                  if (match.round === 'quarterfinal' && match.id === 'third_place_playoff') {
+                  let matchType = getRoundTitle(match.round || 0, totalRounds);
+                  if (match.id === 'third_place_playoff') {
                     matchType = 'Хүрэл медалийн тоглолт';
-                  } else if (match.round === 'semifinal') {
-                    matchType = 'Хагас финал';
-                  } else if (match.round === 'final') {
-                    matchType = 'Финал';
                   }
 
 

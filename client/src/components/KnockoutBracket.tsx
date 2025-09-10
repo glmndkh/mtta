@@ -12,7 +12,7 @@ interface Match {
   player2?: Player | null;
   winner?: Player | null;
   round: number;
-  position: number;
+  position: { x: number; y: number };
   score1?: number;
   score2?: number;
 }
@@ -21,6 +21,7 @@ interface KnockoutBracketProps {
   matches: Match[];
   title?: string;
   onMatchClick?: (match: Match) => void;
+  selectedMatchId?: string;
 }
 
 export function KnockoutBracket({ 
@@ -85,7 +86,7 @@ export function KnockoutBracket({
 
             <div className="matches-container">
               {matchesByRound[round]
-                .sort((a, b) => a.position - b.position)
+                .sort((a, b) => a.position.y - b.position.y)
                 .map((match) => (
                   <div 
                     key={match.id} 
