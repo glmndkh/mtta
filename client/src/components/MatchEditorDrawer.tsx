@@ -390,15 +390,20 @@ export function MatchEditorDrawer({
       }
 
       if (hasChanges) {
+        // Force complete cache invalidation and refetch
+        queryClient.invalidateQueries({ queryKey: ['/api/tournaments'] });
+        queryClient.refetchQueries({ queryKey: ['/api/tournaments'] });
+
         toast({
           title: "Амжилттай",
-          description: "Матч амжилттай шинэчлэгдлээ",
+          description: "Тоглолт амжилттай шинэчлэгдлээ",
         });
+        onClose();
 
-        // Give some time for the mutations to complete before closing
+        // Small delay then force refresh
         setTimeout(() => {
-          onClose();
-        }, 500);
+          window.location.reload();
+        }, 1000);
       } else {
         toast({
           title: "Мэдээлэл",

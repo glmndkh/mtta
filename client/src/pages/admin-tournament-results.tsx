@@ -152,10 +152,14 @@ export default function AdminTournamentResultsPage() {
   }, [filteredParticipationTypes, participationType]);
 
   // Fetch existing results
-  const { data: existingResults, error: resultsError } = useQuery<TournamentResults>({
+  const { data: existingResults, isLoading: resultsLoading, error: resultsError } = useQuery<TournamentResults>({
     queryKey: ['/api/tournaments', tournamentId, 'results'],
     enabled: !!tournamentId,
     retry: 1,
+    staleTime: 0, // Always consider data stale
+    cacheTime: 0, // Don't cache results
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   // Fetch all users for autocomplete
@@ -328,6 +332,63 @@ export default function AdminTournamentResultsPage() {
       });
     },
   });
+
+  // Mutation to update match results
+  const updateMatchResult = useMutation({
+    mutationFn: async ({ matchId, winner, bestOf, setsWonA, setsWonB }: {
+      matchId: string;
+      winner: 'A' | 'B' | 'WO' | 'RET';
+      bestOf: number;
+      setsWonA: number;
+      setsWonB: number;
+    }) => {
+      return apiRequest(`/api/matches/${matchId}/result-summary`, {
+        method: 'PUT',
+        body: JSON.stringify({ winner, bestOf, setsWonA, setsWonB }),
+      });
+    },
+    onSuccess: () => {
+      // Force refetch with no cache
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', tournamentId, 'results'] });
+      queryClient.refetchQueries({ queryKey: ['/api/tournaments', tournamentId, 'results'] });
+
+      // Also invalidate tournament data
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', tournamentId] });
+
+      toast({
+        title: "Амжилттай",
+        description: "Тоглолтын үр дүн амжилттай хадгалагдлаа",
+      });
+    },
+  });
+
+  // Mutation to update match players
+  const updateMatchPlayers = useMutation({
+    mutationFn: async ({ matchId, playerAId, playerBId }: {
+      matchId: string;
+      playerAId?: string | null;
+      playerBId?: string | null;
+    }) => {
+      return apiRequest(`/api/matches/${matchId}/players`, {
+        method: 'PUT',
+        body: JSON.stringify({ playerAId, playerBId }),
+      });
+    },
+    onSuccess: () => {
+      // Force refetch with no cache
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', tournamentId, 'results'] });
+      queryClient.refetchQueries({ queryKey: ['/api/tournaments', tournamentId, 'results'] });
+
+      // Also invalidate tournament data
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', tournamentId] });
+
+      toast({
+        title: "Амжилттай", 
+        description: "Тоглогчид амжилттай солигдлоо",
+      });
+    },
+  });
+
 
   // Check if user is admin
   if (!isAuthenticated || (user as any)?.role !== 'admin') {
@@ -633,7 +694,7 @@ export default function AdminTournamentResultsPage() {
               groupName: group.groupName || 'Групп',
               position: position
             };
-            
+
             console.log('Adding qualified player:', qualifiedPlayer);
             qualified.push(qualifiedPlayer);
           }
@@ -835,7 +896,7 @@ export default function AdminTournamentResultsPage() {
       });
       return;
     }
-    
+
     // Skip BYE matches
     if (match.player1?.id === 'bye' || match.player2?.id === 'bye') {
       toast({
@@ -845,14 +906,14 @@ export default function AdminTournamentResultsPage() {
       });
       return;
     }
-    
+
     console.log('Match clicked:', match);
-    
+
     setCurrentMatch(match);
     setSelectedWinner(match.winner?.id === match.player1?.id ? 'A' : 
                      match.winner?.id === match.player2?.id ? 'B' : '');
     setBestOf(5); // Default best-of-5
-    
+
     // Parse existing series score
     if (match.score && match.score !== 'BYE') {
       const scoreParts = match.score.split('-');
@@ -864,7 +925,7 @@ export default function AdminTournamentResultsPage() {
       setSetsWonA(0);
       setSetsWonB(0);
     }
-    
+
     setResultType('normal');
     setResultModalOpen(true);
   };
@@ -872,19 +933,19 @@ export default function AdminTournamentResultsPage() {
   // Save match result
   const saveMatchResult = () => {
     if (!currentMatch) return;
-    
+
     const updatedMatches = knockoutMatches.map(match => {
       if (match.id !== currentMatch.id) return match;
-      
+
       const updatedMatch = { ...match };
-      
+
       // Set winner
-      if (selectedWinner === 'A' && match.player1) {
-        updatedMatch.winner = match.player1;
-      } else if (selectedWinner === 'B' && match.player2) {
-        updatedMatch.winner = match.player2;
+      if (selectedWinner === 'A' && currentMatch.player1) {
+        updatedMatch.winner = currentMatch.player1;
+      } else if (selectedWinner === 'B' && currentMatch.player2) {
+        updatedMatch.winner = currentMatch.player2;
       }
-      
+
       // Set series score
       if (resultType === 'WO') {
         updatedMatch.score = bestOf === 5 ? '3-0' : '4-0';
@@ -893,20 +954,26 @@ export default function AdminTournamentResultsPage() {
       } else {
         updatedMatch.score = `${setsWonA}-${setsWonB}`;
       }
-      
+
       return updatedMatch;
     });
-    
+
     // Auto-advance winner to next match
     const advancedMatches = advanceWinnerToNextMatch(updatedMatches, currentMatch.id);
     setKnockoutMatches(advancedMatches);
-    
+
     // Calculate and update final rankings
     updateFinalRankings(advancedMatches);
-    
+
     setResultModalOpen(false);
-    saveResultsMutation.mutate();
-    
+    updateMatchResult.mutate({ // Use the mutation here
+      matchId: currentMatch.id,
+      winner: selectedWinner === 'A' ? 'A' : selectedWinner === 'B' ? 'B' : 'WO', // Assuming WO/RET logic might map here
+      bestOf,
+      setsWonA,
+      setsWonB
+    });
+
     toast({
       title: "Үр дүн хадгалагдлаа",
       description: `${currentMatch.player1?.name} vs ${currentMatch.player2?.name}`
@@ -917,14 +984,14 @@ export default function AdminTournamentResultsPage() {
   const advanceWinnerToNextMatch = (matches: KnockoutMatch[], matchId: string): KnockoutMatch[] => {
     const match = matches.find(m => m.id === matchId);
     if (!match?.winner) return matches;
-    
+
     // Find next match in bracket structure
     const round = match.round;
     const matchIndex = parseInt(match.id.split('_')[2]);
-    const nextRound = round + 1;
+    const nextRound = typeof round === 'number' ? round + 1 : parseInt(String(round).split(' ')[0], 10) + 1; // Handle potential string rounds like "1/4"
     const nextMatchIndex = Math.floor(matchIndex / 2);
     const nextMatchId = `match_${nextRound}_${nextMatchIndex}`;
-    
+
     return matches.map(m => {
       if (m.id === nextMatchId) {
         const slot = matchIndex % 2 === 0 ? 'player1' : 'player2';
@@ -937,16 +1004,17 @@ export default function AdminTournamentResultsPage() {
   // Update final rankings based on completed matches
   const updateFinalRankings = (matches: KnockoutMatch[]) => {
     const newRankings: FinalRanking[] = [];
-    
+
     // Find final match
-    const finalMatch = matches.find(m => m.round === Math.max(...matches.map(m => m.round)) && m.id !== 'third_place_playoff');
+    const finalRoundNumber = Math.max(...matches.map(m => typeof m.round === 'number' ? m.round : parseInt(String(m.round).split(' ')[0], 10)), 0);
+    const finalMatch = matches.find(m => m.round === finalRoundNumber && m.id !== 'third_place_playoff');
     if (finalMatch?.winner && finalMatch.player1 && finalMatch.player2) {
       newRankings.push({
         position: 1,
         playerId: finalMatch.winner.id,
         playerName: finalMatch.winner.name
       });
-      
+
       const finalLoser = finalMatch.player1.id === finalMatch.winner.id ? finalMatch.player2 : finalMatch.player1;
       newRankings.push({
         position: 2,
@@ -954,7 +1022,7 @@ export default function AdminTournamentResultsPage() {
         playerName: finalLoser.name
       });
     }
-    
+
     // Find 3rd place match
     const thirdPlaceMatch = matches.find(m => m.id === 'third_place_playoff');
     if (thirdPlaceMatch?.winner) {
@@ -964,7 +1032,7 @@ export default function AdminTournamentResultsPage() {
         playerName: thirdPlaceMatch.winner.name
       });
     }
-    
+
     setFinalRankings(newRankings);
   };
 
@@ -1024,7 +1092,7 @@ export default function AdminTournamentResultsPage() {
 
     // First round with seeded players and BYEs
     const firstRoundMatches = Math.pow(2, rounds - 1);
-    
+
     // Standard bracket seeding for proper BYE placement
     const bracketSeeding: number[] = [];
     for (let i = 0; i < powerOf2; i++) {
@@ -1105,7 +1173,7 @@ export default function AdminTournamentResultsPage() {
     if (rounds >= 2) {
       matches.push({
         id: 'third_place_playoff',
-        round: rounds,
+        round: rounds, // This might need adjustment based on how rounds are numbered for the 3rd place match
         position: { x: 200 + (rounds - 2) * ROUND_WIDTH / 2, y: START_Y + 450 }
       });
     }
@@ -1418,7 +1486,7 @@ export default function AdminTournamentResultsPage() {
                                       ) : (
                                         <Input
                                           value={group.resultMatrix[playerIndex]?.[opponentIndex] || ''}
-                                          onChange={(e) => updateMatchResult(groupIndex, playerIndex, opponentIndex, e.target.value)}
+                                          onChange={(e) => updateMatchResult(groupIndex, player1Index, player2Index, e.target.value)}
                                           placeholder="3-1"
                                           className="w-full h-8 text-center text-xs"
                                         />
@@ -1476,11 +1544,24 @@ export default function AdminTournamentResultsPage() {
                         </div>
 
                         {(() => {
-                          // Show all registered participants with better debugging
-                          console.log('All participants for group:', participants);
-                          console.log('Current group tables:', groupStageTables);
+                          // Get all possible IDs for this participant
+                          const getParticipantIds = (p: TournamentParticipant) => [
+                            p.id,
+                            p.playerId,
+                            p.userId
+                          ].filter(Boolean) as string[];
 
-                          // Recalculate available players each time
+                          // Helper function to check if a participant is already in any group
+                          const isParticipantInAnyGroup = (p: TournamentParticipant): boolean => {
+                            const participantIds = getParticipantIds(p);
+                            return groupStageTables.some(anyGroup => 
+                              anyGroup.players && anyGroup.players.some(gp => 
+                                participantIds.includes(gp.id) || 
+                                participantIds.includes(gp.playerId)
+                              )
+                            );
+                          };
+
                           // Helper function to get readable display label for participation type
                           const getParticipationLabel = (type: string) => {
                             try {
@@ -1524,23 +1605,8 @@ export default function AdminTournamentResultsPage() {
                             }
                           };
 
+                          // Filter for available players
                           const availablePlayers = participants.filter(participant => {
-                            // Get all possible IDs for this participant
-                            const participantIds = [
-                              participant.id,
-                              participant.playerId,
-                              participant.userId
-                            ].filter(Boolean);
-
-                            // Check if player is already in ANY group in this tournament
-                            const isInAnyGroup = groupStageTables.some(anyGroup => 
-                              anyGroup.players && anyGroup.players.some(gp => 
-                                participantIds.includes(gp.id) || 
-                                participantIds.includes(gp.playerId)
-                              )
-                            );
-
-                            // More lenient name validation - accept if any name field exists
                             const hasValidName = Boolean(
                               participant.firstName || 
                               participant.lastName || 
@@ -1548,15 +1614,7 @@ export default function AdminTournamentResultsPage() {
                               participant.name ||
                               participant.username
                             );
-
-                            console.log('Checking participant:', {
-                              ids: participantIds,
-                              name: participant.firstName + ' ' + participant.lastName,
-                              isInGroup: isInAnyGroup,
-                              hasName: hasValidName
-                            });
-
-                            return !isInAnyGroup && hasValidName;
+                            return !isParticipantInAnyGroup(participant) && hasValidName;
                           });
 
                           const totalRegistered = participants.length;
@@ -1564,9 +1622,7 @@ export default function AdminTournamentResultsPage() {
                             total + (group.players ? group.players.length : 0), 0
                           );
 
-                          console.log(`Available players: ${availablePlayers.length}, Total registered: ${totalRegistered}, In groups: ${totalInGroups}`);
-
-                          // Always show the registration stats
+                          // Display registration stats
                           const registrationStats = (
                             <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
                               <div className="flex justify-between">
@@ -1584,6 +1640,7 @@ export default function AdminTournamentResultsPage() {
                             </div>
                           );
 
+                          // Handle cases with no participants or all participants already assigned
                           if (totalRegistered === 0) {
                             return (
                               <div className="text-center py-3 border-2 border-dashed border-border rounded-lg bg-card">
@@ -1612,6 +1669,7 @@ export default function AdminTournamentResultsPage() {
                             );
                           }
 
+                          // Render player selection dropdown and add button
                           return (
                             <div>
                               {registrationStats}
@@ -1623,7 +1681,7 @@ export default function AdminTournamentResultsPage() {
                                     </SelectTrigger>
                                     <SelectContent>
                                       {availablePlayers.map((participant) => {
-                                        const participantId = participant.id || participant.playerId || participant.userId;
+                                        const participantId = getParticipantIds(participant)[0]; // Use the first available ID
                                         const participantName = participant.playerName || 
                                           `${participant.firstName || ''} ${participant.lastName || ''}`.trim() ||
                                           participant.name || participant.username || 'Нэр тодорхойгүй';
@@ -1640,9 +1698,7 @@ export default function AdminTournamentResultsPage() {
                                     onClick={() => {
                                       if (selectedPlayerId) {
                                         const selectedParticipant = availablePlayers.find(p => 
-                                          p.id === selectedPlayerId || 
-                                          p.playerId === selectedPlayerId || 
-                                          p.userId === selectedPlayerId
+                                          getParticipantIds(p).includes(selectedPlayerId)
                                         );
                                         if (selectedParticipant) {
                                           const participantName = selectedParticipant.playerName || 
@@ -1741,7 +1797,7 @@ export default function AdminTournamentResultsPage() {
           <DialogHeader>
             <DialogTitle>Тоглолтын үр дүн оруулах</DialogTitle>
           </DialogHeader>
-          
+
           {currentMatch && (
             <div className="space-y-4">
               {/* Match Info */}

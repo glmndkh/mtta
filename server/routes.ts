@@ -2979,6 +2979,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tournaments/:tournamentId/results", async (req, res) => {
     try {
       const { tournamentId } = req.params;
+      
+      // Disable caching for real-time updates
+      res.set({
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0"
+      });
+      
       const results = await storage.getTournamentResults(tournamentId);
       if (!results) {
         return res.json({
