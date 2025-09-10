@@ -79,7 +79,7 @@ export function MatchEditorDrawer({
   // Form state
   const [playerA, setPlayerA] = useState<Player | null>(null);
   const [playerB, setPlayerB] = useState<Player | null>(null);
-  const [winner, setWinner] = useState<'A' | 'B' | 'WO' | 'RET' | ''>('');
+  const [winner, setWinner] = useState<'A' | 'B' | 'WO' | 'RET' | 'none'>('none');
   const [bestOf, setBestOf] = useState<5 | 7>(bestOfDefault);
   const [setsWonA, setSetsWonA] = useState(0);
   const [setsWonB, setSetsWonB] = useState(0);
@@ -121,7 +121,7 @@ export function MatchEditorDrawer({
           }
         }
       } else {
-        setWinner('');
+        setWinner('none');
         setSetsWonA(0);
         setSetsWonB(0);
       }
@@ -254,7 +254,7 @@ export function MatchEditorDrawer({
   };
 
   const handleWinnerChange = (newWinner: string) => {
-    setWinner(newWinner as 'A' | 'B' | 'WO' | 'RET' | '');
+    setWinner(newWinner as 'A' | 'B' | 'WO' | 'RET' | 'none');
     
     // Auto-set series for special cases
     if (newWinner === 'WO' || newWinner === 'RET') {
@@ -335,7 +335,7 @@ export function MatchEditorDrawer({
       }
 
       // Update result if set
-      if (winner) {
+      if (winner && winner !== 'none') {
         await updateResultMutation.mutateAsync({
           winner: winner as 'A' | 'B' | 'WO' | 'RET',
           bestOf,
@@ -509,7 +509,7 @@ export function MatchEditorDrawer({
                     <SelectValue placeholder="Ялагч сонгох" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Тодорхойгүй</SelectItem>
+                    <SelectItem value="none">Тодорхойгүй</SelectItem>
                     <SelectItem value="A">Тоглогч A</SelectItem>
                     <SelectItem value="B">Тоглогч B</SelectItem>
                     <SelectItem value="WO">W.O. (Walk Over)</SelectItem>
