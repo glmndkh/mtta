@@ -165,7 +165,7 @@ export function KnockoutBracket({
         const updatedMatch = { ...match };
         
         if (field === 'player1' || field === 'player2') {
-          const selectedPlayer = availablePlayers.find(p => p.name === value || p.id === value);
+          const selectedPlayer = availablePlayers.find(p => p.id === value);
           if (selectedPlayer) {
             updatedMatch[field as 'player1' | 'player2'] = selectedPlayer;
           }
@@ -227,12 +227,9 @@ export function KnockoutBracket({
                         <div className="player-name">
                           {isAdmin && editingField === `${match.id}_player1` ? (
                             <Select
-                              value={editingValue}
+                              value={editingValue || undefined}
                               onValueChange={(value) => {
-                                const selectedPlayer = availablePlayers.find(p => p.id === value);
-                                if (selectedPlayer) {
-                                  saveEdit(match.id, 'player1', selectedPlayer.name);
-                                }
+                                saveEdit(match.id, 'player1', value);
                               }}
                               onOpenChange={(open) => {
                                 if (!open) cancelEdit();
@@ -255,7 +252,7 @@ export function KnockoutBracket({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (isAdmin) {
-                                  startEdit(`${match.id}_player1`, match.player1?.name || '');
+                                  startEdit(`${match.id}_player1`, match.player1?.id || '');
                                 } else {
                                   handlePlayerClick(match.player1, match, e);
                                 }
@@ -308,12 +305,9 @@ export function KnockoutBracket({
                         <div className="player-name">
                           {isAdmin && editingField === `${match.id}_player2` ? (
                             <Select
-                              value={editingValue}
+                              value={editingValue || undefined}
                               onValueChange={(value) => {
-                                const selectedPlayer = availablePlayers.find(p => p.id === value);
-                                if (selectedPlayer) {
-                                  saveEdit(match.id, 'player2', selectedPlayer.name);
-                                }
+                                saveEdit(match.id, 'player2', value);
                               }}
                               onOpenChange={(open) => {
                                 if (!open) cancelEdit();
@@ -336,7 +330,7 @@ export function KnockoutBracket({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (isAdmin) {
-                                  startEdit(`${match.id}_player2`, match.player2?.name || '');
+                                  startEdit(`${match.id}_player2`, match.player2?.id || '');
                                 } else {
                                   handlePlayerClick(match.player2, match, e);
                                 }
