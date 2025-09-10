@@ -76,15 +76,6 @@
   overflow: hidden;
 }
 
-.match-box .edit-button {
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.match-box:hover .edit-button {
-  opacity: 1;
-}
-
 .match-box:hover {
   border-color: #10b981;
   transform: translateY(-2px);
