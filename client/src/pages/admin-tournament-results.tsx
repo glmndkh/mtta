@@ -17,6 +17,7 @@ import { KnockoutBracketEditor } from "@/components/KnockoutBracketEditor";
 import { KnockoutBracket } from "@/components/KnockoutBracket";
 import type { Tournament, TournamentResults, TournamentParticipant, User } from "@shared/schema";
 import * as XLSX from 'xlsx';
+import { normalizeKnockoutMatches } from "@/lib/knockout";
 
 
 // Types for Excel-style tournament result editing
@@ -48,7 +49,7 @@ interface GroupStageTable {
 
 interface KnockoutMatch {
   id: string;
-  round: number;
+  round: number | string;
   player1?: { id: string; name: string };
   player2?: { id: string; name: string };
   player1Score?: string;
@@ -216,7 +217,8 @@ export default function AdminTournamentResultsPage() {
       const groupResults = (existingResults.groupStageResults as Record<string, GroupStageTable[]> || {})[participationType] || [];
       setGroupStageTables(groupResults);
       const knockoutResultsByType = (existingResults.knockoutResults as Record<string, KnockoutMatch[]> || {})[participationType] || [];
-      setKnockoutMatches(knockoutResultsByType);
+      const normalizedKnockout = normalizeKnockoutMatches(knockoutResultsByType) as KnockoutMatch[];
+      setKnockoutMatches(normalizedKnockout);
 
       // Load final rankings or calculate from knockout matches if missing
       const savedRankings = (existingResults.finalRankings as Record<string, FinalRanking[]> || {})[participationType] || [];
@@ -224,15 +226,15 @@ export default function AdminTournamentResultsPage() {
         setFinalRankings(savedRankings);
       } else {
         // Calculate from knockout matches if no rankings saved
-        const knockoutResults = knockoutResultsByType;
+        const knockoutResults = normalizedKnockout;
         const calculatedRankings: FinalRanking[] = [];
 
         console.log('Loading existing knockout results:', knockoutResults);
         console.log('Available rounds:', knockoutResults.map(m => m.round));
 
         // Look for final match - match with highest round (excluding 3rd place)
-        const finalRound = Math.max(...knockoutResults.map(m => m.round), 0);
-        const finalMatch = knockoutResults.find(m => m.round === finalRound && m.id !== 'third_place_playoff');
+        const finalRound = Math.max(...knockoutResults.map(m => Number(m.round)), 0);
+        const finalMatch = knockoutResults.find(m => Number(m.round) === finalRound && m.id !== 'third_place_playoff');
 
         console.log('Found/created final match:', finalMatch);
 
@@ -1056,7 +1058,7 @@ export default function AdminTournamentResultsPage() {
                         <KnockoutBracket
                           matches={knockoutMatches.map(match => ({
                             id: match.id,
-                            round: match.round,
+                            round: Number(match.round),
                             player1: match.player1,
                             player2: match.player2,
                             winner: match.winner,
@@ -1080,13 +1082,13 @@ export default function AdminTournamentResultsPage() {
                   {/* Admin Editor */}
                   <KnockoutBracketEditor
                     initialMatches={(() => {
-                      const totalRounds = Math.max(...knockoutMatches.map(m => m.round), 0);
+                      const totalRounds = Math.max(...knockoutMatches.map(m => Number(m.round)), 0);
                       return knockoutMatches.map(match => ({
                         id: match.id,
-                        round: match.round,
+                        round: Number(match.round),
                         roundName: match.id === 'third_place_playoff'
                           ? '3-р байрын тоглолт'
-                          : getRoundName(Math.pow(2, totalRounds - match.round)),
+                          : getRoundName(Math.pow(2, totalRounds - Number(match.round))),
                         player1: match.player1,
                         player2: match.player2,
                         player1Score: match.player1Score,
