@@ -386,6 +386,36 @@ export function MatchEditorDrawer({
           setsWonA,
           setsWonB,
         });
+
+        // Automatically advance winner to next match
+        if (match?.nextMatchId && (winner === 'A' || winner === 'B')) {
+          const winnerId = winner === 'A' ? playerA?.id : playerB?.id;
+          if (winnerId) {
+            const nextMatch = allMatches.find(m => m.id === match.nextMatchId);
+            const currentRoundMatches = allMatches.filter(m => m.round === match.round);
+            const matchIndex = currentRoundMatches.findIndex(m => m.id === match.id);
+            const nextPosition = matchIndex % 2 === 0 ? 'playerAId' : 'playerBId';
+
+            const payload: any = {
+              playerAId: nextMatch?.player1?.id || null,
+              playerBId: nextMatch?.player2?.id || null,
+            };
+            payload[nextPosition] = winnerId;
+
+            try {
+              await fetch(`/api/matches/${match.nextMatchId}/players`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Cache-Control': 'no-cache',
+                },
+                body: JSON.stringify(payload),
+              });
+            } catch (e) {
+              console.error('Failed to advance winner:', e);
+            }
+          }
+        }
         hasChanges = true;
       }
 

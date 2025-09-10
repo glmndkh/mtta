@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
-import { Edit } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { MatchEditorDrawer } from './MatchEditorDrawer';
 import './knockout.css';
 
@@ -17,8 +15,12 @@ interface Match {
   winner?: Player | null;
   round: number;
   position: { x: number; y: number };
+  score?: string;
   score1?: number;
   score2?: number;
+  nextMatchId?: string;
+  sourceMatchIds?: string[];
+  status?: 'scheduled' | 'started' | 'finished';
 }
 
 interface KnockoutBracketProps {
@@ -85,11 +87,23 @@ export function KnockoutBracket({
 
   const [, setLocation] = useLocation();
 
-  const handlePlayerClick = (player: Player | null | undefined, event: React.MouseEvent) => {
-    if (!player || !isAdmin) return;
-    
-    event.stopPropagation(); // Prevent match click when clicking player name
-    
+  const openEditor = (match: Match) => {
+    setEditingMatch(match);
+    setIsEditorOpen(true);
+  };
+
+  const handlePlayerClick = (
+    player: Player | null | undefined,
+    match: Match,
+    event: React.MouseEvent
+  ) => {
+    event.stopPropagation();
+    if (isAdmin) {
+      openEditor(match);
+      return;
+    }
+    if (!player) return;
+
     if (onPlayerClick) {
       onPlayerClick(player.id);
     } else {
@@ -98,10 +112,12 @@ export function KnockoutBracket({
     }
   };
 
-  const handleEditMatch = (match: Match, event: React.MouseEvent) => {
-    event.stopPropagation(); // Prevent match click
-    setEditingMatch(match);
-    setIsEditorOpen(true);
+  const handleMatchClick = (match: Match) => {
+    if (isAdmin) {
+      openEditor(match);
+    } else {
+      onMatchClick?.(match);
+    }
   };
 
   const handleCloseEditor = () => {
@@ -128,25 +144,15 @@ export function KnockoutBracket({
                 .map((match) => (
                   <div
                     key={match.id}
-                    className={`match-box ${onMatchClick ? 'clickable' : ''} relative`}
-                    onClick={() => onMatchClick?.(match)}
+                    className={`match-box ${isAdmin || onMatchClick ? 'clickable' : ''} relative`}
+                    onClick={() => handleMatchClick(match)}
                   >
-                    {isAdmin && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="absolute top-1 right-1 h-6 w-6 p-0 bg-white/80 hover:bg-white z-10"
-                        onClick={(e) => handleEditMatch(match, e)}
-                      >
-                        <Edit className="w-3 h-3" />
-                      </Button>
-                    )}
                     <div className="match-content">
                       <div className={`player-row ${match.winner?.id === match.player1?.id ? 'winner' : ''}`}>
-                        <div 
-                          className={`player-name ${isAdmin && match.player1 && match.player1.name !== 'BYE' ? 'player-clickable' : ''}`}
-                          onClick={(e) => handlePlayerClick(match.player1, e)}
-                          title={isAdmin && match.player1 && match.player1.name !== 'BYE' ? 'Тоглогчийн профайл харах' : undefined}
+                        <div
+                          className={`player-name ${match.player1 && !isAdmin && match.player1.name !== 'BYE' ? 'player-clickable' : ''}`}
+                          onClick={(e) => handlePlayerClick(match.player1, match, e)}
+                          title={!isAdmin && match.player1 && match.player1.name !== 'BYE' ? 'Тоглогчийн профайл харах' : undefined}
                         >
                           {getPlayerDisplay(match.player1)}
                         </div>
@@ -160,10 +166,10 @@ export function KnockoutBracket({
                       </div>
 
                       <div className={`player-row ${match.winner?.id === match.player2?.id ? 'winner' : ''}`}>
-                        <div 
-                          className={`player-name ${isAdmin && match.player2 && match.player2.name !== 'BYE' ? 'player-clickable' : ''}`}
-                          onClick={(e) => handlePlayerClick(match.player2, e)}
-                          title={isAdmin && match.player2 && match.player2.name !== 'BYE' ? 'Тоглогчийн профайл харах' : undefined}
+                        <div
+                          className={`player-name ${match.player2 && !isAdmin && match.player2.name !== 'BYE' ? 'player-clickable' : ''}`}
+                          onClick={(e) => handlePlayerClick(match.player2, match, e)}
+                          title={!isAdmin && match.player2 && match.player2.name !== 'BYE' ? 'Тоглогчийн профайл харах' : undefined}
                         >
                           {getPlayerDisplay(match.player2)}
                         </div>
