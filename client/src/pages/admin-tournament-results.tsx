@@ -94,6 +94,13 @@ export default function AdminTournamentResultsPage() {
   const [selectedBracketMatchId, setSelectedBracketMatchId] = useState<string | null>(null);
   const [finalRankings, setFinalRankings] = useState<FinalRanking[]>([]);
   const [isPublished, setIsPublished] = useState(false);
+  const [resultModalOpen, setResultModalOpen] = useState(false);
+  const [currentMatch, setCurrentMatch] = useState<KnockoutMatch | null>(null);
+  const [selectedWinner, setSelectedWinner] = useState<'A' | 'B' | ''>('');
+  const [bestOf, setBestOf] = useState<5 | 7>(5);
+  const [setsWonA, setSetsWonA] = useState<number>(0);
+  const [setsWonB, setSetsWonB] = useState<number>(0);
+  const [resultType, setResultType] = useState<'normal' | 'WO' | 'RET'>('normal');
   const [customParticipationTypes, setCustomParticipationTypes] = useState<string[]>([]);
   const [addCategoryOpen, setAddCategoryOpen] = useState(false);
   const [newCategory, setNewCategory] = useState("");
@@ -813,10 +820,172 @@ export default function AdminTournamentResultsPage() {
     }
   };
 
-  // Function to generate a bracket structure for any player count
-  const generateBracket = (playerCount: number): KnockoutMatch[] => {
-    if (playerCount < 2) return [];
+  // C) Handle match click for in-bracket results
+  const handleMatchClick = (matchId: string) => {
+    const match = knockoutMatches.find(m => m.id === matchId);
+    if (!match || !match.player1 || !match.player2) return;
+    
+    // Skip BYE matches
+    if (match.player1?.id === 'bye' || match.player2?.id === 'bye') return;
+    
+    setCurrentMatch(match);
+    setSelectedWinner(match.winner?.id === match.player1?.id ? 'A' : 
+                     match.winner?.id === match.player2?.id ? 'B' : '');
+    setBestOf(5); // Default best-of-5
+    
+    // Parse existing series score
+    if (match.score) {
+      const scoreParts = match.score.split('-');
+      if (scoreParts.length === 2) {
+        setSetsWonA(parseInt(scoreParts[0]) || 0);
+        setSetsWonB(parseInt(scoreParts[1]) || 0);
+      }
+    } else {
+      setSetsWonA(0);
+      setSetsWonB(0);
+    }
+    
+    setResultType('normal');
+    setResultModalOpen(true);
+  };
 
+  // Save match result
+  const saveMatchResult = () => {
+    if (!currentMatch) return;
+    
+    const updatedMatches = knockoutMatches.map(match => {
+      if (match.id !== currentMatch.id) return match;
+      
+      const updatedMatch = { ...match };
+      
+      // Set winner
+      if (selectedWinner === 'A' && match.player1) {
+        updatedMatch.winner = match.player1;
+      } else if (selectedWinner === 'B' && match.player2) {
+        updatedMatch.winner = match.player2;
+      }
+      
+      // Set series score
+      if (resultType === 'WO') {
+        updatedMatch.score = bestOf === 5 ? '3-0' : '4-0';
+      } else if (resultType === 'RET') {
+        updatedMatch.score = bestOf === 5 ? '3-0' : '4-0';
+      } else {
+        updatedMatch.score = `${setsWonA}-${setsWonB}`;
+      }
+      
+      return updatedMatch;
+    });
+    
+    // Auto-advance winner to next match
+    const advancedMatches = advanceWinnerToNextMatch(updatedMatches, currentMatch.id);
+    setKnockoutMatches(advancedMatches);
+    
+    // Calculate and update final rankings
+    updateFinalRankings(advancedMatches);
+    
+    setResultModalOpen(false);
+    saveResultsMutation.mutate();
+    
+    toast({
+      title: "Үр дүн хадгалагдлаа",
+      description: `${currentMatch.player1?.name} vs ${currentMatch.player2?.name}`
+    });
+  };
+
+  // Advance winner to next match
+  const advanceWinnerToNextMatch = (matches: KnockoutMatch[], matchId: string): KnockoutMatch[] => {
+    const match = matches.find(m => m.id === matchId);
+    if (!match?.winner) return matches;
+    
+    // Find next match in bracket structure
+    const round = match.round;
+    const matchIndex = parseInt(match.id.split('_')[2]);
+    const nextRound = round + 1;
+    const nextMatchIndex = Math.floor(matchIndex / 2);
+    const nextMatchId = `match_${nextRound}_${nextMatchIndex}`;
+    
+    return matches.map(m => {
+      if (m.id === nextMatchId) {
+        const slot = matchIndex % 2 === 0 ? 'player1' : 'player2';
+        return { ...m, [slot]: match.winner };
+      }
+      return m;
+    });
+  };
+
+  // Update final rankings based on completed matches
+  const updateFinalRankings = (matches: KnockoutMatch[]) => {
+    const newRankings: FinalRanking[] = [];
+    
+    // Find final match
+    const finalMatch = matches.find(m => m.round === Math.max(...matches.map(m => m.round)) && m.id !== 'third_place_playoff');
+    if (finalMatch?.winner && finalMatch.player1 && finalMatch.player2) {
+      newRankings.push({
+        position: 1,
+        playerId: finalMatch.winner.id,
+        playerName: finalMatch.winner.name
+      });
+      
+      const finalLoser = finalMatch.player1.id === finalMatch.winner.id ? finalMatch.player2 : finalMatch.player1;
+      newRankings.push({
+        position: 2,
+        playerId: finalLoser.id,
+        playerName: finalLoser.name
+      });
+    }
+    
+    // Find 3rd place match
+    const thirdPlaceMatch = matches.find(m => m.id === 'third_place_playoff');
+    if (thirdPlaceMatch?.winner) {
+      newRankings.push({
+        position: 3,
+        playerId: thirdPlaceMatch.winner.id,
+        playerName: thirdPlaceMatch.winner.name
+      });
+    }
+    
+    setFinalRankings(newRankings);
+  };
+
+  // B) Groups → Knockout Generator
+  const generateBracketFromGroups = () => {
+    const qualifiedPlayers = getQualifiedPlayers();
+    if (qualifiedPlayers.length < 4) {
+      toast({
+        title: "Хангалтгүй тоглогч",
+        description: "Дор хаяж 4 тоглогч шаардлагатай",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Cross seeding policy (default): A1 vs B2, B1 vs A2, C1 vs D2, D1 vs C2
+    const groupedPlayers = qualifiedPlayers.reduce((acc, player) => {
+      if (!acc[player.groupName]) acc[player.groupName] = [];
+      acc[player.groupName].push(player);
+      return acc;
+    }, {} as Record<string, typeof qualifiedPlayers>);
+
+    // Sort players within each group by position
+    Object.keys(groupedPlayers).forEach(group => {
+      groupedPlayers[group].sort((a, b) => a.position - b.position);
+    });
+
+    const groupNames = Object.keys(groupedPlayers);
+    const seededPlayers: QualifiedPlayer[] = [];
+
+    // Apply cross seeding
+    const maxQualifiers = Math.max(...Object.values(groupedPlayers).map(g => g.length));
+    for (let position = 1; position <= maxQualifiers; position++) {
+      groupNames.forEach(groupName => {
+        const player = groupedPlayers[groupName][position - 1];
+        if (player) seededPlayers.push(player);
+      });
+    }
+
+    // Generate bracket structure for 2^k players
+    const playerCount = seededPlayers.length;
     const powerOf2 = Math.pow(2, Math.ceil(Math.log2(playerCount)));
     const rounds = Math.ceil(Math.log2(powerOf2));
     const byeCount = powerOf2 - playerCount;
@@ -825,7 +994,45 @@ export default function AdminTournamentResultsPage() {
     const START_Y = 80;
     const matches: KnockoutMatch[] = [];
 
-    for (let round = 1; round <= rounds; round++) {
+    // First round with seeded players
+    const firstRoundMatches = Math.pow(2, rounds - 1);
+    for (let matchIndex = 0; matchIndex < firstRoundMatches; matchIndex++) {
+      const verticalSpacing = 120;
+      const yPosition = START_Y + (matchIndex * verticalSpacing * 2);
+
+      const match: KnockoutMatch = {
+        id: `match_1_${matchIndex}`,
+        round: 1,
+        position: { x: 50, y: yPosition }
+      };
+
+      // Assign players with standard bracket seeding
+      const player1Index = matchIndex * 2;
+      const player2Index = player1Index + 1;
+
+      if (player1Index < seededPlayers.length) {
+        match.player1 = {
+          id: seededPlayers[player1Index].id,
+          name: seededPlayers[player1Index].name
+        };
+      }
+
+      if (player2Index < seededPlayers.length) {
+        match.player2 = {
+          id: seededPlayers[player2Index].id,
+          name: seededPlayers[player2Index].name
+        };
+      } else if (player1Index < seededPlayers.length) {
+        // Add BYE for uneven player count
+        match.player2 = { id: 'bye', name: 'BYE' };
+        match.winner = match.player1; // Auto-advance past BYE
+      }
+
+      matches.push(match);
+    }
+
+    // Generate subsequent rounds
+    for (let round = 2; round <= rounds; round++) {
       const matchesInRound = Math.pow(2, rounds - round);
 
       for (let matchIndex = 0; matchIndex < matchesInRound; matchIndex++) {
@@ -833,23 +1040,18 @@ export default function AdminTournamentResultsPage() {
         const centerOffset = (matchesInRound - 1) * verticalSpacing / 2;
         const yPosition = START_Y + (matchIndex * verticalSpacing) - centerOffset + (round * 50);
 
-        const match: KnockoutMatch = {
+        matches.push({
           id: `match_${round}_${matchIndex}`,
           round,
           position: {
             x: 50 + (round - 1) * ROUND_WIDTH,
             y: Math.max(yPosition, 60)
           }
-        };
-
-        if (round === 1 && matchIndex < byeCount) {
-          match.player2 = { id: 'bye', name: 'BYE' };
-        }
-
-        matches.push(match);
+        });
       }
     }
 
+    // Add 3rd place playoff
     if (rounds >= 2) {
       matches.push({
         id: 'third_place_playoff',
@@ -858,7 +1060,11 @@ export default function AdminTournamentResultsPage() {
       });
     }
 
-    return matches.sort((a, b) => a.round - b.round || a.position.y - b.position.y);
+    setKnockoutMatches(matches);
+    toast({
+      title: "Bracket үүсгэгдлээ",
+      description: `${playerCount} тоглогчийн шигшээ тоглолт үүсгэгдлээ (${byeCount} BYE)`
+    });
   };
 
   return (
@@ -955,275 +1161,73 @@ export default function AdminTournamentResultsPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>Шигшээ тоглолтууд</CardTitle>
+                    <CardTitle>Шигшээ тоглолт</CardTitle>
                     <CardDescription>
-                      Шаардлагат тоглолтууд ба тэдгээрийн үр дүн
+                      Single elimination bracket система
                     </CardDescription>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <div className="flex space-x-2 border-r pr-2">
-                      <Button 
-                        onClick={exportToExcel} 
-                        variant="outline" 
-                        size="sm"
-                        className="flex items-center gap-2"
-                      >
-                        <Download className="w-4 h-4" />
-                        Excel татах
-                      </Button>
-                    </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={() => {
+                        const qualifiedPlayers = getQualifiedPlayers();
+                        if (qualifiedPlayers.length >= 4) {
+                          generateBracketFromGroups();
+                        } else {
+                          toast({
+                            title: "Хангалтгүй тоглогч",
+                            description: "Дор хаяж 4 тоглогч шаардлагатай",
+                            variant: "destructive"
+                          });
+                        }
+                      }} 
+                      disabled={getQualifiedPlayers().length < 4}
+                      className="flex items-center gap-2"
+                    >
+                      <Trophy className="w-4 h-4" />
+                      Группаас bracket үүсгэх
+                    </Button>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                {/* Display Final Rankings from Knockout Results */}
-                {finalRankings.length > 0 && (
-                  <div className="mb-6 p-4 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg">
-                    <h3 className="text-lg font-semibold text-amber-800 mb-3 flex items-center gap-2">
-                      <Trophy className="w-5 h-5" />
-                      Шигшээ тоглолтын эцсийн үр дүн ({finalRankings.length} тоглогч)
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {finalRankings.map((ranking, index) => (
-                        <div 
-                          key={index} 
-                          className={`p-4 rounded-lg border-2 text-center ${
-                            ranking.position === 1 ? 'bg-yellow-100 border-yellow-400' :
-                            ranking.position === 2 ? 'bg-secondary border-border' :
-                            'bg-orange-100 border-orange-400'
-                          }`}
-                        >
-                          <div className="text-3xl mb-2">
-                            {ranking.position === 1 ? '🥇' : ranking.position === 2 ? '🥈' : '🥉'}
-                          </div>
-                          <div className="text-lg font-bold text-text-primary">{ranking.position}-р байр</div>
-                          <div className="font-medium text-text-primary">{ranking.playerName}</div>
-                        </div>
-                      ))}
+                {/* Tournament Bracket Display */}
+                {knockoutMatches.length > 0 ? (
+                  <div className="bg-gray-900 rounded-lg border border-gray-700 p-6">
+                    <h4 className="text-xl font-semibold mb-6 text-center text-white bg-gray-800 py-3 rounded-lg">
+                      🏆 Шигшээ тоглолтын хүснэгт
+                    </h4>
+                    <div className="bg-white rounded-lg p-4">
+                      <KnockoutBracket
+                        matches={knockoutMatches.map(match => ({
+                          id: match.id,
+                          round: Number(match.round),
+                          player1: match.player1,
+                          player2: match.player2,
+                          winner: match.winner,
+                          score1: match.player1Score ? parseInt(match.player1Score, 10) : undefined,
+                          score2: match.player2Score ? parseInt(match.player2Score, 10) : undefined,
+                          position: match.position,
+                          series: match.score
+                        }))}
+                        onMatchClick={handleMatchClick}
+                        isAdmin={true}
+                      />
                     </div>
                   </div>
-                )}
-
-                {finalRankings.length === 0 && (
-                  <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-center gap-2 text-blue-800">
-                      <Trophy className="w-5 h-5" />
-                      <span className="font-medium">Эцсийн үр дүн гараагүй</span>
-                    </div>
-                    <p className="text-sm text-blue-700 mt-1">
-                      Шигшээ тоглолтыг дуусгасны дараа эцсийн байрлал энд харагдана.
+                ) : (
+                  <div className="text-center py-12">
+                    <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">Шигшээ тоглолт үүсгээгүй</h3>
+                    <p className="text-gray-500 mb-4">
+                      Эхлээд хэсгийн тоглолтыг дуусгаж, дараа нь "Группаас bracket үүсгэх" товчийг дарна уу.
                     </p>
+                    {getQualifiedPlayers().length > 0 && (
+                      <p className="text-sm text-green-600">
+                        Шалгарсан тоглогчид: {getQualifiedPlayers().length}
+                      </p>
+                    )}
                   </div>
                 )}
-
-                {/* Qualified Players Section - Compact */}
-                {getQualifiedPlayers().length > 0 && (
-                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-green-800">
-                        Шигшээд шалгарсан тоглогчид: {getQualifiedPlayers().length}
-                      </span>
-                      <div className="flex gap-1">
-                        {getQualifiedPlayers().map((player, index) => (
-                          <span key={index} className="text-xs bg-card px-2 py-1 rounded border text-text-secondary">
-                            {player.name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* No qualified players message */}
-                {getQualifiedPlayers().length === 0 && (
-                  <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <div className="flex items-center gap-2 text-yellow-800">
-                      <Trophy className="w-5 h-5" />
-                      <span className="font-medium">Шигшээд шалгарсан тоглогч байхгүй</span>
-                    </div>
-                    <p className="text-sm text-yellow-700 mt-1">
-                      Хэсгийн тоглолтыг дуусгаж, үр дүн оруулсны дараа шигшээд шалгарсан тоглогчид энд харагдана.
-                    </p>
-                  </div>
-                )}
-
-                <div className="space-y-6">
-                  {/* Tournament Bracket Display - Traditional Style */}
-                  {knockoutMatches.length > 0 && (
-                    <div className="bg-gray-900 rounded-lg border border-gray-700 p-6">
-                      <h4 className="text-xl font-semibold mb-6 text-center text-white bg-gray-800 py-3 rounded-lg">
-                        🏆 Шигшээ тоглолтын хүснэгт
-                      </h4>
-                      <div className="bg-white rounded-lg p-4">
-                        <KnockoutBracket
-                          matches={knockoutMatches.map(match => ({
-                            id: match.id,
-                            round: Number(match.round),
-                            player1: match.player1,
-                            player2: match.player2,
-                            winner: match.winner,
-                            score1: match.player1Score ? parseInt(match.player1Score, 10) : undefined,
-                            score2: match.player2Score ? parseInt(match.player2Score, 10) : undefined,
-                            position: match.position
-                          }))}
-                          selectedMatchId={selectedBracketMatchId || undefined}
-                          onMatchClick={(id) => {
-                            setSelectedBracketMatchId(id);
-                            const el = document.getElementById(`match-editor-${id}`);
-                            if (el) {
-                              el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            }
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Admin Editor */}
-                  <KnockoutBracketEditor
-                    initialMatches={(() => {
-                      const totalRounds = Math.max(...knockoutMatches.map(m => Number(m.round)), 0);
-                      return knockoutMatches.map(match => ({
-                        id: match.id,
-                        round: Number(match.round),
-                        roundName: match.id === 'third_place_playoff'
-                          ? '3-р байрын тоглолт'
-                          : getRoundName(Math.pow(2, totalRounds - Number(match.round))),
-                        player1: match.player1,
-                        player2: match.player2,
-                        player1Score: match.player1Score,
-                        player2Score: match.player2Score,
-                        score: match.score,
-                        winner: match.winner,
-                        position: match.position
-                      }));
-                    })()}
-                    users={allUsers} // Pass allUsers, but logic inside will use participants
-                    qualifiedPlayers={getQualifiedPlayers()}
-                    selectedMatchId={selectedBracketMatchId || undefined}
-                    onMatchSelect={setSelectedBracketMatchId}
-                    onSave={(newMatches) => {
-                      // Convert back to original format and preserve individual scores
-                      const convertedMatches = newMatches.map(match => ({
-                        id: match.id,
-                        round: match.round,
-                        player1: match.player1,
-                        player2: match.player2,
-                        player1Score: match.player1Score,
-                        player2Score: match.player2Score,
-                        score: match.score || (match.player1Score && match.player2Score ? `${match.player1Score}-${match.player2Score}` : '') as string,
-                        winner: match.winner,
-                        position: match.position
-                      }));
-                      setKnockoutMatches(convertedMatches);
-
-                      // Calculate and update final rankings
-                      const newFinalRankings: FinalRanking[] = [];
-
-                      console.log('All matches for ranking calculation:', newMatches);
-                      console.log('Available roundNames:', newMatches.map(m => m.roundName));
-
-                      // Find the REAL final match - should be the one with highest round number or specific ID
-                      const allFinals = newMatches.filter(m => m.roundName === 'Финал' && m.id !== 'third_place_playoff');
-                      console.log('All final matches found:', allFinals);
-
-                      // The real final is usually the one with the highest round number or most advanced position
-                      let finalMatch = allFinals.find(m => m.id.includes('match_2_') || m.id.includes('match_3_'));
-
-                      // If no advanced final found, try to find by position (rightmost on bracket)
-                      if (!finalMatch && allFinals.length > 0) {
-                        finalMatch = allFinals.reduce((latest, current) => {
-                          return (current.position.x > latest.position.x) ? current : latest;
-                        });
-                      }
-
-                      console.log('Selected final match for rankings:', finalMatch);
-                      console.log('Final match players:', finalMatch?.player1?.name, 'vs', finalMatch?.player2?.name);
-                      console.log('Final match winner:', finalMatch?.winner?.name);
-
-                      if (finalMatch?.winner && finalMatch.player1 && finalMatch.player2) {
-                        // 1st place: final winner
-                        newFinalRankings.push({
-                          position: 1,
-                          playerId: finalMatch.winner.id,
-                          playerName: finalMatch.winner.name
-                        });
-
-                        // 2nd place: final loser (the other player in final) - ALWAYS from final match
-                        const finalLoser = finalMatch.player1.id === finalMatch.winner.id ? finalMatch.player2 : finalMatch.player1;
-                        newFinalRankings.push({
-                          position: 2,
-                          playerId: finalLoser.id,
-                          playerName: finalLoser.name
-                        });
-
-                        console.log('Final match results - Winner:', finalMatch.winner.name, 'Loser (2nd place):', finalLoser.name);
-                      } else if (finalMatch?.player1 && finalMatch?.player2 && !finalMatch.winner) {
-                        // If final has players but no winner yet, don't add rankings
-                        console.log('Final match has players but no winner determined yet');
-                      }
-
-                      // Find 3rd place playoff
-                      const thirdPlaceMatch = newMatches.find(m => m.id === 'third_place_playoff');
-                      console.log('Found 3rd place match:', thirdPlaceMatch);
-
-                      if (thirdPlaceMatch?.winner) {
-                        // Make sure 3rd place winner is not already in rankings (avoid duplicates)
-                        const alreadyRanked = newFinalRankings.some(r => r.playerId === thirdPlaceMatch.winner!.id);
-                        if (!alreadyRanked) {
-                          // 3rd place: 3rd place playoff winner
-                          newFinalRankings.push({
-                            position: 3,
-                            playerId: thirdPlaceMatch.winner.id,
-                            playerName: thirdPlaceMatch.winner.name
-                          });
-
-                          console.log('3rd place winner:', thirdPlaceMatch.winner.name);
-                        } else {
-                          console.log('3rd place winner already ranked, skipping duplicate');
-                        }
-                      }
-
-                      console.log('Calculated final rankings:', newFinalRankings);
-
-                      setFinalRankings(newFinalRankings);
-
-                      // Auto-save via existing mutation
-                      saveResultsMutation.mutate();
-                    }}
-                  />
-                </div>
-                <div className="flex gap-2 mt-4">
-                  <Button 
-                    onClick={() => {
-                      const qualifiedPlayers = getQualifiedPlayers();
-                      if (qualifiedPlayers.length >= 4) {
-                        const bracket = generateBracket(qualifiedPlayers.length);
-                        setKnockoutMatches(bracket);
-                        toast({
-                          title: "Шигшээ тоглолт үүсгэгдлээ",
-                          description: `${qualifiedPlayers.length} тоглогчийн хоосон шигшээ тоглолт үүсгэгдлээ`
-                        });
-                      } else {
-                        toast({
-                          title: "Хангалтгүй тоглогч",
-                          description: "Дор хаяж 4 тоглогч шаардлагатай",
-                          variant: "destructive"
-                        });
-                      }
-                    }} 
-                    disabled={getQualifiedPlayers().length < 4}
-                  >
-                    {getQualifiedPlayers().length >= 4 
-                      ? "Хоосон шигшээ үүсгэх"
-                      : `Шигшээ үүсгэх (${getQualifiedPlayers().length}/4)`
-                    }
-                  </Button>
-                  <Button onClick={() => setKnockoutMatches([])} variant="destructive" size="sm">
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Цэвэрлэх
-                  </Button>
-                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -1670,6 +1674,130 @@ export default function AdminTournamentResultsPage() {
               Болих
             </Button>
             <Button onClick={handleAddCategory}>Нэмэх</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Match Result Modal */}
+      <Dialog open={resultModalOpen} onOpenChange={setResultModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Тоглолтын үр дүн оруулах</DialogTitle>
+          </DialogHeader>
+          
+          {currentMatch && (
+            <div className="space-y-4">
+              {/* Match Info */}
+              <div className="text-center p-3 bg-gray-50 rounded-lg">
+                <div className="font-medium text-lg">
+                  {currentMatch.player1?.name} vs {currentMatch.player2?.name}
+                </div>
+              </div>
+
+              {/* Winner Selection */}
+              <div>
+                <label className="text-sm font-medium mb-2 block">Ялагч</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant={selectedWinner === 'A' ? "default" : "outline"}
+                    onClick={() => setSelectedWinner('A')}
+                    className="h-auto p-3"
+                  >
+                    <div className="text-center">
+                      <div className="font-medium">A</div>
+                      <div className="text-xs">{currentMatch.player1?.name}</div>
+                    </div>
+                  </Button>
+                  <Button
+                    variant={selectedWinner === 'B' ? "default" : "outline"}
+                    onClick={() => setSelectedWinner('B')}
+                    className="h-auto p-3"
+                  >
+                    <div className="text-center">
+                      <div className="font-medium">B</div>
+                      <div className="text-xs">{currentMatch.player2?.name}</div>
+                    </div>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Best Of Selection */}
+              <div>
+                <label className="text-sm font-medium mb-2 block">Best-of</label>
+                <Select value={bestOf.toString()} onValueChange={(value) => setBestOf(parseInt(value) as 5 | 7)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">Best of 5</SelectItem>
+                    <SelectItem value="7">Best of 7</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Result Type */}
+              <div>
+                <label className="text-sm font-medium mb-2 block">Үр дүнгийн төрөл</label>
+                <Select value={resultType} onValueChange={(value) => setResultType(value as 'normal' | 'WO' | 'RET')}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="normal">Хэвийн</SelectItem>
+                    <SelectItem value="WO">W.O. (Walk Over)</SelectItem>
+                    <SelectItem value="RET">RET (Retired)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Series Score (only for normal results) */}
+              {resultType === 'normal' && (
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Сетийн оноо</label>
+                  <div className="grid grid-cols-3 gap-2 items-center">
+                    <Input
+                      type="number"
+                      min="0"
+                      max={bestOf === 5 ? "3" : "4"}
+                      value={setsWonA}
+                      onChange={(e) => setSetsWonA(parseInt(e.target.value) || 0)}
+                      placeholder="0"
+                    />
+                    <div className="text-center font-medium">-</div>
+                    <Input
+                      type="number"
+                      min="0"
+                      max={bestOf === 5 ? "3" : "4"}
+                      value={setsWonB}
+                      onChange={(e) => setSetsWonB(parseInt(e.target.value) || 0)}
+                      placeholder="0"
+                    />
+                  </div>
+                  {bestOf === 5 && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      Боломжтой оноо: 3-0, 3-1, 3-2
+                    </div>
+                  )}
+                  {bestOf === 7 && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      Боломжтой оноо: 4-0, 4-1, 4-2, 4-3
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setResultModalOpen(false)}>
+              Болих
+            </Button>
+            <Button 
+              onClick={saveMatchResult}
+              disabled={!selectedWinner || (resultType === 'normal' && (!setsWonA && !setsWonB))}
+            >
+              Хадгалах
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
