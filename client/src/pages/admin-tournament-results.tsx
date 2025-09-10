@@ -130,9 +130,9 @@ export default function AdminTournamentResultsPage() {
     enabled: !!tournamentId,
     retry: 1,
   });
-  const participants = participationType
-    ? participantsData.filter(p => p.participationType === participationType)
-    : participantsData;
+  const participants = participationType && Array.isArray(participantsData)
+    ? participantsData.filter(p => p?.participationType === participationType)
+    : (Array.isArray(participantsData) ? participantsData : []);
   const allParticipationTypes = tournament?.participationTypes || [];
 
   // Filter out doubles and mixed categories for results entry
@@ -157,7 +157,7 @@ export default function AdminTournamentResultsPage() {
     enabled: !!tournamentId,
     retry: 1,
     staleTime: 0, // Always consider data stale
-    cacheTime: 0, // Don't cache results
+    gcTime: 0, // Don't cache results (updated from cacheTime)
     refetchOnWindowFocus: true,
     refetchOnMount: true,
   });
@@ -225,11 +225,12 @@ export default function AdminTournamentResultsPage() {
   // Load existing results into state
   useEffect(() => {
     if (existingResults && participationType) {
-      const groupResults = (existingResults.groupStageResults as Record<string, GroupStageTable[]> || {})[participationType] || [];
-      setGroupStageTables(groupResults);
-      const knockoutResultsByType = (existingResults.knockoutResults as Record<string, KnockoutMatch[]> || {})[participationType] || [];
-      const normalizedKnockout = normalizeKnockoutMatches(knockoutResultsByType) as KnockoutMatch[];
-      setKnockoutMatches(normalizedKnockout);
+      try {
+        const groupResults = (existingResults.groupStageResults as Record<string, GroupStageTable[]> || {})[participationType] || [];
+        setGroupStageTables(groupResults);
+        const knockoutResultsByType = (existingResults.knockoutResults as Record<string, KnockoutMatch[]> || {})[participationType] || [];
+        const normalizedKnockout = normalizeKnockoutMatches(knockoutResultsByType) as KnockoutMatch[];
+        setKnockoutMatches(normalizedKnockout);
 
       // Load final rankings or calculate from knockout matches if missing
       const savedRankings = (existingResults.finalRankings as Record<string, FinalRanking[]> || {})[participationType] || [];
@@ -285,6 +286,14 @@ export default function AdminTournamentResultsPage() {
       }
 
       setIsPublished(existingResults.isPublished || false);
+    } catch (error) {
+      console.error('Error loading tournament results:', error);
+      // Reset to default state on error
+      setGroupStageTables([]);
+      setKnockoutMatches([]);
+      setFinalRankings([]);
+      setIsPublished(false);
+    }
     }
   }, [existingResults, participationType]);
 
