@@ -85,11 +85,11 @@ export function KnockoutBracket({
             </div>
 
             <div className="matches-container">
-              {matchesByRound[round]
+              {[...(matchesByRound[round] ?? [])]
                 .sort((a, b) => (a.position?.y || 0) - (b.position?.y || 0))
                 .map((match) => (
-                  <div 
-                    key={match.id} 
+                  <div
+                    key={match.id}
                     className={`match-box ${onMatchClick ? 'clickable' : ''}`}
                     onClick={() => onMatchClick?.(match)}
                   >
