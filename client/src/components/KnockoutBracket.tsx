@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -46,7 +46,7 @@ export function KnockoutBracket({
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState<string>('');
   // Update local matches when props change
-  React.useEffect(() => {
+  useEffect(() => {
     setLocalMatches(matches);
   }, [matches]);
 
