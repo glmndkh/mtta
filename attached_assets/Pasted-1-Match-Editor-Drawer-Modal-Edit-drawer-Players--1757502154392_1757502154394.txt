@@ -1,0 +1,83 @@
+1) Match Editor (Drawer/Modal)
+
+Матч карт дээр Edit (✎) товч. Дарвал drawer нээгдэнэ.
+
+Players блок
+
+Combobox A, Combobox B: searchable (тамирчид/квалифайеруудаас).
+
+Шууд туслах товч:
+
+Swap A/B
+
+Set BYE (слотыг хоосолж BYE болгох)
+
+Reset to source (өмнөх матчийн ялагчтайгаа автоматаар холбох)
+
+Rules/Validation
+
+A ба B ижил хүн байхыг хоригло.
+
+Нэг тамирчинг ижил тойрогт 2 өөр матчид давхар сонгохыг хоригло (prompt: “өмнөх матчийн слотоос салгаж энд шилжүүлэх үү?”).
+
+Хэрэв тухайн слот өмнөх матчийн ялагчтай linked байвал “Manual override” анхааруулга үзүүлээд unlink хий (дараа нь “Reset to source”-оор буцааж болно).
+
+Result блок
+
+Winner: A | B | W.O. | RET.
+
+Best-of: 5 | 7 (default = bracket config).
+
+Series picker:
+
+BO5 → 3–0, 3–1, 3–2
+
+BO7 → 4–0, 4–1, 4–2, 4–3
+
+Validation: сонгосон winner-тэй зөрчилдсөн series-ийг зөвшөөрөхгүй (A ялсан бол A-гийн тоо 3/4 байх ёстой). W.O./RET сонгосон үед series-ийг 3–0/4–0 болгон lock.
+
+Доод товчнууд: Save, Save & Next, Cancel.
+
+2) Хадгалалт ба дамжуулалт
+
+Players өөрчлөгдвөл:
+
+PUT /api/matches/:id/players → { playerAId|null, playerBId|null, override:true|false }.
+
+Хэрэв өмнө нь энэ матч/дараагийнх дээр winner байрлаж байсан бол унтрааж, шинэ тоглогчдын дагуу дараагийн бүх холбоосыг дахин тооц.
+
+Result өөрчлөгдвөл:
+
+PUT /api/matches/:id/result-summary → { winner: 'A'|'B'|'WO'|'RET', bestOf, setsWonA, setsWonB }.
+
+Амжилтад:
+
+Одоогийн матч status='finished'.
+
+nextMatchId байвал winner-ийг nextSlot руу байршуулж, тэр матчийг scheduled болго.
+
+React Query invalidate: bracket/matches/participants.
+
+BYE: A эсвэл B нь BYE бол Save дарахгүйгээр автоматаар finished → winner-ийг шууд дамжуул.
+
+3) QA / Хамгаалалт
+
+Locked bracket: Ямар нэг матч started/finished болсон бол Regenerate-ийг блоколж үлдээ.
+
+Player conflict: Нэг тоглогчийг ижил тойргийн өөр матчид сонгох үед confirm диалог (хуучин слотоос remove → энд move).
+
+Undo: Сүүлийн 1 өөрчлөлтийг буцаах Undo (client-side history).
+
+Audit trail (optional): “A→B солино”, “Winner 3–1 болгосон” г.м. үйлдлийн лог.
+
+4) Acceptance (Done)
+
+ Админ нэг матч дээр тамирчин A/B-г сонгож/солих/Swap/Reset/Set BYE хийж чадна.
+
+ Winner + series-ийг (3–0, 3–1 … / 4–0, 4–1 …) drawer-оос өөрчилж хадгална.
+
+ Save дармагц дараагийн тойрогт ялагч зөв slot-оор харагдана (refresh-гүй).
+
+ Давхардал/зөрчилд UX-ийн анхааруулга гарч, буруу төлөв хадгалахгүй.
+
+ Public DRAW дээр series чип шинэчлэгдэнэ.
