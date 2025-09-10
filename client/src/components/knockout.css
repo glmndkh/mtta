@@ -223,8 +223,7 @@
 }
 
 .clickable:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 15px 35px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.2);
   border-color: #34d399;
 }
 
@@ -283,38 +282,15 @@
   }
 }
 
-/* Animation for when matches are loaded */
+/* No animations - static display */
 .match-box {
-  animation: fadeInUp 0.6s ease-out forwards;
-  opacity: 0;
-  transform: translateY(20px);
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.match-box:nth-child(1) { animation-delay: 0.1s; }
-.match-box:nth-child(2) { animation-delay: 0.2s; }
-.match-box:nth-child(3) { animation-delay: 0.3s; }
-.match-box:nth-child(4) { animation-delay: 0.4s; }
-.match-box:nth-child(5) { animation-delay: 0.5s; }
-
-@keyframes fadeInUp {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Glow effect for winner rows */
+/* Static highlight for winner rows */
 .player-row.winner {
-  animation: glow 2s ease-in-out infinite alternate;
-}
-
-@keyframes glow {
-  from {
-    box-shadow: 0 0 5px rgba(16, 185, 129, 0.5);
-  }
-  to {
-    box-shadow: 0 0 20px rgba(16, 185, 129, 0.8), 0 0 30px rgba(16, 185, 129, 0.4);
-  }
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
 }
 
 /* Dark theme enhancements */
@@ -329,19 +305,11 @@
   --lucky-color: #f59e0b;
 }
 
-/* Lucky draw/bye match styling */
+/* Lucky draw/bye match styling - static */
 .vs-divider:contains("🍀") {
   background: linear-gradient(45deg, var(--lucky-color), #fbbf24);
   color: white;
   font-weight: bold;
-  animation: luckyGlow 2s ease-in-out infinite alternate;
+  box-shadow: 0 0 8px var(--lucky-color);
 }
-
-@keyframes luckyGlow {
-  0% {
-    box-shadow: 0 0 5px var(--lucky-color);
-  }
-  100% {
-    box-shadow: 0 0 15px var(--lucky-color), 0 0 25px var(--lucky-color);
-  }
 }
