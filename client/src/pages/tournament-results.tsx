@@ -9,6 +9,7 @@ import { ArrowLeft, Trophy, Medal, Users, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { KnockoutBracket } from "@/components/KnockoutBracket";
+import { normalizeKnockoutMatches } from "@/lib/knockout";
 import PageWithLoading from "@/components/PageWithLoading";
 import type { Tournament, TournamentResults } from "@shared/schema";
 
@@ -43,7 +44,7 @@ interface GroupStageGroup {
 
 interface KnockoutMatch {
   id: string;
-  round: number;
+  round: number | string;
   player1?: { id: string; name: string };
   player2?: { id: string; name: string };
   player1Score?: string;
@@ -142,7 +143,8 @@ export default function TournamentResultsPage() {
   const finalRankingsByType = (results.finalRankings as Record<string, FinalRanking[]> || {});
 
   const groupStageResults: GroupStageGroup[] = groupStageResultsByType[activeType] || [];
-  const knockoutResults: KnockoutMatch[] = knockoutResultsByType[activeType] || [];
+  const rawKnockoutResults: KnockoutMatch[] = knockoutResultsByType[activeType] || [];
+  const knockoutResults: KnockoutMatch[] = normalizeKnockoutMatches(rawKnockoutResults) as KnockoutMatch[];
   const finalRankings: FinalRanking[] = finalRankingsByType[activeType] || [];
 
   const navigateToProfile = (playerId: string) => {
@@ -264,7 +266,7 @@ export default function TournamentResultsPage() {
                     <KnockoutBracket
                       matches={knockoutResults.map(match => ({
                         id: match.id,
-                        round: match.round,
+                        round: Number(match.round),
                         player1: match.player1,
                         player2: match.player2,
                         winner: match.winner,
@@ -420,9 +422,9 @@ export default function TournamentResultsPage() {
                 <div className="space-y-6">
                   {/* Semifinals */}
                   {(() => {
-                    const totalRounds = Math.max(...knockoutResults.map(m => m.round), 0);
+                    const totalRounds = Math.max(...knockoutResults.map(m => Number(m.round)), 0);
                     const semifinals = knockoutResults.filter(match =>
-                      match.round === totalRounds - 1 && match.id !== 'third_place_playoff'
+                      Number(match.round) === totalRounds - 1 && match.id !== 'third_place_playoff'
                     );
 
                     if (semifinals.length > 0) {
@@ -485,9 +487,9 @@ export default function TournamentResultsPage() {
 
                   {/* Finals */}
                   {(() => {
-                    const totalRounds = Math.max(...knockoutResults.map(m => m.round), 0);
+                    const totalRounds = Math.max(...knockoutResults.map(m => Number(m.round)), 0);
                     const finals = knockoutResults.filter(match =>
-                      match.round === totalRounds && match.id !== 'third_place_playoff'
+                      Number(match.round) === totalRounds && match.id !== 'third_place_playoff'
                     );
 
                     if (finals.length > 0) {

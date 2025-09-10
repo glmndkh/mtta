@@ -14,6 +14,7 @@ import { ArrowLeft, User, Upload } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { normalizeKnockoutMatches } from "@/lib/knockout";
 import type { Tournament, TournamentResults } from "@shared/schema";
 import { UserAutocomplete } from "@/components/UserAutocomplete";
 import { ObjectUploader } from "@/components/ObjectUploader";
@@ -26,7 +27,7 @@ interface GroupStageGroup {
 
 interface KnockoutMatch {
   id: string;
-  round: number;
+  round: number | string;
   player1?: { id: string; name: string };
   player2?: { id: string; name: string };
   player1Score?: string;
@@ -274,7 +275,8 @@ interface Participant {
   }
 
   const groupStageResults: GroupStageGroup[] = (results?.groupStageResults as any) || [];
-  const knockoutResults: KnockoutMatch[] = (results?.knockoutResults as any) || [];
+  const rawKnockoutResults: KnockoutMatch[] = (results?.knockoutResults as any) || [];
+  const knockoutResults = normalizeKnockoutMatches(rawKnockoutResults) as KnockoutMatch[];
   const finalRankings: FinalRanking[] = (results?.finalRankings as any) || [];
 
   const formatDate = (d: string | Date) => format(new Date(d), 'yyyy-MM-dd');
@@ -433,7 +435,7 @@ interface Participant {
                 <KnockoutBracket
                   matches={knockoutResults.map(match => ({
                     id: match.id,
-                    round: match.round,
+                    round: Number(match.round),
                     player1: match.player1,
                     player2: match.player2,
                     winner: match.winner,
