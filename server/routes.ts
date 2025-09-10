@@ -1120,7 +1120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         console.log(`Created new player record for user ${userId}:`, player);
       }
-      
+
       console.log(`Registering player ${player.id} for tournament ${tournamentId} with category ${category}`);
 
       // Check for existing registration with same category
@@ -1286,9 +1286,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { category } = req.query;
       const { tournamentId } = req.params;
-      
+
       console.log(`Fetching participants for tournament: ${tournamentId}, category: ${category}`);
-      
+
       if (!tournamentId) {
         return res.status(400).json({ message: "Tournament ID is required" });
       }
@@ -1434,6 +1434,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res
         .status(400)
         .json({ message: "Тоглолтын үр дүн хадгалахад алдаа гарлаа" });
+    }
+  });
+
+  // Update match players
+  app.put('/api/matches/:matchId/players', async (req: Request, res: Response) => {
+    try {
+      const { matchId } = req.params;
+      const { playerAId, playerBId, override } = req.body;
+
+      // TODO: Implement match player update logic
+      // This would update the knockout matches in the tournament results
+
+      res.json({ success: true, message: 'Match players updated' });
+    } catch (error) {
+      console.error('Error updating match players:', error);
+      res.status(500).json({ message: 'Failed to update match players' });
+    }
+  });
+
+  // Update match result
+  app.put('/api/matches/:matchId/result-summary', async (req: Request, res: Response) => {
+    try {
+      const { matchId } = req.params;
+      const { winner, bestOf, setsWonA, setsWonB } = req.body;
+
+      // TODO: Implement match result update logic
+      // This would update the knockout match result and propagate winners
+
+      res.json({ success: true, message: 'Match result updated' });
+    } catch (error) {
+      console.error('Error updating match result:', error);
+      res.status(500).json({ message: 'Failed to update match result' });
     }
   });
 

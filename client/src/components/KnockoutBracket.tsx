@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocation } from 'wouter';
+import { Edit } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MatchEditorDrawer } from './MatchEditorDrawer';
 import './knockout.css';
 
 interface Player {
@@ -25,6 +28,7 @@ interface KnockoutBracketProps {
   selectedMatchId?: string;
   isAdmin?: boolean;
   onPlayerClick?: (playerId: string) => void;
+  availablePlayers?: Player[];
 }
 
 export function KnockoutBracket({ 
@@ -32,8 +36,11 @@ export function KnockoutBracket({
   title = "Шигшээ тоглолт",
   onMatchClick,
   isAdmin = false,
-  onPlayerClick
+  onPlayerClick,
+  availablePlayers = []
 }: KnockoutBracketProps) {
+  const [editingMatch, setEditingMatch] = useState<Match | null>(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   // Group matches by round
   const matchesByRound = matches.reduce((acc, match) => {
     if (!acc[match.round]) {
@@ -91,6 +98,17 @@ export function KnockoutBracket({
     }
   };
 
+  const handleEditMatch = (match: Match, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent match click
+    setEditingMatch(match);
+    setIsEditorOpen(true);
+  };
+
+  const handleCloseEditor = () => {
+    setIsEditorOpen(false);
+    setEditingMatch(null);
+  };
+
   return (
     <div className="knockout-tournament">
       <div className="tournament-header">
@@ -110,9 +128,19 @@ export function KnockoutBracket({
                 .map((match) => (
                   <div
                     key={match.id}
-                    className={`match-box ${onMatchClick ? 'clickable' : ''}`}
+                    className={`match-box ${onMatchClick ? 'clickable' : ''} relative`}
                     onClick={() => onMatchClick?.(match)}
                   >
+                    {isAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute top-1 right-1 h-6 w-6 p-0 bg-white/80 hover:bg-white z-10"
+                        onClick={(e) => handleEditMatch(match, e)}
+                      >
+                        <Edit className="w-3 h-3" />
+                      </Button>
+                    )}
                     <div className="match-content">
                       <div className={`player-row ${match.winner?.id === match.player1?.id ? 'winner' : ''}`}>
                         <div 
@@ -154,6 +182,16 @@ export function KnockoutBracket({
           </div>
         ))}
       </div>
+
+      {/* Match Editor Drawer */}
+      <MatchEditorDrawer
+        match={editingMatch}
+        isOpen={isEditorOpen}
+        onClose={handleCloseEditor}
+        availablePlayers={availablePlayers}
+        allMatches={matches}
+        bestOfDefault={5}
+      />
     </div>
   );
 };

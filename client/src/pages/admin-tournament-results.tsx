@@ -1261,6 +1261,13 @@ export default function AdminTournamentResultsPage() {
                         }))}
                         onMatchClick={handleMatchClick}
                         isAdmin={true}
+                        availablePlayers={[
+                          ...getQualifiedPlayers().map(p => ({ id: p.id, name: p.name })),
+                          ...participants.map(p => ({
+                            id: p.id || p.playerId || p.userId || '',
+                            name: p.playerName || `${p.firstName || ''} ${p.lastName || ''}`.trim() || p.name || p.username || 'Нэр тодорхойгүй'
+                          }))
+                        ]}
                       />
                     </div>
                   </div>
