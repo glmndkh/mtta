@@ -627,17 +627,21 @@ export default function AdminTournamentResultsPage() {
 
           // Only include players with positions 1 or 2
           if (position === 1 || position === 2) {
-            qualified.push({
-              id: player.id,
-              name: player.name,
-              groupName: group.groupName,
+            const qualifiedPlayer = {
+              id: player.id || player.playerId || '',
+              name: player.name || 'Нэр тодорхойгүй',
+              groupName: group.groupName || 'Групп',
               position: position
-            });
+            };
+            
+            console.log('Adding qualified player:', qualifiedPlayer);
+            qualified.push(qualifiedPlayer);
           }
         });
       }
     });
 
+    console.log('All qualified players:', qualified);
     return qualified;
   };
 
@@ -823,10 +827,26 @@ export default function AdminTournamentResultsPage() {
   // C) Handle match click for in-bracket results
   const handleMatchClick = (matchId: string) => {
     const match = knockoutMatches.find(m => m.id === matchId);
-    if (!match || !match.player1 || !match.player2) return;
+    if (!match || !match.player1 || !match.player2) {
+      toast({
+        title: "Алдаа",
+        description: "Тоглолт олдсонгүй эсвэл тоглогчийн мэдээлэл дутуу байна",
+        variant: "destructive"
+      });
+      return;
+    }
     
     // Skip BYE matches
-    if (match.player1?.id === 'bye' || match.player2?.id === 'bye') return;
+    if (match.player1?.id === 'bye' || match.player2?.id === 'bye') {
+      toast({
+        title: "BYE тоглолт",
+        description: "BYE тоглолтонд үр дүн оруулах шаардлагагүй",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    console.log('Match clicked:', match);
     
     setCurrentMatch(match);
     setSelectedWinner(match.winner?.id === match.player1?.id ? 'A' : 
@@ -834,7 +854,7 @@ export default function AdminTournamentResultsPage() {
     setBestOf(5); // Default best-of-5
     
     // Parse existing series score
-    if (match.score) {
+    if (match.score && match.score !== 'BYE') {
       const scoreParts = match.score.split('-');
       if (scoreParts.length === 2) {
         setSetsWonA(parseInt(scoreParts[0]) || 0);
@@ -951,10 +971,10 @@ export default function AdminTournamentResultsPage() {
   // B) Groups → Knockout Generator
   const generateBracketFromGroups = () => {
     const qualifiedPlayers = getQualifiedPlayers();
-    if (qualifiedPlayers.length < 4) {
+    if (qualifiedPlayers.length < 2) {
       toast({
         title: "Хангалтгүй тоглогч",
-        description: "Дор хаяж 4 тоглогч шаардлагатай",
+        description: "Дор хаяж 2 тоглогч шаардлагатай",
         variant: "destructive"
       });
       return;
@@ -990,12 +1010,31 @@ export default function AdminTournamentResultsPage() {
     const rounds = Math.ceil(Math.log2(powerOf2));
     const byeCount = powerOf2 - playerCount;
 
+    console.log('Generating bracket:', {
+      playerCount,
+      powerOf2,
+      rounds,
+      byeCount,
+      seededPlayers: seededPlayers.map(p => p.name)
+    });
+
     const ROUND_WIDTH = 350;
     const START_Y = 80;
     const matches: KnockoutMatch[] = [];
 
-    // First round with seeded players
+    // First round with seeded players and BYEs
     const firstRoundMatches = Math.pow(2, rounds - 1);
+    
+    // Standard bracket seeding for proper BYE placement
+    const bracketSeeding: number[] = [];
+    for (let i = 0; i < powerOf2; i++) {
+      if (i < seededPlayers.length) {
+        bracketSeeding.push(i);
+      } else {
+        bracketSeeding.push(-1); // BYE placeholder
+      }
+    }
+
     for (let matchIndex = 0; matchIndex < firstRoundMatches; matchIndex++) {
       const verticalSpacing = 120;
       const yPosition = START_Y + (matchIndex * verticalSpacing * 2);
@@ -1006,26 +1045,37 @@ export default function AdminTournamentResultsPage() {
         position: { x: 50, y: yPosition }
       };
 
-      // Assign players with standard bracket seeding
+      // Standard bracket pairing
       const player1Index = matchIndex * 2;
       const player2Index = player1Index + 1;
 
+      // Assign player1
       if (player1Index < seededPlayers.length) {
         match.player1 = {
           id: seededPlayers[player1Index].id,
           name: seededPlayers[player1Index].name
         };
+      } else {
+        match.player1 = { id: 'bye', name: 'BYE' };
       }
 
+      // Assign player2
       if (player2Index < seededPlayers.length) {
         match.player2 = {
           id: seededPlayers[player2Index].id,
           name: seededPlayers[player2Index].name
         };
-      } else if (player1Index < seededPlayers.length) {
-        // Add BYE for uneven player count
+      } else {
         match.player2 = { id: 'bye', name: 'BYE' };
-        match.winner = match.player1; // Auto-advance past BYE
+      }
+
+      // Auto-advance if one player gets BYE
+      if (match.player1.id === 'bye' && match.player2.id !== 'bye') {
+        match.winner = match.player2;
+        match.score = 'BYE';
+      } else if (match.player2.id === 'bye' && match.player1.id !== 'bye') {
+        match.winner = match.player1;
+        match.score = 'BYE';
       }
 
       matches.push(match);
@@ -1051,7 +1101,7 @@ export default function AdminTournamentResultsPage() {
       }
     }
 
-    // Add 3rd place playoff
+    // Add 3rd place playoff if we have semifinals
     if (rounds >= 2) {
       matches.push({
         id: 'third_place_playoff',
@@ -1063,7 +1113,7 @@ export default function AdminTournamentResultsPage() {
     setKnockoutMatches(matches);
     toast({
       title: "Bracket үүсгэгдлээ",
-      description: `${playerCount} тоглогчийн шигшээ тоглолт үүсгэгдлээ (${byeCount} BYE)`
+      description: `${playerCount} тоглогчийн шигшээ тоглолт үүсгэгдлээ${byeCount > 0 ? ` (${byeCount} BYE)` : ''}`
     });
   };
 

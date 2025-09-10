@@ -44,7 +44,7 @@ export function KnockoutBracket({
 
   const getRoundTitle = (round: number, totalRounds: number) => {
     const matchesInRound = Math.pow(2, totalRounds - round);
-    
+
     switch (matchesInRound) {
       case 1: return 'ФИНАЛ';
       case 2: return 'ХАГАС ФИНАЛ';
