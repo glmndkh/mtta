@@ -849,7 +849,19 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
               <Save className="w-4 h-4 mr-2" />
               Хадгалах
             </Button>
-            <Button onClick={() => setMatches([])} variant="destructive" size="sm">
+            <Button 
+              onClick={() => {
+                if (window.confirm('Бүх тоглолтыг устгахдаа итгэлтэй байна уу?')) {
+                  setMatches([]);
+                  toast({
+                    title: "Цэвэрлэгдлээ",
+                    description: "Бүх тоглолтууд устгагдлаа"
+                  });
+                }
+              }} 
+              variant="destructive" 
+              size="sm"
+            >
               <RotateCcw className="w-4 h-4 mr-2" />
               Цэвэрлэх
             </Button>
