@@ -480,6 +480,190 @@ const AdminTournamentResults: React.FC = () => {
           </div>
         </div>
 
+        {/* Group Stage Results */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-white">
+            <Users className="w-6 h-6 text-green-500" />
+            Хэсэгийн шатны тоглолт
+          </h2>
+          
+          {groupStageResults.length > 0 ? (
+            <div className="space-y-6">
+              {groupStageResults.map((group, groupIndex) => (
+                <Card key={group.id} className="bg-gray-800 border-gray-700">
+                  <CardHeader>
+                    <CardTitle className="text-white flex items-center justify-between">
+                      <span>{group.name}</span>
+                      <Badge variant="outline" className="text-green-400 border-green-400">
+                        {group.players.length} тоглогч
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {/* Players List */}
+                    <div className="mb-4">
+                      <h4 className="text-sm font-medium text-gray-300 mb-2">Тоглогчид:</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        {group.players.map((player, playerIndex) => (
+                          <div key={player.id} className="flex items-center gap-2 p-2 bg-gray-700 rounded">
+                            <span className="text-sm text-white">{playerIndex + 1}. {player.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Results Matrix */}
+                    <div className="mb-4">
+                      <h4 className="text-sm font-medium text-gray-300 mb-2">Тоглолтын үр дүн:</h4>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm border border-gray-600">
+                          <thead>
+                            <tr className="bg-gray-700">
+                              <th className="border border-gray-600 p-2 text-left text-gray-300">Тоглогч</th>
+                              {group.players.map((player, index) => (
+                                <th key={index} className="border border-gray-600 p-2 text-center text-gray-300 min-w-[80px]">
+                                  {index + 1}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {group.players.map((player, rowIndex) => (
+                              <tr key={rowIndex} className="bg-gray-800">
+                                <td className="border border-gray-600 p-2 font-medium text-white">
+                                  {rowIndex + 1}. {player.name}
+                                </td>
+                                {group.players.map((_, colIndex) => (
+                                  <td key={colIndex} className="border border-gray-600 p-1 text-center">
+                                    {rowIndex === colIndex ? (
+                                      <span className="text-gray-500">-</span>
+                                    ) : (
+                                      <Input
+                                        type="text"
+                                        value={group.resultMatrix[rowIndex]?.[colIndex] || ''}
+                                        onChange={(e) => {
+                                          const newMatrix = [...group.resultMatrix];
+                                          if (!newMatrix[rowIndex]) newMatrix[rowIndex] = [];
+                                          newMatrix[rowIndex][colIndex] = e.target.value;
+                                          
+                                          setGroupStageResults(prev => prev.map(g => 
+                                            g.id === group.id 
+                                              ? { ...g, resultMatrix: newMatrix }
+                                              : g
+                                          ));
+                                        }}
+                                        className="w-16 h-8 text-center text-xs"
+                                        placeholder="3-1"
+                                      />
+                                    )}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Player Statistics */}
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-300 mb-2">Тоглогчдын статистик:</h4>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm border border-gray-600">
+                          <thead>
+                            <tr className="bg-gray-700">
+                              <th className="border border-gray-600 p-2 text-left text-gray-300">Тоглогч</th>
+                              <th className="border border-gray-600 p-2 text-center text-gray-300">Хожсон</th>
+                              <th className="border border-gray-600 p-2 text-center text-gray-300">Хожигдсон</th>
+                              <th className="border border-gray-600 p-2 text-center text-gray-300">Оноо</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {group.players
+                              .map((player) => {
+                                const stats = group.playerStats.find(s => s.playerId === player.id) || { 
+                                  wins: 0, 
+                                  losses: 0, 
+                                  points: 0 
+                                };
+                                return { player, stats };
+                              })
+                              .sort((a, b) => {
+                                if (b.stats.points !== a.stats.points) {
+                                  return b.stats.points - a.stats.points;
+                                }
+                                return b.stats.wins - a.stats.wins;
+                              })
+                              .map(({ player, stats }, index) => (
+                                <tr key={player.id} className={`${index < 2 ? 'bg-green-900/30' : 'bg-gray-800'}`}>
+                                  <td className="border border-gray-600 p-2 text-white">
+                                    <div className="flex items-center gap-2">
+                                      {index < 2 && <Badge className="bg-green-600 text-xs">Шилжсэн</Badge>}
+                                      <span>{player.name}</span>
+                                    </div>
+                                  </td>
+                                  <td className="border border-gray-600 p-2 text-center text-white">{stats.wins}</td>
+                                  <td className="border border-gray-600 p-2 text-center text-white">{stats.losses}</td>
+                                  <td className="border border-gray-600 p-2 text-center text-white font-bold">{stats.points}</td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="bg-gray-800 border-gray-700">
+              <CardContent className="p-6 text-center">
+                <p className="text-gray-400 mb-4">Хэсэгийн шатны тоглолт үүсгэгдээгүй байна</p>
+                <Button 
+                  onClick={() => {
+                    // Create sample group stage data
+                    const sampleGroups: GroupStageGroup[] = [
+                      {
+                        id: 'group_a',
+                        name: 'А хэсэг',
+                        players: participants?.slice(0, 4).map((p, i) => ({
+                          id: p.id,
+                          name: p.user?.firstName && p.user?.lastName 
+                            ? `${p.user.firstName} ${p.user.lastName}`
+                            : `Тоглогч ${i + 1}`,
+                          playerId: p.id,
+                          userId: p.userId
+                        })) || [],
+                        resultMatrix: [],
+                        playerStats: []
+                      },
+                      {
+                        id: 'group_b',
+                        name: 'Б хэсэг',
+                        players: participants?.slice(4, 8).map((p, i) => ({
+                          id: p.id,
+                          name: p.user?.firstName && p.user?.lastName 
+                            ? `${p.user.firstName} ${p.user.lastName}`
+                            : `Тоглогч ${i + 5}`,
+                          playerId: p.id,
+                          userId: p.userId
+                        })) || [],
+                        resultMatrix: [],
+                        playerStats: []
+                      }
+                    ];
+                    setGroupStageResults(sampleGroups);
+                  }}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Хэсэгийн шат үүсгэх
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
         {/* Qualified Players Tabs */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-4">
