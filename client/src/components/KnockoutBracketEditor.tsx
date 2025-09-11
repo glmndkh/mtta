@@ -248,6 +248,53 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     });
   }, [qualifiedPlayers, generateBracket, toast]);
 
+  // Generate bracket with automatic seeding
+  const generateBracketBySeed = useCallback(() => {
+    if (qualifiedPlayers.length < 4) {
+      toast({
+        title: "Хангалтгүй тоглогч",
+        description: "Дор хаяж 4 тоглогч шаардлагатай",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Sort qualified players by seed
+    const sortedBySeeed = [...qualifiedPlayers].sort((a, b) => (a.seed || a.position) - (b.seed || b.position));
+    
+    const bracket = generateBracket(qualifiedPlayers.length);
+    
+    // Assign players to first round matches based on seeding
+    const firstRoundMatches = bracket.filter(m => m.round === 1);
+    
+    let playerIndex = 0;
+    firstRoundMatches.forEach((match, matchIndex) => {
+      if (playerIndex < sortedBySeeed.length) {
+        match.player1 = {
+          id: sortedBySeeed[playerIndex].id,
+          name: sortedBySeeed[playerIndex].name
+        };
+        playerIndex++;
+      }
+      
+      if (playerIndex < sortedBySeeed.length) {
+        match.player2 = {
+          id: sortedBySeeed[playerIndex].id,
+          name: sortedBySeeed[playerIndex].name
+        };
+        playerIndex++;
+      }
+    });
+
+    const resolved = autoResolveByes(bracket);
+    setMatches(resolved);
+    
+    toast({
+      title: "Seed-ээр автомат бөглөгдлөө",
+      description: `${qualifiedPlayers.length} тоглогчийг seed-ийн дагуу байрлуулсан. Одоо гараар өөрчилж болно.`
+    });
+  }, [qualifiedPlayers, generateBracket, toast]);
+
 
   // Get all selected player IDs to prevent duplicates
   const getSelectedPlayerIds = (): Set<string> => {
@@ -273,29 +320,68 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     const currentMatch = matches.find(m => m.id === matchId);
     if (currentMatch) {
       const currentPlayer = currentMatch[position];
-      if (currentPlayer?.id && currentPlayer.id !== 'lucky_draw') {
+      if (currentPlayer?.id && !['lucky_draw', 'bye'].includes(currentPlayer.id)) {
         selectedIds.delete(currentPlayer.id);
       }
 
       const otherPlayer = position === 'player1' ? currentMatch.player2 : currentMatch.player1;
-      if (otherPlayer?.id && otherPlayer.id !== 'lucky_draw') {
+      if (otherPlayer?.id && !['lucky_draw', 'bye'].includes(otherPlayer.id)) {
         selectedIds.delete(otherPlayer.id);
       }
     }
 
-    // Convert qualified players to user format and filter out selected ones
+    // Convert qualified players to user format with additional info
     const qualifiedAsUsers = qualifiedPlayers.map(qp => {
       const user = users.find(u => u.id === qp.id);
-      return user || {
+      const isAssigned = selectedIds.has(qp.id);
+      const assignedMatch = isAssigned ? matches.find(m => 
+        m.player1?.id === qp.id || m.player2?.id === qp.id
+      ) : null;
+
+      return user ? {
+        ...user,
+        displayName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Unknown',
+        groupInfo: `${qp.groupName}, Seed #${qp.seed || qp.position}`,
+        isAssigned,
+        assignedTo: assignedMatch ? `${assignedMatch.roundName}` : undefined
+      } : {
         id: qp.id,
         firstName: qp.name.split(' ')[0] || qp.name,
         lastName: qp.name.split(' ').slice(1).join(' ') || '',
         email: '',
-        phone: ''
+        phone: '',
+        displayName: qp.name,
+        groupInfo: `${qp.groupName}, Seed #${qp.seed || qp.position}`,
+        isAssigned,
+        assignedTo: assignedMatch ? `${assignedMatch.roundName}` : undefined
       };
     });
 
-    return qualifiedAsUsers.filter(user => !selectedIds.has(user.id));
+    // Add BYE and Lucky draw options
+    const specialOptions = [
+      {
+        id: 'bye',
+        firstName: 'BYE',
+        lastName: '',
+        email: '',
+        phone: '',
+        displayName: 'BYE',
+        groupInfo: 'Автомат шилжилт',
+        isAssigned: false
+      },
+      {
+        id: 'lucky_draw',
+        firstName: 'Lucky',
+        lastName: 'Draw',
+        email: '',
+        phone: '',
+        displayName: 'Lucky Draw',
+        groupInfo: 'Санамсаргүй сонголт',
+        isAssigned: false
+      }
+    ];
+
+    return [...qualifiedAsUsers, ...specialOptions];
   };
 
   // Handle player selection
@@ -744,6 +830,14 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
               Хоосон шигшээ үүсгэх
             </Button>
             <Button 
+              onClick={generateBracketBySeed} 
+              disabled={qualifiedPlayers.length < 4}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Trophy className="w-4 h-4 mr-2" />
+              Seed-ээр автомат бөглөх
+            </Button>
+            <Button 
               onClick={advanceAllWinners} 
               disabled={matches.length === 0}
               variant="secondary"
@@ -858,8 +952,20 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                       <UserAutocomplete
                         users={getAvailableUsers(match.id, 'player1')}
                         value={match.player1?.id || ''}
-                        onSelect={(user) => handlePlayerChange(match.id, 'player1', user?.id || '')}
-                        placeholder="Тоглогч сонгох"
+                        onSelect={(user) => {
+                          // Validation: Check if trying to assign same player to both positions
+                          if (user?.id && match.player2?.id === user.id) {
+                            toast({
+                              title: "Алдаа",
+                              description: "Нэг тоглогчийг хоёр талд байрлуулж болохгүй",
+                              variant: "destructive"
+                            });
+                            return;
+                          }
+                          handlePlayerChange(match.id, 'player1', user?.id || '');
+                        }}
+                        placeholder="Тоглогч сонгох (бүх шалгарсан тоглогч)"
+                        disabled={match.winner !== undefined} // Lock if match is finished
                       />
                       <Input
                         type="number"
@@ -868,7 +974,13 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                         onChange={(e) => handleScoreChange(match.id, 'player1Score', e.target.value)}
                         min="0"
                         max={WIN_TARGET}
+                        disabled={match.winner !== undefined}
                       />
+                      {match.winner && (
+                        <div className="text-xs text-gray-500 flex items-center gap-1">
+                          🔒 Үр дүн баталгаажсан
+                        </div>
+                      )}
                     </div>
 
                     {/* Player 2 */}
@@ -877,8 +989,20 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                       <UserAutocomplete
                         users={getAvailableUsers(match.id, 'player2')}
                         value={match.player2?.id || ''}
-                        onSelect={(user) => handlePlayerChange(match.id, 'player2', user?.id || '')}
-                        placeholder="Тоглогч сонгох"
+                        onSelect={(user) => {
+                          // Validation: Check if trying to assign same player to both positions
+                          if (user?.id && match.player1?.id === user.id) {
+                            toast({
+                              title: "Алдаа",
+                              description: "Нэг тоглогчийг хоёр талд байрлуулж болохгүй",
+                              variant: "destructive"
+                            });
+                            return;
+                          }
+                          handlePlayerChange(match.id, 'player2', user?.id || '');
+                        }}
+                        placeholder="Тоглогч сонгох (бүх шалгарсан тоглогч)"
+                        disabled={match.winner !== undefined} // Lock if match is finished
                       />
                       <Input
                         type="number"
@@ -887,7 +1011,13 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                         onChange={(e) => handleScoreChange(match.id, 'player2Score', e.target.value)}
                         min="0"
                         max={WIN_TARGET}
+                        disabled={match.winner !== undefined}
                       />
+                      {match.winner && (
+                        <div className="text-xs text-gray-500 flex items-center gap-1">
+                          🔒 Үр дүн баталгаажсан
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -900,6 +1030,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                           variant={match.winner?.id === match.player1.id ? "default" : "outline"}
                           size="sm"
                           onClick={() => handleWinnerSelection(match.id, match.player1!.id)}
+                          disabled={match.winner !== undefined}
                         >
                           {match.player1.name}
                         </Button>
@@ -907,6 +1038,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                           variant={match.winner?.id === match.player2.id ? "default" : "outline"}
                           size="sm"
                           onClick={() => handleWinnerSelection(match.id, match.player2!.id)}
+                          disabled={match.winner !== undefined}
                         >
                           {match.player2.name}
                         </Button>
@@ -918,6 +1050,29 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                           Цэвэрлэх
                         </Button>
                       </div>
+                      {match.winner && (
+                        <div className="mt-2">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              if (window.confirm('Энэ тоглолтыг түгжээ тайлж засварлах уу?')) {
+                                setMatches(prev => prev.map(m => 
+                                  m.id === match.id 
+                                    ? { ...m, winner: undefined, player1Score: undefined, player2Score: undefined }
+                                    : m
+                                ));
+                                toast({
+                                  title: "Түгжээ тайлагдлаа",
+                                  description: "Одоо тоглолтыг дахин засварлах боломжтой"
+                                });
+                              }
+                            }}
+                          >
+                            🔓 Түгжээ тайлж засах
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )}
 

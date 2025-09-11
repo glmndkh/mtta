@@ -19,7 +19,16 @@ import { cn, formatName } from "@/lib/utils";
 import type { User } from "@shared/schema";
 
 interface UserAutocompleteProps {
-  users: User[];
+  users: Array<{
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    displayName?: string;
+    groupInfo?: string;
+    isAssigned?: boolean;
+    assignedTo?: string;
+  }>;
   value?: string;
   onSelect: (user: User | null) => void;
   placeholder?: string;
@@ -58,7 +67,7 @@ export function UserAutocomplete({
     const email = user.email?.toLowerCase() || "";
     const club = user.clubAffiliation?.toLowerCase() || "";
     const search = searchTerm.toLowerCase();
-    
+
     return fullName.includes(search) || 
            email.includes(search) || 
            club.includes(search);
@@ -70,6 +79,21 @@ export function UserAutocomplete({
     }
     setOpen(false);
     setSearchTerm("");
+  };
+
+  const getUserDisplay = (user: any) => {
+    if (!user) return '';
+    if (user.displayName) return user.displayName;
+    const name = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+    return name || user.email || 'Unknown User';
+  };
+
+  const getUserFullDisplay = (user: any) => {
+    const display = getUserDisplay(user);
+    if (user.groupInfo) {
+      return `${display} — ${user.groupInfo}${user.assignedTo ? ` (already in ${user.assignedTo})` : ''}`;
+    }
+    return display;
   };
 
   const content = (
@@ -101,25 +125,35 @@ export function UserAutocomplete({
             {filteredUsers.map((user) => (
               <CommandItem
                 key={user.id}
-                onSelect={() => handleSelect(user)}
-                className="flex items-center justify-between"
+                value={user.id}
+                onSelect={() => {
+                  onSelect(user);
+                  setOpen(false);
+                  setSearchTerm("");
+                }}
+                className={`cursor-pointer ${user.isAssigned ? 'text-gray-500 bg-gray-50' : ''}`}
+                disabled={user.isAssigned}
               >
+                <Check
+                  className={`mr-2 h-4 w-4 ${
+                    value === user.id ? "opacity-100" : "opacity-0"
+                  }`}
+                />
                 <div className="flex flex-col">
-                  <span className="font-medium">
-                    {formatName(user.firstName, user.lastName)}
+                  <span className={user.isAssigned ? 'line-through' : ''}>
+                    {getUserDisplay(user)}
                   </span>
-                  {user.clubAffiliation && (
-                    <span className="text-sm text-gray-500">
-                      {user.clubAffiliation}
+                  {user.groupInfo && (
+                    <span className="text-xs text-gray-500">
+                      {user.groupInfo}
+                      {user.assignedTo && (
+                        <span className="text-red-500 ml-1">
+                          (уже в {user.assignedTo})
+                        </span>
+                      )}
                     </span>
                   )}
                 </div>
-                <Check
-                  className={cn(
-                    "ml-2 h-4 w-4",
-                    value === user.id ? "opacity-100" : "opacity-0"
-                  )}
-                />
               </CommandItem>
             ))}
           </CommandGroup>
