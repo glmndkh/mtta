@@ -199,49 +199,36 @@ const AdminTournamentResults: React.FC = () => {
 
   // Create empty knockout bracket
   const createEmptyKnockoutBracket = () => {
-    // Create 8 empty matches for a standard 16-player bracket
+    // Create proper empty matches structure for 16-player bracket
     const emptyMatches: KnockoutMatch[] = [];
+    const rounds = 4; // 16 -> 8 -> 4 -> 2 -> 1
     
-    // First round (8 matches)
-    for (let i = 0; i < 8; i++) {
-      emptyMatches.push({
-        id: `knockout_round1_${Date.now()}_${i}`,
-        round: "1",
-        isFinished: false,
-      });
+    let matchId = 1;
+    
+    // Generate matches for each round
+    for (let round = 1; round <= rounds; round++) {
+      const matchesInRound = Math.pow(2, rounds - round);
+      
+      for (let matchIndex = 0; matchIndex < matchesInRound; matchIndex++) {
+        emptyMatches.push({
+          id: `match_${matchId}`,
+          round: round.toString(),
+          player1: undefined,
+          player2: undefined,
+          winner: undefined,
+          score: undefined,
+          isFinished: false,
+        });
+        matchId++;
+      }
     }
-
-    // Second round (4 matches)  
-    for (let i = 0; i < 4; i++) {
-      emptyMatches.push({
-        id: `knockout_round2_${Date.now()}_${i}`,
-        round: "2", 
-        isFinished: false,
-      });
-    }
-
-    // Semi-final (2 matches)
-    for (let i = 0; i < 2; i++) {
-      emptyMatches.push({
-        id: `knockout_semifinal_${Date.now()}_${i}`,
-        round: "3",
-        isFinished: false,
-      });
-    }
-
-    // Final (1 match)
-    emptyMatches.push({
-      id: `knockout_final_${Date.now()}`,
-      round: "4",
-      isFinished: false,
-    });
 
     setKnockoutResults(emptyMatches);
     setActiveTab("knockout");
 
     toast({
       title: "Амжилттай",
-      description: "Хоосон шилжих тоглолтын шигшээ үүсгэгдлээ. Одоо тамирчдыг нэмж үр дүн оруулна уу.",
+      description: "Хоосон шилжих тоглолтын шигшээ үүсгэгдлээ. Одоо тамирчдыг сонгож үр дүн оруулна уу.",
     });
   };
 

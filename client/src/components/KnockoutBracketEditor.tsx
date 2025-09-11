@@ -136,6 +136,45 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     return newMatches.sort((a, b) => a.round - b.round || a.position!.y - b.position!.y);
   }, []);
 
+  // Generate bracket structure (used by createEmptyBracket)
+  const generateEmptyBracket = useCallback((playerCount: number): Match[] => {
+    // Create a fixed number of rounds for an empty bracket, e.g., 16 players (4 rounds)
+    const rounds = Math.ceil(Math.log2(playerCount));
+    const ROUND_WIDTH = 350;
+    const START_Y = 80;
+    const matches: Match[] = [];
+
+    for (let round = 1; round <= rounds; round++) {
+      const matchesInRound = Math.pow(2, rounds - round);
+      const roundName = getRoundName(matchesInRound);
+
+      for (let matchIndex = 0; matchIndex < matchesInRound; matchIndex++) {
+        const verticalSpacing = Math.pow(2, round) * 120;
+        const centerOffset = (matchesInRound - 1) * verticalSpacing / 2;
+        const yPosition = START_Y + (matchIndex * verticalSpacing) - centerOffset + (round * 50);
+
+        const match: Match = {
+          id: `match_${round}_${matchIndex}`,
+          round,
+          roundName,
+          position: {
+            x: 50 + (round - 1) * ROUND_WIDTH,
+            y: Math.max(yPosition, 60)
+          }
+        };
+
+        // Set next match connection
+        if (round < rounds) {
+          const nextMatchIndex = Math.floor(matchIndex / 2);
+          match.nextMatchId = `match_${round + 1}_${nextMatchIndex}`;
+        }
+
+        matches.push(match);
+      }
+    }
+    return matches;
+  }, []);
+
   // Generate tournament bracket structure
   const generateBracket = useCallback((playerCount: number): Match[] => {
     // Always use bye matches for proper bracket generation
