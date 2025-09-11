@@ -197,6 +197,54 @@ const AdminTournamentResults: React.FC = () => {
     });
   };
 
+  // Create empty knockout bracket
+  const createEmptyKnockoutBracket = () => {
+    // Create 8 empty matches for a standard 16-player bracket
+    const emptyMatches: KnockoutMatch[] = [];
+    
+    // First round (8 matches)
+    for (let i = 0; i < 8; i++) {
+      emptyMatches.push({
+        id: `knockout_round1_${Date.now()}_${i}`,
+        round: "1",
+        isFinished: false,
+      });
+    }
+
+    // Second round (4 matches)  
+    for (let i = 0; i < 4; i++) {
+      emptyMatches.push({
+        id: `knockout_round2_${Date.now()}_${i}`,
+        round: "2", 
+        isFinished: false,
+      });
+    }
+
+    // Semi-final (2 matches)
+    for (let i = 0; i < 2; i++) {
+      emptyMatches.push({
+        id: `knockout_semifinal_${Date.now()}_${i}`,
+        round: "3",
+        isFinished: false,
+      });
+    }
+
+    // Final (1 match)
+    emptyMatches.push({
+      id: `knockout_final_${Date.now()}`,
+      round: "4",
+      isFinished: false,
+    });
+
+    setKnockoutResults(emptyMatches);
+    setActiveTab("knockout");
+
+    toast({
+      title: "Амжилттай",
+      description: "Хоосон шилжих тоглолтын шигшээ үүсгэгдлээ. Одоо тамирчдыг нэмж үр дүн оруулна уу.",
+    });
+  };
+
   const deleteGroup = (groupId: string) => {
     setGroupStageResults(groupStageResults.filter(g => g.id !== groupId));
   };
@@ -1064,35 +1112,71 @@ const AdminTournamentResults: React.FC = () => {
                   Шилжих тоглолтын үр дүн болон bracket-ийг удирдана уу
                 </p>
               </div>
-              {/* You might add category selection here if your knockout stage has multiple categories */}
-              {/* Example: If tournament.knockoutCategories exists, map over it */}
-              {tournament.knockoutCategories?.length > 0 && (
-                <Select onValueChange={setActiveKnockoutCategory} defaultValue={activeKnockoutCategory || tournament.knockoutCategories[0]}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Бүлэгийг сонгоно уу" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {tournament.knockoutCategories.map(category => (
-                      <SelectItem key={category} value={category}>{category}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
+              <div className="flex items-center gap-3">
+                {knockoutResults.length === 0 && (
+                  <Button 
+                    onClick={createEmptyKnockoutBracket}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Хоосон шигшээ үүсгэх
+                  </Button>
+                )}
+                {/* You might add category selection here if your knockout stage has multiple categories */}
+                {/* Example: If tournament.knockoutCategories exists, map over it */}
+                {tournament.knockoutCategories?.length > 0 && (
+                  <Select onValueChange={setActiveKnockoutCategory} defaultValue={activeKnockoutCategory || tournament.knockoutCategories[0]}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Бүлэгийг сонгоно уу" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {tournament.knockoutCategories.map(category => (
+                        <SelectItem key={category} value={category}>{category}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
             </div>
             <Card>
               <CardContent className="p-6">
-                {/* Render KnockoutBracketEditor for the selected category */}
-                <KnockoutBracketEditor
-                  key={`knockout-${activeKnockoutCategory}`}
-                  initialMatches={normalizeKnockoutMatches(
-                    knockoutResults?.[activeKnockoutCategory] || []
-                  )}
-                  users={allUsers}
-                  onSave={handleKnockoutSave}
-                  qualifiedPlayers={getQualifiedPlayersForCategory(activeKnockoutCategory)}
-                  selectedMatchId={selectedMatchId}
-                  onMatchSelect={setSelectedMatchId}
-                />
+                {knockoutResults.length === 0 ? (
+                  <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                    <Trophy className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Шилжих тоглолт байхгүй байна</h3>
+                    <p className="text-gray-600 mb-4">
+                      Групп шатнаас шалгарсан тамирчдыг шилжүүлэх эсвэл хоосон шигшээ үүсгэнэ үү
+                    </p>
+                    <div className="flex justify-center gap-3">
+                      <Button 
+                        onClick={advanceQualifiedPlayers}
+                        disabled={groupStageResults.length === 0}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <Users className="w-4 h-4 mr-2" />
+                        Шалгарсан тамирчдыг шилжүүлэх
+                      </Button>
+                      <Button 
+                        onClick={createEmptyKnockoutBracket}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Хоосон шигшээ үүсгэх
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Render KnockoutBracketEditor for the selected category */
+                  <KnockoutBracketEditor
+                    key={`knockout-${activeKnockoutCategory}`}
+                    initialMatches={normalizeKnockoutMatches(knockoutResults || [])}
+                    users={allUsers}
+                    onSave={handleKnockoutSave}
+                    qualifiedPlayers={getQualifiedPlayersForCategory(activeKnockoutCategory)}
+                    selectedMatchId={selectedMatchId}
+                    onMatchSelect={setSelectedMatchId}
+                  />
+                )}
               </CardContent>
             </Card>
           </TabsContent>
