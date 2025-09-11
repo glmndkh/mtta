@@ -28,10 +28,10 @@ const AboutPage = () => {
         <div className="container mx-auto px-4 py-8">
           {/* Page Header */}
           <div className="text-center mb-16">
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 glow-text">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4 glow-text">
               Бидний тухай
             </h1>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
+            <p className="text-xl text-gray-700 dark:text-gray-300 max-w-3xl mx-auto mb-8">
               Монголын ширээний теннисний холбоо - Спортын хөгжил, залуусын сургалт, олон улсын хамтын ажиллагаа
             </p>
             <div className="flex justify-center">
@@ -42,7 +42,7 @@ const AboutPage = () => {
           {/* President's Greeting Section */}
           <section className="mb-20">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-white mb-4">Ерөнхийлөгчийн мэндчилгээ</h2>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Ерөнхийлөгчийн мэндчилгээ</h2>
               <div className="w-20 h-1 bg-green-400 mx-auto"></div>
             </div>
             
@@ -69,10 +69,10 @@ const AboutPage = () => {
                   </div>
                   
                   <div className="flex-1 text-center md:text-left">
-                    <h3 className="text-2xl font-bold text-white mb-2">Ц. Гантулга</h3>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Ц. Гантулга</h3>
                     <p className="text-green-400 text-lg mb-6">Монголын Ширээний Теннисний Холбооны Ерөнхийлөгч</p>
-                    
-                    <div className="text-gray-300 leading-relaxed space-y-4">
+
+                    <div className="text-gray-700 dark:text-gray-300 leading-relaxed space-y-4">
                       <p>
                         Эрхэм хүндэт тамирчид, дасгалжуулагчид, ширээний теннисийн спортыг дэмжигч бүхэнд мэндчилж байна.
                       </p>
@@ -89,7 +89,7 @@ const AboutPage = () => {
                     </div>
                     
                     <div className="mt-6 text-right">
-                      <div className="text-white font-semibold">Хүндэтгэсэн,</div>
+                      <div className="text-gray-900 dark:text-white font-semibold">Хүндэтгэсэн,</div>
                       <div className="text-green-400 font-bold text-lg">Ц. Гантулга</div>
                     </div>
                   </div>
@@ -101,7 +101,7 @@ const AboutPage = () => {
           {/* Mission, Vision, Values Section */}
           <section className="mb-20">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-white mb-4">Эрхэм зорилго</h2>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Эрхэм зорилго</h2>
               <div className="w-20 h-1 bg-green-400 mx-auto"></div>
             </div>
             
@@ -142,23 +142,23 @@ const AboutPage = () => {
                   <div className="text-left">
                     <div className="flex items-center mb-2">
                       <div className="w-2 h-2 bg-orange-400 rounded-full mr-3"></div>
-                      <span className="text-gray-300">Спортын ёс зүй</span>
+                      <span className="text-gray-700 dark:text-gray-300">Спортын ёс зүй</span>
                     </div>
                     <div className="flex items-center mb-2">
                       <div className="w-2 h-2 bg-orange-400 rounded-full mr-3"></div>
-                      <span className="text-gray-300">Хамтын ажиллагаа</span>
+                      <span className="text-gray-700 dark:text-gray-300">Хамтын ажиллагаа</span>
                     </div>
                     <div className="flex items-center mb-2">
                       <div className="w-2 h-2 bg-orange-400 rounded-full mr-3"></div>
-                      <span className="text-gray-300">Залуусын дэмжлэг</span>
+                      <span className="text-gray-700 dark:text-gray-300">Залуусын дэмжлэг</span>
                     </div>
                     <div className="flex items-center mb-2">
                       <div className="w-2 h-2 bg-orange-400 rounded-full mr-3"></div>
-                      <span className="text-gray-300">Олон улсын стандарт</span>
+                      <span className="text-gray-700 dark:text-gray-300">Олон улсын стандарт</span>
                     </div>
                     <div className="flex items-center">
                       <div className="w-2 h-2 bg-orange-400 rounded-full mr-3"></div>
-                      <span className="text-gray-300">Тэргүүлэх арга барил</span>
+                      <span className="text-gray-700 dark:text-gray-300">Тэргүүлэх арга барил</span>
                     </div>
                   </div>
                 </CardContent>
@@ -169,7 +169,7 @@ const AboutPage = () => {
           {/* Strategic Goals Section */}
           <section className="mb-20">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-white mb-4">Стратегийн зорилтууд</h2>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Стратегийн зорилтууд</h2>
               <div className="w-20 h-1 bg-green-400 mx-auto"></div>
             </div>
             
@@ -179,8 +179,8 @@ const AboutPage = () => {
                   <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Users className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <h4 className="text-lg font-semibold text-white mb-2">Спортын хөгжүүлэлт</h4>
-                  <p className="text-gray-300 text-sm leading-relaxed">
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Спортын хөгжүүлэлт</h4>
+                  <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
                     Ширээний теннисийг Монголд өргөн дэлгэрүүлж, бүх насны иргэдэд энэ спортыг дэмжиж, тамирчдын техникийг сайжруулах
                   </p>
                 </CardContent>
@@ -191,8 +191,8 @@ const AboutPage = () => {
                   <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Users className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <h4 className="text-lg font-semibold text-white mb-2">Залуусын сургалт</h4>
-                  <p className="text-gray-300 text-sm leading-relaxed">
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Залуусын сургалт</h4>
+                  <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
                     Залуу тамирчдыг олон улсын түвшинд бэлтгэж, дасгалжуулагчдын чадвар дээшлүүлэх сургалтыг зохион байгуулах
                   </p>
                 </CardContent>
@@ -203,8 +203,8 @@ const AboutPage = () => {
                   <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Users className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <h4 className="text-lg font-semibold text-white mb-2">Олон улсын хамтын ажиллагаа</h4>
-                  <p className="text-gray-300 text-sm leading-relaxed">
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Олон улсын хамтын ажиллагаа</h4>
+                  <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
                     ITTF болон бусад олон улсын байгууллагуудтай хамтын ажиллагааг өргөжүүлж, тамирчдын солилцоог дэмжих
                   </p>
                 </CardContent>
@@ -215,9 +215,9 @@ const AboutPage = () => {
           {/* Timeline Section */}
           <section className="mb-20">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-white mb-4">Он цагийн хэлхээс</h2>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Он цагийн хэлхээс</h2>
               <div className="w-20 h-1 bg-green-400 mx-auto mb-8"></div>
-              <p className="text-gray-300 max-w-2xl mx-auto">
+              <p className="text-gray-700 dark:text-gray-300 max-w-2xl mx-auto">
                 Монголын ширээний теннисний холбооны түүхэн замнал - 1965 онд анх байгуулагдсанаас өнөөг хүртэл спортын хөгжилд оруулсан хувь нэмэр.
               </p>
             </div>
@@ -246,8 +246,8 @@ const AboutPage = () => {
                       </div>
                       <Card className="card-dark">
                         <CardContent className="p-6">
-                          <h3 className="text-white font-semibold mb-2">{event.title}</h3>
-                          <p className="text-gray-300 text-sm leading-relaxed">{event.description}</p>
+                          <h3 className="text-gray-900 dark:text-white font-semibold mb-2">{event.title}</h3>
+                          <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">{event.description}</p>
                         </CardContent>
                       </Card>
                     </div>
@@ -260,7 +260,7 @@ const AboutPage = () => {
           {/* Leadership Section */}
           <section className="mb-20">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-white mb-4">Удирдлагын баг</h2>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Удирдлагын баг</h2>
               <div className="w-20 h-1 bg-green-400 mx-auto"></div>
             </div>
             
@@ -268,34 +268,34 @@ const AboutPage = () => {
               <Card className="card-dark text-center">
                 <CardContent className="p-6">
                   <div className="w-24 h-24 bg-gray-600 rounded-full mx-auto mb-4 flex items-center justify-center">
-                    <Users className="w-12 h-12 text-gray-300" />
+                    <Users className="w-12 h-12 text-gray-700 dark:text-gray-300" />
                   </div>
-                  <h3 className="text-white font-semibold text-lg mb-2">Ц. Гантулга</h3>
+                  <h3 className="text-gray-900 dark:text-white font-semibold text-lg mb-2">Ц. Гантулга</h3>
                   <p className="text-green-400 text-sm mb-2">Ерөнхийлөгч</p>
-                  <p className="text-gray-300 text-xs">Монголын ширээний теннисний хөгжилд 25 жил ажилласан туршлагатай</p>
+                  <p className="text-gray-700 dark:text-gray-300 text-xs">Монголын ширээний теннисний хөгжилд 25 жил ажилласан туршлагатай</p>
                 </CardContent>
               </Card>
 
               <Card className="card-dark text-center">
                 <CardContent className="p-6">
                   <div className="w-24 h-24 bg-gray-600 rounded-full mx-auto mb-4 flex items-center justify-center">
-                    <Users className="w-12 h-12 text-gray-300" />
+                    <Users className="w-12 h-12 text-gray-700 dark:text-gray-300" />
                   </div>
-                  <h3 className="text-white font-semibold text-lg mb-2">Б. Мөнхбат</h3>
+                  <h3 className="text-gray-900 dark:text-white font-semibold text-lg mb-2">Б. Мөнхбат</h3>
                   <p className="text-green-400 text-sm mb-2">Гүйцэтгэх захирал</p>
-                  <p className="text-gray-300 text-xs">Олон улсын тэмцээн, төсөл хэрэгжүүлэх чиглэлийг удирддаг</p>
+                  <p className="text-gray-700 dark:text-gray-300 text-xs">Олон улсын тэмцээн, төсөл хэрэгжүүлэх чиглэлийг удирддаг</p>
                 </CardContent>
               </Card>
 
               <Card className="card-dark text-center">
                 <CardContent className="p-6">
                   <div className="w-24 h-24 bg-gray-600 rounded-full mx-auto mb-4 flex items-center justify-center">
-                    <Users className="w-12 h-12 text-gray-300" />
+                    <Users className="w-12 h-12 text-gray-700 dark:text-gray-300" />
                   </div>
-                  <h3 className="text-white font-semibold text-lg mb-2">Д. Энхтүүшин</h3>
+                  <h3 className="text-gray-900 dark:text-white font-semibold text-lg mb-2">Д. Энхтүүшин</h3>
                   <p className="text-green-400 text-sm mb-2">Сургалтын албаны дарга</p>
-                  <p className="text-gray-300 text-xs">Багш, дасгалжуулагчдын сургалт, арга зүйн ажилыг удирддаг</p>
-                </CardContent>
+                  <p className="text-gray-700 dark:text-gray-300 text-xs">Багш, дасгалжуулагчдын сургалт, арга зүйн ажилыг удирддаг</p>
+              </CardContent>
               </Card>
             </div>
           </section>
@@ -303,7 +303,7 @@ const AboutPage = () => {
           {/* Organizational Structure Section */}
           <section className="mb-20">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-white mb-4">Бүтэц, зохион байгуулалт</h2>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Бүтэц, зохион байгуулалт</h2>
               <div className="w-20 h-1 bg-green-400 mx-auto"></div>
             </div>
             
@@ -341,7 +341,7 @@ const AboutPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
                   <div className="bg-gray-700 p-4 rounded-lg text-center">
                     <div className="text-purple-400 font-medium mb-2">Спортын хөгжлийн алба</div>
-                    <div className="text-gray-300 text-sm space-y-1">
+                    <div className="text-gray-700 dark:text-gray-300 text-sm space-y-1">
                       <div>Тамирчдын бэлтгэлийн хэлтэс</div>
                       <div>Тэмцээний зохион байгуулалтын хэлтэс</div>
                       <div>Дасгалжуулагчдын сургалтын хэлтэс</div>
@@ -350,7 +350,7 @@ const AboutPage = () => {
 
                   <div className="bg-gray-700 p-4 rounded-lg text-center">
                     <div className="text-pink-400 font-medium mb-2">Олон улсын харилцааны алба</div>
-                    <div className="text-gray-300 text-sm space-y-1">
+                    <div className="text-gray-700 dark:text-gray-300 text-sm space-y-1">
                       <div>ITTF-тэй харилцах хэлтэс</div>
                       <div>Азийн холбооны харилцааны хэлтэс</div>
                     </div>
@@ -358,7 +358,7 @@ const AboutPage = () => {
 
                   <div className="bg-gray-700 p-4 rounded-lg text-center">
                     <div className="text-green-400 font-medium mb-2">Залуучуудын спортын алба</div>
-                    <div className="text-gray-300 text-sm space-y-1">
+                    <div className="text-gray-700 dark:text-gray-300 text-sm space-y-1">
                       <div>Сургуулийн спортын хэлтэс</div>
                     </div>
                   </div>
@@ -371,13 +371,13 @@ const AboutPage = () => {
                 {/* Bottom Level */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
                   <div className="bg-orange-600 p-4 rounded text-center">
-                    <div className="text-white font-medium mb-2">Клубуудын харилцааны алба</div>
-                    <div className="text-gray-200 text-sm">Холбооны гишүүд клубуудтай харилцах</div>
+                    <div className="text-gray-900 dark:text-white font-medium mb-2">Клубуудын харилцааны алба</div>
+                    <div className="text-gray-700 dark:text-gray-200 text-sm">Холбооны гишүүд клубуудтай харилцах</div>
                   </div>
 
                   <div className="bg-orange-600 p-4 rounded text-center">
-                    <div className="text-white font-medium mb-2">Олон нийтийн харилцааны алба</div>
-                    <div className="text-gray-200 text-sm">Хэвлэл мэдээлэл, сурталчилгаа</div>
+                    <div className="text-gray-900 dark:text-white font-medium mb-2">Олон нийтийн харилцааны алба</div>
+                    <div className="text-gray-700 dark:text-gray-200 text-sm">Хэвлэл мэдээлэл, сурталчилгаа</div>
                   </div>
                 </div>
               </div>
@@ -389,19 +389,19 @@ const AboutPage = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div className="text-center">
                 <div className="text-4xl font-bold text-green-400 mb-2">60+</div>
-                <div className="text-gray-300">Жилийн туршлага</div>
+                <div className="text-gray-700 dark:text-gray-300">Жилийн туршлага</div>
               </div>
               <div className="text-center">
                 <div className="text-4xl font-bold text-green-400 mb-2">500+</div>
-                <div className="text-gray-300">Тамирчин</div>
+                <div className="text-gray-700 dark:text-gray-300">Тамирчин</div>
               </div>
               <div className="text-center">
                 <div className="text-4xl font-bold text-green-400 mb-2">15+</div>
-                <div className="text-gray-300">Клуб</div>
+                <div className="text-gray-700 dark:text-gray-300">Клуб</div>
               </div>
               <div className="text-center">
                 <div className="text-4xl font-bold text-green-400 mb-2">100+</div>
-                <div className="text-gray-300">Тэмцээн</div>
+                <div className="text-gray-700 dark:text-gray-300">Тэмцээн</div>
               </div>
             </div>
           </section>
