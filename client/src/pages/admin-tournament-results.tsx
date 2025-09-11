@@ -370,24 +370,25 @@ const AdminTournamentResults: React.FC = () => {
   return (
     <PageWithLoading>
       <Navigation />
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+      <div className="min-h-screen bg-gray-900 text-white">
+        <div className="container mx-auto px-4 py-8">
+          {/* Header */}
+          <div className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-6 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button 
                 onClick={() => setLocation('/admin/tournaments')}
                 variant="outline"
                 size="sm"
-                className="hover:bg-gray-50"
+                className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Буцах
               </Button>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Тэмцээний үр дүн удирдах</h1>
-                <p className="text-lg text-gray-700 mt-1">{tournament.name}</p>
-                <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                <h1 className="text-3xl font-bold text-white">Тэмцээний үр дүн удирдах</h1>
+                <p className="text-lg text-gray-300 mt-1">{tournament.name}</p>
+                <div className="flex items-center gap-4 mt-2 text-sm text-gray-400">
                   <span className="flex items-center gap-1">
                     <Users className="w-4 h-4" />
                     {participants?.length || 0} оролцогч
@@ -423,11 +424,11 @@ const AdminTournamentResults: React.FC = () => {
         </div>
 
         {/* Podium Cards */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Trophy className="w-6 h-6 text-yellow-500" />
-            Шилдэг тоглогчид
-          </h2>
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-white">
+              <Trophy className="w-6 h-6 text-yellow-500" />
+              Шилдэг тоглогчид
+            </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* 1st Place */}
             <Card className="bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 text-white border-yellow-300">
@@ -480,12 +481,12 @@ const AdminTournamentResults: React.FC = () => {
         </div>
 
         {/* Qualified Players Tabs */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <Users className="w-6 h-6 text-blue-500" />
-              Шилжих тоглогчдын удирдлага
-            </h2>
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold flex items-center gap-2 text-white">
+                  <Users className="w-6 h-6 text-blue-500" />
+                  Шилжих тоглогчдын удирдлага
+                </h2>
             <div className="flex items-center gap-2">
               <Button 
                 onClick={generateKnockoutBracket}
@@ -503,35 +504,35 @@ const AdminTournamentResults: React.FC = () => {
           </div>
 
           <Tabs value={selectedPlayerTab} onValueChange={setSelectedPlayerTab}>
-            <TabsList className="bg-gray-100 p-1">
-              <TabsTrigger value="all" className="px-4 py-2">Бүгд ({qualifiedPlayers.length})</TabsTrigger>
+                <TabsList className="bg-gray-800 border border-gray-700 p-1">
+                  <TabsTrigger value="all" className="px-4 py-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300">Бүгд ({qualifiedPlayers.length})</TabsTrigger>
               {qualifiedPlayers.map((player) => (
-                <TabsTrigger 
-                  key={player.id} 
-                  value={player.id}
-                  className="px-4 py-2"
-                >
-                  {player.name}
-                </TabsTrigger>
-              ))}
+                    <TabsTrigger 
+                      key={player.id} 
+                      value={player.id}
+                      className="px-4 py-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300"
+                    >
+                      {player.name}
+                    </TabsTrigger>
+                  ))}
             </TabsList>
 
             <TabsContent value="all" className="mt-4">
-              <Card>
-                <CardContent className="p-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                    {qualifiedPlayers.map((player) => (
-                      <div 
-                        key={player.id}
-                        className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border"
-                      >
+                  <Card className="bg-gray-800 border-gray-700">
+                    <CardContent className="p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                        {qualifiedPlayers.map((player) => (
+                          <div 
+                            key={player.id}
+                            className="flex items-center gap-3 p-3 bg-gray-700 rounded-lg border border-gray-600"
+                          >
                         <Badge variant="outline" className="text-xs">
                           #{player.seed}
                         </Badge>
                         <div className="flex-1">
-                          <div className="font-medium text-sm">{player.name}</div>
-                          <div className="text-xs text-gray-500">{player.groupName} - {player.position}-р</div>
-                        </div>
+                              <div className="font-medium text-sm text-white">{player.name}</div>
+                              <div className="text-xs text-gray-400">{player.groupName} - {player.position}-р</div>
+                            </div>
                       </div>
                     ))}
                   </div>
@@ -540,18 +541,18 @@ const AdminTournamentResults: React.FC = () => {
             </TabsContent>
 
             {qualifiedPlayers.map((player) => (
-              <TabsContent key={player.id} value={player.id} className="mt-4">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <User className="w-6 h-6 text-blue-600" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold">{player.name}</h3>
-                        <p className="text-sm text-gray-600">{player.groupName} - {player.position}-р байр</p>
-                        <p className="text-xs text-gray-500">Seed: #{player.seed}</p>
-                      </div>
+                  <TabsContent key={player.id} value={player.id} className="mt-4">
+                    <Card className="bg-gray-800 border-gray-700">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                            <User className="w-6 h-6 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-white">{player.name}</h3>
+                            <p className="text-sm text-gray-400">{player.groupName} - {player.position}-р байр</p>
+                            <p className="text-xs text-gray-500">Seed: #{player.seed}</p>
+                          </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -561,24 +562,24 @@ const AdminTournamentResults: React.FC = () => {
         </div>
 
         {/* Knockout Bracket */}
-        {knockoutResults.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <Trophy className="w-6 h-6 text-purple-500" />
-              Шилжих тоглолтын удирдлага
-            </h2>
-            <Card>
-              <CardContent className="p-6">
+            {knockoutResults.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-white">
+                  <Trophy className="w-6 h-6 text-purple-500" />
+                  Шилжих тоглолтын удирдлага
+                </h2>
+                <Card className="bg-gray-800 border-gray-700">
+                  <CardContent className="p-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   {/* Semifinals */}
-                  <div>
-                    <h3 className="text-lg font-medium mb-4 text-center">Хагас финал</h3>
-                    <div className="space-y-4">
-                      {knockoutResults
-                        .filter(match => match.roundName === 'Хагас финал')
-                        .map((match) => (
-                          <Card key={match.id} className="border-2 border-purple-200">
-                            <CardContent className="p-4">
+                      <div>
+                        <h3 className="text-lg font-medium mb-4 text-center text-white">Хагас финал</h3>
+                        <div className="space-y-4">
+                          {knockoutResults
+                            .filter(match => match.roundName === 'Хагас финал')
+                            .map((match) => (
+                              <Card key={match.id} className="border-2 border-purple-600 bg-gray-800">
+                                <CardContent className="p-4">
                               <div className="flex items-center justify-between mb-3">
                                 <Badge variant="outline">
                                   {match.id.toUpperCase()}
@@ -591,10 +592,10 @@ const AdminTournamentResults: React.FC = () => {
                               </div>
 
                               {/* Player 1 */}
-                              <div className="flex items-center justify-between mb-2 p-2 bg-gray-50 rounded">
-                                <span className="font-medium">
-                                  {match.player1?.name || 'Тоглогч 1'}
-                                </span>
+                                  <div className="flex items-center justify-between mb-2 p-2 bg-gray-700 rounded">
+                                    <span className="font-medium text-white">
+                                      {match.player1?.name || 'Тоглогч 1'}
+                                    </span>
                                 <div className="flex items-center gap-2">
                                   <Input
                                     type="number"
@@ -614,10 +615,10 @@ const AdminTournamentResults: React.FC = () => {
                               </div>
 
                               {/* Player 2 */}
-                              <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                                <span className="font-medium">
-                                  {match.player2?.name || 'Тоглогч 2'}
-                                </span>
+                                  <div className="flex items-center justify-between p-2 bg-gray-700 rounded">
+                                    <span className="font-medium text-white">
+                                      {match.player2?.name || 'Тоглогч 2'}
+                                    </span>
                                 <div className="flex items-center gap-2">
                                   <Input
                                     type="number"
@@ -642,13 +643,13 @@ const AdminTournamentResults: React.FC = () => {
                   </div>
 
                   {/* Final */}
-                  <div>
-                    <h3 className="text-lg font-medium mb-4 text-center">Финал</h3>
-                    {knockoutResults
-                      .filter(match => match.roundName === 'Финал')
-                      .map((match) => (
-                        <Card key={match.id} className="border-2 border-yellow-300">
-                          <CardContent className="p-4">
+                      <div>
+                        <h3 className="text-lg font-medium mb-4 text-center text-white">Финал</h3>
+                        {knockoutResults
+                          .filter(match => match.roundName === 'Финал')
+                          .map((match) => (
+                            <Card key={match.id} className="border-2 border-yellow-500 bg-gray-800">
+                              <CardContent className="p-4">
                             <div className="flex items-center justify-between mb-3">
                               <Badge variant="outline" className="bg-yellow-100">
                                 ФИНАЛ
@@ -661,10 +662,10 @@ const AdminTournamentResults: React.FC = () => {
                             </div>
 
                             {/* Player 1 */}
-                            <div className="flex items-center justify-between mb-2 p-2 bg-gray-50 rounded">
-                              <span className="font-medium">
-                                {match.player1?.name || 'Финалист 1'}
-                              </span>
+                                <div className="flex items-center justify-between mb-2 p-2 bg-gray-700 rounded">
+                                  <span className="font-medium text-white">
+                                    {match.player1?.name || 'Финалист 1'}
+                                  </span>
                               <div className="flex items-center gap-2">
                                 <Input
                                   type="number"
@@ -684,10 +685,10 @@ const AdminTournamentResults: React.FC = () => {
                             </div>
 
                             {/* Player 2 */}
-                            <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                              <span className="font-medium">
-                                {match.player2?.name || 'Финалист 2'}
-                              </span>
+                                <div className="flex items-center justify-between p-2 bg-gray-700 rounded">
+                                  <span className="font-medium text-white">
+                                    {match.player2?.name || 'Финалист 2'}
+                                  </span>
                               <div className="flex items-center gap-2">
                                 <Input
                                   type="number"
@@ -711,13 +712,13 @@ const AdminTournamentResults: React.FC = () => {
                   </div>
 
                   {/* Third Place */}
-                  <div>
-                    <h3 className="text-lg font-medium mb-4 text-center">3-р байр</h3>
-                    {knockoutResults
-                      .filter(match => match.roundName === '3-р байрны тоглолт')
-                      .map((match) => (
-                        <Card key={match.id} className="border-2 border-orange-200">
-                          <CardContent className="p-4">
+                      <div>
+                        <h3 className="text-lg font-medium mb-4 text-center text-white">3-р байр</h3>
+                        {knockoutResults
+                          .filter(match => match.roundName === '3-р байрны тоглолт')
+                          .map((match) => (
+                            <Card key={match.id} className="border-2 border-orange-500 bg-gray-800">
+                              <CardContent className="p-4">
                             <div className="flex items-center justify-between mb-3">
                               <Badge variant="outline" className="bg-orange-100">
                                 3-Р БАЙР
@@ -730,10 +731,10 @@ const AdminTournamentResults: React.FC = () => {
                             </div>
 
                             {/* Player 1 */}
-                            <div className="flex items-center justify-between mb-2 p-2 bg-gray-50 rounded">
-                              <span className="font-medium">
-                                {match.player1?.name || 'Тоглогч 1'}
-                              </span>
+                                <div className="flex items-center justify-between mb-2 p-2 bg-gray-700 rounded">
+                                  <span className="font-medium text-white">
+                                    {match.player1?.name || 'Тоглогч 1'}
+                                  </span>
                               <div className="flex items-center gap-2">
                                 <Input
                                   type="number"
@@ -753,10 +754,10 @@ const AdminTournamentResults: React.FC = () => {
                             </div>
 
                             {/* Player 2 */}
-                            <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                              <span className="font-medium">
-                                {match.player2?.name || 'Тоглогч 2'}
-                              </span>
+                                <div className="flex items-center justify-between p-2 bg-gray-700 rounded">
+                                  <span className="font-medium text-white">
+                                    {match.player2?.name || 'Тоглогч 2'}
+                                  </span>
                               <div className="flex items-center gap-2">
                                 <Input
                                   type="number"
@@ -785,27 +786,27 @@ const AdminTournamentResults: React.FC = () => {
         )}
 
         {/* Settings Panel */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="w-5 h-5" />
-              Шилжилтийн тохиргоо
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            <Card className="mb-6 bg-gray-800 border-gray-700">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Target className="w-5 h-5" />
+                  Шилжилтийн тохиргоо
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center gap-2">
-                <input type="checkbox" id="top1" className="rounded" defaultChecked />
-                <label htmlFor="top1" className="text-sm">Топ 1 шилжих</label>
-              </div>
-              <div className="flex items-center gap-2">
-                <input type="checkbox" id="top2" className="rounded" defaultChecked />
-                <label htmlFor="top2" className="text-sm">Топ 2 шилжих</label>
-              </div>
-              <div className="flex items-center gap-2">
-                <input type="checkbox" id="luckyDraw" className="rounded" />
-                <label htmlFor="luckyDraw" className="text-sm">Lucky draw сонголт</label>
-              </div>
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" id="top1" className="rounded" defaultChecked />
+                    <label htmlFor="top1" className="text-sm text-gray-300">Топ 1 шилжих</label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" id="top2" className="rounded" defaultChecked />
+                    <label htmlFor="top2" className="text-sm text-gray-300">Топ 2 шилжих</label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" id="luckyDraw" className="rounded" />
+                    <label htmlFor="luckyDraw" className="text-sm text-gray-300">Lucky draw сонголт</label>
+                  </div>
             </div>
             <div className="mt-4 flex items-center gap-3">
               <Button 
@@ -816,20 +817,21 @@ const AdminTournamentResults: React.FC = () => {
                 Хэсэглэлүүдээс шилжилт хийх
               </Button>
               <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isPublished}
-                  onChange={(e) => setIsPublished(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm font-medium text-gray-700">Нийтэд харуулах</span>
+                    <input
+                      type="checkbox"
+                      checked={isPublished}
+                      onChange={(e) => setIsPublished(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-300">Нийтэд харуулах</span>
                 {isPublished && <Eye className="w-4 h-4 text-green-600" />}
                 {!isPublished && <EyeOff className="w-4 h-4 text-gray-400" />}
               </label>
             </div>
           </CardContent>
         </Card>
-      </div>
+            </div>
+        </div>
     </PageWithLoading>
   );
 };
