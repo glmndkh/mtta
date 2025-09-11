@@ -82,6 +82,9 @@ const AdminTournamentResults: React.FC = () => {
   const [isPublished, setIsPublished] = useState(false);
   const [selectedPlayerTab, setSelectedPlayerTab] = useState<string>("all");
   const [qualifiedPlayers, setQualifiedPlayers] = useState<QualifiedPlayer[]>([]);
+  const [showAddPlayerToGroup, setShowAddPlayerToGroup] = useState<string | null>(null);
+  const [selectedNewPlayerId, setSelectedNewPlayerId] = useState<string>('');
+
 
   // Fetch tournament data
   const { data: tournament, isLoading: tournamentLoading } = useQuery<Tournament>({
@@ -704,6 +707,96 @@ const AdminTournamentResults: React.FC = () => {
                         ))}
                         {group.players.length === 0 && <p className="text-gray-500 text-sm">Энэ хэсэгт тоглогч байхгүй байна.</p>}
                       </div>
+                      {/* Button to show modal */}
+                      <Button
+                        size="sm"
+                        className="mt-3 bg-blue-600 hover:bg-blue-700"
+                        onClick={() => setShowAddPlayerToGroup(group.id)}
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Тоглогч нэмэх
+                      </Button>
+
+                      {/* Add Player Modal */}
+                      {showAddPlayerToGroup === group.id && (
+                        <div className="mt-4 p-4 bg-gray-700 rounded-lg border border-gray-600">
+                          <h5 className="text-sm font-medium text-white mb-3">Тоглогч сонгох</h5>
+                          <div className="space-y-3">
+                            <UserAutocomplete
+                              users={users.filter(user => {
+                                // Filter out users already in groups
+                                const usedUserIds = groupStageResults.flatMap(g => 
+                                  g.players.map(p => p.userId).filter(Boolean)
+                                );
+                                return !usedUserIds.includes(user.id);
+                              })}
+                              onUserSelect={(user) => {
+                                setSelectedNewPlayerId(user.id);
+                              }}
+                              placeholder="Тоглогч хайх..."
+                            />
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  if (!selectedNewPlayerId) {
+                                    toast({
+                                      title: "Тоглогч сонгоно уу",
+                                      variant: "destructive"
+                                    });
+                                    return;
+                                  }
+
+                                  const selectedUser = users.find(u => u.id === selectedNewPlayerId);
+                                  if (!selectedUser) return;
+
+                                  setGroupStageResults(prev => prev.map(g =>
+                                    g.id === group.id
+                                      ? {
+                                          ...g,
+                                          players: [...g.players, {
+                                            id: selectedUser.id,
+                                            name: `${selectedUser.firstName} ${selectedUser.lastName}`,
+                                            playerId: selectedUser.id,
+                                            userId: selectedUser.id
+                                          }],
+                                          playerStats: [...g.playerStats, {
+                                            playerId: selectedUser.id,
+                                            wins: 0,
+                                            losses: 0,
+                                            points: 0
+                                          }]
+                                        }
+                                      : g
+                                  ));
+
+                                  toast({
+                                    title: "Тоглогч нэмэгдлээ",
+                                    description: `${selectedUser.firstName} ${selectedUser.lastName} ${group.name}-д нэмэгдлээ`
+                                  });
+
+                                  setShowAddPlayerToGroup(null);
+                                  setSelectedNewPlayerId('');
+                                }}
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                <Plus className="w-4 h-4 mr-1" />
+                                Нэмэх
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setShowAddPlayerToGroup(null);
+                                  setSelectedNewPlayerId('');
+                                }}
+                              >
+                                Цуцлах
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Results Matrix */}
