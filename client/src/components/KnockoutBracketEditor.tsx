@@ -218,6 +218,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     });
   }, [qualifiedPlayers, generateBracket, toast]);
 
+
   // Get all selected player IDs to prevent duplicates
   const getSelectedPlayerIds = (): Set<string> => {
     const selectedIds = new Set<string>();
@@ -367,7 +368,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     let matchesCopy = [...arr];
 
     const resolve = (m: Match) => {
-      if (!m.player1 || !m.player2) return matchesCopy;
+      if (!m.player1 || !m.player2) return;
 
       // If one side is BYE, the other wins immediately
       const p1Bye = m.player1.id === 'bye';
@@ -386,8 +387,6 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
           resolved
         );
       }
-
-      return matchesCopy;
     };
 
     matchesCopy
@@ -702,7 +701,6 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                         value={match.player1?.id || ''}
                         onSelect={(user) => handlePlayerChange(match.id, 'player1', user?.id || '')}
                         placeholder="Тоглогч сонгох"
-                        includeSpecialOptions={true}
                       />
                       <Input
                         type="number"
@@ -722,7 +720,6 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                         value={match.player2?.id || ''}
                         onSelect={(user) => handlePlayerChange(match.id, 'player2', user?.id || '')}
                         placeholder="Тоглогч сонгох"
-                        includeSpecialOptions={true}
                       />
                       <Input
                         type="number"

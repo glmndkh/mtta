@@ -14,6 +14,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { UserAutocomplete } from "@/components/UserAutocomplete";
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
+import { KnockoutBracketEditor } from "@/components/KnockoutBracketEditor";
 import type { Tournament, TournamentResults, TournamentParticipant, User as UserType } from "@shared/schema";
 import * as XLSX from 'xlsx';
 
@@ -552,7 +553,7 @@ const AdminTournamentResults: React.FC = () => {
       matches.push({
         id: 'third_place_playoff',
         round: totalRounds.toString(),
-        roundName: "3-р байрны тоглолт",
+        roundName: "3-р байрын тоглолт",
         isFinished: false
       });
     }
@@ -1178,228 +1179,41 @@ const AdminTournamentResults: React.FC = () => {
         </div>
 
         {/* Knockout Bracket */}
-            {knockoutResults.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-white">
-                  <Trophy className="w-6 h-6 text-purple-500" />
-                  Шилжих тоглолтын удирдлага
-                </h2>
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardContent className="p-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  {/* Semifinals */}
-                      <div>
-                        <h3 className="text-lg font-medium mb-4 text-center text-white">Хагас финал</h3>
-                        <div className="space-y-4">
-                          {knockoutResults
-                            .filter(match => match.roundName === 'Хагас финал')
-                            .map((match) => (
-                              <Card key={match.id} className="border-2 border-purple-600 bg-gray-800">
-                                <CardContent className="p-4">
-                              <div className="flex items-center justify-between mb-3">
-                                <Badge variant="outline">
-                                  {match.id.toUpperCase()}
-                                </Badge>
-                                {match.winner && (
-                                  <Badge className="bg-green-600">
-                                    Дууссан
-                                  </Badge>
-                                )}
-                              </div>
-
-                              {/* Player 1 */}
-                                  <div className="flex items-center justify-between mb-2 p-2 bg-gray-700 rounded">
-                                    <span className="font-medium text-white">
-                                      {match.player1?.name || 'Тоглогч 1'}
-                                    </span>
-                                <div className="flex items-center gap-2">
-                                  <Input
-                                    type="number"
-                                    value={match.player1Score || ''}
-                                    onChange={(e) => handleMatchScoreChange(match.id, 'player1Score', e.target.value)}
-                                    className="w-16 h-8 text-center"
-                                    placeholder="0"
-                                  />
-                                  <Button
-                                    size="sm"
-                                    variant={match.winner?.id === match.player1?.id ? "default" : "outline"}
-                                    onClick={() => handleWinnerToggle(match.id, match.player1?.id || '')}
-                                  >
-                                    ✔️
-                                  </Button>
-                                </div>
-                              </div>
-
-                              {/* Player 2 */}
-                                  <div className="flex items-center justify-between p-2 bg-gray-700 rounded">
-                                    <span className="font-medium text-white">
-                                      {match.player2?.name || 'Тоглогч 2'}
-                                    </span>
-                                <div className="flex items-center gap-2">
-                                  <Input
-                                    type="number"
-                                    value={match.player2Score || ''}
-                                    onChange={(e) => handleMatchScoreChange(match.id, 'player2Score', e.target.value)}
-                                    className="w-16 h-8 text-center"
-                                    placeholder="0"
-                                  />
-                                  <Button
-                                    size="sm"
-                                    variant={match.winner?.id === match.player2?.id ? "default" : "outline"}
-                                    onClick={() => handleWinnerToggle(match.id, match.player2?.id || '')}
-                                  >
-                                    ✔️
-                                  </Button>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                    </div>
-                  </div>
-
-                  {/* Final */}
-                      <div>
-                        <h3 className="text-lg font-medium mb-4 text-center text-white">Финал</h3>
-                        {knockoutResults
-                          .filter(match => match.roundName === 'Финал')
-                          .map((match) => (
-                            <Card key={match.id} className="border-2 border-yellow-500 bg-gray-800">
-                              <CardContent className="p-4">
-                            <div className="flex items-center justify-between mb-3">
-                              <Badge variant="outline" className="bg-yellow-100">
-                                ФИНАЛ
-                              </Badge>
-                              {match.winner && (
-                                <Badge className="bg-green-600">
-                                  Дууссан
-                                </Badge>
-                              )}
-                            </div>
-
-                            {/* Player 1 */}
-                                <div className="flex items-center justify-between mb-2 p-2 bg-gray-700 rounded">
-                                  <span className="font-medium text-white">
-                                    {match.player1?.name || 'Финалист 1'}
-                                  </span>
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  type="number"
-                                  value={match.player1Score || ''}
-                                  onChange={(e) => handleMatchScoreChange(match.id, 'player1Score', e.target.value)}
-                                  className="w-16 h-8 text-center"
-                                  placeholder="0"
-                                />
-                                <Button
-                                  size="sm"
-                                  variant={match.winner?.id === match.player1?.id ? "default" : "outline"}
-                                  onClick={() => handleWinnerToggle(match.id, match.player1?.id || '')}
-                                >
-                                  ✔️
-                                </Button>
-                              </div>
-                            </div>
-
-                            {/* Player 2 */}
-                                <div className="flex items-center justify-between p-2 bg-gray-700 rounded">
-                                  <span className="font-medium text-white">
-                                    {match.player2?.name || 'Финалист 2'}
-                                  </span>
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  type="number"
-                                  value={match.player2Score || ''}
-                                  onChange={(e) => handleMatchScoreChange(match.id, 'player2Score', e.target.value)}
-                                  className="w-16 h-8 text-center"
-                                  placeholder="0"
-                                />
-                                <Button
-                                  size="sm"
-                                  variant={match.winner?.id === match.player2?.id ? "default" : "outline"}
-                                  onClick={() => handleWinnerToggle(match.id, match.player2?.id || '')}
-                                >
-                                  ✔️
-                                </Button>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                  </div>
-
-                  {/* Third Place */}
-                      <div>
-                        <h3 className="text-lg font-medium mb-4 text-center text-white">3-р байр</h3>
-                        {knockoutResults
-                          .filter(match => match.roundName === '3-р байрны тоглолт')
-                          .map((match) => (
-                            <Card key={match.id} className="border-2 border-orange-500 bg-gray-800">
-                              <CardContent className="p-4">
-                            <div className="flex items-center justify-between mb-3">
-                              <Badge variant="outline" className="bg-orange-100">
-                                3-Р БАЙР
-                              </Badge>
-                              {match.winner && (
-                                <Badge className="bg-green-600">
-                                  Дууссан
-                                </Badge>
-                              )}
-                            </div>
-
-                            {/* Player 1 */}
-                                <div className="flex items-center justify-between mb-2 p-2 bg-gray-700 rounded">
-                                  <span className="font-medium text-white">
-                                    {match.player1?.name || 'Тоглогч 1'}
-                                  </span>
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  type="number"
-                                  value={match.player1Score || ''}
-                                  onChange={(e) => handleMatchScoreChange(match.id, 'player1Score', e.target.value)}
-                                  className="w-16 h-8 text-center"
-                                  placeholder="0"
-                                />
-                                <Button
-                                  size="sm"
-                                  variant={match.winner?.id === match.player1?.id ? "default" : "outline"}
-                                  onClick={() => handleWinnerToggle(match.id, match.player1?.id || '')}
-                                >
-                                  ✔️
-                                </Button>
-                              </div>
-                            </div>
-
-                            {/* Player 2 */}
-                                <div className="flex items-center justify-between p-2 bg-gray-700 rounded">
-                                  <span className="font-medium text-white">
-                                    {match.player2?.name || 'Тоглогч 2'}
-                                  </span>
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  type="number"
-                                  value={match.player2Score || ''}
-                                  onChange={(e) => handleMatchScoreChange(match.id, 'player2Score', e.target.value)}
-                                  className="w-16 h-8 text-center"
-                                  placeholder="0"
-                                />
-                                <Button
-                                  size="sm"
-                                  variant={match.winner?.id === match.player2?.id ? "default" : "outline"}
-                                  onClick={() => handleWinnerToggle(match.id, match.player2?.id || '')}
-                                >
-                                  ✔️
-                                </Button>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-white">
+            <Trophy className="w-6 h-6 text-purple-500" />
+            Шилжих тоглолтын удирдлага
+          </h2>
+          
+          <KnockoutBracketEditor
+            initialMatches={knockoutResults.map(match => ({
+              ...match,
+              position: { x: 100, y: 100 }, // Default position, will be calculated by the editor
+              nextMatchId: undefined, // Will be calculated by the editor
+              player1Score: match.player1Score,
+              player2Score: match.player2Score
+            }))}
+            users={[]} // Not needed since we use qualified players
+            qualifiedPlayers={qualifiedPlayers}
+            onSave={(matches) => {
+              setKnockoutResults(matches.map(match => ({
+                id: match.id,
+                round: match.round.toString(),
+                roundName: match.roundName,
+                player1: match.player1,
+                player2: match.player2,
+                winner: match.winner,
+                player1Score: match.player1Score,
+                player2Score: match.player2Score,
+                isFinished: !!match.winner
+              })));
+              toast({
+                title: "Хадгалагдлаа",
+                description: "Шилжих тоглолтын үр дүн хадгалагдлаа"
+              });
+            }}
+          />
+        </div>
 
         {/* Settings Panel */}
             <Card className="mb-6 bg-gray-800 border-gray-700">
