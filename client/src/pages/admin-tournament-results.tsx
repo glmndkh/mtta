@@ -125,7 +125,7 @@ const AdminTournamentResults: React.FC = () => {
       const groupResults = existingResults.groupStageResults;
       const knockoutResultsData = existingResults.knockoutResults;
       const finalRankingsData = existingResults.finalRankings;
-      
+
       setGroupStageResults(Array.isArray(groupResults) ? groupResults : []);
       setKnockoutResults(Array.isArray(knockoutResultsData) ? knockoutResultsData : []);
       setFinalRankings(Array.isArray(finalRankingsData) ? finalRankingsData : []);
@@ -339,7 +339,7 @@ const AdminTournamentResults: React.FC = () => {
     );
   }
 
-  
+
 
   return (
     <PageWithLoading>
@@ -544,119 +544,140 @@ const AdminTournamentResults: React.FC = () => {
 
                       {/* Results Matrix */}
                       {group.players.length > 1 && (
-                        <div className="overflow-x-auto">
-                          <h4 className="font-medium mb-2">Тоглолтын үр дүн</h4>
-                          <table className="min-w-full border-collapse border border-gray-300">
-                            <thead>
-                              <tr>
-                                <th className="border border-gray-300 p-2 bg-gray-50">Тамирчин</th>
-                                {group.players.map((_, index) => (
-                                  <th key={index} className="border border-gray-300 p-2 bg-gray-50">
-                                    {index + 1}
-                                  </th>
-                                ))}
-                                <th className="border border-gray-300 p-2 bg-gray-50">Оноо</th>
-                                <th className="border border-gray-300 p-2 bg-gray-50">Байр</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {(() => {
-                                // Calculate and sort players by points and wins for ranking
-                                const sortedPlayers = group.players
-                                  .map((player, originalIndex) => {
-                                    const stats = group.playerStats.find(s => s.playerId === player.id) || { wins: 0, losses: 0, points: 0 };
-                                    return { player, originalIndex, stats };
-                                  })
-                                  .sort((a, b) => {
-                                    if (b.stats.points !== a.stats.points) {
-                                      return b.stats.points - a.stats.points; // Higher points first
-                                    }
-                                    return b.stats.wins - a.stats.wins; // Then by wins
-                                  });
+                        <div className="space-y-4">
+                          <div className="bg-gray-800 rounded-lg p-4">
+                            <div className="flex items-center justify-between mb-4">
+                              <h4 className="font-medium text-white">{group.name}</h4>
+                              <div className="flex items-center gap-2">
+                                <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                                  Групп нэмэх
+                                </Button>
+                                <Button size="sm" variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">
+                                  Засах талбар
+                                </Button>
+                                <Button size="sm" variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">
+                                  Эрэмб засах
+                                </Button>
+                              </div>
+                            </div>
 
-                                return sortedPlayers.map(({ player, originalIndex, stats }, rankIndex) => {
-                                  const position = rankIndex + 1;
-                                  const isQualified = position <= 2; // Top 2 qualify
+                            <div className="overflow-x-auto">
+                              <table className="w-full border-collapse">
+                                <thead>
+                                  <tr className="bg-gray-700">
+                                    <th className="border border-gray-600 p-2 text-left text-white font-medium">№</th>
+                                    <th className="border border-gray-600 p-2 text-left text-white font-medium">Нэр</th>
+                                    <th className="border border-gray-600 p-2 text-center text-white font-medium">Клуб</th>
+                                    {group.players.map((_, index) => (
+                                      <th key={index} className="border border-gray-600 p-2 text-center text-white font-medium w-12">
+                                        {index + 1}
+                                      </th>
+                                    ))}
+                                    <th className="border border-gray-600 p-2 text-center text-white font-medium">Оноо</th>
+                                    <th className="border border-gray-600 p-2 text-center text-white font-medium">Байр</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {(() => {
+                                    // Calculate and sort players by points and wins for ranking
+                                    const sortedPlayers = group.players
+                                      .map((player, originalIndex) => {
+                                        const stats = group.playerStats.find(s => s.playerId === player.id) || { wins: 0, losses: 0, points: 0 };
+                                        return { player, originalIndex, stats };
+                                      })
+                                      .sort((a, b) => {
+                                        if (b.stats.points !== a.stats.points) {
+                                          return b.stats.points - a.stats.points;
+                                        }
+                                        return b.stats.wins - a.stats.wins;
+                                      });
 
-                                  return (
-                                    <tr 
-                                      key={player.id}
-                                      className={isQualified ? "bg-green-50" : ""}
-                                    >
-                                      <td className="border border-gray-300 p-2 font-medium">
-                                        <div className="flex items-center gap-2">
-                                          {originalIndex + 1}. {player.name}
-                                          {isQualified && (
-                                            <Badge className="bg-green-100 text-green-800 text-xs px-1 py-0">
-                                              Шалгарсан
-                                            </Badge>
-                                          )}
-                                        </div>
-                                      </td>
-                                      {group.players.map((_, opponentIndex) => (
-                                        <td key={opponentIndex} className="border border-gray-300 p-1">
-                                          {originalIndex === opponentIndex ? (
-                                            <div className="bg-gray-200 h-8 flex items-center justify-center">
-                                              -
-                                            </div>
-                                          ) : (
-                                            <Input
-                                              type="text"
-                                              value={group.resultMatrix[originalIndex]?.[opponentIndex] || ""}
-                                              onChange={(e) => updateGroupResult(
-                                                group.id,
-                                                originalIndex,
-                                                opponentIndex,
-                                                e.target.value
+                                    return sortedPlayers.map(({ player, originalIndex, stats }, rankIndex) => {
+                                      const position = rankIndex + 1;
+                                      const isQualified = position <= 2;
+
+                                      return (
+                                        <tr 
+                                          key={player.id}
+                                          className={`${isQualified ? "bg-green-900/30" : "bg-gray-800/50"} hover:bg-gray-700/50`}
+                                        >
+                                          <td className="border border-gray-600 p-2 text-white">
+                                            {position}
+                                          </td>
+                                          <td className="border border-gray-600 p-2">
+                                            <div className="flex items-center gap-2">
+                                              <span className="text-white">{player.name}</span>
+                                              {isQualified && (
+                                                <Badge className="bg-green-600 text-white text-xs">
+                                                  Шалгарсан
+                                                </Badge>
                                               )}
-                                              placeholder="3-1"
-                                              className="h-8 text-center text-sm"
-                                            />
-                                          )}
-                                        </td>
-                                      ))}
-                                      <td className="border border-gray-300 p-2 text-center font-bold">
-                                        {stats.points}
-                                      </td>
-                                      <td className={`border border-gray-300 p-2 text-center font-bold ${
-                                        isQualified ? "text-green-600" : "text-gray-600"
-                                      }`}>
-                                        {position}
-                                      </td>
-                                    </tr>
-                                  );
-                                });
-                              })()}
-                            </tbody>
-                          </table>
-                          
-                          {/* Qualification Summary */}
-                          <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
-                            <h5 className="font-medium text-green-800 mb-2">Дараагийн шатанд шалгарсан тамирчид:</h5>
-                            <div className="space-y-1">
-                              {(() => {
-                                const sortedPlayers = group.players
-                                  .map((player) => {
-                                    const stats = group.playerStats.find(s => s.playerId === player.id) || { wins: 0, losses: 0, points: 0 };
-                                    return { player, stats };
-                                  })
-                                  .sort((a, b) => {
-                                    if (b.stats.points !== a.stats.points) {
-                                      return b.stats.points - a.stats.points;
-                                    }
-                                    return b.stats.wins - a.stats.wins;
-                                  })
-                                  .slice(0, 2); // Top 2
+                                            </div>
+                                          </td>
+                                          <td className="border border-gray-600 p-2 text-center text-gray-300 text-sm">
+                                            -
+                                          </td>
+                                          {group.players.map((_, opponentIndex) => (
+                                            <td key={opponentIndex} className="border border-gray-600 p-1">
+                                              {originalIndex === opponentIndex ? (
+                                                <div className="bg-gray-600 h-8 flex items-center justify-center text-gray-400">
+                                                  -
+                                                </div>
+                                              ) : (
+                                                <Input
+                                                  type="text"
+                                                  value={group.resultMatrix[originalIndex]?.[opponentIndex] || ""}
+                                                  onChange={(e) => updateGroupResult(
+                                                    group.id,
+                                                    originalIndex,
+                                                    opponentIndex,
+                                                    e.target.value
+                                                  )}
+                                                  placeholder="3-1"
+                                                  className="h-8 text-center text-sm bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                                                />
+                                              )}
+                                            </td>
+                                          ))}
+                                          <td className="border border-gray-600 p-2 text-center font-bold text-white">
+                                            {stats.points}
+                                          </td>
+                                          <td className={`border border-gray-600 p-2 text-center font-bold ${
+                                            isQualified ? "text-green-400" : "text-gray-300"
+                                          }`}>
+                                            {position}
+                                          </td>
+                                        </tr>
+                                      );
+                                    });
+                                  })()}
+                                </tbody>
+                              </table>
+                            </div>
 
-                                return sortedPlayers.map(({ player }, index) => (
-                                  <div key={player.id} className="flex items-center gap-2 text-green-700">
-                                    <Badge className="bg-green-100 text-green-800">
-                                      {index + 1}-р байр
-                                    </Badge>
-                                    {player.name}
-                                  </div>
-                                ));
-                              })()}
+                            {/* Qualification Summary */}
+                            <div className="mt-4 p-3 bg-green-900/20 rounded border border-green-600">
+                              <p className="text-green-400 text-sm mb-2">
+                                Эхний 2 тамирчин группээс дараагийн шатанд шалгарна
+                              </p>
+                              <div className="text-green-300 text-sm">
+                                Шалгарсан тамирчид: {(() => {
+                                  const qualified = group.players
+                                    .map((player) => {
+                                      const stats = group.playerStats.find(s => s.playerId === player.id) || { wins: 0, losses: 0, points: 0 };
+                                      return { player, stats };
+                                    })
+                                    .sort((a, b) => {
+                                      if (b.stats.points !== a.stats.points) {
+                                        return b.stats.points - a.stats.points;
+                                      }
+                                      return b.stats.wins - a.stats.wins;
+                                    })
+                                    .slice(0, 2);
+
+                                  return qualified.map(({ player }) => player.name).join(', ');
+                                })()}
+                              </div>
                             </div>
                           </div>
                         </div>
