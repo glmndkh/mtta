@@ -145,12 +145,7 @@ export default function AdminTournaments() {
                           Засах
                         </Button>
                       </Link>
-                      <Link href={`/admin/tournament/${tournament.id}/results`}>
-                        <Button size="sm" className="flex-1">
-                          <Settings className="w-4 h-4 mr-1" />
-                          Удирдах
-                        </Button>
-                      </Link>
+                      
                     </div>
                   </div>
                 </CardContent>

@@ -184,12 +184,12 @@ function MedalWinnersSection({
         <Trophy className="w-6 h-6 text-yellow-400" />
         Медальтнууд
       </h2>
-      
+
       <div className="flex flex-wrap justify-center gap-6">
         {topThree.map((ranking) => {
           const medalInfo = getMedalInfo(ranking.position);
           const MedalIcon = medalInfo.icon;
-          
+
           return (
             <div 
               key={ranking.playerId}
@@ -201,7 +201,7 @@ function MedalWinnersSection({
             >
               <div className="flex flex-col items-center space-y-3">
                 <MedalIcon className={`w-12 h-12 ${medalInfo.color}`} />
-                
+
                 <Avatar className="w-16 h-16 border-2 border-white">
                   <AvatarImage 
                     src={`/api/users/${ranking.playerId}/avatar`} 
@@ -212,7 +212,7 @@ function MedalWinnersSection({
                     <User className="w-8 h-8" />
                   </AvatarFallback>
                 </Avatar>
-                
+
                 <div>
                   <p className="font-bold text-lg text-white">{ranking.playerName}</p>
                   <p className={`text-sm font-medium ${medalInfo.color}`}>{medalInfo.place}</p>
@@ -352,10 +352,10 @@ function TournamentParticipants({ tournamentId }: { tournamentId: string }) {
       const matchesSearch = searchTerm === "" || 
         formatName(participant.firstName, participant.lastName).toLowerCase().includes(searchTerm.toLowerCase()) ||
         participant.clubAffiliation?.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
       const matchesClub = clubFilter === "all" || participant.clubAffiliation === clubFilter;
       const matchesType = participationTypeFilter === "all" || participant.participationType === participationTypeFilter;
-      
+
       return matchesSearch && matchesClub && matchesType;
     });
   }, [participants, searchTerm, clubFilter, participationTypeFilter]);
@@ -374,7 +374,7 @@ function TournamentParticipants({ tournamentId }: { tournamentId: string }) {
           <Users className="w-5 h-5 text-green-400" />
           Бүртгүүлсэн тоглогчид ({participants.length})
         </CardTitle>
-        
+
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex items-center gap-2 flex-1">
@@ -386,7 +386,7 @@ function TournamentParticipants({ tournamentId }: { tournamentId: string }) {
               className="flex-1 bg-gray-800 border-gray-700 text-white placeholder:text-gray-400"
             />
           </div>
-          
+
           <div className="flex gap-2">
             <Select value={clubFilter} onValueChange={setClubFilter}>
               <SelectTrigger className="w-[180px] bg-gray-800 border-gray-700 text-white">
@@ -416,7 +416,7 @@ function TournamentParticipants({ tournamentId }: { tournamentId: string }) {
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         {filteredParticipants.length === 0 ? (
           <div className="text-center py-8 text-gray-400">
@@ -490,7 +490,7 @@ export default function TournamentPage() {
   // Check if user meets rating requirements - always call useMemo
   const canRegister = useMemo(() => {
     if (!tournament || !isAuthenticated || !user) return false;
-    
+
     // For now, assume all users can register
     // In the future, this should check user's rating against minRating/maxRating
     return true;
@@ -560,10 +560,10 @@ export default function TournamentPage() {
         ) : (
           <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600" />
         )}
-        
+
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-black/50" />
-        
+
         {/* Back Button */}
         <div className="absolute top-6 left-6 z-20">
           <Button 
@@ -575,7 +575,7 @@ export default function TournamentPage() {
             Буцах
           </Button>
         </div>
-        
+
         {/* Hero Content */}
         <div className="relative z-10 h-full flex items-center">
           <div className="w-full px-4 sm:px-6 lg:px-8">
@@ -595,7 +595,7 @@ export default function TournamentPage() {
                   <span>Зохион байгуулагч: {tournament.organizer}</span>
                 </div>
               </div>
-              
+
               {/* Medal Winners Section */}
               <MedalWinnersSection tournamentResults={tournamentResults} />
             </div>
@@ -606,10 +606,10 @@ export default function TournamentPage() {
       {/* Main Content */}
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid lg:grid-cols-3 gap-8">
-          
+
           {/* Left Content - Tournament Details */}
           <div className="lg:col-span-2 space-y-6">
-            
+
             {/* Tournament Information Card */}
             <Card className="card-dark">
               <CardHeader>
@@ -769,7 +769,7 @@ export default function TournamentPage() {
                   userRegistration={userRegistration}
                   canRegister={canRegister}
                 />
-                
+
                 <div className="text-sm text-gray-400 space-y-2">
                   <p>• Бүртгэлийн дараа буцаах боломжгүй</p>
                   <p>• Тэмцээнд оролцохоос өмнө төлбөр төлөх шаардлагатай</p>
@@ -803,24 +803,10 @@ export default function TournamentPage() {
                     </Badge>
                   </div>
                 </div>
-                
-                {/* View Results Button - show when tournament results exist and are published */}
-                {tournamentResults && tournamentResults.isPublished && (
-                  <div className="mt-4 pt-4 border-t">
-                    <Button 
-                      onClick={() => setLocation(`/tournament/${tournament.id}/results`)}
-                      className="w-full flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white border-none"
-                      variant="outline"
-                    >
-                      <Trophy className="w-4 h-4" />
-                      Үр дүн харах
-                    </Button>
-                  </div>
-                )}
-                
+
                 {/* Admin Results Button - only for admins */}
                 {(user as any)?.role === 'admin' && (
-                  <div className={tournament.status === 'completed' ? 'mt-2' : 'mt-4 pt-4 border-t'}>
+                  <div className={'mt-4 pt-4 border-t'}>
                     <Button 
                       onClick={() => setLocation(`/admin/tournament/${tournament.id}/results`)}
                       className="w-full flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"

@@ -1463,7 +1463,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // For now, we'll update tournament results directly
       // In a real implementation, you'd have a matches table
-      
+
       // Find the tournament this match belongs to
       const tournaments = await storage.getTournaments();
       let targetTournament = null;
@@ -1479,7 +1479,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (match) {
               targetTournament = tournament;
               targetResults = results;
-              
+
               // Update the match players
               if (playerAId) {
                 const playerA = await storage.getUser(playerAId);
@@ -1551,7 +1551,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (match) {
               targetTournament = tournament;
               targetResults = results;
-              
+
               // Update the match result
               if (winner === 'A' && match.player1) {
                 match.winner = match.player1;
@@ -2976,188 +2976,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // --------------
   // Tournament Results (admin)
   // --------------
-  app.get("/api/tournaments/:tournamentId/results", async (req, res) => {
-    try {
-      const { tournamentId } = req.params;
-      
-      // Disable caching for real-time updates
-      res.set({
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        "Pragma": "no-cache",
-        "Expires": "0"
-      });
-      
-      const results = await storage.getTournamentResults(tournamentId);
-      if (!results) {
-        return res.json({
-          tournamentId,
-          groupStageResults: {},
-          knockoutResults: {},
-          finalRankings: {},
-          isPublished: false,
-        });
-      }
-      res.json(results);
-    } catch (e) {
-      console.error("Error fetching tournament results:", e);
-      res.status(500).json({ message: "Failed to fetch tournament results" });
-    }
-  });
-
-  app.post(
-    "/api/admin/tournament-results",
-    requireAuth,
-    isAdminRole,
-    async (req: any, res) => {
-      try {
-        const {
-          tournamentId,
-          participationType,
-          groupStageResults,
-          knockoutResults,
-          finalRankings,
-          isPublished,
-        } = req.body;
-
-        console.log("Received tournament results data:", { tournamentId, participationType, groupStageResults });
-
-        if (!tournamentId || !participationType)
-          return res
-            .status(400)
-            .json({
-              message: "Tournament ID and participation type are required",
-            });
-
-        // Check if this is a tournament or league
-        const tournament = await storage.getTournament(tournamentId);
-        const league = tournament ? null : await storage.getLeague(tournamentId);
-
-        if (!tournament && !league) {
-          return res.status(404).json({ message: "Tournament or League not found" });
-        }
-
-        // For leagues, we don't use the tournament_results table
-        // Instead, we'll handle league results differently
-        if (league && !tournament) {
-          // For now, just return success for leagues
-          // TODO: Implement league-specific results storage
-          console.log("League results data:", { tournamentId, participationType, groupStageResults });
-          return res.json({ 
-            message: "League results saved successfully (placeholder)", 
-            data: { tournamentId, participationType, groupStageResults } 
-          });
-        }
-
-        const ensureParticipant = async (player: any) => {
-          if (!player) return;
-          if (player.playerId || player.id) return player.playerId || player.id;
-          const name = player.playerName || player.name;
-          if (!name) throw new Error("playerName is required");
-          const [firstName, ...rest] = String(name).split(" ");
-          const lastName = rest.join(" ");
-          const newUser = await storage.createSimpleUser({
-            email: null,
-            phone: null,
-            firstName,
-            lastName,
-            gender: null,
-            dateOfBirth: null,
-            clubAffiliation: null,
-            password: null,
-            role: "player",
-          });
-          const newPlayer = await storage.createPlayer({ userId: newUser.id });
-
-          // Only register for tournament if it's actually a tournament, not a league
-          if (tournament) {
-            await storage.registerForTournament({
-              tournamentId,
-              playerId: newPlayer.id,
-              participationType,
-            });
-          }
-
-          player.playerId = newPlayer.id;
-          player.id = newPlayer.id;
-          player.playerName = name;
-          return newPlayer.id;
-        };
-
-        const processedGroup = [] as any[];
-        for (const group of groupStageResults || []) {
-          const newGroup = { ...group };
-          newGroup.players = [];
-          for (const p of group.players || []) {
-            // Don't auto-create players for existing names in management interface
-            if (p.name && p.name.trim()) {
-              newGroup.players.push(p);
-            }
-          }
-          processedGroup.push(newGroup);
-        }
-
-        const processedKnockout = [] as any[];
-        for (const match of knockoutResults || []) {
-          const newMatch = { ...match };
-          if (newMatch.player1) await ensureParticipant(newMatch.player1);
-          if (newMatch.player2) await ensureParticipant(newMatch.player2);
-          if (newMatch.winner) await ensureParticipant(newMatch.winner);
-          processedKnockout.push(newMatch);
-        }
-
-        const processedFinal = [] as any[];
-        for (const ranking of finalRankings || []) {
-          await ensureParticipant(ranking);
-          processedFinal.push(ranking);
-        }
-
-        const existing = await storage.getTournamentResults(tournamentId);
-        const mergedGroup = {
-          ...((existing?.groupStageResults as any) || {}),
-          [participationType]: processedGroup,
-        };
-        const mergedKnockout = {
-          ...((existing?.knockoutResults as any) || {}),
-          [participationType]: processedKnockout,
-        };
-        const mergedFinal = {
-          ...((existing?.finalRankings as any) || {}),
-          [participationType]: processedFinal,
-        };
-
-        const resultsData = {
-          tournamentId,
-          groupStageResults: mergedGroup,
-          knockoutResults: mergedKnockout,
-          finalRankings: mergedFinal,
-          isPublished: !!isPublished,
-        };
-
-        const results = await storage.upsertTournamentResults(resultsData);
-        res.json({ message: "Tournament results saved successfully", results });
-      } catch (e) {
-        console.error("Error saving tournament results:", e);
-        res.status(500).json({ message: "Failed to save tournament results" });
-      }
-    },
-  );
-
-  app.put(
-    "/api/admin/tournament-results/:tournamentId/publish",
-    requireAuth,
-    isAdminRole,
-    async (req, res) => {
-      try {
-        await storage.publishTournamentResults(req.params.tournamentId);
-        res.json({ message: "Tournament results published successfully" });
-      } catch (e) {
-        console.error("Error publishing tournament results:", e);
-        res
-          .status(500)
-          .json({ message: "Failed to publish tournament results" });
-      }
-    },
-  );
+  
 
   // --------------
   // Avatars
