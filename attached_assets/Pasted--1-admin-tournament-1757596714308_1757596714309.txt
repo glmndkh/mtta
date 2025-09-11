@@ -1,0 +1,125 @@
+Тэмцээний үр дүн оруулах хэсгийн код доор байна:
+
+1. Админ үр дүн оруулах хуудас (admin-tournament-results.tsx)
+Энэ хуудас нь админд зориулсан бөгөөд тэмцээний үр дүнг оруулах, засварлах боломжтой:
+
+// client/src/pages/admin-tournament-results.tsx
+import { useState, useEffect } from "react";
+import { useRoute, useLocation } from "wouter";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Plus, Trash2, Save, Users, Trophy, Target, Download, Upload, FileSpreadsheet } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { UserAutocomplete } from "@/components/UserAutocomplete";
+import { KnockoutBracketEditor } from "@/components/KnockoutBracketEditor";
+import Navigation from "@/components/navigation";
+import PageWithLoading from "@/components/PageWithLoading";
+import type { Tournament, TournamentResults, TournamentParticipant, User } from "@shared/schema";
+import * as XLSX from 'xlsx';
+// ... (типүүд ба интерфейсүүд)
+// ... (бүх функцүүд болон компонент)
+2. Backend API endpoints
+Тэмцээний үр дүнтэй холбоотой API endpoints:
+
+// server/routes.ts дээрх хэсэг
+// Tournament results routes
+// Get tournament results
+app.get('/api/tournaments/:tournamentId/results', async (req, res) => {
+  try {
+    const { tournamentId } = req.params;
+    const results = await storage.getTournamentResults(tournamentId);
+    
+    if (!results) {
+      return res.status(404).json({ message: "Tournament results not found" });
+    }
+    
+    res.json(results);
+  } catch (error) {
+    console.error("Error fetching tournament results:", error);
+    res.status(500).json({ message: "Failed to fetch tournament results" });
+  }
+});
+// Admin route to save tournament results
+app.post('/api/admin/tournament-results', async (req: any, res) => {
+  try {
+    // Check if user is admin
+    const userId = req.session?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const user = await storage.getUser(userId);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    const { tournamentId, groupStageResults, knockoutResults, finalRankings, isPublished } = req.body;
+    if (!tournamentId) {
+      return res.status(400).json({ message: "Tournament ID is required" });
+    }
+    const resultsData = {
+      tournamentId,
+      groupStageResults: groupStageResults || null,
+      knockoutResults: knockoutResults || null,
+      finalRankings: finalRankings || null,
+      isPublished: isPublished || false,
+    };
+    const results = await storage.upsertTournamentResults(resultsData);
+    res.json({ message: "Tournament results saved successfully", results });
+  } catch (error) {
+    console.error("Error saving tournament results:", error);
+    res.status(500).json({ message: "Failed to save tournament results" });
+  }
+});
+3. Database Schema
+Үр дүн хадгалах схем:
+
+// shared/schema.ts дээрх хэсэг
+// Tournament results table for storing structured tournament results
+export const tournamentResults = pgTable("tournament_results", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  tournamentId: varchar("tournament_id").references(() => tournaments.id).notNull().unique(),
+  groupStageResults: jsonb("group_stage_results"), // JSON structure for group stage data
+  knockoutResults: jsonb("knockout_results"), // JSON structure for bracket/knockout data
+  finalRankings: jsonb("final_rankings"), // Final tournament rankings/placements
+  isPublished: boolean("is_published").default(false), // Whether results are visible to users
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+4. Үр дүн харах хуудас (tournament-results.tsx)
+Хэрэглэгчид зориулсан үр дүн харах хуудас:
+
+// client/src/pages/tournament-results.tsx дээрх хэсэг
+export default function TournamentResultsPage() {
+  // ... (дата авах хэсэг)
+  
+  if (!results || !results.isPublished) {
+    return (
+      <div className="min-h-screen main-bg flex items-center justify-center">
+        <div className="text-center">
+          <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold mb-2 text-white">Үр дүн хараахан бэлэн болоогүй</h1>
+          <p className="text-gray-300 mb-4">
+            {tournament.status === 'completed' 
+              ? 'Тэмцээний үр дүн тун удахгүй нийтлэгдэх болно.'
+              : 'Тэмцээн дууссаны дараа үр дүн нийтлэгдэх болно.'
+            }
+          </p>
+        </div>
+      </div>
+    );
+  }
+  
+  // ... (үр дүн харуулах хэсэг)
+}
+Үндсэн функцүүд:
+Групп тулаан үр дүн оруулах - Excel-тэй адил хүснэгт байдлаар
+Шигшээ тоглолт удирдах - Bracket editor ашиглан
+Эцсийн байрлал тодорхойлох - Автомат тооцоолол
+Excel import/export - Өгөгдөл солилцох
+Үр дүн нийтлэх - Хэрэглэгчдэд харуулах
