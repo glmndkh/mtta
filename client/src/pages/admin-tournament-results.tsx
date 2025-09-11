@@ -91,6 +91,12 @@ const AdminTournamentResults: React.FC = () => {
     enabled: !!params?.tournamentId,
   });
 
+  // Fetch all users for autocomplete
+  const { data: users = [] } = useQuery<User[]>({
+    queryKey: ['/api/admin/users'],
+    enabled: !!params?.tournamentId,
+  });
+
   // Save results mutation
   const saveResultsMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -513,6 +519,7 @@ const AdminTournamentResults: React.FC = () => {
                   {/* Add Player */}
                   <div>
                     <UserAutocomplete
+                      users={users}
                       onSelect={(user) => user && addPlayerToGroup(group.id, user)}
                       placeholder="Тамирчин хайх..."
                     />
@@ -644,6 +651,7 @@ const AdminTournamentResults: React.FC = () => {
               <CardContent className="p-6">
                 <div className="space-y-4">
                   <UserAutocomplete
+                    users={users}
                     onSelect={(user) => user && addToFinalRankings(user)}
                     placeholder="Тамирчин хайж нэмэх..."
                   />
