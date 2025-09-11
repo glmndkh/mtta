@@ -2091,14 +2091,6 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return created;
     }
-          ...data,
-          id: `tr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .returning();
-      return created;
-    }
   }
 }
 
