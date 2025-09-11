@@ -257,6 +257,10 @@ export interface IStorage {
   getTournamentTeams(tournamentId: string): Promise<any[]>;
   getTournamentTeamById(teamId: string): Promise<any>;
   deleteTournamentTeam(teamId: string): Promise<boolean>;
+
+  // Tournament Results Operations
+  getTournamentResults(tournamentId: string): Promise<TournamentResults | null>;
+  upsertTournamentResults(data: InsertTournamentResults): Promise<TournamentResults>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1526,19 +1530,10 @@ export class DatabaseStorage implements IStorage {
               let isPlayer1 = false;
 
               // Check if player is in this match (by player ID or user ID)
-              if (match.player1?.id === playerId || match.player2?.id === playerId) {
+              if (match.player1?.id === playerId || match.player1?.id === userId ||
+                match.player2?.id === playerId || match.player2?.id === userId) {
                 isPlayerInMatch = true;
-                isPlayer1 = match.player1?.id === playerId;
-              } else {
-                // Try with user ID
-                const playerRecord = await db.select().from(players).where(eq(players.id, playerId)).limit(1);
-                if (playerRecord.length > 0) {
-                  const userId = playerRecord[0].userId;
-                  if (match.player1?.id === userId || match.player2?.id === userId) {
-                    isPlayerInMatch = true;
-                    isPlayer1 = match.player1?.id === userId;
-                  }
-                }
+                isPlayer1 = match.player1?.id === playerId || match.player1?.id === userId;
               }
 
               if (isPlayerInMatch && match.score) {
@@ -1701,8 +1696,6 @@ export class DatabaseStorage implements IStorage {
                   if (match.id === 'third_place_playoff') {
                     matchType = 'Хүрэл медалийн тоглолт';
                   }
-
-
 
                   matches.push({
                     id: `knockout_${match.id}_${playerId}`,
@@ -2058,6 +2051,46 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Tournament Results Operations
+  async getTournamentResults(tournamentId: string): Promise<TournamentResults | null> {
+    const [result] = await db
+      .select()
+      .from(tournamentResults)
+      .where(eq(tournamentResults.tournamentId, tournamentId))
+      .limit(1);
+
+    return result || null;
+  }
+
+  async upsertTournamentResults(data: InsertTournamentResults): Promise<TournamentResults> {
+    const existing = await this.getTournamentResults(data.tournamentId);
+
+    if (existing) {
+      const [updated] = await db
+        .update(tournamentResults)
+        .set({
+          groupStageResults: data.groupStageResults,
+          knockoutResults: data.knockoutResults,
+          finalRankings: data.finalRankings,
+          isPublished: data.isPublished,
+          updatedAt: new Date(),
+        })
+        .where(eq(tournamentResults.tournamentId, data.tournamentId))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(tournamentResults)
+        .values({
+          ...data,
+          id: `tr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+      return created;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();

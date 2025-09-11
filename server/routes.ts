@@ -142,19 +142,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
 
-  const isAdminRole = async (req: any, res: any, next: any) => {
+  const requireRole = (roles: string[]) => async (req: any, res: any, next: any) => {
+    if (!req.session?.userId) {
+      return res.status(401).json({ message: "Нэвтрэх шаардлагатай" });
+    }
     try {
-      if (!req.session?.userId)
-        return res.status(401).json({ message: "Нэвтрэх шаардлагатай" });
       const user = await storage.getUser(req.session.userId);
-      if (!user || user.role !== "admin")
-        return res.status(403).json({ message: "Админ эрх шаардлагатай" });
+      if (!user || !roles.includes(user.role)) {
+        return res.status(403).json({ message: "Эрх шаардлагатай" });
+      }
       next();
     } catch (e) {
-      console.error("Admin check error:", e);
+      console.error("Role check error:", e);
       res.status(500).json({ message: "Эрх шалгахад алдаа гарлаа" });
     }
   };
+
+  const isAdminRole = requireRole(['admin']);
 
   // ------------------------
   // Simple auth (email/phone)
@@ -2976,7 +2980,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // --------------
   // Tournament Results (admin)
   // --------------
-  
+  app.get('/api/tournaments/:tournamentId/results', async (req, res) => {
+    try {
+      const { tournamentId } = req.params;
+      const results = await storage.getTournamentResults(tournamentId);
+      res.json(results);
+    } catch (error) {
+      console.error('Error fetching tournament results:', error);
+      res.status(500).json({ error: 'Failed to fetch tournament results' });
+    }
+  });
+
+  app.post('/api/admin/tournament-results', requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const data = req.body;
+      const results = await storage.upsertTournamentResults(data);
+      res.json(results);
+    } catch (error) {
+      console.error('Error saving tournament results:', error);
+      res.status(500).json({ error: 'Failed to save tournament results' });
+    }
+  });
+
 
   // --------------
   // Avatars
