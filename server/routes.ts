@@ -2991,9 +2991,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Save tournament results
-  app.post('/api/admin/tournament-results', requireAuth, isAdminRole, async (req, res) => {
+  app.post('/api/admin/tournament-results', requireAuth, async (req, res) => {
     try {
-      const user = req.user;
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Нэвтрэх шаардлагатай" });
+      }
+
+      const user = await storage.getUserById(userId);
       if (!user || user.role !== 'admin') {
         return res.status(403).json({ message: "Зөвхөн админ хэрэглэгч үр дүн хадгалах боломжтой" });
       }
