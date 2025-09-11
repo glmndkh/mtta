@@ -260,7 +260,7 @@ const AdminTournamentResults: React.FC = () => {
             if (scoreParts.length === 2) {
               const score1 = parseInt(scoreParts[0]) || 0;
               const score2 = parseInt(scoreParts[1]) || 0;
-              
+
               if (score1 > score2) {
                 stats[i].wins++;
                 stats[i].points += 2; // 2 points for win
@@ -272,7 +272,7 @@ const AdminTournamentResults: React.FC = () => {
                 stats[i].losses++;
                 stats[i].points += 1;
               }
-              
+
               stats[i].setsWon += score1;
               stats[i].setsLost += score2;
               stats[j].setsWon += score2;
@@ -575,6 +575,46 @@ const AdminTournamentResults: React.FC = () => {
     saveResultsMutation.mutate(data);
   };
 
+  // Improved handleAddPlayerToGroup function
+  const handleAddPlayerToGroup = (groupId: string, user: User) => {
+    if (!user || !user.id) {
+      console.error('Invalid user data:', user);
+      toast({
+        title: "Алдаа",
+        description: "Буруу тоглогчийн мэдээлэл байна.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setGroupStageResults(prev => 
+      prev.map(group => 
+        group.id === groupId 
+          ? {
+              ...group,
+              players: [...group.players, {
+                id: user.id,
+                name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Unknown Player',
+                playerId: user.id, // Ensure playerId is set
+                userId: user.id // Ensure userId is set
+              }],
+              playerStats: [...group.playerStats, {
+                playerId: user.id,
+                wins: 0,
+                losses: 0,
+                points: 0
+              }]
+            }
+          : group
+      )
+    );
+
+    toast({
+      title: "Тоглогч нэмэгдлээ",
+      description: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Unknown Player' + ` ${groupId}-д нэмэгдлээ`
+    });
+  };
+
   if (tournamentLoading) {
     return <PageWithLoading>{null}</PageWithLoading>;
   }
@@ -793,14 +833,18 @@ const AdminTournamentResults: React.FC = () => {
                               users={users.filter(user => {
                                 // Filter out users already in groups
                                 const usedUserIds = groupStageResults.flatMap(g => 
-                                  g.players.map(p => p.userId).filter(Boolean)
+                                  g.players.map(p => p.userId).filter(Boolean) // Use userId for filtering
                                 );
                                 return !usedUserIds.includes(user.id);
                               })}
-                              onUserSelect={(user) => {
-                                setSelectedNewPlayerId(user.id);
+                              value={undefined} // Reset value to undefined for proper re-rendering
+                              onSelect={(user) => {
+                                if (user && user.id) {
+                                  handleAddPlayerToGroup(group.id, user);
+                                  setShowAddPlayerToGroup(null);
+                                }
                               }}
-                              placeholder="Тоглогч хайх..."
+                              placeholder="Тоглогч сонгох..."
                             />
                             <div className="flex items-center gap-2">
                               <Button
@@ -817,30 +861,7 @@ const AdminTournamentResults: React.FC = () => {
                                   const selectedUser = users.find(u => u.id === selectedNewPlayerId);
                                   if (!selectedUser) return;
 
-                                  setGroupStageResults(prev => prev.map(g =>
-                                    g.id === group.id
-                                      ? {
-                                          ...g,
-                                          players: [...g.players, {
-                                            id: selectedUser.id,
-                                            name: `${selectedUser.firstName} ${selectedUser.lastName}`,
-                                            playerId: selectedUser.id,
-                                            userId: selectedUser.id
-                                          }],
-                                          playerStats: [...g.playerStats, {
-                                            playerId: selectedUser.id,
-                                            wins: 0,
-                                            losses: 0,
-                                            points: 0
-                                          }]
-                                        }
-                                      : g
-                                  ));
-
-                                  toast({
-                                    title: "Тоглогч нэмэгдлээ",
-                                    description: `${selectedUser.firstName} ${selectedUser.lastName} ${group.name}-д нэмэгдлээ`
-                                  });
+                                  handleAddPlayerToGroup(group.id, selectedUser);
 
                                   setShowAddPlayerToGroup(null);
                                   setSelectedNewPlayerId('');
