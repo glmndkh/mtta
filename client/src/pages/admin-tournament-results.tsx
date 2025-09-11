@@ -20,14 +20,14 @@ import * as XLSX from 'xlsx';
 interface GroupStageGroup {
   id: string;
   name: string;
-  players: Array<{ 
+  players: Array<{
     id: string;
     name: string;
     playerId?: string;
     userId?: string;
   }>;
   resultMatrix: string[][];
-  playerStats: Array<{ 
+  playerStats: Array<{
     playerId: string;
     wins: number;
     losses: number;
@@ -96,14 +96,14 @@ const AdminTournamentResults: React.FC = () => {
   });
 
   // Fetch participants
-  const { data: participants } = useQuery<TournamentParticipant[]>({ 
-    queryKey: ['/api/tournaments', params?.tournamentId, 'participants'], 
-    enabled: !!params?.tournamentId 
+  const { data: participants } = useQuery<TournamentParticipant[]>({
+    queryKey: ['/api/tournaments', params?.tournamentId, 'participants'],
+    enabled: !!params?.tournamentId
   });
 
   // Fetch all users for autocomplete
-  const { data: users = [] } = useQuery<User[]>({ 
-    queryKey: ['/api/admin/users'], 
+  const { data: users = [] } = useQuery<User[]>({
+    queryKey: ['/api/admin/users'],
     enabled: !!params?.tournamentId
   });
 
@@ -165,13 +165,13 @@ const AdminTournamentResults: React.FC = () => {
       if (group.players.length >= 2) {
         const sortedPlayers = group.players
           .map((player) => {
-            const stats = group.playerStats.find(s => s.playerId === player.id) || { 
-              wins: 0, 
-              losses: 0, 
-              points: 0, 
-              setsWon: 0, 
-              setsLost: 0, 
-              setsDifference: 0 
+            const stats = group.playerStats.find(s => s.playerId === player.id) || {
+              wins: 0,
+              losses: 0,
+              points: 0,
+              setsWon: 0,
+              setsLost: 0,
+              setsDifference: 0
             };
             return { player, stats };
           })
@@ -321,7 +321,7 @@ const AdminTournamentResults: React.FC = () => {
           name: `${groupLetter} хэсэг`,
           players: groupParticipants.map(p => ({
             id: p.id,
-            name: p.user?.firstName && p.user?.lastName 
+            name: p.user?.firstName && p.user?.lastName
               ? `${p.user.firstName} ${p.user.lastName}`
               : `Тоглогч ${p.id}`,
             playerId: p.id,
@@ -342,6 +342,41 @@ const AdminTournamentResults: React.FC = () => {
     toast({
       title: "Хэсэгийн шат үүсгэгдлээ",
       description: `${groups.length} хэсэг үүсгэж ${totalParticipants} тоглогчийг хуваарилсан`
+    });
+  };
+
+  // Add a new group
+  const addNewGroup = () => {
+    const newGroupLetter = String.fromCharCode(65 + groupStageResults.length);
+    const newGroup: GroupStageGroup = {
+      id: `group_${newGroupLetter.toLowerCase()}`,
+      name: `${newGroupLetter} хэсэг`,
+      players: [],
+      resultMatrix: [],
+      playerStats: []
+    };
+    setGroupStageResults(prev => [...prev, newGroup]);
+    toast({
+      title: "Шинэ хэсэг үүсгэгдлээ",
+      description: `${newGroup.name} амжилттай үүсгэгдлээ`
+    });
+  };
+
+  // Remove a player from a group
+  const removePlayerFromGroup = (groupId: string, playerId: string) => {
+    setGroupStageResults(prev => prev.map(group => {
+      if (group.id === groupId) {
+        return {
+          ...group,
+          players: group.players.filter(player => player.id !== playerId),
+          playerStats: group.playerStats.filter(stat => stat.playerId !== playerId),
+        };
+      }
+      return group;
+    }));
+    toast({
+      title: "Тоглогч хасагдлаа",
+      description: `Тоглогч амжилттай хасагдлаа`
     });
   };
 
@@ -373,12 +408,12 @@ const AdminTournamentResults: React.FC = () => {
 
     // Calculate matches needed in first round
     const firstRoundMatches = Math.ceil(playerCount / 2);
-    
+
     // First round matches
     for (let i = 0; i < firstRoundMatches; i++) {
       const player1Index = i * 2;
       const player2Index = i * 2 + 1;
-      
+
       matches.push({
         id: `round1_${i + 1}`,
         round: "1",
@@ -400,7 +435,7 @@ const AdminTournamentResults: React.FC = () => {
     for (let round = 2; round < rounds; round++) {
       const matchesInRound = Math.ceil(previousRoundMatches / 2);
       const roundName = getRoundName(matchesInRound);
-      
+
       for (let i = 0; i < matchesInRound; i++) {
         matches.push({
           id: `round${round}_${i + 1}`,
@@ -447,7 +482,7 @@ const AdminTournamentResults: React.FC = () => {
       case 16: return '1/16 финал';
       case 32: return '1/32 финал';
       case 64: return '1/64 финал';
-      default: 
+      default:
         if (matchCount > 1) {
           return `1/${matchCount * 2} финал`;
         }
@@ -499,7 +534,7 @@ const AdminTournamentResults: React.FC = () => {
           <div className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-6 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button 
+              <Button
                 onClick={() => setLocation('/admin/tournaments')}
                 variant="outline"
                 size="sm"
@@ -524,18 +559,18 @@ const AdminTournamentResults: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Badge 
+              <Badge
                 variant={isPublished ? "default" : "secondary"}
-                className={`px-3 py-1 text-sm ${ 
-                  isPublished 
+                className={`px-3 py-1 text-sm ${
+                  isPublished
                     ? "bg-green-100 text-green-800 border-green-200"
                     : "bg-yellow-100 text-yellow-800 border-yellow-200"
                 }`}
               >
                 {isPublished ? "Нийтлэгдсэн" : "Ноорог"}
               </Badge>
-              <Button 
-                onClick={handleSave} 
+              <Button
+                onClick={handleSave}
                 disabled={saveResultsMutation.isPending}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6"
               >
@@ -605,11 +640,38 @@ const AdminTournamentResults: React.FC = () => {
 
         {/* Group Stage Results */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-white">
-            <Users className="w-6 h-6 text-green-500" />
-            Хэсэгийн шатны тоглолт
-          </h2>
-          
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold flex items-center gap-2 text-white">
+              <Users className="w-6 h-6 text-green-500" />
+              Хэсэгийн шатны тоглолт
+            </h2>
+            <div className="flex items-center gap-2">
+              {groupStageResults.length > 0 && (
+                <Button
+                  onClick={addNewGroup}
+                  variant="outline"
+                  size="sm"
+                  className="border-green-600 text-green-400 hover:bg-green-600 hover:text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Хэсэг нэмэх
+                </Button>
+              )}
+              <Button
+                onClick={generateKnockoutBracket}
+                disabled={qualifiedPlayers.length < 4}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <Trophy className="w-4 h-4 mr-2" />
+                Шигшээ тоглолт үүсгэх
+              </Button>
+              <Button variant="outline" size="sm">
+                <Download className="w-4 h-4 mr-2" />
+                Excel татах
+              </Button>
+            </div>
+          </div>
+
           {groupStageResults.length > 0 ? (
             <div className="space-y-6">
               {groupStageResults.map((group, groupIndex) => (
@@ -628,10 +690,19 @@ const AdminTournamentResults: React.FC = () => {
                       <h4 className="text-sm font-medium text-gray-300 mb-2">Тоглогчид:</h4>
                       <div className="grid grid-cols-2 gap-2">
                         {group.players.map((player, playerIndex) => (
-                          <div key={player.id} className="flex items-center gap-2 p-2 bg-gray-700 rounded">
+                          <div key={player.id} className="flex items-center gap-2 p-2 bg-gray-700 rounded justify-between">
                             <span className="text-sm text-white">{playerIndex + 1}. {player.name}</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => removePlayerFromGroup(group.id, player.id)}
+                              className="text-red-500 hover:text-red-600 p-1"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           </div>
                         ))}
+                        {group.players.length === 0 && <p className="text-gray-500 text-sm">Энэ хэсэгт тоглогч байхгүй байна.</p>}
                       </div>
                     </div>
 
@@ -668,9 +739,9 @@ const AdminTournamentResults: React.FC = () => {
                                           const newMatrix = [...group.resultMatrix];
                                           if (!newMatrix[rowIndex]) newMatrix[rowIndex] = [];
                                           newMatrix[rowIndex][colIndex] = e.target.value;
-                                          
-                                          setGroupStageResults(prev => prev.map(g => 
-                                            g.id === group.id 
+
+                                          setGroupStageResults(prev => prev.map(g =>
+                                            g.id === group.id
                                               ? { ...g, resultMatrix: newMatrix }
                                               : g
                                           ));
@@ -704,10 +775,10 @@ const AdminTournamentResults: React.FC = () => {
                           <tbody>
                             {group.players
                               .map((player) => {
-                                const stats = group.playerStats.find(s => s.playerId === player.id) || { 
-                                  wins: 0, 
-                                  losses: 0, 
-                                  points: 0 
+                                const stats = group.playerStats.find(s => s.playerId === player.id) || {
+                                  wins: 0,
+                                  losses: 0,
+                                  points: 0
                                 };
                                 return { player, stats };
                               })
@@ -746,7 +817,7 @@ const AdminTournamentResults: React.FC = () => {
                   <p className="text-sm text-gray-500">
                     {participants?.length || 0} оролцогч бүртгэгдсэн байна
                   </p>
-                  <Button 
+                  <Button
                     onClick={createGroupStage}
                     disabled={!participants || participants.length < 8}
                     className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600"
@@ -773,7 +844,7 @@ const AdminTournamentResults: React.FC = () => {
                   Шилжих тоглогчдын удирдлага
                 </h2>
             <div className="flex items-center gap-2">
-              <Button 
+              <Button
                 onClick={generateKnockoutBracket}
                 disabled={qualifiedPlayers.length < 4}
                 className="bg-green-600 hover:bg-green-700"
@@ -792,8 +863,8 @@ const AdminTournamentResults: React.FC = () => {
                 <TabsList className="bg-gray-800 border border-gray-700 p-1">
                   <TabsTrigger value="all" className="px-4 py-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300">Бүгд ({qualifiedPlayers.length})</TabsTrigger>
               {qualifiedPlayers.map((player) => (
-                    <TabsTrigger 
-                      key={player.id} 
+                    <TabsTrigger
+                      key={player.id}
                       value={player.id}
                       className="px-4 py-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300"
                     >
@@ -807,7 +878,7 @@ const AdminTournamentResults: React.FC = () => {
                     <CardContent className="p-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                         {qualifiedPlayers.map((player) => (
-                          <div 
+                          <div
                             key={player.id}
                             className="flex items-center gap-3 p-3 bg-gray-700 rounded-lg border border-gray-600"
                           >
@@ -1094,7 +1165,7 @@ const AdminTournamentResults: React.FC = () => {
                   </div>
             </div>
             <div className="mt-4 flex items-center gap-3">
-              <Button 
+              <Button
                 onClick={generateKnockoutBracket}
                 disabled={qualifiedPlayers.length < 4}
                 className="bg-blue-600 hover:bg-blue-700"
