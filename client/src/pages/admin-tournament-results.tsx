@@ -1,7 +1,1200 @@
-[
-  {"file_path": "admin-tournament-results.tsx", "content": "import { useState, useEffect } from \"react\";\nimport { useRoute, useLocation } from \"wouter\";\nimport { useQuery, useMutation, useQueryClient } from \"@tanstack/react-query\";\nimport { Card, CardContent, CardDescription, CardHeader, CardTitle } from \"@/components/ui/card\";\nimport { Button } from \"@/components/ui/button\";\nimport { Input } from \"@/components/ui/input\";\nimport { Badge } from \"@/components/ui/badge\";\nimport { Tabs, TabsContent, TabsList, TabsTrigger } from \"@/components/ui/tabs\";\nimport { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from \"@/components/ui/select\";\nimport { ArrowLeft, Plus, Trash2, Save, Users, Trophy, Target, Download, Upload, FileSpreadsheet, Minus, Eye, EyeOff } from \"lucide-react\";\nimport { useAuth } from \"@/hooks/useAuth\";\nimport { useToast } from \"@/hooks/use-toast\";\nimport { apiRequest } from \"@/lib/queryClient\";\nimport { UserAutocomplete } from \"@/components/UserAutocomplete\";\nimport { KnockoutBracketEditor } from \"@/components/KnockoutBracketEditor\";\nimport Navigation from \"@/components/navigation\";\nimport PageWithLoading from \"@/components/PageWithLoading\";\nimport type { Tournament, TournamentResults, TournamentParticipant, User } from \"@shared/schema\";\nimport * as XLSX from 'xlsx';\n\ninterface GroupStageGroup {\n  id: string;\n  name: string;\n  players: Array<{ \n    id: string;\n    name: string;\n    playerId?: string;\n    userId?: string;\n  }>;\n  resultMatrix: string[][]; // Changed from number[][] to string[][]\n  playerStats: Array<{ \n    playerId: string;\n    wins: number;\n    losses: number;\n    points: number;\n  }>;\n}\n\ninterface KnockoutMatch {\n  id: string;\n  round: string;\n  player1?: { id: string; name: string; playerId?: string; userId?: string };\n  player2?: { id: string; name: string; playerId?: string; userId?: string };\n  winner?: { id: string; name: string; playerId?: string; userId?: string };\n  score?: string;\n  isFinished: boolean;\n}\n\ninterface FinalRanking {\n  position: number;\n  player: {\n    id: string;\n    name: string;\n    playerId?: string;\n    userId?: string;\n  };\n  points?: number;\n  note?: string;\n}\n\nconst AdminTournamentResults: React.FC = () => {\n  const [, setLocation] = useLocation();\n  const router = { back: () => setLocation('/admin/tournaments') }; // Mock router for example\n  const [match, params] = useRoute(\"/admin/tournament/:tournamentId/results\");\n  const { user } = useAuth();\n  const { toast } = useToast();\n  const queryClient = useQueryClient();\n\n  // States\n  const [groupStageResults, setGroupStageResults] = useState<GroupStageGroup[]>([]);\n  const [knockoutResults, setKnockoutResults] = useState<KnockoutMatch[]>([]);\n  const [finalRankings, setFinalRankings] = useState<FinalRanking[]>([]);\n  const [isPublished, setIsPublished] = useState(false);\n  const [activeTab, setActiveTab] = useState(\"group-stage\");\n\n  // For Knockout Editor\n  const [allUsers, setAllUsers] = useState<User[]>([]);\n  const [activeKnockoutCategory, setActiveKnockoutCategory] = useState<string | null>(null);\n  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);\n\n  // Fetch tournament data\n  const { data: tournament, isLoading: tournamentLoading } = useQuery<Tournament>({\n    queryKey: ['/api/tournaments', params?.tournamentId],\n    enabled: !!params?.tournamentId,\n  });\n\n  // Fetch existing results\n  const { data: existingResults } = useQuery<TournamentResults>({\n    queryKey: ['/api/tournaments', params?.tournamentId, 'results'],\n    enabled: !!params?.tournamentId,\n  });\n\n  // Fetch participants\n  const { data: participants } = useQuery<TournamentParticipant[]>({ \n    queryKey: ['/api/tournaments', params?.tournamentId, 'participants'], \n    enabled: !!params?.tournamentId \n  });\n\n  // Fetch all users for autocomplete\n  const { data: users = [] } = useQuery<User[]>({ \n    queryKey: ['/api/admin/users'], \n    enabled: !!params?.tournamentId\n  });\n\n  // Save results mutation\n  const saveResultsMutation = useMutation({\n    mutationFn: async (data: any) => {\n      console.log('Saving tournament results:', data);\n      const response = await fetch('/api/admin/tournament-results', {\n        method: 'POST',\n        headers: {\n          'Content-Type': 'application/json',\n        },\n        credentials: 'include',\n        body: JSON.stringify(data),\n      });\n\n      if (!response.ok) {\n        const errorData = await response.json();\n        throw new Error(errorData.message || 'Үр дүн хадгалахад алдаа гарлаа');\n      }\n\n      return response.json();\n    },\n    onSuccess: () => {\n      toast({\n        title: \"Амжилттай хадгалагдлаа\",\n        description: \"Тэмцээний үр дүн амжилттай хадгалагдлаа\",\n      });\n      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', params?.tournamentId, 'results'] });\n    },\n    onError: (error: any) => {\n      toast({\n        title: \"Алдаа гарлаа\",\n        description: error.message || \"Үр дүн хадгалахад алдаа гарлаа\",\n        variant: \"destructive\",\n      });\n    },\n  });\n\n  // Initialize data when existing results are loaded\n  useEffect(() => {\n    if (existingResults) {\n      const groupResults = existingResults.groupStageResults;\n      const knockoutResultsData = existingResults.knockoutResults;\n      const finalRankingsData = existingResults.finalRankings;\n\n      setGroupStageResults(Array.isArray(groupResults) ? groupResults : []);\n      setKnockoutResults(Array.isArray(knockoutResultsData) ? knockoutResultsData : []);\n      setFinalRankings(Array.isArray(finalRankingsData) ? finalRankingsData : []);\n      setIsPublished(existingResults.isPublished || false);\n    }\n  }, [existingResults]);\n\n  // Set all users for knockout editor\n  useEffect(() => {\n    setAllUsers(users);\n  }, [users]);\n\n  // Update active knockout category when knockout results change or participants load\n  useEffect(() => {\n    if (knockoutResults && knockoutResults.length > 0) {\n      // Assuming the first category is the default if not set\n      if (!activeKnockoutCategory) {\n        setActiveKnockoutCategory(knockoutResults[0].id); // Or a more relevant key\n      }\n    } else if (participants && participants.length > 0 && !activeKnockoutCategory) {\n      // If no knockout results yet, but participants exist, set a default category if applicable\n      // This part might need adjustment based on how categories are defined in your data\n    }\n  }, [knockoutResults, participants]);\n\n  // Group Stage Functions\n  const addGroup = () => {\n    // Check if there are players available to add to groups\n    if (!users || users.length === 0) {\n      toast({\n        title: \"Алдаа\",\n        description: \"Хэрэглэгчдийн жагсаалт хоосон байна. Эхлээд тамирчдыг системд бүртгүүлнэ үү.\",\n        variant: \"destructive\",\n      });\n      return;\n    }\n\n    const newGroup: GroupStageGroup = {\n      id: Date.now().toString(),\n      name: `Group ${String.fromCharCode(65 + groupStageResults.length)}`,\n      players: [],\n      resultMatrix: [],\n      playerStats: [],\n    };\n    setGroupStageResults([...groupStageResults, newGroup]);\n\n    toast({\n      title: \"Амжилттай\",\n      description: `${newGroup.name} үүсгэгдлээ. Одоо тамирчдыг нэмнэ үү.`,\n    });\n  };\n\n  const deleteGroup = (groupId: string) => {\n    setGroupStageResults(groupStageResults.filter(g => g.id !== groupId));\n  };\n\n  const addPlayerToGroup = (groupId: string, player: User) => {\n    // Check if player is already in this group or any other group\n    const isPlayerAlreadyInGroup = groupStageResults.some(group => \n      group.players.some(p => p.userId === player.id)\n    );\n\n    if (isPlayerAlreadyInGroup) {\n      toast({\n        title: \"Анхаар\",\n        description: \"Энэ тамирчин аль хэдийн групп дээр байгаа байна.\",\n        variant: \"destructive\",\n      });\n      return;\n    }\n\n    setGroupStageResults(prev => prev.map(group => {\n      if (group.id === groupId) {\n        const newPlayer = {\n          id: player.id,\n          name: `${player.firstName || ''} ${player.lastName || ''}`.trim() || player.email || 'Unknown',\n          playerId: player.id,\n          userId: player.id,\n        };\n        const updatedPlayers = [...group.players, newPlayer];\n        const matrixSize = updatedPlayers.length;\n        const newMatrix = Array(matrixSize).fill(null).map((_, i) => \n          Array(matrixSize).fill(null).map((_, j) => \n            i < group.resultMatrix.length && j < group.resultMatrix[i]?.length \n              ? group.resultMatrix[i][j]\n              : (i === j ? 'X' : '')\n          )\n        );\n\n        toast({\n          title: \"Амжилттай\",\n          description: `${newPlayer.name} группт нэмэгдлээ`,\n        });\n\n        return {\n          ...group,\n          players: updatedPlayers,\n          resultMatrix: newMatrix,\n          playerStats: updatedPlayers.map(p => ({\n            playerId: p.id,\n            wins: 0,\n            losses: 0,\n            points: 0,\n          })),\n        };\n      }\n      return group;\n    }));\n  };\n\n  // Get available users excluding those already in groups\n  const getAvailableUsers = () => {\n    const usersInGroups = groupStageResults.flatMap(group => \n      group.players.map(p => p.userId)\n    );\n    return users.filter(user => !usersInGroups.includes(user.id));\n  };\n\n  // Auto-advance qualified players to knockout stage\n  const advanceQualifiedPlayers = () => {\n    // Check if there are any empty groups\n    const emptyGroups = groupStageResults.filter(group => group.players.length === 0);\n    if (emptyGroups.length > 0) {\n      toast({\n        title: \"Алдаа\",\n        description: \"Хоосон группууд байна. Эхлээд бүх группт тоглогч нэмнэ үү.\",\n        variant: \"destructive\",\n      });\n      return;\n    }\n\n    // Check if all groups have enough players\n    const incompleteGroups = groupStageResults.filter(group => group.players.length < 2);\n    if (incompleteGroups.length > 0) {\n      toast({\n        title: \"Анхааруулга\",\n        description: \"Зарим группт хангалттай тоглогч байхгүй байна. Групп тус бүрт дор хаяж 2 тоглогч байх ёстой.\",\n        variant: \"destructive\",\n      });\n      return;\n    }\n\n    const qualifiedPlayers: Array<{ \n      player: { id: string; name: string; playerId?: string; userId?: string }; \n      groupName: string;\n      position: number;\n    }> = [];\n\n    groupStageResults.forEach(group => {\n      if (group.players.length >= 2) {\n        // Sort players by stats to get top 2\n        const sortedPlayers = group.players\n          .map((player) => {\n            const stats = group.playerStats.find(s => s.playerId === player.id) || { \n              wins: 0, \n              losses: 0, \n              points: 0, \n              setsWon: 0, \n              setsLost: 0, \n              setsDifference: 0 \n            };\n            return { player, stats };\n          })\n          .sort((a, b) => {\n            if (b.stats.points !== a.stats.points) {\n              return b.stats.points - a.stats.points;\n            }\n            if ((b.stats.setsDifference || 0) !== (a.stats.setsDifference || 0)) {\n              return (b.stats.setsDifference || 0) - (a.stats.setsDifference || 0);\n            }\n            if ((b.stats.setsWon || 0) !== (a.stats.setsWon || 0)) {\n              return (b.stats.setsWon || 0) - (a.stats.setsWon || 0);\n            }\n            return b.stats.wins - a.stats.wins;\n          });\n\n        // Get top 2 qualified players\n        sortedPlayers.slice(0, 2).forEach((item, index) => {\n          qualifiedPlayers.push({\n            player: item.player,\n            groupName: group.name,\n            position: index + 1\n          });\n        });\n      }\n    });\n\n    if (qualifiedPlayers.length > 0) {\n      // Create initial knockout matches from qualified players\n      const initialMatches: KnockoutMatch[] = [];\n\n      // Pair up qualified players for first round\n      for (let i = 0; i < qualifiedPlayers.length; i += 2) {\n        if (i + 1 < qualifiedPlayers.length) {\n          const match: KnockoutMatch = {\n            id: `knockout_${Date.now()}_${i}`,\n            round: \"1\",\n            player1: qualifiedPlayers[i].player,\n            player2: qualifiedPlayers[i + 1].player,\n            isFinished: false,\n          };\n          initialMatches.push(match);\n        }\n      }\n\n      setKnockoutResults(initialMatches);\n      setActiveTab(\"knockout\");\n\n      toast({\n        title: \"Шалгарсан тоглогчид\",\n        description: `${qualifiedPlayers.length} тоглогч шилжих тоглолтод шалгарлаа`,\n      });\n    }\n  };\n\n  const updateGroupResult = (groupId: string, playerIndex: number, opponentIndex: number, result: string) => {\n    // Validate input format (should be like \"3-1\", \"3-2\", etc.)\n    if (result && result.trim() !== '' && !result.match(/^\\d+-\\d+$/)) {\n      toast({\n        title: \"Буруу формат\",\n        description: \"Үр дүнг 3-1, 3-2 гэх мэтээр оруулна уу\",\n        variant: \"destructive\",\n      });\n      return;\n    }\n\n    setGroupStageResults(prev => prev.map(group => {\n      if (group.id === groupId) {\n        const newMatrix = [...group.resultMatrix];\n        if (!newMatrix[playerIndex]) {\n          newMatrix[playerIndex] = [];\n        }\n        newMatrix[playerIndex][opponentIndex] = result;\n\n        // Automatically fill the opposite result if it's a valid score\n        if (result && result.includes('-')) {\n          const [score1, score2] = result.split('-').map(s => parseInt(s.trim()));\n          if (!isNaN(score1) && !isNaN(score2)) {\n            if (!newMatrix[opponentIndex]) {\n              newMatrix[opponentIndex] = [];\n            }\n            // Only set the opposite if it's not already filled\n            if (!newMatrix[opponentIndex][playerIndex] || newMatrix[opponentIndex][playerIndex] === '') {\n              newMatrix[opponentIndex][playerIndex] = `${score2}-${score1}`;\n            }\n          }\n        }\n\n        // Calculate comprehensive stats from score strings\n        const newStats = group.players.map((player, idx) => {\n          let wins = 0, losses = 0, points = 0, setsWon = 0, setsLost = 0;\n\n          for (let j = 0; j < group.players.length; j++) {\n            if (idx !== j) {\n              const matchResult = newMatrix[idx] && newMatrix[idx][j];\n              if (matchResult && typeof matchResult === 'string' && matchResult.includes('-')) {\n                const [score1, score2] = matchResult.split('-').map(s => parseInt(s.trim()));\n                if (!isNaN(score1) && !isNaN(score2)) {\n                  setsWon += score1;\n                  setsLost += score2;\n\n                  if (score1 > score2) {\n                    wins++;\n                    points += 3; // 3 points for a win\n                  } else if (score1 < score2) {\n                    losses++;\n                    points += 0; // 0 points for a loss\n                  } else if (score1 === score2) {\n                    points += 1; // 1 point for a draw (rare in table tennis)\n                  }\n                }\n              }\n            }\n          }\n\n          return {\n            playerId: player.id,\n            wins,\n            losses,\n            points,\n            setsWon,\n            setsLost,\n            setsDifference: setsWon - setsLost,\n          };\n        });\n\n        return {\n          ...group,\n          resultMatrix: newMatrix,\n          playerStats: newStats,\n        };\n      }\n      return group;\n    }));\n  };\n\n  // Final Rankings Functions\n  const addToFinalRankings = (player: User) => {\n    const newRanking: FinalRanking = {\n      position: finalRankings.length + 1,\n      player: {\n        id: player.id,\n        name: `${player.firstName || ''} ${player.lastName || ''}`.trim() || player.email || 'Unknown',\n        playerId: player.id,\n        userId: player.id,\n      },\n    };\n    setFinalRankings([...finalRankings, newRanking]);\n  };\n\n  const updateFinalRanking = (index: number, field: keyof FinalRanking, value: any) => {\n    setFinalRankings(prev => prev.map((ranking, i) => \n      i === index ? { ...ranking, [field]: value } : ranking\n    ));\n  };\n\n  const deleteFinalRanking = (index: number) => {\n    setFinalRankings(prev => prev.filter((_, i) => i !== index).map((ranking, i) => ({ \n      ...ranking,\n      position: i + 1,\n    })));\n  };\n\n  // Save function\n  const handleSave = () => {\n    if (!params?.tournamentId) return;\n\n    // Validate groups before saving\n    const hasEmptyGroups = groupStageResults.some(group => group.players.length === 0);\n    const hasIncompleteMatches = groupStageResults.some(group => {\n      if (group.players.length < 2) return false; // Skip validation for groups with less than 2 players\n\n      // Check if all matches have results\n      for (let i = 0; i < group.players.length; i++) {\n        for (let j = 0; j < group.players.length; j++) {\n          if (i !== j) {\n            const result = group.resultMatrix[i] && group.resultMatrix[i][j];\n            if (!result || result.trim() === '') {\n              return true; // Has incomplete matches\n            }\n          }\n        }\n      }\n      return false;\n    });\n\n    if (hasEmptyGroups) {\n      toast({\n        title: \"Анхааруулга\",\n        description: \"Хоосон группууд байна. Эдгээрийг устгах эсвэл тамирчин нэмнэ үү.\",\n        variant: \"destructive\",\n      });\n      return;\n    }\n\n    if (hasIncompleteMatches) {\n      const shouldContinue = window.confirm(\n        \"Зарим тоглолтын үр дүн дутуу байна. Хадгалахыг үргэлжлүүлэх үү?\"\n      );\n      if (!shouldContinue) return;\n    }\n\n    const data = {\n      tournamentId: params.tournamentId,\n      groupStageResults: groupStageResults.length > 0 ? groupStageResults : null,\n      knockoutResults: knockoutResults.length > 0 ? knockoutResults : null,\n      finalRankings: finalRankings.length > 0 ? finalRankings : null,\n      isPublished,\n    };\n\n    saveResultsMutation.mutate(data);\n  };\n\n  // Excel Import/Export\n  const handleExcelImport = (event: React.ChangeEvent<HTMLInputElement>) => {\n    const file = event.target.files?.[0];\n    if (!file) return;\n\n    const reader = new FileReader();\n    reader.onload = (e) => {\n      try {\n        const data = e.target?.result;\n        const workbook = XLSX.read(data, { type: 'binary' });\n        const sheetName = workbook.SheetNames[0];\n        const worksheet = workbook.Sheets[sheetName];\n        const jsonData = XLSX.utils.sheet_to_json(worksheet);\n\n        // Process imported data and convert to your format\n        console.log('Imported data:', jsonData);\n        toast({\n          title: \"Excel файл импорт хийгдлээ\",\n          description: \"Өгөгдлийг шалгаж, шаардлагатай засварлага хийнэ үү\",\n        });\n      } catch (error) {\n        toast({\n          title: \"Excel импорт амжилтгүй\",\n          description: \"Файлыг уншихад алдаа гарлаа\",\n          variant: \"destructive\",\n        });\n      }\n    };\n    reader.readAsBinaryString(file);\n  };\n\n  const handleExcelExport = () => {\n    const wb = XLSX.utils.book_new();\n\n    if (finalRankings.length > 0) {\n      const rankingsData = finalRankings.map(r => ({\n        'Байрлал': r.position,\n        'Тамирчин': r.player.name,\n        'Оноо': r.points || '',\n        'Тэмдэглэл': r.note || '',\n      }));\n      const ws = XLSX.utils.json_to_sheet(rankingsData);\n      XLSX.utils.book_append_sheet(wb, ws, \"Эцсийн жагсаалт\");\n    }\n\n    XLSX.writeFile(wb, `tournament_${params?.tournamentId}_results.xlsx`);\n  };\n\n  // Helper to normalize matches for KnockoutBracketEditor\n  const normalizeKnockoutMatches = (matches: KnockoutMatch[]) => {\n    return matches.map(match => ({ \n      ...match,\n      // Ensure player1 and player2 are in the expected format if they exist\n      player1: match.player1 ? { id: match.player1.id, name: match.player1.name } : undefined,\n      player2: match.player2 ? { id: match.player2.id, name: match.player2.name } : undefined,\n      winner: match.winner ? { id: match.winner.id, name: match.winner.name } : undefined,\n    }));\n  };\n\n  // Helper function to get qualified players for a specific category/tab\n  const getQualifiedPlayersForCategory = (category?: string | null) => {\n    if (!category || !participants) return [];\n\n    // Filter participants by category (adjust 'participationType' if your schema uses a different field for category)\n    const categoryParticipants = participants.filter(p => p.participationType === category);\n\n    // Map to the format expected by KnockoutBracketEditor's qualifiedPlayers prop\n    return categoryParticipants.map(p => ({\n      id: p.userId, // Assuming userId is the unique identifier for the player\n      name: p.name || `${p.firstName || ''} ${p.lastName || ''}`.trim() || 'Unknown',\n      userId: p.userId\n    }));\n  };\n\n  const handleKnockoutSave = async (matches: any[]) => {\n    if (!params?.tournamentId || !activeKnockoutCategory) return;\n\n    // Update the knockoutResults state with the new matches\n    setKnockoutResults(prev => {\n      const updatedResults = [...prev];\n      // Find the index of the category to update\n      const categoryIndex = updatedResults.findIndex(m => m.id === activeKnockoutCategory); // Assuming match.id can represent category\n      if (categoryIndex !== -1) {\n        // Replace or update the matches for this category\n        // This logic might need refinement based on how you structure knockoutResults for different categories\n        updatedResults[categoryIndex] = { ...updatedResults[categoryIndex], matches: matches }; // Example structure\n      } else {\n        // If category doesn't exist, add it (consider how categories are defined)\n        updatedResults.push({ id: activeKnockoutCategory, matches: matches });\n      }\n      return updatedResults;\n    });\n\n    toast({ \n      title: \"Шилжих тоглолтын үр дүн хадгалагдлаа\",\n      description: \"Bracket-ийн өөрчлөлтүүд хадгалагдлаа.\"\n    });\n\n    // Note: You might want to trigger the main saveResultsMutation here or have a separate save mechanism for knockout stages\n  };\n\n  if (tournamentLoading) {\n    return <PageWithLoading>{null}</PageWithLoading>;\n  }\n\n  if (!tournament) {\n    return (\n      <PageWithLoading>\n        <div className=\"container mx-auto px-4 py-8 text-center\">\n          <p>Тэмцээн олдсонгүй</p>\n          <Button onClick={() => setLocation('/admin/tournaments')} className=\"mt-4\">\n            <ArrowLeft className=\"w-4 h-4 mr-2\" />\n            Буцах\n          </Button>\n        </div>\n      </PageWithLoading>\n    );\n  }\n\n\n\n  return (\n    <PageWithLoading>\n      <Navigation />\n      <div className=\"container mx-auto px-4 py-8\">\n        {/* Header */}\n        <div className=\"bg-white rounded-lg shadow-sm border p-6 mb-6\">\n          <div className=\"flex items-center justify-between\">\n            <div className=\"flex items-center gap-4\">\n              <Button \n                onClick={() => setLocation('/admin/tournaments')}\n                variant=\"outline\"\n                size=\"sm\"\n                className=\"hover:bg-gray-50\"\n              >\n                <ArrowLeft className=\"w-4 h-4 mr-2\" />\n                Буцах\n              </Button>\n              <div>\n                <h1 className=\"text-3xl font-bold text-gray-900\">Тэмцээний үр дүн удирдах</h1>\n                <p className=\"text-lg text-gray-700 mt-1\">{tournament.name}</p>\n                <div className=\"flex items-center gap-4 mt-2 text-sm text-gray-600\">\n                  <span className=\"flex items-center gap-1\">\n                    <Users className=\"w-4 h-4\" />\n                    {participants?.length || 0} оролцогч\n                  </span>\n                  <span className=\"flex items-center gap-1\">\n                    <Trophy className=\"w-4 h-4\" />\n                    {tournament.format}\n                  </span>\n                </div>\n              </div>\n            </div>\n            <div className=\"flex items-center gap-3\">\n              <Badge \n                variant={isPublished ? \"default\" : \"secondary\"}\n                className={`px-3 py-1 text-sm ${ \n                  isPublished \n                    ? \"bg-green-100 text-green-800 border-green-200\"\n                    : \"bg-yellow-100 text-yellow-800 border-yellow-200\"\n                }`}\n              >\n                {isPublished ? \"Нийтлэгдсэн\" : \"Ноорог\"}\n              </Badge>\n              <Button \n                onClick={handleSave} \n                disabled={saveResultsMutation.isPending}\n                className=\"bg-blue-600 hover:bg-blue-700 text-white px-6\"\n              >\n                <Save className=\"w-4 h-4 mr-2\" />\n                {saveResultsMutation.isPending ? \"Хадгалж байна...\" : \"Хадгалах\"}\n              </Button>\n            </div>\n          </div>\n        </div>\n\n        {/* Import/Export Tools */}\n        <Card className=\"mb-6 border-l-4 border-l-blue-500\">\n          <CardHeader className=\"bg-gray-50\">\n            <CardTitle className=\"flex items-center gap-2 text-gray-800\">\n              <FileSpreadsheet className=\"w-5 h-5 text-blue-600\" />\n              Excel импорт/экспорт\n            </CardTitle>\n            <CardDescription>\n              Үр дүнгээ Excel файлаас импорт хийх эсвэл экспорт хийж татаж авах\n            </CardDescription>\n          </CardHeader>\n          <CardContent className=\"pt-6\">\n            <div className=\"flex items-center gap-4 flex-wrap\">\n              <div>\n                <input\n                  type=\"file\"\n                  id=\"excel-import\"\n                  accept=\".xlsx,.xls\"\n                  onChange={handleExcelImport}\n                  className=\"hidden\"\n                />\n                <Button \n                  onClick={() => document.getElementById('excel-import')?.click()} \n                  variant=\"outline\"\n                  className=\"border-green-200 text-green-700 hover:bg-green-50\"\n                >\n                  <Upload className=\"w-4 h-4 mr-2\" />\n                  Excel импорт\n                </Button>\n              </div>\n              <Button \n                onClick={handleExcelExport} \n                variant=\"outline\"\n                className=\"border-blue-200 text-blue-700 hover:bg-blue-50\"\n              >\n                <Download className=\"w-4 h-4 mr-2\" />\n                Excel экспорт\n              </Button>\n              <div className=\"text-sm text-gray-500 ml-auto\">\n                Дэмжигдэх форматууд: .xlsx, .xls\n              </div>\n            </div>\n          </CardContent>\n        </Card>\n\n        {/* Main Content */}\n        <div className=\"bg-white rounded-lg shadow-sm border\">\n          <Tabs value={activeTab} onValueChange={setActiveTab} className=\"w-full\">\n            <div className=\"border-b bg-gray-50 px-6 py-4 rounded-t-lg\">\n              <TabsList className=\"grid w-full grid-cols-3 bg-white shadow-sm\">\n                <TabsTrigger \n                  value=\"group-stage\"\n                  className=\"flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white\"\n                >\n                  <Users className=\"w-4 h-4\" />\n                  <span className=\"hidden sm:inline\">Группийн шат</span>\n                  <span className=\"sm:hidden\">Групп</span>\n                </TabsTrigger>\n                <TabsTrigger \n                  value=\"knockout\"\n                  className=\"flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white\"\n                >\n                  <Trophy className=\"w-4 h-4\" />\n                  <span className=\"hidden sm:inline\">Шилжих тоглолт</span>\n                  <span className=\"sm:hidden\">Шилжих</span>\n                </TabsTrigger>\n                <TabsTrigger \n                  value=\"final-rankings\"\n                  className=\"flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white\"\n                >\n                  <Target className=\"w-4 h-4\" />\n                  <span className=\"hidden sm:inline\">Эцсийн жагсаалт</span>\n                  <span className=\"sm:hidden\">Жагсаалт</span>\n                </TabsTrigger>\n              </TabsList>\n            </div>\n\n          {/* Group Stage Tab */}\n          <TabsContent value=\"group-stage\" className=\"p-6 space-y-6\">\n            <div className=\"flex items-center justify-between\">\n              <div>\n                <h2 className=\"text-xl font-semibold text-gray-900\">Группийн шатны үр дүн</h2>\n                <p className=\"text-sm text-gray-600 mt-1\">\n                  Тэмцээний группийн шатны тоглолтуудын үр дүнг оруулна уу\n                </p>\n              </div>\n              <div className=\"flex items-center gap-3\">\n                <Button \n                  onClick={advanceQualifiedPlayers}\n                  disabled={groupStageResults.length === 0}\n                  className=\"bg-blue-600 hover:bg-blue-700 text-white px-4 py-2\"\n                >\n                  <Trophy className=\"w-4 h-4 mr-2\" />\n                  Шалгарсан тоглогчдыг шилжүүлэх\n                </Button>\n                <Button \n                  onClick={addGroup}\n                  className=\"bg-green-600 hover:bg-green-700 text-white px-4 py-2\"\n                >\n                  <Plus className=\"w-4 h-4 mr-2\" />\n                  Групп нэмэх\n                </Button>\n              </div>\n            </div>\n\n            {groupStageResults.length === 0 ? (\n              <div className=\"text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300\">\n                <Users className=\"w-12 h-12 text-gray-400 mx-auto mb-4\" />\n                <h3 className=\"text-lg font-medium text-gray-900 mb-2\">Групп байхгүй байна</h3>\n                <p className=\"text-gray-600 mb-4\">Эхний группээ үүсгэж тэмцээний үр дүн оруулж эхлээрэй</p>\n                <Button \n                  onClick={addGroup}\n                  className=\"bg-green-600 hover:bg-green-700 text-white\"\n                >\n                  <Plus className=\"w-4 h-4 mr-2\" />\n                  Анхны групп үүсгэх\n                </Button>\n              </div>\n            ) : null}\n\n            {groupStageResults && Array.isArray(groupStageResults) && groupStageResults.map((group, groupIndex) => (\n              <Card key={group.id}>\n                <CardHeader>\n                  <div className=\"flex items-center justify-between\">\n                    <CardTitle>{group.name}</CardTitle>\n                    <Button \n                      onClick={() => deleteGroup(group.id)}\n                      variant=\"destructive\"\n                      size=\"sm\"\n                    >\n                      <Trash2 className=\"w-4 h-4\" />\n                    </Button>\n                  </div>\n                </CardHeader>\n                <CardContent className=\"space-y-4\">\n                  {/* Add Player */}\n                  <div>\n                    <UserAutocomplete\n                      users={getAvailableUsers()}\n                      onSelect={(user) => user && addPlayerToGroup(group.id, user)}\n                      placeholder=\"Тамирчин хайх...\"\n                    />\n                  </div>\n\n                  {/* Players List */}\n                  {group.players.length > 0 && (\n                    <div className=\"space-y-4\">\n                      <h4 className=\"font-medium\">Тамирчид ({group.players.length})</h4>\n                      <div className=\"grid grid-cols-2 md:grid-cols-4 gap-2\">\n                        {group.players.map((player, index) => (\n                          <div key={player.id} className=\"p-2 bg-gray-100 rounded text-sm flex justify-between items-center\">\n                            <span>{index + 1}. {player.name}</span>\n                            <Button \n                              onClick={() => {\n                                setGroupStageResults(prev => prev.map(g => {\n                                  if (g.id === group.id) {\n                                    const updatedPlayers = g.players.filter(p => p.id !== player.id);\n                                    const matrixSize = updatedPlayers.length;\n                                    const newMatrix = Array(matrixSize).fill(null).map((_, i) => \n                                      Array(matrixSize).fill(null).map((_, j) => i === j ? 'X' : '')\n                                    );\n                                    return {\n                                      ...g,\n                                      players: updatedPlayers,\n                                      resultMatrix: newMatrix,\n                                      playerStats: updatedPlayers.map(p => ({\n                                        playerId: p.id,\n                                        wins: 0,\n                                        losses: 0,\n                                        points: 0,\n                                      })),\n                                    };\n                                  }\n                                  return g;\n                                }));\n                                toast({\n                                  title: \"Амжилттай\",\n                                  description: `${player.name} группаас хасагдлаа`,\n                                });\n                              }}\n                              variant=\"destructive\"\n                              size=\"sm\"\n                              className=\"ml-2 h-6 w-6 p-0\"\n                            >\n                              <Minus className=\"w-3 h-3\" />\n                            </Button>\n                          </div>\n                        ))}\n                      </div>\n\n                      {/* Results Matrix */}\n                      {group.players.length > 1 && (\n                        <div className=\"space-y-4\">\n                          <div className=\"bg-gray-800 rounded-lg p-4\">\n                            <div className=\"flex items-center justify-between mb-4\">\n                              <h4 className=\"font-medium text-white\">{group.name}</h4>\n                              <div className=\"flex items-center gap-2\">\n                                <Button size=\"sm\" className=\"bg-green-600 hover:bg-green-700\">\n                                  Групп нэмэх\n                                </Button>\n                                <Button size=\"sm\" variant=\"outline\" className=\"border-gray-600 text-gray-300 hover:bg-gray-700\">\n                                  Засах талбар\n                                </Button>\n                                <Button size=\"sm\" variant=\"outline\" className=\"border-gray-600 text-gray-300 hover:bg-gray-700\">\n                                  Эрэмб засах\n                                </Button>\n                              </div>\n                            </div>\n\n                            <div className=\"overflow-x-auto\">\n                              <table className=\"w-full border-collapse\">\n                                <thead>\n                                  <tr className=\"bg-gray-700\">\n                                    <th className=\"border border-gray-600 p-2 text-left text-white font-medium\">№</th>\n                                    <th className=\"border border-gray-600 p-2 text-left text-white font-medium\">Нэр</th>\n                                    <th className=\"border border-gray-600 p-2 text-center text-white font-medium\">Клуб</th>\n                                    {group.players.map((_, index) => (\n                                      <th key={index} className=\"border border-gray-600 p-2 text-center text-white font-medium w-12\">\n                                        {index + 1}\n                                      </th>\n                                    ))}\n                                    <th className=\"border border-gray-600 p-2 text-center text-white font-medium\">Оноо</th>\n                                    <th className=\"border border-gray-600 p-2 text-center text-white font-medium\">Байр</th>\n                                  </tr>\n                                </thead>\n                                <tbody>\n                                  {(() => {\n                                    // Calculate and sort players by points, wins, and sets difference for ranking\n                                    const sortedPlayers = group.players\n                                      .map((player, originalIndex) => {\n                                        const stats = group.playerStats.find(s => s.playerId === player.id) || { \n                                          wins: 0, \n                                          losses: 0, \n                                          points: 0, \n                                          setsWon: 0, \n                                          setsLost: 0, \n                                          setsDifference: 0 \n                                        };\n                                        return { player, originalIndex, stats };\n                                      })\n                                      .sort((a, b) => {\n                                        // Primary: Points\n                                        if (b.stats.points !== a.stats.points) {\n                                          return b.stats.points - a.stats.points;\n                                        }\n                                        // Secondary: Sets difference (sets won - sets lost)\n                                        if ((b.stats.setsDifference || 0) !== (a.stats.setsDifference || 0)) {\n                                          return (b.stats.setsDifference || 0) - (a.stats.setsDifference || 0);\n                                        }\n                                        // Tertiary: Sets won\n                                        if ((b.stats.setsWon || 0) !== (a.stats.setsWon || 0)) {\n                                          return (b.stats.setsWon || 0) - (a.stats.setsWon || 0);\n                                        }\n                                        // Quaternary: Wins\n                                        return b.stats.wins - a.stats.wins;\n                                      });\n\n                                    return sortedPlayers.map(({ player, originalIndex, stats }, rankIndex) => {\n                                      const position = rankIndex + 1;\n                                      const isQualified = position <= 2;\n\n                                      return (\n                                        <tr \n                                          key={player.id}\n                                          className={`${isQualified ? \"bg-green-900/30\" : \"bg-gray-800/50\"} hover:bg-gray-700/50`}\n                                        >\n                                          <td className=\"border border-gray-600 p-2 text-white\">\n                                            {position}\n                                          </td>\n                                          <td className=\"border border-gray-600 p-2\">\n                                            <div className=\"flex items-center gap-2\">\n                                              <span className=\"text-white\">{player.name}</span>\n                                              {isQualified && (\n                                                <Badge className=\"bg-green-600 text-white text-xs\">\n                                                  Шалгарсан\n                                                </Badge>\n                                              )}\n                                            </div>\n                                          </td>\n                                          <td className=\"border border-gray-600 p-2 text-center text-gray-300 text-sm\">\n                                            -\n                                          </td>\n                                          {group.players.map((_, opponentIndex) => (\n                                            <td key={opponentIndex} className=\"border border-gray-600 p-1\">\n                                              {originalIndex === opponentIndex ? (\n                                                <div className=\"bg-gray-600 h-8 flex items-center justify-center text-gray-400\">\n                                                  -\n                                                </div>\n                                              ) : (\n                                                <Input\n                                                  type=\"text\"\n                                                  value={group.resultMatrix[originalIndex]?.[opponentIndex] || \"\"}\n                                                  onChange={(e) => updateGroupResult(\n                                                    group.id,\n                                                    originalIndex,\n                                                    opponentIndex,\n                                                    e.target.value\n                                                  )}\n                                                  placeholder=\"3-1\"\n                                                  className=\"h-8 text-center text-sm bg-gray-700 border-gray-600 text-white placeholder-gray-400\"\n                                                />\n                                              )}\n                                            </td>\n                                          ))}\n                                          <td className=\"border border-gray-600 p-2 text-center font-bold text-white\">\n                                            {stats.points}\n                                          </td>\n                                          <td className={`border border-gray-600 p-2 text-center font-bold ${ \n                                            isQualified ? \"text-green-400\" : \"text-gray-300\"\n                                          }`}>\n                                            {position}\n                                          </td>\n                                        </tr>\n                                      );\n                                    });\n                                  })()}\n                                </tbody>\n                              </table>\n                            </div>\n\n                            {/* Qualification Summary */}\n                            <div className=\"mt-4 p-3 bg-green-900/20 rounded border border-green-600\">\n                              <p className=\"text-green-400 text-sm mb-2\">\n                                Эхний 2 тамирчин группээс дараагийн шатанд шалгарна\n                              </p>\n                              <div className=\"text-green-300 text-sm\">\n                                Шалгарсан тамирчид: {(() => {\n                                  const qualified = group.players\n                                    .map((player) => {\n                                      const stats = group.playerStats.find(s => s.playerId === player.id) || { wins: 0, losses: 0, points: 0 };\n                                      return { player, stats };\n                                    })\n                                    .sort((a, b) => {\n                                      if (b.stats.points !== a.stats.points) {\n                                        return b.stats.points - a.stats.points;\n                                      }\n                                      return b.stats.wins - a.stats.wins;\n                                    })\n                                    .slice(0, 2);\n\n                                  return qualified.map(({ player }) => player.name).join(', ');\n                                })()}\n                              </div>\n                            </div>\n                          </div>\n                        </div>\n                      )}\n                    </div>\n                  )}\n                </CardContent>\n              </Card>\n            ))}\n          </TabsContent>\n\n          {/* Knockout Tab */}\n          <TabsContent value=\"knockout\" className=\"p-6 space-y-6\">\n            <div className=\"flex items-center justify-between\">\n              <div>\n                <h2 className=\"text-xl font-semibold text-gray-900\">Шилжих тоглолт</h2>\n                <p className=\"text-sm text-gray-600 mt-1\">\n                  Шилжих тоглолтын үр дүн болон bracket-ийг удирдана уу\n                </p>\n              </div>\n              {/* You might add category selection here if your knockout stage has multiple categories */} \n            </div>\n            <Card>\n              <CardContent className=\"p-6\">\n                {/* Render KnockoutBracketEditor for the selected category */}\n                {/* Ensure activeKnockoutCategory is correctly set, potentially based on tournament structure */}\n                {/* Example: If tournament.knockoutCategories exists, map over it */}\n                {/* For simplicity, assuming a single knockout bracket for now */}\n                <KnockoutBracketEditor\n                  key={`knockout-${activeKnockoutCategory}`}\n                  initialMatches={normalizeKnockoutMatches(\n                    knockoutResults?.[activeKnockoutCategory] || []\n                  )}\n                  users={allUsers}\n                  onSave={handleKnockoutSave}\n                  qualifiedPlayers={getQualifiedPlayersForCategory(activeKnockoutCategory)}\n                  selectedMatchId={selectedMatchId}\n                  onMatchSelect={setSelectedMatchId}\n                />\n              </CardContent>\n            </Card>\n          </TabsContent>\n\n          {/* Final Rankings Tab */}\n          <TabsContent value=\"final-rankings\" className=\"p-6 space-y-6\">\n            <div className=\"flex items-center justify-between\">\n              <div>\n                <h2 className=\"text-xl font-semibold text-gray-900\">Эцсийн жагсаалт</h2>\n                <p className=\"text-sm text-gray-600 mt-1\">\n                  Тэмцээний эцсийн үр дүн болон тамирчдын байрлалыг оруулна уу\n                </p>\n              </div>\n              <div className=\"flex items-center gap-2\">\n                <label className=\"flex items-center gap-2 cursor-pointer\">\n                  <input\n                    type=\"checkbox\"\n                    checked={isPublished}\n                    onChange={(e) => setIsPublished(e.target.checked)}\n                    className=\"w-4 h-4 text-blue-600 rounded focus:ring-blue-500\"\n                  />\n                  <span className=\"text-sm font-medium text-gray-700\">Нийтэд харуулах</span>\n                  {isPublished && <Eye className=\"w-4 h-4 text-green-600\" />}\n                  {!isPublished && <EyeOff className=\"w-4 h-4 text-gray-400\" />}\n                </label>\n              </div>\n            </div>\n\n            <Card>\n              <CardContent className=\"p-6\">\n                <div className=\"space-y-4\">\n                  <UserAutocomplete\n                    users={getAvailableUsers()}\n                    onSelect={(user) => user && addToFinalRankings(user)}\n                    placeholder=\"Тамирчин хайж нэмэх...\"\n                  />\n\n                  {finalRankings.length > 0 && (\n                    <div className=\"overflow-x-auto\">\n                      <table className=\"w-full border-collapse border border-gray-300\">\n                        <thead>\n                          <tr>\n                            <th className=\"border border-gray-300 p-3 bg-gray-50\">Байрлал</th>\n                            <th className=\"border border-gray-300 p-3 bg-gray-50\">Тамирчин</th>\n                            <th className=\"border border-gray-300 p-3 bg-gray-50\">Оноо</th>\n                            <th className=\"border border-gray-300 p-3 bg-gray-50\">Тэмдэглэл</th>\n                            <th className=\"border border-gray-300 p-3 bg-gray-50\">Үйлдэл</th>\n                          </tr>\n                        </thead>\n                        <tbody>\n                          {finalRankings.map((ranking, index) => (\n                            <tr key={index}>\n                              <td className=\"border border-gray-300 p-3 text-center font-bold\">\n                                {ranking.position}\n                              </td>\n                              <td className=\"border border-gray-300 p-3\">\n                                {ranking.player.name}\n                              </td>\n                              <td className=\"border border-gray-300 p-3\">\n                                <Input\n                                  type=\"number\"\n                                  value={ranking.points || ''}\n                                  onChange={(e) => updateFinalRanking(\n                                    index,\n                                    'points',\n                                    parseInt(e.target.value) || 0\n                                  )}\n                                  placeholder=\"Оноо\"\n                                  className=\"w-20\"\n                                />\n                              </td>\n                              <td className=\"border border-gray-300 p-3\">\n                                <Input\n                                  value={ranking.note || ''}\n                                  onChange={(e) => updateFinalRanking(index, 'note', e.target.value)}\n                                  placeholder=\"Тэмдэглэл\"\n                                />\n                              </td>\n                              <td className=\"border border-gray-300 p-3 text-center\">\n                                <Button \n                                  onClick={() => deleteFinalRanking(index)}\n                                  variant=\"destructive\"\n                                  size=\"sm\"\n                                >\n                                  <Trash2 className=\"w-4 h-4\" />\n                                </Button>\n                              </td>\n                            </tr>\n                          ))}\n                        </tbody>\n                      </table>\n                    </div>\n                  )}\n                </div>\n              </CardContent>\n            </Card>\n          </TabsContent>\n          </Tabs>\n        </div>\n      </div>\n    </PageWithLoading>\n  );\n};\n\nexport default AdminTournamentResults;\n"]},
-  {"file_path": "components/KnockoutBracketEditor.tsx", "content": "import React, { useState, useEffect, useCallback } from 'react';\nimport { Button } from './ui/button';\nimport { Input } from './ui/input';\nimport { Card, CardHeader, CardTitle, CardContent } from './ui/card';\nimport { Plus, Minus, Trash2, Save, Search, Users, Trophy, Target } from 'lucide-react';\n\ninterface Player {\n  id: string;\n  name: string;\n  userId?: string; // To link to the actual user if needed\n}\n\ninterface Match {\n  id: string;\n  round: string;\n  player1?: Player;\n  player2?: Player;\n  winner?: Player;\n  score?: string;\n  isFinished: boolean;\n}\n\ninterface KnockoutBracketEditorProps {\n  initialMatches: Match[];\n  users: Player[]; // List of all available users to select from\n  onSave: (matches: Match[]) => void;\n  qualifiedPlayers?: Player[]; // Players who have qualified for this bracket\n  selectedMatchId: string | null;\n  onMatchSelect: (matchId: string | null) => void;\n}\n\nexport const KnockoutBracketEditor: React.FC<KnockoutBracketEditorProps> = ({\n  initialMatches,\n  users,\n  onSave,\n  qualifiedPlayers = [],\n  selectedMatchId,\n  onMatchSelect,\n}) => {\n  const [matches, setMatches] = useState<Match[]>(initialMatches);\n  const [searchTerm, setSearchTerm] = useState('');\n  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);\n\n  useEffect(() => {\n    setMatches(initialMatches);\n  }, [initialMatches]);\n\n  // Populate initial qualified players if there are no initial matches or matches are empty\n  useEffect(() => {\n    if (qualifiedPlayers.length > 0 && (matches.length === 0 || matches.every(m => !m.player1 && !m.player2))) {\n      const newMatches: Match[] = [];\n      // Pair up qualified players for the first round\n      for (let i = 0; i < qualifiedPlayers.length; i += 2) {\n        if (i + 1 < qualifiedPlayers.length) {\n          const match: Match = {\n            id: `match_${Date.now()}_${i}`,\n            round: '1',\n            player1: qualifiedPlayers[i],\n            player2: qualifiedPlayers[i + 1],\n            isFinished: false,\n          };\n          newMatches.push(match);\n        } else {\n          // Handle odd number of players if necessary (e.g., bye)\n        }\n      }\n      if (newMatches.length > 0) {\n        setMatches(newMatches);\n        // Optionally call onSave here if you want to auto-save the initial bracket setup\n        // onSave(newMatches);\n      }\n    } else if (qualifiedPlayers.length > 0 && matches.length > 0 && matches.every(m => !m.player1 && !m.player2)) {\n      // If matches exist but are empty, try to fill them from qualifiedPlayers\n      // This scenario might occur if initialMatches was empty but qualifiedPlayers were provided\n      let playerIndex = 0;\n      const updatedMatches = matches.map(match => {\n        if (playerIndex < qualifiedPlayers.length && !match.player1) {\n          const newMatch = { ...match, player1: qualifiedPlayers[playerIndex++] };\n          if (playerIndex < qualifiedPlayers.length && !match.player2) {\n            newMatch.player2 = qualifiedPlayers[playerIndex++];\n          }\n          return newMatch;\n        }\n        return match;\n      });\n      setMatches(updatedMatches);\n    }\n  }, [qualifiedPlayers, initialMatches]); // Rerun if initialMatches changes or qualifiedPlayers are loaded\n\n  const handlePlayerSelect = useCallback((matchId: string, playerSlot: 'player1' | 'player2', player: Player) => {\n    setMatches(prevMatches =>\n      prevMatches.map(m => {\n        if (m.id === matchId) {\n          const updatedMatch = { ...m, [playerSlot]: player };\n          // Clear winner if players change\n          if (playerSlot === 'player1' && m.player2 && m.winner?.id === player.id) {\n            updatedMatch.winner = undefined;\n          }\n          if (playerSlot === 'player2' && m.player1 && m.winner?.id === player.id) {\n            updatedMatch.winner = undefined;\n          }\n          // If both players are set, and winner is not, default to no winner or clear score\n          if (updatedMatch.player1 && updatedMatch.player2 && !updatedMatch.winner) {\n            updatedMatch.score = ''; // Clear score if players are updated\n            updatedMatch.isFinished = false;\n          } \n          return updatedMatch;\n        }\n        return m;\n      })\n    );\n    setSearchTerm(''); // Clear search term after selection\n    setSelectedPlayer(null); // Clear selected player\n    onMatchSelect(matchId); // Keep the match selected\n  }, [onMatchSelect]);\n\n  const handleScoreChange = useCallback((matchId: string, score: string) => {\n    setMatches(prevMatches =>\n      prevMatches.map(m => {\n        if (m.id === matchId) {\n          const updatedMatch = { ...m, score: score };\n          // If score is entered, mark as finished if players are set\n          if (score && score.includes('-') && m.player1 && m.player2) {\n            updatedMatch.isFinished = true;\n            // Optionally determine winner based on score here if logic is simple\n            // Example: simple set win calculation\n            const [score1, score2] = score.split('-').map(Number);\n            if (!isNaN(score1) && !isNaN(score2)) {\n              if (score1 > score2 && m.player1) {\n                updatedMatch.winner = m.player1;\n              } else if (score2 > score1 && m.player2) {\n                updatedMatch.winner = m.player2;\n              } else {\n                // Handle draw or invalid score if necessary\n                updatedMatch.winner = undefined;\n              }\n            }\n          } else {\n            updatedMatch.isFinished = false;\n            updatedMatch.winner = undefined; // Clear winner if score is cleared or invalid\n          }\n          return updatedMatch;\n        }\n        return m;\n      })\n    );\n  }, []);\n\n  const handleWinnerSelect = useCallback((matchId: string, winner: Player | undefined) => {\n    setMatches(prevMatches =>\n      prevMatches.map(m => {\n        if (m.id === matchId) {\n          const updatedMatch = { ...m, winner: winner };\n          // If winner is set, mark match as finished\n          if (winner) {\n            updatedMatch.isFinished = true;\n          } else {\n            // If winner is cleared, reset finished status and score\n            updatedMatch.isFinished = false;\n            updatedMatch.score = '';\n          }\n          return updatedMatch;\n        }\n        return m;\n      })\n    );\n  }, []);\n\n  const addMatch = () => {\n    const nextRound = matches.length > 0 ? (parseInt(matches[0].round) + 1).toString() : '1';\n    const newMatch: Match = {\n      id: `match_${Date.now()}`,\n      round: nextRound,\n      isFinished: false,\n    };\n    setMatches([...matches, newMatch]);\n  };\n\n  const removeMatch = (matchId: string) => {\n    setMatches(prevMatches => prevMatches.filter(m => m.id !== matchId));\n  };\n\n  const handleSaveClick = () => {\n    onSave(matches);\n  };\n\n  const filteredUsers = users.filter(user =>\n    user.name.toLowerCase().includes(searchTerm.toLowerCase())\n  );\n\n  const handleSearchFocus = () => {\n    // Optionally do something when search input is focused\n  };\n\n  const handleSearchBlur = () => {\n    // Optionally clear search or selected player after a delay if needed\n  };\n\n  const handleAddPlayerClick = (player: Player) => {\n    setSelectedPlayer(player);\n    setSearchTerm(player.name);\n  };\n\n  const handleClearSelection = () => {\n    setSearchTerm('');\n    setSelectedPlayer(null);\n  };\n\n  // Group matches by round for display\n  const matchesByRound = matches.reduce((acc, match) => {\n    if (!acc[match.round]) {\n      acc[match.round] = [];\n    }\n    acc[match.round].push(match);\n    return acc;\n  }, {} as Record<string, Match[]>);\n\n  const sortedRounds = Object.keys(matchesByRound).sort((a, b) => parseInt(a) - parseInt(b));\n\n  return (\n    <Card className=\"w-full\">\n      <CardHeader className=\"flex flex-row items-center justify-between space-y-0 border-b p-4\">\n        <div className=\"space-y-1\">\n          <CardTitle>Шилжих тоглолтын Bracket</CardTitle>\n          <CardDescription>Тоглогч болон тоглолтын үр дүнг оруулна уу</CardDescription>\n        </div>\n        <Button onClick={handleSaveClick} className=\"bg-blue-600 hover:bg-blue-700 text-white\">\n          <Save className=\"w-4 h-4 mr-2\" />\n          Хадгалах\n        </Button>\n      </CardHeader>\n      <CardContent className=\"p-4 pt-6\">\n        \n        <div className=\"flex justify-end mb-4\">\n          <Button onClick={addMatch} className=\"flex items-center gap-1 bg-green-600 hover:bg-green-700\">\n            <Plus className=\"w-4 h-4\" />\n            Тоглолт нэмэх\n          </Button>\n        </div>\n\n        {sortedRounds.map(round => (\n          <div key={round} className=\"mb-8\">\n            <h3 className=\"text-lg font-semibold mb-3 border-b pb-2\">Round {round}</h3>\n            <div className=\"flex flex-col md:flex-row gap-4 flex-wrap justify-center\">\n              {matchesByRound[round].map((match) => (\n                <div \n                  key={match.id}\n                  className={`relative w-full md:w-64 lg:w-72 break-inside-avoid border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200 \n                    ${selectedMatchId === match.id ? 'border-blue-500 shadow-md ring-2 ring-blue-300' : 'border-gray-200 bg-white'}\n                    ${match.isFinished ? 'bg-gray-50' : ''}\n                  `}\n                  onClick={() => onMatchSelect(match.id)}\n                >\n                  <div className=\"flex flex-col gap-3\">\n                    {/* Player 1 */} \n                    <div className=\"flex items-center gap-2\">\n                      <div className=\"flex-1\">\n                        {match.player1 ? (\n                          <div className={`flex items-center justify-between p-2 rounded \n                            ${match.winner?.id === match.player1.id ? 'bg-green-200' : 'bg-gray-100'}\n                          `}>\n                            <span>{match.player1.name}</span>\n                            {match.winner?.id === match.player1.id && <Trophy className=\"w-4 h-4 text-green-600\" />}\n                          </div>\n                        ) : (\n                          <Button variant=\"outline\" className=\"w-full justify-start\" onClick={(e) => { e.stopPropagation(); onMatchSelect(match.id); }}>\n                            <Plus className=\"w-4 h-4 mr-2\" />\n                            Player 1\n                          </Button>\n                        )}\n                      </div>\n                      {match.player1 && (\n                        <Button \n                          size=\"sm\" \n                          variant=\"ghost\" \n                          className=\"text-red-500 hover:text-red-600\"\n                          onClick={(e) => {\n                            e.stopPropagation();\n                            handlePlayerSelect(match.id, 'player1', undefined as any); // Pass undefined to clear\n                          }}\n                        >\n                          <Minus className=\"w-4 h-4\" />\n                        </Button>\n                      )}\n                    </div>\n\n                    {/* Score */} \n                    {match.player1 && match.player2 && (\n                      <Input \n                        value={match.score || ''}\n                        onChange={(e) => handleScoreChange(match.id, e.target.value)}\n                        placeholder=\"3-0\"\n                        className=\"text-center h-10 border-gray-300 focus:border-blue-500\"\n                        disabled={!match.player1 || !match.player2}\n                      />\n                    )}\n\n                    {/* Player 2 */} \n                    <div className=\"flex items-center gap-2\">\n                      <div className=\"flex-1\">\n                        {match.player2 ? (\n                          <div className={`flex items-center justify-between p-2 rounded \n                            ${match.winner?.id === match.player2.id ? 'bg-green-200' : 'bg-gray-100'}\n                          `}>\n                            <span>{match.player2.name}</span>\n                            {match.winner?.id === match.player2.id && <Trophy className=\"w-4 h-4 text-green-600\" />}\n                          </div>\n                        ) : (\n                          <Button variant=\"outline\" className=\"w-full justify-start\" onClick={(e) => { e.stopPropagation(); onMatchSelect(match.id); }}>\n                            <Plus className=\"w-4 h-4 mr-2\" />\n                            Player 2\n                          </Button>\n                        )}\n                      </div>\n                      {match.player2 && (\n                        <Button \n                          size=\"sm\" \n                          variant=\"ghost\" \n                          className=\"text-red-500 hover:text-red-600\"\n                          onClick={(e) => {\n                            e.stopPropagation();\n                            handlePlayerSelect(match.id, 'player2', undefined as any); // Pass undefined to clear\n                          }}\n                        >\n                          <Minus className=\"w-4 h-4\" />\n                        </Button>\n                      )}\n                    </div>\n\n                    {/* Delete Match Button */} \n                    <Button \n                      size=\"sm\" \n                      variant=\"destructive\" \n                      className=\"absolute top-1 right-1 p-1 h-6 w-6 invisible group-hover:visible opacity-70 hover:opacity-100\"\n                      onClick={(e) => {\n                        e.stopPropagation();\n                        removeMatch(match.id);\n                      }}\n                    >\n                      <Trash2 className=\"w-3 h-3\" />\n                    </Button>\n                  </div>\n\n                  {/* Player selection dropdown when match is selected */} \n                  {selectedMatchId === match.id && (\n                    <div className=\"absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center z-10\">\n                      <div className=\"bg-white p-4 rounded-lg shadow-lg w-full max-w-sm\">\n                        <div className=\"flex items-center justify-between mb-3\">\n                          <h4 className=\"font-semibold\">{match.player1 && match.player2 ? 'Player 1 эсвэл Player 2 сонгоно уу' : 'Тоглогч сонгоно уу'}</h4>\n                          <Button variant=\"ghost\" size=\"sm\" onClick={(e) => { e.stopPropagation(); onMatchSelect(null); }}>\n                            <Search className=\"w-4 h-4\" />\n                          </Button>\n                        </div>\n                        <Input \n                          placeholder=\"Тоглогч хайх...\"\n                          value={searchTerm}\n                          onChange={(e) => setSearchTerm(e.target.value)}\n                          className=\"mb-3\"\n                          onFocus={handleSearchFocus}\n                          onBlur={handleSearchBlur}\n                        />\n                        <div className=\"h-40 overflow-y-auto border rounded\">\n                          {filteredUsers.length > 0 ? (\n                            filteredUsers.map(user => (\n                              <div\n                                key={user.id}\n                                className=\"p-2 hover:bg-gray-100 cursor-pointer border-b\"\n                                onClick={(e) => {\n                                  e.stopPropagation();\n                                  // Determine which slot to fill based on whether player1 is already set\n                                  if (!match.player1) {\n                                    handlePlayerSelect(match.id, 'player1', user);\n                                  } else if (!match.player2) {\n                                    handlePlayerSelect(match.id, 'player2', user);\n                                  } else {\n                                    // If both players are set, maybe allow reassigning or do nothing\n                                    // For now, let's assume selection is for an empty slot\n                                  }\n                                  onMatchSelect(match.id); // Keep the match selected to allow further actions\n                                }}\n                              >\n                                {user.name}\n                              </div>\n                            ))\n                          ) : (\n                            <div className=\"p-2 text-center text-gray-500\">Тоглогч олдсонгүй</div>\n                          )}\n                        </div>\n                        {/* Buttons to clear search or selection */} \n                        <div className=\"flex justify-between mt-3\">\n                          <Button variant=\"outline\" onClick={(e) => { e.stopPropagation(); setSearchTerm(''); }}>Clear Search</Button>\n                          {selectedPlayer && (\n                            <Button variant=\"secondary\" onClick={(e) => { e.stopPropagation(); handleClearSelection(); }}>Clear Selection</Button>\n                          )}\n                          <Button variant=\"outline\" onClick={(e) => { e.stopPropagation(); onMatchSelect(null); }}>Done</Button>\n                        </div>\n                      </div>\n                    </div>\n                  )}\n                </div>\n              ))}\n            </div>\n          </div>\n        ))}\n      </CardContent>\n    </Card>\n  );\n};\n"]},
-  {"file_path": "app/admin/tournament/[tournamentId]/results.tsx", "content": "import { useState, useEffect } from \"react\";\nimport { useRoute, useLocation } from \"wouter\";\nimport { useQuery, useMutation, useQueryClient } from \"@tanstack/react-query\";\nimport { Card, CardContent, CardDescription, CardHeader, CardTitle } from \"@/components/ui/card\";\nimport { Button } from \"@/components/ui/button\";\nimport { Input } from \"@/components/ui/input\";\nimport { Badge } from \"@/components/ui/badge\";\nimport { Tabs, TabsContent, TabsList, TabsTrigger } from \"@/components/ui/tabs\";\nimport { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from \"@/components/ui/select\";\nimport { ArrowLeft, Plus, Trash2, Save, Users, Trophy, Target, Download, Upload, FileSpreadsheet, Minus, Eye, EyeOff } from \"lucide-react\";\nimport { useAuth } from \"@/hooks/useAuth\";\nimport { useToast } from \"@/hooks/use-toast\";\nimport { apiRequest } from \"@/lib/queryClient\";\nimport { UserAutocomplete } from \"@/components/UserAutocomplete\";\nimport { KnockoutBracketEditor } from \"@/components/KnockoutBracketEditor\";\nimport Navigation from \"@/components/navigation\";\nimport PageWithLoading from \"@/components/PageWithLoading\";\nimport type { Tournament, TournamentResults, TournamentParticipant, User } from \"@shared/schema\";\nimport * as XLSX from 'xlsx';\n\ninterface GroupStageGroup {\n  id: string;\n  name: string;\n  players: Array<{ \n    id: string;\n    name: string;\n    playerId?: string;\n    userId?: string;\n  }>;\n  resultMatrix: string[][]; // Changed from number[][] to string[][]\n  playerStats: Array<{ \n    playerId: string;\n    wins: number;\n    losses: number;\n    points: number;\n  }>;\n}\n\ninterface KnockoutMatch {\n  id: string;\n  round: string;\n  player1?: { id: string; name: string; playerId?: string; userId?: string };\n  player2?: { id: string; name: string; playerId?: string; userId?: string };\n  winner?: { id: string; name: string; playerId?: string; userId?: string };\n  score?: string;\n  isFinished: boolean;\n}\n\ninterface FinalRanking {\n  position: number;\n  player: {\n    id: string;\n    name: string;\n    playerId?: string;\n    userId?: string;\n  };\n  points?: number;\n  note?: string;\n}\n\nconst AdminTournamentResults: React.FC = () => {\n  const [, setLocation] = useLocation();\n  const router = { back: () => setLocation('/admin/tournaments') }; // Mock router for example\n  const [match, params] = useRoute(\"/admin/tournament/:tournamentId/results\");\n  const { user } = useAuth();\n  const { toast } = useToast();\n  const queryClient = useQueryClient();\n\n  // States\n  const [groupStageResults, setGroupStageResults] = useState<GroupStageGroup[]>([]);\n  const [knockoutResults, setKnockoutResults] = useState<KnockoutMatch[]>([]);\n  const [finalRankings, setFinalRankings] = useState<FinalRanking[]>([]);\n  const [isPublished, setIsPublished] = useState(false);\n  const [activeTab, setActiveTab] = useState(\"group-stage\");\n\n  // For Knockout Editor\n  const [allUsers, setAllUsers] = useState<User[]>([]);\n  const [activeKnockoutCategory, setActiveKnockoutCategory] = useState<string | null>(null);\n  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);\n\n  // Fetch tournament data\n  const { data: tournament, isLoading: tournamentLoading } = useQuery<Tournament>({\n    queryKey: ['/api/tournaments', params?.tournamentId],\n    enabled: !!params?.tournamentId,\n  });\n\n  // Fetch existing results\n  const { data: existingResults } = useQuery<TournamentResults>({\n    queryKey: ['/api/tournaments', params?.tournamentId, 'results'],\n    enabled: !!params?.tournamentId,\n  });\n\n  // Fetch participants\n  const { data: participants } = useQuery<TournamentParticipant[]>({ \n    queryKey: ['/api/tournaments', params?.tournamentId, 'participants'], \n    enabled: !!params?.tournamentId \n  });\n\n  // Fetch all users for autocomplete\n  const { data: users = [] } = useQuery<User[]>({ \n    queryKey: ['/api/admin/users'], \n    enabled: !!params?.tournamentId\n  });\n\n  // Save results mutation\n  const saveResultsMutation = useMutation({\n    mutationFn: async (data: any) => {\n      console.log('Saving tournament results:', data);\n      const response = await fetch('/api/admin/tournament-results', {\n        method: 'POST',\n        headers: {\n          'Content-Type': 'application/json',\n        },\n        credentials: 'include',\n        body: JSON.stringify(data),\n      });\n\n      if (!response.ok) {\n        const errorData = await response.json();\n        throw new Error(errorData.message || 'Үр дүн хадгалахад алдаа гарлаа');\n      }\n\n      return response.json();\n    },\n    onSuccess: () => {\n      toast({\n        title: \"Амжилттай хадгалагдлаа\",\n        description: \"Тэмцээний үр дүн амжилттай хадгалагдлаа\",\n      });\n      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', params?.tournamentId, 'results'] });\n    },\n    onError: (error: any) => {\n      toast({\n        title: \"Алдаа гарлаа\",\n        description: error.message || \"Үр дүн хадгалахад алдаа гарлаа\",\n        variant: \"destructive\",\n      });\n    },\n  });\n\n  // Initialize data when existing results are loaded\n  useEffect(() => {\n    if (existingResults) {\n      const groupResults = existingResults.groupStageResults;\n      const knockoutResultsData = existingResults.knockoutResults;\n      const finalRankingsData = existingResults.finalRankings;\n\n      setGroupStageResults(Array.isArray(groupResults) ? groupResults : []);\n      setKnockoutResults(Array.isArray(knockoutResultsData) ? knockoutResultsData : []);\n      setFinalRankings(Array.isArray(finalRankingsData) ? finalRankingsData : []);\n      setIsPublished(existingResults.isPublished || false);\n    }\n  }, [existingResults]);\n\n  // Set all users for knockout editor\n  useEffect(() => {\n    setAllUsers(users);\n  }, [users]);\n\n  // Update active knockout category when knockout results change or participants load\n  useEffect(() => {\n    if (knockoutResults && knockoutResults.length > 0) {\n      // Assuming the first category is the default if not set\n      if (!activeKnockoutCategory) {\n        setActiveKnockoutCategory(knockoutResults[0].id); // Or a more relevant key\n      }\n    } else if (participants && participants.length > 0 && !activeKnockoutCategory) {\n      // If no knockout results yet, but participants exist, set a default category if applicable\n      // This part might need adjustment based on how categories are defined in your data\n    }\n  }, [knockoutResults, participants]);\n\n  // Group Stage Functions\n  const addGroup = () => {\n    // Check if there are players available to add to groups\n    if (!users || users.length === 0) {\n      toast({\n        title: \"Алдаа\",\n        description: \"Хэрэглэгчдийн жагсаалт хоосон байна. Эхлээд тамирчдыг системд бүртгүүлнэ үү.\",\n        variant: \"destructive\",\n      });\n      return;\n    }\n\n    const newGroup: GroupStageGroup = {\n      id: Date.now().toString(),\n      name: `Group ${String.fromCharCode(65 + groupStageResults.length)}`,\n      players: [],\n      resultMatrix: [],\n      playerStats: [],\n    };\n    setGroupStageResults([...groupStageResults, newGroup]);\n\n    toast({\n      title: \"Амжилттай\",\n      description: `${newGroup.name} үүсгэгдлээ. Одоо тамирчдыг нэмнэ үү.`,\n    });\n  };\n\n  const deleteGroup = (groupId: string) => {\n    setGroupStageResults(groupStageResults.filter(g => g.id !== groupId));\n  };\n\n  const addPlayerToGroup = (groupId: string, player: User) => {\n    // Check if player is already in this group or any other group\n    const isPlayerAlreadyInGroup = groupStageResults.some(group => \n      group.players.some(p => p.userId === player.id)\n    );\n\n    if (isPlayerAlreadyInGroup) {\n      toast({\n        title: \"Анхаар\",\n        description: \"Энэ тамирчин аль хэдийн групп дээр байгаа байна.\",\n        variant: \"destructive\",\n      });\n      return;\n    }\n\n    setGroupStageResults(prev => prev.map(group => {\n      if (group.id === groupId) {\n        const newPlayer = {\n          id: player.id,\n          name: `${player.firstName || ''} ${player.lastName || ''}`.trim() || player.email || 'Unknown',\n          playerId: player.id,\n          userId: player.id,\n        };\n        const updatedPlayers = [...group.players, newPlayer];\n        const matrixSize = updatedPlayers.length;\n        const newMatrix = Array(matrixSize).fill(null).map((_, i) => \n          Array(matrixSize).fill(null).map((_, j) => \n            i < group.resultMatrix.length && j < group.resultMatrix[i]?.length \n              ? group.resultMatrix[i][j]\n              : (i === j ? 'X' : '')\n          )\n        );\n\n        toast({\n          title: \"Амжилттай\",\n          description: `${newPlayer.name} группт нэмэгдлээ`,\n        });\n\n        return {\n          ...group,\n          players: updatedPlayers,\n          resultMatrix: newMatrix,\n          playerStats: updatedPlayers.map(p => ({\n            playerId: p.id,\n            wins: 0,\n            losses: 0,\n            points: 0,\n          })),\n        };\n      }\n      return group;\n    }));\n  };\n\n  // Get available users excluding those already in groups\n  const getAvailableUsers = () => {\n    const usersInGroups = groupStageResults.flatMap(group => \n      group.players.map(p => p.userId)\n    );\n    return users.filter(user => !usersInGroups.includes(user.id));\n  };\n\n  // Auto-advance qualified players to knockout stage\n  const advanceQualifiedPlayers = () => {\n    // Check if there are any empty groups\n    const emptyGroups = groupStageResults.filter(group => group.players.length === 0);\n    if (emptyGroups.length > 0) {\n      toast({\n        title: \"Алдаа\",\n        description: \"Хоосон группууд байна. Эхлээд бүх группт тоглогч нэмнэ үү.\",\n        variant: \"destructive\",\n      });\n      return;\n    }\n\n    // Check if all groups have enough players\n    const incompleteGroups = groupStageResults.filter(group => group.players.length < 2);\n    if (incompleteGroups.length > 0) {\n      toast({\n        title: \"Анхааруулга\",\n        description: \"Зарим группт хангалттай тоглогч байхгүй байна. Групп тус бүрт дор хаяж 2 тоглогч байх ёстой.\",\n        variant: \"destructive\",\n      });\n      return;\n    }\n\n    const qualifiedPlayers: Array<{ \n      player: { id: string; name: string; playerId?: string; userId?: string }; \n      groupName: string;\n      position: number;\n    }> = [];\n\n    groupStageResults.forEach(group => {\n      if (group.players.length >= 2) {\n        // Sort players by stats to get top 2\n        const sortedPlayers = group.players\n          .map((player) => {\n            const stats = group.playerStats.find(s => s.playerId === player.id) || { \n              wins: 0, \n              losses: 0, \n              points: 0, \n              setsWon: 0, \n              setsLost: 0, \n              setsDifference: 0 \n            };\n            return { player, stats };\n          })\n          .sort((a, b) => {\n            if (b.stats.points !== a.stats.points) {\n              return b.stats.points - a.stats.points;\n            }\n            if ((b.stats.setsDifference || 0) !== (a.stats.setsDifference || 0)) {\n              return (b.stats.setsDifference || 0) - (a.stats.setsDifference || 0);\n            }\n            if ((b.stats.setsWon || 0) !== (a.stats.setsWon || 0)) {\n              return (b.stats.setsWon || 0) - (a.stats.setsWon || 0);\n            }\n            return b.stats.wins - a.stats.wins;\n          });\n\n        // Get top 2 qualified players\n        sortedPlayers.slice(0, 2).forEach((item, index) => {\n          qualifiedPlayers.push({\n            player: item.player,\n            groupName: group.name,\n            position: index + 1\n          });\n        });\n      }\n    });\n\n    if (qualifiedPlayers.length > 0) {\n      // Create initial knockout matches from qualified players\n      const initialMatches: KnockoutMatch[] = [];\n\n      // Pair up qualified players for first round\n      for (let i = 0; i < qualifiedPlayers.length; i += 2) {\n        if (i + 1 < qualifiedPlayers.length) {\n          const match: KnockoutMatch = {\n            id: `knockout_${Date.now()}_${i}`,\n            round: \"1\",\n            player1: qualifiedPlayers[i].player,\n            player2: qualifiedPlayers[i + 1].player,\n            isFinished: false,\n          };\n          initialMatches.push(match);\n        }\n      }\n\n      setKnockoutResults(initialMatches);\n      setActiveTab(\"knockout\");\n\n      toast({\n        title: \"Шалгарсан тоглогчид\",\n        description: `${qualifiedPlayers.length} тоглогч шилжих тоглолтод шалгарлаа`,\n      });\n    }\n  };\n\n  const updateGroupResult = (groupId: string, playerIndex: number, opponentIndex: number, result: string) => {\n    // Validate input format (should be like \"3-1\", \"3-2\", etc.)\n    if (result && result.trim() !== '' && !result.match(/^\\d+-\\d+$/)) {\n      toast({\n        title: \"Буруу формат\",\n        description: \"Үр дүнг 3-1, 3-2 гэх мэтээр оруулна уу\",\n        variant: \"destructive\",\n      });\n      return;\n    }\n\n    setGroupStageResults(prev => prev.map(group => {\n      if (group.id === groupId) {\n        const newMatrix = [...group.resultMatrix];\n        if (!newMatrix[playerIndex]) {\n          newMatrix[playerIndex] = [];\n        }\n        newMatrix[playerIndex][opponentIndex] = result;\n\n        // Automatically fill the opposite result if it's a valid score\n        if (result && result.includes('-')) {\n          const [score1, score2] = result.split('-').map(s => parseInt(s.trim()));\n          if (!isNaN(score1) && !isNaN(score2)) {\n            if (!newMatrix[opponentIndex]) {\n              newMatrix[opponentIndex] = [];\n            }\n            // Only set the opposite if it's not already filled\n            if (!newMatrix[opponentIndex][playerIndex] || newMatrix[opponentIndex][playerIndex] === '') {\n              newMatrix[opponentIndex][playerIndex] = `${score2}-${score1}`;\n            }\n          }\n        }\n\n        // Calculate comprehensive stats from score strings\n        const newStats = group.players.map((player, idx) => {\n          let wins = 0, losses = 0, points = 0, setsWon = 0, setsLost = 0;\n\n          for (let j = 0; j < group.players.length; j++) {\n            if (idx !== j) {\n              const matchResult = newMatrix[idx] && newMatrix[idx][j];\n              if (matchResult && typeof matchResult === 'string' && matchResult.includes('-')) {\n                const [score1, score2] = matchResult.split('-').map(s => parseInt(s.trim()));\n                if (!isNaN(score1) && !isNaN(score2)) {\n                  setsWon += score1;\n                  setsLost += score2;\n\n                  if (score1 > score2) {\n                    wins++;\n                    points += 3; // 3 points for a win\n                  } else if (score1 < score2) {\n                    losses++;\n                    points += 0; // 0 points for a loss\n                  } else if (score1 === score2) {\n                    points += 1; // 1 point for a draw (rare in table tennis)\n                  }\n                }\n              }\n            }\n          }\n\n          return {\n            playerId: player.id,\n            wins,\n            losses,\n            points,\n            setsWon,\n            setsLost,\n            setsDifference: setsWon - setsLost,\n          };\n        });\n\n        return {\n          ...group,\n          resultMatrix: newMatrix,\n          playerStats: newStats,\n        };\n      }\n      return group;\n    }));\n  };\n\n  // Final Rankings Functions\n  const addToFinalRankings = (player: User) => {\n    const newRanking: FinalRanking = {\n      position: finalRankings.length + 1,\n      player: {\n        id: player.id,\n        name: `${player.firstName || ''} ${player.lastName || ''}`.trim() || player.email || 'Unknown',\n        playerId: player.id,\n        userId: player.id,\n      },\n    };\n    setFinalRankings([...finalRankings, newRanking]);\n  };\n\n  const updateFinalRanking = (index: number, field: keyof FinalRanking, value: any) => {\n    setFinalRankings(prev => prev.map((ranking, i) => \n      i === index ? { ...ranking, [field]: value } : ranking\n    ));\n  };\n\n  const deleteFinalRanking = (index: number) => {\n    setFinalRankings(prev => prev.filter((_, i) => i !== index).map((ranking, i) => ({ \n      ...ranking,\n      position: i + 1,\n    })));\n  };\n\n  // Save function\n  const handleSave = () => {\n    if (!params?.tournamentId) return;\n\n    // Validate groups before saving\n    const hasEmptyGroups = groupStageResults.some(group => group.players.length === 0);\n    const hasIncompleteMatches = groupStageResults.some(group => {\n      if (group.players.length < 2) return false; // Skip validation for groups with less than 2 players\n\n      // Check if all matches have results\n      for (let i = 0; i < group.players.length; i++) {\n        for (let j = 0; j < group.players.length; j++) {\n          if (i !== j) {\n            const result = group.resultMatrix[i] && group.resultMatrix[i][j];\n            if (!result || result.trim() === '') {\n              return true; // Has incomplete matches\n            }\n          }\n        }\n      }\n      return false;\n    });\n\n    if (hasEmptyGroups) {\n      toast({\n        title: \"Анхааруулга\",\n        description: \"Хоосон группууд байна. Эдгээрийг устгах эсвэл тамирчин нэмнэ үү.\",\n        variant: \"destructive\",\n      });\n      return;\n    }\n\n    if (hasIncompleteMatches) {\n      const shouldContinue = window.confirm(\n        \"Зарим тоглолтын үр дүн дутуу байна. Хадгалахыг үргэлжлүүлэх үү?\"\n      );\n      if (!shouldContinue) return;\n    }\n\n    const data = {\n      tournamentId: params.tournamentId,\n      groupStageResults: groupStageResults.length > 0 ? groupStageResults : null,\n      knockoutResults: knockoutResults.length > 0 ? knockoutResults : null,\n      finalRankings: finalRankings.length > 0 ? finalRankings : null,\n      isPublished,\n    };\n\n    saveResultsMutation.mutate(data);\n  };\n\n  // Excel Import/Export\n  const handleExcelImport = (event: React.ChangeEvent<HTMLInputElement>) => {\n    const file = event.target.files?.[0];\n    if (!file) return;\n\n    const reader = new FileReader();\n    reader.onload = (e) => {\n      try {\n        const data = e.target?.result;\n        const workbook = XLSX.read(data, { type: 'binary' });\n        const sheetName = workbook.SheetNames[0];\n        const worksheet = workbook.Sheets[sheetName];\n        const jsonData = XLSX.utils.sheet_to_json(worksheet);\n\n        // Process imported data and convert to your format\n        console.log('Imported data:', jsonData);\n        toast({\n          title: \"Excel файл импорт хийгдлээ\",\n          description: \"Өгөгдлийг шалгаж, шаардлагатай засварлага хийнэ үү\",\n        });\n      } catch (error) {\n        toast({\n          title: \"Excel импорт амжилтгүй\",\n          description: \"Файлыг уншихад алдаа гарлаа\",\n          variant: \"destructive\",\n        });\n      }\n    };\n    reader.readAsBinaryString(file);\n  };\n\n  const handleExcelExport = () => {\n    const wb = XLSX.utils.book_new();\n\n    if (finalRankings.length > 0) {\n      const rankingsData = finalRankings.map(r => ({\n        'Байрлал': r.position,\n        'Тамирчин': r.player.name,\n        'Оноо': r.points || '',\n        'Тэмдэглэл': r.note || '',\n      }));\n      const ws = XLSX.utils.json_to_sheet(rankingsData);\n      XLSX.utils.book_append_sheet(wb, ws, \"Эцсийн жагсаалт\");\n    }\n\n    XLSX.writeFile(wb, `tournament_${params?.tournamentId}_results.xlsx`);\n  };\n\n  // Helper to normalize matches for KnockoutBracketEditor\n  const normalizeKnockoutMatches = (matches: KnockoutMatch[]) => {\n    return matches.map(match => ({ \n      ...match,\n      // Ensure player1 and player2 are in the expected format if they exist\n      player1: match.player1 ? { id: match.player1.id, name: match.player1.name } : undefined,\n      player2: match.player2 ? { id: match.player2.id, name: match.player2.name } : undefined,\n      winner: match.winner ? { id: match.winner.id, name: match.winner.name } : undefined,\n    }));\n  };\n\n  // Helper function to get qualified players for a specific category/tab\n  const getQualifiedPlayersForCategory = (category?: string | null) => {\n    if (!category || !participants) return [];\n\n    // Filter participants by category (adjust 'participationType' if your schema uses a different field for category)\n    const categoryParticipants = participants.filter(p => p.participationType === category);\n\n    // Map to the format expected by KnockoutBracketEditor's qualifiedPlayers prop\n    return categoryParticipants.map(p => ({\n      id: p.userId, // Assuming userId is the unique identifier for the player\n      name: p.name || `${p.firstName || ''} ${p.lastName || ''}`.trim() || 'Unknown',\n      userId: p.userId\n    }));\n  };\n\n  const handleKnockoutSave = async (matches: any[]) => {\n    if (!params?.tournamentId || !activeKnockoutCategory) return;\n\n    // Update the knockoutResults state with the new matches\n    setKnockoutResults(prev => {\n      const updatedResults = [...prev];\n      // Find the index of the category to update\n      // This logic needs refinement: knockoutResults is an array of Match, not categories. \n      // You likely need a structure like { categoryId: Match[] } or similar.\n      // For now, assuming knockoutResults is a flat array and we update it directly.\n      // If you have categories, you'd need to find the correct array to update.\n      \n      // If knockoutResults is meant to hold matches for ONE bracket:\n      return matches;\n\n      // If knockoutResults is meant to hold MULTIPLE brackets (categories):\n      // const categoryIndex = updatedResults.findIndex(categoryMatches => categoryMatches.some(m => m.id === matches[0]?.id)); // Example logic\n      // if (categoryIndex !== -1) {\n      //   updatedResults[categoryIndex] = matches;\n      // } else {\n      //   // Add new category if it doesn't exist\n      //   updatedResults.push(matches);\n      // }\n      // return updatedResults;\n    });\n\n    toast({ \n      title: \"Шилжих тоглолтын үр дүн хадгалагдлаа\",\n      description: \"Bracket-ийн өөрчлөлтүүд хадгалагдлаа.\"\n    });\n\n    // Note: You might want to trigger the main saveResultsMutation here or have a separate save mechanism for knockout stages\n  };\n\n  if (tournamentLoading) {\n    return <PageWithLoading>{null}</PageWithLoading>;\n  }\n\n  if (!tournament) {\n    return (\n      <PageWithLoading>\n        <div className=\"container mx-auto px-4 py-8 text-center\">\n          <p>Тэмцээн олдсонгүй</p>\n          <Button onClick={() => setLocation('/admin/tournaments')} className=\"mt-4\">\n            <ArrowLeft className=\"w-4 h-4 mr-2\" />\n            Буцах\n          </Button>\n        </div>\n      </PageWithLoading>\n    );\n  }\n\n\n\n  return (\n    <PageWithLoading>\n      <Navigation />\n      <div className=\"container mx-auto px-4 py-8\">\n        {/* Header */}\n        <div className=\"bg-white rounded-lg shadow-sm border p-6 mb-6\">\n          <div className=\"flex items-center justify-between\">\n            <div className=\"flex items-center gap-4\">\n              <Button \n                onClick={() => setLocation('/admin/tournaments')}\n                variant=\"outline\"\n                size=\"sm\"\n                className=\"hover:bg-gray-50\"\n              >\n                <ArrowLeft className=\"w-4 h-4 mr-2\" />\n                Буцах\n              </Button>\n              <div>\n                <h1 className=\"text-3xl font-bold text-gray-900\">Тэмцээний үр дүн удирдах</h1>\n                <p className=\"text-lg text-gray-700 mt-1\">{tournament.name}</p>\n                <div className=\"flex items-center gap-4 mt-2 text-sm text-gray-600\">\n                  <span className=\"flex items-center gap-1\">\n                    <Users className=\"w-4 h-4\" />\n                    {participants?.length || 0} оролцогч\n                  </span>\n                  <span className=\"flex items-center gap-1\">\n                    <Trophy className=\"w-4 h-4\" />\n                    {tournament.format}\n                  </span>\n                </div>\n              </div>\n            </div>\n            <div className=\"flex items-center gap-3\">\n              <Badge \n                variant={isPublished ? \"default\" : \"secondary\"}\n                className={`px-3 py-1 text-sm ${ \n                  isPublished \n                    ? \"bg-green-100 text-green-800 border-green-200\"\n                    : \"bg-yellow-100 text-yellow-800 border-yellow-200\"\n                }`}\n              >\n                {isPublished ? \"Нийтлэгдсэн\" : \"Ноорог\"}\n              </Badge>\n              <Button \n                onClick={handleSave} \n                disabled={saveResultsMutation.isPending}\n                className=\"bg-blue-600 hover:bg-blue-700 text-white px-6\"\n              >\n                <Save className=\"w-4 h-4 mr-2\" />\n                {saveResultsMutation.isPending ? \"Хадгалж байна...\" : \"Хадгалах\"}\n              </Button>\n            </div>\n          </div>\n        </div>\n\n        {/* Import/Export Tools */}\n        <Card className=\"mb-6 border-l-4 border-l-blue-500\">\n          <CardHeader className=\"bg-gray-50\">\n            <CardTitle className=\"flex items-center gap-2 text-gray-800\">\n              <FileSpreadsheet className=\"w-5 h-5 text-blue-600\" />\n              Excel импорт/экспорт\n            </CardTitle>\n            <CardDescription>\n              Үр дүнгээ Excel файлаас импорт хийх эсвэл экспорт хийж татаж авах\n            </CardDescription>\n          </CardHeader>\n          <CardContent className=\"pt-6\">\n            <div className=\"flex items-center gap-4 flex-wrap\">\n              <div>\n                <input\n                  type=\"file\"\n                  id=\"excel-import\"\n                  accept=\".xlsx,.xls\"\n                  onChange={handleExcelImport}\n                  className=\"hidden\"\n                />\n                <Button \n                  onClick={() => document.getElementById('excel-import')?.click()} \n                  variant=\"outline\"\n                  className=\"border-green-200 text-green-700 hover:bg-green-50\"\n                >\n                  <Upload className=\"w-4 h-4 mr-2\" />\n                  Excel импорт\n                </Button>\n              </div>\n              <Button \n                onClick={handleExcelExport} \n                variant=\"outline\"\n                className=\"border-blue-200 text-blue-700 hover:bg-blue-50\"\n              >\n                <Download className=\"w-4 h-4 mr-2\" />\n                Excel экспорт\n              </Button>\n              <div className=\"text-sm text-gray-500 ml-auto\">\n                Дэмжигдэх форматууд: .xlsx, .xls\n              </div>\n            </div>\n          </CardContent>\n        </Card>\n\n        {/* Main Content */}\n        <div className=\"bg-white rounded-lg shadow-sm border\">\n          <Tabs value={activeTab} onValueChange={setActiveTab} className=\"w-full\">\n            <div className=\"border-b bg-gray-50 px-6 py-4 rounded-t-lg\">\n              <TabsList className=\"grid w-full grid-cols-3 bg-white shadow-sm\">\n                <TabsTrigger \n                  value=\"group-stage\"\n                  className=\"flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white\"\n                >\n                  <Users className=\"w-4 h-4\" />\n                  <span className=\"hidden sm:inline\">Группийн шат</span>\n                  <span className=\"sm:hidden\">Групп</span>\n                </TabsTrigger>\n                <TabsTrigger \n                  value=\"knockout\"\n                  className=\"flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white\"\n                >\n                  <Trophy className=\"w-4 h-4\" />\n                  <span className=\"hidden sm:inline\">Шилжих тоглолт</span>\n                  <span className=\"sm:hidden\">Шилжих</span>\n                </TabsTrigger>\n                <TabsTrigger \n                  value=\"final-rankings\"\n                  className=\"flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white\"\n                >\n                  <Target className=\"w-4 h-4\" />\n                  <span className=\"hidden sm:inline\">Эцсийн жагсаалт</span>\n                  <span className=\"sm:hidden\">Жагсаалт</span>\n                </TabsTrigger>\n              </TabsList>\n            </div>\n\n          {/* Group Stage Tab */}\n          <TabsContent value=\"group-stage\" className=\"p-6 space-y-6\">\n            <div className=\"flex items-center justify-between\">\n              <div>\n                <h2 className=\"text-xl font-semibold text-gray-900\">Группийн шатны үр дүн</h2>\n                <p className=\"text-sm text-gray-600 mt-1\">\n                  Тэмцээний группийн шатны тоглолтуудын үр дүнг оруулна уу\n                </p>\n              </div>\n              <div className=\"flex items-center gap-3\">\n                <Button \n                  onClick={advanceQualifiedPlayers}\n                  disabled={groupStageResults.length === 0}\n                  className=\"bg-blue-600 hover:bg-blue-700 text-white px-4 py-2\"\n                >\n                  <Trophy className=\"w-4 h-4 mr-2\" />\n                  Шалгарсан тоглогчдыг шилжүүлэх\n                </Button>\n                <Button \n                  onClick={addGroup}\n                  className=\"bg-green-600 hover:bg-green-700 text-white px-4 py-2\"\n                >\n                  <Plus className=\"w-4 h-4 mr-2\" />\n                  Групп нэмэх\n                </Button>\n              </div>\n            </div>\n\n            {groupStageResults.length === 0 ? (\n              <div className=\"text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300\">\n                <Users className=\"w-12 h-12 text-gray-400 mx-auto mb-4\" />\n                <h3 className=\"text-lg font-medium text-gray-900 mb-2\">Групп байхгүй байна</h3>\n                <p className=\"text-gray-600 mb-4\">Эхний группээ үүсгэж тэмцээний үр дүн оруулж эхлээрэй</p>\n                <Button \n                  onClick={addGroup}\n                  className=\"bg-green-600 hover:bg-green-700 text-white\"\n                >\n                  <Plus className=\"w-4 h-4 mr-2\" />\n                  Анхны групп үүсгэх\n                </Button>\n              </div>\n            ) : null}\n\n            {groupStageResults && Array.isArray(groupStageResults) && groupStageResults.map((group, groupIndex) => (\n              <Card key={group.id}>\n                <CardHeader>\n                  <div className=\"flex items-center justify-between\">\n                    <CardTitle>{group.name}</CardTitle>\n                    <Button \n                      onClick={() => deleteGroup(group.id)}\n                      variant=\"destructive\"\n                      size=\"sm\"\n                    >\n                      <Trash2 className=\"w-4 h-4\" />\n                    </Button>\n                  </div>\n                </CardHeader>\n                <CardContent className=\"space-y-4\">\n                  {/* Add Player */}\n                  <div>\n                    <UserAutocomplete\n                      users={getAvailableUsers()}\n                      onSelect={(user) => user && addPlayerToGroup(group.id, user)}\n                      placeholder=\"Тамирчин хайх...\"\n                    />\n                  </div>\n\n                  {/* Players List */}\n                  {group.players.length > 0 && (\n                    <div className=\"space-y-4\">\n                      <h4 className=\"font-medium\">Тамирчид ({group.players.length})</h4>\n                      <div className=\"grid grid-cols-2 md:grid-cols-4 gap-2\">\n                        {group.players.map((player, index) => (\n                          <div key={player.id} className=\"p-2 bg-gray-100 rounded text-sm flex justify-between items-center\">\n                            <span>{index + 1}. {player.name}</span>\n                            <Button \n                              onClick={() => {\n                                setGroupStageResults(prev => prev.map(g => {\n                                  if (g.id === group.id) {\n                                    const updatedPlayers = g.players.filter(p => p.id !== player.id);\n                                    const matrixSize = updatedPlayers.length;\n                                    const newMatrix = Array(matrixSize).fill(null).map((_, i) => \n                                      Array(matrixSize).fill(null).map((_, j) => i === j ? 'X' : '')\n                                    );\n                                    return {\n                                      ...g,\n                                      players: updatedPlayers,\n                                      resultMatrix: newMatrix,\n                                      playerStats: updatedPlayers.map(p => ({\n                                        playerId: p.id,\n                                        wins: 0,\n                                        losses: 0,\n                                        points: 0,\n                                      })),\n                                    };\n                                  }\n                                  return g;\n                                }));\n                                toast({\n                                  title: \"Амжилттай\",\n                                  description: `${player.name} группаас хасагдлаа`,\n                                });\n                              }}\n                              variant=\"destructive\"\n                              size=\"sm\"\n                              className=\"ml-2 h-6 w-6 p-0\"\n                            >\n                              <Minus className=\"w-3 h-3\" />\n                            </Button>\n                          </div>\n                        ))}\n                      </div>\n\n                      {/* Results Matrix */}\n                      {group.players.length > 1 && (\n                        <div className=\"space-y-4\">\n                          <div className=\"bg-gray-800 rounded-lg p-4\">\n                            <div className=\"flex items-center justify-between mb-4\">\n                              <h4 className=\"font-medium text-white\">{group.name}</h4>\n                              <div className=\"flex items-center gap-2\">\n                                <Button size=\"sm\" className=\"bg-green-600 hover:bg-green-700\">\n                                  Групп нэмэх\n                                </Button>\n                                <Button size=\"sm\" variant=\"outline\" className=\"border-gray-600 text-gray-300 hover:bg-gray-700\">\n                                  Засах талбар\n                                </Button>\n                                <Button size=\"sm\" variant=\"outline\" className=\"border-gray-600 text-gray-300 hover:bg-gray-700\">\n                                  Эрэмб засах\n                                </Button>\n                              </div>\n                            </div>\n\n                            <div className=\"overflow-x-auto\">\n                              <table className=\"w-full border-collapse\">\n                                <thead>\n                                  <tr className=\"bg-gray-700\">\n                                    <th className=\"border border-gray-600 p-2 text-left text-white font-medium\">№</th>\n                                    <th className=\"border border-gray-600 p-2 text-left text-white font-medium\">Нэр</th>\n                                    <th className=\"border border-gray-600 p-2 text-center text-white font-medium\">Клуб</th>\n                                    {group.players.map((_, index) => (\n                                      <th key={index} className=\"border border-gray-600 p-2 text-center text-white font-medium w-12\">\n                                        {index + 1}\n                                      </th>\n                                    ))}\n                                    <th className=\"border border-gray-600 p-2 text-center text-white font-medium\">Оноо</th>\n                                    <th className=\"border border-gray-600 p-2 text-center text-white font-medium\">Байр</th>\n                                  </tr>\n                                </thead>\n                                <tbody>\n                                  {(() => {\n                                    // Calculate and sort players by points, wins, and sets difference for ranking\n                                    const sortedPlayers = group.players\n                                      .map((player, originalIndex) => {\n                                        const stats = group.playerStats.find(s => s.playerId === player.id) || { \n                                          wins: 0, \n                                          losses: 0, \n                                          points: 0, \n                                          setsWon: 0, \n                                          setsLost: 0, \n                                          setsDifference: 0 \n                                        };\n                                        return { player, originalIndex, stats };\n                                      })\n                                      .sort((a, b) => {\n                                        // Primary: Points\n                                        if (b.stats.points !== a.stats.points) {\n                                          return b.stats.points - a.stats.points;\n                                        }\n                                        // Secondary: Sets difference (sets won - sets lost)\n                                        if ((b.stats.setsDifference || 0) !== (a.stats.setsDifference || 0)) {\n                                          return (b.stats.setsDifference || 0) - (a.stats.setsDifference || 0);\n                                        }\n                                        // Tertiary: Sets won\n                                        if ((b.stats.setsWon || 0) !== (a.stats.setsWon || 0)) {\n                                          return (b.stats.setsWon || 0) - (a.stats.setsWon || 0);\n                                        }\n                                        // Quaternary: Wins\n                                        return b.stats.wins - a.stats.wins;\n                                      });\n\n                                    return sortedPlayers.map(({ player, originalIndex, stats }, rankIndex) => {\n                                      const position = rankIndex + 1;\n                                      const isQualified = position <= 2;\n\n                                      return (\n                                        <tr \n                                          key={player.id}\n                                          className={`${isQualified ? \"bg-green-900/30\" : \"bg-gray-800/50\"} hover:bg-gray-700/50`}\n                                        >\n                                          <td className=\"border border-gray-600 p-2 text-white\">\n                                            {position}\n                                          </td>\n                                          <td className=\"border border-gray-600 p-2\">\n                                            <div className=\"flex items-center gap-2\">\n                                              <span className=\"text-white\">{player.name}</span>\n                                              {isQualified && (\n                                                <Badge className=\"bg-green-600 text-white text-xs\">\n                                                  Шалгарсан\n                                                </Badge>\n                                              )}\n                                            </div>\n                                          </td>\n                                          <td className=\"border border-gray-600 p-2 text-center text-gray-300 text-sm\">\n                                            -\n                                          </td>\n                                          {group.players.map((_, opponentIndex) => (\n                                            <td key={opponentIndex} className=\"border border-gray-600 p-1\">\n                                              {originalIndex === opponentIndex ? (\n                                                <div className=\"bg-gray-600 h-8 flex items-center justify-center text-gray-400\">\n                                                  -\n                                                </div>\n                                              ) : (\n                                                <Input\n                                                  type=\"text\"\n                                                  value={group.resultMatrix[originalIndex]?.[opponentIndex] || \"\"}\n                                                  onChange={(e) => updateGroupResult(\n                                                    group.id,\n                                                    originalIndex,\n                                                    opponentIndex,\n                                                    e.target.value\n                                                  )}\n                                                  placeholder=\"3-1\"\n                                                  className=\"h-8 text-center text-sm bg-gray-700 border-gray-600 text-white placeholder-gray-400\"\n                                                />\n                                              )}\n                                            </td>\n                                          ))}\n                                          <td className=\"border border-gray-600 p-2 text-center font-bold text-white\">\n                                            {stats.points}\n                                          </td>\n                                          <td className={`border border-gray-600 p-2 text-center font-bold ${ \n                                            isQualified ? \"text-green-400\" : \"text-gray-300\"\n                                          }`}>\n                                            {position}\n                                          </td>\n                                        </tr>\n                                      );\n                                    });\n                                  })()}\n                                </tbody>\n                              </table>\n                            </div>\n\n                            {/* Qualification Summary */}\n                            <div className=\"mt-4 p-3 bg-green-900/20 rounded border border-green-600\">\n                              <p className=\"text-green-400 text-sm mb-2\">\n                                Эхний 2 тамирчин группээс дараагийн шатанд шалгарна\n                              </p>\n                              <div className=\"text-green-300 text-sm\">\n                                Шалгарсан тамирчид: {(() => {\n                                  const qualified = group.players\n                                    .map((player) => {\n                                      const stats = group.playerStats.find(s => s.playerId === player.id) || { wins: 0, losses: 0, points: 0 };\n                                      return { player, stats };\n                                    })\n                                    .sort((a, b) => {\n                                      if (b.stats.points !== a.stats.points) {\n                                        return b.stats.points - a.stats.points;\n                                      }\n                                      return b.stats.wins - a.stats.wins;\n                                    })\n                                    .slice(0, 2);\n\n                                  return qualified.map(({ player }) => player.name).join(', ');\n                                })()}\n                              </div>\n                            </div>\n                          </div>\n                        </div>\n                      )}\n                    </div>\n                  )}\n                </CardContent>\n              </Card>\n            ))}\n          </TabsContent>\n\n          {/* Knockout Tab */}\n          <TabsContent value=\"knockout\" className=\"p-6 space-y-6\">\n            <div className=\"flex items-center justify-between\">\n              <div>\n                <h2 className=\"text-xl font-semibold text-gray-900\">Шилжих тоглолт</h2>\n                <p className=\"text-sm text-gray-600 mt-1\">\n                  Шилжих тоглолтын үр дүн болон bracket-ийг удирдана уу\n                </p>\n              </div>\n              {/* You might add category selection here if your knockout stage has multiple categories */}\n              {/* Example: If tournament.knockoutCategories exists, map over it */}\n              {tournament.knockoutCategories?.length > 0 && (\n                <Select onValueChange={setActiveKnockoutCategory} defaultValue={activeKnockoutCategory || tournament.knockoutCategories[0]}>\n                  <SelectTrigger className=\"w-[180px]\">\n                    <SelectValue placeholder=\"Бүлэгийг сонгоно уу\" />\n                  </SelectTrigger>\n                  <SelectContent>\n                    {tournament.knockoutCategories.map(category => (\n                      <SelectItem key={category} value={category}>{category}</SelectItem>\n                    ))}\n                  </SelectContent>\n                </Select>\n              )}\n            </div>\n            <Card>\n              <CardContent className=\"p-6\">\n                {/* Render KnockoutBracketEditor for the selected category */}\n                <KnockoutBracketEditor\n                  key={`knockout-${activeKnockoutCategory}`}\n                  initialMatches={normalizeKnockoutMatches(\n                    knockoutResults?.[activeKnockoutCategory] || []\n                  )}\n                  users={allUsers}\n                  onSave={handleKnockoutSave}\n                  qualifiedPlayers={getQualifiedPlayersForCategory(activeKnockoutCategory)}\n                  selectedMatchId={selectedMatchId}\n                  onMatchSelect={setSelectedMatchId}\n                />\n              </CardContent>\n            </Card>\n          </TabsContent>\n\n          {/* Final Rankings Tab */}\n          <TabsContent value=\"final-rankings\" className=\"p-6 space-y-6\">\n            <div className=\"flex items-center justify-between\">\n              <div>\n                <h2 className=\"text-xl font-semibold text-gray-900\">Эцсийн жагсаалт</h2>\n                <p className=\"text-sm text-gray-600 mt-1\">\n                  Тэмцээний эцсийн үр дүн болон тамирчдын байрлалыг оруулна уу\n                </p>\n              </div>\n              <div className=\"flex items-center gap-2\">\n                <label className=\"flex items-center gap-2 cursor-pointer\">\n                  <input\n                    type=\"checkbox\"\n                    checked={isPublished}\n                    onChange={(e) => setIsPublished(e.target.checked)}\n                    className=\"w-4 h-4 text-blue-600 rounded focus:ring-blue-500\"\n                  />\n                  <span className=\"text-sm font-medium text-gray-700\">Нийтэд харуулах</span>\n                  {isPublished && <Eye className=\"w-4 h-4 text-green-600\" />}\n                  {!isPublished && <EyeOff className=\"w-4 h-4 text-gray-400\" />}\n                </label>\n              </div>\n            </div>\n\n            <Card>\n              <CardContent className=\"p-6\">\n                <div className=\"space-y-4\">\n                  <UserAutocomplete\n                    users={getAvailableUsers()}\n                    onSelect={(user) => user && addToFinalRankings(user)}\n                    placeholder=\"Тамирчин хайж нэмэх...\"\n                  />\n\n                  {finalRankings.length > 0 && (\n                    <div className=\"overflow-x-auto\">\n                      <table className=\"w-full border-collapse border border-gray-300\">\n                        <thead>\n                          <tr>\n                            <th className=\"border border-gray-300 p-3 bg-gray-50\">Байрлал</th>\n                            <th className=\"border border-gray-300 p-3 bg-gray-50\">Тамирчин</th>\n                            <th className=\"border border-gray-300 p-3 bg-gray-50\">Оноо</th>\n                            <th className=\"border border-gray-300 p-3 bg-gray-50\">Тэмдэглэл</th>\n                            <th className=\"border border-gray-300 p-3 bg-gray-50\">Үйлдэл</th>\n                          </tr>\n                        </thead>\n                        <tbody>\n                          {finalRankings.map((ranking, index) => (\n                            <tr key={index}>\n                              <td className=\"border border-gray-300 p-3 text-center font-bold\">\n                                {ranking.position}\n                              </td>\n                              <td className=\"border border-gray-300 p-3\">\n                                {ranking.player.name}\n                              </td>\n                              <td className=\"border border-gray-300 p-3\">\n                                <Input\n                                  type=\"number\"\n                                  value={ranking.points || ''}\n                                  onChange={(e) => updateFinalRanking(\n                                    index,\n                                    'points',\n                                    parseInt(e.target.value) || 0\n                                  )}\n                                  placeholder=\"Оноо\"\n                                  className=\"w-20\"\n                                />\n                              </td>\n                              <td className=\"border border-gray-300 p-3\">\n                                <Input\n                                  value={ranking.note || ''}\n                                  onChange={(e) => updateFinalRanking(index, 'note', e.target.value)}\n                                  placeholder=\"Тэмдэглэл\"\n                                />\n                              </td>\n                              <td className=\"border border-gray-300 p-3 text-center\">\n                                <Button \n                                  onClick={() => deleteFinalRanking(index)}\n                                  variant=\"destructive\"\n                                  size=\"sm\"\n                                >\n                                  <Trash2 className=\"w-4 h-4\" />\n                                </Button>\n                              </td>\n                            </tr>\n                          ))}\n                        </tbody>\n                      </table>\n                    </div>\n                  )}\n                </div>\n              </CardContent>\n            </Card>\n          </TabsContent>\n          </Tabs>\n        </div>\n      </div>\n    </PageWithLoading>\n  );\n};\n\nexport default AdminTournamentResults;\n"]}
-]
-```
-The code adds a helper function `getQualifiedPlayersForCategory` and uses it to pass the correct `qualifiedPlayers` prop to the `KnockoutBracketEditor` component.
+import { useState, useEffect } from "react";
+import { useRoute, useLocation } from "wouter";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Plus, Trash2, Save, Users, Trophy, Target, Download, Upload, FileSpreadsheet, Minus, Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { UserAutocomplete } from "@/components/UserAutocomplete";
+import { KnockoutBracketEditor } from "@/components/KnockoutBracketEditor";
+import Navigation from "@/components/navigation";
+import PageWithLoading from "@/components/PageWithLoading";
+import type { Tournament, TournamentResults, TournamentParticipant, User } from "@shared/schema";
+import * as XLSX from 'xlsx';
+
+interface GroupStageGroup {
+  id: string;
+  name: string;
+  players: Array<{ 
+    id: string;
+    name: string;
+    playerId?: string;
+    userId?: string;
+  }>;
+  resultMatrix: string[][]; // Changed from number[][] to string[][]
+  playerStats: Array<{ 
+    playerId: string;
+    wins: number;
+    losses: number;
+    points: number;
+  }>;
+}
+
+interface KnockoutMatch {
+  id: string;
+  round: string;
+  player1?: { id: string; name: string; playerId?: string; userId?: string };
+  player2?: { id: string; name: string; playerId?: string; userId?: string };
+  winner?: { id: string; name: string; playerId?: string; userId?: string };
+  score?: string;
+  isFinished: boolean;
+}
+
+interface FinalRanking {
+  position: number;
+  player: {
+    id: string;
+    name: string;
+    playerId?: string;
+    userId?: string;
+  };
+  points?: number;
+  note?: string;
+}
+
+const AdminTournamentResults: React.FC = () => {
+  const [, setLocation] = useLocation();
+  const router = { back: () => setLocation('/admin/tournaments') }; // Mock router for example
+  const [match, params] = useRoute("/admin/tournament/:tournamentId/results");
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // States
+  const [groupStageResults, setGroupStageResults] = useState<GroupStageGroup[]>([]);
+  const [knockoutResults, setKnockoutResults] = useState<KnockoutMatch[]>([]);
+  const [finalRankings, setFinalRankings] = useState<FinalRanking[]>([]);
+  const [isPublished, setIsPublished] = useState(false);
+  const [activeTab, setActiveTab] = useState("group-stage");
+
+  // For Knockout Editor
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [activeKnockoutCategory, setActiveKnockoutCategory] = useState<string | null>(null);
+  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
+
+  // Fetch tournament data
+  const { data: tournament, isLoading: tournamentLoading } = useQuery<Tournament>({
+    queryKey: ['/api/tournaments', params?.tournamentId],
+    enabled: !!params?.tournamentId,
+  });
+
+  // Fetch existing results
+  const { data: existingResults } = useQuery<TournamentResults>({
+    queryKey: ['/api/tournaments', params?.tournamentId, 'results'],
+    enabled: !!params?.tournamentId,
+  });
+
+  // Fetch participants
+  const { data: participants } = useQuery<TournamentParticipant[]>({ 
+    queryKey: ['/api/tournaments', params?.tournamentId, 'participants'], 
+    enabled: !!params?.tournamentId 
+  });
+
+  // Fetch all users for autocomplete
+  const { data: users = [] } = useQuery<User[]>({ 
+    queryKey: ['/api/admin/users'], 
+    enabled: !!params?.tournamentId
+  });
+
+  // Save results mutation
+  const saveResultsMutation = useMutation({
+    mutationFn: async (data: any) => {
+      console.log('Saving tournament results:', data);
+      const response = await fetch('/api/admin/tournament-results', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Үр дүн хадгалахад алдаа гарлаа');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Амжилттай хадгалагдлаа",
+        description: "Тэмцээний үр дүн амжилттай хадгалагдлаа",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', params?.tournamentId, 'results'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Алдаа гарлаа",
+        description: error.message || "Үр дүн хадгалахад алдаа гарлаа",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Initialize data when existing results are loaded
+  useEffect(() => {
+    if (existingResults) {
+      const groupResults = existingResults.groupStageResults;
+      const knockoutResultsData = existingResults.knockoutResults;
+      const finalRankingsData = existingResults.finalRankings;
+
+      setGroupStageResults(Array.isArray(groupResults) ? groupResults : []);
+      setKnockoutResults(Array.isArray(knockoutResultsData) ? knockoutResultsData : []);
+      setFinalRankings(Array.isArray(finalRankingsData) ? finalRankingsData : []);
+      setIsPublished(existingResults.isPublished || false);
+    }
+  }, [existingResults]);
+
+  // Set all users for knockout editor
+  useEffect(() => {
+    setAllUsers(users);
+  }, [users]);
+
+  // Update active knockout category when knockout results change or participants load
+  useEffect(() => {
+    if (knockoutResults && knockoutResults.length > 0) {
+      // Assuming the first category is the default if not set
+      if (!activeKnockoutCategory) {
+        setActiveKnockoutCategory(knockoutResults[0].id); // Or a more relevant key
+      }
+    } else if (participants && participants.length > 0 && !activeKnockoutCategory) {
+      // If no knockout results yet, but participants exist, set a default category if applicable
+      // This part might need adjustment based on how categories are defined in your data
+    }
+  }, [knockoutResults, participants]);
+
+  // Group Stage Functions
+  const addGroup = () => {
+    // Check if there are players available to add to groups
+    if (!users || users.length === 0) {
+      toast({
+        title: "Алдаа",
+        description: "Хэрэглэгчдийн жагсаалт хоосон байна. Эхлээд тамирчдыг системд бүртгүүлнэ үү.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newGroup: GroupStageGroup = {
+      id: Date.now().toString(),
+      name: `Group ${String.fromCharCode(65 + groupStageResults.length)}`,
+      players: [],
+      resultMatrix: [],
+      playerStats: [],
+    };
+    setGroupStageResults([...groupStageResults, newGroup]);
+
+    toast({
+      title: "Амжилттай",
+      description: `${newGroup.name} үүсгэгдлээ. Одоо тамирчдыг нэмнэ үү.`,
+    });
+  };
+
+  const deleteGroup = (groupId: string) => {
+    setGroupStageResults(groupStageResults.filter(g => g.id !== groupId));
+  };
+
+  const addPlayerToGroup = (groupId: string, player: User) => {
+    // Check if player is already in this group or any other group
+    const isPlayerAlreadyInGroup = groupStageResults.some(group => 
+      group.players.some(p => p.userId === player.id)
+    );
+
+    if (isPlayerAlreadyInGroup) {
+      toast({
+        title: "Анхаар",
+        description: "Энэ тамирчин аль хэдийн групп дээр байгаа байна.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setGroupStageResults(prev => prev.map(group => {
+      if (group.id === groupId) {
+        const newPlayer = {
+          id: player.id,
+          name: `${player.firstName || ''} ${player.lastName || ''}`.trim() || player.email || 'Unknown',
+          playerId: player.id,
+          userId: player.id,
+        };
+        const updatedPlayers = [...group.players, newPlayer];
+        const matrixSize = updatedPlayers.length;
+        const newMatrix = Array(matrixSize).fill(null).map((_, i) => 
+          Array(matrixSize).fill(null).map((_, j) => 
+            i < group.resultMatrix.length && j < group.resultMatrix[i]?.length 
+              ? group.resultMatrix[i][j]
+              : (i === j ? 'X' : '')
+          )
+        );
+
+        toast({
+          title: "Амжилттай",
+          description: `${newPlayer.name} группт нэмэгдлээ`,
+        });
+
+        return {
+          ...group,
+          players: updatedPlayers,
+          resultMatrix: newMatrix,
+          playerStats: updatedPlayers.map(p => ({
+            playerId: p.id,
+            wins: 0,
+            losses: 0,
+            points: 0,
+          })),
+        };
+      }
+      return group;
+    }));
+  };
+
+  // Get available users excluding those already in groups
+  const getAvailableUsers = () => {
+    const usersInGroups = groupStageResults.flatMap(group => 
+      group.players.map(p => p.userId)
+    );
+    return users.filter(user => !usersInGroups.includes(user.id));
+  };
+
+  // Auto-advance qualified players to knockout stage
+  const advanceQualifiedPlayers = () => {
+    // Check if there are any empty groups
+    const emptyGroups = groupStageResults.filter(group => group.players.length === 0);
+    if (emptyGroups.length > 0) {
+      toast({
+        title: "Алдаа",
+        description: "Хоосон группууд байна. Эхлээд бүх группт тоглогч нэмнэ үү.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if all groups have enough players
+    const incompleteGroups = groupStageResults.filter(group => group.players.length < 2);
+    if (incompleteGroups.length > 0) {
+      toast({
+        title: "Анхааруулга",
+        description: "Зарим группт хангалттай тоглогч байхгүй байна. Групп тус бүрт дор хаяж 2 тоглогч байх ёстой.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const qualifiedPlayers: Array<{ 
+      player: { id: string; name: string; playerId?: string; userId?: string }; 
+      groupName: string;
+      position: number;
+    }> = [];
+
+    groupStageResults.forEach(group => {
+      if (group.players.length >= 2) {
+        // Sort players by stats to get top 2
+        const sortedPlayers = group.players
+          .map((player) => {
+            const stats = group.playerStats.find(s => s.playerId === player.id) || { 
+              wins: 0, 
+              losses: 0, 
+              points: 0, 
+              setsWon: 0, 
+              setsLost: 0, 
+              setsDifference: 0 
+            };
+            return { player, stats };
+          })
+          .sort((a, b) => {
+            if (b.stats.points !== a.stats.points) {
+              return b.stats.points - a.stats.points;
+            }
+            if ((b.stats.setsDifference || 0) !== (a.stats.setsDifference || 0)) {
+              return (b.stats.setsDifference || 0) - (a.stats.setsDifference || 0);
+            }
+            if ((b.stats.setsWon || 0) !== (a.stats.setsWon || 0)) {
+              return (b.stats.setsWon || 0) - (a.stats.setsWon || 0);
+            }
+            return b.stats.wins - a.stats.wins;
+          });
+
+        // Get top 2 qualified players
+        sortedPlayers.slice(0, 2).forEach((item, index) => {
+          qualifiedPlayers.push({
+            player: item.player,
+            groupName: group.name,
+            position: index + 1
+          });
+        });
+      }
+    });
+
+    if (qualifiedPlayers.length > 0) {
+      // Create initial knockout matches from qualified players
+      const initialMatches: KnockoutMatch[] = [];
+
+      // Pair up qualified players for first round
+      for (let i = 0; i < qualifiedPlayers.length; i += 2) {
+        if (i + 1 < qualifiedPlayers.length) {
+          const match: KnockoutMatch = {
+            id: `knockout_${Date.now()}_${i}`,
+            round: "1",
+            player1: qualifiedPlayers[i].player,
+            player2: qualifiedPlayers[i + 1].player,
+            isFinished: false,
+          };
+          initialMatches.push(match);
+        }
+      }
+
+      setKnockoutResults(initialMatches);
+      setActiveTab("knockout");
+
+      toast({
+        title: "Шалгарсан тоглогчид",
+        description: `${qualifiedPlayers.length} тоглогч шилжих тоглолтод шалгарлаа`,
+      });
+    }
+  };
+
+  const updateGroupResult = (groupId: string, playerIndex: number, opponentIndex: number, result: string) => {
+    // Validate input format (should be like "3-1", "3-2", etc.)
+    if (result && result.trim() !== '' && !result.match(/^\d+-\d+$/)) {
+      toast({
+        title: "Буруу формат",
+        description: "Үр дүнг 3-1, 3-2 гэх мэтээр оруулна уу",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setGroupStageResults(prev => prev.map(group => {
+      if (group.id === groupId) {
+        const newMatrix = [...group.resultMatrix];
+        if (!newMatrix[playerIndex]) {
+          newMatrix[playerIndex] = [];
+        }
+        newMatrix[playerIndex][opponentIndex] = result;
+
+        // Automatically fill the opposite result if it's a valid score
+        if (result && result.includes('-')) {
+          const [score1, score2] = result.split('-').map(s => parseInt(s.trim()));
+          if (!isNaN(score1) && !isNaN(score2)) {
+            if (!newMatrix[opponentIndex]) {
+              newMatrix[opponentIndex] = [];
+            }
+            // Only set the opposite if it's not already filled
+            if (!newMatrix[opponentIndex][playerIndex] || newMatrix[opponentIndex][playerIndex] === '') {
+              newMatrix[opponentIndex][playerIndex] = `${score2}-${score1}`;
+            }
+          }
+        }
+
+        // Calculate comprehensive stats from score strings
+        const newStats = group.players.map((player, idx) => {
+          let wins = 0, losses = 0, points = 0, setsWon = 0, setsLost = 0;
+
+          for (let j = 0; j < group.players.length; j++) {
+            if (idx !== j) {
+              const matchResult = newMatrix[idx] && newMatrix[idx][j];
+              if (matchResult && typeof matchResult === 'string' && matchResult.includes('-')) {
+                const [score1, score2] = matchResult.split('-').map(s => parseInt(s.trim()));
+                if (!isNaN(score1) && !isNaN(score2)) {
+                  setsWon += score1;
+                  setsLost += score2;
+
+                  if (score1 > score2) {
+                    wins++;
+                    points += 3; // 3 points for a win
+                  } else if (score1 < score2) {
+                    losses++;
+                    points += 0; // 0 points for a loss
+                  } else if (score1 === score2) {
+                    points += 1; // 1 point for a draw (rare in table tennis)
+                  }
+                }
+              }
+            }
+          }
+
+          return {
+            playerId: player.id,
+            wins,
+            losses,
+            points,
+            setsWon,
+            setsLost,
+            setsDifference: setsWon - setsLost,
+          };
+        });
+
+        return {
+          ...group,
+          resultMatrix: newMatrix,
+          playerStats: newStats,
+        };
+      }
+      return group;
+    }));
+  };
+
+  // Final Rankings Functions
+  const addToFinalRankings = (player: User) => {
+    const newRanking: FinalRanking = {
+      position: finalRankings.length + 1,
+      player: {
+        id: player.id,
+        name: `${player.firstName || ''} ${player.lastName || ''}`.trim() || player.email || 'Unknown',
+        playerId: player.id,
+        userId: player.id,
+      },
+    };
+    setFinalRankings([...finalRankings, newRanking]);
+  };
+
+  const updateFinalRanking = (index: number, field: keyof FinalRanking, value: any) => {
+    setFinalRankings(prev => prev.map((ranking, i) => 
+      i === index ? { ...ranking, [field]: value } : ranking
+    ));
+  };
+
+  const deleteFinalRanking = (index: number) => {
+    setFinalRankings(prev => prev.filter((_, i) => i !== index).map((ranking, i) => ({ 
+      ...ranking,
+      position: i + 1,
+    })));
+  };
+
+  // Save function
+  const handleSave = () => {
+    if (!params?.tournamentId) return;
+
+    // Validate groups before saving
+    const hasEmptyGroups = groupStageResults.some(group => group.players.length === 0);
+    const hasIncompleteMatches = groupStageResults.some(group => {
+      if (group.players.length < 2) return false; // Skip validation for groups with less than 2 players
+
+      // Check if all matches have results
+      for (let i = 0; i < group.players.length; i++) {
+        for (let j = 0; j < group.players.length; j++) {
+          if (i !== j) {
+            const result = group.resultMatrix[i] && group.resultMatrix[i][j];
+            if (!result || result.trim() === '') {
+              return true; // Has incomplete matches
+            }
+          }
+        }
+      }
+      return false;
+    });
+
+    if (hasEmptyGroups) {
+      toast({
+        title: "Анхааруулга",
+        description: "Хоосон группууд байна. Эдгээрийг устгах эсвэл тамирчин нэмнэ үү.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (hasIncompleteMatches) {
+      const shouldContinue = window.confirm(
+        "Зарим тоглолтын үр дүн дутуу байна. Хадгалахыг үргэлжлүүлэх үү?"
+      );
+      if (!shouldContinue) return;
+    }
+
+    const data = {
+      tournamentId: params.tournamentId,
+      groupStageResults: groupStageResults.length > 0 ? groupStageResults : null,
+      knockoutResults: knockoutResults.length > 0 ? knockoutResults : null,
+      finalRankings: finalRankings.length > 0 ? finalRankings : null,
+      isPublished,
+    };
+
+    saveResultsMutation.mutate(data);
+  };
+
+  // Excel Import/Export
+  const handleExcelImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = e.target?.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        // Process imported data and convert to your format
+        console.log('Imported data:', jsonData);
+        toast({
+          title: "Excel файл импорт хийгдлээ",
+          description: "Өгөгдлийг шалгаж, шаардлагатай засварлага хийнэ үү",
+        });
+      } catch (error) {
+        toast({
+          title: "Excel импорт амжилтгүй",
+          description: "Файлыг уншихад алдаа гарлаа",
+          variant: "destructive",
+        });
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
+  const handleExcelExport = () => {
+    const wb = XLSX.utils.book_new();
+
+    if (finalRankings.length > 0) {
+      const rankingsData = finalRankings.map(r => ({
+        'Байрлал': r.position,
+        'Тамирчин': r.player.name,
+        'Оноо': r.points || '',
+        'Тэмдэглэл': r.note || '',
+      }));
+      const ws = XLSX.utils.json_to_sheet(rankingsData);
+      XLSX.utils.book_append_sheet(wb, ws, "Эцсийн жагсаалт");
+    }
+
+    XLSX.writeFile(wb, `tournament_${params?.tournamentId}_results.xlsx`);
+  };
+
+  // Helper to normalize matches for KnockoutBracketEditor
+  const normalizeKnockoutMatches = (matches: KnockoutMatch[]) => {
+    return matches.map(match => ({ 
+      ...match,
+      // Ensure player1 and player2 are in the expected format if they exist
+      player1: match.player1 ? { id: match.player1.id, name: match.player1.name } : undefined,
+      player2: match.player2 ? { id: match.player2.id, name: match.player2.name } : undefined,
+      winner: match.winner ? { id: match.winner.id, name: match.winner.name } : undefined,
+    }));
+  };
+
+  // Helper function to get qualified players for a specific category/tab
+  const getQualifiedPlayersForCategory = (category?: string | null) => {
+    if (!category || !participants) return [];
+
+    // Filter participants by category (adjust 'participationType' if your schema uses a different field for category)
+    const categoryParticipants = participants.filter(p => p.participationType === category);
+
+    // Map to the format expected by KnockoutBracketEditor's qualifiedPlayers prop
+    return categoryParticipants.map(p => ({
+      id: p.userId, // Assuming userId is the unique identifier for the player
+      name: p.name || `${p.firstName || ''} ${p.lastName || ''}`.trim() || 'Unknown',
+      userId: p.userId
+    }));
+  };
+
+  const handleKnockoutSave = async (matches: any[]) => {
+    if (!params?.tournamentId || !activeKnockoutCategory) return;
+
+    // Update the knockoutResults state with the new matches
+    setKnockoutResults(prev => {
+      const updatedResults = [...prev];
+      // Find the index of the category to update
+      // This logic needs refinement: knockoutResults is an array of Match, not categories. 
+      // You likely need a structure like { categoryId: Match[] } or similar.
+      // For now, assuming knockoutResults is a flat array and we update it directly.
+      // If you have categories, you'd need to find the correct array to update.
+      
+      // If knockoutResults is meant to hold matches for ONE bracket:
+      return matches;
+
+      // If knockoutResults is meant to hold MULTIPLE brackets (categories):
+      // const categoryIndex = updatedResults.findIndex(categoryMatches => categoryMatches.some(m => m.id === matches[0]?.id)); // Example logic
+      // if (categoryIndex !== -1) {
+      //   updatedResults[categoryIndex] = matches;
+      // } else {
+      //   // Add new category if it doesn't exist
+      //   updatedResults.push(matches);
+      // }
+      // return updatedResults;
+    });
+
+    toast({ 
+      title: "Шилжих тоглолтын үр дүн хадгалагдлаа",
+      description: "Bracket-ийн өөрчлөлтүүд хадгалагдлаа."
+    });
+
+    // Note: You might want to trigger the main saveResultsMutation here or have a separate save mechanism for knockout stages
+  };
+
+  if (tournamentLoading) {
+    return <PageWithLoading>{null}</PageWithLoading>;
+  }
+
+  if (!tournament) {
+    return (
+      <PageWithLoading>
+        <div className="container mx-auto px-4 py-8 text-center">
+          <p>Тэмцээн олдсонгүй</p>
+          <Button onClick={() => setLocation('/admin/tournaments')} className="mt-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Буцах
+          </Button>
+        </div>
+      </PageWithLoading>
+    );
+  }
+
+
+
+  return (
+    <PageWithLoading>
+      <Navigation />
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button 
+                onClick={() => setLocation('/admin/tournaments')}
+                variant="outline"
+                size="sm"
+                className="hover:bg-gray-50"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Буцах
+              </Button>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Тэмцээний үр дүн удирдах</h1>
+                <p className="text-lg text-gray-700 mt-1">{tournament.name}</p>
+                <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                  <span className="flex items-center gap-1">
+                    <Users className="w-4 h-4" />
+                    {participants?.length || 0} оролцогч
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Trophy className="w-4 h-4" />
+                    {tournament.format}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Badge 
+                variant={isPublished ? "default" : "secondary"}
+                className={`px-3 py-1 text-sm ${ 
+                  isPublished 
+                    ? "bg-green-100 text-green-800 border-green-200"
+                    : "bg-yellow-100 text-yellow-800 border-yellow-200"
+                }`}
+              >
+                {isPublished ? "Нийтлэгдсэн" : "Ноорог"}
+              </Badge>
+              <Button 
+                onClick={handleSave} 
+                disabled={saveResultsMutation.isPending}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {saveResultsMutation.isPending ? "Хадгалж байна..." : "Хадгалах"}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Import/Export Tools */}
+        <Card className="mb-6 border-l-4 border-l-blue-500">
+          <CardHeader className="bg-gray-50">
+            <CardTitle className="flex items-center gap-2 text-gray-800">
+              <FileSpreadsheet className="w-5 h-5 text-blue-600" />
+              Excel импорт/экспорт
+            </CardTitle>
+            <CardDescription>
+              Үр дүнгээ Excel файлаас импорт хийх эсвэл экспорт хийж татаж авах
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4 flex-wrap">
+              <div>
+                <input
+                  type="file"
+                  id="excel-import"
+                  accept=".xlsx,.xls"
+                  onChange={handleExcelImport}
+                  className="hidden"
+                />
+                <Button 
+                  onClick={() => document.getElementById('excel-import')?.click()} 
+                  variant="outline"
+                  className="border-green-200 text-green-700 hover:bg-green-50"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Excel импорт
+                </Button>
+              </div>
+              <Button 
+                onClick={handleExcelExport} 
+                variant="outline"
+                className="border-blue-200 text-blue-700 hover:bg-blue-50"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Excel экспорт
+              </Button>
+              <div className="text-sm text-gray-500 ml-auto">
+                Дэмжигдэх форматууд: .xlsx, .xls
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Main Content */}
+        <div className="bg-white rounded-lg shadow-sm border">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <div className="border-b bg-gray-50 px-6 py-4 rounded-t-lg">
+              <TabsList className="grid w-full grid-cols-3 bg-white shadow-sm">
+                <TabsTrigger 
+                  value="group-stage"
+                  className="flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                >
+                  <Users className="w-4 h-4" />
+                  <span className="hidden sm:inline">Группийн шат</span>
+                  <span className="sm:hidden">Групп</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="knockout"
+                  className="flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                >
+                  <Trophy className="w-4 h-4" />
+                  <span className="hidden sm:inline">Шилжих тоглолт</span>
+                  <span className="sm:hidden">Шилжих</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="final-rankings"
+                  className="flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                >
+                  <Target className="w-4 h-4" />
+                  <span className="hidden sm:inline">Эцсийн жагсаалт</span>
+                  <span className="sm:hidden">Жагсаалт</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+          {/* Group Stage Tab */}
+          <TabsContent value="group-stage" className="p-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Группийн шатны үр дүн</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Тэмцээний группийн шатны тоглолтуудын үр дүнг оруулна уу
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button 
+                  onClick={advanceQualifiedPlayers}
+                  disabled={groupStageResults.length === 0}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2"
+                >
+                  <Trophy className="w-4 h-4 mr-2" />
+                  Шалгарсан тоглогчдыг шилжүүлэх
+                </Button>
+                <Button 
+                  onClick={addGroup}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Групп нэмэх
+                </Button>
+              </div>
+            </div>
+
+            {groupStageResults.length === 0 ? (
+              <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Групп байхгүй байна</h3>
+                <p className="text-gray-600 mb-4">Эхний группээ үүсгэж тэмцээний үр дүн оруулж эхлээрэй</p>
+                <Button 
+                  onClick={addGroup}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Анхны групп үүсгэх
+                </Button>
+              </div>
+            ) : null}
+
+            {groupStageResults && Array.isArray(groupStageResults) && groupStageResults.map((group, groupIndex) => (
+              <Card key={group.id}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>{group.name}</CardTitle>
+                    <Button 
+                      onClick={() => deleteGroup(group.id)}
+                      variant="destructive"
+                      size="sm"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Add Player */}
+                  <div>
+                    <UserAutocomplete
+                      users={getAvailableUsers()}
+                      onSelect={(user) => user && addPlayerToGroup(group.id, user)}
+                      placeholder="Тамирчин хайх..."
+                    />
+                  </div>
+
+                  {/* Players List */}
+                  {group.players.length > 0 && (
+                    <div className="space-y-4">
+                      <h4 className="font-medium">Тамирчид ({group.players.length})</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {group.players.map((player, index) => (
+                          <div key={player.id} className="p-2 bg-gray-100 rounded text-sm flex justify-between items-center">
+                            <span>{index + 1}. {player.name}</span>
+                            <Button 
+                              onClick={() => {
+                                setGroupStageResults(prev => prev.map(g => {
+                                  if (g.id === group.id) {
+                                    const updatedPlayers = g.players.filter(p => p.id !== player.id);
+                                    const matrixSize = updatedPlayers.length;
+                                    const newMatrix = Array(matrixSize).fill(null).map((_, i) => 
+                                      Array(matrixSize).fill(null).map((_, j) => i === j ? 'X' : '')
+                                    );
+                                    return {
+                                      ...g,
+                                      players: updatedPlayers,
+                                      resultMatrix: newMatrix,
+                                      playerStats: updatedPlayers.map(p => ({
+                                        playerId: p.id,
+                                        wins: 0,
+                                        losses: 0,
+                                        points: 0,
+                                      })),
+                                    };
+                                  }
+                                  return g;
+                                }));
+                                toast({
+                                  title: "Амжилттай",
+                                  description: `${player.name} группаас хасагдлаа`,
+                                });
+                              }}
+                              variant="destructive"
+                              size="sm"
+                              className="ml-2 h-6 w-6 p-0"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Results Matrix */}
+                      {group.players.length > 1 && (
+                        <div className="space-y-4">
+                          <div className="bg-gray-800 rounded-lg p-4">
+                            <div className="flex items-center justify-between mb-4">
+                              <h4 className="font-medium text-white">{group.name}</h4>
+                              <div className="flex items-center gap-2">
+                                <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                                  Групп нэмэх
+                                </Button>
+                                <Button size="sm" variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">
+                                  Засах талбар
+                                </Button>
+                                <Button size="sm" variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">
+                                  Эрэмб засах
+                                </Button>
+                              </div>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                              <table className="w-full border-collapse">
+                                <thead>
+                                  <tr className="bg-gray-700">
+                                    <th className="border border-gray-600 p-2 text-left text-white font-medium">№</th>
+                                    <th className="border border-gray-600 p-2 text-left text-white font-medium">Нэр</th>
+                                    <th className="border border-gray-600 p-2 text-center text-white font-medium">Клуб</th>
+                                    {group.players.map((_, index) => (
+                                      <th key={index} className="border border-gray-600 p-2 text-center text-white font-medium w-12">
+                                        {index + 1}
+                                      </th>
+                                    ))}
+                                    <th className="border border-gray-600 p-2 text-center text-white font-medium">Оноо</th>
+                                    <th className="border border-gray-600 p-2 text-center text-white font-medium">Байр</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {(() => {
+                                    // Calculate and sort players by points, wins, and sets difference for ranking
+                                    const sortedPlayers = group.players
+                                      .map((player, originalIndex) => {
+                                        const stats = group.playerStats.find(s => s.playerId === player.id) || { 
+                                          wins: 0, 
+                                          losses: 0, 
+                                          points: 0, 
+                                          setsWon: 0, 
+                                          setsLost: 0, 
+                                          setsDifference: 0 
+                                        };
+                                        return { player, originalIndex, stats };
+                                      })
+                                      .sort((a, b) => {
+                                        // Primary: Points
+                                        if (b.stats.points !== a.stats.points) {
+                                          return b.stats.points - a.stats.points;
+                                        }
+                                        // Secondary: Sets difference (sets won - sets lost)
+                                        if ((b.stats.setsDifference || 0) !== (a.stats.setsDifference || 0)) {
+                                          return (b.stats.setsDifference || 0) - (a.stats.setsDifference || 0);
+                                        }
+                                        // Tertiary: Sets won
+                                        if ((b.stats.setsWon || 0) !== (a.stats.setsWon || 0)) {
+                                          return (b.stats.setsWon || 0) - (a.stats.setsWon || 0);
+                                        }
+                                        // Quaternary: Wins
+                                        return b.stats.wins - a.stats.wins;
+                                      });
+
+                                    return sortedPlayers.map(({ player, originalIndex, stats }, rankIndex) => {
+                                      const position = rankIndex + 1;
+                                      const isQualified = position <= 2;
+
+                                      return (
+                                        <tr 
+                                          key={player.id}
+                                          className={`${isQualified ? "bg-green-900/30" : "bg-gray-800/50"} hover:bg-gray-700/50`}
+                                        >
+                                          <td className="border border-gray-600 p-2 text-white">
+                                            {position}
+                                          </td>
+                                          <td className="border border-gray-600 p-2">
+                                            <div className="flex items-center gap-2">
+                                              <span className="text-white">{player.name}</span>
+                                              {isQualified && (
+                                                <Badge className="bg-green-600 text-white text-xs">
+                                                  Шалгарсан
+                                                </Badge>
+                                              )}
+                                            </div>
+                                          </td>
+                                          <td className="border border-gray-600 p-2 text-center text-gray-300 text-sm">
+                                            -
+                                          </td>
+                                          {group.players.map((_, opponentIndex) => (
+                                            <td key={opponentIndex} className="border border-gray-600 p-1">
+                                              {originalIndex === opponentIndex ? (
+                                                <div className="bg-gray-600 h-8 flex items-center justify-center text-gray-400">
+                                                  -
+                                                </div>
+                                              ) : (
+                                                <Input
+                                                  type="text"
+                                                  value={group.resultMatrix[originalIndex]?.[opponentIndex] || ""}
+                                                  onChange={(e) => updateGroupResult(
+                                                    group.id,
+                                                    originalIndex,
+                                                    opponentIndex,
+                                                    e.target.value
+                                                  )}
+                                                  placeholder="3-1"
+                                                  className="h-8 text-center text-sm bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                                                />
+                                              )}
+                                            </td>
+                                          ))}
+                                          <td className="border border-gray-600 p-2 text-center font-bold text-white">
+                                            {stats.points}
+                                          </td>
+                                          <td className={`border border-gray-600 p-2 text-center font-bold ${ 
+                                            isQualified ? "text-green-400" : "text-gray-300"
+                                          }`}>
+                                            {position}
+                                          </td>
+                                        </tr>
+                                      );
+                                    });
+                                  })()}
+                                </tbody>
+                              </table>
+                            </div>
+
+                            {/* Qualification Summary */}
+                            <div className="mt-4 p-3 bg-green-900/20 rounded border border-green-600">
+                              <p className="text-green-400 text-sm mb-2">
+                                Эхний 2 тамирчин группээс дараагийн шатанд шалгарна
+                              </p>
+                              <div className="text-green-300 text-sm">
+                                Шалгарсан тамирчид: {(() => {
+                                  const qualified = group.players
+                                    .map((player) => {
+                                      const stats = group.playerStats.find(s => s.playerId === player.id) || { wins: 0, losses: 0, points: 0 };
+                                      return { player, stats };
+                                    })
+                                    .sort((a, b) => {
+                                      if (b.stats.points !== a.stats.points) {
+                                        return b.stats.points - a.stats.points;
+                                      }
+                                      return b.stats.wins - a.stats.wins;
+                                    })
+                                    .slice(0, 2);
+
+                                  return qualified.map(({ player }) => player.name).join(', ');
+                                })()}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}.
+          </TabsContent>
+
+          {/* Knockout Tab */}
+          <TabsContent value="knockout" className="p-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Шилжих тоглолт</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Шилжих тоглолтын үр дүн болон bracket-ийг удирдана уу
+                </p>
+              </div>
+              {/* You might add category selection here if your knockout stage has multiple categories */}
+              {/* Example: If tournament.knockoutCategories exists, map over it */}
+              {tournament.knockoutCategories?.length > 0 && (
+                <Select onValueChange={setActiveKnockoutCategory} defaultValue={activeKnockoutCategory || tournament.knockoutCategories[0]}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Бүлэгийг сонгоно уу" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tournament.knockoutCategories.map(category => (
+                      <SelectItem key={category} value={category}>{category}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+            <Card>
+              <CardContent className="p-6">
+                {/* Render KnockoutBracketEditor for the selected category */}
+                <KnockoutBracketEditor
+                  key={`knockout-${activeKnockoutCategory}`}
+                  initialMatches={normalizeKnockoutMatches(
+                    knockoutResults?.[activeKnockoutCategory] || []
+                  )}
+                  users={allUsers}
+                  onSave={handleKnockoutSave}
+                  qualifiedPlayers={getQualifiedPlayersForCategory(activeKnockoutCategory)}
+                  selectedMatchId={selectedMatchId}
+                  onMatchSelect={setSelectedMatchId}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Final Rankings Tab */}
+          <TabsContent value="final-rankings" className="p-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Эцсийн жагсаалт</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Тэмцээний эцсийн үр дүн болон тамирчдын байрлалыг оруулна уу
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isPublished}
+                    onChange={(e) => setIsPublished(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Нийтэд харуулах</span>
+                  {isPublished && <Eye className="w-4 h-4 text-green-600" />}
+                  {!isPublished && <EyeOff className="w-4 h-4 text-gray-400" />}
+                </label>
+              </div>
+            </div>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  <UserAutocomplete
+                    users={getAvailableUsers()}
+                    onSelect={(user) => user && addToFinalRankings(user)}
+                    placeholder="Тамирчин хайж нэмэх..."
+                  />
+
+                  {finalRankings.length > 0 && (
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse border border-gray-300">
+                        <thead>
+                          <tr>
+                            <th className="border border-gray-300 p-3 bg-gray-50">Байрлал</th>
+                            <th className="border border-gray-300 p-3 bg-gray-50">Тамирчин</th>
+                            <th className="border border-gray-300 p-3 bg-gray-50">Оноо</th>
+                            <th className="border border-gray-300 p-3 bg-gray-50">Тэмдэглэл</th>
+                            <th className="border border-gray-300 p-3 bg-gray-50">Үйлдэл</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {finalRankings.map((ranking, index) => (
+                            <tr key={index}>
+                              <td className="border border-gray-300 p-3 text-center font-bold">
+                                {ranking.position}
+                              </td>
+                              <td className="border border-gray-300 p-3">
+                                {ranking.player.name}
+                              </td>
+                              <td className="border border-gray-300 p-3">
+                                <Input
+                                  type="number"
+                                  value={ranking.points || ''}
+                                  onChange={(e) => updateFinalRanking(
+                                    index,
+                                    'points',
+                                    parseInt(e.target.value) || 0
+                                  )}
+                                  placeholder="Оноо"
+                                  className="w-20"
+                                />
+                              </td>
+                              <td className="border border-gray-300 p-3">
+                                <Input
+                                  value={ranking.note || ''}
+                                  onChange={(e) => updateFinalRanking(index, 'note', e.target.value)}
+                                  placeholder="Тэмдэглэл"
+                                />
+                              </td>
+                              <td className="border border-gray-300 p-3 text-center">
+                                <Button 
+                                  onClick={() => deleteFinalRanking(index)}
+                                  variant="destructive"
+                                  size="sm"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </PageWithLoading>
+  );
+};
+
+export default AdminTournamentResults;
