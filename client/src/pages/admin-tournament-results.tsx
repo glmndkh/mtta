@@ -14,7 +14,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { UserAutocomplete } from "@/components/UserAutocomplete";
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
-import type { Tournament, TournamentResults, TournamentParticipant, User } from "@shared/schema";
+import type { Tournament, TournamentResults, TournamentParticipant } from "@shared/schema";
 import * as XLSX from 'xlsx';
 
 interface GroupStageGroup {
