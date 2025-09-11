@@ -27,7 +27,7 @@ interface GroupStageGroup {
     playerId?: string;
     userId?: string;
   }>;
-  resultMatrix: number[][];
+  resultMatrix: string[][]; // Changed from number[][] to string[][]
   playerStats: Array<{
     playerId: string;
     wins: number;
@@ -164,7 +164,7 @@ const AdminTournamentResults: React.FC = () => {
           Array(matrixSize).fill(null).map((_, j) =>
             i < group.resultMatrix.length && j < group.resultMatrix[i]?.length
               ? group.resultMatrix[i][j]
-              : (i === j ? -1 : 0)
+              : (i === j ? 'X' : '')
           )
         );
 
@@ -184,26 +184,31 @@ const AdminTournamentResults: React.FC = () => {
     }));
   };
 
-  const updateGroupResult = (groupId: string, playerIndex: number, opponentIndex: number, result: number) => {
+  const updateGroupResult = (groupId: string, playerIndex: number, opponentIndex: number, result: string) => {
     setGroupStageResults(prev => prev.map(group => {
       if (group.id === groupId) {
         const newMatrix = [...group.resultMatrix];
         newMatrix[playerIndex][opponentIndex] = result;
 
-        // Calculate stats
+        // Calculate stats from score strings
         const newStats = group.players.map((player, idx) => {
           let wins = 0, losses = 0, points = 0;
 
           for (let j = 0; j < group.players.length; j++) {
             if (idx !== j) {
               const matchResult = newMatrix[idx][j];
-              if (matchResult === 1) {
-                wins++;
-                points += 2;
-              } else if (matchResult === 0.5) {
-                points += 1;
-              } else if (matchResult === 0) {
-                losses++;
+              if (matchResult && typeof matchResult === 'string' && matchResult.includes('-')) {
+                const [score1, score2] = matchResult.split('-').map(s => parseInt(s.trim()));
+                if (!isNaN(score1) && !isNaN(score2)) {
+                  if (score1 > score2) {
+                    wins++;
+                    points += 2;
+                  } else if (score1 < score2) {
+                    losses++;
+                  } else if (score1 === score2) {
+                    points += 1;
+                  }
+                }
               }
             }
           }
@@ -566,24 +571,18 @@ const AdminTournamentResults: React.FC = () => {
                                           -
                                         </div>
                                       ) : (
-                                        <Select
-                                          value={group.resultMatrix[playerIndex]?.[opponentIndex]?.toString() || ""}
-                                          onValueChange={(value) => updateGroupResult(
+                                        <Input
+                                          type="text"
+                                          value={group.resultMatrix[playerIndex]?.[opponentIndex] || ""}
+                                          onChange={(e) => updateGroupResult(
                                             group.id,
                                             playerIndex,
                                             opponentIndex,
-                                            parseFloat(value)
+                                            e.target.value
                                           )}
-                                        >
-                                          <SelectTrigger className="h-8">
-                                            <SelectValue />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            <SelectItem value="1">Ялалт</SelectItem>
-                                            <SelectItem value="0.5">Тэнцэв</SelectItem>
-                                            <SelectItem value="0">Ялагдал</SelectItem>
-                                          </SelectContent>
-                                        </Select>
+                                          placeholder="3-1"
+                                          className="h-8 text-center text-sm"
+                                        />
                                       )}
                                     </td>
                                   ))}
