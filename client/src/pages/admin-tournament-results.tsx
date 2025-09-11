@@ -239,6 +239,73 @@ const AdminTournamentResults: React.FC = () => {
     return podium;
   };
 
+  // Calculate group statistics from result matrix
+  const calculateGroupStats = (group: GroupStageGroup) => {
+    const stats = group.players.map(player => ({
+      playerId: player.id,
+      wins: 0,
+      losses: 0,
+      points: 0,
+      setsWon: 0,
+      setsLost: 0
+    }));
+
+    // Calculate stats from result matrix
+    for (let i = 0; i < group.players.length; i++) {
+      for (let j = 0; j < group.players.length; j++) {
+        if (i !== j && group.resultMatrix[i]?.[j]) {
+          const result = group.resultMatrix[i][j];
+          if (result && result !== '' && result !== '-') {
+            const scoreParts = result.split('-').map(s => s.trim());
+            if (scoreParts.length === 2) {
+              const score1 = parseInt(scoreParts[0]) || 0;
+              const score2 = parseInt(scoreParts[1]) || 0;
+              
+              if (score1 > score2) {
+                stats[i].wins++;
+                stats[i].points += 2; // 2 points for win
+                stats[j].losses++;
+                stats[j].points += 1; // 1 point for loss
+              } else if (score2 > score1) {
+                stats[j].wins++;
+                stats[j].points += 2;
+                stats[i].losses++;
+                stats[i].points += 1;
+              }
+              
+              stats[i].setsWon += score1;
+              stats[i].setsLost += score2;
+              stats[j].setsWon += score2;
+              stats[j].setsLost += score1;
+            }
+          }
+        }
+      }
+    }
+
+    return stats;
+  };
+
+  // Handle result matrix change
+  const handleResultMatrixChange = (groupId: string, rowIndex: number, colIndex: number, value: string) => {
+    setGroupStageResults(prev => prev.map(group => {
+      if (group.id !== groupId) return group;
+
+      const newMatrix = [...group.resultMatrix];
+      if (!newMatrix[rowIndex]) newMatrix[rowIndex] = [];
+      newMatrix[rowIndex][colIndex] = value;
+
+      // Recalculate stats
+      const newStats = calculateGroupStats({ ...group, resultMatrix: newMatrix });
+
+      return {
+        ...group,
+        resultMatrix: newMatrix,
+        playerStats: newStats
+      };
+    }));
+  };
+
   // Handle match score changes
   const handleMatchScoreChange = (matchId: string, field: 'player1Score' | 'player2Score', value: string) => {
     setKnockoutResults(prev => prev.map(match => {
@@ -828,17 +895,7 @@ const AdminTournamentResults: React.FC = () => {
                                       <Input
                                         type="text"
                                         value={group.resultMatrix[rowIndex]?.[colIndex] || ''}
-                                        onChange={(e) => {
-                                          const newMatrix = [...group.resultMatrix];
-                                          if (!newMatrix[rowIndex]) newMatrix[rowIndex] = [];
-                                          newMatrix[rowIndex][colIndex] = e.target.value;
-
-                                          setGroupStageResults(prev => prev.map(g =>
-                                            g.id === group.id
-                                              ? { ...g, resultMatrix: newMatrix }
-                                              : g
-                                          ));
-                                        }}
+                                        onChange={(e) => handleResultMatrixChange(group.id, rowIndex, colIndex, e.target.value)}
                                         className="w-16 h-8 text-center text-xs"
                                         placeholder="3-1"
                                       />
@@ -859,39 +916,59 @@ const AdminTournamentResults: React.FC = () => {
                         <table className="w-full text-sm border border-gray-600">
                           <thead>
                             <tr className="bg-gray-700">
+                              <th className="border border-gray-600 p-2 text-left text-gray-300">Байр</th>
                               <th className="border border-gray-600 p-2 text-left text-gray-300">Тоглогч</th>
                               <th className="border border-gray-600 p-2 text-center text-gray-300">Хожсон</th>
                               <th className="border border-gray-600 p-2 text-center text-gray-300">Хожигдсон</th>
                               <th className="border border-gray-600 p-2 text-center text-gray-300">Оноо</th>
+                              <th className="border border-gray-600 p-2 text-center text-gray-300">Сэт +/-</th>
                             </tr>
                           </thead>
                           <tbody>
                             {group.players
                               .map((player) => {
-                                const stats = group.playerStats.find(s => s.playerId === player.id) || {
+                                // Use calculated stats
+                                const calculatedStats = calculateGroupStats(group);
+                                const stats = calculatedStats.find(s => s.playerId === player.id) || {
                                   wins: 0,
                                   losses: 0,
-                                  points: 0
+                                  points: 0,
+                                  setsWon: 0,
+                                  setsLost: 0
                                 };
                                 return { player, stats };
                               })
                               .sort((a, b) => {
+                                // Sort by points first, then by sets difference
                                 if (b.stats.points !== a.stats.points) {
                                   return b.stats.points - a.stats.points;
                                 }
-                                return b.stats.wins - a.stats.wins;
+                                const setsDiffA = a.stats.setsWon - a.stats.setsLost;
+                                const setsDiffB = b.stats.setsWon - b.stats.setsLost;
+                                if (setsDiffB !== setsDiffA) {
+                                  return setsDiffB - setsDiffA;
+                                }
+                                return b.stats.setsWon - a.stats.setsWon;
                               })
                               .map(({ player, stats }, index) => (
                                 <tr key={player.id} className={`${index < 2 ? 'bg-green-900/30' : 'bg-gray-800'}`}>
-                                  <td className="border border-gray-600 p-2 text-white">
-                                    <div className="flex items-center gap-2">
-                                      {index < 2 && <Badge className="bg-green-600 text-xs">Шилжсэн</Badge>}
-                                      <span>{player.name}</span>
+                                  <td className="border border-gray-600 p-2 text-center text-white">
+                                    <div className="flex items-center justify-center gap-1">
+                                      <span className="text-lg font-bold">{index + 1}</span>
+                                      {index < 2 && <Badge className="bg-green-600 text-xs ml-1">Q</Badge>}
                                     </div>
+                                  </td>
+                                  <td className="border border-gray-600 p-2 text-white">
+                                    <span>{player.name}</span>
                                   </td>
                                   <td className="border border-gray-600 p-2 text-center text-white">{stats.wins}</td>
                                   <td className="border border-gray-600 p-2 text-center text-white">{stats.losses}</td>
                                   <td className="border border-gray-600 p-2 text-center text-white font-bold">{stats.points}</td>
+                                  <td className="border border-gray-600 p-2 text-center text-white">
+                                    <span className={`${stats.setsWon - stats.setsLost >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                      {stats.setsWon - stats.setsLost >= 0 ? '+' : ''}{stats.setsWon - stats.setsLost}
+                                    </span>
+                                  </td>
                                 </tr>
                               ))}
                           </tbody>
