@@ -464,72 +464,69 @@ const AdminTournamentResults: React.FC = () => {
     const playerCount = qualifiedPlayers.length;
     const matches: KnockoutMatch[] = [];
 
-    // Determine tournament structure based on player count
-    const getRoundStructure = (count: number) => {
-      if (count <= 4) return { rounds: 2, firstRoundName: "Хагас финал" };
-      if (count <= 8) return { rounds: 3, firstRoundName: "Дөрөвний финал" };
-      if (count <= 16) return { rounds: 4, firstRoundName: "1/8 финал" };
-      if (count <= 32) return { rounds: 5, firstRoundName: "1/16 финал" };
-      if (count <= 64) return { rounds: 6, firstRoundName: "1/32 финал" };
+    // Calculate the next power of 2 to determine bracket size
+    const nextPowerOf2 = Math.pow(2, Math.ceil(Math.log2(playerCount)));
+    const totalMatches = nextPowerOf2 - 1; // Total matches in a single elimination tournament
+    const rounds = Math.ceil(Math.log2(nextPowerOf2));
+
+    console.log(`Generating bracket for ${playerCount} players. Next power of 2: ${nextPowerOf2}, Total matches: ${totalMatches}, Rounds: ${rounds}`);
+
+    // Determine tournament structure based on next power of 2
+    const getRoundStructure = (powerOf2: number) => {
+      if (powerOf2 <= 4) return { rounds: 2, firstRoundName: "Хагас финал" };
+      if (powerOf2 <= 8) return { rounds: 3, firstRoundName: "Дөрөвний финал" };
+      if (powerOf2 <= 16) return { rounds: 4, firstRoundName: "1/8 финал" };
+      if (powerOf2 <= 32) return { rounds: 5, firstRoundName: "1/16 финал" };
+      if (powerOf2 <= 64) return { rounds: 6, firstRoundName: "1/32 финал" };
       return { rounds: 7, firstRoundName: "1/64 финал" };
     };
 
-    const { rounds, firstRoundName } = getRoundStructure(playerCount);
+    const { rounds: totalRounds, firstRoundName } = getRoundStructure(nextPowerOf2);
 
-    // Calculate matches needed in first round
-    const firstRoundMatches = Math.ceil(playerCount / 2);
-
-    // First round matches
-    for (let i = 0; i < firstRoundMatches; i++) {
-      const player1Index = i * 2;
-      const player2Index = i * 2 + 1;
-
-      matches.push({
-        id: `round1_${i + 1}`,
-        round: "1",
-        roundName: firstRoundName,
-        player1: player1Index < qualifiedPlayers.length ? {
-          id: qualifiedPlayers[player1Index].id,
-          name: qualifiedPlayers[player1Index].name
-        } : undefined,
-        player2: player2Index < qualifiedPlayers.length ? {
-          id: qualifiedPlayers[player2Index].id,
-          name: qualifiedPlayers[player2Index].name
-        } : undefined,
-        isFinished: false
-      });
-    }
-
-    // Generate subsequent rounds
-    let previousRoundMatches = firstRoundMatches;
-    for (let round = 2; round < rounds; round++) {
-      const matchesInRound = Math.ceil(previousRoundMatches / 2);
+    // Generate all rounds
+    for (let round = 1; round <= totalRounds; round++) {
+      const matchesInRound = Math.pow(2, totalRounds - round);
       const roundName = getRoundName(matchesInRound);
 
       for (let i = 0; i < matchesInRound; i++) {
-        matches.push({
-          id: `round${round}_${i + 1}`,
-          round: round.toString(),
-          roundName: roundName,
-          isFinished: false
-        });
+        const matchId = `round${round}_${i + 1}`;
+        
+        // For first round, assign actual players
+        if (round === 1) {
+          const player1Index = i * 2;
+          const player2Index = i * 2 + 1;
+          
+          matches.push({
+            id: matchId,
+            round: round.toString(),
+            roundName: roundName,
+            player1: player1Index < qualifiedPlayers.length ? {
+              id: qualifiedPlayers[player1Index].id,
+              name: qualifiedPlayers[player1Index].name
+            } : undefined,
+            player2: player2Index < qualifiedPlayers.length ? {
+              id: qualifiedPlayers[player2Index].id,
+              name: qualifiedPlayers[player2Index].name
+            } : undefined,
+            isFinished: false
+          });
+        } else {
+          // For subsequent rounds, matches will be populated when previous round winners are determined
+          matches.push({
+            id: matchId,
+            round: round.toString(),
+            roundName: roundName,
+            isFinished: false
+          });
+        }
       }
-      previousRoundMatches = matchesInRound;
     }
 
-    // Final
-    matches.push({
-      id: 'final',
-      round: rounds.toString(),
-      roundName: "Финал",
-      isFinished: false
-    });
-
-    // Third place playoff (only if more than 4 players)
+    // Add third place playoff for tournaments with more than 4 players
     if (playerCount > 4) {
       matches.push({
         id: 'third_place_playoff',
-        round: rounds.toString(),
+        round: totalRounds.toString(),
         roundName: "3-р байрны тоглолт",
         isFinished: false
       });
@@ -538,7 +535,7 @@ const AdminTournamentResults: React.FC = () => {
     setKnockoutResults(matches);
     toast({
       title: "Шигшээ тоглолт үүсгэгдлээ",
-      description: `${qualifiedPlayers.length} тоглогчийн ${rounds} шатлалт шигшээ тоглолт үүсгэгдлээ`
+      description: `${qualifiedPlayers.length} тоглогчийн ${totalMatches + (playerCount > 4 ? 1 : 0)} тоглолттой шигшээ тоглолт үүсгэгдлээ`
     });
   };
 
@@ -837,40 +834,20 @@ const AdminTournamentResults: React.FC = () => {
                                 );
                                 return !usedUserIds.includes(user.id);
                               })}
-                              value={undefined} // Reset value to undefined for proper re-rendering
+                              value={selectedNewPlayerId}
                               onSelect={(user) => {
                                 if (user && user.id) {
+                                  setSelectedNewPlayerId(user.id);
                                   handleAddPlayerToGroup(group.id, user);
                                   setShowAddPlayerToGroup(null);
+                                  setSelectedNewPlayerId('');
+                                } else {
+                                  setSelectedNewPlayerId('');
                                 }
                               }}
                               placeholder="Тоглогч сонгох..."
                             />
                             <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                onClick={() => {
-                                  if (!selectedNewPlayerId) {
-                                    toast({
-                                      title: "Тоглогч сонгоно уу",
-                                      variant: "destructive"
-                                    });
-                                    return;
-                                  }
-
-                                  const selectedUser = users.find(u => u.id === selectedNewPlayerId);
-                                  if (!selectedUser) return;
-
-                                  handleAddPlayerToGroup(group.id, selectedUser);
-
-                                  setShowAddPlayerToGroup(null);
-                                  setSelectedNewPlayerId('');
-                                }}
-                                className="bg-green-600 hover:bg-green-700"
-                              >
-                                <Plus className="w-4 h-4 mr-1" />
-                                Нэмэх
-                              </Button>
                               <Button
                                 size="sm"
                                 variant="outline"
