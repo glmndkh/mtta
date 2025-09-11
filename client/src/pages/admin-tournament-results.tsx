@@ -556,43 +556,109 @@ const AdminTournamentResults: React.FC = () => {
                                   </th>
                                 ))}
                                 <th className="border border-gray-300 p-2 bg-gray-50">Оноо</th>
+                                <th className="border border-gray-300 p-2 bg-gray-50">Байр</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {group.players.map((player, playerIndex) => (
-                                <tr key={player.id}>
-                                  <td className="border border-gray-300 p-2 font-medium">
-                                    {playerIndex + 1}. {player.name}
-                                  </td>
-                                  {group.players.map((_, opponentIndex) => (
-                                    <td key={opponentIndex} className="border border-gray-300 p-1">
-                                      {playerIndex === opponentIndex ? (
-                                        <div className="bg-gray-200 h-8 flex items-center justify-center">
-                                          -
-                                        </div>
-                                      ) : (
-                                        <Input
-                                          type="text"
-                                          value={group.resultMatrix[playerIndex]?.[opponentIndex] || ""}
-                                          onChange={(e) => updateGroupResult(
-                                            group.id,
-                                            playerIndex,
-                                            opponentIndex,
-                                            e.target.value
+                              {(() => {
+                                // Calculate and sort players by points and wins for ranking
+                                const sortedPlayers = group.players
+                                  .map((player, originalIndex) => {
+                                    const stats = group.playerStats.find(s => s.playerId === player.id) || { wins: 0, losses: 0, points: 0 };
+                                    return { player, originalIndex, stats };
+                                  })
+                                  .sort((a, b) => {
+                                    if (b.stats.points !== a.stats.points) {
+                                      return b.stats.points - a.stats.points; // Higher points first
+                                    }
+                                    return b.stats.wins - a.stats.wins; // Then by wins
+                                  });
+
+                                return sortedPlayers.map(({ player, originalIndex, stats }, rankIndex) => {
+                                  const position = rankIndex + 1;
+                                  const isQualified = position <= 2; // Top 2 qualify
+
+                                  return (
+                                    <tr 
+                                      key={player.id}
+                                      className={isQualified ? "bg-green-50" : ""}
+                                    >
+                                      <td className="border border-gray-300 p-2 font-medium">
+                                        <div className="flex items-center gap-2">
+                                          {originalIndex + 1}. {player.name}
+                                          {isQualified && (
+                                            <Badge className="bg-green-100 text-green-800 text-xs px-1 py-0">
+                                              Шалгарсан
+                                            </Badge>
                                           )}
-                                          placeholder="3-1"
-                                          className="h-8 text-center text-sm"
-                                        />
-                                      )}
-                                    </td>
-                                  ))}
-                                  <td className="border border-gray-300 p-2 text-center font-bold">
-                                    {group.playerStats.find(s => s.playerId === player.id)?.points || 0}
-                                  </td>
-                                </tr>
-                              ))}
+                                        </div>
+                                      </td>
+                                      {group.players.map((_, opponentIndex) => (
+                                        <td key={opponentIndex} className="border border-gray-300 p-1">
+                                          {originalIndex === opponentIndex ? (
+                                            <div className="bg-gray-200 h-8 flex items-center justify-center">
+                                              -
+                                            </div>
+                                          ) : (
+                                            <Input
+                                              type="text"
+                                              value={group.resultMatrix[originalIndex]?.[opponentIndex] || ""}
+                                              onChange={(e) => updateGroupResult(
+                                                group.id,
+                                                originalIndex,
+                                                opponentIndex,
+                                                e.target.value
+                                              )}
+                                              placeholder="3-1"
+                                              className="h-8 text-center text-sm"
+                                            />
+                                          )}
+                                        </td>
+                                      ))}
+                                      <td className="border border-gray-300 p-2 text-center font-bold">
+                                        {stats.points}
+                                      </td>
+                                      <td className={`border border-gray-300 p-2 text-center font-bold ${
+                                        isQualified ? "text-green-600" : "text-gray-600"
+                                      }`}>
+                                        {position}
+                                      </td>
+                                    </tr>
+                                  );
+                                });
+                              })()}
                             </tbody>
                           </table>
+                          
+                          {/* Qualification Summary */}
+                          <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                            <h5 className="font-medium text-green-800 mb-2">Дараагийн шатанд шалгарсан тамирчид:</h5>
+                            <div className="space-y-1">
+                              {(() => {
+                                const sortedPlayers = group.players
+                                  .map((player) => {
+                                    const stats = group.playerStats.find(s => s.playerId === player.id) || { wins: 0, losses: 0, points: 0 };
+                                    return { player, stats };
+                                  })
+                                  .sort((a, b) => {
+                                    if (b.stats.points !== a.stats.points) {
+                                      return b.stats.points - a.stats.points;
+                                    }
+                                    return b.stats.wins - a.stats.wins;
+                                  })
+                                  .slice(0, 2); // Top 2
+
+                                return sortedPlayers.map(({ player }, index) => (
+                                  <div key={player.id} className="flex items-center gap-2 text-green-700">
+                                    <Badge className="bg-green-100 text-green-800">
+                                      {index + 1}-р байр
+                                    </Badge>
+                                    {player.name}
+                                  </div>
+                                ));
+                              })()}
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
