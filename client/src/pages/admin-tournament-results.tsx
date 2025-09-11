@@ -1193,7 +1193,7 @@ const AdminTournamentResults: React.FC = () => {
               player1Score: match.player1Score,
               player2Score: match.player2Score
             }))}
-            users={[]} // Not needed since we use qualified players
+            users={users || []} // Pass users for additional player options
             qualifiedPlayers={qualifiedPlayers}
             onSave={(matches) => {
               setKnockoutResults(matches.map(match => ({

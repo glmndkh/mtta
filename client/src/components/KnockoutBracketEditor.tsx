@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UserAutocomplete } from "@/components/UserAutocomplete";
-import { Trash2, Save, RotateCcw, Trophy } from "lucide-react";
+import { Trash2, Save, RotateCcw, Trophy, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Player {
@@ -56,6 +56,10 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [matches, setMatches] = useState<Match[]>(initialMatches);
   const { toast } = useToast();
+  const [showPlayerSelector, setShowPlayerSelector] = useState(false);
+  const [selectedMatchForEdit, setSelectedMatchForEdit] = useState<Match | null>(null);
+  const [selectedPlayerPosition, setSelectedPlayerPosition] = useState<'player1' | 'player2'>('player1');
+
 
   const WIN_TARGET = 3; // Points needed to win
 
@@ -65,6 +69,32 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
       setMatches(initialMatches);
     }
   }, [initialMatches]);
+
+  const handlePlayerSelect = (matchId: string, position: 'player1' | 'player2') => {
+    const match = matches.find(m => m.id === matchId);
+    if (match) {
+      setSelectedMatchForEdit(match);
+      setSelectedPlayerPosition(position);
+      setShowPlayerSelector(true);
+    }
+  };
+
+  const createByePlayer = () => ({ id: 'bye', name: 'BYE' });
+
+  const setPlayerInMatch = (match: Match, position: 'player1' | 'player2', player: Player) => {
+    setMatches(prev => {
+      const updatedMatches = prev.map(m => {
+        if (m.id === match.id) {
+          return { ...m, [position]: player, winner: undefined };
+        }
+        return m;
+      });
+      const updatedMatch = updatedMatches.find(m => m.id === match.id)!;
+      return propagateResult(autoResolveByes(updatedMatches), updatedMatch);
+    });
+    setShowPlayerSelector(false);
+    setSelectedMatchForEdit(null);
+  };
 
   // Generate bye matches for uneven player counts
   const generateByeMatches = useCallback((playerCount: number) => {
@@ -572,6 +602,135 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     }
 
     return rankings;
+  };
+
+  // Render the bracket structure using nested divs
+  const renderBracket = () => {
+    const matchesByRound: Record<number, Match[]> = {};
+    matches.forEach(match => {
+      if (!matchesByRound[match.round]) {
+        matchesByRound[match.round] = [];
+      }
+      matchesByRound[match.round].push(match);
+    });
+
+    const sortedRounds = Object.keys(matchesByRound).map(Number).sort((a, b) => a - b);
+
+    return (
+      <div className="flex items-start justify-center space-x-8">
+        {sortedRounds.map(round => (
+          <div key={round} className="flex flex-col items-center space-y-8">
+            {matchesByRound[round].map((match) => (
+              <Card 
+                key={match.id}
+                className={`
+                  w-[300px] transition-all duration-300 ease-in-out
+                  ${selectedMatchId === match.id ? 'ring-2 ring-blue-500 shadow-lg' : 'shadow-md hover:shadow-xl'}
+                  ${match.winner ? 'bg-gray-800' : 'bg-gray-900'}
+                `}
+                onClick={() => onMatchSelect && onMatchSelect(match.id)}
+              >
+                <CardContent className="p-4 text-white">
+                  <div className="flex items-center justify-between mb-3">
+                    <Badge variant="outline" className="text-gray-400 border-gray-600">
+                      {match.roundName}
+                    </Badge>
+                    {match.id === 'third_place_playoff' && (
+                      <Badge variant="secondary">3-р байр</Badge>
+                    )}
+                  </div>
+
+                  {/* Player 1 Row */}
+                  <div className="player-row" key={`${match.id}-p1`}>
+                    <div 
+                      className="player-name player-clickable"
+                      onClick={() => handlePlayerSelect(match.id, 'player1')}
+                      title="Тоглогч сонгохын тулд дарна уу"
+                    >
+                      {match.player1?.name || 'Тоглогч сонгох'}
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      max={WIN_TARGET}
+                      value={match.player1Score || ''}
+                      onChange={(e) => handleScoreChange(match.id, 'player1Score', e.target.value)}
+                      className="player-score"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="vs-divider">VS</div>
+                  {/* Player 2 Row */}
+                  <div className="player-row" key={`${match.id}-p2`}>
+                    <div 
+                      className="player-name player-clickable"
+                      onClick={() => handlePlayerSelect(match.id, 'player2')}
+                      title="Тоглогч сонгохын тулд дарна уу"
+                    >
+                      {match.player2?.name || 'Тоглогч сонгох'}
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      max={WIN_TARGET}
+                      value={match.player2Score || ''}
+                      onChange={(e) => handleScoreChange(match.id, 'player2Score', e.target.value)}
+                      className="player-score"
+                      placeholder="0"
+                    />
+                  </div>
+
+                  {/* Winner display and selection */}
+                  {match.player1 && match.player2 && (
+                    <div className="mt-3">
+                      {match.winner ? (
+                        <div className="text-center text-sm text-green-400 font-semibold">
+                          Ялагч: {match.winner.name}
+                        </div>
+                      ) : (
+                        <div className="flex justify-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="xs"
+                            onClick={() => handleWinnerSelection(match.id, match.player1!.id)}
+                            disabled={!match.player1}
+                          >
+                            {match.player1?.name}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="xs"
+                            onClick={() => handleWinnerSelection(match.id, match.player2!.id)}
+                            disabled={!match.player2}
+                          >
+                            {match.player2?.name}
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="xs"
+                            onClick={() => handleWinnerSelection(match.id, '')}
+                          >
+                            X
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const handleSaveClick = () => {
+    onSave(matches);
+    toast({
+      title: "Шигшээ тоглолт хадгалагдлаа",
+      description: "Бүх өөрчлөлтүүд амжилттай хадгалагдлаа."
+    });
   };
 
   return (
