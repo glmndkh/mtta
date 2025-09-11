@@ -100,8 +100,22 @@ const AdminTournamentResults: React.FC = () => {
   // Save results mutation
   const saveResultsMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await apiRequest('/api/admin/tournament-results', 'POST', data);
-      return response;
+      console.log('Saving tournament results:', data);
+      const response = await fetch('/api/admin/tournament-results', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Үр дүн хадгалахад алдаа гарлаа');
+      }
+
+      return response.json();
     },
     onSuccess: () => {
       toast({

@@ -2082,6 +2082,15 @@ export class DatabaseStorage implements IStorage {
       const [created] = await db
         .insert(tournamentResults)
         .values({
+          tournamentId: data.tournamentId,
+          groupStageResults: data.groupStageResults,
+          knockoutResults: data.knockoutResults,
+          finalRankings: data.finalRankings,
+          isPublished: data.isPublished,
+        })
+        .returning();
+      return created;
+    }
           ...data,
           id: `tr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           createdAt: new Date(),

@@ -2982,23 +2982,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // --------------
   app.get('/api/tournaments/:tournamentId/results', async (req, res) => {
     try {
-      const { tournamentId } = req.params;
-      const results = await storage.getTournamentResults(tournamentId);
+      const results = await storage.getTournamentResults(req.params.tournamentId);
       res.json(results);
-    } catch (error) {
-      console.error('Error fetching tournament results:', error);
-      res.status(500).json({ error: 'Failed to fetch tournament results' });
+    } catch (error: any) {
+      console.error("Error fetching tournament results:", error);
+      res.status(500).json({ message: error.message });
     }
   });
 
+  // Save tournament results
   app.post('/api/admin/tournament-results', requireAuth, isAdminRole, async (req, res) => {
     try {
-      const data = req.body;
-      const results = await storage.upsertTournamentResults(data);
+      const user = req.user;
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Зөвхөн админ хэрэглэгч үр дүн хадгалах боломжтой" });
+      }
+
+      const { tournamentId, groupStageResults, knockoutResults, finalRankings, isPublished } = req.body;
+
+      if (!tournamentId) {
+        return res.status(400).json({ message: "Тэмцээний ID шаардлагатай" });
+      }
+
+      const results = await storage.upsertTournamentResults({
+        tournamentId,
+        groupStageResults: groupStageResults || null,
+        knockoutResults: knockoutResults || null,
+        finalRankings: finalRankings || null,
+        isPublished: isPublished || false,
+      });
+
+      console.log("Tournament results saved successfully:", tournamentId);
       res.json(results);
-    } catch (error) {
-      console.error('Error saving tournament results:', error);
-      res.status(500).json({ error: 'Failed to save tournament results' });
+    } catch (error: any) {
+      console.error("Error saving tournament results:", error);
+      res.status(500).json({ message: error.message });
     }
   });
 
