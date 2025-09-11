@@ -1,0 +1,82 @@
+Даалгавар: “Тоглолт цэвэрлэх” бүрэн ажиллахгүй байгааг зас
+Шинж тэмдэг
+
+Цэвэрлэх дармагц toast “Тоглолт цэвэрлэгдлээ” гардаг ч:
+
+Dropdown сонголт хэвээр үлдэнэ
+
+“already in 1/8 финал” саарал тэмдэглэл арилахгүй
+
+Оноо болон ялсан тоглогч reset болохгүй
+
+Гол шаардлага
+
+Нэг source of truth = matches[matchId]. Цэвэрлэлт дараах бүгдэд нөлөөлнө:
+
+player1Id = null, player2Id = null
+
+winnerId = null, score = "" | null
+
+qualifiedPlayers[].assignedMatchId-аас уг 2 тоглогчийг алга болго
+
+Dropdown value-уудыг controlled байлгаж value нь дээрх state-аас шууд авдаг байх
+
+“already in …” тэмдэглэл хийх логик нь assignedMatchId дээр тулгуурладаг байх
+
+Ажиллах дараалал
+
+API: PATCH /matches/:id-д { player1Id:null, player2Id:null, winnerId:null, score:null }.
+
+Optimistic update (амжилттай хариу хүлээлгүй түр түр): дээрх утгуудыг локал state-д даруй 반영.
+
+Cache invalidate (хэрэв React Query/TanStack ашиглаж байвал):
+
+matches болон qualifiedPlayers query-г invalidateQueries хийнэ.
+
+Derived list-ээ дахин тооц:
+
+Dropdown-д харагдах “шалгарсан тоглогчид” жагсаалтыг assignedMatchId == null шүүлттэйгээр дарамтгүй дахин гарга.
+
+UI reset:
+
+Dropdown-ын value-г null болгож placeholder (“Тоглогч сонгох”) үзүүл.
+
+Онооны input-д value="" болго.
+
+Winner chips/Toggle-ийг сонгогдоогүй төлөвт оруул.
+
+Хэрэв React Hook Form ашиглаж байвал тухайн match form-д reset(defaultValues) дууд.
+
+Re-render баталгаажуулалт:
+
+Match card компонент дээр key={match.updatedAt || match.version || match.id + ':' + resetCounter} маягаар key өөрчлөгдөж шинэ render хийх боломжтой байг.
+
+Disable state:
+
+Match locked үед цэвэрлэхийг хориглож (disabled), үлдсэн бүх тохиолдолд ажиллах ёстой.
+
+Тест кейсүүд
+
+ Цэвэрлэсний дараа Player1/Player2 dropdown хоосон, placeholder харагдана
+
+ Цэвэрлэсэн тоглогч бусад dropdown-д шууд “already in …” тэмдэглэлгүй, сонгогдох боломжтой болно
+
+ Онооны input хоосон болно; Winner сонголт алга болно
+
+ Браузер refresh хийсэн ч хоосон байдал хадгалагдсан (API-д амжилттай хадгалагдсан)
+
+ 3 секундийн дотор бүх UI хэсгүүд синк (re-render) болсон байх
+
+ Locked match → цэвэрлэх товч disabled, toast/validation зөв гарна
+
+Болзошгүй шалтгаануудыг заавал шалга
+
+Dropdown uncontrolled байгаагаас өмнөх сонголт үлдэж байна → controlled болго
+
+qualifiedPlayers жагсаалт memo/cache-д түгжигдсэн → invalidate / refetch хий
+
+assignedMatchId-ыг null болгохгүй орхисон → саарал “already in …” арилахгүй
+
+Local state-д reset хийсэн ч API амжилтгүй → error handler + rollback хэрэгтэй
+
+Кейст тулгуурласан render-ийг key өөрчлөхгүй байгаагаас хуучин DOM хадгалагдана → дээрх key тактик хэрэглэ
