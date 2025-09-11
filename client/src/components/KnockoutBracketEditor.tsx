@@ -651,6 +651,41 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     }
   };
 
+  // Clear individual match function
+  const handleClearMatch = (matchId: string) => {
+    const match = matches.find(m => m.id === matchId);
+    if (!match) return;
+
+    // Don't allow clearing if match is locked/finished
+    if (match.winner) {
+      toast({
+        title: "Цэвэрлэх боломжгүй",
+        description: "Үр дүн баталгаажсан тоглолтыг цэвэрлэх боломжгүй",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Clear all match data
+    setMatches(prev => prev.map(m => 
+      m.id === matchId 
+        ? { 
+            ...m, 
+            player1: undefined, 
+            player2: undefined, 
+            player1Score: undefined, 
+            player2Score: undefined, 
+            winner: undefined 
+          }
+        : m
+    ));
+
+    toast({
+      title: "Тоглолт цэвэрлэгдлээ",
+      description: "Тоглолтын бүх мэдээлэл устгагдлаа"
+    });
+  };
+
   // Delete match function
   const handleDeleteMatch = (matchId: string) => {
     setMatches(prev => prev.filter(match => match.id !== matchId));
@@ -802,6 +837,24 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                       )}
                     </div>
                   )}
+
+                  {/* Match Actions */}
+                  {(match.player1 || match.player2) && (
+                    <div className="mt-3 flex justify-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="xs"
+                        onClick={() => handleClearMatch(match.id)}
+                        disabled={!!match.winner}
+                        className="text-orange-500 hover:text-orange-700"
+                      >
+                        <RotateCcw className="w-3 h-3 mr-1" />
+                        Цэвэрлэх
+                      </Button>
+                    </div>
+                  )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -947,14 +1000,25 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                         </Badge>
                       )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteMatch(match.id)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleClearMatch(match.id)}
+                        disabled={!!match.winner}
+                        className="text-orange-500 hover:text-orange-700"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteMatch(match.id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1097,9 +1161,24 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                     ) : match.player1 && match.player2 ? (
                       <span>Үр дүн оруулаагүй</span>
                     ) : (
-                      <span>Тоглогчид сонгоогүй</span>
+                      <span className="text-gray-400">Тоглогчид сонгоогүй</span>
                     )}
                   </div>
+
+                  {/* Clear Match Button */}
+                  {!match.winner && (match.player1 || match.player2) && (
+                    <div className="mt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleClearMatch(match.id)}
+                        className="w-full text-orange-500 hover:text-orange-700 border-orange-300"
+                      >
+                        <RotateCcw className="w-4 h-4 mr-2" />
+                        Тоглолт цэвэрлэх
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
