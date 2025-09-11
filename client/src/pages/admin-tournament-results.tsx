@@ -116,9 +116,13 @@ const AdminTournamentResults: React.FC = () => {
   // Initialize data when existing results are loaded
   useEffect(() => {
     if (existingResults) {
-      setGroupStageResults((existingResults.groupStageResults as any) || []);
-      setKnockoutResults((existingResults.knockoutResults as any) || []);
-      setFinalRankings((existingResults.finalRankings as any) || []);
+      const groupResults = existingResults.groupStageResults;
+      const knockoutResultsData = existingResults.knockoutResults;
+      const finalRankingsData = existingResults.finalRankings;
+      
+      setGroupStageResults(Array.isArray(groupResults) ? groupResults : []);
+      setKnockoutResults(Array.isArray(knockoutResultsData) ? knockoutResultsData : []);
+      setFinalRankings(Array.isArray(finalRankingsData) ? finalRankingsData : []);
       setIsPublished(existingResults.isPublished || false);
     }
   }, [existingResults]);
@@ -491,7 +495,7 @@ const AdminTournamentResults: React.FC = () => {
               </div>
             ) : null}
 
-            {groupStageResults.map((group, groupIndex) => (
+            {groupStageResults && Array.isArray(groupStageResults) && groupStageResults.map((group, groupIndex) => (
               <Card key={group.id}>
                 <CardHeader>
                   <div className="flex items-center justify-between">
