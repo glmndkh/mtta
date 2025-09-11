@@ -700,7 +700,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                       <UserAutocomplete
                         users={getAvailableUsers(match.id, 'player1')}
                         value={match.player1?.id || ''}
-                        onChange={(playerId) => handlePlayerChange(match.id, 'player1', playerId)}
+                        onSelect={(user) => handlePlayerChange(match.id, 'player1', user?.id || '')}
                         placeholder="Тоглогч сонгох"
                         includeSpecialOptions={true}
                       />
@@ -720,7 +720,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                       <UserAutocomplete
                         users={getAvailableUsers(match.id, 'player2')}
                         value={match.player2?.id || ''}
-                        onChange={(playerId) => handlePlayerChange(match.id, 'player2', playerId)}
+                        onSelect={(user) => handlePlayerChange(match.id, 'player2', user?.id || '')}
                         placeholder="Тоглогч сонгох"
                         includeSpecialOptions={true}
                       />

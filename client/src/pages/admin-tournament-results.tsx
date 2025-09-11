@@ -14,7 +14,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { UserAutocomplete } from "@/components/UserAutocomplete";
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
-import type { Tournament, TournamentResults, TournamentParticipant } from "@shared/schema";
+import type { Tournament, TournamentResults, TournamentParticipant, User as UserType } from "@shared/schema";
 import * as XLSX from 'xlsx';
 
 interface GroupStageGroup {
@@ -105,7 +105,7 @@ const AdminTournamentResults: React.FC = () => {
   });
 
   // Fetch all users for autocomplete
-  const { data: users = [] } = useQuery<User[]>({
+  const { data: users = [] } = useQuery<UserType[]>({
     queryKey: ['/api/admin/users'],
     enabled: !!params?.tournamentId
   });
@@ -164,7 +164,8 @@ const AdminTournamentResults: React.FC = () => {
   useEffect(() => {
     const qualified: QualifiedPlayer[] = [];
 
-    groupStageResults.forEach(group => {
+    if (Array.isArray(groupStageResults)) {
+      groupStageResults.forEach(group => {
       if (group.players.length >= 2) {
         const sortedPlayers = group.players
           .map((player) => {
@@ -195,8 +196,9 @@ const AdminTournamentResults: React.FC = () => {
             seed: qualified.length + 1
           });
         });
-      }
-    });
+        }
+      });
+    }
 
     setQualifiedPlayers(qualified);
   }, [groupStageResults]);
@@ -596,7 +598,7 @@ const AdminTournamentResults: React.FC = () => {
   };
 
   // Improved handleAddPlayerToGroup function
-  const handleAddPlayerToGroup = (groupId: string, user: User) => {
+  const handleAddPlayerToGroup = (groupId: string, user: UserType) => {
     if (!user || !user.id) {
       console.error('Invalid user data:', user);
       toast({
@@ -821,7 +823,7 @@ const AdminTournamentResults: React.FC = () => {
             </div>
           </div>
 
-          {groupStageResults.length > 0 ? (
+          {Array.isArray(groupStageResults) && groupStageResults.length > 0 ? (
             <div className="space-y-6">
               {groupStageResults.map((group, groupIndex) => (
                 <Card key={group.id} className="bg-gray-800 border-gray-700">
@@ -869,11 +871,11 @@ const AdminTournamentResults: React.FC = () => {
                           <h5 className="text-sm font-medium text-white mb-3">Тоглогч сонгох</h5>
                           <div className="space-y-3">
                             <UserAutocomplete
-                              users={users.filter(user => {
+                              users={(users || []).filter(user => {
                                 // Filter out users already in groups
-                                const usedUserIds = groupStageResults.flatMap(g => 
+                                const usedUserIds = Array.isArray(groupStageResults) ? groupStageResults.flatMap(g => 
                                   g.players.map(p => p.userId).filter(Boolean) // Use userId for filtering
-                                );
+                                ) : [];
                                 return !usedUserIds.includes(user.id);
                               })}
                               value={selectedNewPlayerId}
@@ -1072,7 +1074,7 @@ const AdminTournamentResults: React.FC = () => {
           <Tabs value={selectedPlayerTab} onValueChange={setSelectedPlayerTab}>
                 <TabsList className="bg-gray-800 border border-gray-700 p-1">
                   <TabsTrigger value="all" className="px-4 py-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300">Бүгд ({qualifiedPlayers.length})</TabsTrigger>
-                  {qualifiedPlayers.map((player) => (
+                  {Array.isArray(qualifiedPlayers) ? qualifiedPlayers.map((player) => (
                     <TabsTrigger
                       key={player.id}
                       value={player.id}
@@ -1080,7 +1082,7 @@ const AdminTournamentResults: React.FC = () => {
                     >
                       {player.name}
                     </TabsTrigger>
-                  ))}
+                  )) : null}
                   <TabsTrigger value="manage" className="px-4 py-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-300">
                     Тоглогч удирдах
                   </TabsTrigger>
@@ -1090,7 +1092,7 @@ const AdminTournamentResults: React.FC = () => {
                   <Card className="bg-gray-800 border-gray-700">
                     <CardContent className="p-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                        {qualifiedPlayers.map((player) => (
+                        {Array.isArray(qualifiedPlayers) ? qualifiedPlayers.map((player) => (
                           <div
                             key={player.id}
                             className="flex items-center gap-3 p-3 bg-gray-700 rounded-lg border border-gray-600"
@@ -1103,13 +1105,13 @@ const AdminTournamentResults: React.FC = () => {
                               <div className="text-xs text-gray-400">{player.groupName} - {player.position}-р</div>
                             </div>
                       </div>
-                    ))}
+                    )) : null}
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            {qualifiedPlayers.map((player) => (
+            {Array.isArray(qualifiedPlayers) ? qualifiedPlayers.map((player) => (
                   <TabsContent key={player.id} value={player.id} className="mt-4">
                     <Card className="bg-gray-800 border-gray-700">
                       <CardContent className="p-4">
@@ -1126,7 +1128,7 @@ const AdminTournamentResults: React.FC = () => {
                   </CardContent>
                 </Card>
               </TabsContent>
-            ))}
+            )) : null}
 
             <TabsContent value="manage" className="mt-4">
                 <Card className="bg-gray-800 border-gray-700">
