@@ -276,7 +276,76 @@ const AdminTournamentResults: React.FC = () => {
     }));
   };
 
-  // Generate empty knockout bracket
+  // Create group stage
+  const createGroupStage = () => {
+    if (!participants || participants.length < 8) {
+      toast({
+        title: "Хангалтгүй тоглогч",
+        description: "Хэсэгийн тоглолтод дор хаяж 8 тоглогч шаардлагатай",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Calculate number of groups based on participants
+    const totalParticipants = participants.length;
+    let groupCount = 4; // Default 4 groups
+    let playersPerGroup = 4; // Default 4 players per group
+
+    if (totalParticipants >= 64) {
+      groupCount = 16;
+      playersPerGroup = 4;
+    } else if (totalParticipants >= 32) {
+      groupCount = 8;
+      playersPerGroup = 4;
+    } else if (totalParticipants >= 16) {
+      groupCount = 4;
+      playersPerGroup = 4;
+    } else {
+      groupCount = Math.ceil(totalParticipants / 4);
+      playersPerGroup = 4;
+    }
+
+    const groups: GroupStageGroup[] = [];
+    const shuffledParticipants = [...participants].sort(() => Math.random() - 0.5);
+
+    // Create groups
+    for (let i = 0; i < groupCount; i++) {
+      const groupLetter = String.fromCharCode(65 + i); // A, B, C, D...
+      const startIndex = i * playersPerGroup;
+      const groupParticipants = shuffledParticipants.slice(startIndex, startIndex + playersPerGroup);
+
+      if (groupParticipants.length >= 3) { // At least 3 players needed
+        groups.push({
+          id: `group_${groupLetter.toLowerCase()}`,
+          name: `${groupLetter} хэсэг`,
+          players: groupParticipants.map(p => ({
+            id: p.id,
+            name: p.user?.firstName && p.user?.lastName 
+              ? `${p.user.firstName} ${p.user.lastName}`
+              : `Тоглогч ${p.id}`,
+            playerId: p.id,
+            userId: p.userId
+          })),
+          resultMatrix: [],
+          playerStats: groupParticipants.map(p => ({
+            playerId: p.id,
+            wins: 0,
+            losses: 0,
+            points: 0
+          }))
+        });
+      }
+    }
+
+    setGroupStageResults(groups);
+    toast({
+      title: "Хэсэгийн шат үүсгэгдлээ",
+      description: `${groups.length} хэсэг үүсгэж ${totalParticipants} тоглогчийг хуваарилсан`
+    });
+  };
+
+  // Generate proper knockout bracket based on qualified players count
   const generateKnockoutBracket = () => {
     if (qualifiedPlayers.length < 4) {
       toast({
@@ -287,49 +356,103 @@ const AdminTournamentResults: React.FC = () => {
       return;
     }
 
+    const playerCount = qualifiedPlayers.length;
     const matches: KnockoutMatch[] = [];
 
-    // Semifinals
-    for (let i = 0; i < qualifiedPlayers.length; i += 2) {
-      if (i + 1 < qualifiedPlayers.length) {
+    // Determine tournament structure based on player count
+    const getRoundStructure = (count: number) => {
+      if (count <= 4) return { rounds: 2, firstRoundName: "Хагас финал" };
+      if (count <= 8) return { rounds: 3, firstRoundName: "Дөрөвний финал" };
+      if (count <= 16) return { rounds: 4, firstRoundName: "1/8 финал" };
+      if (count <= 32) return { rounds: 5, firstRoundName: "1/16 финал" };
+      if (count <= 64) return { rounds: 6, firstRoundName: "1/32 финал" };
+      return { rounds: 7, firstRoundName: "1/64 финал" };
+    };
+
+    const { rounds, firstRoundName } = getRoundStructure(playerCount);
+
+    // Calculate matches needed in first round
+    const firstRoundMatches = Math.ceil(playerCount / 2);
+    
+    // First round matches
+    for (let i = 0; i < firstRoundMatches; i++) {
+      const player1Index = i * 2;
+      const player2Index = i * 2 + 1;
+      
+      matches.push({
+        id: `round1_${i + 1}`,
+        round: "1",
+        roundName: firstRoundName,
+        player1: player1Index < qualifiedPlayers.length ? {
+          id: qualifiedPlayers[player1Index].id,
+          name: qualifiedPlayers[player1Index].name
+        } : undefined,
+        player2: player2Index < qualifiedPlayers.length ? {
+          id: qualifiedPlayers[player2Index].id,
+          name: qualifiedPlayers[player2Index].name
+        } : undefined,
+        isFinished: false
+      });
+    }
+
+    // Generate subsequent rounds
+    let previousRoundMatches = firstRoundMatches;
+    for (let round = 2; round < rounds; round++) {
+      const matchesInRound = Math.ceil(previousRoundMatches / 2);
+      const roundName = getRoundName(matchesInRound);
+      
+      for (let i = 0; i < matchesInRound; i++) {
         matches.push({
-          id: `sf_${i/2 + 1}`,
-          round: "1",
-          roundName: "Хагас финал",
-          player1: {
-            id: qualifiedPlayers[i].id,
-            name: qualifiedPlayers[i].name
-          },
-          player2: {
-            id: qualifiedPlayers[i + 1].id,
-            name: qualifiedPlayers[i + 1].name
-          },
+          id: `round${round}_${i + 1}`,
+          round: round.toString(),
+          roundName: roundName,
           isFinished: false
         });
       }
+      previousRoundMatches = matchesInRound;
     }
 
     // Final
     matches.push({
       id: 'final',
-      round: "2",
+      round: rounds.toString(),
       roundName: "Финал",
       isFinished: false
     });
 
-    // Third place playoff
-    matches.push({
-      id: 'third_place_playoff',
-      round: "2",
-      roundName: "3-р байрны тоглолт",
-      isFinished: false
-    });
+    // Third place playoff (only if more than 4 players)
+    if (playerCount > 4) {
+      matches.push({
+        id: 'third_place_playoff',
+        round: rounds.toString(),
+        roundName: "3-р байрны тоглолт",
+        isFinished: false
+      });
+    }
 
     setKnockoutResults(matches);
     toast({
       title: "Шигшээ тоглолт үүсгэгдлээ",
-      description: `${qualifiedPlayers.length} тоглогчийн шигшээ тоглолт үүсгэгдлээ`
+      description: `${qualifiedPlayers.length} тоглогчийн ${rounds} шатлалт шигшээ тоглолт үүсгэгдлээ`
     });
+  };
+
+  // Helper function to get round name based on matches count
+  const getRoundName = (matchCount: number): string => {
+    switch (matchCount) {
+      case 1: return 'Финал';
+      case 2: return 'Хагас финал';
+      case 4: return 'Дөрөвний финал';
+      case 8: return '1/8 финал';
+      case 16: return '1/16 финал';
+      case 32: return '1/32 финал';
+      case 64: return '1/64 финал';
+      default: 
+        if (matchCount > 1) {
+          return `1/${matchCount * 2} финал`;
+        }
+        return `${matchCount} тоглолт`;
+    }
   };
 
   // Save function
@@ -619,46 +742,24 @@ const AdminTournamentResults: React.FC = () => {
             <Card className="bg-gray-800 border-gray-700">
               <CardContent className="p-6 text-center">
                 <p className="text-gray-400 mb-4">Хэсэгийн шатны тоглолт үүсгэгдээгүй байна</p>
-                <Button 
-                  onClick={() => {
-                    // Create sample group stage data
-                    const sampleGroups: GroupStageGroup[] = [
-                      {
-                        id: 'group_a',
-                        name: 'А хэсэг',
-                        players: participants?.slice(0, 4).map((p, i) => ({
-                          id: p.id,
-                          name: p.user?.firstName && p.user?.lastName 
-                            ? `${p.user.firstName} ${p.user.lastName}`
-                            : `Тоглогч ${i + 1}`,
-                          playerId: p.id,
-                          userId: p.userId
-                        })) || [],
-                        resultMatrix: [],
-                        playerStats: []
-                      },
-                      {
-                        id: 'group_b',
-                        name: 'Б хэсэг',
-                        players: participants?.slice(4, 8).map((p, i) => ({
-                          id: p.id,
-                          name: p.user?.firstName && p.user?.lastName 
-                            ? `${p.user.firstName} ${p.user.lastName}`
-                            : `Тоглогч ${i + 5}`,
-                          playerId: p.id,
-                          userId: p.userId
-                        })) || [],
-                        resultMatrix: [],
-                        playerStats: []
-                      }
-                    ];
-                    setGroupStageResults(sampleGroups);
-                  }}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Хэсэгийн шат үүсгэх
-                </Button>
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-500">
+                    {participants?.length || 0} оролцогч бүртгэгдсэн байна
+                  </p>
+                  <Button 
+                    onClick={createGroupStage}
+                    disabled={!participants || participants.length < 8}
+                    className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Хэсэгийн шат үүсгэх
+                  </Button>
+                  {(!participants || participants.length < 8) && (
+                    <p className="text-xs text-red-400">
+                      Дор хаяж 8 тоглогч шаардлагатай
+                    </p>
+                  )}
+                </div>
               </CardContent>
             </Card>
           )}
