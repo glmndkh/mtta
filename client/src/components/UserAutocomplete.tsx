@@ -47,13 +47,13 @@ export function UserAutocomplete({
     }
   }, [customNameValue, value]);
 
-  const selectedUser = users.find(user => user.id === value);
+  const selectedUser = users?.find(user => user.id === value);
   const displayValue = selectedUser
     ? formatName(selectedUser.firstName, selectedUser.lastName)
     : customNameValue || placeholder;
 
   // Filter users based on search term
-  const filteredUsers = users.filter(user => {
+  const filteredUsers = (users || []).filter(user => {
     const fullName = formatName(user.firstName, user.lastName).toLowerCase();
     const email = user.email?.toLowerCase() || "";
     const club = user.clubAffiliation?.toLowerCase() || "";
