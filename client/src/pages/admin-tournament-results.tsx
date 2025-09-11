@@ -135,6 +135,16 @@ const AdminTournamentResults: React.FC = () => {
 
   // Group Stage Functions
   const addGroup = () => {
+    // Check if there are players available to add to groups
+    if (!users || users.length === 0) {
+      toast({
+        title: "Алдаа",
+        description: "Хэрэглэгчдийн жагсаалт хоосон байна. Эхлээд тамирчдыг системд бүртгүүлнэ үү.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const newGroup: GroupStageGroup = {
       id: Date.now().toString(),
       name: `Group ${String.fromCharCode(65 + groupStageResults.length)}`,
@@ -143,6 +153,11 @@ const AdminTournamentResults: React.FC = () => {
       playerStats: [],
     };
     setGroupStageResults([...groupStageResults, newGroup]);
+    
+    toast({
+      title: "Амжилттай",
+      description: `${newGroup.name} үүсгэгдлээ. Одоо тамирчдыг нэмнэ үү.`,
+    });
   };
 
   const deleteGroup = (groupId: string) => {
@@ -150,6 +165,20 @@ const AdminTournamentResults: React.FC = () => {
   };
 
   const addPlayerToGroup = (groupId: string, player: User) => {
+    // Check if player is already in this group or any other group
+    const isPlayerAlreadyInGroup = groupStageResults.some(group => 
+      group.players.some(p => p.userId === player.id)
+    );
+
+    if (isPlayerAlreadyInGroup) {
+      toast({
+        title: "Анхаар",
+        description: "Энэ тамирчин аль хэдийн групп дээр байгаа байна.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setGroupStageResults(prev => prev.map(group => {
       if (group.id === groupId) {
         const newPlayer = {
@@ -168,6 +197,11 @@ const AdminTournamentResults: React.FC = () => {
           )
         );
 
+        toast({
+          title: "Амжилттай",
+          description: `${newPlayer.name} группт нэмэгдлээ`,
+        });
+
         return {
           ...group,
           players: updatedPlayers,
@@ -185,28 +219,59 @@ const AdminTournamentResults: React.FC = () => {
   };
 
   const updateGroupResult = (groupId: string, playerIndex: number, opponentIndex: number, result: string) => {
+    // Validate input format (should be like "3-1", "3-2", etc.)
+    if (result && result.trim() !== '' && !result.match(/^\d+-\d+$/)) {
+      toast({
+        title: "Буруу формат",
+        description: "Үр дүнг 3-1, 3-2 гэх мэтээр оруулна уу",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setGroupStageResults(prev => prev.map(group => {
       if (group.id === groupId) {
         const newMatrix = [...group.resultMatrix];
+        if (!newMatrix[playerIndex]) {
+          newMatrix[playerIndex] = [];
+        }
         newMatrix[playerIndex][opponentIndex] = result;
 
-        // Calculate stats from score strings
+        // Automatically fill the opposite result if it's a valid score
+        if (result && result.includes('-')) {
+          const [score1, score2] = result.split('-').map(s => parseInt(s.trim()));
+          if (!isNaN(score1) && !isNaN(score2)) {
+            if (!newMatrix[opponentIndex]) {
+              newMatrix[opponentIndex] = [];
+            }
+            // Only set the opposite if it's not already filled
+            if (!newMatrix[opponentIndex][playerIndex] || newMatrix[opponentIndex][playerIndex] === '') {
+              newMatrix[opponentIndex][playerIndex] = `${score2}-${score1}`;
+            }
+          }
+        }
+
+        // Calculate comprehensive stats from score strings
         const newStats = group.players.map((player, idx) => {
-          let wins = 0, losses = 0, points = 0;
+          let wins = 0, losses = 0, points = 0, setsWon = 0, setsLost = 0;
 
           for (let j = 0; j < group.players.length; j++) {
             if (idx !== j) {
-              const matchResult = newMatrix[idx][j];
+              const matchResult = newMatrix[idx] && newMatrix[idx][j];
               if (matchResult && typeof matchResult === 'string' && matchResult.includes('-')) {
                 const [score1, score2] = matchResult.split('-').map(s => parseInt(s.trim()));
                 if (!isNaN(score1) && !isNaN(score2)) {
+                  setsWon += score1;
+                  setsLost += score2;
+                  
                   if (score1 > score2) {
                     wins++;
-                    points += 2;
+                    points += 3; // 3 points for a win
                   } else if (score1 < score2) {
                     losses++;
+                    points += 0; // 0 points for a loss
                   } else if (score1 === score2) {
-                    points += 1;
+                    points += 1; // 1 point for a draw (rare in table tennis)
                   }
                 }
               }
@@ -218,6 +283,9 @@ const AdminTournamentResults: React.FC = () => {
             wins,
             losses,
             points,
+            setsWon,
+            setsLost,
+            setsDifference: setsWon - setsLost,
           };
         });
 
@@ -261,6 +329,41 @@ const AdminTournamentResults: React.FC = () => {
   // Save function
   const handleSave = () => {
     if (!params?.tournamentId) return;
+
+    // Validate groups before saving
+    const hasEmptyGroups = groupStageResults.some(group => group.players.length === 0);
+    const hasIncompleteMatches = groupStageResults.some(group => {
+      if (group.players.length < 2) return false; // Skip validation for groups with less than 2 players
+      
+      // Check if all matches have results
+      for (let i = 0; i < group.players.length; i++) {
+        for (let j = 0; j < group.players.length; j++) {
+          if (i !== j) {
+            const result = group.resultMatrix[i] && group.resultMatrix[i][j];
+            if (!result || result.trim() === '') {
+              return true; // Has incomplete matches
+            }
+          }
+        }
+      }
+      return false;
+    });
+
+    if (hasEmptyGroups) {
+      toast({
+        title: "Анхааруулга",
+        description: "Хоосон группууд байна. Эдгээрийг устгах эсвэл тамирчин нэмнэ үү.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (hasIncompleteMatches) {
+      const shouldContinue = window.confirm(
+        "Зарим тоглолтын үр дүн дутуу байна. Хадгалахыг үргэлжлүүлэх үү?"
+      );
+      if (!shouldContinue) return;
+    }
 
     const data = {
       tournamentId: params.tournamentId,
@@ -536,8 +639,42 @@ const AdminTournamentResults: React.FC = () => {
                       <h4 className="font-medium">Тамирчид ({group.players.length})</h4>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         {group.players.map((player, index) => (
-                          <div key={player.id} className="p-2 bg-gray-100 rounded text-sm">
-                            {index + 1}. {player.name}
+                          <div key={player.id} className="p-2 bg-gray-100 rounded text-sm flex justify-between items-center">
+                            <span>{index + 1}. {player.name}</span>
+                            <Button
+                              onClick={() => {
+                                setGroupStageResults(prev => prev.map(g => {
+                                  if (g.id === group.id) {
+                                    const updatedPlayers = g.players.filter(p => p.id !== player.id);
+                                    const matrixSize = updatedPlayers.length;
+                                    const newMatrix = Array(matrixSize).fill(null).map((_, i) =>
+                                      Array(matrixSize).fill(null).map((_, j) => i === j ? 'X' : '')
+                                    );
+                                    return {
+                                      ...g,
+                                      players: updatedPlayers,
+                                      resultMatrix: newMatrix,
+                                      playerStats: updatedPlayers.map(p => ({
+                                        playerId: p.id,
+                                        wins: 0,
+                                        losses: 0,
+                                        points: 0,
+                                      })),
+                                    };
+                                  }
+                                  return g;
+                                }));
+                                toast({
+                                  title: "Амжилттай",
+                                  description: `${player.name} группаас хасагдлаа`,
+                                });
+                              }}
+                              variant="destructive"
+                              size="sm"
+                              className="ml-2 h-6 w-6 p-0"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </Button>
                           </div>
                         ))}
                       </div>
@@ -579,16 +716,33 @@ const AdminTournamentResults: React.FC = () => {
                                 </thead>
                                 <tbody>
                                   {(() => {
-                                    // Calculate and sort players by points and wins for ranking
+                                    // Calculate and sort players by points, wins, and sets difference for ranking
                                     const sortedPlayers = group.players
                                       .map((player, originalIndex) => {
-                                        const stats = group.playerStats.find(s => s.playerId === player.id) || { wins: 0, losses: 0, points: 0 };
+                                        const stats = group.playerStats.find(s => s.playerId === player.id) || { 
+                                          wins: 0, 
+                                          losses: 0, 
+                                          points: 0, 
+                                          setsWon: 0, 
+                                          setsLost: 0, 
+                                          setsDifference: 0 
+                                        };
                                         return { player, originalIndex, stats };
                                       })
                                       .sort((a, b) => {
+                                        // Primary: Points
                                         if (b.stats.points !== a.stats.points) {
                                           return b.stats.points - a.stats.points;
                                         }
+                                        // Secondary: Sets difference (sets won - sets lost)
+                                        if ((b.stats.setsDifference || 0) !== (a.stats.setsDifference || 0)) {
+                                          return (b.stats.setsDifference || 0) - (a.stats.setsDifference || 0);
+                                        }
+                                        // Tertiary: Sets won
+                                        if ((b.stats.setsWon || 0) !== (a.stats.setsWon || 0)) {
+                                          return (b.stats.setsWon || 0) - (a.stats.setsWon || 0);
+                                        }
+                                        // Quaternary: Wins
                                         return b.stats.wins - a.stats.wins;
                                       });
 
