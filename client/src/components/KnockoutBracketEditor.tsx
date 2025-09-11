@@ -261,12 +261,12 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
 
     // Sort qualified players by seed
     const sortedBySeeed = [...qualifiedPlayers].sort((a, b) => (a.seed || a.position) - (b.seed || b.position));
-    
+
     const bracket = generateBracket(qualifiedPlayers.length);
-    
+
     // Assign players to first round matches based on seeding
     const firstRoundMatches = bracket.filter(m => m.round === 1);
-    
+
     let playerIndex = 0;
     firstRoundMatches.forEach((match, matchIndex) => {
       if (playerIndex < sortedBySeeed.length) {
@@ -276,7 +276,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
         };
         playerIndex++;
       }
-      
+
       if (playerIndex < sortedBySeeed.length) {
         match.player2 = {
           id: sortedBySeeed[playerIndex].id,
@@ -288,7 +288,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
 
     const resolved = autoResolveByes(bracket);
     setMatches(resolved);
-    
+
     toast({
       title: "Seed-ээр автомат бөглөгдлөө",
       description: `${qualifiedPlayers.length} тоглогчийг seed-ийн дагуу байрлуулсан. Одоо гараар өөрчилж болно.`
@@ -905,8 +905,9 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                 if (window.confirm('Бүх тоглолтыг устгахдаа итгэлтэй байна уу?')) {
                   setMatches([]);
                   toast({
-                    title: "Цэвэрлэгдлээ",
-                    description: "Бүх тоглолтууд устгагдлаа"
+                    title: "Бүгд амжилттай цэвэрлэгдлээ",
+                    description: "Бүх тоглолтууд устгагдаж, бүх тоглогчид дахин сонгогдох боломжтой боллоо",
+                    variant: "default"
                   });
                 }
               }} 
@@ -942,7 +943,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
             <h4 className="font-medium mb-2">Тоглогч сонголтын төлөв</h4>
             <div className="text-sm space-y-1">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-blue-50 border rounded"></div>
+                <div className="w-3 h-3 bg-blue-50 rounded"></div>
                 <span className="text-gray-600">Тоглогч сонгох</span>
               </div>
               <div className="flex items-center gap-2">
