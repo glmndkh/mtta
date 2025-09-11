@@ -4,7 +4,6 @@ import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatName } from "@/lib/utils";
 
 interface Judge {
@@ -18,7 +17,11 @@ interface Judge {
 export default function JudgesPage() {
   const [tab, setTab] = useState("domestic");
 
-  const { data: judges, isLoading: judgesLoading, error: judgesError } = useQuery<Judge[]>({
+  const {
+    data: judges,
+    isLoading: judgesLoading,
+    error: judgesError,
+  } = useQuery<Judge[]>({
     queryKey: ["/api/judges", tab],
     queryFn: async () => {
       const res = await fetch(`/api/judges?type=${tab}`);
@@ -29,42 +32,67 @@ export default function JudgesPage() {
     refetchOnMount: true,
   });
 
-  console.log('Judges data:', { judges, judgesLoading, judgesError });
+  const renderJudgeCard = (judge: Judge) => (
+    <Card key={judge.id} className="overflow-hidden">
+      {judge.imageUrl && (
+        <img
+          src={judge.imageUrl}
+          alt={formatName(judge.firstName, judge.lastName)}
+          className="w-full h-48 object-contain bg-gray-100"
+        />
+      )}
+      <CardContent className="p-4 bg-gradient-to-r from-green-700 to-green-600 text-white">
+        <div className="flex flex-col">
+          <span className="text-xl font-semibold">
+            {formatName(judge.firstName, judge.lastName)}
+          </span>
+          <span className="text-sm text-gray-200">
+            {judge.judgeType === "domestic" ? "Дотоодын шүүгч" : "Олон улсын шүүгч"}
+          </span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  console.log("Judges data:", { judges, judgesLoading, judgesError });
 
   return (
     <PageWithLoading isLoading={judgesLoading} error={judgesError}>
       <Navigation />
       <div className="main-bg">
         <div className="container mx-auto px-4 py-8">
-          <h1 className="text-4xl font-bold text-white mb-6 text-center">Шүүгчид</h1>
+          <h1 className="text-4xl font-bold text-white mb-6 text-center">
+            Шүүгчид
+          </h1>
           <Tabs value={tab} onValueChange={setTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-800 border-gray-700">
-              <TabsTrigger value="domestic" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">Дотоодын шүүгчид</TabsTrigger>
-              <TabsTrigger value="international" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">Олон улсын шүүгчид</TabsTrigger>
+              <TabsTrigger
+                value="domestic"
+                className="data-[state=active]:bg-green-600 data-[state=active]:text-white"
+              >
+                Дотоодын шүүгчид
+              </TabsTrigger>
+              <TabsTrigger
+                value="international"
+                className="data-[state=active]:bg-green-600 data-[state=active]:text-white"
+              >
+                Олон улсын шүүгчид
+              </TabsTrigger>
             </TabsList>
-            <TabsContent value={"domestic"}>
+            <TabsContent value="domestic">
               <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                {judges && Array.isArray(judges) ?
-                  judges.filter(judge => judge.judgeType === 'domestic').map(judge => (
-                    <Card key={judge.id} className="bg-gray-800 text-white hover:bg-gray-700 transition-colors aspect-[3/4] flex flex-col">
-                      <CardContent className="flex flex-col items-center justify-center p-8 h-full text-center">
-                        <Avatar className="w-40 h-48 mb-6 rounded-lg">
-                          <AvatarImage src={judge.imageUrl} alt={formatName(judge.firstName, judge.lastName)} className="object-cover" />
-                          <AvatarFallback className="text-3xl rounded-lg">{judge.lastName?.[0]}{judge.firstName?.[0]}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-semibold text-lg mb-1">{formatName(judge.firstName, judge.lastName)}</div>
-                          <div className="text-sm text-gray-400">Дотоодын шүүгч</div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )) : null
-                }
-                {judges && Array.isArray(judges) && judges.filter(judge => judge.judgeType === 'domestic').length === 0 && (
-                  <div className="col-span-full text-center text-gray-400 py-8">
-                    Дотоодын шүүгч байхгүй байна
-                  </div>
-                )}
+                {judges && Array.isArray(judges)
+                  ? judges
+                      .filter((judge) => judge.judgeType === "domestic")
+                      .map(renderJudgeCard)
+                  : null}
+                {judges &&
+                  Array.isArray(judges) &&
+                  judges.filter((judge) => judge.judgeType === "domestic").length === 0 && (
+                    <div className="col-span-full text-center text-gray-400 py-8">
+                      Дотоодын шүүгч байхгүй байна
+                    </div>
+                  )}
                 {!judges && (
                   <div className="col-span-full text-center text-gray-400 py-8">
                     Ачааллаж байна...
@@ -72,29 +100,20 @@ export default function JudgesPage() {
                 )}
               </div>
             </TabsContent>
-            <TabsContent value={"international"}>
+            <TabsContent value="international">
               <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                {judges && Array.isArray(judges) ?
-                  judges.filter(judge => judge.judgeType === 'international').map(judge => (
-                    <Card key={judge.id} className="bg-gray-800 text-white hover:bg-gray-700 transition-colors aspect-[3/4] flex flex-col">
-                      <CardContent className="flex flex-col items-center justify-center p-8 h-full text-center">
-                        <Avatar className="w-40 h-48 mb-6 rounded-lg">
-                          <AvatarImage src={judge.imageUrl} alt={formatName(judge.firstName, judge.lastName)} className="object-cover" />
-                          <AvatarFallback className="text-3xl rounded-lg">{judge.lastName?.[0]}{judge.firstName?.[0]}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-semibold text-lg mb-1">{formatName(judge.firstName, judge.lastName)}</div>
-                          <div className="text-sm text-gray-400">Олон улсын шүүгч</div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )) : null
-                }
-                {judges && Array.isArray(judges) && judges.filter(judge => judge.judgeType === 'international').length === 0 && (
-                  <div className="col-span-full text-center text-gray-400 py-8">
-                    Олон улсын шүүгч байхгүй байна
-                  </div>
-                )}
+                {judges && Array.isArray(judges)
+                  ? judges
+                      .filter((judge) => judge.judgeType === "international")
+                      .map(renderJudgeCard)
+                  : null}
+                {judges &&
+                  Array.isArray(judges) &&
+                  judges.filter((judge) => judge.judgeType === "international").length === 0 && (
+                    <div className="col-span-full text-center text-gray-400 py-8">
+                      Олон улсын шүүгч байхгүй байна
+                    </div>
+                  )}
                 {!judges && (
                   <div className="col-span-full text-center text-gray-400 py-8">
                     Ачааллаж байна...
