@@ -324,39 +324,7 @@ const AdminTournamentResults: React.FC = () => {
     );
   }
 
-  // Temporary state and functions for the new structure (to be replaced with actual logic)
-  const [showPreview, setShowPreview] = useState(false);
-  const [currentTab, setCurrentTab] = useState("groups");
-  const [availablePlayers, setAvailablePlayers] = useState<User[]>([]);
-
-  const handleSaveResults = () => {
-    // Placeholder for save logic
-    console.log("Saving results...");
-    handleSave(); // Call the actual save mutation
-  };
-
-  const addNewGroup = () => {
-    // Placeholder for add new group logic
-    console.log("Adding new group...");
-    addGroup(); // Call the actual add group logic
-  };
-
-  const removeGroup = (groupId: string) => {
-    // Placeholder for remove group logic
-    console.log("Removing group:", groupId);
-    deleteGroup(groupId); // Call the actual delete group logic
-  };
-
-
-  const updateKnockoutScore = (matchId: string, playerKey: 'player1Score' | 'player2Score', value: string) => {
-    // Placeholder for update knockout score logic
-    console.log("Updating score for match", matchId, playerKey, value);
-  };
-
-  const setWinner = (matchId: string) => {
-    // Placeholder for set winner logic
-    console.log("Setting winner for match:", matchId);
-  };
+  
 
   return (
     <PageWithLoading>
@@ -543,7 +511,6 @@ const AdminTournamentResults: React.FC = () => {
                     <UserAutocomplete
                       onSelect={(user) => user && addPlayerToGroup(group.id, user)}
                       placeholder="Тамирчин хайх..."
-                      users={participants || []} // Use participants data for autocomplete
                     />
                   </div>
 
@@ -674,7 +641,6 @@ const AdminTournamentResults: React.FC = () => {
                 <div className="space-y-4">
                   <UserAutocomplete
                     onSelect={(user) => user && addToFinalRankings(user)}
-                    users={participants || []} // Use participants data for autocomplete
                     placeholder="Тамирчин хайж нэмэх..."
                   />
 
