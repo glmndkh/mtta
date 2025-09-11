@@ -24,6 +24,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { formatName } from '@/lib/utils';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
@@ -465,7 +466,7 @@ export function MatchEditorDrawer({
   const filteredPlayersA = useMemo(() => {
     if (!playerASearch.trim()) return availablePlayers;
     return availablePlayers.filter(player => {
-      const playerName = player.name || player.fullName || `${player.firstName || ''} ${player.lastName || ''}`.trim();
+      const playerName = player.name || player.fullName || formatName(player.firstName || '', player.lastName || '');
       const playerEmail = player.email || '';
       return playerName.toLowerCase().includes(playerASearch.toLowerCase()) ||
              playerEmail.toLowerCase().includes(playerASearch.toLowerCase());
@@ -475,7 +476,7 @@ export function MatchEditorDrawer({
   const filteredPlayersB = useMemo(() => {
     if (!playerBSearch.trim()) return availablePlayers;
     return availablePlayers.filter(player => {
-      const playerName = player.name || player.fullName || `${player.firstName || ''} ${player.lastName || ''}`.trim();
+      const playerName = player.name || player.fullName || formatName(player.firstName || '', player.lastName || '');
       const playerEmail = player.email || '';
       return playerName.toLowerCase().includes(playerBSearch.toLowerCase()) ||
              playerEmail.toLowerCase().includes(playerBSearch.toLowerCase());

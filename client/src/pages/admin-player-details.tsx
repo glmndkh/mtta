@@ -18,6 +18,7 @@ import Navigation from "@/components/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
+import { formatName } from "@/lib/utils";
 
 export default function AdminPlayerDetailsPage() {
   const [match, params] = useRoute("/admin/player/:id");
@@ -214,7 +215,7 @@ export default function AdminPlayerDetailsPage() {
                           <User className="h-12 w-12" />
                         </div>
                       )}
-                      <h2 className="text-2xl font-bold">{playerData?.firstName} {playerData?.lastName}</h2>
+                      <h2 className="text-2xl font-bold">{formatName(playerData?.firstName, playerData?.lastName)}</h2>
                       <div className="flex flex-wrap gap-2 justify-center mt-2">
                         <Badge variant="secondary" className="bg-white/20 text-black">
                           {playerData?.role === 'admin' ? 'Админ' : 'Тоглогч'}

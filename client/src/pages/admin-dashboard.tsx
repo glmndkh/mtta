@@ -23,7 +23,7 @@ import RichTextEditor from "@/components/rich-text-editor";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { getImageUrl } from "@/lib/utils";
+import { getImageUrl, formatName } from "@/lib/utils";
 
 // Import Form components
 import {
@@ -600,7 +600,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
           <TableBody>
             {filteredUsers.map((user: any) => (
               <TableRow key={user.id}>
-                <TableCell>{user.firstName} {user.lastName}</TableCell>
+                <TableCell>{formatName(user.firstName, user.lastName)}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>{user.phone}</TableCell>
                 <TableCell>{user.gender}</TableCell>
@@ -906,7 +906,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                   <TableCell>{player.age}</TableCell>
                   <TableCell>
                     {player.imageUrl && (
-                      <img src={player.imageUrl} alt={`${player.firstName} ${player.lastName}`} className="w-10 h-10 rounded-full object-cover" />
+                      <img src={player.imageUrl} alt={formatName(player.firstName, player.lastName)} className="w-10 h-10 rounded-full object-cover" />
                     )}
                   </TableCell>
                   <TableCell>
@@ -954,11 +954,11 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
             <TableBody>
               {judges && Array.isArray(judges) ? judges.map((judge: any) => (
                 <TableRow key={judge.id}>
-                  <TableCell>{judge.firstName} {judge.lastName}</TableCell>
+                  <TableCell>{formatName(judge.firstName, judge.lastName)}</TableCell>
                   <TableCell>{judge.judgeType === 'international' ? 'Олон улсын' : 'Дотоодын'}</TableCell>
                   <TableCell>
                     {judge.imageUrl && (
-                      <img src={judge.imageUrl} alt={judge.firstName} className="w-10 h-10 rounded-full" />
+                      <img src={judge.imageUrl} alt={formatName(judge.firstName, judge.lastName)} className="w-10 h-10 rounded-full" />
                     )}
                   </TableCell>
                   <TableCell>
@@ -1001,7 +1001,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               {coaches && Array.isArray(coaches) ? coaches.map((coach: any) => (
                 <TableRow key={coach.id}>
                   <TableCell>
-                    {coach.name || `${coach.firstName || ''} ${coach.lastName || ''}`}
+                    {coach.name || formatName(coach.firstName || '', coach.lastName || '')}
                   </TableCell>
                   <TableCell>{coach.clubName}</TableCell>
                   <TableCell>
@@ -1887,7 +1887,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                   <SelectItem value="none">Хэрэглэгчгүй</SelectItem>
                   {users && Array.isArray(users) ? users.map((user: any) => (
                     <SelectItem key={user.id} value={user.id}>
-                      {user.firstName} {user.lastName}
+                      {formatName(user.firstName, user.lastName)}
                     </SelectItem>
                   )) : null}
                 </SelectContent>
@@ -2295,7 +2295,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                 <SelectContent>
                   {allUsers && Array.isArray(allUsers) && allUsers.filter((user: any) => user.role === 'player').map((player: any) => (
                     <SelectItem key={player.id} value={player.id}>
-                      {player.firstName} {player.lastName}
+                      {formatName(player.firstName, player.lastName)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -2307,7 +2307,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                     const player = allUsers && Array.isArray(allUsers) ? allUsers.find((u: any) => u.id === playerId && u.role === 'player') : null;
                     return player ? (
                       <div key={playerId} className="flex items-center justify-between bg-secondary p-2 rounded">
-                        <span className="text-sm">{player.firstName} {player.lastName}</span>
+                        <span className="text-sm">{formatName(player.firstName, player.lastName)}</span>
                         <Button
                           type="button"
                           variant="ghost"

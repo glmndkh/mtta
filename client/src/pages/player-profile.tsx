@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, User, Trophy, Calendar, MapPin, Phone, Mail } from "lucide-react";
 import Navigation from "@/components/navigation";
+import { formatName } from "@/lib/utils";
 
 export default function PlayerProfilePage() {
   const [match, params] = useRoute("/player/:id");
@@ -105,7 +106,7 @@ export default function PlayerProfilePage() {
                       <User className="h-12 w-12" />
                     </div>
                   )}
-                  <h2 className="text-2xl font-bold">{user?.firstName} {user?.lastName}</h2>
+                  <h2 className="text-2xl font-bold">{formatName(user?.firstName, user?.lastName)}</h2>
                   <p className="opacity-80">Тоглогч</p>
                   {player?.memberNumber && (
                     <p className="text-sm opacity-70 mt-1">Гишүүн №: {player.memberNumber}</p>
@@ -186,8 +187,8 @@ export default function PlayerProfilePage() {
                           {tournamentMatches.map((match: any, index: number) => {
                             const isWinner = match.isWinner;
                             const hasResult = match.result && match.result.trim() !== '';
-                            const opponentName = match.opponent?.name || 
-                                                (match.opponent?.user ? `${match.opponent.user.firstName} ${match.opponent.user.lastName}` : 
+                            const opponentName = match.opponent?.name ||
+                                                (match.opponent?.user ? formatName(match.opponent.user.firstName, match.opponent.user.lastName) :
                                                  'Харсагч олдсонгүй');
                             
                             // Parse score from result (assuming format like "3-1" or "2:3")
@@ -246,7 +247,7 @@ export default function PlayerProfilePage() {
                                           onClick={() => navigate(`/player-profile/${params?.id}`)}
                                           className="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
                                         >
-                                          {player?.firstName} {player?.lastName}
+                                          {formatName(player?.firstName, player?.lastName)}
                                         </button>
                                       </div>
                                       
@@ -296,7 +297,7 @@ export default function PlayerProfilePage() {
                             const isPlayer1 = match.player1Id === params?.id;
                             const isWinner = match.winnerId === params?.id;
                             const opponent = isPlayer1 ? match.player2 : match.player1;
-                            const opponentName = opponent?.user ? `${opponent.user.firstName} ${opponent.user.lastName}` : 'Харсагч олдсонгүй';
+                            const opponentName = opponent?.user ? formatName(opponent.user.firstName, opponent.user.lastName) : 'Харсагч олдсонгүй';
                             
                             // Calculate total score from sets
                             let playerTotalScore = 0;
@@ -356,7 +357,7 @@ export default function PlayerProfilePage() {
                                           onClick={() => navigate(`/player-profile/${params?.id}`)}
                                           className="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
                                         >
-                                          {player?.firstName} {player?.lastName}
+                                          {formatName(player?.firstName, player?.lastName)}
                                         </button>
                                       </div>
                                       

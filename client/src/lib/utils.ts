@@ -5,6 +5,19 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export function formatName(
+  firstName?: string | null,
+  lastName?: string | null,
+  useInitial: boolean = false
+): string {
+  const fn = firstName?.trim() || ""
+  const ln = lastName?.trim() || ""
+  if (useInitial && ln) {
+    return `${ln.charAt(0)}. ${fn}`.trim()
+  }
+  return `${ln} ${fn}`.trim()
+}
+
 // Static placeholder SVG used when an image URL is not provided
 export const placeholderImageData =
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9iMjQ0IiB2aWV3Qm94PSIwIDAgNDAwIDI0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIyNDAiIGZpbGw9IiNGM0Y0RjYiLz4KPHBhdGggZD0iTTE2MCAxMDBIMjI1VjE0MEhNMTYwVjEwMFoiIGZpbGw9IiNEOUQ5QkIiLz4KPHBhdGggZD0iTTE3NSAxN0gxNzVWMTE1WiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K';

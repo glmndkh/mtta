@@ -13,6 +13,7 @@ import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import PageWithLoading from "@/components/PageWithLoading";
 import { format } from "date-fns";
+import { formatName, getImageUrl } from "@/lib/utils";
 
 // Type definitions for API responses
 interface SliderItem {
@@ -383,13 +384,13 @@ export default function Home() {
                       {player.profileImageUrl ? (
                         <img
                           src={getImageUrl(player.profileImageUrl)}
-                          alt={`${player.firstName} ${player.lastName}`}
+                          alt={formatName(player.firstName, player.lastName)}
                           className="w-16 h-16 rounded-full mx-auto object-cover group-hover:scale-105 transition-transform"
                         />
                       ) : (
                         <div className="w-16 h-16 rounded-full bg-mtta-green text-white flex items-center justify-center mx-auto group-hover:scale-105 transition-transform">
                           <span className="text-lg font-bold">
-                            {player.firstName?.[0]}{player.lastName?.[0]}
+                            {player.lastName?.[0]}{player.firstName?.[0]}
                           </span>
                         </div>
                       )}
@@ -400,7 +401,7 @@ export default function Home() {
                       )}
                     </div>
                     <h4 className="font-medium text-sm text-gray-900 group-hover:text-mtta-green transition-colors">
-                      {player.firstName} {player.lastName}
+                      {formatName(player.firstName, player.lastName)}
                     </h4>
                     {player.rating && (
                       <p className="text-xs text-gray-600">{player.rating} pts</p>

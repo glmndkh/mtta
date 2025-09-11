@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { User, Users } from 'lucide-react';
+import { formatName } from '@/lib/utils';
 
 const categories = [
   { value: 'all', label: 'Бүгд' },
@@ -131,14 +132,14 @@ export function ParticipantsTab({ tournamentId }: ParticipantsTabProps) {
                 >
                   <Avatar className="h-10 w-10">
                     <AvatarFallback>
-                      {getInitials(participant.playerName || participant.fullName || `${participant.firstName || ''} ${participant.lastName || ''}`.trim() || 'N/A')}
+                      {getInitials(participant.playerName || participant.fullName || formatName(participant.firstName || '', participant.lastName || '') || 'N/A')}
                     </AvatarFallback>
                   </Avatar>
                   
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">
-                        {participant.playerName || participant.fullName || `${participant.firstName || ''} ${participant.lastName || ''}`.trim() || 'Тодорхойгүй'}
+                        {participant.playerName || participant.fullName || formatName(participant.firstName || '', participant.lastName || '') || 'Тодорхойгүй'}
                       </span>
                       {participant.gender && (
                         <span className="text-xs text-muted-foreground">

@@ -16,6 +16,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
+import { formatName } from "@/lib/utils";
 
 interface Tournament {
   id: string;
@@ -349,7 +350,7 @@ function TournamentParticipants({ tournamentId }: { tournamentId: string }) {
   const filteredParticipants = useMemo(() => {
     return participants.filter(participant => {
       const matchesSearch = searchTerm === "" || 
-        `${participant.firstName} ${participant.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        formatName(participant.firstName, participant.lastName).toLowerCase().includes(searchTerm.toLowerCase()) ||
         participant.clubAffiliation?.toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesClub = clubFilter === "all" || participant.clubAffiliation === clubFilter;
@@ -444,7 +445,7 @@ function TournamentParticipants({ tournamentId }: { tournamentId: string }) {
                       }}
                     >
                       <User className="w-4 h-4" />
-                      {participant.firstName} {participant.lastName}
+                      {formatName(participant.firstName, participant.lastName)}
                     </button>
                   </TableCell>
                   <TableCell className="text-gray-300">{participant.clubAffiliation || "Тодорхойгүй"}</TableCell>
