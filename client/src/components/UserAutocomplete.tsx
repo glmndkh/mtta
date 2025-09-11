@@ -68,9 +68,6 @@ export function UserAutocomplete({
     if (onSelect && typeof onSelect === 'function') {
       onSelect(user);
     }
-    if (onUserSelect && typeof onUserSelect === 'function') {
-      onUserSelect(user);
-    }
     setOpen(false);
     setSearchTerm("");
   };
