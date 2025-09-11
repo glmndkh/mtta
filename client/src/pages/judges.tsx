@@ -5,6 +5,7 @@ import PageWithLoading from "@/components/PageWithLoading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatName } from "@/lib/utils";
 
 interface Judge {
   id: string;
@@ -48,11 +49,11 @@ export default function JudgesPage() {
                     <Card key={judge.id} className="bg-gray-800 text-white hover:bg-gray-700 transition-colors aspect-[3/4] flex flex-col">
                       <CardContent className="flex flex-col items-center justify-center p-8 h-full text-center">
                         <Avatar className="w-40 h-48 mb-6 rounded-lg">
-                          <AvatarImage src={judge.imageUrl} alt={judge.firstName} className="object-cover" />
-                          <AvatarFallback className="text-3xl rounded-lg">{judge.firstName?.[0]}{judge.lastName?.[0]}</AvatarFallback>
+                          <AvatarImage src={judge.imageUrl} alt={formatName(judge.firstName, judge.lastName)} className="object-cover" />
+                          <AvatarFallback className="text-3xl rounded-lg">{judge.lastName?.[0]}{judge.firstName?.[0]}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="font-semibold text-lg mb-1">{judge.firstName} {judge.lastName}</div>
+                          <div className="font-semibold text-lg mb-1">{formatName(judge.firstName, judge.lastName)}</div>
                           <div className="text-sm text-gray-400">Дотоодын шүүгч</div>
                         </div>
                       </CardContent>
@@ -78,11 +79,11 @@ export default function JudgesPage() {
                     <Card key={judge.id} className="bg-gray-800 text-white hover:bg-gray-700 transition-colors aspect-[3/4] flex flex-col">
                       <CardContent className="flex flex-col items-center justify-center p-8 h-full text-center">
                         <Avatar className="w-40 h-48 mb-6 rounded-lg">
-                          <AvatarImage src={judge.imageUrl} alt={judge.firstName} className="object-cover" />
-                          <AvatarFallback className="text-3xl rounded-lg">{judge.firstName?.[0]}{judge.lastName?.[0]}</AvatarFallback>
+                          <AvatarImage src={judge.imageUrl} alt={formatName(judge.firstName, judge.lastName)} className="object-cover" />
+                          <AvatarFallback className="text-3xl rounded-lg">{judge.lastName?.[0]}{judge.firstName?.[0]}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="font-semibold text-lg mb-1">{judge.firstName} {judge.lastName}</div>
+                          <div className="font-semibold text-lg mb-1">{formatName(judge.firstName, judge.lastName)}</div>
                           <div className="text-sm text-gray-400">Олон улсын шүүгч</div>
                         </div>
                       </CardContent>

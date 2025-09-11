@@ -10,7 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
-import { cn } from '@/lib/utils';
+import { cn, formatName } from '@/lib/utils';
 
 type RegistrationFormProps = {
   tournament: {
@@ -322,7 +322,7 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
           </Label>
           <div className="flex flex-wrap gap-2">
             <Badge variant="outline" className="px-3 py-1">
-              {profile.fullName || profile.name || `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'Нэр тодорхойгүй'}
+              {profile.fullName || profile.name || formatName(profile.firstName || '', profile.lastName || '') || 'Нэр тодорхойгүй'}
             </Badge>
             <Badge variant="outline" className="px-3 py-1">
               {profile.gender === 'male' ? 'Эрэгтэй' : profile.gender === 'female' ? 'Эмэгтэй' : 'Хүйс тодорхойгүй'}

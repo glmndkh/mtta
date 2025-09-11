@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Calendar, Users, MapPin, Settings } from "lucide-react";
+import { formatName } from "@/lib/utils";
 
 interface TournamentBracketProps {
   tournamentId: string;
@@ -124,7 +125,7 @@ export default function TournamentBracket({ tournamentId }: TournamentBracketPro
                             <div className={`flex justify-between items-center p-2 rounded text-sm ${
                               match.winnerId === match.player1Id ? 'bg-green-100 font-medium' : 'bg-gray-50'
                             }`}>
-                              <span>{match.player1?.user?.firstName} {match.player1?.user?.lastName}</span>
+                              <span>{formatName(match.player1?.user?.firstName, match.player1?.user?.lastName)}</span>
                               <span className={match.winnerId === match.player1Id ? 'text-mtta-green font-bold' : 'text-gray-500'}>
                                 {match.status === 'completed' ? '3' : '-'}
                               </span>
@@ -132,7 +133,7 @@ export default function TournamentBracket({ tournamentId }: TournamentBracketPro
                             <div className={`flex justify-between items-center p-2 rounded text-sm ${
                               match.winnerId === match.player2Id ? 'bg-green-100 font-medium' : 'bg-gray-50'
                             }`}>
-                              <span>{match.player2?.user?.firstName} {match.player2?.user?.lastName}</span>
+                              <span>{formatName(match.player2?.user?.firstName, match.player2?.user?.lastName)}</span>
                               <span className={match.winnerId === match.player2Id ? 'text-mtta-green font-bold' : 'text-gray-500'}>
                                 {match.status === 'completed' ? '1' : '-'}
                               </span>

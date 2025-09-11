@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { User, Trophy, Calendar, CreditCard, BarChart3, Target, TrendingUp, Award, Star } from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { formatName } from "@/lib/utils";
 
 export default function PlayerDashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -131,7 +132,7 @@ export default function PlayerDashboard() {
                     </div>
                   )}
                   <div>
-                    <h3 className="text-xl font-bold">{user.firstName} {user.lastName}</h3>
+                    <h3 className="text-xl font-bold">{formatName(user.firstName, user.lastName)}</h3>
                     <p className="opacity-80">Тоглогч</p>
                     {player?.memberNumber && (
                       <p className="text-sm opacity-70">Гишүүн №: {player.memberNumber}</p>
@@ -329,8 +330,8 @@ export default function PlayerDashboard() {
                                     <div className="flex items-center text-sm text-gray-700">
                                       <span className="font-medium">vs</span>
                                       <span className="ml-2">
-                                        {match.opponent?.name || 
-                                         (match.opponent?.user ? `${match.opponent.user.firstName} ${match.opponent.user.lastName}` : 
+                                        {match.opponent?.name ||
+                                         (match.opponent?.user ? formatName(match.opponent.user.firstName, match.opponent.user.lastName) :
                                           'Харсагч олдсонгүй')}
                                       </span>
                                     </div>
@@ -404,7 +405,7 @@ export default function PlayerDashboard() {
                               >
                                 <div>
                                   <p className="font-medium text-gray-900">
-                                    vs {opponent?.user?.firstName} {opponent?.user?.lastName}
+                                    vs {formatName(opponent?.user?.firstName, opponent?.user?.lastName)}
                                   </p>
                                   <p className="text-sm text-gray-600">
                                     {match.scheduledAt 

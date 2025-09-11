@@ -3,7 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { getImageUrl } from "@/lib/utils";
+import { getImageUrl, formatName } from "@/lib/utils";
 import Navigation from "@/components/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -402,7 +402,7 @@ export default function NewsDetail() {
                         {article.author?.profileImageUrl ? (
                           <img
                             src={getImageUrl(article.author.profileImageUrl)}
-                            alt={`${article.author.firstName} ${article.author.lastName}`}
+                            alt={formatName(article.author.firstName, article.author.lastName)}
                             className="w-full h-full object-cover"
                             onError={(e) => {
                               console.error('Author profile image failed to load:', article.author?.profileImageUrl);
@@ -422,12 +422,12 @@ export default function NewsDetail() {
                           <User className="h-6 w-6 text-gray-400" />
                         )}
                         <figcaption className="sr-only">
-                          {article.author?.firstName} {article.author?.lastName}
+                          {formatName(article.author?.firstName, article.author?.lastName)}
                         </figcaption>
                       </div>
                       <div>
                         <p className="font-semibold text-gray-900">
-                          {article.author?.firstName} {article.author?.lastName}
+                          {formatName(article.author?.firstName, article.author?.lastName)}
                         </p>
                         <div className="flex items-center text-sm text-gray-500">
                           <Clock className="h-3 w-3 mr-1" />

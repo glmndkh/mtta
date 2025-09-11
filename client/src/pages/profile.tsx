@@ -18,6 +18,7 @@ import { AlertCircle, CheckCircle, Clock, User, Camera, MapPin, Phone, Mail, Cal
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useTheme } from "@/contexts/ThemeContext";
+import { formatName } from "@/lib/utils";
 
 interface PlayerStats {
   rank?: string;
@@ -408,13 +409,13 @@ export default function Profile() {
                   <Avatar className="w-24 h-24">
                     <AvatarImage src={profile?.profilePicture} alt={profile?.firstName} />
                     <AvatarFallback className="text-2xl">
-                      {(profile?.firstName?.[0] || '') + (profile?.lastName?.[0] || '')}
+                      {(profile?.lastName?.[0] || '') + (profile?.firstName?.[0] || '')}
                     </AvatarFallback>
                   </Avatar>
                 </div>
                 <div className="text-center md:text-left flex-1">
                   <div className="flex items-center gap-3 flex-wrap">
-                    <h1 className="text-3xl font-bold theme-text">{profile?.firstName} {profile?.lastName}</h1>
+                    <h1 className="text-3xl font-bold theme-text">{formatName(profile?.firstName, profile?.lastName)}</h1>
                     {/* Tournament Medals */}
                     {medals && medals.map((medal: any) => (
                       <div key={`${medal.tournamentId}-${medal.medalType}`} className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${

@@ -15,7 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { cn, formatName } from "@/lib/utils";
 import type { User } from "@shared/schema";
 
 interface UserAutocompleteProps {
@@ -49,12 +49,12 @@ export function UserAutocomplete({
 
   const selectedUser = users.find(user => user.id === value);
   const displayValue = selectedUser
-    ? `${selectedUser.firstName} ${selectedUser.lastName}`
+    ? formatName(selectedUser.firstName, selectedUser.lastName)
     : customNameValue || placeholder;
 
   // Filter users based on search term
   const filteredUsers = users.filter(user => {
-    const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+    const fullName = formatName(user.firstName, user.lastName).toLowerCase();
     const email = user.email?.toLowerCase() || "";
     const club = user.clubAffiliation?.toLowerCase() || "";
     const search = searchTerm.toLowerCase();
@@ -104,7 +104,7 @@ export function UserAutocomplete({
               >
                 <div className="flex flex-col">
                   <span className="font-medium">
-                    {user.firstName} {user.lastName}
+                    {formatName(user.firstName, user.lastName)}
                   </span>
                   {user.clubAffiliation && (
                     <span className="text-sm text-gray-500">
