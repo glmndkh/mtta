@@ -10,5 +10,3 @@ const TournamentResults: React.FC = () => {
 };
 
 export default TournamentResults;
-
-export default TournamentResults;
