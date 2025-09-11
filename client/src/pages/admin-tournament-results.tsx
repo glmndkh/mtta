@@ -218,6 +218,89 @@ const AdminTournamentResults: React.FC = () => {
     }));
   };
 
+  // Get available users excluding those already in groups
+  const getAvailableUsers = () => {
+    const usersInGroups = groupStageResults.flatMap(group => 
+      group.players.map(p => p.userId)
+    );
+    return users.filter(user => !usersInGroups.includes(user.id));
+  };
+
+  // Auto-advance qualified players to knockout stage
+  const advanceQualifiedPlayers = () => {
+    const qualifiedPlayers: Array<{
+      player: { id: string; name: string; playerId?: string; userId?: string };
+      groupName: string;
+      position: number;
+    }> = [];
+
+    groupStageResults.forEach(group => {
+      if (group.players.length >= 2) {
+        // Sort players by stats to get top 2
+        const sortedPlayers = group.players
+          .map((player) => {
+            const stats = group.playerStats.find(s => s.playerId === player.id) || { 
+              wins: 0, 
+              losses: 0, 
+              points: 0, 
+              setsWon: 0, 
+              setsLost: 0, 
+              setsDifference: 0 
+            };
+            return { player, stats };
+          })
+          .sort((a, b) => {
+            if (b.stats.points !== a.stats.points) {
+              return b.stats.points - a.stats.points;
+            }
+            if ((b.stats.setsDifference || 0) !== (a.stats.setsDifference || 0)) {
+              return (b.stats.setsDifference || 0) - (a.stats.setsDifference || 0);
+            }
+            if ((b.stats.setsWon || 0) !== (a.stats.setsWon || 0)) {
+              return (b.stats.setsWon || 0) - (a.stats.setsWon || 0);
+            }
+            return b.stats.wins - a.stats.wins;
+          });
+
+        // Get top 2 qualified players
+        sortedPlayers.slice(0, 2).forEach((item, index) => {
+          qualifiedPlayers.push({
+            player: item.player,
+            groupName: group.name,
+            position: index + 1
+          });
+        });
+      }
+    });
+
+    if (qualifiedPlayers.length > 0) {
+      // Create initial knockout matches from qualified players
+      const initialMatches: KnockoutMatch[] = [];
+      
+      // Pair up qualified players for first round
+      for (let i = 0; i < qualifiedPlayers.length; i += 2) {
+        if (i + 1 < qualifiedPlayers.length) {
+          const match: KnockoutMatch = {
+            id: `knockout_${Date.now()}_${i}`,
+            round: "1",
+            player1: qualifiedPlayers[i].player,
+            player2: qualifiedPlayers[i + 1].player,
+            isFinished: false,
+          };
+          initialMatches.push(match);
+        }
+      }
+
+      setKnockoutResults(initialMatches);
+      setActiveTab("knockout");
+
+      toast({
+        title: "Шалгарсан тоглогчид",
+        description: `${qualifiedPlayers.length} тоглогч шилжих тоглолтод шалгарлаа`,
+      });
+    }
+  };
+
   const updateGroupResult = (groupId: string, playerIndex: number, opponentIndex: number, result: string) => {
     // Validate input format (should be like "3-1", "3-2", etc.)
     if (result && result.trim() !== '' && !result.match(/^\d+-\d+$/)) {
@@ -585,13 +668,23 @@ const AdminTournamentResults: React.FC = () => {
                   Тэмцээний группийн шатны тоглолтуудын үр дүнг оруулна уу
                 </p>
               </div>
-              <Button 
-                onClick={addGroup}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Групп нэмэх
-              </Button>
+              <div className="flex items-center gap-3">
+                <Button 
+                  onClick={advanceQualifiedPlayers}
+                  disabled={groupStageResults.length === 0}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2"
+                >
+                  <Trophy className="w-4 h-4 mr-2" />
+                  Шалгарсан тоглогчдыг шилжүүлэх
+                </Button>
+                <Button 
+                  onClick={addGroup}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Групп нэмэх
+                </Button>
+              </div>
             </div>
 
             {groupStageResults.length === 0 ? (
@@ -627,7 +720,7 @@ const AdminTournamentResults: React.FC = () => {
                   {/* Add Player */}
                   <div>
                     <UserAutocomplete
-                      users={users}
+                      users={getAvailableUsers()}
                       onSelect={(user) => user && addPlayerToGroup(group.id, user)}
                       placeholder="Тамирчин хайх..."
                     />
@@ -891,7 +984,7 @@ const AdminTournamentResults: React.FC = () => {
               <CardContent className="p-6">
                 <div className="space-y-4">
                   <UserAutocomplete
-                    users={users}
+                    users={getAvailableUsers()}
                     onSelect={(user) => user && addToFinalRankings(user)}
                     placeholder="Тамирчин хайж нэмэх..."
                   />
