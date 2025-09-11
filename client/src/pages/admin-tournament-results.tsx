@@ -1053,7 +1053,7 @@ const AdminTournamentResults: React.FC = () => {
           <Tabs value={selectedPlayerTab} onValueChange={setSelectedPlayerTab}>
                 <TabsList className="bg-gray-800 border border-gray-700 p-1">
                   <TabsTrigger value="all" className="px-4 py-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300">Бүгд ({qualifiedPlayers.length})</TabsTrigger>
-              {qualifiedPlayers.map((player) => (
+                  {qualifiedPlayers.map((player) => (
                     <TabsTrigger
                       key={player.id}
                       value={player.id}
@@ -1062,6 +1062,9 @@ const AdminTournamentResults: React.FC = () => {
                       {player.name}
                     </TabsTrigger>
                   ))}
+                  <TabsTrigger value="manage" className="px-4 py-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-300">
+                    Тоглогч удирдах
+                  </TabsTrigger>
             </TabsList>
 
             <TabsContent value="all" className="mt-4">
@@ -1105,6 +1108,51 @@ const AdminTournamentResults: React.FC = () => {
                 </Card>
               </TabsContent>
             ))}
+
+            <TabsContent value="manage" className="mt-4">
+                <Card className="bg-gray-800 border-gray-700">
+                  <CardContent className="p-4">
+                    <div className="mb-4">
+                      <h4 className="text-sm font-medium text-gray-300 mb-2">Шилжих тоглогчдыг удирдах:</h4>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm border border-gray-600">
+                          <thead>
+                            <tr className="bg-gray-700">
+                              <th className="border border-gray-600 p-2 text-left text-gray-300">#</th>
+                              <th className="border border-gray-600 p-2 text-left text-gray-300">Нэр</th>
+                              <th className="border border-gray-600 p-2 text-center text-gray-300">Хэсэг</th>
+                              <th className="border border-gray-600 p-2 text-center text-gray-300">Байр</th>
+                              <th className="border border-gray-600 p-2 text-center text-gray-300">Seed</th>
+                              <th className="border border-gray-600 p-2 text-center text-gray-300">Үйлдэл</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {qualifiedPlayers.map((player, index) => (
+                              <tr key={player.id} className="bg-gray-800">
+                                <td className="border border-gray-600 p-2 text-white">{index + 1}</td>
+                                <td className="border border-gray-600 p-2 text-white font-medium">{player.name}</td>
+                                <td className="border border-gray-600 p-2 text-center text-gray-400">{player.groupName}</td>
+                                <td className="border border-gray-600 p-2 text-center text-white font-bold">{player.position}</td>
+                                <td className="border border-gray-600 p-2 text-center text-white">{player.seed}</td>
+                                <td className="border border-gray-600 p-2 text-center">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => { /* Handle remove player logic */ }}
+                                    className="text-red-500 hover:text-red-600"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+            </TabsContent>
           </Tabs>
         </div>
 
