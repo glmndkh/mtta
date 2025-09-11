@@ -2670,7 +2670,7 @@ export class DatabaseStorage implements IStorage {
     return club;
   }
 
-  async getClubsByOwner(ownerId: string): Promise<Club[] > {
+  async getClubsByOwner(ownerId: string): Promise<Club[]> {
     return await db.select().from(clubs).where(eq(clubs.ownerId, ownerId));
   }
 
