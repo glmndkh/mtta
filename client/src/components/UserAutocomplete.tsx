@@ -65,7 +65,12 @@ export function UserAutocomplete({
   });
 
   const handleSelect = (user: User) => {
-    onSelect(user);
+    if (onSelect && typeof onSelect === 'function') {
+      onSelect(user);
+    }
+    if (onUserSelect && typeof onUserSelect === 'function') {
+      onUserSelect(user);
+    }
     setOpen(false);
     setSearchTerm("");
   };
