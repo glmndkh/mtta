@@ -435,14 +435,37 @@ const AdminTournamentResults: React.FC = () => {
   // Remove a player from a group
   const removePlayerFromGroup = (groupId: string, playerId: string) => {
     setGroupStageResults(prev => prev.map(group => {
-      if (group.id === groupId) {
-        return {
-          ...group,
-          players: group.players.filter(player => player.id !== playerId),
-          playerStats: group.playerStats.filter(stat => stat.playerId !== playerId),
-        };
-      }
-      return group;
+      if (group.id !== groupId) return group;
+
+      const playerIndex = group.players.findIndex(p => p.id === playerId);
+      if (playerIndex === -1) return group;
+
+      const updatedPlayers = group.players.filter(player => player.id !== playerId);
+      
+      // Remove the player's row and column from result matrix
+      const newMatrix = group.resultMatrix
+        .filter((_, i) => i !== playerIndex)
+        .map(row => row.filter((_, j) => j !== playerIndex));
+
+      // Recalculate stats
+      const updatedGroup = {
+        ...group,
+        players: updatedPlayers,
+        resultMatrix: newMatrix,
+        playerStats: updatedPlayers.map(p => ({
+          playerId: p.id,
+          wins: 0,
+          losses: 0,
+          points: 0
+        }))
+      };
+
+      const newStats = calculateGroupStats(updatedGroup);
+
+      return {
+        ...updatedGroup,
+        playerStats: newStats
+      };
     }));
     toast({
       title: "Тоглогч хасагдлаа",
@@ -585,30 +608,49 @@ const AdminTournamentResults: React.FC = () => {
     }
 
     setGroupStageResults(prev => 
-      prev.map(group => 
-        group.id === groupId 
-          ? {
-              ...group,
-              players: [...group.players, {
-                id: user.id,
-                name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Unknown Player',
-                playerId: user.id, // Ensure playerId is set
-                userId: user.id // Ensure userId is set
-              }],
-              playerStats: [...group.playerStats, {
-                playerId: user.id,
-                wins: 0,
-                losses: 0,
-                points: 0
-              }]
-            }
-          : group
-      )
+      prev.map(group => {
+        if (group.id !== groupId) return group;
+        
+        const newPlayer = {
+          id: user.id,
+          name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Unknown Player',
+          playerId: user.id,
+          userId: user.id
+        };
+
+        const updatedGroup = {
+          ...group,
+          players: [...group.players, newPlayer],
+          playerStats: [...group.playerStats, {
+            playerId: user.id,
+            wins: 0,
+            losses: 0,
+            points: 0
+          }]
+        };
+
+        // Initialize result matrix for the new player count
+        const playerCount = updatedGroup.players.length;
+        const newMatrix = Array(playerCount).fill(null).map((_, i) => 
+          Array(playerCount).fill('').map((_, j) => 
+            group.resultMatrix[i]?.[j] || ''
+          )
+        );
+
+        // Recalculate stats based on existing results
+        const newStats = calculateGroupStats({ ...updatedGroup, resultMatrix: newMatrix });
+
+        return {
+          ...updatedGroup,
+          resultMatrix: newMatrix,
+          playerStats: newStats
+        };
+      })
     );
 
     toast({
       title: "Тоглогч нэмэгдлээ",
-      description: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Unknown Player' + ` ${groupId}-д нэмэгдлээ`
+      description: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Unknown Player' + ` групп-д нэмэгдлээ`
     });
   };
 
