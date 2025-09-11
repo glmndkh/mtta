@@ -60,6 +60,7 @@ interface FinalRanking {
 
 const AdminTournamentResults: React.FC = () => {
   const [, setLocation] = useLocation();
+  const router = { back: () => setLocation('/admin/tournaments') }; // Mock router for example
   const [match, params] = useRoute("/admin/tournament/:tournamentId/results");
   const { user } = useAuth();
   const { toast } = useToast();
@@ -149,10 +150,10 @@ const AdminTournamentResults: React.FC = () => {
         };
         const updatedPlayers = [...group.players, newPlayer];
         const matrixSize = updatedPlayers.length;
-        const newMatrix = Array(matrixSize).fill(null).map((_, i) => 
-          Array(matrixSize).fill(null).map((_, j) => 
-            i < group.resultMatrix.length && j < group.resultMatrix[i]?.length 
-              ? group.resultMatrix[i][j] 
+        const newMatrix = Array(matrixSize).fill(null).map((_, i) =>
+          Array(matrixSize).fill(null).map((_, j) =>
+            i < group.resultMatrix.length && j < group.resultMatrix[i]?.length
+              ? group.resultMatrix[i][j]
               : (i === j ? -1 : 0)
           )
         );
@@ -230,7 +231,7 @@ const AdminTournamentResults: React.FC = () => {
   };
 
   const updateFinalRanking = (index: number, field: keyof FinalRanking, value: any) => {
-    setFinalRankings(prev => prev.map((ranking, i) => 
+    setFinalRankings(prev => prev.map((ranking, i) =>
       i === index ? { ...ranking, [field]: value } : ranking
     ));
   };
@@ -331,16 +332,19 @@ const AdminTournamentResults: React.FC = () => {
   const handleSaveResults = () => {
     // Placeholder for save logic
     console.log("Saving results...");
+    handleSave(); // Call the actual save mutation
   };
 
   const addNewGroup = () => {
     // Placeholder for add new group logic
     console.log("Adding new group...");
+    addGroup(); // Call the actual add group logic
   };
 
   const removeGroup = (groupId: string) => {
     // Placeholder for remove group logic
     console.log("Removing group:", groupId);
+    deleteGroup(groupId); // Call the actual delete group logic
   };
 
 
@@ -463,7 +467,7 @@ const AdminTournamentResults: React.FC = () => {
                     <UserAutocomplete
                       onSelect={(user) => user && addPlayerToGroup(group.id, user)}
                       placeholder="Тамирчин хайх..."
-                      users={[]}
+                      users={participants || []} // Use participants data for autocomplete
                     />
                   </div>
 
@@ -511,9 +515,9 @@ const AdminTournamentResults: React.FC = () => {
                                         <Select
                                           value={group.resultMatrix[playerIndex]?.[opponentIndex]?.toString() || ""}
                                           onValueChange={(value) => updateGroupResult(
-                                            group.id, 
-                                            playerIndex, 
-                                            opponentIndex, 
+                                            group.id,
+                                            playerIndex,
+                                            opponentIndex,
                                             parseFloat(value)
                                           )}
                                         >
@@ -581,7 +585,7 @@ const AdminTournamentResults: React.FC = () => {
                 <div className="space-y-4">
                   <UserAutocomplete
                     onSelect={(user) => user && addToFinalRankings(user)}
-                    users={[]}
+                    users={participants || []} // Use participants data for autocomplete
                     placeholder="Тамирчин хайж нэмэх..."
                   />
 
@@ -611,8 +615,8 @@ const AdminTournamentResults: React.FC = () => {
                                   type="number"
                                   value={ranking.points || ''}
                                   onChange={(e) => updateFinalRanking(
-                                    index, 
-                                    'points', 
+                                    index,
+                                    'points',
                                     parseInt(e.target.value) || 0
                                   )}
                                   placeholder="Оноо"
