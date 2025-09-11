@@ -6,13 +6,13 @@ export class DatabaseStorage implements IStorage {
       .from(tournamentResults)
       .where(eq(tournamentResults.tournamentId, tournamentId))
       .limit(1);
-    
+
     return result || null;
   }
 
   async upsertTournamentResults(data: InsertTournamentResults): Promise<TournamentResults> {
     const existing = await this.getTournamentResults(data.tournamentId);
-    
+
     if (existing) {
       const [updated] = await db
         .update(tournamentResults)
