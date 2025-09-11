@@ -239,14 +239,14 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
       return;
     }
 
-    const bracket = generateBracket(qualifiedPlayers.length);
-    const resolved = autoResolveByes(bracket);
-    setMatches(resolved);
+    // Use generateEmptyBracket instead of generateBracket to get truly empty matches
+    const bracket = generateEmptyBracket(qualifiedPlayers.length);
+    setMatches(bracket);
     toast({
-      title: "Шигшээ тоглолт үүсгэгдлээ",
+      title: "Хоосон шигшээ тоглолт үүсгэгдлээ",
       description: `${qualifiedPlayers.length} тоглогчийн хоосон шигшээ тоглолт үүсгэгдлээ`
     });
-  }, [qualifiedPlayers, generateBracket, toast]);
+  }, [qualifiedPlayers, generateEmptyBracket, toast]);
 
   // Generate bracket with automatic seeding
   const generateBracketBySeed = useCallback(() => {
