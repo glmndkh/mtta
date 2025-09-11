@@ -107,6 +107,8 @@ export default function AdminTournamentResultsPage() {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>(''); // State to hold selected player ID for adding to group
   const [participationType, setParticipationType] = useState<string | undefined>(undefined);
 
+  // Constants for bracket logic
+  const WIN_TARGET = 2; // For best-of-3 series, needs 2 sets to win. Can be adjusted for best-of-5/7.
 
   // Check if we have a tournament ID, if not show tournament selection
   const tournamentId = params?.id;
@@ -616,7 +618,7 @@ export default function AdminTournamentResultsPage() {
     }
   };
 
-  
+
 
   const updateGroupMatchResult = (groupIndex: number, playerIndex: number, opponentIndex: number, score: string) => {
     const updated = [...groupStageTables];
@@ -896,13 +898,349 @@ export default function AdminTournamentResultsPage() {
     }
   };
 
+  // A) Knockout Bracket Logic
+  // Helper to propagate winner to the next match
+  const propagateResult = (matches: KnockoutMatch[], updatedMatch: KnockoutMatch): KnockoutMatch[] => {
+    if (!updatedMatch.winner || !updatedMatch.nextMatchId) return matches;
+
+    return matches.map(match => {
+      if (match.id !== updatedMatch.nextMatchId) return match;
+
+      // Determine which player slot (player1 or player2) to fill
+      const roundMatches = matches.filter(m => m.round === updatedMatch.round && m.id !== 'third_place_playoff');
+      const matchIndexInRound = roundMatches.findIndex(m => m.id === updatedMatch.id);
+      const targetPlayerSlot = matchIndexInRound % 2 === 0 ? 'player1' : 'player2';
+
+      // Only update if the slot is currently empty
+      if (!match[targetPlayerSlot] && match.player1?.id !== updatedMatch.winner.id && match.player2?.id !== updatedMatch.winner.id) {
+        return {
+          ...match,
+          [targetPlayerSlot]: updatedMatch.winner,
+        };
+      }
+      return match;
+    });
+  };
+
+  // Handle score changes with auto-advance
+  const handleScoreChange = (matchId: string, scoreField: 'player1Score' | 'player2Score', value: string) => {
+    setKnockoutMatches(prev => {
+      let updatedMatch: KnockoutMatch | undefined;
+
+      const newMatches = prev.map(match => {
+        if (match.id !== matchId) return match;
+
+        const m = { ...match, [scoreField]: value };
+
+        // Clear previous winner when scores change
+        m.winner = undefined;
+
+        // Validate and parse scores
+        const p1Score = m.player1Score ? parseInt(String(m.player1Score), 10) || 0 : 0;
+        const p2Score = m.player2Score ? parseInt(String(m.player2Score), 10) || 0 : 0;
+
+        const hasP1Score = m.player1Score !== undefined && m.player1Score !== '';
+        const hasP2Score = m.player2Score !== undefined && m.player2Score !== '';
+
+        // Auto-determine winner based on scores
+        if (m.player1 && m.player2) {
+          // If one player reaches WIN_TARGET and has lead
+          if (hasP1Score && p1Score >= WIN_TARGET && (!hasP2Score || p1Score > p2Score)) {
+            m.winner = m.player1;
+          } else if (hasP2Score && p2Score >= WIN_TARGET && (!hasP1Score || p2Score > p1Score)) {
+            m.winner = m.player2;
+          } 
+          // If both scores entered and not equal
+          else if (hasP1Score && hasP2Score && p1Score !== p2Score) {
+            m.winner = p1Score > p2Score ? m.player1 : m.player2;
+          }
+        }
+
+        updatedMatch = m;
+        return m;
+      });
+
+      // Auto-propagate result if winner determined
+      return updatedMatch && updatedMatch.winner ? 
+        propagateResult(newMatches, updatedMatch) : newMatches;
+    });
+  };
+
+
+  // Advance all winners to next round
+  const advanceAllWinners = () => {
+    let advancedCount = 0;
+
+    setKnockoutMatches(prev => {
+      const newMatches = [...prev];
+
+      // Sort matches by round to process in correct order
+      const sortedMatches = newMatches
+        .filter(m => m.winner && m.nextMatchId)
+        .sort((a, b) => a.round - b.round);
+
+      sortedMatches.forEach(match => {
+        if (!match.winner || !match.nextMatchId) return;
+
+        const nextMatch = newMatches.find(m => m.id === match.nextMatchId);
+        if (!nextMatch) return;
+
+        // Determine position in next match
+        const currentRoundMatches = newMatches.filter(m => m.round === match.round && m.id !== 'third_place_playoff');
+        const matchIndex = currentRoundMatches.findIndex(m => m.id === match.id);
+        const nextPosition = matchIndex % 2 === 0 ? 'player1' : 'player2';
+
+        // Only advance if position is empty
+        if (!nextMatch[nextPosition]) {
+          nextMatch[nextPosition] = match.winner;
+          nextMatch.winner = undefined; // Clear any previous winner
+          advancedCount++;
+
+          // Handle 3rd place playoff for semifinal losers
+          if (match.roundName === 'Хагас финал') {
+            const loser = match.player1?.id === match.winner.id ? match.player2 : match.player1;
+            if (loser) {
+              const thirdPlaceMatch = newMatches.find(m => m.id === 'third_place_playoff');
+              if (thirdPlaceMatch) {
+                if (!thirdPlaceMatch.player1) {
+                  thirdPlaceMatch.player1 = loser;
+                } else if (!thirdPlaceMatch.player2) {
+                  thirdPlaceMatch.player2 = loser;
+                }
+              }
+            }
+          }
+        }
+      });
+
+      return newMatches;
+    });
+
+    if (advancedCount > 0) {
+      toast({
+        title: "Хожигчид шилжлээ",
+        description: `${advancedCount} хожигч дараагийн шатанд автоматаар шилжлээ`
+      });
+    } else {
+      toast({
+        title: "Шилжүүлэх хожигч алга",
+        description: "Шилжүүлэх боломжтой хожигч олдсонгүй",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Handle bulk completion of matches based on scores
+  const handleBulkComplete = () => {
+    let completedCount = 0;
+
+    setKnockoutMatches(prev => {
+      let updatedMatches = [...prev];
+
+      updatedMatches.forEach(match => {
+        // Skip matches that already have winners or no players
+        if (match.winner || !match.player1 || !match.player2) return;
+
+        const p1Score = match.player1Score ? parseInt(String(match.player1Score), 10) || 0 : 0;
+        const p2Score = match.player2Score ? parseInt(String(match.player2Score), 10) || 0 : 0;
+
+        const hasP1Score = match.player1Score !== undefined && match.player1Score !== '';
+        const hasP2Score = match.player2Score !== undefined && match.player2Score !== '';
+
+        // Determine winner if scores are entered
+        if (hasP1Score && hasP2Score && p1Score !== p2Score) {
+          match.winner = p1Score > p2Score ? match.player1 : match.player2;
+          completedCount++;
+        } else if (hasP1Score && p1Score >= WIN_TARGET && !hasP2Score) {
+          match.winner = match.player1;
+          completedCount++;
+        } else if (hasP2Score && p2Score >= WIN_TARGET && !hasP1Score) {
+          match.winner = match.player2;
+          completedCount++;
+        }
+      });
+
+      // Propagate all results
+      updatedMatches.forEach(match => {
+        if (match.winner) {
+          updatedMatches = propagateResult(updatedMatches, match);
+        }
+      });
+
+      return updatedMatches;
+    });
+
+    if (completedCount > 0) {
+      toast({
+        title: "Тоглолтууд дууслаа",
+        description: `${completedCount} тоглолтын үр дүн автоматаар тодорхойлогдлоо`
+      });
+    } else {
+      toast({
+        title: "Дуусгах тоглолт алга",
+        description: "Оноо оруулсан гүйцэт тоглолт олдсонгүй",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // C) Groups → Knockout Generator
+  const generateBracketFromGroups = () => {
+    const qualifiedPlayers = getQualifiedPlayers();
+    if (qualifiedPlayers.length < 2) {
+      toast({
+        title: "Хангалтгүй тоглогч",
+        description: "Дор хаяж 2 тоглогч шаардлагатай",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Cross seeding policy (default): A1 vs B2, B1 vs A2, C1 vs D2, D1 vs C2
+    const groupedPlayers = qualifiedPlayers.reduce((acc, player) => {
+      if (!acc[player.groupName]) acc[player.groupName] = [];
+      acc[player.groupName].push(player);
+      return acc;
+    }, {} as Record<string, typeof qualifiedPlayers>);
+
+    // Sort players within each group by position
+    Object.keys(groupedPlayers).forEach(group => {
+      groupedPlayers[group].sort((a, b) => a.position - b.position);
+    });
+
+    const groupNames = Object.keys(groupedPlayers);
+    const seededPlayers: QualifiedPlayer[] = [];
+
+    // Apply cross seeding
+    const maxQualifiers = Math.max(...Object.values(groupedPlayers).map(g => g.length));
+    for (let position = 1; position <= maxQualifiers; position++) {
+      groupNames.forEach(groupName => {
+        const player = groupedPlayers[groupName][position - 1];
+        if (player) seededPlayers.push(player);
+      });
+    }
+
+    // Generate bracket structure for 2^k players
+    const playerCount = seededPlayers.length;
+    const powerOf2 = Math.pow(2, Math.ceil(Math.log2(playerCount)));
+    const rounds = Math.ceil(Math.log2(powerOf2));
+    const byeCount = powerOf2 - playerCount;
+
+    console.log('Generating bracket:', {
+      playerCount,
+      powerOf2,
+      rounds,
+      byeCount,
+      seededPlayers: seededPlayers.map(p => p.name)
+    });
+
+    const ROUND_WIDTH = 350;
+    const START_Y = 80;
+    const matches: KnockoutMatch[] = [];
+
+    // First round with seeded players and BYEs
+    const firstRoundMatches = Math.pow(2, rounds - 1);
+
+    // Standard bracket seeding for proper BYE placement
+    const bracketSeeding: number[] = [];
+    for (let i = 0; i < powerOf2; i++) {
+      if (i < seededPlayers.length) {
+        bracketSeeding.push(i);
+      } else {
+        bracketSeeding.push(-1); // BYE placeholder
+      }
+    }
+
+    for (let matchIndex = 0; matchIndex < firstRoundMatches; matchIndex++) {
+      const verticalSpacing = 120;
+      const yPosition = START_Y + (matchIndex * verticalSpacing * 2);
+
+      const match: KnockoutMatch = {
+        id: `match_1_${matchIndex}`,
+        round: 1,
+        position: { x: 50, y: yPosition }
+      };
+
+      // Standard bracket pairing
+      const player1Index = matchIndex * 2;
+      const player2Index = player1Index + 1;
+
+      // Assign player1
+      if (player1Index < seededPlayers.length) {
+        match.player1 = {
+          id: seededPlayers[player1Index].id,
+          name: seededPlayers[player1Index].name
+        };
+      } else {
+        match.player1 = { id: 'bye', name: 'BYE' };
+      }
+
+      // Assign player2
+      if (player2Index < seededPlayers.length) {
+        match.player2 = {
+          id: seededPlayers[player2Index].id,
+          name: seededPlayers[player2Index].name
+        };
+      } else {
+        match.player2 = { id: 'bye', name: 'BYE' };
+      }
+
+      // Auto-advance if one player gets BYE
+      if (match.player1.id === 'bye' && match.player2.id !== 'bye') {
+        match.winner = match.player2;
+        match.score = 'BYE';
+      } else if (match.player2.id === 'bye' && match.player1.id !== 'bye') {
+        match.winner = match.player1;
+        match.score = 'BYE';
+      }
+
+      matches.push(match);
+    }
+
+    // Generate subsequent rounds
+    for (let round = 2; round <= rounds; round++) {
+      const matchesInRound = Math.pow(2, rounds - round);
+
+      for (let matchIndex = 0; matchIndex < matchesInRound; matchIndex++) {
+        const verticalSpacing = Math.pow(2, round) * 120;
+        const centerOffset = (matchesInRound - 1) * verticalSpacing / 2;
+        const yPosition = START_Y + (matchIndex * verticalSpacing) - centerOffset + (round * 50);
+
+        matches.push({
+          id: `match_${round}_${matchIndex}`,
+          round,
+          position: {
+            x: 50 + (round - 1) * ROUND_WIDTH,
+            y: Math.max(yPosition, 60)
+          }
+        });
+      }
+    }
+
+    // Add 3rd place playoff if we have semifinals
+    if (rounds >= 2) {
+      matches.push({
+        id: 'third_place_playoff',
+        round: rounds, // This might need adjustment based on how rounds are numbered for the 3rd place match
+        position: { x: 200 + (rounds - 2) * ROUND_WIDTH / 2, y: START_Y + 450 }
+      });
+    }
+
+    setKnockoutMatches(matches);
+    toast({
+      title: "Bracket үүсгэгдлээ",
+      description: `${playerCount} тоглогчийн шигшээ тоглолт үүсгэгдлээ${byeCount > 0 ? ` (${byeCount} BYE)` : ''}`
+    });
+  };
+
+  // D) Match Result Modal Logic
   // C) Handle match click for in-bracket results
   const handleMatchClick = (matchId: string) => {
     // Prevent unwanted modal opening if already open
     if (resultModalOpen) {
       return;
     }
-    
+
     const match = knockoutMatches.find(m => m.id === matchId);
     if (!match || !match.player1 || !match.player2) {
       toast({
@@ -1052,155 +1390,6 @@ export default function AdminTournamentResultsPage() {
     setFinalRankings(newRankings);
   };
 
-  // B) Groups → Knockout Generator
-  const generateBracketFromGroups = () => {
-    const qualifiedPlayers = getQualifiedPlayers();
-    if (qualifiedPlayers.length < 2) {
-      toast({
-        title: "Хангалтгүй тоглогч",
-        description: "Дор хаяж 2 тоглогч шаардлагатай",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Cross seeding policy (default): A1 vs B2, B1 vs A2, C1 vs D2, D1 vs C2
-    const groupedPlayers = qualifiedPlayers.reduce((acc, player) => {
-      if (!acc[player.groupName]) acc[player.groupName] = [];
-      acc[player.groupName].push(player);
-      return acc;
-    }, {} as Record<string, typeof qualifiedPlayers>);
-
-    // Sort players within each group by position
-    Object.keys(groupedPlayers).forEach(group => {
-      groupedPlayers[group].sort((a, b) => a.position - b.position);
-    });
-
-    const groupNames = Object.keys(groupedPlayers);
-    const seededPlayers: QualifiedPlayer[] = [];
-
-    // Apply cross seeding
-    const maxQualifiers = Math.max(...Object.values(groupedPlayers).map(g => g.length));
-    for (let position = 1; position <= maxQualifiers; position++) {
-      groupNames.forEach(groupName => {
-        const player = groupedPlayers[groupName][position - 1];
-        if (player) seededPlayers.push(player);
-      });
-    }
-
-    // Generate bracket structure for 2^k players
-    const playerCount = seededPlayers.length;
-    const powerOf2 = Math.pow(2, Math.ceil(Math.log2(playerCount)));
-    const rounds = Math.ceil(Math.log2(powerOf2));
-    const byeCount = powerOf2 - playerCount;
-
-    console.log('Generating bracket:', {
-      playerCount,
-      powerOf2,
-      rounds,
-      byeCount,
-      seededPlayers: seededPlayers.map(p => p.name)
-    });
-
-    const ROUND_WIDTH = 350;
-    const START_Y = 80;
-    const matches: KnockoutMatch[] = [];
-
-    // First round with seeded players and BYEs
-    const firstRoundMatches = Math.pow(2, rounds - 1);
-
-    // Standard bracket seeding for proper BYE placement
-    const bracketSeeding: number[] = [];
-    for (let i = 0; i < powerOf2; i++) {
-      if (i < seededPlayers.length) {
-        bracketSeeding.push(i);
-      } else {
-        bracketSeeding.push(-1); // BYE placeholder
-      }
-    }
-
-    for (let matchIndex = 0; matchIndex < firstRoundMatches; matchIndex++) {
-      const verticalSpacing = 120;
-      const yPosition = START_Y + (matchIndex * verticalSpacing * 2);
-
-      const match: KnockoutMatch = {
-        id: `match_1_${matchIndex}`,
-        round: 1,
-        position: { x: 50, y: yPosition }
-      };
-
-      // Standard bracket pairing
-      const player1Index = matchIndex * 2;
-      const player2Index = player1Index + 1;
-
-      // Assign player1
-      if (player1Index < seededPlayers.length) {
-        match.player1 = {
-          id: seededPlayers[player1Index].id,
-          name: seededPlayers[player1Index].name
-        };
-      } else {
-        match.player1 = { id: 'bye', name: 'BYE' };
-      }
-
-      // Assign player2
-      if (player2Index < seededPlayers.length) {
-        match.player2 = {
-          id: seededPlayers[player2Index].id,
-          name: seededPlayers[player2Index].name
-        };
-      } else {
-        match.player2 = { id: 'bye', name: 'BYE' };
-      }
-
-      // Auto-advance if one player gets BYE
-      if (match.player1.id === 'bye' && match.player2.id !== 'bye') {
-        match.winner = match.player2;
-        match.score = 'BYE';
-      } else if (match.player2.id === 'bye' && match.player1.id !== 'bye') {
-        match.winner = match.player1;
-        match.score = 'BYE';
-      }
-
-      matches.push(match);
-    }
-
-    // Generate subsequent rounds
-    for (let round = 2; round <= rounds; round++) {
-      const matchesInRound = Math.pow(2, rounds - round);
-
-      for (let matchIndex = 0; matchIndex < matchesInRound; matchIndex++) {
-        const verticalSpacing = Math.pow(2, round) * 120;
-        const centerOffset = (matchesInRound - 1) * verticalSpacing / 2;
-        const yPosition = START_Y + (matchIndex * verticalSpacing) - centerOffset + (round * 50);
-
-        matches.push({
-          id: `match_${round}_${matchIndex}`,
-          round,
-          position: {
-            x: 50 + (round - 1) * ROUND_WIDTH,
-            y: Math.max(yPosition, 60)
-          }
-        });
-      }
-    }
-
-    // Add 3rd place playoff if we have semifinals
-    if (rounds >= 2) {
-      matches.push({
-        id: 'third_place_playoff',
-        round: rounds, // This might need adjustment based on how rounds are numbered for the 3rd place match
-        position: { x: 200 + (rounds - 2) * ROUND_WIDTH / 2, y: START_Y + 450 }
-      });
-    }
-
-    setKnockoutMatches(matches);
-    toast({
-      title: "Bracket үүсгэгдлээ",
-      description: `${playerCount} тоглогчийн шигшээ тоглолт үүсгэгдлээ${byeCount > 0 ? ` (${byeCount} BYE)` : ''}`
-    });
-  };
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -1298,7 +1487,10 @@ export default function AdminTournamentResultsPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>Шигшээ тоглолт</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                      <Trophy className="w-5 h-5" />
+                      Шигшээ тоглолт
+                    </CardTitle>
                     <CardDescription>
                       Single elimination bracket система
                     </CardDescription>
@@ -1356,6 +1548,37 @@ export default function AdminTournamentResultsPage() {
                           }))
                         ]}
                       />
+                    </div>
+                    {/* Control Panel */}
+                    <div className="mb-6 p-4 bg-gray-50 rounded-lg mt-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold">Шигшээ тоглолтын удирдлага</h3>
+                        <div className="flex gap-2">
+                          <Button onClick={generateBracketFromGroups} disabled={getQualifiedPlayers().length < 4}>
+                            Хоосон шигшээ үүсгэх
+                          </Button>
+                          <Button 
+                            onClick={advanceAllWinners} 
+                            disabled={knockoutMatches.length === 0}
+                            variant="secondary"
+                          >
+                            <Trophy className="w-4 h-4 mr-2" />
+                            Хожигчдыг шилжүүлэх
+                          </Button>
+                          <Button onClick={handleBulkComplete} disabled={knockoutMatches.length === 0} variant="outline">
+                            <Target className="w-4 h-4 mr-2" />
+                            Дууссан тоглолт авто тооцох
+                          </Button>
+                          <Button onClick={() => saveResultsMutation.mutate()} variant="outline">
+                            <Save className="w-4 h-4 mr-2" />
+                            {saveResultsMutation.isPending ? 'Хадгалж байна...' : 'Хадгалах'}
+                          </Button>
+                          <Button onClick={() => setKnockoutMatches([])} variant="destructive" size="sm">
+                            <RotateCcw className="w-4 h-4 mr-2" />
+                            Цэвэрлэх
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ) : (
