@@ -853,8 +853,6 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                       </Button>
                     </div>
                   )}
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             ))}
