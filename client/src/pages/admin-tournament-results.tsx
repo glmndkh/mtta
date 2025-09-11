@@ -363,42 +363,69 @@ const AdminTournamentResults: React.FC = () => {
       <Navigation />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Button
-              onClick={() => setLocation('/admin/tournaments')}
-              variant="outline"
-              size="sm"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Буцах
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">Тэмцээний үр дүн удирдах</h1>
-              <p className="text-gray-600">{tournament.name}</p>
+        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={() => setLocation('/admin/tournaments')}
+                variant="outline"
+                size="sm"
+                className="hover:bg-gray-50"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Буцах
+              </Button>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Тэмцээний үр дүн удирдах</h1>
+                <p className="text-lg text-gray-700 mt-1">{tournament.name}</p>
+                <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                  <span className="flex items-center gap-1">
+                    <Users className="w-4 h-4" />
+                    {participants?.length || 0} оролцогч
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Trophy className="w-4 h-4" />
+                    {tournament.format}
+                  </span>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant={isPublished ? "default" : "secondary"}>
-              {isPublished ? "Нийтлэгдсэн" : "Ноорог"}
-            </Badge>
-            <Button onClick={handleSave} disabled={saveResultsMutation.isPending}>
-              <Save className="w-4 h-4 mr-2" />
-              {saveResultsMutation.isPending ? "Хадгалж байна..." : "Хадгалах"}
-            </Button>
+            <div className="flex items-center gap-3">
+              <Badge 
+                variant={isPublished ? "default" : "secondary"}
+                className={`px-3 py-1 text-sm ${
+                  isPublished 
+                    ? "bg-green-100 text-green-800 border-green-200" 
+                    : "bg-yellow-100 text-yellow-800 border-yellow-200"
+                }`}
+              >
+                {isPublished ? "Нийтлэгдсэн" : "Ноорог"}
+              </Badge>
+              <Button 
+                onClick={handleSave} 
+                disabled={saveResultsMutation.isPending}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {saveResultsMutation.isPending ? "Хадгалж байна..." : "Хадгалах"}
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Import/Export Tools */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileSpreadsheet className="w-5 h-5" />
+        <Card className="mb-6 border-l-4 border-l-blue-500">
+          <CardHeader className="bg-gray-50">
+            <CardTitle className="flex items-center gap-2 text-gray-800">
+              <FileSpreadsheet className="w-5 h-5 text-blue-600" />
               Excel импорт/экспорт
             </CardTitle>
+            <CardDescription>
+              Үр дүнгээ Excel файлаас импорт хийх эсвэл экспорт хийж татаж авах
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4 flex-wrap">
               <div>
                 <input
                   type="file"
@@ -407,45 +434,94 @@ const AdminTournamentResults: React.FC = () => {
                   onChange={handleExcelImport}
                   className="hidden"
                 />
-                <Button onClick={() => document.getElementById('excel-import')?.click()} variant="outline">
+                <Button 
+                  onClick={() => document.getElementById('excel-import')?.click()} 
+                  variant="outline"
+                  className="border-green-200 text-green-700 hover:bg-green-50"
+                >
                   <Upload className="w-4 h-4 mr-2" />
                   Excel импорт
                 </Button>
               </div>
-              <Button onClick={handleExcelExport} variant="outline">
+              <Button 
+                onClick={handleExcelExport} 
+                variant="outline"
+                className="border-blue-200 text-blue-700 hover:bg-blue-50"
+              >
                 <Download className="w-4 h-4 mr-2" />
                 Excel экспорт
               </Button>
+              <div className="text-sm text-gray-500 ml-auto">
+                Дэмжигдэх форматууд: .xlsx, .xls
+              </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Main Content */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="group-stage">
-              <Users className="w-4 h-4 mr-2" />
-              Группийн шат
-            </TabsTrigger>
-            <TabsTrigger value="knockout">
-              <Trophy className="w-4 h-4 mr-2" />
-              Шилжих тоглолт
-            </TabsTrigger>
-            <TabsTrigger value="final-rankings">
-              <Target className="w-4 h-4 mr-2" />
-              Эцсийн жагсаалт
-            </TabsTrigger>
-          </TabsList>
+        <div className="bg-white rounded-lg shadow-sm border">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <div className="border-b bg-gray-50 px-6 py-4 rounded-t-lg">
+              <TabsList className="grid w-full grid-cols-3 bg-white shadow-sm">
+                <TabsTrigger 
+                  value="group-stage"
+                  className="flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                >
+                  <Users className="w-4 h-4" />
+                  <span className="hidden sm:inline">Группийн шат</span>
+                  <span className="sm:hidden">Групп</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="knockout"
+                  className="flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                >
+                  <Trophy className="w-4 h-4" />
+                  <span className="hidden sm:inline">Шилжих тоглолт</span>
+                  <span className="sm:hidden">Шилжих</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="final-rankings"
+                  className="flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                >
+                  <Target className="w-4 h-4" />
+                  <span className="hidden sm:inline">Эцсийн жагсаалт</span>
+                  <span className="sm:hidden">Жагсаалт</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
           {/* Group Stage Tab */}
-          <TabsContent value="group-stage" className="space-y-6">
+          <TabsContent value="group-stage" className="p-6 space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Группийн шатны үр дүн</h2>
-              <Button onClick={addGroup}>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Группийн шатны үр дүн</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Тэмцээний группийн шатны тоглолтуудын үр дүнг оруулна уу
+                </p>
+              </div>
+              <Button 
+                onClick={addGroup}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2"
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Групп нэмэх
               </Button>
             </div>
+
+            {groupStageResults.length === 0 ? (
+              <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Групп байхгүй байна</h3>
+                <p className="text-gray-600 mb-4">Эхний группээ үүсгэж тэмцээний үр дүн оруулж эхлээрэй</p>
+                <Button 
+                  onClick={addGroup}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Анхны групп үүсгэх
+                </Button>
+              </div>
+            ) : null}
 
             {groupStageResults.map((group, groupIndex) => (
               <Card key={group.id}>
@@ -550,9 +626,14 @@ const AdminTournamentResults: React.FC = () => {
           </TabsContent>
 
           {/* Knockout Tab */}
-          <TabsContent value="knockout" className="space-y-6">
+          <TabsContent value="knockout" className="p-6 space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Шилжих тоглолт</h2>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Шилжих тоглолт</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Шилжих тоглолтын үр дүн болон bracket-ийг удирдана уу
+                </p>
+              </div>
             </div>
             <Card>
               <CardContent className="p-6">
@@ -565,17 +646,25 @@ const AdminTournamentResults: React.FC = () => {
           </TabsContent>
 
           {/* Final Rankings Tab */}
-          <TabsContent value="final-rankings" className="space-y-6">
+          <TabsContent value="final-rankings" className="p-6 space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Эцсийн жагсаалт</h2>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Эцсийн жагсаалт</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Тэмцээний эцсийн үр дүн болон тамирчдын байрлалыг оруулна уу
+                </p>
+              </div>
               <div className="flex items-center gap-2">
-                <label className="flex items-center gap-2">
+                <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={isPublished}
                     onChange={(e) => setIsPublished(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                   />
-                  <span>Нийтэд харуулах</span>
+                  <span className="text-sm font-medium text-gray-700">Нийтэд харуулах</span>
+                  {isPublished && <Eye className="w-4 h-4 text-green-600" />}
+                  {!isPublished && <EyeOff className="w-4 h-4 text-gray-400" />}
                 </label>
               </div>
             </div>
@@ -649,7 +738,8 @@ const AdminTournamentResults: React.FC = () => {
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
+          </Tabs>
+        </div>
       </div>
     </PageWithLoading>
   );
