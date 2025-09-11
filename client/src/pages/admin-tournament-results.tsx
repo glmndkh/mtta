@@ -143,9 +143,9 @@ const AdminTournamentResults: React.FC = () => {
       if (group.id === groupId) {
         const newPlayer = {
           id: player.id,
-          name: player.name,
-          playerId: player.playerId,
-          userId: user.id,
+          name: `${player.firstName || ''} ${player.lastName || ''}`.trim() || player.email || 'Unknown',
+          playerId: player.id,
+          userId: player.id,
         };
         const updatedPlayers = [...group.players, newPlayer];
         const matrixSize = updatedPlayers.length;
@@ -221,8 +221,8 @@ const AdminTournamentResults: React.FC = () => {
       position: finalRankings.length + 1,
       player: {
         id: player.id,
-        name: player.name,
-        playerId: player.playerId,
+        name: `${player.firstName || ''} ${player.lastName || ''}`.trim() || player.email || 'Unknown',
+        playerId: player.id,
         userId: player.id,
       },
     };
@@ -343,15 +343,6 @@ const AdminTournamentResults: React.FC = () => {
     console.log("Removing group:", groupId);
   };
 
-  const addPlayerToGroup = (groupId: string, playerId: string) => {
-    // Placeholder for add player to group logic
-    console.log("Adding player", playerId, "to group", groupId);
-  };
-
-  const updateGroupResult = (groupId: string, playerIndex: number, opponentIndex: number, value: string) => {
-    // Placeholder for update group result logic
-    console.log("Updating result for group", groupId, playerIndex, opponentIndex, value);
-  };
 
   const updateKnockoutScore = (matchId: string, playerKey: 'player1Score' | 'player2Score', value: string) => {
     // Placeholder for update knockout score logic
@@ -470,8 +461,9 @@ const AdminTournamentResults: React.FC = () => {
                   {/* Add Player */}
                   <div>
                     <UserAutocomplete
-                      onUserSelect={(user) => addPlayerToGroup(group.id, user)}
+                      onSelect={(user) => user && addPlayerToGroup(group.id, user)}
                       placeholder="Тамирчин хайх..."
+                      users={[]}
                     />
                   </div>
 
@@ -588,7 +580,8 @@ const AdminTournamentResults: React.FC = () => {
               <CardContent className="p-6">
                 <div className="space-y-4">
                   <UserAutocomplete
-                    onUserSelect={addToFinalRankings}
+                    onSelect={(user) => user && addToFinalRankings(user)}
+                    users={[]}
                     placeholder="Тамирчин хайж нэмэх..."
                   />
 
