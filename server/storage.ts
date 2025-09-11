@@ -1,4 +1,5 @@
-// Tournament Results Operations
+export class DatabaseStorage implements IStorage {
+  // Tournament Results Operations
   async getTournamentResults(tournamentId: string): Promise<TournamentResults | null> {
     const [result] = await db
       .select()

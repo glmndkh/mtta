@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -157,7 +156,7 @@ const AdminTournamentResults: React.FC = () => {
               : (i === j ? -1 : 0)
           )
         );
-        
+
         return {
           ...group,
           players: updatedPlayers,
@@ -179,11 +178,11 @@ const AdminTournamentResults: React.FC = () => {
       if (group.id === groupId) {
         const newMatrix = [...group.resultMatrix];
         newMatrix[playerIndex][opponentIndex] = result;
-        
+
         // Calculate stats
         const newStats = group.players.map((player, idx) => {
           let wins = 0, losses = 0, points = 0;
-          
+
           for (let j = 0; j < group.players.length; j++) {
             if (idx !== j) {
               const matchResult = newMatrix[idx][j];
@@ -197,7 +196,7 @@ const AdminTournamentResults: React.FC = () => {
               }
             }
           }
-          
+
           return {
             playerId: player.id,
             wins,
@@ -271,7 +270,7 @@ const AdminTournamentResults: React.FC = () => {
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
-        
+
         // Process imported data and convert to your format
         console.log('Imported data:', jsonData);
         toast({
@@ -291,7 +290,7 @@ const AdminTournamentResults: React.FC = () => {
 
   const handleExcelExport = () => {
     const wb = XLSX.utils.book_new();
-    
+
     if (finalRankings.length > 0) {
       const rankingsData = finalRankings.map(r => ({
         'Байрлал': r.position,
