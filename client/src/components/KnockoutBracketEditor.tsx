@@ -56,7 +56,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [matches, setMatches] = useState<Match[]>(initialMatches);
   const { toast } = useToast();
-  
+
   const WIN_TARGET = 3; // Points needed to win
 
   // Update matches when initialMatches changes
@@ -75,9 +75,9 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     const powerOf2 = Math.pow(2, Math.ceil(Math.log2(playerCount)));
     const byeCount = powerOf2 - playerCount;
     const newMatches: Match[] = [];
-    
+
     console.log(`Generating bracket for ${playerCount} players. Need ${byeCount} byes for power of 2: ${powerOf2}`);
-    
+
     // Calculate the number of rounds needed
     const rounds = Math.ceil(Math.log2(powerOf2));
     const ROUND_WIDTH = 350;
@@ -375,7 +375,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
 
         // Clear any existing players from this match in the next round
         const participantIds = [match.player1?.id, match.player2?.id].filter(Boolean);
-        
+
         if (nextMatch.player1 && participantIds.includes(nextMatch.player1.id)) {
           nextMatch.player1 = undefined;
         }
@@ -619,7 +619,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
         </div>
       )}
 
-      
+
     {/* Individual Match Editors */}
       {matches.length > 0 && (
         <div className="mt-8">

@@ -228,6 +228,28 @@ const AdminTournamentResults: React.FC = () => {
 
   // Auto-advance qualified players to knockout stage
   const advanceQualifiedPlayers = () => {
+    // Check if there are any empty groups
+    const emptyGroups = groupStageResults.filter(group => group.players.length === 0);
+    if (emptyGroups.length > 0) {
+      toast({
+        title: "Алдаа",
+        description: "Хоосон группууд байна. Эхлээд бүх группт тоглогч нэмнэ үү.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if all groups have enough players
+    const incompleteGroups = groupStageResults.filter(group => group.players.length < 2);
+    if (incompleteGroups.length > 0) {
+      toast({
+        title: "Анхааруулга",
+        description: "Зарим группт хангалттай тоглогч байхгүй байна. Групп тус бүрт дор хаяж 2 тоглогч байх ёстой.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const qualifiedPlayers: Array<{
       player: { id: string; name: string; playerId?: string; userId?: string };
       groupName: string;
