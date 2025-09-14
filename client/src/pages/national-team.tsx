@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
