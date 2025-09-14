@@ -2,6 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import { formatName } from "@/lib/utils";
 
 interface NationalTeamPlayer {
@@ -29,29 +36,59 @@ export default function NationalTeamPage() {
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {players.map((player) => (
-              <Card key={player.id} className="overflow-hidden">
-                {player.imageUrl && (
-                  <img
-                    src={player.imageUrl}
-                    alt={formatName(player.firstName, player.lastName)}
-                    className="w-full h-48 object-contain bg-gray-100"
-                  />
-                )}
-                <CardContent className="p-4 bg-gradient-to-r from-green-700 to-green-600 text-white">
-                  <div className="flex flex-col">
-                    <span className="text-xl font-semibold">
-                      {formatName(player.firstName, player.lastName)}
-                    </span>
-                    {player.age !== undefined && (
-                      <span className="text-sm text-gray-200">{player.age} нас</span>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <>
+            <Carousel className="w-full max-w-3xl mx-auto mb-8">
+              <CarouselContent>
+                {players.map((player) => (
+                  <CarouselItem key={player.id}>
+                    <div className="flex flex-col items-center gap-4 bg-gradient-to-r from-mtta-green to-green-700 p-6 rounded-lg text-white">
+                      {player.imageUrl && (
+                        <img
+                          src={player.imageUrl}
+                          alt={formatName(player.firstName, player.lastName)}
+                          className="w-48 h-64 object-contain bg-white rounded"
+                        />
+                      )}
+                      <div className="text-center">
+                        <h2 className="text-2xl font-bold">
+                          {formatName(player.firstName, player.lastName)}
+                        </h2>
+                        {player.age !== undefined && (
+                          <p className="text-sm text-gray-200">{player.age} нас</p>
+                        )}
+                      </div>
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+
+            <div className="space-y-6">
+              {players.map((player) => (
+                <Card key={player.id} className="overflow-hidden">
+                  {player.imageUrl && (
+                    <img
+                      src={player.imageUrl}
+                      alt={formatName(player.firstName, player.lastName)}
+                      className="w-full h-48 object-contain bg-gray-100"
+                    />
+                  )}
+                  <CardContent className="p-4 bg-gradient-to-r from-green-700 to-green-600 text-white">
+                    <div className="flex flex-col">
+                      <span className="text-xl font-semibold">
+                        {formatName(player.firstName, player.lastName)}
+                      </span>
+                      {player.age !== undefined && (
+                        <span className="text-sm text-gray-200">{player.age} нас</span>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </PageWithLoading>
