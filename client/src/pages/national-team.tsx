@@ -89,10 +89,10 @@ export default function NationalTeamPage() {
                     <img
                       src={currentPlayer.imageUrl}
                       alt={formatName(currentPlayer.firstName, currentPlayer.lastName)}
-                      className="w-80 h-96 object-cover rounded-lg shadow-2xl"
+                      className="w-96 h-[28rem] object-cover rounded-lg shadow-2xl border-0"
                     />
                   ) : (
-                    <div className="w-80 h-96 bg-white/20 rounded-lg shadow-2xl flex items-center justify-center">
+                    <div className="w-96 h-[28rem] bg-white/20 rounded-lg shadow-2xl flex items-center justify-center border-0">
                       <div className="text-white text-6xl font-bold">
                         {currentPlayer?.firstName?.[0]}{currentPlayer?.lastName?.[0]}
                       </div>
@@ -117,15 +117,6 @@ export default function NationalTeamPage() {
                           <span className="font-bold ml-2">{currentPlayer.age}</span>
                         </div>
                       )}
-                    </div>
-                  </div>
-
-                  {/* Stats Placeholder */}
-                  <div className="space-y-4">
-                    <div>
-                      <div className="text-white/80 text-sm">Үндэсний дэлгэрэнгүй</div>
-                      <div className="text-4xl font-bold">#1</div>
-                      <div className="text-sm text-white/80">ҮНДЭСНИЙ ШИГШЭЭ</div>
                     </div>
                   </div>
 
