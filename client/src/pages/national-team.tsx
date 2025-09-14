@@ -37,32 +37,32 @@ export default function NationalTeamPage() {
           </div>
         ) : (
           <>
-            <Carousel className="w-full max-w-3xl mx-auto mb-8">
+            <Carousel className="w-full mx-auto mb-8 max-w-5xl p-8 rounded-lg bg-white dark:bg-black">
               <CarouselContent>
                 {players.map((player) => (
                   <CarouselItem key={player.id}>
-                    <div className="flex flex-col items-center gap-4 bg-gradient-to-r from-mtta-green to-green-700 p-6 rounded-lg text-white">
+                    <div className="flex flex-col items-center gap-4">
                       {player.imageUrl && (
                         <img
                           src={player.imageUrl}
                           alt={formatName(player.firstName, player.lastName)}
-                          className="w-48 h-64 object-contain bg-white rounded"
+                          className="w-48 h-64 object-contain rounded"
                         />
                       )}
                       <div className="text-center">
-                        <h2 className="text-2xl font-bold">
+                        <h2 className="text-2xl font-bold text-black dark:text-white">
                           {formatName(player.firstName, player.lastName)}
                         </h2>
                         {player.age !== undefined && (
-                          <p className="text-sm text-gray-200">{player.age} нас</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{player.age} нас</p>
                         )}
                       </div>
                     </div>
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
+              <CarouselPrevious className="text-mtta-green border-mtta-green" />
+              <CarouselNext className="text-mtta-green border-mtta-green" />
             </Carousel>
 
             <div className="space-y-6">
