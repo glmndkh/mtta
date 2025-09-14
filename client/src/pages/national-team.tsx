@@ -89,11 +89,11 @@ export default function NationalTeamPage() {
                     <img
                       src={currentPlayer.imageUrl}
                       alt={formatName(currentPlayer.firstName, currentPlayer.lastName)}
-                      className="w-96 h-[28rem] object-cover rounded-lg border-0"
+                      className="w-[28rem] h-[32rem] object-cover rounded-lg border-0"
                     />
                   ) : (
-                    <div className="w-96 h-[28rem] bg-white/20 rounded-lg flex items-center justify-center border-0">
-                      <div className="text-white text-6xl font-bold">
+                    <div className="w-[28rem] h-[32rem] bg-white/20 rounded-lg flex items-center justify-center border-0">
+                      <div className="text-white text-8xl font-bold">
                         {currentPlayer?.firstName?.[0]}{currentPlayer?.lastName?.[0]}
                       </div>
                     </div>
@@ -103,30 +103,16 @@ export default function NationalTeamPage() {
                 {/* Player Info */}
                 <div className="text-white space-y-8">
                   <div>
-                    <h1 className="text-5xl font-bold mb-4">
+                    <h1 className="text-7xl font-bold mb-6">
                       {formatName(currentPlayer?.firstName || '', currentPlayer?.lastName || '')}
                     </h1>
-                    <div className="flex items-center gap-8 text-lg">
-                      <div className="flex items-center gap-2">
-                        <span className="text-white/80">🇲🇳</span>
-                        <span>Монгол</span>
+                    {currentPlayer?.age && (
+                      <div className="text-3xl">
+                        <span className="text-white/80">Нас:</span>
+                        <span className="font-bold ml-3">{currentPlayer.age}</span>
                       </div>
-                      {currentPlayer?.age && (
-                        <div>
-                          <span className="text-white/80">Нас</span>
-                          <span className="font-bold ml-2">{currentPlayer.age}</span>
-                        </div>
-                      )}
-                    </div>
+                    )}
                   </div>
-
-                  {/* Player Profile Button */}
-                  <Button 
-                    className="bg-white text-blue-600 hover:bg-white/90 font-semibold px-6 py-3"
-                    onClick={() => {/* Navigate to player profile */}}
-                  >
-                    Тоглогчийн профайл →
-                  </Button>
                 </div>
               </div>
 
