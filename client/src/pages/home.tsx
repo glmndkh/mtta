@@ -210,11 +210,20 @@ export default function Home() {
                           <p className="text-xl md:text-2xl text-gray-200">{slide.description}</p>
                         )}
                         {slide.linkUrl && (
-                          <Link href={slide.linkUrl}>
-                            <Button size="lg" className="bg-white text-mtta-green hover:bg-gray-100 font-semibold px-8 py-4">
-                              Дэлгэрэнгүй
-                            </Button>
-                          </Link>
+                          <div className="relative z-10">
+                            <Link href={slide.linkUrl}>
+                              <Button 
+                                size="lg" 
+                                className="bg-white text-mtta-green hover:bg-gray-100 font-semibold px-8 py-4 shadow-lg hover:shadow-xl transition-all duration-300"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.location.href = slide.linkUrl!;
+                                }}
+                              >
+                                Дэлгэрэнгүй
+                              </Button>
+                            </Link>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -226,16 +235,22 @@ export default function Home() {
               {sliders.length > 1 && (
                 <>
                   <button
-                    onClick={() => setCurrentSlide((prev) => (prev - 1 + sliders.length) % sliders.length)}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-mtta-green p-2 rounded-full transition-all duration-200 hover:scale-110"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentSlide((prev) => (prev - 1 + sliders.length) % sliders.length);
+                    }}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-mtta-green p-2 rounded-full transition-all duration-200 hover:scale-110 z-10"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
                   </button>
                   <button
-                    onClick={() => setCurrentSlide((prev) => (prev + 1) % sliders.length)}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-mtta-green p-2 rounded-full transition-all duration-200 hover:scale-110"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentSlide((prev) => (prev + 1) % sliders.length);
+                    }}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-mtta-green p-2 rounded-full transition-all duration-200 hover:scale-110 z-10"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -250,8 +265,11 @@ export default function Home() {
                   {sliders.map((_, index) => (
                     <button
                       key={index}
-                      onClick={() => setCurrentSlide(index)}
-                      className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentSlide(index);
+                      }}
+                      className={`w-3 h-3 rounded-full transition-all duration-200 z-10 ${
                         index === currentSlide 
                           ? 'bg-white scale-110' 
                           : 'bg-white bg-opacity-50 hover:bg-opacity-80'
