@@ -103,8 +103,9 @@ export default function NationalTeamPage() {
                 {/* Player Info */}
                 <div className="text-white space-y-8">
                   <div>
-                    <h1 className="text-7xl font-bold mb-6">
-                      {formatName(currentPlayer?.firstName || '', currentPlayer?.lastName || '')}
+                    <h1 className="text-7xl font-bold mb-6 leading-tight">
+                      <div>{currentPlayer?.firstName || ''}</div>
+                      <div>{currentPlayer?.lastName || ''}</div>
                     </h1>
                     {currentPlayer?.age && (
                       <div className="text-3xl">
@@ -164,8 +165,9 @@ export default function NationalTeamPage() {
                       )}
                       <CardContent className="p-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
                         <div className="text-center">
-                          <h3 className="text-xl font-bold mb-2">
-                            {formatName(player.firstName, player.lastName)}
+                          <h3 className="text-xl font-bold mb-2 leading-tight">
+                            <div>{player.firstName}</div>
+                            <div>{player.lastName}</div>
                           </h3>
                           {player.age !== undefined && (
                             <p className="text-blue-100">{player.age} нас</p>
