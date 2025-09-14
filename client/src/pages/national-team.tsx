@@ -82,17 +82,17 @@ export default function NationalTeamPage() {
               )}
 
               {/* Main Content */}
-              <div className="flex items-center gap-16 max-w-6xl mx-auto">
+              <div className="flex flex-col items-center max-w-6xl mx-auto">
                 {/* Player Image */}
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 mb-8">
                   {currentPlayer?.imageUrl ? (
                     <img
                       src={currentPlayer.imageUrl}
                       alt={formatName(currentPlayer.firstName, currentPlayer.lastName)}
-                      className="w-[28rem] h-[32rem] object-cover rounded-lg border-0"
+                      className="w-[24rem] h-[32rem] object-cover rounded-lg border-0"
                     />
                   ) : (
-                    <div className="w-[28rem] h-[32rem] bg-white/20 rounded-lg flex items-center justify-center border-0">
+                    <div className="w-[24rem] h-[32rem] bg-white/20 rounded-lg flex items-center justify-center border-0">
                       <div className="text-white text-8xl font-bold">
                         {currentPlayer?.firstName?.[0]}{currentPlayer?.lastName?.[0]}
                       </div>
@@ -101,14 +101,14 @@ export default function NationalTeamPage() {
                 </div>
 
                 {/* Player Info */}
-                <div className="text-white space-y-8">
-                  <div>
-                    <h1 className="text-7xl font-bold mb-6 leading-tight">
+                <div className="text-white text-center">
+                  <div className="bg-black/20 backdrop-blur-sm rounded-2xl px-8 py-6 border border-white/10">
+                    <h1 className="text-6xl font-bold mb-4 leading-tight">
                       <div>{currentPlayer?.firstName || ''}</div>
                       <div>{currentPlayer?.lastName || ''}</div>
                     </h1>
                     {currentPlayer?.age && (
-                      <div className="text-3xl">
+                      <div className="text-2xl">
                         <span className="text-white/80">Нас:</span>
                         <span className="font-bold ml-3">{currentPlayer.age}</span>
                       </div>
