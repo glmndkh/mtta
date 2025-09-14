@@ -148,26 +148,28 @@ export default function NationalTeamPage() {
                       }`}
                       onClick={() => goToPlayer(index)}
                     >
-                      {player.imageUrl ? (
-                        <img
-                          src={player.imageUrl}
-                          alt={formatName(player.firstName, player.lastName)}
-                          className="w-full h-64 object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-64 bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                          <div className="text-white text-4xl font-bold">
-                            {player.firstName?.[0]}{player.lastName?.[0]}
+                      <div className="relative">
+                        {player.imageUrl ? (
+                          <img
+                            src={player.imageUrl}
+                            alt={formatName(player.firstName, player.lastName)}
+                            className="w-full h-80 object-cover object-top"
+                          />
+                        ) : (
+                          <div className="w-full h-80 bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                            <div className="text-white text-4xl font-bold">
+                              {player.firstName?.[0]}{player.lastName?.[0]}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      <CardContent className="p-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                        )}
+                      </div>
+                      <CardContent className="p-6 bg-white text-gray-800">
                         <div className="text-center">
-                          <h3 className="text-xl font-bold mb-2">
+                          <h3 className="text-xl font-bold mb-2 text-blue-700">
                             {formatName(player.firstName, player.lastName)}
                           </h3>
                           {player.age !== undefined && (
-                            <p className="text-blue-100">{player.age} нас</p>
+                            <p className="text-gray-600">{player.age} нас</p>
                           )}
                         </div>
                       </CardContent>
