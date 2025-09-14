@@ -89,10 +89,10 @@ export default function NationalTeamPage() {
                     <img
                       src={currentPlayer.imageUrl}
                       alt={formatName(currentPlayer.firstName, currentPlayer.lastName)}
-                      className="w-96 h-[28rem] object-cover rounded-lg shadow-2xl border-0"
+                      className="w-96 h-[28rem] object-cover rounded-lg border-0"
                     />
                   ) : (
-                    <div className="w-96 h-[28rem] bg-white/20 rounded-lg shadow-2xl flex items-center justify-center border-0">
+                    <div className="w-96 h-[28rem] bg-white/20 rounded-lg flex items-center justify-center border-0">
                       <div className="text-white text-6xl font-bold">
                         {currentPlayer?.firstName?.[0]}{currentPlayer?.lastName?.[0]}
                       </div>
