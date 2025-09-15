@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Trophy, Calendar, Users, MapPin, DollarSign, Plus, X, Save, Eye, Upload } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -116,7 +117,7 @@ export default function AdminTournamentGenerator() {
       regulationDocumentUrl: "",
       minRating: "none",
       maxRating: "none",
-      isPublished: true,
+      isPublished: false,
     }
   });
 
@@ -224,9 +225,15 @@ export default function AdminTournamentGenerator() {
       };
 
       if (isEditing && editingId) {
-        await apiRequest("PUT", `/api/admin/tournaments/${editingId}`, payload);
+        await apiRequest(`/api/admin/tournaments/${editingId}`, {
+          method: 'PUT',
+          body: JSON.stringify(payload),
+        });
       } else {
-        await apiRequest("POST", "/api/tournaments", payload);
+        await apiRequest('/api/tournaments', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
       }
     },
     onSuccess: () => {
@@ -256,7 +263,7 @@ export default function AdminTournamentGenerator() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/login";
         }, 500);
         return;
       }
@@ -864,19 +871,25 @@ export default function AdminTournamentGenerator() {
                   control={form.control}
                   name="isPublished"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
+                    <FormItem className="flex flex-row items-center justify-between space-y-0 p-4 border rounded-lg">
                       <div className="space-y-1 leading-none">
-                        <FormLabel>Шууд нийтлэх</FormLabel>
-                        <p className="text-sm text-gray-600">
+                        <FormLabel className="text-base">Нийтлэх</FormLabel>
+                        <p className="text-sm text-muted-foreground">
                           Тэмцээнийг үүсгэх дайтад шууд нийтлэн оролцогчдын бүртгэлийг эхлүүлэх
                         </p>
                       </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className={`${
+                            field.value 
+                              ? 'data-[state=checked]:bg-green-500' 
+                              : 'data-[state=unchecked]:bg-white border-2 border-gray-300'
+                          }`}
+                          data-testid="switch-publish-generator"
+                        />
+                      </FormControl>
                     </FormItem>
                   )}
                 />

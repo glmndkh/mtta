@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
@@ -930,19 +931,25 @@ export default function AdminTournamentCreate() {
                         control={form.control}
                         name="isPublished"
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
+                          <FormItem className="flex flex-row items-center justify-between space-y-0 p-4 border rounded-lg">
                             <div className="space-y-1 leading-none">
-                              <FormLabel>Шууд нийтлэх</FormLabel>
+                              <FormLabel className="text-base">Нийтлэх</FormLabel>
                               <p className="text-sm text-muted-foreground">
                                 Тэмцээнийг шууд нийтэлж, бүртгэл эхлүүлэх
                               </p>
                             </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                className={`${
+                                  field.value 
+                                    ? 'data-[state=checked]:bg-green-500' 
+                                    : 'data-[state=unchecked]:bg-white border-2 border-gray-300'
+                                }`}
+                                data-testid="switch-publish"
+                              />
+                            </FormControl>
                           </FormItem>
                         )}
                       />
