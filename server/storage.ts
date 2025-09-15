@@ -789,8 +789,34 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteTournament(id: string): Promise<boolean> {
-    const result = await db.delete(tournaments).where(eq(tournaments.id, id));
-    return (result.rowCount || 0) > 0;
+    try {
+      // Delete in order: child records first, then parent
+      
+      // 1. Delete tournament results
+      await db.delete(tournamentResults).where(eq(tournamentResults.tournamentId, id));
+      
+      // 2. Delete tournament team players
+      const teams = await db.select().from(tournamentTeams).where(eq(tournamentTeams.tournamentId, id));
+      for (const team of teams) {
+        await db.delete(tournamentTeamPlayers).where(eq(tournamentTeamPlayers.tournamentTeamId, team.id));
+      }
+      
+      // 3. Delete tournament teams
+      await db.delete(tournamentTeams).where(eq(tournamentTeams.tournamentId, id));
+      
+      // 4. Delete tournament participants
+      await db.delete(tournamentParticipants).where(eq(tournamentParticipants.tournamentId, id));
+      
+      // 5. Delete matches
+      await db.delete(matches).where(eq(matches.tournamentId, id));
+      
+      // 6. Finally delete the tournament
+      const result = await db.delete(tournaments).where(eq(tournaments.id, id));
+      return (result.rowCount || 0) > 0;
+    } catch (error) {
+      console.error("Error deleting tournament:", error);
+      return false;
+    }
   }
 
   async registerPlayerForTournament(tournamentId: string, playerId: string): Promise<void> {
