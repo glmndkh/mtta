@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
-import { Trophy, Calendar, Users, MapPin, DollarSign, Plus, X, Save, Eye, Upload, FileText, Award } from "lucide-react";
+import { Trophy, Calendar, Users, MapPin, DollarSign, Plus, X, Save, Eye, Upload, FileText, Award, ArrowLeft } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -54,6 +54,12 @@ export default function AdminTournamentCreate() {
   const urlParams = new URLSearchParams(window.location.search);
   const editingId = urlParams.get('id');
   const isEditing = !!editingId;
+  
+  // Load tournament data for editing
+  const { data: existingTournament, isLoading: tournamentLoading } = useQuery({
+    queryKey: ['/api/tournaments', editingId],
+    enabled: isEditing && !!editingId,
+  });
 
   const [minAge, setMinAge] = useState("");
   const [maxAge, setMaxAge] = useState("");
@@ -179,61 +185,60 @@ export default function AdminTournamentCreate() {
 
   // Load existing tournament data when editing
   useEffect(() => {
-    if (isEditing && editingId) {
-      const loadTournament = async () => {
-        try {
-          const response = await apiRequest(`/api/tournaments/${editingId}`);
-          const tournament = await response.json();
-          
-          // Set form values
-          form.setValue("name", tournament.name || "");
-          form.setValue("description", tournament.description || "");
-          form.setValue("startDate", tournament.startDate ? new Date(tournament.startDate).toISOString().slice(0, 16) : "");
-          form.setValue("endDate", tournament.endDate ? new Date(tournament.endDate).toISOString().slice(0, 16) : "");
-          form.setValue("registrationDeadline", tournament.registrationDeadline ? new Date(tournament.registrationDeadline).toISOString().slice(0, 16) : "");
-          form.setValue("location", tournament.location || "");
-          form.setValue("organizer", tournament.organizer || "");
-          form.setValue("maxParticipants", tournament.maxParticipants || 32);
-          form.setValue("entryFee", tournament.entryFee || 0);
-          form.setValue("rules", tournament.rules || "");
-          form.setValue("prizes", tournament.prizes || "");
-          form.setValue("contactInfo", tournament.contactInfo || "");
-          form.setValue("schedule", tournament.schedule ? JSON.parse(tournament.schedule).description : "");
-          form.setValue("requirements", tournament.requirements || "");
-          form.setValue("backgroundImageUrl", tournament.backgroundImageUrl || "");
-          form.setValue("regulationDocumentUrl", tournament.regulationDocumentUrl || "");
-          form.setValue("isPublished", tournament.isPublished || false);
-          
-          // Set state values
-          setRichDescription(tournament.richDescription || "");
-          setBackgroundImageUrl(tournament.backgroundImageUrl || "");
-          setRegulationDocumentUrl(tournament.regulationDocumentUrl || "");
-          
-          // Parse participation types
-          if (tournament.participationTypes) {
-            const categories = tournament.participationTypes.map((type: string) => {
-              try {
-                return JSON.parse(type);
-              } catch {
-                return { minAge: null, maxAge: null, gender: "male" };
-              }
-            });
-            setParticipationCategories(categories);
-          }
-          
-        } catch (error) {
-          console.error("Failed to load tournament:", error);
-          toast({
-            title: "Алдаа",
-            description: "Тэмцээний мэдээлэл ачаалахад алдаа гарлаа",
-            variant: "destructive",
-          });
-        }
-      };
+    if (isEditing && existingTournament) {
+      const tournament = existingTournament;
       
-      loadTournament();
+      // Set form values with proper formatting
+      form.setValue("name", tournament.name || "");
+      form.setValue("description", tournament.description || "");
+      form.setValue("startDate", tournament.startDate ? new Date(tournament.startDate).toISOString().slice(0, 16) : "");
+      form.setValue("endDate", tournament.endDate ? new Date(tournament.endDate).toISOString().slice(0, 16) : "");
+      form.setValue("registrationDeadline", tournament.registrationDeadline ? new Date(tournament.registrationDeadline).toISOString().slice(0, 16) : "");
+      form.setValue("location", tournament.location || "");
+      form.setValue("organizer", tournament.organizer || "");
+      form.setValue("maxParticipants", tournament.maxParticipants || 32);
+      form.setValue("entryFee", tournament.entryFee || 0);
+      form.setValue("rules", tournament.rules || "");
+      form.setValue("prizes", tournament.prizes || "");
+      form.setValue("contactInfo", tournament.contactInfo || "");
+      
+      // Handle schedule parsing
+      let scheduleText = "";
+      if (tournament.schedule) {
+        try {
+          const parsed = JSON.parse(tournament.schedule);
+          scheduleText = parsed.description || tournament.schedule;
+        } catch {
+          scheduleText = tournament.schedule;
+        }
+      }
+      form.setValue("schedule", scheduleText);
+      
+      form.setValue("requirements", tournament.requirements || "");
+      form.setValue("backgroundImageUrl", tournament.backgroundImageUrl || "");
+      form.setValue("regulationDocumentUrl", tournament.regulationDocumentUrl || "");
+      form.setValue("minRating", tournament.minRating || "");
+      form.setValue("maxRating", tournament.maxRating || "");
+      form.setValue("isPublished", tournament.isPublished || false);
+      
+      // Set state values
+      setRichDescription(tournament.richDescription || "");
+      setBackgroundImageUrl(tournament.backgroundImageUrl || "");
+      setRegulationDocumentUrl(tournament.regulationDocumentUrl || "");
+      
+      // Parse participation types
+      if (tournament.participationTypes) {
+        const categories = tournament.participationTypes.map((type: string) => {
+          try {
+            return JSON.parse(type);
+          } catch {
+            return { minAge: null, maxAge: null, gender: "male" };
+          }
+        });
+        setParticipationCategories(categories);
+      }
     }
-  }, [isEditing, editingId, form, toast]);
+  }, [isEditing, existingTournament, form]);
 
   // Mutation for creating/updating tournament
   const createTournamentMutation = useMutation({
@@ -255,10 +260,17 @@ export default function AdminTournamentCreate() {
     onSuccess: () => {
       toast({
         title: "Амжилттай",
-        description: isEditing ? "Тэмцээн амжилттай засагдлаа" : "Тэмцээн амжилттай үүсгэгдлээ",
+        description: isEditing ? "Тэмцээн амжилттай шинэчлэгдлээ" : "Тэмцээн амжилттай үүсгэгдлээ",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/tournaments"] });
-      if (!isEditing) {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tournaments"] });
+      
+      if (isEditing) {
+        // Navigate back to tournament list after editing
+        setTimeout(() => {
+          window.location.href = "/admin/tournaments";
+        }, 1000);
+      } else {
         form.reset();
         setRichDescription("");
         setBackgroundImageUrl("");
@@ -347,12 +359,12 @@ export default function AdminTournamentCreate() {
   };
 
 
-  if (isLoading) {
+  if (isLoading || (isEditing && tournamentLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mtta-green mx-auto mb-4"></div>
-          <p className="text-gray-600">Уншиж байна...</p>
+          <p className="text-gray-600">{isEditing ? "Тэмцээний мэдээлэл ачаалж байна..." : "Уншиж байна..."}</p>
         </div>
       </div>
     );
@@ -374,6 +386,16 @@ export default function AdminTournamentCreate() {
               <p className="text-gray-600">{isEditing ? "Тэмцээний мэдээлэл засварлах" : "Шинэ тэмцээн зохион байгуулж, дэлгэрэнгүй мэдээлэл оруулах"}</p>
             </div>
             <div className="flex space-x-3">
+              {isEditing && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => window.location.href = "/admin/tournaments"}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Цуцлах
+                </Button>
+              )}
               <Button
                 type="button"
                 variant="outline"
@@ -1012,7 +1034,10 @@ export default function AdminTournamentCreate() {
                       disabled={createTournamentMutation.isPending}
                     >
                       <Save className="h-4 w-4 mr-2" />
-                      {createTournamentMutation.isPending ? "Хадгалж байна..." : isEditing ? "Тэмцээн хадгалах" : "Тэмцээн үүсгэх"}
+                      {createTournamentMutation.isPending 
+                        ? (isEditing ? "Шинэчилж байна..." : "Хадгалж байна...") 
+                        : (isEditing ? "Тэмцээн шинэчлэх" : "Тэмцээн үүсгэх")
+                      }
                     </Button>
                   </div>
                 </div>

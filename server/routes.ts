@@ -2159,17 +2159,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     isAdminRole,
     async (req: any, res) => {
       try {
-        const updateData = insertTournamentSchema.partial().parse(req.body);
-        const tournament = await storage.updateTournament(
-          req.params.id,
-          updateData,
-        );
-        if (!tournament)
+        const tournamentId = req.params.id;
+        
+        // Check if tournament exists first
+        const existingTournament = await storage.getTournament(tournamentId);
+        if (!existingTournament) {
           return res.status(404).json({ message: "Тэмцээн олдсонгүй" });
+        }
+
+        // Parse and validate update data
+        const {
+          startDate,
+          endDate,
+          registrationDeadline,
+          maxParticipants,
+          entryFee,
+          ...rest
+        } = req.body;
+
+        const updateData = insertTournamentSchema.partial().parse({
+          ...rest,
+          ...(startDate ? { startDate: new Date(startDate) } : {}),
+          ...(endDate ? { endDate: new Date(endDate) } : {}),
+          ...(registrationDeadline
+            ? { registrationDeadline: new Date(registrationDeadline) }
+            : {}),
+          ...(maxParticipants !== undefined
+            ? { maxParticipants: parseInt(maxParticipants) }
+            : {}),
+          ...(entryFee !== undefined ? { entryFee: entryFee.toString() } : {}),
+        });
+
+        const tournament = await storage.updateTournament(tournamentId, updateData);
+        if (!tournament) {
+          return res.status(404).json({ message: "Тэмцээн олдсонгүй" });
+        }
+        
         res.json(tournament);
       } catch (e) {
         console.error("Error updating tournament:", e);
-        res.status(400).json({ message: "Тэмцээн засварлахад алдаа гарлаа" });
+        if (e instanceof z.ZodError) {
+          return res.status(422).json({ 
+            message: "Мэдээллийн алдаа", 
+            errors: e.errors 
+          });
+        }
+        res.status(400).json({ message: "Тэмцээн шинэчлэхэд алдаа гарлаа" });
       }
     },
   );
