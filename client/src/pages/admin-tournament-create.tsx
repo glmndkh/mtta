@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { useRoute, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
 import RichTextEditor from "@/components/rich-text-editor";
@@ -49,11 +50,14 @@ export default function AdminTournamentCreate() {
   const { user, isAuthenticated, isLoading } = useAuth() as any;
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   
-  // Check if we're editing an existing tournament
-  const urlParams = new URLSearchParams(window.location.search);
-  const editingId = urlParams.get('id');
-  const isEditing = !!editingId;
+  // Check routes for create vs edit mode
+  const [matchCreate] = useRoute("/admin/tournament-create");
+  const [matchEdit, paramsEdit] = useRoute("/tournaments/:id/edit");
+  
+  const isEditing = !!matchEdit;
+  const editingId = paramsEdit?.id;
   
   // Load tournament data for editing
   const { data: existingTournament, isLoading: tournamentLoading } = useQuery({
@@ -197,7 +201,7 @@ export default function AdminTournamentCreate() {
       form.setValue("location", tournament.location || "");
       form.setValue("organizer", tournament.organizer || "");
       form.setValue("maxParticipants", tournament.maxParticipants || 32);
-      form.setValue("entryFee", tournament.entryFee || 0);
+      form.setValue("entryFee", parseFloat(tournament.entryFee) || 0);
       form.setValue("rules", tournament.rules || "");
       form.setValue("prizes", tournament.prizes || "");
       form.setValue("contactInfo", tournament.contactInfo || "");
@@ -236,6 +240,9 @@ export default function AdminTournamentCreate() {
           }
         });
         setParticipationCategories(categories);
+        
+        // Update form participationTypes with the existing data
+        form.setValue("participationTypes", tournament.participationTypes || []);
       }
     }
   }, [isEditing, existingTournament, form]);
@@ -244,7 +251,7 @@ export default function AdminTournamentCreate() {
   const createTournamentMutation = useMutation({
     mutationFn: async (data: any) => {
       const url = isEditing ? `/api/admin/tournaments/${editingId}` : "/api/tournaments";
-      const method = isEditing ? "PUT" : "POST";
+      const method = isEditing ? "PATCH" : "POST";
       
       await apiRequest(url, {
         method,
@@ -268,13 +275,14 @@ export default function AdminTournamentCreate() {
       if (isEditing) {
         // Navigate back to tournament list after editing
         setTimeout(() => {
-          window.location.href = "/admin/tournaments";
+          setLocation("/admin/tournaments");
         }, 1000);
       } else {
         form.reset();
         setRichDescription("");
         setBackgroundImageUrl("");
         setRegulationDocumentUrl("");
+        setParticipationCategories([]);
       }
     },
     onError: (error) => {
@@ -285,13 +293,13 @@ export default function AdminTournamentCreate() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          setLocation("/login");
         }, 500);
         return;
       }
       toast({
         title: "Алдаа",
-        description: "Тэмцээн үүсгэхэд алдаа гарлаа",
+        description: isEditing ? "Тэмцээн шинэчлэхэд алдаа гарлаа" : "Тэмцээн үүсгэхэд алдаа гарлаа",
         variant: "destructive",
       });
     },
@@ -390,7 +398,7 @@ export default function AdminTournamentCreate() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => window.location.href = "/admin/tournaments"}
+                  onClick={() => setLocation("/admin/tournaments")}
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Цуцлах

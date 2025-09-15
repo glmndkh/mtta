@@ -139,7 +139,7 @@ export default function AdminTournaments() {
                           Харах
                         </Button>
                       </Link>
-                      <Link href={`/admin/tournament-create?id=${tournament.id}`}>
+                      <Link href={`/tournaments/${tournament.id}/edit`}>
                         <Button variant="outline" size="sm" className="flex-1">
                           <Settings className="w-4 h-4 mr-1" />
                           Засах
