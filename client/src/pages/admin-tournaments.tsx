@@ -18,11 +18,12 @@ interface Tournament {
   status: string;
   prize?: string;
   createdAt: string;
+  isPublished: boolean;
 }
 
 export default function AdminTournaments() {
   const { data: tournaments = [], isLoading } = useQuery<Tournament[]>({
-    queryKey: ['/api/tournaments'],
+    queryKey: ['/api/admin/tournaments'],
   });
 
   const formatDate = (dateString: string) => {
@@ -103,7 +104,12 @@ export default function AdminTournaments() {
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-lg">{tournament.name}</CardTitle>
-                    {getStatusBadge(tournament.status)}
+                    <div className="flex gap-2">
+                      {getStatusBadge(tournament.status)}
+                      <Badge variant={tournament.isPublished ? "default" : "secondary"}>
+                        {tournament.isPublished ? "Нийтлэгдсэн" : "Ноорог"}
+                      </Badge>
+                    </div>
                   </div>
                   <CardDescription className="line-clamp-2">
                     {tournament.description}

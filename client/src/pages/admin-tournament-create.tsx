@@ -278,11 +278,10 @@ export default function AdminTournamentCreate() {
           setLocation("/admin/tournaments");
         }, 1000);
       } else {
-        form.reset();
-        setRichDescription("");
-        setBackgroundImageUrl("");
-        setRegulationDocumentUrl("");
-        setParticipationCategories([]);
+        // Navigate to admin tournaments after creating
+        setTimeout(() => {
+          setLocation("/admin/tournaments");
+        }, 1000);
       }
     },
     onError: (error) => {

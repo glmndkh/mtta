@@ -1002,9 +1002,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Public tournaments = active only
-  app.get("/api/tournaments", async (_req, res) => {
+  app.get("/api/tournaments", async (req: any, res) => {
     try {
-      const tournaments = await storage.getTournaments();
+      let tournaments = await storage.getTournaments();
+      
+      // If user is not admin, only show published tournaments
+      const userId = req.session?.userId;
+      const user = userId ? await storage.getUser(userId) : null;
+      const isAdmin = user && user.role === 'admin';
+      
+      if (!isAdmin) {
+        tournaments = tournaments.filter(t => t.isPublished);
+      }
+      
       res.json(tournaments);
     } catch (e) {
       console.error("Error fetching tournaments:", e);
