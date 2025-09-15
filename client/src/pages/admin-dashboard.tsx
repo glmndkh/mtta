@@ -454,7 +454,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         excerpt: item.excerpt || "",
         imageUrl: item.imageUrl || "",
         category: item.category || "news",
-        published: item.published || false,
+        published: item.published !== undefined ? item.published : false,
       });
     }
     setShowDialog(true); // Show the dialog
