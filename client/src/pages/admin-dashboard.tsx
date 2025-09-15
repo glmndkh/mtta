@@ -3511,37 +3511,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               <CardDescription>Нийт системийн үзүүлэлт ба дэлгэрэнгүй статистик</CardDescription>
             </CardHeader>
             <CardContent>
-              {/* The following section displays key statistics, including the total number of tournaments. */}
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="flex items-center space-x-4 rounded-xl border p-4">
-                  <Users className="h-8 w-8 text-mtta-blue" />
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{stats?.users || 0}</p>
-                    <p className="text-sm text-gray-600">Хэрэглэгчид</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-4 rounded-xl border p-4">
-                  <Building className="h-8 w-8 text-mtta-orange" />
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{stats?.clubs || 0}</p>
-                    <p className="text-sm text-gray-600">Клубууд</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-4 rounded-xl border p-4">
-                  <Shield className="h-8 w-8 text-mtta-purple" />
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{stats?.judges || 0}</p>
-                    <p className="text-sm text-gray-600">Шүүгчид</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-4 rounded-xl border p-4">
-                  <Trophy className="h-8 w-8 text-mtta-green" />
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{stats?.tournaments || 0}</p>
-                    <p className="text-sm text-gray-600">Нийт тэмцээн</p>
-                  </div>
-                </div>
-              </div>
+              <AdminStatsDashboard />
             </CardContent>
           </Card>
         </TabsContent>
