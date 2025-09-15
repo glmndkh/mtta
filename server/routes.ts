@@ -979,7 +979,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         contactInfo: req.body.contactInfo || null,
         schedule: req.body.schedule || null,
         requirements: req.body.requirements || null,
-        isPublished: req.body.isPublished || false,
+        // Ensure we always store a proper boolean value
+        // This avoids cases where "isPublished" might come through as a string
+        // like "true" or "false" which would otherwise be treated as truthy
+        // when using the `||` operator above.
+        isPublished: Boolean(req.body.isPublished),
         organizerId: req.session.userId,
         clubId: null,
         backgroundImageUrl: req.body.backgroundImageUrl || null,

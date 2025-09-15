@@ -6,6 +6,7 @@ import { Plus, Calendar, Users, Trophy, Settings, Eye, Globe, EyeOff } from "luc
 import { Link } from "wouter";
 import Navigation from "@/components/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 interface Tournament {
   id: string;
@@ -30,35 +31,45 @@ export default function AdminTournaments() {
   const queryClient = useQueryClient();
 
   const togglePublishMutation = useMutation({
-    mutationFn: async ({ tournamentId, isPublished }: { tournamentId: string, isPublished: boolean }) => {
-      const response = await fetch(`/api/admin/tournaments/${tournamentId}`, {
+    // Send request to toggle tournament publish state
+    mutationFn: async ({ tournamentId, isPublished }: { tournamentId: string; isPublished: boolean }) => {
+      const res = await apiRequest(`/api/admin/tournaments/${tournamentId}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ isPublished }),
       });
-      
-      if (!response.ok) {
-        throw new Error('Тэмцээний төлөв шинэчлэхэд алдаа гарлаа');
+      return res.json();
+    },
+    // Optimistically update the cache so the button colour changes immediately
+    onMutate: async ({ tournamentId, isPublished }) => {
+      await queryClient.cancelQueries({ queryKey: ['/api/admin/tournaments'] });
+      const previous = queryClient.getQueryData<Tournament[]>(['/api/admin/tournaments']);
+      queryClient.setQueryData<Tournament[]>(['/api/admin/tournaments'], (old = []) =>
+        old.map((t) => (t.id === tournamentId ? { ...t, isPublished } : t))
+      );
+      return { previous };
+    },
+    onError: (error: any, _variables, context) => {
+      // Revert optimistic update on error
+      if (context?.previous) {
+        queryClient.setQueryData(['/api/admin/tournaments'], context.previous);
       }
-      
-      return response.json();
+      toast({
+        title: 'Алдаа',
+        description: error.message || 'Тэмцээний төлөв шинэчлэхэд алдаа гарлаа',
+        variant: 'destructive',
+      });
     },
     onSuccess: () => {
       toast({
-        title: "Амжилттай",
-        description: "Тэмцээний төлөв шинэчлэгдлээ",
+        title: 'Амжилттай',
+        description: 'Тэмцээний төлөв шинэчлэгдлээ',
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/tournaments'] });
+      // Refetch public list so published tournaments appear for users
       queryClient.invalidateQueries({ queryKey: ['/api/tournaments'] });
     },
-    onError: (error: any) => {
-      toast({
-        title: "Алдаа",
-        description: error.message || "Тэмцээний төлөв шинэчлэхэд алдаа гарлаа",
-        variant: "destructive",
-      });
+    onSettled: () => {
+      // Ensure admin list is in sync
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tournaments'] });
     },
   });
 
