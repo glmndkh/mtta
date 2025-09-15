@@ -790,29 +790,51 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTournament(id: string): Promise<boolean> {
     try {
+      console.log(`Starting tournament deletion for ID: ${id}`);
+      
       // Delete in order: child records first, then parent
       
-      // 1. Delete tournament results
-      await db.delete(tournamentResults).where(eq(tournamentResults.tournamentId, id));
+      // 1. Delete match sets first (child of matches)
+      const tournamentMatches = await db.select().from(matches).where(eq(matches.tournamentId, id));
+      for (const match of tournamentMatches) {
+        await db.delete(matchSets).where(eq(matchSets.matchId, match.id));
+      }
+      console.log(`Deleted match sets for ${tournamentMatches.length} matches`);
       
-      // 2. Delete tournament team players
+      // 2. Delete matches
+      await db.delete(matches).where(eq(matches.tournamentId, id));
+      console.log('Deleted tournament matches');
+      
+      // 3. Delete tournament results
+      await db.delete(tournamentResults).where(eq(tournamentResults.tournamentId, id));
+      console.log('Deleted tournament results');
+      
+      // 4. Delete tournament team players
       const teams = await db.select().from(tournamentTeams).where(eq(tournamentTeams.tournamentId, id));
       for (const team of teams) {
         await db.delete(tournamentTeamPlayers).where(eq(tournamentTeamPlayers.tournamentTeamId, team.id));
       }
+      console.log(`Deleted players from ${teams.length} tournament teams`);
       
-      // 3. Delete tournament teams
+      // 5. Delete tournament teams
       await db.delete(tournamentTeams).where(eq(tournamentTeams.tournamentId, id));
+      console.log('Deleted tournament teams');
       
-      // 4. Delete tournament participants
-      await db.delete(tournamentParticipants).where(eq(tournamentParticipants.tournamentId, id));
+      // 6. Delete tournament participants
+      const participantsResult = await db.delete(tournamentParticipants).where(eq(tournamentParticipants.tournamentId, id));
+      console.log(`Deleted ${participantsResult.rowCount || 0} tournament participants`);
       
-      // 5. Delete matches
-      await db.delete(matches).where(eq(matches.tournamentId, id));
-      
-      // 6. Finally delete the tournament
+      // 7. Finally delete the tournament
       const result = await db.delete(tournaments).where(eq(tournaments.id, id));
-      return (result.rowCount || 0) > 0;
+      const success = (result.rowCount || 0) > 0;
+      
+      if (success) {
+        console.log(`Successfully deleted tournament ${id}`);
+      } else {
+        console.log(`No tournament found with ID ${id}`);
+      }
+      
+      return success;
     } catch (error) {
       console.error("Error deleting tournament:", error);
       return false;
