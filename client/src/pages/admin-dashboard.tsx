@@ -407,6 +407,18 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         ownerName: item.ownerName || "",
         extraData: item.extraData || [],
       });
+    } else if (selectedTab === "tournaments") {
+      setFormData({
+        name: item.name || "",
+        description: item.description || "",
+        startDate: item.startDate ? item.startDate.split('T')[0] : "",
+        endDate: item.endDate ? item.endDate.split('T')[0] : "",
+        location: item.location || "",
+        maxParticipants: item.maxParticipants || "",
+        entryFee: item.entryFee || "",
+        status: item.status || "",
+        isPublished: item.isPublished || false,
+      });
     } else if (selectedTab === "judges") {
       setFormData({
         firstName: item.firstName || "",
