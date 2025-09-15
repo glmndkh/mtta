@@ -49,6 +49,11 @@ export default function AdminTournamentCreate() {
   const { user, isAuthenticated, isLoading } = useAuth() as any;
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Check if we're editing an existing tournament
+  const urlParams = new URLSearchParams(window.location.search);
+  const editingId = urlParams.get('id');
+  const isEditing = !!editingId;
 
   const [minAge, setMinAge] = useState("");
   const [maxAge, setMaxAge] = useState("");
@@ -172,11 +177,72 @@ export default function AdminTournamentCreate() {
     }
   };
 
-  // Mutation for creating tournament
+  // Load existing tournament data when editing
+  useEffect(() => {
+    if (isEditing && editingId) {
+      const loadTournament = async () => {
+        try {
+          const response = await apiRequest(`/api/tournaments/${editingId}`);
+          const tournament = await response.json();
+          
+          // Set form values
+          form.setValue("name", tournament.name || "");
+          form.setValue("description", tournament.description || "");
+          form.setValue("startDate", tournament.startDate ? new Date(tournament.startDate).toISOString().slice(0, 16) : "");
+          form.setValue("endDate", tournament.endDate ? new Date(tournament.endDate).toISOString().slice(0, 16) : "");
+          form.setValue("registrationDeadline", tournament.registrationDeadline ? new Date(tournament.registrationDeadline).toISOString().slice(0, 16) : "");
+          form.setValue("location", tournament.location || "");
+          form.setValue("organizer", tournament.organizer || "");
+          form.setValue("maxParticipants", tournament.maxParticipants || 32);
+          form.setValue("entryFee", tournament.entryFee || 0);
+          form.setValue("rules", tournament.rules || "");
+          form.setValue("prizes", tournament.prizes || "");
+          form.setValue("contactInfo", tournament.contactInfo || "");
+          form.setValue("schedule", tournament.schedule ? JSON.parse(tournament.schedule).description : "");
+          form.setValue("requirements", tournament.requirements || "");
+          form.setValue("backgroundImageUrl", tournament.backgroundImageUrl || "");
+          form.setValue("regulationDocumentUrl", tournament.regulationDocumentUrl || "");
+          form.setValue("isPublished", tournament.isPublished || false);
+          
+          // Set state values
+          setRichDescription(tournament.richDescription || "");
+          setBackgroundImageUrl(tournament.backgroundImageUrl || "");
+          setRegulationDocumentUrl(tournament.regulationDocumentUrl || "");
+          
+          // Parse participation types
+          if (tournament.participationTypes) {
+            const categories = tournament.participationTypes.map((type: string) => {
+              try {
+                return JSON.parse(type);
+              } catch {
+                return { minAge: null, maxAge: null, gender: "male" };
+              }
+            });
+            setParticipationCategories(categories);
+          }
+          
+        } catch (error) {
+          console.error("Failed to load tournament:", error);
+          toast({
+            title: "Алдаа",
+            description: "Тэмцээний мэдээлэл ачаалахад алдаа гарлаа",
+            variant: "destructive",
+          });
+        }
+      };
+      
+      loadTournament();
+    }
+  }, [isEditing, editingId, form, toast]);
+
+  // Mutation for creating/updating tournament
   const createTournamentMutation = useMutation({
     mutationFn: async (data: any) => {
-      await apiRequest("/api/tournaments", {
-        method: "POST",
+      const url = isEditing ? `/api/admin/tournaments/${editingId}` : "/api/tournaments";
+      const method = isEditing ? "PUT" : "POST";
+      
+      await apiRequest(url, {
+        method,
         body: JSON.stringify({
           ...data,
           richDescription,
@@ -189,13 +255,15 @@ export default function AdminTournamentCreate() {
     onSuccess: () => {
       toast({
         title: "Амжилттай",
-        description: "Тэмцээн амжилттай үүсгэгдлээ",
+        description: isEditing ? "Тэмцээн амжилттай засагдлаа" : "Тэмцээн амжилттай үүсгэгдлээ",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/tournaments"] });
-      form.reset();
-      setRichDescription("");
-      setBackgroundImageUrl("");
-      setRegulationDocumentUrl("");
+      if (!isEditing) {
+        form.reset();
+        setRichDescription("");
+        setBackgroundImageUrl("");
+        setRegulationDocumentUrl("");
+      }
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -302,8 +370,8 @@ export default function AdminTournamentCreate() {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Тэмцээн Үүсгэх</h1>
-              <p className="text-gray-600">Шинэ тэмцээн зохион байгуулж, дэлгэрэнгүй мэдээлэл оруулах</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{isEditing ? "Тэмцээн Засах" : "Тэмцээн Үүсгэх"}</h1>
+              <p className="text-gray-600">{isEditing ? "Тэмцээний мэдээлэл засварлах" : "Шинэ тэмцээн зохион байгуулж, дэлгэрэнгүй мэдээлэл оруулах"}</p>
             </div>
             <div className="flex space-x-3">
               <Button
@@ -944,7 +1012,7 @@ export default function AdminTournamentCreate() {
                       disabled={createTournamentMutation.isPending}
                     >
                       <Save className="h-4 w-4 mr-2" />
-                      {createTournamentMutation.isPending ? "Хадгалж байна..." : "Тэмцээн үүсгэх"}
+                      {createTournamentMutation.isPending ? "Хадгалж байна..." : isEditing ? "Тэмцээн хадгалах" : "Тэмцээн үүсгэх"}
                     </Button>
                   </div>
                 </div>

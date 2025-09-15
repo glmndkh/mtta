@@ -40,7 +40,7 @@ export default function AdminTournaments() {
       'completed': { label: 'Дууссан', variant: 'secondary' as const },
       'cancelled': { label: 'Цуцлагдсан', variant: 'destructive' as const }
     };
-    
+
     const statusInfo = statusMap[status as keyof typeof statusMap] || { label: status, variant: 'default' as const };
     return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
   };
@@ -115,7 +115,7 @@ export default function AdminTournaments() {
                       <Calendar className="w-4 h-4" />
                       <span>{formatDate(tournament.startDate)} - {formatDate(tournament.endDate)}</span>
                     </div>
-                    
+
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Users className="w-4 h-4" />
                       <span>Хамгийн ихдээ {tournament.maxParticipants} оролцогч</span>
@@ -145,7 +145,7 @@ export default function AdminTournaments() {
                           Засах
                         </Button>
                       </Link>
-                      
+
                     </div>
                   </div>
                 </CardContent>
