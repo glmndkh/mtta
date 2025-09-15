@@ -447,6 +447,15 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         sortOrder: item.sortOrder || 0,
         selectedNewsId: item.selectedNewsId || "",
       });
+    } else if (selectedTab === "news") {
+      setFormData({
+        title: item.title || "",
+        content: item.content || "",
+        excerpt: item.excerpt || "",
+        imageUrl: item.imageUrl || "",
+        category: item.category || "news",
+        published: item.published || false,
+      });
     }
     setShowDialog(true); // Show the dialog
   };
@@ -2828,9 +2837,9 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                       try {
                         const aclResponse = await apiRequest("/api/objects/finalize", {
                           method: "PUT",
-                          body: JSON.stringify({ 
+                          body: JSON.stringify({
                             fileURL: uploadURL,
-                            isPublic: true 
+                            isPublic: true
                           }),
                           headers: { 'Content-Type': 'application/json' },
                         });
@@ -3109,6 +3118,59 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
     );
   };
 
+  // Function to render the news tab content
+  const renderNewsTab = () => (
+    <div className="space-y-4">
+      <div className="flex flex-wrap justify-between items-center gap-4">
+        <h2 className="text-2xl font-bold">Мэдээ нийтлэлүүд</h2>
+        <Button onClick={openCreateDialog}>
+          <Plus className="w-4 h-4 mr-2" />
+          Мэдээ нэмэх
+        </Button>
+      </div>
+
+      {newsLoading ? (
+        <div>Ачааллаж байна...</div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Гарчиг</TableHead>
+              <TableHead>Категори</TableHead>
+              <TableHead>Нийтлэгдсэн</TableHead>
+              <TableHead>Үүсгэсэн огноо</TableHead>
+              <TableHead>Үйлдэл</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {news && Array.isArray(news) ? news.map((article: any) => (
+              <TableRow key={article.id}>
+                <TableCell>{article.title}</TableCell>
+                <TableCell>{article.category}</TableCell>
+                <TableCell>
+                  <Badge variant={article.published ? 'default' : 'secondary'}>
+                    {article.published ? 'Нийтлэгдсэн' : 'Ноорог'}
+                  </Badge>
+                </TableCell>
+                <TableCell>{new Date(article.createdAt).toLocaleDateString('mn-MN')}</TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => openEditDialog(article)}>
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(article.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )) : null}
+          </TableBody>
+        </Table>
+      )}
+    </div>
+  );
+
   return (
     <div className="container mx-auto p-6">
       <div className="mb-8">
@@ -3300,7 +3362,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                         <TableHead>Эхлэх огноо</TableHead>
                         <TableHead>Дуусах огноо</TableHead>
                         <TableHead>Статус</TableHead>
-                        <TableHead>Нийтлэгдсэн</TableHead>
+                        <TableHead>Нийтлэгсэн</TableHead>
                         <TableHead>Үйлдэл</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -3377,55 +3439,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               <CardDescription>Мэдээ нийтлэл нэмэх, засах, устгах</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex flex-wrap justify-between items-center gap-4">
-                  <h2 className="text-2xl font-bold">Мэдээ нийтлэлүүд</h2>
-                  <Button onClick={openCreateDialog}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Мэдээ нэмэх
-                  </Button>
-                </div>
-
-                {newsLoading ? (
-                  <div>Ачааллаж байна...</div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Гарчиг</TableHead>
-                        <TableHead>Категори</TableHead>
-                        <TableHead>Нийтлэгдсэн</TableHead>
-                        <TableHead>Үүсгэсэн огноо</TableHead>
-                        <TableHead>Үйлдэл</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {news && Array.isArray(news) ? news.map((article: any) => (
-                        <TableRow key={article.id}>
-                          <TableCell>{article.title}</TableCell>
-                          <TableCell>{article.category}</TableCell>
-                          <TableCell>
-                            <Badge variant={article.published ? 'default' : 'secondary'}>
-                              {article.published ? 'Нийтлэгдсэн' : 'Ноорог'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{new Date(article.createdAt).toLocaleDateString('mn-MN')}</TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button size="sm" variant="outline" onClick={() => openEditDialog(article)}>
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                              <Button size="sm" variant="destructive" onClick={() => handleDelete(article.id)}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )) : null}
-                    </TableBody>
-                  </Table>
-                )}
-              </div>
+              {renderNewsTab()}
             </CardContent>
           </Card>
         </TabsContent>
@@ -3490,18 +3504,6 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
           </Card>
         </TabsContent>
 
-        <TabsContent value="national-team">
-          <Card>
-            <CardHeader>
-              <CardTitle>Үндэсний шигшээ баг</CardTitle>
-              <CardDescription>Шигшээ багийн тоглогчдыг нэмэх, засах, устгах</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {renderNationalTeamTab()}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         <TabsContent value="stats">
           <Card>
             <CardHeader>
@@ -3544,27 +3546,36 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         setEditingItem(null);
         setFormData({}); // Reset form data on close
       }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader className="flex-shrink-0">
-            <DialogTitle>Засварлах</DialogTitle>
-            <DialogDescription>
-              Мэдээллийг шинэчлэнэ үү
-            </DialogDescription>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedTab === 'users' ? 'Хэрэглэгч засах' :
+               selectedTab === 'clubs' ? 'Клуб засах' :
+               selectedTab === 'coaches' ? 'Дасгалжуулагч засах' :
+               selectedTab === 'branches' ? 'Салбар холбоо засах' :
+               selectedTab === 'federation-members' ? 'Холбооны гишүүн засах' :
+               selectedTab === 'national-team' ? 'Үндэсний шигшээ тоглогч засах' :
+               selectedTab === 'judges' ? 'Шүүгч засах' :
+               selectedTab === 'leagues' ? 'Лиг засах' :
+               selectedTab === 'news' ? 'Мэдээ засах' :
+               selectedTab === 'teams' ? 'Баг засах' :
+               selectedTab === 'sliders' ? 'Слайдер засах' :
+               selectedTab === 'sponsors' ? 'Ивээн тэтгэгч засах' :
+               selectedTab === 'tournaments' ? 'Тэмцээн засах' :
+               selectedTab === 'champions' ? 'Аварга засах' : 'Засах'}
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 overflow-y-auto flex-1 pr-2">
+          <div className="space-y-4">
             {renderFormFields()}
-            <DialogFooter className="flex-shrink-0 pt-4 border-t">
-              <Button variant="outline" onClick={() => {
-                setEditingItem(null);
-                setShowDialog(false);
-              }}>
-                Цуцлах
-              </Button>
-              <Button onClick={handleUpdate} disabled={updateMutation.isPending}>
-                {updateMutation.isPending ? "Шинэчилж байна..." : "Шинэчлэх"}
-              </Button>
-            </DialogFooter>
           </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDialog(false)}>
+              Цуцлах
+            </Button>
+            <Button onClick={handleUpdate} disabled={updateMutation.isPending}>
+              {updateMutation.isPending ? 'Шинэчилж байна...' : 'Шинэчлэх'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
