@@ -220,7 +220,7 @@ export default function Home() {
                                   window.location.href = slide.linkUrl!;
                                 }}
                               >
-                                Дэлгэрэнгүй
+                                {slide.buttonText || "Дэлгэрэнгүй"}
                               </Button>
                             </Link>
                           </div>
