@@ -1,10 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Calendar, Users, Trophy, Settings, Eye } from "lucide-react";
+import { Plus, Calendar, Users, Trophy, Settings, Eye, Globe, EyeOff } from "lucide-react";
 import { Link } from "wouter";
 import Navigation from "@/components/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 interface Tournament {
   id: string;
@@ -25,6 +26,48 @@ export default function AdminTournaments() {
   const { data: tournaments = [], isLoading } = useQuery<Tournament[]>({
     queryKey: ['/api/admin/tournaments'],
   });
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const togglePublishMutation = useMutation({
+    mutationFn: async ({ tournamentId, isPublished }: { tournamentId: string, isPublished: boolean }) => {
+      const response = await fetch(`/api/admin/tournaments/${tournamentId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isPublished }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Тэмцээний төлөв шинэчлэхэд алдаа гарлаа');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Амжилттай",
+        description: "Тэмцээний төлөв шинэчлэгдлээ",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tournaments'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Алдаа",
+        description: error.message || "Тэмцээний төлөв шинэчлэхэд алдаа гарлаа",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleTogglePublish = (tournament: Tournament) => {
+    togglePublishMutation.mutate({
+      tournamentId: tournament.id,
+      isPublished: !tournament.isPublished,
+    });
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('mn-MN', {
@@ -151,7 +194,31 @@ export default function AdminTournaments() {
                           Засах
                         </Button>
                       </Link>
-
+                    </div>
+                    
+                    <div className="pt-2">
+                      <Button
+                        onClick={() => handleTogglePublish(tournament)}
+                        disabled={togglePublishMutation.isPending}
+                        size="sm"
+                        className={`w-full ${
+                          tournament.isPublished 
+                            ? 'bg-red-600 hover:bg-red-700 text-white' 
+                            : 'bg-green-600 hover:bg-green-700 text-white'
+                        }`}
+                      >
+                        {tournament.isPublished ? (
+                          <>
+                            <EyeOff className="w-4 h-4 mr-1" />
+                            Нуух
+                          </>
+                        ) : (
+                          <>
+                            <Globe className="w-4 h-4 mr-1" />
+                            Нийтлэх
+                          </>
+                        )}
+                      </Button>
                     </div>
                   </div>
                 </CardContent>

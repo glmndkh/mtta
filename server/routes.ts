@@ -1116,6 +1116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           registrationDeadline,
           maxParticipants,
           entryFee,
+          isPublished,
           ...rest
         } = req.body;
 
@@ -1130,6 +1131,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ? { maxParticipants: parseInt(maxParticipants) }
             : {}),
           ...(entryFee !== undefined ? { entryFee: entryFee.toString() } : {}),
+          ...(isPublished !== undefined ? { isPublished: Boolean(isPublished) } : {}),
         });
 
         const tournament = await storage.updateTournament(tournamentId, updateData);
