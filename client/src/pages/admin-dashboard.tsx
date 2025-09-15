@@ -434,6 +434,19 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         age: item.age || 0,
         imageUrl: item.imageUrl || "",
       });
+    } else if (selectedTab === "sliders") {
+      setFormData({
+        title: item.title || "",
+        subtitle: item.subtitle || "",
+        description: item.description || "",
+        imageUrl: item.imageUrl || "",
+        linkType: item.linkType || 'custom',
+        linkUrl: item.linkUrl || "",
+        buttonText: item.buttonText || "",
+        isActive: item.isActive || false,
+        sortOrder: item.sortOrder || 0,
+        selectedNewsId: item.selectedNewsId || "",
+      });
     }
     setShowDialog(true); // Show the dialog
   };
