@@ -3558,7 +3558,9 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         setEditingItem(null);
         setFormData({}); // Reset form data on close
       }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent
+          className={`${selectedTab === 'tournaments' ? 'max-w-[90vw] max-h-[95vh]' : 'max-w-4xl max-h-[90vh]'} overflow-y-auto`}
+        >
           <DialogHeader>
             <DialogTitle>
               {selectedTab === 'users' ? 'Хэрэглэгч засах' :
