@@ -1009,16 +1009,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tournaments", async (req: any, res) => {
     try {
       let tournaments = await storage.getTournaments();
-      
+
       // If user is not admin, only show published tournaments
       const userId = req.session?.userId;
       const user = userId ? await storage.getUser(userId) : null;
       const isAdmin = user && user.role === 'admin';
-      
+
       if (!isAdmin) {
         tournaments = tournaments.filter(t => t.isPublished);
       }
-      
+
       res.json(tournaments);
     } catch (e) {
       console.error("Error fetching tournaments:", e);
@@ -1106,7 +1106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req: any, res) => {
       try {
         const tournamentId = req.params.id;
-        
+
         // Check if tournament exists first
         const existingTournament = await storage.getTournament(tournamentId);
         if (!existingTournament) {
@@ -1142,7 +1142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!tournament) {
           return res.status(404).json({ message: "Тэмцээн олдсонгүй" });
         }
-        
+
         res.json(tournament);
       } catch (e) {
         console.error("Error updating tournament:", e);
@@ -1602,72 +1602,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error updating match players:', error);
       res.status(500).json({ message: 'Failed to update match players' });
-    }
-  });
-
-  // Update match result
-  app.put('/api/matches/:matchId/result-summary', requireAuth, async (req: any, res) => {
-    try {
-      const { matchId } = req.params;
-      const { winner, bestOf, setsWonA, setsWonB } = req.body;
-
-      console.log(`Updating match ${matchId} result:`, { winner, bestOf, setsWonA, setsWonB });
-
-      // Find the tournament this match belongs to
-      const tournaments = await storage.getTournaments();
-      let targetTournament = null;
-      let targetResults = null;
-
-      for (const tournament of tournaments) {
-        const results = await storage.getTournamentResults(tournament.id);
-        if (results?.knockoutResults) {
-          const knockoutResults = results.knockoutResults as any;
-          for (const category in knockoutResults) {
-            const matches = knockoutResults[category] || [];
-            const match = matches.find((m: any) => m.id === matchId);
-            if (match) {
-              targetTournament = tournament;
-              targetResults = results;
-
-              // Update the match result
-              if (winner === 'A' && match.player1) {
-                match.winner = match.player1;
-              } else if (winner === 'B' && match.player2) {
-                match.winner = match.player2;
-              }
-
-              // Update score
-              if (winner === 'WO') {
-                match.score = 'W.O.';
-              } else if (winner === 'RET') {
-                match.score = 'RET';
-              } else {
-                match.score = `${setsWonA}-${setsWonB}`;
-              }
-
-              match.player1Score = setsWonA.toString();
-              match.player2Score = setsWonB.toString();
-
-              // Save updated results
-              await storage.upsertTournamentResults({
-                tournamentId: tournament.id,
-                groupStageResults: results.groupStageResults,
-                knockoutResults: results.knockoutResults,
-                finalRankings: results.finalRankings,
-                isPublished: results.isPublished
-              });
-
-              console.log(`Updated match ${matchId} result successfully`);
-              return res.json({ success: true, message: 'Match result updated' });
-            }
-          }
-        }
-      }
-
-      res.status(404).json({ message: 'Match not found' });
-    } catch (error) {
-      console.error('Error updating match result:', error);
-      res.status(500).json({ message: 'Failed to update match result' });
     }
   });
 
@@ -2233,7 +2167,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req: any, res) => {
       try {
         const tournamentId = req.params.id;
-        
+
         // Check if tournament exists first
         const existingTournament = await storage.getTournament(tournamentId);
         if (!existingTournament) {
@@ -2267,7 +2201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!tournament) {
           return res.status(404).json({ message: "Тэмцээн олдсонгүй" });
         }
-        
+
         res.json(tournament);
       } catch (e) {
         console.error("Error updating tournament:", e);

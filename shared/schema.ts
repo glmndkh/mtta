@@ -542,6 +542,8 @@ export const insertHomepageSliderSchema = createInsertSchema(homepageSliders).om
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  title: z.string().optional().nullable(),
 });
 
 export const insertSponsorSchema = createInsertSchema(sponsors).omit({

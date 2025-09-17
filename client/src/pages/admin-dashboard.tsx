@@ -1634,7 +1634,9 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                         const file = result.successful[0];
                         const response = await apiRequest("/api/objects/finalize", {
                           method: "PUT",
-                          headers: { "Content-Type": "application/json" },
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
                           body: JSON.stringify({
                             fileURL: file.uploadURL,
                             isPublic: true,
@@ -2368,11 +2370,12 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         return (
           <>
             <div>
-              <Label htmlFor="title">Гарчиг</Label>
+              <Label htmlFor="title">Гарчиг (заавал биш)</Label>
               <Input
                 id="title"
                 value={formData.title || ''}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
+                placeholder="Слайдын гарчиг"
               />
             </div>
             <div>
