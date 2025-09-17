@@ -1487,14 +1487,15 @@ const AdminTournamentResults: React.FC = () => {
                         className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                       />
                       <span className="text-sm font-medium text-gray-300">Нийтэд харуулах</span>
-                  {isPublished && <Eye className="w-4 h-4 text-green-600" />}
-                  {!isPublished && <EyeOff className="w-4 h-4 text-gray-400" />}
+                      {isPublished && <Eye className="w-4 h-4 text-green-600" />}
+                      {!isPublished && <EyeOff className="w-4 h-4 text-gray-400" />}
                 </label>
               </div>
             </CardContent>
           </Card>
             </div>
         </div>
+      </div>
     </PageWithLoading>
   );
 };
