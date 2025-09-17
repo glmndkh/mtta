@@ -14,6 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import PageWithLoading from "@/components/PageWithLoading";
 import { format } from "date-fns";
 import { formatName, getImageUrl } from "@/lib/utils";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 // Type definitions for API responses
 interface SliderItem {
@@ -23,6 +24,7 @@ interface SliderItem {
   imageUrl?: string;
   linkUrl?: string;
   active: boolean;
+  buttonText?: string;
 }
 
 interface NewsItem {
@@ -102,7 +104,7 @@ export default function Home() {
   // Auto-play slider
   useEffect(() => {
     if (sliders.length <= 1) return;
-    
+
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % sliders.length);
     }, 5000); // Change slide every 5 seconds
@@ -169,9 +171,9 @@ export default function Home() {
   return (
     <PageWithLoading>
       <div className="min-h-screen">
-        
 
-        
+
+
 
         <Navigation />
 
@@ -179,7 +181,7 @@ export default function Home() {
         <section className="relative">
           {/* Hero Slider */}
           {slidersLoading ? (
-            <div className="bg-gradient-to-r from-mtta-green to-green-700 text-white py-20">
+            <div className="bg-gradient-to-r from-mtta-green to-green-700 py-20">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <Skeleton className="h-12 w-3/4 mb-4 bg-white bg-opacity-20" />
                 <Skeleton className="h-6 w-1/2 bg-white bg-opacity-20" />
@@ -188,18 +190,20 @@ export default function Home() {
           ) : sliders.length > 0 ? (
             <div className="relative w-full h-[600px] overflow-hidden">
               {/* Slides */}
-              <div 
+              <div
                 className="flex transition-transform duration-500 ease-in-out h-full"
                 style={{ transform: `translateX(-${currentSlide * 100}%)` }}
               >
                 {sliders.map((slide, index) => (
-                  <div 
+                  <div
                     key={slide.id}
-                    className="w-full flex-shrink-0 bg-cover bg-center relative"
+                    className="w-full flex-shrink-0 relative"
                     style={{
-                      backgroundImage: slide.imageUrl 
-                        ? `url(${getImageUrl(slide.imageUrl)})` 
-                        : 'linear-gradient(to right, #10b981, #047857)'
+                      backgroundImage: slide.imageUrl
+                        ? `url(${getImageUrl(slide.imageUrl)})`
+                        : 'linear-gradient(to right, #10b981, #047857)',
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center'
                     }}
                   >
                     <div className="absolute inset-0 bg-black bg-opacity-40"></div>
@@ -212,8 +216,8 @@ export default function Home() {
                         {slide.linkUrl && (
                           <div className="relative z-10">
                             <Link href={slide.linkUrl}>
-                              <Button 
-                                size="lg" 
+                              <Button
+                                size="lg"
                                 className="bg-white text-mtta-green hover:bg-gray-100 font-semibold px-8 py-4 shadow-lg hover:shadow-xl transition-all duration-300"
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -270,8 +274,8 @@ export default function Home() {
                         setCurrentSlide(index);
                       }}
                       className={`w-3 h-3 rounded-full transition-all duration-200 z-10 ${
-                        index === currentSlide 
-                          ? 'bg-white scale-110' 
+                        index === currentSlide
+                          ? 'bg-white scale-110'
                           : 'bg-white bg-opacity-50 hover:bg-opacity-80'
                       }`}
                     />
@@ -285,7 +289,7 @@ export default function Home() {
               <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"></div>
             </div>
           )}
-          
+
           {/* Default Hero Content when no sliders */}
           {!slidersLoading && sliders.length === 0 && (
             <div className="bg-gradient-to-r from-mtta-green to-green-700 text-white py-20">
@@ -294,13 +298,13 @@ export default function Home() {
             </div>
           )}
 
-        
+
         </section>
 
         {/* Main Content - Remaining Blocks */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 space-y-16">
 
-          
+
 
           {/* 1. Шинэ мэдээ */}
           <section>

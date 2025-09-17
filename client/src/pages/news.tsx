@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -47,6 +46,7 @@ import {
   BookOpen,
   ExternalLink
 } from 'lucide-react';
+import { AspectRatio } from '../components/ui/aspect-ratio';
 
 // Enhanced schema for news
 const newsFormSchema = z.object({
@@ -80,12 +80,12 @@ const emitAnalyticsEvent = (event: string, data: any) => {
       timestamp: new Date().toISOString(),
     });
   }
-  
+
   // Custom analytics
   if (typeof window !== 'undefined' && (window as any).customAnalytics) {
     (window as any).customAnalytics.track(event, data);
   }
-  
+
   console.log(`📊 Analytics: ${event}`, data);
 };
 
@@ -134,7 +134,7 @@ export default function News() {
       const response = await fetch(`/api/news?${params}`);
       if (!response.ok) throw new Error('Мэдээ татаж авахад алдаа гарлаа');
       const data = await response.json();
-      
+
       // Handle both old format (array) and new format (object)
       if (Array.isArray(data)) {
         return { news: data, total: data.length, page: 1, totalPages: 1 };
@@ -333,7 +333,7 @@ export default function News() {
   const handleShare = useCallback((platform: string, newsItem: any) => {
     const url = `${window.location.origin}/news/${newsItem.slug || newsItem.id}`;
     const title = newsItem.title;
-    
+
     let shareUrl = '';
     switch (platform) {
       case 'facebook':
@@ -346,7 +346,7 @@ export default function News() {
         shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
         break;
     }
-    
+
     if (shareUrl) {
       window.open(shareUrl, '_blank', 'width=600,height=400');
       emitAnalyticsEvent('news_share', { platform, id: newsItem.id });
@@ -355,10 +355,10 @@ export default function News() {
 
   const handleLoadMore = useCallback(async () => {
     if (isLoadingMore) return;
-    
+
     setIsLoadingMore(true);
     setPage(prev => prev + 1);
-    
+
     // Simulate loading delay for better UX
     setTimeout(() => setIsLoadingMore(false), 500);
   }, [isLoadingMore]);
@@ -366,16 +366,16 @@ export default function News() {
   // Enhanced image helper with WebP support
   const getImageUrl = useCallback((imageUrl: string) => {
     if (!imageUrl) return null;
-    
+
     // Handle data URLs
     if (imageUrl.startsWith('data:')) return imageUrl;
-    
+
     // Handle object storage paths
     if (imageUrl.startsWith('/objects/')) return imageUrl;
-    
+
     // Handle direct URLs
     if (imageUrl.startsWith('http')) return imageUrl;
-    
+
     // Fallback to object storage
     return `/objects/uploads/${imageUrl}`;
   }, []);
@@ -385,11 +385,11 @@ export default function News() {
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) return 'Саяхан';
     if (diffInHours < 24) return `${diffInHours} цагийн өмнө`;
     if (diffInHours < 48) return 'Өчигдөр';
-    
+
     return date.toLocaleDateString('mn-MN', {
       year: 'numeric',
       month: 'short',
@@ -412,7 +412,7 @@ export default function News() {
           </div>
         </div>
       </div>
-      
+
       {/* Grid skeleton */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[...Array(6)].map((_, i) => (
@@ -481,7 +481,7 @@ export default function News() {
   // Enhanced featured news card with better accessibility
   const FeaturedNewsCard = ({ item }: { item: any }) => {
     const imageUrl = getImageUrl(item.imageUrl);
-    
+
     return (
       <Card 
         className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group focus-within:ring-2 focus-within:ring-blue-500"
@@ -499,10 +499,11 @@ export default function News() {
         <div className="md:flex">
           <div className="md:w-1/2 relative overflow-hidden">
             {imageUrl ? (
+              <AspectRatio ratio={16 / 9} className="overflow-hidden">
               <img
                 src={imageUrl}
                 alt={item.title}
-                className="w-full h-64 md:h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 loading="eager"
                 onLoad={() => console.log('Featured image loaded successfully:', imageUrl)}
                 onError={(e) => {
@@ -510,6 +511,7 @@ export default function News() {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
+              </AspectRatio>
             ) : (
               <div className="w-full h-64 md:h-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center">
                 <div className="text-white text-center">
@@ -520,7 +522,7 @@ export default function News() {
             )}
             <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent"></div>
           </div>
-          
+
           <div className="p-6 md:w-1/2 flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -531,26 +533,26 @@ export default function News() {
                   {categoryLabels[item.category as keyof typeof categoryLabels] || item.category}
                 </Badge>
               </div>
-              
+
               <h1 
                 id={`featured-news-title-${item.id}`}
                 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-3 leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
               >
                 {item.title}
               </h1>
-              
+
               <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4">
                 <Clock className="w-4 h-4 mr-1" aria-hidden="true" />
                 <time dateTime={item.createdAt || item.publishedAt}>
                   {formatDate(item.createdAt || item.publishedAt)}
                 </time>
               </div>
-              
+
               <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-3">
                 {item.excerpt || item.content?.substring(0, 200) + '...'}
               </p>
             </div>
-            
+
             <div className="flex items-center justify-between">
               <Button 
                 onClick={(e) => {
@@ -563,7 +565,7 @@ export default function News() {
                 Дэлгэрэнгүй
                 <ChevronRight className="w-4 h-4 ml-2" aria-hidden="true" />
               </Button>
-              
+
               <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
@@ -609,7 +611,7 @@ export default function News() {
   // Enhanced regular news card with lazy loading
   const NewsCard = ({ item }: { item: any }) => {
     const imageUrl = getImageUrl(item.imageUrl);
-    
+
     return (
       <Card 
         className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-opacity-50"
@@ -626,17 +628,19 @@ export default function News() {
       >
         <div className="aspect-video overflow-hidden relative">
           {imageUrl ? (
-            <img
-              src={imageUrl}
-              alt={item.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              loading="lazy"
-              onLoad={() => console.log('Image loaded successfully:', imageUrl)}
-              onError={(e) => {
-                console.error('Image failed to load:', imageUrl);
-                (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI0MCIgdmlld0JveD0iMCAwIDQwMCAyNDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIyNDAiIGZpbGw9IiNGM0Y0RjYiLz48cGF0aCBkPSJNMTYwIDEwMEgyNDBWMTQwSDE2MFYxMDBaIiBmaWxsPSIjRDFENURCIi8+PHBhdGggZD0iTTE3NSAxMTVIMjI1VjEyNUgxNzVWMTE1WiIgZmlsbD0iIzlDQTNBRiIvPjwvc3ZnPgo=';
-              }}
-            />
+            <AspectRatio ratio={16 / 9} className="overflow-hidden">
+              <img
+                src={imageUrl}
+                alt={item.title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                loading="lazy"
+                onLoad={() => console.log('Image loaded successfully:', imageUrl)}
+                onError={(e) => {
+                  console.error('Image failed to load:', imageUrl);
+                  (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI0MCIgdmlld0JveD0iMCAwIDQwMCAyNDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIyNDAiIGZpbGw9IiNGM0Y0RjYiLz48cGF0aCBkPSJNMTYwIDEwMEgyNDBWMTQwSDE2MFYxMDBaIiBmaWxsPSIjRDFENURCIi8+PHBhdGggZD0iTTE3NSAxNVIMjI1VjEyNUgxNzVWMTE1WiIgZmlsbD0iIzlDQTNBRiIvPjwvc3ZnPgo=';
+                }}
+              />
+            </AspectRatio>
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
               <Calendar className="w-8 h-8 text-gray-400" aria-hidden="true" />
@@ -644,7 +648,7 @@ export default function News() {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
         </div>
-        
+
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-2">
             <Badge variant="outline" className="text-xs">
@@ -657,18 +661,18 @@ export default function News() {
               </time>
             </span>
           </div>
-          
+
           <h3 
             id={`news-title-${item.id}`}
             className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
           >
             {item.title}
           </h3>
-          
+
           <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-3">
             {item.excerpt || item.content?.substring(0, 120) + '...'}
           </p>
-          
+
           <div className="flex items-center justify-between">
             <Button 
               size="sm" 
@@ -683,7 +687,7 @@ export default function News() {
               Дэлгэрэнгүй
               <ExternalLink className="w-4 h-4 ml-1" aria-hidden="true" />
             </Button>
-            
+
             <Button
               variant="ghost"
               size="sm"
@@ -720,7 +724,7 @@ export default function News() {
                 </p>
               )}
             </div>
-            
+
             {isAuthenticated && user?.role === 'admin' && (
               <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                 <DialogTrigger asChild>
@@ -914,7 +918,7 @@ export default function News() {
                   <h2 id="news-list-title" className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                     Сүүлийн мэдээ
                   </h2>
-                  
+
                   {regularNews.length > 0 ? (
                     <>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -922,7 +926,7 @@ export default function News() {
                           <NewsCard key={item.id} item={item} />
                         ))}
                       </div>
-                      
+
                       {/* Load More */}
                       {regularNews.length >= 12 && (
                         <div className="text-center mt-12">
