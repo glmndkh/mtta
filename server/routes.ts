@@ -2389,8 +2389,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/sliders", requireAuth, isAdminRole, async (req, res) => {
     try {
-      const sliderData = insertHomepageSliderSchema.parse(req.body);
-      const slider = await storage.createHomepageSlider(sliderData);
+      // Allow empty title if not provided, use a default value
+      const sliderData = {
+        ...req.body,
+        title: req.body.title || "Зургийн слайд"
+      };
+      const validatedData = insertHomepageSliderSchema.parse(sliderData);
+      const slider = await storage.createHomepageSlider(validatedData);
       res.json(slider);
     } catch (e) {
       console.error("Error creating slider:", e);

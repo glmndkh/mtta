@@ -321,7 +321,7 @@ export const newsFeed = pgTable("news_feed", {
 // Homepage sliders table
 export const homepageSliders = pgTable("homepage_sliders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  title: varchar("title").notNull(),
+  title: varchar("title"),
   subtitle: text("subtitle"),
   description: text("description"),
   imageUrl: varchar("image_url").notNull(),

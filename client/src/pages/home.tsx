@@ -209,7 +209,9 @@ export default function Home() {
                     <div className="absolute inset-0 bg-black bg-opacity-40"></div>
                     <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center">
                       <div className="text-white space-y-4 animate-fade-in">
-                        <h1 className="text-4xl md:text-6xl font-bold">{slide.title}</h1>
+                        {slide.title && (
+                          <h1 className="text-4xl md:text-6xl font-bold">{slide.title}</h1>
+                        )}
                         {slide.description && (
                           <p className="text-xl md:text-2xl text-gray-200">{slide.description}</p>
                         )}
