@@ -194,13 +194,13 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
 
   return (
     <Link href={`/events/${event.id}`}>
-      <div className="relative h-[360px] w-full overflow-hidden rounded-2xl cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl" onClick={handleCardClick}>
+      <div className="relative h-[280px] sm:h-[320px] md:h-[360px] w-full overflow-hidden rounded-xl sm:rounded-2xl cursor-pointer transition-all duration-300 hover:scale-[1.01] sm:hover:scale-[1.02] hover:shadow-xl sm:hover:shadow-2xl" onClick={handleCardClick}>
         {bg ? (
           <img
             src={bg}
             onError={() => setImgErr(true)}
             alt='Event cover'
-            className='absolute inset-0 h-full w-full object-cover'
+            className='absolute inset-0 h-full w-full object-cover object-center'
             loading={priority ? 'eager' : 'lazy'}
             fetchPriority={priority ? 'high' : 'auto'}
           />
@@ -210,22 +210,22 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/0" />
 
         {/* Left info */}
-        <div className="absolute left-4 bottom-4 md:left-6 md:bottom-6 max-w-[70%] text-white">
-          <div className="bg-white/15 rounded-full px-2.5 py-1 text-xs font-semibold inline-block mb-2">
+        <div className="absolute left-3 bottom-3 sm:left-4 sm:bottom-4 md:left-6 md:bottom-6 max-w-[65%] sm:max-w-[70%] text-white">
+          <div className="bg-white/15 rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-xs font-semibold inline-block mb-1.5 sm:mb-2">
             {formatDateRange(event.startDate, event.endDate)}
           </div>
-          <h2 className="text-2xl md:text-3xl font-extrabold drop-shadow line-clamp-2">
+          <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-extrabold drop-shadow line-clamp-2">
             {event.name}
           </h2>
           {event.venue && (
-            <div className="text-white/85">{event.venue}</div>
+            <div className="text-sm sm:text-base text-white/85">{event.venue}</div>
           )}
-          <div className="text-white/85">
+          <div className="text-sm sm:text-base text-white/85">
             {event.city || event.location}
             {event.country && `, ${event.country}`}
           </div>
           {prize && (
-            <div className="mt-2 text-sm text-white/85 font-semibold">
+            <div className="mt-1 sm:mt-2 text-xs sm:text-sm text-white/85 font-semibold">
               PRIZE MONEY: {prize}
             </div>
           )}
@@ -274,7 +274,7 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
         </div>
 
         {/* Right side countdown & categories */}
-        <div className="absolute left-4 right-4 bottom-24 translate-y-0 flex flex-col gap-3 sm:left-auto sm:right-4 sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2 sm:items-end">
+        <div className="absolute left-3 right-3 bottom-20 sm:bottom-24 translate-y-0 flex flex-col gap-2 sm:gap-3 sm:left-auto sm:right-3 md:right-4 sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2 sm:items-end">
           <div className="relative flex items-center justify-end gap-2">
             {status === "ongoing" && (
               <div className="flex items-center gap-1 text-red-500 mr-1">
@@ -282,7 +282,7 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
                 <span className="text-[10px] md:text-xs font-bold">LIVE</span>
               </div>
             )}
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
               {["Days", "Hours", "Minutes", "Seconds"].map((label, idx) => {
                 const value = [
                   countdown.days,
@@ -293,12 +293,12 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
                 return (
                   <div
                     key={label}
-                    className="bg-black/60 backdrop-blur rounded-xl px-4 py-3 md:px-5 md:py-4 text-white text-center"
+                    className="bg-black/60 backdrop-blur rounded-lg sm:rounded-xl px-2 py-2 sm:px-3 sm:py-3 md:px-4 md:py-3 lg:px-5 lg:py-4 text-white text-center"
                   >
-                    <div className="text-3xl md:text-5xl font-extrabold">
+                    <div className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-extrabold">
                       {formatNum(value)}
                     </div>
-                    <div className="mt-1 text-[10px] md:text-xs uppercase opacity-80">
+                    <div className="mt-0.5 sm:mt-1 text-[8px] sm:text-[10px] md:text-xs uppercase opacity-80">
                       {label}
                     </div>
                   </div>

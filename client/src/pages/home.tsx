@@ -188,7 +188,7 @@ export default function Home() {
               </div>
             </div>
           ) : sliders.length > 0 ? (
-            <div className="relative w-full h-[600px] overflow-hidden">
+            <div className="relative w-full h-[400px] sm:h-[500px] md:h-[600px] overflow-hidden">
               {/* Slides */}
               <div
                 className="flex transition-transform duration-500 ease-in-out h-full"
@@ -207,13 +207,13 @@ export default function Home() {
                     }}
                   >
                     <div className="absolute inset-0 bg-black bg-opacity-40"></div>
-                    <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center">
-                      <div className="text-white space-y-4 animate-fade-in">
+                    <div className="relative max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 h-full flex items-center">
+                      <div className="text-white space-y-2 sm:space-y-3 md:space-y-4 animate-fade-in">
                         {slide.title && slide.title.trim() && (
-                          <h1 className="text-4xl md:text-6xl font-bold">{slide.title}</h1>
+                          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight">{slide.title}</h1>
                         )}
                         {slide.description && (
-                          <p className="text-xl md:text-2xl text-gray-200">{slide.description}</p>
+                          <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-200">{slide.description}</p>
                         )}
                         {slide.linkUrl && (
                           <div className="relative z-10">
