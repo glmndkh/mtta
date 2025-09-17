@@ -1761,10 +1761,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const dataToValidate = { ...req.body, authorId };
         console.log("Data to validate:", dataToValidate);
 
-        const newsData = insertNewsSchema.parse(dataToValidate);
-        console.log("Validated news data:", newsData);
+        // Make sure to set default values for fields that might be missing
+        const validatedNewsData = insertNewsSchema.parse({
+          ...dataToValidate,
+          content: dataToValidate.content || '',
+          excerpt: dataToValidate.excerpt || '',
+          category: dataToValidate.category || 'news',
+          imageUrl: dataToValidate.imageUrl || null,
+          publishedAt: dataToValidate.published ? new Date() : null,
+        });
 
-        const news = await storage.createNews(newsData);
+        const news = await storage.createNews(validatedNewsData);
         console.log("Created news:", news);
         res.json(news);
       } catch (e) {

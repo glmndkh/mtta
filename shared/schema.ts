@@ -534,8 +534,13 @@ export const insertMatchSchema = createInsertSchema(matches).omit({
 export const insertNewsSchema = createInsertSchema(newsFeed).omit({
   id: true,
   createdAt: true,
-  publishedAt: true,
   updatedAt: true,
+  publishedAt: true,
+}).extend({
+  content: z.string().optional().nullable(),
+  excerpt: z.string().optional().nullable(),
+  imageUrl: z.string().optional().nullable(),
+  category: z.string().optional().nullable(),
 });
 
 export const insertHomepageSliderSchema = createInsertSchema(homepageSliders).omit({

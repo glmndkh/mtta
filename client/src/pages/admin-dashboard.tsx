@@ -2904,7 +2904,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
   const validateForm = () => {
     switch (selectedTab) {
       case 'news':
-        return formData.title && formData.content;
+        return formData.title; // Зөвхөн гарчиг л заавал, бусад талбар заавал биш
       case 'tournaments':
         return formData.name && formData.startDate && formData.endDate && formData.location;
       case 'sponsors':
@@ -3010,7 +3010,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                           <DropdownMenuItem onClick={() => handleTournamentManagement(league.id, 'manage-league')}>
                             <Settings className="w-4 h-4 mr-2" />
                             Удирдлагын самбар нээх
-                          </DropdownMenuItem>
+                          </DropdownMenu>
                         </DropdownMenuContent>
                       </DropdownMenu>
                       <Button size="sm" variant="outline" onClick={() => openEditDialog(league)}>
