@@ -90,18 +90,18 @@ export default function Navigation() {
 
   // Drawer animation classes
   const drawerBase =
-    "fixed top-0 right-0 h-full w-[300px] bg-gray-900 shadow-xl overflow-y-auto z-[60] transition-transform duration-200";
+    "fixed top-0 right-0 h-full w-[280px] sm:w-[300px] bg-gray-900 shadow-xl overflow-y-auto z-[60] transition-transform duration-300 ease-in-out";
   const drawerState = showMobileMenu ? "translate-x-0" : "translate-x-full";
 
   return (
     <>
       <nav className="nav-dark sticky top-0 z-50">
       <div className="w-full px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-14 sm:h-16">
           {/* Logo */}
           <Link href="/">
             <div className="flex items-center cursor-pointer logo-glow">
-              <img src={mttaLogo} alt="MTTA Logo" className="h-10 w-auto max-w-[120px]" />
+              <img src={mttaLogo} alt="MTTA Logo" className="h-8 sm:h-9 md:h-10 w-auto max-w-[100px] sm:max-w-[120px]" />
             </div>
           </Link>
 
@@ -245,10 +245,11 @@ export default function Navigation() {
               ref={triggerRef}
               variant="ghost"
               size="sm"
-              className="md:hidden text-white hover:text-mtta-green"
+              className="md:hidden text-white hover:text-mtta-green p-2"
               onClick={() => setShowMobileMenu((v) => !v)}
+              data-testid="mobile-menu-toggle"
             >
-              {showMobileMenu ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {showMobileMenu ? <X className="h-5 w-5 sm:h-6 sm:w-6" /> : <Menu className="h-5 w-5 sm:h-6 sm:w-6" />}
             </Button>
           </div>
         </div>
@@ -270,11 +271,12 @@ export default function Navigation() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header with logo and close button */}
-            <div className="flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700">
-              <img src={mttaLogo} alt="MTTA" className="h-8" />
+            <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-800 border-b border-gray-700">
+              <img src={mttaLogo} alt="MTTA" className="h-7 sm:h-8" />
               <button
                 onClick={() => setShowMobileMenu(false)}
-                className="text-white p-2 hover:bg-gray-700 rounded"
+                className="text-white p-2 hover:bg-gray-700 rounded min-w-[44px] min-h-[44px] flex items-center justify-center"
+                data-testid="mobile-menu-close"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -292,7 +294,7 @@ export default function Navigation() {
                       <Link href={link.href}>
                         <div
                           onClick={() => setShowMobileMenu(false)}
-                          className={`flex items-center px-6 py-4 text-white border-b border-gray-800 hover:bg-gray-800 ${
+                          className={`flex items-center px-4 sm:px-6 py-4 text-white border-b border-gray-800 hover:bg-gray-800 min-h-[48px] ${
                             active ? 'bg-green-900 text-green-400' : ''
                           }`}
                         >
@@ -305,15 +307,15 @@ export default function Navigation() {
                         {link.dropdown.map((subLink) => (
                           subLink.sublinks ? (
                             <div key={subLink.label} className="border-b border-gray-700">
-                              <div className="flex items-center px-12 py-3 text-gray-300">
-                                <span className="text-sm">{subLink.label}</span>
+                              <div className="flex items-center px-8 sm:px-12 py-3 text-gray-300 min-h-[44px]">
+                                <span className="text-sm font-medium">{subLink.label}</span>
                               </div>
                               <div className="bg-gray-700">
                                 {subLink.sublinks.map((item) => (
                                   <Link key={item.href} href={item.href}>
                                     <div
                                       onClick={() => setShowMobileMenu(false)}
-                                      className="flex items-center px-16 py-3 text-gray-300 hover:bg-gray-600 hover:text-white border-t border-gray-600"
+                                      className="flex items-center px-10 sm:px-16 py-3 text-gray-300 hover:bg-gray-600 hover:text-white border-t border-gray-600 min-h-[44px]"
                                     >
                                       <span className="text-sm">{item.label}</span>
                                     </div>
@@ -325,7 +327,7 @@ export default function Navigation() {
                             <Link key={subLink.href} href={subLink.href}>
                               <div
                                 onClick={() => setShowMobileMenu(false)}
-                                className="flex items-center px-12 py-3 text-gray-300 hover:bg-gray-700 hover:text-white border-b border-gray-700"
+                                className="flex items-center px-8 sm:px-12 py-3 text-gray-300 hover:bg-gray-700 hover:text-white border-b border-gray-700 min-h-[44px]"
                               >
                                 <span className="text-sm">{subLink.label}</span>
                               </div>
@@ -354,17 +356,17 @@ export default function Navigation() {
             </div>
 
             {/* User section at bottom */}
-            <div className="mt-8 border-t border-gray-700 bg-gray-800">
+            <div className="mt-4 sm:mt-8 border-t border-gray-700 bg-gray-800">
               {isAuthenticated && user ? (
-                <div className="p-4 space-y-3">
+                <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
                   {(user as any).role === 'player' && (
                     <Link href="/profile">
                       <div
                         onClick={() => setShowMobileMenu(false)}
-                        className="flex items-center text-white p-3 rounded hover:bg-gray-700"
+                        className="flex items-center text-white p-3 rounded hover:bg-gray-700 min-h-[48px]"
                       >
                         <User className="h-4 w-4 mr-3" />
-                        <span>{t('nav.profile')}</span>
+                        <span className="text-base">{t('nav.profile')}</span>
                       </div>
                     </Link>
                   )}
@@ -374,19 +376,19 @@ export default function Navigation() {
                       <Link href="/admin/dashboard">
                         <div
                           onClick={() => setShowMobileMenu(false)}
-                          className="flex items-center text-white p-3 rounded hover:bg-gray-700"
+                          className="flex items-center text-white p-3 rounded hover:bg-gray-700 min-h-[48px]"
                         >
                           <User className="h-4 w-4 mr-3" />
-                          <span>{t('nav.admin')}</span>
+                          <span className="text-base">{t('nav.admin')}</span>
                         </div>
                       </Link>
                       <Link href="/admin/generator">
                         <div
                           onClick={() => setShowMobileMenu(false)}
-                          className="flex items-center text-white p-3 rounded hover:bg-gray-700"
+                          className="flex items-center text-white p-3 rounded hover:bg-gray-700 min-h-[48px]"
                         >
                           <Trophy className="h-4 w-4 mr-3" />
-                          <span>{t('nav.createTournament')}</span>
+                          <span className="text-base">{t('nav.createTournament')}</span>
                         </div>
                       </Link>
                     </>
@@ -397,10 +399,11 @@ export default function Navigation() {
                       setShowMobileMenu(false);
                       window.location.href = '/api/logout';
                     }}
-                    className="flex items-center text-red-400 p-3 rounded hover:bg-red-900 hover:bg-opacity-20 w-full"
+                    className="flex items-center text-red-400 p-3 rounded hover:bg-red-900 hover:bg-opacity-20 w-full min-h-[48px]"
+                    data-testid="mobile-logout-button"
                   >
-                    <LogOut className="h-4 w-4 mr-1" />
-                    <span>{t('nav.logout')}</span>
+                    <LogOut className="h-4 w-4 mr-3" />
+                    <span className="text-base">{t('nav.logout')}</span>
                   </button>
                 </div>
               ) : (
