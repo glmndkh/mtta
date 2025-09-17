@@ -2911,7 +2911,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
       case 'sponsors':
         return formData.name && formData.logoUrl;
       case 'sliders':
-        return formData.title && formData.imageUrl;
+        return formData.imageUrl; // Title заавал биш, зөвхөн зураг л заавал
       case 'clubs':
         // Add validation for location fields
         return formData.name && formData.country && formData.province && formData.city;
