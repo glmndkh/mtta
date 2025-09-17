@@ -3010,7 +3010,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                           <DropdownMenuItem onClick={() => handleTournamentManagement(league.id, 'manage-league')}>
                             <Settings className="w-4 h-4 mr-2" />
                             Удирдлагын самбар нээх
-                          </DropdownMenu>
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                       <Button size="sm" variant="outline" onClick={() => openEditDialog(league)}>
