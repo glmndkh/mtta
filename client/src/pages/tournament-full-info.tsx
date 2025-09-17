@@ -363,7 +363,31 @@ interface Participant {
 
             {/* Overview */}
             <TabsContent value="overview">
-              {results?.isPublished && finalRankings.length > 0 ? (
+              {results?.isPublished && results?.finalRankings?.images && results.finalRankings.images.length > 0 ? (
+                <Card className="mb-6">
+                  <CardHeader>
+                    <CardTitle>Тэмцээний үр дүн</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {results.finalRankings.images.map((image: any, index: number) => (
+                        <div key={index} className="bg-white rounded-lg overflow-hidden shadow-md">
+                          <img 
+                            src={image.url} 
+                            alt={image.description || `Үр дүн ${index + 1}`}
+                            className="w-full h-64 object-cover"
+                          />
+                          {image.description && (
+                            <div className="p-3">
+                              <p className="text-sm text-gray-600">{image.description}</p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : finalRankings.length > 0 ? (
                 <Card className="mb-6">
                   <CardHeader>
                     <CardTitle>Тэмцээний үр дүн</CardTitle>
