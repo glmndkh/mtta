@@ -3209,7 +3209,6 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
             <TrendingUp className="w-4 h-4" />
             Статистик
           </TabsTrigger>
-          <div className="w-full font-bold mt-2 text-foreground text-lg">Холбоо</div>
           <TabsTrigger value="branches" className="admin-tab-trigger flex items-center gap-2 data-[state=active]:bg-green-600 font-semibold text-base">
             <LinkIcon className="w-4 h-4" />
             Салбар холбоод
@@ -3242,7 +3241,6 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
             <Users className="w-4 h-4" />
             Хэрэглэгчид
           </TabsTrigger>
-          <div className="w-full font-bold mt-2 text-foreground text-lg">Тэмцээн</div>
           <TabsTrigger value="tournaments" className="admin-tab-trigger flex items-center gap-2 data-[state=active]:bg-green-600 font-semibold text-base">
             <Trophy className="w-4 h-4" />
             Тэмцээн
@@ -3255,7 +3253,6 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
             <Users className="w-4 h-4" />
             Багууд
           </TabsTrigger>
-          <div className="w-full font-bold mt-2 text-foreground text-lg">Мэдээ</div>
           <TabsTrigger value="news" className="admin-tab-trigger flex items-center gap-2 data-[state=active]:bg-green-600 font-semibold text-base">
             <Newspaper className="w-4 h-4" />
             Мэдээ
