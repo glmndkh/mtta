@@ -2375,7 +2375,6 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                 id="title"
                 value={formData.title || ''}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
-                placeholder="Слайдын гарчиг"
               />
             </div>
             <div>
