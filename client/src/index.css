@@ -147,6 +147,9 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
 .main-content .card, .main-content .card-content { background: var(--card) !important; border: 1px solid var(--border) !important; color: var(--text-primary) !important; }
 
 /* Global page background */
+.main-content .card, .main-content .card-content { background: var(--card) !important; border: 1px solid var(--border) !important; color: var(--text-primary) !important; }
+
+/* Global page background */
 .main-bg {
   background-color: var(--background);
   color: var(--text-primary);
@@ -1784,5 +1787,25 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
   }
   100% {
     background-position: 200% 0;
+  }
+}
+
+/* Hero slider specific styling */
+.hero-slider {
+  height: 700px; /* Base height increased by 100px */
+  min-height: 600px;
+}
+
+@media (max-width: 768px) {
+  .hero-slider {
+    height: 500px; /* Mobile height increased by 100px */
+    min-height: 450px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-slider {
+    height: 450px; /* Small mobile height increased by 100px */
+    min-height: 400px;
   }
 }
