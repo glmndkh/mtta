@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, Trash2, Save, Users, Trophy, Target, Download, Upload, FileSpreadsheet, Minus, Eye, EyeOff, Medal, Crown, Award, User } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, Users, Trophy, Target, Download, Upload, FileSpreadsheet, Minus, Eye, EyeOff, Medal, Crown, Award, User, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -17,6 +17,9 @@ import PageWithLoading from "@/components/PageWithLoading";
 import { KnockoutBracketEditor } from "@/components/KnockoutBracketEditor";
 import type { Tournament, TournamentResults, TournamentParticipant, User as UserType } from "@shared/schema";
 import * as XLSX from 'xlsx';
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { ObjectUploader } from "@/components/ObjectUploader";
 
 interface GroupStageGroup {
   id: string;
@@ -85,7 +88,9 @@ const AdminTournamentResults: React.FC = () => {
   const [qualifiedPlayers, setQualifiedPlayers] = useState<QualifiedPlayer[]>([]);
   const [showAddPlayerToGroup, setShowAddPlayerToGroup] = useState<string | null>(null);
   const [selectedNewPlayerId, setSelectedNewPlayerId] = useState<string>('');
-
+  const [selectedTournament, setSelectedTournament] = useState<string>('');
+  const [resultsImages, setResultsImages] = useState<{url: string, description: string}[]>([]);
+  const [tournaments, setTournaments] = useState<any[]>([]);
 
   // Fetch tournament data
   const { data: tournament, isLoading: tournamentLoading } = useQuery<Tournament>({
@@ -110,6 +115,29 @@ const AdminTournamentResults: React.FC = () => {
     queryKey: ['/api/admin/users'],
     enabled: !!params?.tournamentId
   });
+
+  // Fetch tournaments for the dropdown
+  useEffect(() => {
+    const fetchTournaments = async () => {
+      try {
+        const response = await fetch('/api/tournaments');
+        if (!response.ok) {
+          throw new Error('Failed to fetch tournaments');
+        }
+        const data = await response.json();
+        setTournaments(data);
+      } catch (error) {
+        console.error('Error fetching tournaments:', error);
+        toast({
+          title: "Алдаа",
+          description: "Тэмцээний жагсаалтыг татаж чадсангүй",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchTournaments();
+  }, []);
 
   // Save results mutation
   const saveResultsMutation = useMutation({
@@ -158,6 +186,9 @@ const AdminTournamentResults: React.FC = () => {
       setKnockoutResults(Array.isArray(knockoutResultsData) ? knockoutResultsData : []);
       setFinalRankings(Array.isArray(finalRankingsData) ? finalRankingsData : []);
       setIsPublished(existingResults.isPublished || false);
+      if (existingResults.finalRankings && existingResults.finalRankings.images) {
+        setResultsImages(existingResults.finalRankings.images);
+      }
     }
   }, [existingResults]);
 
@@ -444,7 +475,7 @@ const AdminTournamentResults: React.FC = () => {
       if (playerIndex === -1) return group;
 
       const updatedPlayers = group.players.filter(player => player.id !== playerId);
-      
+
       // Remove the player's row and column from result matrix
       const newMatrix = group.resultMatrix
         .filter((_, i) => i !== playerIndex)
@@ -516,12 +547,12 @@ const AdminTournamentResults: React.FC = () => {
 
       for (let i = 0; i < matchesInRound; i++) {
         const matchId = `round${round}_${i + 1}`;
-        
+
         // For first round, assign actual players
         if (round === 1) {
           const player1Index = i * 2;
           const player2Index = i * 2 + 1;
-          
+
           matches.push({
             id: matchId,
             round: round.toString(),
@@ -613,7 +644,7 @@ const AdminTournamentResults: React.FC = () => {
     setGroupStageResults(prev => 
       prev.map(group => {
         if (group.id !== groupId) return group;
-        
+
         const newPlayer = {
           id: user.id,
           name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Unknown Player',
@@ -656,6 +687,65 @@ const AdminTournamentResults: React.FC = () => {
       description: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Unknown Player' + ` групп-д нэмэгдлээ`
     });
   };
+
+  // New function to handle saving the results with images and descriptions
+  const saveResults = async () => {
+    if (!selectedTournament) {
+      toast({
+        title: "Алдаа",
+        description: "Тэмцээн сонгоно уу",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (resultsImages.length === 0) {
+      toast({
+        title: "Алдаа",
+        description: "Дор хаяж нэг зураг хуулна уу",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/admin/tournament-results', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tournamentId: selectedTournament,
+          finalRankings: {
+            images: resultsImages
+          },
+          isPublished: true
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save results');
+      }
+
+      toast({
+        title: "Амжилттай",
+        description: "Үр дүн амжилттай хадгалагдлаа"
+      });
+
+      // Reset form
+      setSelectedTournament('');
+      setResultsImages([]);
+
+    } catch (error) {
+      console.error('Error saving results:', error);
+      toast({
+        title: "Алдаа",
+        description: "Үр дүн хадгалахад алдаа гарлаа",
+        variant: "destructive"
+      });
+    }
+  };
+
 
   if (tournamentLoading) {
     return <PageWithLoading>{null}</PageWithLoading>;
@@ -1184,7 +1274,7 @@ const AdminTournamentResults: React.FC = () => {
             <Trophy className="w-6 h-6 text-purple-500" />
             Шилжих тоглолтын удирдлага
           </h2>
-          
+
           <KnockoutBracketEditor
             initialMatches={knockoutResults.map(match => ({
               ...match,
@@ -1209,57 +1299,200 @@ const AdminTournamentResults: React.FC = () => {
               })));
               toast({
                 title: "Хадгалагдлаа",
-                description: "Шилжих тоглолтын үр дүн хадгалагдлаа"
+                description: "Шигшээ тоглолтын үр дүн хадгалагдлаа"
               });
             }}
           />
         </div>
 
-        {/* Settings Panel */}
-            <Card className="mb-6 bg-gray-800 border-gray-700">
-              <CardHeader>
+        {/* Upload Results Section */}
+        <div className="mb-8">
+            <Card className="bg-gray-800 border-gray-700">
+                <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-white">
-                  <Target className="w-5 h-5" />
-                  Шилжилтийн тохиргоо
+                    <Upload className="w-5 h-5" />
+                    Тэмцээний үр дүн оруулах
                 </CardTitle>
-              </CardHeader>
-              <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex items-center gap-2">
-                    <input type="checkbox" id="top1" className="rounded" defaultChecked />
-                    <label htmlFor="top1" className="text-sm text-gray-300">Топ 1 шилжих</label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input type="checkbox" id="top2" className="rounded" defaultChecked />
-                    <label htmlFor="top2" className="text-sm text-gray-300">Топ 2 шилжих</label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input type="checkbox" id="luckyDraw" className="rounded" />
-                    <label htmlFor="luckyDraw" className="text-sm text-gray-300">Lucky draw сонголт</label>
-                  </div>
-            </div>
-            <div className="mt-4 flex items-center gap-3">
-              <Button
-                onClick={generateKnockoutBracket}
-                disabled={qualifiedPlayers.length < 4}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                Хэсэглэлүүдээс шилжилт хийх
-              </Button>
-              <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={isPublished}
-                      onChange={(e) => setIsPublished(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                    />
-                    <span className="text-sm font-medium text-gray-300">Нийтэд харуулах</span>
-                {isPublished && <Eye className="w-4 h-4 text-green-600" />}
-                {!isPublished && <EyeOff className="w-4 h-4 text-gray-400" />}
-              </label>
-            </div>
-          </CardContent>
-        </Card>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                <div>
+                    <Label htmlFor="tournamentSelect">Тэмцээн сонгох</Label>
+                    <select
+                    id="tournamentSelect"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    value={selectedTournament}
+                    onChange={(e) => setSelectedTournament(e.target.value)}
+                    >
+                    <option value="">Тэмцээн сонгоно уу</option>
+                    {tournaments.map((tournament: any) => (
+                        <option key={tournament.id} value={tournament.id}>
+                        {tournament.name}
+                        </option>
+                    ))}
+                    </select>
+                </div>
+
+                {selectedTournament && (
+                    <div className="space-y-4">
+                    <div>
+                        <Label>Үр дүнгийн зураг хуулах</Label>
+                        <p className="text-sm text-muted-foreground mb-2">
+                        Тэмцээний үр дүнгийн зураг хуулж, тайлбар нэмнэ үү
+                        </p>
+                        <ObjectUploader
+                        maxNumberOfFiles={5}
+                        maxFileSize={5 * 1024 * 1024}
+                        onGetUploadParameters={async () => {
+                            const response = await fetch('/api/objects/upload', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                            });
+                            const data = await response.json();
+                            return {
+                            method: 'PUT' as const,
+                            url: data.uploadURL
+                            };
+                        }}
+                        onComplete={async (result) => {
+                            if (result.successful && result.successful.length > 0) {
+                            const newImages = [];
+                            for (const file of result.successful) {
+                                try {
+                                const response = await fetch('/api/objects/finalize', {
+                                    method: 'PUT',
+                                    headers: {
+                                    'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                    fileURL: file.uploadURL,
+                                    isPublic: true
+                                    })
+                                });
+                                const data = await response.json();
+                                newImages.push({
+                                    url: data.objectPath,
+                                    description: ''
+                                });
+                                } catch (error) {
+                                console.error('Error finalizing upload:', error);
+                                }
+                            }
+                            setResultsImages(prev => [...prev, ...newImages]);
+                            toast({
+                                title: "Амжилттай",
+                                description: `${newImages.length} зураг хуулагдлаа`
+                            });
+                            }
+                        }}
+                        buttonClassName="w-full"
+                        >
+                        <Upload className="w-4 h-4 mr-2" />
+                        Үр дүнгийн зураг сонгох
+                        </ObjectUploader>
+                    </div>
+
+                    {resultsImages.length > 0 && (
+                        <div>
+                        <Label>Хуулсан зургууд ба тайлбар</Label>
+                        <div className="space-y-4">
+                            {resultsImages.map((item, index) => (
+                            <div key={index} className="border rounded-lg p-4 space-y-3">
+                                <div className="relative">
+                                <img
+                                    src={item.url.startsWith('/') ? item.url : `/objects/${item.url}`}
+                                    alt={`Үр дүн ${index + 1}`}
+                                    className="w-full h-48 object-cover rounded border"
+                                />
+                                <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="absolute top-2 right-2"
+                                    onClick={() => setResultsImages(prev => prev.filter((_, i) => i !== index))}
+                                >
+                                    <X className="w-4 h-4" />
+                                </Button>
+                                </div>
+                                <div>
+                                <Label htmlFor={`description-${index}`}>Зургийн тайлбар</Label>
+                                <Textarea
+                                    id={`description-${index}`}
+                                    placeholder="Энэ зургийн тухай тайлбар бичнэ үү..."
+                                    value={item.description}
+                                    onChange={(e) => {
+                                    const newImages = [...resultsImages];
+                                    newImages[index] = { ...newImages[index], description: e.target.value };
+                                    setResultsImages(newImages);
+                                    }}
+                                    rows={3}
+                                />
+                                </div>
+                            </div>
+                            ))}
+                        </div>
+                        </div>
+                    )}
+
+                    <Button 
+                        onClick={saveResults}
+                        disabled={!selectedTournament || resultsImages.length === 0}
+                        className="w-full"
+                    >
+                        Үр дүн хадгалах
+                    </Button>
+                    </div>
+                )}
+                </CardContent>
+            </Card>
+        </div>
+
+        {/* Settings Panel */}
+            <div className="mb-6">
+              <Card className="bg-gray-800 border-gray-700">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <Target className="w-5 h-5" />
+                    Шилжилтийн тохиргоо
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="flex items-center gap-2">
+                        <input type="checkbox" id="top1" className="rounded" defaultChecked />
+                        <label htmlFor="top1" className="text-sm text-gray-300">Топ 1 шилжих</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input type="checkbox" id="top2" className="rounded" defaultChecked />
+                        <label htmlFor="top2" className="text-sm text-gray-300">Топ 2 шилжих</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input type="checkbox" id="luckyDraw" className="rounded" />
+                        <label htmlFor="luckyDraw" className="text-sm text-gray-300">Lucky draw сонголт</label>
+                      </div>
+              </div>
+              <div className="mt-4 flex items-center gap-3">
+                <Button
+                  onClick={generateKnockoutBracket}
+                  disabled={qualifiedPlayers.length < 4}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Хэсэглэлүүдээс шилжилт хийх
+                </Button>
+                <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isPublished}
+                        onChange={(e) => setIsPublished(e.target.checked)}
+                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                      />
+                      <span className="text-sm font-medium text-gray-300">Нийтэд харуулах</span>
+                  {isPublished && <Eye className="w-4 h-4 text-green-600" />}
+                  {!isPublished && <EyeOff className="w-4 h-4 text-gray-400" />}
+                </label>
+              </div>
+            </CardContent>
+          </Card>
             </div>
         </div>
     </PageWithLoading>
