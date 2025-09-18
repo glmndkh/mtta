@@ -3763,6 +3763,18 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
           </Card>
         </TabsContent>
 
+        <TabsContent value="national-team">
+          <Card>
+            <CardHeader>
+              <CardTitle>Үндэсний шигшээний удирдлага</CardTitle>
+              <CardDescription>Үндэсний шигшээний бүрэлдэхүүнийг удирдах</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {renderNationalTeamTab()}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="stats">
           <Card>
             <CardHeader>
