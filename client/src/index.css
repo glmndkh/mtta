@@ -138,6 +138,67 @@ nav a:hover { color: var(--link); }
 a:hover { color: var(--link); }
 .text-muted-foreground, .text-muted { color: var(--text-secondary) !important; }
 .text-gray-400, .text-gray-500, .text-gray-600, .text-gray-700 { color: var(--text-secondary) !important; }
+
+/* Ensure text-muted is visible in both themes */
+[data-theme="light"] .text-muted-foreground,
+[data-theme="light"] .text-muted,
+[data-theme="light"] .text-gray-400,
+[data-theme="light"] .text-gray-500,
+[data-theme="light"] .text-gray-600,
+[data-theme="light"] .text-gray-700,
+.light .text-muted-foreground,
+.light .text-muted,
+.light .text-gray-400,
+.light .text-gray-500,
+.light .text-gray-600,
+.light .text-gray-700 {
+  color: #64748b !important;
+}
+
+[data-theme="dark"] .text-muted-foreground,
+[data-theme="dark"] .text-muted,
+[data-theme="dark"] .text-gray-400,
+[data-theme="dark"] .text-gray-500,
+[data-theme="dark"] .text-gray-600,
+[data-theme="dark"] .text-gray-700,
+.dark .text-muted-foreground,
+.dark .text-muted,
+.dark .text-gray-400,
+.dark .text-gray-500,
+.dark .text-gray-600,
+.dark .text-gray-700 {
+  color: #a0a8b3 !important;
+}
+
+/* Universal text visibility fixes */
+* {
+  transition: color 0.3s ease !important;
+}
+
+/* Force text to be visible in all contexts */
+.bg-white *,
+.bg-gray-50 *,
+.bg-gray-100 * {
+  color: inherit !important;
+}
+
+[data-theme="light"] .bg-white *,
+[data-theme="light"] .bg-gray-50 *,
+[data-theme="light"] .bg-gray-100 *,
+.light .bg-white *,
+.light .bg-gray-50 *,
+.light .bg-gray-100 * {
+  color: #0f172a !important;
+}
+
+[data-theme="dark"] .bg-white *,
+[data-theme="dark"] .bg-gray-50 *,
+[data-theme="dark"] .bg-gray-100 *,
+.dark .bg-white *,
+.dark .bg-gray-50 *,
+.dark .bg-gray-100 * {
+  color: #ffffff !important;
+}
 .bg-secondary { background-color: var(--accent) !important; color: var(--link) !important; }
 button {
   background: linear-gradient(135deg, var(--success), var(--link));
@@ -665,6 +726,93 @@ button[type="submit"]:hover {
 .card-dark:hover {
   border-color: rgba(var(--link-rgb), 0.6) !important;
   box-shadow: 0 8px 32px rgba(var(--link-rgb), 0.1) !important;
+}
+
+/* Statistics cards specific styling */
+.stats-card,
+.stat-card {
+  background: var(--card) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.stats-card h3,
+.stats-card h4,
+.stats-card p,
+.stats-card span,
+.stats-card div,
+.stat-card h3,
+.stat-card h4,
+.stat-card p,
+.stat-card span,
+.stat-card div {
+  color: var(--text-primary) !important;
+}
+
+/* Light mode statistics cards */
+[data-theme="light"] .stats-card,
+[data-theme="light"] .stat-card,
+.light .stats-card,
+.light .stat-card {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 2px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .stats-card h3,
+[data-theme="light"] .stats-card h4,
+[data-theme="light"] .stats-card p,
+[data-theme="light"] .stats-card span,
+[data-theme="light"] .stats-card div,
+[data-theme="light"] .stat-card h3,
+[data-theme="light"] .stat-card h4,
+[data-theme="light"] .stat-card p,
+[data-theme="light"] .stat-card span,
+[data-theme="light"] .stat-card div,
+.light .stats-card h3,
+.light .stats-card h4,
+.light .stats-card p,
+.light .stats-card span,
+.light .stats-card div,
+.light .stat-card h3,
+.light .stat-card h4,
+.light .stat-card p,
+.light .stat-card span,
+.light .stat-card div {
+  color: #0f172a !important;
+}
+
+/* Dark mode statistics cards */
+[data-theme="dark"] .stats-card,
+[data-theme="dark"] .stat-card,
+.dark .stats-card,
+.dark .stat-card {
+  background: #1a1a1a !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .stats-card h3,
+[data-theme="dark"] .stats-card h4,
+[data-theme="dark"] .stats-card p,
+[data-theme="dark"] .stats-card span,
+[data-theme="dark"] .stats-card div,
+[data-theme="dark"] .stat-card h3,
+[data-theme="dark"] .stat-card h4,
+[data-theme="dark"] .stat-card p,
+[data-theme="dark"] .stat-card span,
+[data-theme="dark"] .stat-card div,
+.dark .stats-card h3,
+.dark .stats-card h4,
+.dark .stats-card p,
+.dark .stats-card span,
+.dark .stats-card div,
+.dark .stat-card h3,
+.dark .stat-card h4,
+.dark .stat-card p,
+.dark .stat-card span,
+.dark .stat-card div {
+  color: #ffffff !important;
 }
 
 /* Generic card styling for all cards */
@@ -1410,6 +1558,9 @@ button[type="submit"]:hover {
 [data-theme="light"] p,
 [data-theme="light"] span,
 [data-theme="light"] div,
+[data-theme="light"] label,
+[data-theme="light"] .text-sm,
+[data-theme="light"] .text-xs,
 .light h1,
 .light h2,
 .light h3,
@@ -1418,8 +1569,56 @@ button[type="submit"]:hover {
 .light h6,
 .light p,
 .light span,
-.light div {
+.light div,
+.light label,
+.light .text-sm,
+.light .text-xs {
   color: #0f172a !important;
+}
+
+/* Ensure profile card text is visible in both themes */
+.profile-container h1,
+.profile-container h2,
+.profile-container h3,
+.profile-container h4,
+.profile-container p,
+.profile-container span,
+.profile-container div {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="light"] .profile-container h1,
+[data-theme="light"] .profile-container h2,
+[data-theme="light"] .profile-container h3,
+[data-theme="light"] .profile-container h4,
+[data-theme="light"] .profile-container p,
+[data-theme="light"] .profile-container span,
+[data-theme="light"] .profile-container div,
+.light .profile-container h1,
+.light .profile-container h2,
+.light .profile-container h3,
+.light .profile-container h4,
+.light .profile-container p,
+.light .profile-container span,
+.light .profile-container div {
+  color: #0f172a !important;
+}
+
+[data-theme="dark"] .profile-container h1,
+[data-theme="dark"] .profile-container h2,
+[data-theme="dark"] .profile-container h3,
+[data-theme="dark"] .profile-container h4,
+[data-theme="dark"] .profile-container p,
+[data-theme="dark"] .profile-container span,
+[data-theme="dark"] .profile-container div,
+.dark .profile-container h1,
+.dark .profile-container h2,
+.dark .profile-container h3,
+.dark .profile-container h4,
+.dark .profile-container p,
+.dark .profile-container span,
+.dark .profile-container div {
+  color: #ffffff !important;
 }
 
 /* Fix card content text in light mode */
