@@ -153,14 +153,15 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
   });
 
   // Load all users for player selection dropdown
-  const { data: allUsers } = useQuery({
+  const { data: allUsers, isLoading: allUsersLoading } = useQuery({
     queryKey: ['/api/admin/users'],
     enabled:
       (selectedTab === 'teams' ||
         selectedTab === 'judges' ||
         selectedTab === 'clubs' ||
-        selectedTab === 'coaches') &&
-      (isCreateDialogOpen || !!editingItem || selectedTab === 'clubs')
+        selectedTab === 'coaches' ||
+        selectedTab === 'national-team') &&
+      (isCreateDialogOpen || !!editingItem || selectedTab === 'clubs' || selectedTab === 'national-team')
   });
 
   const { data: news, isLoading: newsLoading } = useQuery({
@@ -202,7 +203,8 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         queryClient.invalidateQueries({ queryKey: ['/api/leagues'] });
       }
       if (selectedTab === 'national-team') {
-        queryClient.invalidateQueries({ queryKey: ['/api/national-team'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/national-team'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       }
       setIsCreateDialogOpen(false);
       setFormData({});
@@ -230,7 +232,8 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         queryClient.invalidateQueries({ queryKey: ['/api/leagues'] });
       }
       if (selectedTab === 'national-team') {
-        queryClient.invalidateQueries({ queryKey: ['/api/national-team'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/national-team'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       }
       setEditingItem(null);
       setFormData({});
@@ -255,7 +258,8 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         queryClient.invalidateQueries({ queryKey: ['/api/leagues'] });
       }
       if (selectedTab === 'national-team') {
-        queryClient.invalidateQueries({ queryKey: ['/api/national-team'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/national-team'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       }
     },
     onError: (error: any) => {
@@ -945,19 +949,23 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
           </div>
         </div>
 
-        {/* Squad Management Section - Show regardless of available users */}
-        {availableUsers && availableUsers.length > 0 && (
-          <Card data-section="user-selection">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserPlus className="w-5 h-5" />
-                Бүртгэгдсэн хэрэглэгчээс нэмэх
-              </CardTitle>
-              <CardDescription>
-                Бүртгэгдсэн хэрэглэгчдээс үндэсний шигшээнд нэмэх боломжтой
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+        {/* Squad Management Section - Always show */}
+        <Card data-section="user-selection">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5" />
+              Бүртгэгдсэн хэрэглэгчээс нэмэх
+            </CardTitle>
+            <CardDescription>
+              Бүртгэгдсэн хэрэглэгчдээс үндэсний шигшээнд нэмэх боломжтой
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {allUsersLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : availableUsers && availableUsers.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-64 overflow-y-auto">
                 {availableUsers.map((user: any) => (
                   <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg bg-card">
@@ -1002,9 +1010,19 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            ) : (
+              <div className="text-center py-8">
+                <UserIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 mb-4">
+                  Одоогоор нэмэх боломжтой хэрэглэгч байхгүй байна
+                </p>
+                <p className="text-sm text-gray-500">
+                  Бүх бүртгэгдсэн хэрэглэгчид аль хэдийн үндэсний шигшээнд орсон эсвэл шинэ хэрэглэгч бүртгүүлээгүй байна
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Current Squad Section */}
         <Card>
@@ -1114,15 +1132,13 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                         <Plus className="w-4 h-4 mr-2" />
                         Шинэ тамирчин нэмэх
                       </Button>
-                      {availableUsers && availableUsers.length > 0 && (
-                        <Button variant="outline" onClick={() => {
-                          // Scroll to the user selection section
-                          document.querySelector('[data-section="user-selection"]')?.scrollIntoView({ behavior: 'smooth' });
-                        }}>
-                          <UserPlus className="w-4 h-4 mr-2" />
-                          Хэрэглэгчээс нэмэх
-                        </Button>
-                      )}
+                      <Button variant="outline" onClick={() => {
+                        // Scroll to the user selection section
+                        document.querySelector('[data-section="user-selection"]')?.scrollIntoView({ behavior: 'smooth' });
+                      }}>
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Хэрэглэгчээс нэмэх
+                      </Button>
                     </div>
                   </div>
                 )}
