@@ -1186,7 +1186,7 @@ const AdminTournamentResults: React.FC = () => {
                         {Array.isArray(qualifiedPlayers) ? qualifiedPlayers.map((player) => (
                           <div
                             key={player.id}
-                            className="flex items-center gap-3 p-3 bg-gray-700 rounded-lg border border-gray-600"
+                            className="flex items-center gap-4 p-3 bg-gray-700 rounded-lg border border-gray-600"
                           >
                         <Badge variant="outline" className="text-xs">
                           #{player.seed}
