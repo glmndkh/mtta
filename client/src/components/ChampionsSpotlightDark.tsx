@@ -32,8 +32,8 @@ export const ChampionsSpotlightDark: React.FC<ChampionsSpotlightDarkProps> = ({
   const currentPlayer = players[currentPlayerIndex];
 
   const backgroundClass = variant === 'alt' 
-    ? 'bg-black' 
-    : 'bg-gradient-to-br from-gray-800 via-gray-900 to-black';
+    ? 'bg-white dark:bg-black' 
+    : 'bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 dark:from-gray-800 dark:via-gray-900 dark:to-black';
 
   return (
     <div className={`relative min-h-screen ${backgroundClass} overflow-hidden`}>
@@ -52,7 +52,7 @@ export const ChampionsSpotlightDark: React.FC<ChampionsSpotlightDarkProps> = ({
           <Button
             variant="ghost"
             size="lg"
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:bg-white/10 z-10 md:left-8"
+            className="absolute left-4 top-1/2 transform -translate-y-1/2 text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/10 z-10 md:left-8"
             onClick={onPrevious}
           >
             <ChevronLeft className="w-6 h-6 md:w-8 md:h-8" />
@@ -60,7 +60,7 @@ export const ChampionsSpotlightDark: React.FC<ChampionsSpotlightDarkProps> = ({
           <Button
             variant="ghost"
             size="lg"
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:bg-white/10 z-10 md:right-8"
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/10 z-10 md:right-8"
             onClick={onNext}
           >
             <ChevronRight className="w-6 h-6 md:w-8 md:h-8" />
@@ -81,7 +81,7 @@ export const ChampionsSpotlightDark: React.FC<ChampionsSpotlightDarkProps> = ({
             />
           ) : (
             <div className="w-32 h-40 sm:w-40 sm:h-48 md:w-48 md:h-56 lg:w-56 lg:h-64 bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl md:rounded-2xl flex items-center justify-center shadow-2xl mx-auto">
-              <div className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold opacity-60">
+              <div className="text-black dark:text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold opacity-60">
                 {currentPlayer?.firstName?.[0]}{currentPlayer?.lastName?.[0]}
               </div>
             </div>
@@ -89,7 +89,7 @@ export const ChampionsSpotlightDark: React.FC<ChampionsSpotlightDarkProps> = ({
         </div>
 
         {/* Content Section */}
-        <div className="text-white text-center space-y-4 md:space-y-6 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
+        <div className="text-black dark:text-white text-center space-y-4 md:space-y-6 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
           {/* National Team Label */}
           <div className="mb-4 md:mb-6">
             <h2 className="text-green-500 text-xs sm:text-sm md:text-base font-bold tracking-widest uppercase">
@@ -108,7 +108,7 @@ export const ChampionsSpotlightDark: React.FC<ChampionsSpotlightDarkProps> = ({
               {currentPlayer?.firstName || 'Тамирчин'}
             </h1>
             <h2 
-              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold text-white/95 leading-none tracking-tight"
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold text-black/95 dark:text-white/95 leading-none tracking-tight"
               style={{ 
                 textShadow: '0 0 20px rgba(255,255,255,0.3), 0 4px 8px rgba(0,0,0,0.8)'
               }}
@@ -120,8 +120,8 @@ export const ChampionsSpotlightDark: React.FC<ChampionsSpotlightDarkProps> = ({
           {/* Player Age */}
           {currentPlayer?.age && (
             <div className="text-lg sm:text-xl md:text-2xl font-medium">
-              <span className="text-white/90">Нас</span>
-              <span className="font-bold ml-2 text-white">{currentPlayer.age}</span>
+              <span className="text-black/90 dark:text-white/90">Нас</span>
+              <span className="font-bold ml-2 text-black dark:text-white">{currentPlayer.age}</span>
             </div>
           )}
         </div>
@@ -135,8 +135,8 @@ export const ChampionsSpotlightDark: React.FC<ChampionsSpotlightDarkProps> = ({
                 onClick={() => onPlayerSelect(index)}
                 className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all duration-300 ${
                   index === currentPlayerIndex 
-                    ? 'bg-white scale-125' 
-                    : 'bg-white/40 hover:bg-white/70'
+                    ? 'bg-black dark:bg-white scale-125' 
+                    : 'bg-black/40 dark:bg-white/40 hover:bg-black/70 dark:hover:bg-white/70'
                 }`}
               />
             ))}
@@ -147,9 +147,9 @@ export const ChampionsSpotlightDark: React.FC<ChampionsSpotlightDarkProps> = ({
       {/* Empty State */}
       {players.length === 0 && (
         <div className="absolute inset-0 flex flex-col items-center justify-center px-4">
-          <div className="text-center text-white">
+          <div className="text-center text-black dark:text-white">
             <div className="w-32 h-40 sm:w-40 sm:h-48 md:w-48 md:h-56 bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl md:rounded-2xl flex items-center justify-center mb-8 mx-auto shadow-2xl">
-              <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold opacity-40">
+              <div className="text-black dark:text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold opacity-40">
                 МТ
               </div>
             </div>
@@ -169,7 +169,7 @@ export const ChampionsSpotlightDark: React.FC<ChampionsSpotlightDarkProps> = ({
             >
               Үндэсний Шигшээ
             </h1>
-            <p className="text-white/70 text-lg sm:text-xl">Тун удахгүй...</p>
+            <p className="text-black/70 dark:text-white/70 text-lg sm:text-xl">Тун удахгүй...</p>
           </div>
         </div>
       )}
