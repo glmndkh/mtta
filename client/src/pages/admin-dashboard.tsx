@@ -523,8 +523,9 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
       defaultData = {
         firstName: '',
         lastName: '',
-        age: 0,
+        age: 25, // Default to 25 instead of 0
         imageUrl: '',
+        userId: '', // Optional user ID if linking to existing user
       };
     } else if (selectedTab === 'clubs') {
       // Default values for clubs, including location fields
@@ -909,6 +910,10 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         )
       : [];
 
+    console.log('National team data:', nationalTeam);
+    console.log('Filtered players:', filteredPlayers);
+    console.log('Available users:', availableUsers);
+
     return (
       <div className="space-y-6">
         {/* Header Section */}
@@ -927,20 +932,26 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                 onChange={(e) => setNationalTeamFilter(e.target.value)}
               />
             </div>
-            <Button onClick={openCreateDialog}>
+            <Button 
+              onClick={() => {
+                console.log('Opening create dialog for national team');
+                openCreateDialog();
+              }}
+              className="bg-green-600 hover:bg-green-700"
+            >
               <Plus className="w-4 h-4 mr-2" />
               Тоглогч нэмэх
             </Button>
           </div>
         </div>
 
-        {/* Squad Management Section */}
-        {availableUsers.length > 0 && (
-          <Card>
+        {/* Squad Management Section - Show regardless of available users */}
+        {availableUsers && availableUsers.length > 0 && (
+          <Card data-section="user-selection">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <UserPlus className="w-5 h-5" />
-                Шигшээнд тоглогч нэмэх
+                Бүртгэгдсэн хэрэглэгчээс нэмэх
               </CardTitle>
               <CardDescription>
                 Бүртгэгдсэн хэрэглэгчдээс үндэсний шигшээнд нэмэх боломжтой
@@ -949,17 +960,17 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-64 overflow-y-auto">
                 {availableUsers.map((user: any) => (
-                  <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg bg-card">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                         <UserIcon className="w-4 h-4 text-blue-600" />
                       </div>
                       <div>
                         <div className="font-medium text-sm">
-                          {formatName(user.firstName, user.lastName)}
+                          {formatName(user.firstName || '', user.lastName || '')}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {user.email}
+                          {user.email || 'И-мэйл байхгүй'}
                         </div>
                       </div>
                     </div>
@@ -967,12 +978,15 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                       size="sm"
                       variant="outline"
                       onClick={() => {
+                        console.log('Adding user to national team:', user);
                         // Add user to national team
                         const playerData = {
-                          firstName: user.firstName,
-                          lastName: user.lastName,
-                          age: user.age || 20, // Default age if not available
-                          imageUrl: user.imageUrl || '',
+                          firstName: user.firstName || '',
+                          lastName: user.lastName || '',
+                          age: user.age || user.dateOfBirth ? 
+                            (new Date().getFullYear() - new Date(user.dateOfBirth).getFullYear()) : 
+                            25, // Calculate age from dateOfBirth or default to 25
+                          imageUrl: user.imageUrl || user.avatarUrl || '',
                           userId: user.id
                         };
                         createMutation.mutate({
@@ -980,9 +994,10 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                           data: playerData,
                         });
                       }}
+                      disabled={createMutation.isPending}
                     >
                       <Plus className="w-3 h-3 mr-1" />
-                      Нэмэх
+                      {createMutation.isPending ? 'Нэмж байна...' : 'Нэмэх'}
                     </Button>
                   </div>
                 ))}
@@ -994,13 +1009,27 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         {/* Current Squad Section */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Flag className="w-5 h-5" />
-              Одоогийн бүрэлдэхүүн
-            </CardTitle>
-            <CardDescription>
-              {filteredPlayers.length} тамирчин үндэсний шигшээнд байна
-            </CardDescription>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Flag className="w-5 h-5" />
+                  Одоогийн бүрэлдэхүүн
+                </CardTitle>
+                <CardDescription>
+                  {nationalTeamLoading ? 'Ачааллаж байна...' : `${filteredPlayers.length} тамирчин үндэсний шигшээнд байна`}
+                </CardDescription>
+              </div>
+              <Button 
+                onClick={() => {
+                  console.log('Opening create dialog for national team from main section');
+                  openCreateDialog();
+                }}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Тоглогч нэмэх
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {nationalTeamLoading ? (
@@ -1009,77 +1038,97 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               </div>
             ) : (
               <div className="space-y-4">
-                {/* Add Player Button */}
-                <div className="flex justify-end">
-                  <Button onClick={openCreateDialog}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Тоглогч нэмэх
-                  </Button>
-                </div>
-
                 {/* Squad Grid View */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {filteredPlayers.map((player: any) => (
-                    <Card key={player.id} className="relative">
-                      <CardContent className="p-4">
-                        <div className="flex items-center space-x-3">
-                          <div className="relative">
-                            {player.imageUrl ? (
-                              <img
-                                src={player.imageUrl}
-                                alt={formatName(player.firstName, player.lastName)}
-                                className="w-12 h-12 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                                <UserIcon className="w-6 h-6 text-blue-600" />
-                              </div>
-                            )}
-                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                {filteredPlayers && filteredPlayers.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {filteredPlayers.map((player: any) => (
+                      <Card key={player.id} className="relative border-2 border-green-200 hover:border-green-400 transition-colors">
+                        <CardContent className="p-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="relative">
+                              {player.imageUrl ? (
+                                <img
+                                  src={player.imageUrl}
+                                  alt={formatName(player.firstName, player.lastName)}
+                                  className="w-12 h-12 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                                  <UserIcon className="w-6 h-6 text-green-600" />
+                                </div>
+                              )}
+                              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">
+                                {formatName(player.firstName || '', player.lastName || '')}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {player.age || 'Нас тодорхойгүй'} нас
+                              </p>
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">
-                              {formatName(player.firstName, player.lastName)}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {player.age} нас
-                            </p>
+                          <div className="flex justify-between mt-3 pt-3 border-t">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                console.log('Opening edit dialog for player:', player);
+                                openEditDialog(player);
+                              }}
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => {
+                                if (confirm(`${formatName(player.firstName, player.lastName)}-г үндэсний шигшээнээс хасахдаа итгэлтэй байна уу?`)) {
+                                  console.log('Deleting player:', player.id);
+                                  handleDelete(player.id);
+                                }
+                              }}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
                           </div>
-                        </div>
-                        <div className="flex justify-between mt-3 pt-3 border-t">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => openEditDialog(player)}
-                          >
-                            <Pencil className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => {
-                              if (confirm(`${formatName(player.firstName, player.lastName)}-г үндэсний шигшээнээс хасахдаа итгэлтэй байна уу?`)) {
-                                handleDelete(player.id);
-                              }
-                            }}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-
-                {filteredPlayers.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Flag className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>Одоогоор үндэсний шигшээнд тамирчид байхгүй байна.</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Flag className="h-16 w-16 text-gray-400 mx-auto mb-6" />
+                    <h3 className="text-xl font-semibold text-gray-700 mb-3">Үндэсний шигшээ хоосон байна</h3>
+                    <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                      Одоогоор үндэсний шигшээнд тамирчид байхгүй байна. Эхний тамирчинг нэмж эхлүүлээрэй.
+                    </p>
+                    <div className="flex gap-3 justify-center">
+                      <Button 
+                        onClick={() => {
+                          console.log('Opening create dialog from empty state');
+                          openCreateDialog();
+                        }}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Шинэ тамирчин нэмэх
+                      </Button>
+                      {availableUsers && availableUsers.length > 0 && (
+                        <Button variant="outline" onClick={() => {
+                          // Scroll to the user selection section
+                          document.querySelector('[data-section="user-selection"]')?.scrollIntoView({ behavior: 'smooth' });
+                        }}>
+                          <UserPlus className="w-4 h-4 mr-2" />
+                          Хэрэглэгчээс нэмэх
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 )}
 
-                {/* Table View Toggle */}
-                {filteredPlayers.length > 0 && (
+                {/* Table View Toggle - Only show if there are players */}
+                {filteredPlayers && filteredPlayers.length > 0 && (
                   <details className="mt-6">
                     <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
                       Хүснэгтээр харах
@@ -1098,16 +1147,20 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                         <TableBody>
                           {filteredPlayers.map((player: any) => (
                             <TableRow key={player.id}>
-                              <TableCell>{player.firstName}</TableCell>
-                              <TableCell>{player.lastName}</TableCell>
-                              <TableCell>{player.age}</TableCell>
+                              <TableCell>{player.firstName || 'Тодорхойгүй'}</TableCell>
+                              <TableCell>{player.lastName || 'Тодорхойгүй'}</TableCell>
+                              <TableCell>{player.age || 'Тодорхойгүй'}</TableCell>
                               <TableCell>
-                                {player.imageUrl && (
+                                {player.imageUrl ? (
                                   <img 
                                     src={player.imageUrl} 
                                     alt={formatName(player.firstName, player.lastName)} 
                                     className="w-10 h-10 rounded-full object-cover" 
                                   />
+                                ) : (
+                                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                                    <UserIcon className="w-4 h-4 text-gray-400" />
+                                  </div>
                                 )}
                               </TableCell>
                               <TableCell>
@@ -3098,7 +3151,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
       case 'federation-members':
         return formData.name;
       case 'national-team':
-        return formData.firstName && formData.lastName && formData.age && formData.imageUrl;
+        return formData.firstName && formData.lastName && formData.age;
       case 'judges':
         return formData.firstName && formData.lastName;
       case 'coaches':
