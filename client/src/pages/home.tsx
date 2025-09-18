@@ -375,7 +375,7 @@ export default function Home() {
                       <img
                         src={getImageUrl(sponsor.logoUrl)}
                         alt={sponsor.name}
-                        className="max-h-16 max-w-full object-contain filter grayscale hover:grayscale-0 transition-all duration-300 group-hover:scale-105"
+                        className="max-h-16 max-w-full object-contain transition-all duration-300 group-hover:scale-105"
                       />
                     ) : (
                       <div className="text-gray-400 text-center p-4 border-2 border-dashed border-gray-200 rounded-lg group-hover:border-mtta-green transition-colors">
