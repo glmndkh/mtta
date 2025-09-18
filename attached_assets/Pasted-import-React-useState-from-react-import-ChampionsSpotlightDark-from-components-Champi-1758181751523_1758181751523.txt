@@ -1,0 +1,161 @@
+import React, { useState } from 'react';
+import { ChampionsSpotlightDark } from './components/ChampionsSpotlightDark';
+
+export default function App() {
+  const [variant, setVariant] = useState<'default' | 'alt' | 'empty'>('default');
+
+  return (
+    <div className="min-h-screen bg-gray-900 py-12">
+      {/* Variant Selector */}
+      <div className="max-w-6xl mx-auto px-6 mb-8">
+        <div className="flex flex-wrap gap-4 justify-center">
+          <button
+            onClick={() => setVariant('default')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              variant === 'default' 
+                ? 'bg-green-600 text-white' 
+                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            Dark Gradient
+          </button>
+          <button
+            onClick={() => setVariant('alt')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              variant === 'alt' 
+                ? 'bg-green-600 text-white' 
+                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            Pure Black
+          </button>
+          <button
+            onClick={() => setVariant('empty')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              variant === 'empty' 
+                ? 'bg-green-600 text-white' 
+                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            Empty Fallback
+          </button>
+        </div>
+      </div>
+
+      {/* Champions Spotlight Card */}
+      <ChampionsSpotlightDark variant={variant} />
+
+      {/* Spec Information */}
+      <div className="max-w-6xl mx-auto px-6 mt-12">
+        <div className="bg-gray-800 rounded-xl p-8 shadow-sm">
+          <h2 className="text-2xl font-semibold mb-6 text-white">MTTA Champions Spotlight - Dark Theme Specifications</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Dark Theme Colors */}
+            <div>
+              <h3 className="font-semibold mb-4 text-white">Dark Theme Colors</h3>
+              <div className="space-y-2 text-sm text-gray-300">
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded bg-gray-800"></div>
+                  <span>Dark Gradient Start: #111827</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded bg-black"></div>
+                  <span>Dark Gradient End: #000000</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded bg-green-600"></div>
+                  <span>MTTA Green Accent: #16A34A</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded bg-white"></div>
+                  <span>Text/Logo: White (#FFFFFF)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Typography */}
+            <div>
+              <h3 className="font-semibold mb-4 text-white">Typography</h3>
+              <div className="space-y-2 text-sm text-gray-300">
+                <div>Player Name: 64px, ExtraBold, White</div>
+                <div>Line Height: 95% (tighter)</div>
+                <div>Subtitle: 14px, +8% tracking, MTTA Green</div>
+                <div>Text Glow: Subtle white glow + shadow</div>
+                <div>Background: Dark gradient/black</div>
+              </div>
+            </div>
+
+            {/* Layout */}
+            <div>
+              <h3 className="font-semibold mb-4 text-white">Layout System</h3>
+              <div className="space-y-2 text-sm text-gray-300">
+                <div>Desktop Frame: 1440×auto</div>
+                <div>Safe Content Width: 1200px</div>
+                <div>12-column grid, 20px gutter</div>
+                <div>Logo: Top-right corner, 24px margin</div>
+                <div>Card Radius: 16px</div>
+                <div>Inner Padding: 40-48px</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Component Architecture */}
+          <div className="mt-8 pt-8 border-t border-gray-700">
+            <h3 className="font-semibold mb-4 text-white">Dark Theme Component Architecture</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-300">
+              <div>
+                <strong className="text-white">Layer Names:</strong>
+                <ul className="list-disc list-inside mt-2 space-y-1">
+                  <li>hero/bg-dark - Dark gradient background</li>
+                  <li>hero/logo - MTTA logo (top-right, white)</li>
+                  <li>hero/player - Player image with shadow</li>
+                  <li>hero/title - Player name with glow</li>
+                  <li>hero/subtitle - Champions Spotlight (green)</li>
+                </ul>
+              </div>
+              <div>
+                <strong className="text-white">Components Created:</strong>
+                <ul className="list-disc list-inside mt-2 space-y-1">
+                  <li>MTTALogoDark - White/inverted logo</li>
+                  <li>DarkBackground - Gradient/black variants</li>
+                  <li>PlayerNameDisplay - Enhanced typography</li>
+                  <li>PlayerSilhouette - Dark theme silhouette</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Features */}
+          <div className="mt-8 pt-8 border-t border-gray-700">
+            <h3 className="font-semibold mb-4 text-white">Dark Theme Features</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-300">
+              <div>
+                <strong className="text-white">Design Changes:</strong>
+                <ul className="list-disc list-inside mt-2 space-y-1">
+                  <li>Dark gradient background (#111827 → #000000)</li>
+                  <li>MTTA logo moved to top-right corner</li>
+                  <li>Player image with subtle drop shadow</li>
+                  <li>64px ExtraBold player name</li>
+                  <li>Green accent on subtitle only</li>
+                  <li>White carousel dots (100%/40% opacity)</li>
+                </ul>
+              </div>
+              <div>
+                <strong className="text-white">Variants Available:</strong>
+                <ul className="list-disc list-inside mt-2 space-y-1">
+                  <li>Default: Dark gradient background</li>
+                  <li>Alt: Pure black background</li>
+                  <li>Empty: Fallback with silhouette</li>
+                  <li>Minimal green accent throughout</li>
+                  <li>Enhanced legibility with text glow</li>
+                  <li>Clean, modern dark aesthetic</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
