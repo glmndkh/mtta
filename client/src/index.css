@@ -1400,6 +1400,94 @@ button[type="submit"]:hover {
   opacity: 1 !important;
 }
 
+/* Fix general text colors for light mode - override white text with dark text */
+[data-theme="light"] h1,
+[data-theme="light"] h2,
+[data-theme="light"] h3,
+[data-theme="light"] h4,
+[data-theme="light"] h5,
+[data-theme="light"] h6,
+[data-theme="light"] p,
+[data-theme="light"] span,
+[data-theme="light"] div,
+.light h1,
+.light h2,
+.light h3,
+.light h4,
+.light h5,
+.light h6,
+.light p,
+.light span,
+.light div {
+  color: #0f172a !important;
+}
+
+/* Fix card content text in light mode */
+[data-theme="light"] .card-dark h3,
+[data-theme="light"] .card-dark h4,
+[data-theme="light"] .card-dark p,
+[data-theme="light"] .card-dark div,
+[data-theme="light"] .card-dark span,
+.light .card-dark h3,
+.light .card-dark h4,
+.light .card-dark p,
+.light .card-dark div,
+.light .card-dark span {
+  color: #0f172a !important;
+}
+
+/* Fix slider and carousel text colors in light mode */
+[data-theme="light"] .slider-title,
+[data-theme="light"] .carousel-title,
+[data-theme="light"] .slider-description,
+[data-theme="light"] .carousel-description,
+.light .slider-title,
+.light .carousel-title,
+.light .slider-description,
+.light .carousel-description {
+  color: #0f172a !important;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Fix theme text colors in light mode */
+[data-theme="light"] .theme-text,
+.light .theme-text {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .theme-text-secondary,
+.light .theme-text-secondary {
+  color: #64748b !important;
+}
+
+/* Fix navigation text in light mode */
+[data-theme="light"] .nav-link,
+.light .nav-link {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .nav-link:hover,
+.light .nav-link:hover {
+  color: #16a34a !important;
+}
+
+/* Fix all text that was forced to white */
+[data-theme="light"] *:not(.slider-overlay):not(.carousel-overlay):not(.btn-green):not([data-state="active"]),
+.light *:not(.slider-overlay):not(.carousel-overlay):not(.btn-green):not([data-state="active"]) {
+  color: inherit;
+}
+
+/* Ensure body and main containers have proper light mode colors */
+[data-theme="light"] body,
+[data-theme="light"] #root,
+[data-theme="light"] .main-bg,
+.light body,
+.light #root,
+.light .main-bg {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
 .tab {
   padding: 10px 20px;
   border-radius: 6px;
