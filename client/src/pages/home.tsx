@@ -50,15 +50,7 @@ interface Tournament {
   participationTypes: string[];
 }
 
-interface TopPlayer {
-  id: string;
-  firstName: string;
-  lastName: string;
-  profileImageUrl?: string;
-  rating?: number;
-  rank?: number;
-  category?: string;
-}
+
 
 export default function Home() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -87,19 +79,11 @@ export default function Home() {
     enabled: true,
   });
 
-  // Fetch top players
-  const { data: topPlayers = [], isLoading: playersLoading } = useQuery<TopPlayer[]>({
-    queryKey: ['/api/players/top'],
-    enabled: true,
-  });
-
   // Fetch active sponsors
   const { data: sponsors = [], isLoading: sponsorsLoading } = useQuery<any[]>({
     queryKey: ['/api/sponsors'],
     enabled: true,
   });
-
-  const [selectedPlayerCategory, setSelectedPlayerCategory] = useState('all');
 
   // Auto-play slider
   useEffect(() => {
@@ -368,73 +352,7 @@ export default function Home() {
             )}
           </section>
 
-          {/* 2. Топ тамирчид */}
-          <section>
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-3xl font-bold text-gray-900">Топ тамирчид</h2>
-
-              {/* Category Filter Chips */}
-              <div className="flex gap-2">
-                {['all', 'men', 'women', 'junior'].map((category) => (
-                  <Button
-                    key={category}
-                    variant={selectedPlayerCategory === category ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setSelectedPlayerCategory(category)}
-                    className={selectedPlayerCategory === category ? 'bg-mtta-green text-white' : ''}
-                  >
-                    {category === 'all' ? 'Бүгд' :
-                     category === 'men' ? 'Эрэгтэй' :
-                     category === 'women' ? 'Эмэгтэй' : 'Залуучууд'}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {playersLoading ? (
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-                {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                  <div key={i} className="text-center">
-                    <Skeleton className="w-16 h-16 rounded-full mx-auto mb-2" />
-                    <Skeleton className="h-4 w-full" />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-                {topPlayers.slice(0, 8).map((player) => (
-                  <div key={player.id} className="text-center group cursor-pointer" onClick={() => window.location.href = `/player/${player.id}`}>
-                    <div className="relative mb-3">
-                      {player.profileImageUrl ? (
-                        <img
-                          src={getImageUrl(player.profileImageUrl)}
-                          alt={formatName(player.firstName, player.lastName)}
-                          className="w-16 h-16 rounded-full mx-auto object-cover group-hover:scale-105 transition-transform"
-                        />
-                      ) : (
-                        <div className="w-16 h-16 rounded-full bg-mtta-green text-white flex items-center justify-center mx-auto group-hover:scale-105 transition-transform">
-                          <span className="text-lg font-bold">
-                            {player.lastName?.[0]}{player.firstName?.[0]}
-                          </span>
-                        </div>
-                      )}
-                      {player.rank && player.rank <= 3 && (
-                        <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-yellow-500 text-white text-xs flex items-center justify-center font-bold">
-                          {player.rank}
-                        </div>
-                      )}
-                    </div>
-                    <h4 className="font-medium text-sm text-gray-900 group-hover:text-mtta-green transition-colors">
-                      {formatName(player.firstName, player.lastName)}
-                    </h4>
-                    {player.rating && (
-                      <p className="text-xs text-gray-600">{player.rating} pts</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+          
 
           {/* 3. Ивээн тэтгэгчид */}
           <section>
