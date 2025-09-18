@@ -1849,14 +1849,14 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
 
 @media (max-width: 768px) {
   .hero-slider {
-    height: 600px; /* Mobile height increased to show full image */
-    min-height: 550px;
+    height: 400px; /* Reduced mobile height for better image visibility */
+    min-height: 350px;
   }
 }
 
 @media (max-width: 480px) {
   .hero-slider {
-    height: 550px; /* Small mobile height increased to show full image */
-    min-height: 500px;
+    height: 350px; /* Reduced small mobile height for better image visibility */
+    min-height: 300px;
   }
 }
