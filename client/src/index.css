@@ -628,24 +628,87 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
 .btn-glow {
   transition: all 0.3s ease;
   box-shadow: 0 0 10px rgba(var(--success-rgb), 0.3);
+  background: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  border: 1px solid var(--border);
 }
 
 .btn-glow:hover {
   box-shadow: 0 0 20px rgba(var(--success-rgb), 0.6);
   transform: translateY(-2px);
+  background: var(--link) !important;
+  border-color: var(--link) !important;
+}
+
+/* General button dark mode fixes */
+button:not(.btn-glow) {
+  background: var(--card) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+}
+
+button:not(.btn-glow):hover {
+  background: var(--accent) !important;
+  color: var(--link) !important;
+  border-color: var(--link) !important;
+}
+
+/* Primary buttons */
+.btn-primary,
+button[type="submit"] {
+  background: linear-gradient(135deg, var(--success), var(--link)) !important;
+  color: var(--primary-foreground) !important;
+  border: 1px solid var(--success) !important;
+}
+
+.btn-primary:hover,
+button[type="submit"]:hover {
+  background: linear-gradient(135deg, var(--link), var(--success)) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(var(--success-rgb), 0.4);
 }
 
 /* Card enhancements */
 .card-dark {
-  background: var(--card);
+  background: var(--card) !important;
   backdrop-filter: blur(10px);
-  border: 1px solid var(--border);
-  color: var(--text-primary);
+  border: 1px solid var(--border) !important;
+  color: var(--text-primary) !important;
 }
 
 .card-dark:hover {
-  border-color: rgba(var(--link-rgb), 0.6);
-  box-shadow: 0 8px 32px rgba(var(--link-rgb), 0.1);
+  border-color: rgba(var(--link-rgb), 0.6) !important;
+  box-shadow: 0 8px 32px rgba(var(--link-rgb), 0.1) !important;
+}
+
+/* Generic card styling for all cards */
+.card,
+[class*="card"] {
+  background: var(--card) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+}
+
+/* Card headers and content */
+.card-header,
+.card-content,
+.card-title,
+.card-description {
+  color: var(--text-primary) !important;
+}
+
+/* Overlay improvements */
+.overlay,
+.modal-overlay {
+  background: rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+[data-theme="light"] .overlay,
+[data-theme="light"] .modal-overlay,
+.light .overlay,
+.light .modal-overlay {
+  background: rgba(0, 0, 0, 0.5) !important;
 }
 
 /* Ensure all text in cards uses theme colors */
@@ -1018,11 +1081,19 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
 /* Navigation enhancements */
 .nav-dark {
   position: relative;
-  background: linear-gradient(to bottom, rgba(25,30,38,0.98) 0%, rgba(15,20,25,0.96) 40%, rgba(10,15,20,0.96) 40%);
-  backdrop-filter: blur(6px);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  box-shadow: inset 1px 1px rgba(255,255,255,0.07), inset 0 -2px rgba(0,0,0,0.35);
+  background: rgba(17, 24, 39, 0.95) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
   overflow: hidden;
+}
+
+/* Light theme navigation override */
+[data-theme="light"] .nav-dark,
+.light .nav-dark {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Sheen effect for navigation */
@@ -1349,21 +1420,21 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
   position: absolute;
   top: 110%;
   left: 0;
-  background-color: var(--card);
+  background-color: var(--card) !important;
   backdrop-filter: blur(6px);
   min-width: 200px;
   border-radius: 6px;
   overflow: hidden;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border) !important;
   z-index: 50;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
 }
 
 .dropdown-content a {
   display: block;
   padding: 12px 16px;
   font-size: 0.9rem;
-  color: var(--text-secondary);
+  color: var(--text-primary) !important;
   text-decoration: none;
   text-transform: none;
   letter-spacing: normal;
@@ -1371,8 +1442,28 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
 }
 
 .dropdown-content a:hover {
-  background-color: var(--accent);
-  color: var(--link);
+  background-color: var(--accent) !important;
+  color: var(--link) !important;
+}
+
+/* Select elements dark mode */
+select,
+.select-trigger {
+  background: var(--card) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+}
+
+select:focus,
+.select-trigger:focus {
+  border-color: var(--link) !important;
+  box-shadow: 0 0 0 2px rgba(var(--link-rgb), 0.2) !important;
+}
+
+/* Select dropdown options */
+select option {
+  background: var(--card) !important;
+  color: var(--text-primary) !important;
 }
 
 
@@ -1568,16 +1659,48 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: var(--muted);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--border);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--link);
+}
+
+/* Dark theme scrollbar */
+[data-theme="dark"] ::-webkit-scrollbar-track,
+.dark ::-webkit-scrollbar-track {
+  background: #1a1a1a !important;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb,
+.dark ::-webkit-scrollbar-thumb {
+  background: #374151 !important;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover,
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: var(--link) !important;
+}
+
+/* Light theme scrollbar */
+[data-theme="light"] ::-webkit-scrollbar-track,
+.light ::-webkit-scrollbar-track {
+  background: #f1f5f9 !important;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb,
+.light ::-webkit-scrollbar-thumb {
+  background: #cbd5e1 !important;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover,
+.light ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8 !important;
 }
 
 /* LIVE badge animation with accessibility support */
@@ -1841,10 +1964,148 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
   }
 }
 
+/* Carousel Navigation Arrows - Comprehensive Dark Mode Support */
+.carousel-prev,
+.carousel-next,
+.slider-prev,
+.slider-next,
+[class*="carousel"] button[class*="prev"],
+[class*="carousel"] button[class*="next"],
+[class*="slider"] button[class*="prev"],
+[class*="slider"] button[class*="next"] {
+  background: var(--card) !important;
+  border: 2px solid var(--border) !important;
+  color: var(--text-primary) !important;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.carousel-prev:hover,
+.carousel-next:hover,
+.slider-prev:hover,
+.slider-next:hover,
+[class*="carousel"] button[class*="prev"]:hover,
+[class*="carousel"] button[class*="next"]:hover,
+[class*="slider"] button[class*="prev"]:hover,
+[class*="slider"] button[class*="next"]:hover {
+  background: var(--link) !important;
+  border-color: var(--link) !important;
+  color: #ffffff !important;
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(var(--link-rgb), 0.4);
+}
+
+/* Carousel pagination dots */
+.carousel-pagination,
+.slider-pagination,
+[class*="carousel"] [class*="pagination"],
+[class*="slider"] [class*="pagination"] {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.carousel-pagination button,
+.slider-pagination button,
+[class*="carousel"] [class*="pagination"] button,
+[class*="slider"] [class*="pagination"] button {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid var(--border) !important;
+  background: var(--muted) !important;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.carousel-pagination button.active,
+.slider-pagination button.active,
+[class*="carousel"] [class*="pagination"] button.active,
+[class*="slider"] [class*="pagination"] button.active {
+  background: var(--link) !important;
+  border-color: var(--link) !important;
+  transform: scale(1.2);
+  box-shadow: 0 0 0 2px rgba(var(--link-rgb), 0.3);
+}
+
+/* Slider content text and overlays for better readability */
+.slider-content,
+.carousel-content {
+  position: relative;
+  z-index: 2;
+}
+
+.slider-title,
+.carousel-title {
+  color: #ffffff !important;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  font-weight: bold;
+}
+
+.slider-description,
+.carousel-description {
+  color: #ffffff !important;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
 /* Hero slider specific styling */
 .hero-slider {
   height: 700px; /* Base height increased by 100px */
   min-height: 600px;
+  background: var(--background);
+  color: var(--text-primary);
+}
+
+/* Carousel and slider controls dark mode styling */
+.carousel-control,
+.slider-control {
+  background: rgba(var(--card-rgb), 0.8) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-primary) !important;
+  backdrop-filter: blur(8px);
+}
+
+.carousel-control:hover,
+.slider-control:hover {
+  background: var(--accent) !important;
+  border-color: var(--link) !important;
+  color: var(--link) !important;
+}
+
+/* Slider dots/indicators */
+.carousel-indicators button,
+.slider-dots button {
+  background: var(--muted-foreground) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.carousel-indicators button.active,
+.slider-dots button.active {
+  background: var(--link) !important;
+  border-color: var(--link) !important;
+}
+
+/* Slider content text overlay */
+.slider-overlay,
+.carousel-overlay {
+  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.8)) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .slider-overlay,
+[data-theme="light"] .carousel-overlay,
+.light .slider-overlay,
+.light .carousel-overlay {
+  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.6)) !important;
+  color: #ffffff !important;
 }
 
 @media (max-width: 768px) {
