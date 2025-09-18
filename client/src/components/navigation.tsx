@@ -106,7 +106,7 @@ export default function Navigation() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden md:flex items-center space-x-2 lg:space-x-6">
             {navigationLinks.map((link) => {
               const Icon = link.icon;
               const active = isActive(location, link.href);
@@ -115,7 +115,7 @@ export default function Navigation() {
                 return (
                   <DropdownMenu key={link.href}>
                     <DropdownMenuTrigger asChild>
-                      <div className={`nav-link flex items-center space-x-1 px-3 py-2 cursor-pointer ${
+                      <div className={`nav-link flex items-center space-x-1 px-2 lg:px-3 py-2 cursor-pointer text-sm lg:text-base ${
                         active ? 'active-nav-link' : ''
                       }`}>
                         <Icon className="h-4 w-4" />
@@ -123,18 +123,18 @@ export default function Navigation() {
                         <ChevronDown className="h-3 w-3 ml-1" />
                       </div>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="bg-gray-800 border-gray-700">
+                    <DropdownMenuContent className="bg-gray-800 border-gray-700 min-w-[200px] max-w-[300px] w-auto">
                       {link.dropdown.map((subLink) => (
                         subLink.sublinks ? (
                           <DropdownMenuSub key={subLink.label}>
-                            <DropdownMenuSubTrigger className="text-white hover:text-green-400 px-2 py-1">
+                            <DropdownMenuSubTrigger className="text-white hover:text-green-400 px-3 py-2.5 text-sm min-h-[40px] flex items-center">
                               {subLink.label}
                             </DropdownMenuSubTrigger>
-                            <DropdownMenuSubContent className="bg-gray-800 border-gray-700">
+                            <DropdownMenuSubContent className="bg-gray-800 border-gray-700 min-w-[180px] max-w-[280px]">
                               {subLink.sublinks.map((item) => (
                                 <DropdownMenuItem key={item.href} asChild>
                                   <Link href={item.href}>
-                                    <div className="text-white hover:text-green-400 w-full px-2 py-1">
+                                    <div className="text-white hover:text-green-400 w-full px-3 py-2.5 text-sm min-h-[40px] flex items-center transition-colors duration-200">
                                       {item.label}
                                     </div>
                                   </Link>
@@ -145,7 +145,7 @@ export default function Navigation() {
                         ) : (
                           <DropdownMenuItem key={subLink.href} asChild>
                             <Link href={subLink.href}>
-                              <div className="text-white hover:text-green-400 w-full px-2 py-1">
+                              <div className="text-white hover:text-green-400 w-full px-3 py-2.5 text-sm min-h-[40px] flex items-center transition-colors duration-200 truncate">
                                 {subLink.label}
                               </div>
                             </Link>
@@ -159,7 +159,7 @@ export default function Navigation() {
 
               return (
                 <Link key={link.href} href={link.href}>
-                  <div className={`nav-link flex items-center space-x-1 px-3 py-2 cursor-pointer ${
+                  <div className={`nav-link flex items-center space-x-1 px-2 lg:px-3 py-2 cursor-pointer text-sm lg:text-base ${
                     active ? 'active-nav-link' : ''
                   }`}>
                     <Icon className="h-4 w-4" />
@@ -172,13 +172,13 @@ export default function Navigation() {
           </div>
 
           {/* User Menu & Mobile Toggle */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-4">
             {isAuthenticated && user ? (
-              <div className="hidden md:flex items-center space-x-4">
+              <div className="hidden md:flex items-center space-x-1 lg:space-x-4">
                 {(user as any).role === 'player' ? (
                   <>
                     <Link href="/profile">
-                      <div className="nav-link flex items-center space-x-2 px-3 py-2 cursor-pointer">
+                      <div className="nav-link flex items-center space-x-2 px-2 lg:px-3 py-2 cursor-pointer text-sm lg:text-base">
                         <User className="h-4 w-4" />
                         <span>{(user as any).firstName}</span>
                       </div>
@@ -187,13 +187,13 @@ export default function Navigation() {
                 ) : (user as any).role === 'admin' ? (
                   <>
                     <Link href="/admin/dashboard">
-                      <div className="nav-link flex items-center space-x-2 px-3 py-2 cursor-pointer">
+                      <div className="nav-link flex items-center space-x-2 px-2 lg:px-3 py-2 cursor-pointer text-sm lg:text-base">
                         <User className="h-4 w-4" />
                         <span>{t('nav.admin')}</span>
                       </div>
                     </Link>
                     <Link href="/profile">
-                      <div className="nav-link flex items-center space-x-2 px-3 py-2 cursor-pointer">
+                      <div className="nav-link flex items-center space-x-2 px-2 lg:px-3 py-2 cursor-pointer text-sm lg:text-base">
                         <User className="h-4 w-4" />
                         <span>{(user as any).firstName} (Admin)</span>
                       </div>
@@ -201,7 +201,7 @@ export default function Navigation() {
                   </>
                 ) : (
                   <Link href="/profile">
-                    <div className="nav-link flex items-center space-x-2 px-3 py-2 cursor-pointer">
+                    <div className="nav-link flex items-center space-x-2 px-2 lg:px-3 py-2 cursor-pointer text-sm lg:text-base">
                       <User className="h-4 w-4" />
                       <span>{(user as any).firstName} ({
                         (user as any).role === 'score_recorder' ? 'Score Recorder' : 'User'
@@ -213,21 +213,21 @@ export default function Navigation() {
                   variant="ghost"
                   size="sm"
                   onClick={() => window.location.href = '/api/logout'}
-                  className="nav-link hover:text-red-400 text-sm px-2 py-1"
+                  className="nav-link hover:text-red-400 text-xs lg:text-sm px-2 py-1.5 min-h-[36px] flex items-center"
                 >
                   <LogOut className="h-4 w-4 mr-1" />
                   {t('nav.logout')}
                 </Button>
               </div>
             ) : (
-              <div className="hidden md:flex items-center space-x-2">
+              <div className="hidden md:flex items-center space-x-1 lg:space-x-2">
                 <Link href="/register">
-                  <button className="btn-green">
+                  <button className="btn-green text-xs lg:text-sm px-3 lg:px-4 py-2 min-h-[36px]">
                     {t('nav.register')}
                   </button>
                 </Link>
                 <Link href="/login">
-                  <button className="btn-green">
+                  <button className="btn-green text-xs lg:text-sm px-3 lg:px-4 py-2 min-h-[36px]">
                     {t('nav.login')}
                   </button>
                 </Link>
