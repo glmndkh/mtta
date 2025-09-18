@@ -523,7 +523,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
       defaultData = {
         firstName: '',
         lastName: '',
-        age: '',
+        age: 0,
         imageUrl: '',
       };
     } else if (selectedTab === 'clubs') {
@@ -913,16 +913,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               onChange={(e) => setNationalTeamFilter(e.target.value)}
             />
           </div>
-          <Button onClick={() => {
-            // Reset form data for national team
-            setFormData({
-              firstName: '',
-              lastName: '',
-              age: '',
-              imageUrl: '',
-            });
-            setIsCreateDialogOpen(true);
-          }}>
+          <Button onClick={openCreateDialog}>
             <Plus className="w-4 h-4 mr-2" />
             Тоглогч нэмэх
           </Button>
