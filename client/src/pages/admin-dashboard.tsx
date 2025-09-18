@@ -902,71 +902,235 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         })
       : [];
 
-    return (
-      <div className="space-y-4">
-        <div className="flex flex-wrap justify-between items-center gap-4">
-          <h2 className="text-2xl font-bold">Үндэсний шигшээ</h2>
-          <div className="flex-1 max-w-sm">
-            <Input
-              placeholder="Тоглогч хайх..."
-              value={nationalTeamFilter}
-              onChange={(e) => setNationalTeamFilter(e.target.value)}
-            />
-          </div>
-          <Button onClick={openCreateDialog}>
-            <Plus className="w-4 h-4 mr-2" />
-            Тоглогч нэмэх
-          </Button>
-        </div>
+    // Get available users who are not already in national team
+    const availableUsers = users && Array.isArray(users) 
+      ? users.filter((user: any) => 
+          !nationalTeam?.some((player: any) => player.userId === user.id)
+        )
+      : [];
 
-        {nationalTeamLoading ? (
-          <div>Ачааллаж байна...</div>
-        ) : filteredPlayers.length === 0 ? (
-          <div className="text-center py-8">
-            <Flag className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 mb-4">Одоогоор үндэсний шигшээний тамирчид байхгүй байна</p>
+    return (
+      <div className="space-y-6">
+        {/* Header Section */}
+        <div className="flex flex-wrap justify-between items-center gap-4">
+          <div>
+            <h2 className="text-2xl font-bold">Үндэсний шигшээ</h2>
+            <p className="text-sm text-muted-foreground">
+              Үндэсний шигшээний бүрэлдэхүүнийг удирдах
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <div className="flex-1 max-w-sm">
+              <Input
+                placeholder="Тоглогч хайх..."
+                value={nationalTeamFilter}
+                onChange={(e) => setNationalTeamFilter(e.target.value)}
+              />
+            </div>
             <Button onClick={openCreateDialog}>
               <Plus className="w-4 h-4 mr-2" />
-              Анхны тамирчинг нэмэх
+              Тоглогч нэмэх
             </Button>
           </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Нэр</TableHead>
-                <TableHead>Овог</TableHead>
-                <TableHead>Нас</TableHead>
-                <TableHead>Зураг</TableHead>
-                <TableHead>Үйлдэл</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredPlayers.map((player: any) => (
-                <TableRow key={player.id}>
-                  <TableCell>{player.firstName}</TableCell>
-                  <TableCell>{player.lastName}</TableCell>
-                  <TableCell>{player.age}</TableCell>
-                  <TableCell>
-                    {player.imageUrl && (
-                      <img src={player.imageUrl} alt={formatName(player.firstName, player.lastName)} className="w-10 h-10 rounded-full object-cover" />
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => openEditDialog(player)}>
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => handleDelete(player.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+        </div>
+
+        {/* Squad Management Section */}
+        {availableUsers.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserPlus className="w-5 h-5" />
+                Шигшээнд тоглогч нэмэх
+              </CardTitle>
+              <CardDescription>
+                Бүртгэгдсэн хэрэглэгчдээс үндэсний шигшээнд нэмэх боломжтой
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-64 overflow-y-auto">
+                {availableUsers.map((user: any) => (
+                  <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <UserIcon className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-sm">
+                          {formatName(user.firstName, user.lastName)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {user.email}
+                        </div>
+                      </div>
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        // Add user to national team
+                        const playerData = {
+                          firstName: user.firstName,
+                          lastName: user.lastName,
+                          age: user.age || 20, // Default age if not available
+                          imageUrl: user.imageUrl || '',
+                          userId: user.id
+                        };
+                        createMutation.mutate({
+                          endpoint: '/api/admin/national-team',
+                          data: playerData,
+                        });
+                      }}
+                    >
+                      <Plus className="w-3 h-3 mr-1" />
+                      Нэмэх
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         )}
+
+        {/* Current Squad Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Flag className="w-5 h-5" />
+              Одоогийн бүрэлдэхүүн
+            </CardTitle>
+            <CardDescription>
+              {filteredPlayers.length} тамирчин үндэсний шигшээнд байна
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {nationalTeamLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : filteredPlayers.length === 0 ? (
+              <div className="text-center py-8">
+                <Flag className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 mb-4">Одоогоор үндэсний шигшээний тамирчид байхгүй байна</p>
+                <Button onClick={openCreateDialog}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Анхны тамирчинг нэмэх
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Squad Grid View */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {filteredPlayers.map((player: any) => (
+                    <Card key={player.id} className="relative">
+                      <CardContent className="p-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="relative">
+                            {player.imageUrl ? (
+                              <img
+                                src={player.imageUrl}
+                                alt={formatName(player.firstName, player.lastName)}
+                                className="w-12 h-12 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                <UserIcon className="w-6 h-6 text-blue-600" />
+                              </div>
+                            )}
+                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">
+                              {formatName(player.firstName, player.lastName)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {player.age} нас
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex justify-between mt-3 pt-3 border-t">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openEditDialog(player)}
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => {
+                              if (confirm(`${formatName(player.firstName, player.lastName)}-г үндэсний шигшээнээс хасахдаа итгэлтэй байна уу?`)) {
+                                handleDelete(player.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Table View Toggle */}
+                <details className="mt-6">
+                  <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
+                    Хүснэгтээр харах
+                  </summary>
+                  <div className="mt-4">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Нэр</TableHead>
+                          <TableHead>Овог</TableHead>
+                          <TableHead>Нас</TableHead>
+                          <TableHead>Зураг</TableHead>
+                          <TableHead>Үйлдэл</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredPlayers.map((player: any) => (
+                          <TableRow key={player.id}>
+                            <TableCell>{player.firstName}</TableCell>
+                            <TableCell>{player.lastName}</TableCell>
+                            <TableCell>{player.age}</TableCell>
+                            <TableCell>
+                              {player.imageUrl && (
+                                <img 
+                                  src={player.imageUrl} 
+                                  alt={formatName(player.firstName, player.lastName)} 
+                                  className="w-10 h-10 rounded-full object-cover" 
+                                />
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button size="sm" variant="outline" onClick={() => openEditDialog(player)}>
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="destructive" 
+                                  onClick={() => {
+                                    if (confirm(`${formatName(player.firstName, player.lastName)}-г үндэсний шигшээнээс хасахдаа итгэлтэй байна уу?`)) {
+                                      handleDelete(player.id);
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </details>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     );
   };
