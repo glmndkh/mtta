@@ -515,11 +515,11 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
 
 /* Light theme */
 [data-theme="light"], .light {
-  --background: #fafafa;
+  --background: #ffffff;
   --card: #ffffff;
   --card-foreground: #0f172a;
   --text-primary: #0f172a;
-  --text-secondary: #64748b;
+  --text-secondary: #475569;
   --foreground: #0f172a;
   --muted: #f1f5f9;
   --muted-foreground: #64748b;
@@ -527,9 +527,9 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
   --popover-foreground: #0f172a;
   --link: #16a34a;
   --link-rgb: 22, 163, 74;
-  --accent: rgba(22, 163, 74, 0.1);
+  --accent: #f1f5f9;
   --accent-foreground: #0f172a;
-  --border: #e2e8f0;
+  --border: #cbd5e1;
   --input: #ffffff;
   --primary: #16a34a;
   --primary-foreground: #ffffff;
@@ -607,7 +607,7 @@ button[role="tab"][data-state="active"] { background-color: var(--link) !importa
   border-color: var(--link) !important;
 }
 
-/* General button dark mode fixes */
+/* General button styling */
 button:not(.btn-glow) {
   background: var(--card) !important;
   color: var(--text-primary) !important;
@@ -618,6 +618,23 @@ button:not(.btn-glow):hover {
   background: var(--accent) !important;
   color: var(--link) !important;
   border-color: var(--link) !important;
+}
+
+/* Light mode specific button improvements */
+[data-theme="light"] button:not(.btn-glow),
+.light button:not(.btn-glow) {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 2px solid #cbd5e1 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="light"] button:not(.btn-glow):hover,
+.light button:not(.btn-glow):hover {
+  background: #f8fafc !important;
+  color: #16a34a !important;
+  border-color: #16a34a !important;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.2) !important;
 }
 
 /* Primary buttons */
@@ -1059,8 +1076,9 @@ button[type="submit"]:hover {
 /* Light theme navigation override */
 [data-theme="light"] .nav-dark,
 .light .nav-dark {
-  background: rgba(255, 255, 255, 0.95) !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Sheen effect for navigation */
@@ -1287,18 +1305,24 @@ button[type="submit"]:hover {
 
 /* Light theme overrides for admin tabs */
 [data-theme="light"] .admin-tab-trigger {
-  color: #ffffff !important; /* Always white even in light theme */
+  color: #0f172a !important; /* Dark text for light theme */
   opacity: 1 !important;
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
 }
 
 [data-theme="light"] .admin-tab-trigger[data-state="active"] {
-  color: #ffffff !important; /* Keep white for active state */
+  color: #ffffff !important; /* White text on green background */
+  background: #16a34a !important;
+  border-color: #16a34a !important;
   opacity: 1 !important;
 }
 
 [data-theme="light"] .admin-tab-trigger[data-state="inactive"] {
-  color: #ffffff !important; /* Keep white for inactive state */
-  opacity: 0.9 !important;
+  color: #475569 !important; /* Muted dark text for inactive */
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  opacity: 1 !important;
 }
 
 /* Tournament Details Tab Styling - Ensure white text always */
@@ -1350,6 +1374,39 @@ button[type="submit"]:hover {
   opacity: 0.9 !important;
 }
 
+/* Light theme specific tournament tab styling */
+[data-theme="light"] .tournament-tabs [role="tab"],
+[data-theme="light"] .tournament-details-tabs [role="tab"],
+.light .tournament-tabs [role="tab"],
+.light .tournament-details-tabs [role="tab"] {
+  color: #475569 !important;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  opacity: 1 !important;
+}
+
+[data-theme="light"] .tournament-tabs [role="tab"][data-state="active"],
+[data-theme="light"] .tournament-details-tabs [role="tab"][data-state="active"],
+.light .tournament-tabs [role="tab"][data-state="active"],
+.light .tournament-details-tabs [role="tab"][data-state="active"] {
+  color: #ffffff !important;
+  background: #16a34a !important;
+  border-color: #16a34a !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+}
+
+[data-theme="light"] .tournament-tabs [role="tab"][data-state="inactive"],
+[data-theme="light"] .tournament-details-tabs [role="tab"][data-state="inactive"],
+.light .tournament-tabs [role="tab"][data-state="inactive"],
+.light .tournament-details-tabs [role="tab"][data-state="inactive"] {
+  color: #64748b !important;
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  font-weight: 500 !important;
+  opacity: 1 !important;
+}
+
 .tab {
   padding: 10px 20px;
   border-radius: 6px;
@@ -1381,7 +1438,7 @@ button[type="submit"]:hover {
   position: relative;
 }
 
-/* Dropdown content is now always visible to avoid hover-only text */
+/* Dropdown content styling */
 .dropdown-content {
   display: block;
   position: absolute;
@@ -1413,7 +1470,27 @@ button[type="submit"]:hover {
   color: var(--link) !important;
 }
 
-/* Select elements dark mode */
+/* Light mode specific dropdown improvements */
+[data-theme="light"] .dropdown-content,
+.light .dropdown-content {
+  background-color: #ffffff !important;
+  border: 2px solid #cbd5e1 !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+[data-theme="light"] .dropdown-content a,
+.light .dropdown-content a {
+  color: #0f172a !important;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+[data-theme="light"] .dropdown-content a:hover,
+.light .dropdown-content a:hover {
+  background-color: #f1f5f9 !important;
+  color: #16a34a !important;
+}
+
+/* Select elements styling */
 select,
 .select-trigger {
   background: var(--card) !important;
@@ -1431,6 +1508,50 @@ select:focus,
 select option {
   background: var(--card) !important;
   color: var(--text-primary) !important;
+}
+
+/* Light mode specific select improvements */
+[data-theme="light"] select,
+[data-theme="light"] .select-trigger,
+.light select,
+.light .select-trigger {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 2px solid #cbd5e1 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="light"] select:focus,
+[data-theme="light"] .select-trigger:focus,
+.light select:focus,
+.light .select-trigger:focus {
+  border-color: #16a34a !important;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2) !important;
+}
+
+[data-theme="light"] select option,
+.light select option {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+/* Light mode input improvements */
+[data-theme="light"] input,
+[data-theme="light"] textarea,
+.light input,
+.light textarea {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 2px solid #cbd5e1 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="light"] input:focus,
+[data-theme="light"] textarea:focus,
+.light input:focus,
+.light textarea:focus {
+  border-color: #16a34a !important;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2) !important;
 }
 
 
