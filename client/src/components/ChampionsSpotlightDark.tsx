@@ -2,6 +2,7 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './ui/button';
+import mttaLogo from '@assets/download_1758183783829.png';
 
 interface NationalTeamPlayer {
   id: string;
@@ -39,9 +40,9 @@ export const ChampionsSpotlightDark: React.FC<ChampionsSpotlightDarkProps> = ({
       {/* MTTA Logo */}
       <div className="absolute top-6 right-6 z-10">
         <img 
-          src="/mtta-logo.png" 
+          src={mttaLogo} 
           alt="MTTA Logo" 
-          className="h-12 w-auto filter brightness-0 invert"
+          className="h-12 w-auto"
         />
       </div>
 
