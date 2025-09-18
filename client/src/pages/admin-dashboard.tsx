@@ -1007,17 +1007,16 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
-            ) : filteredPlayers.length === 0 ? (
-              <div className="text-center py-8">
-                <Flag className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-4">Одоогоор үндэсний шигшээний тамирчид байхгүй байна</p>
-                <Button onClick={openCreateDialog}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Анхны тамирчинг нэмэх
-                </Button>
-              </div>
             ) : (
               <div className="space-y-4">
+                {/* Add Player Button */}
+                <div className="flex justify-end">
+                  <Button onClick={openCreateDialog}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Тоглогч нэмэх
+                  </Button>
+                </div>
+
                 {/* Squad Grid View */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {filteredPlayers.map((player: any) => (
@@ -1072,61 +1071,70 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                   ))}
                 </div>
 
-                {/* Table View Toggle */}
-                <details className="mt-6">
-                  <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
-                    Хүснэгтээр харах
-                  </summary>
-                  <div className="mt-4">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Нэр</TableHead>
-                          <TableHead>Овог</TableHead>
-                          <TableHead>Нас</TableHead>
-                          <TableHead>Зураг</TableHead>
-                          <TableHead>Үйлдэл</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredPlayers.map((player: any) => (
-                          <TableRow key={player.id}>
-                            <TableCell>{player.firstName}</TableCell>
-                            <TableCell>{player.lastName}</TableCell>
-                            <TableCell>{player.age}</TableCell>
-                            <TableCell>
-                              {player.imageUrl && (
-                                <img 
-                                  src={player.imageUrl} 
-                                  alt={formatName(player.firstName, player.lastName)} 
-                                  className="w-10 h-10 rounded-full object-cover" 
-                                />
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                <Button size="sm" variant="outline" onClick={() => openEditDialog(player)}>
-                                  <Pencil className="w-4 h-4" />
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="destructive" 
-                                  onClick={() => {
-                                    if (confirm(`${formatName(player.firstName, player.lastName)}-г үндэсний шигшээнээс хасахдаа итгэлтэй байна уу?`)) {
-                                      handleDelete(player.id);
-                                    }
-                                  }}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                {filteredPlayers.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Flag className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>Одоогоор үндэсний шигшээнд тамирчид байхгүй байна.</p>
                   </div>
-                </details>
+                )}
+
+                {/* Table View Toggle */}
+                {filteredPlayers.length > 0 && (
+                  <details className="mt-6">
+                    <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
+                      Хүснэгтээр харах
+                    </summary>
+                    <div className="mt-4">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Нэр</TableHead>
+                            <TableHead>Овог</TableHead>
+                            <TableHead>Нас</TableHead>
+                            <TableHead>Зураг</TableHead>
+                            <TableHead>Үйлдэл</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredPlayers.map((player: any) => (
+                            <TableRow key={player.id}>
+                              <TableCell>{player.firstName}</TableCell>
+                              <TableCell>{player.lastName}</TableCell>
+                              <TableCell>{player.age}</TableCell>
+                              <TableCell>
+                                {player.imageUrl && (
+                                  <img 
+                                    src={player.imageUrl} 
+                                    alt={formatName(player.firstName, player.lastName)} 
+                                    className="w-10 h-10 rounded-full object-cover" 
+                                  />
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex gap-2">
+                                  <Button size="sm" variant="outline" onClick={() => openEditDialog(player)}>
+                                    <Pencil className="w-4 h-4" />
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="destructive" 
+                                    onClick={() => {
+                                      if (confirm(`${formatName(player.firstName, player.lastName)}-г үндэсний шигшээнээс хасахдаа итгэлтэй байна уу?`)) {
+                                        handleDelete(player.id);
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </details>
+                )}
               </div>
             )}
           </CardContent>
