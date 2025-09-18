@@ -38,9 +38,11 @@ export const ChampionsSpotlightDark: React.FC<ChampionsSpotlightDarkProps> = ({
     <div className={`relative min-h-screen ${backgroundClass} overflow-hidden`}>
       {/* MTTA Logo */}
       <div className="absolute top-6 right-6 z-10">
-        <div className="text-white font-bold text-xl tracking-wider">
-          MTTA
-        </div>
+        <img 
+          src="/mtta-logo.png" 
+          alt="MTTA Logo" 
+          className="h-12 w-auto filter brightness-0 invert"
+        />
       </div>
 
       {/* Main Content */}
