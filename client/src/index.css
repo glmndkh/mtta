@@ -845,6 +845,21 @@ button[type="submit"]:hover {
   background: rgba(0, 0, 0, 0.5) !important;
 }
 
+/* Label styling for both themes */
+label {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="light"] label,
+.light label {
+  color: #0f172a !important;
+}
+
+[data-theme="dark"] label,
+.dark label {
+  color: #ffffff !important;
+}
+
 /* Ensure all text in cards uses theme colors */
 .card-dark * {
   color: var(--text-primary) !important;
@@ -1548,76 +1563,100 @@ button[type="submit"]:hover {
   opacity: 1 !important;
 }
 
-/* Fix general text colors for light mode - override white text with dark text */
-[data-theme="light"] h1,
-[data-theme="light"] h2,
-[data-theme="light"] h3,
-[data-theme="light"] h4,
-[data-theme="light"] h5,
-[data-theme="light"] h6,
-[data-theme="light"] p,
-[data-theme="light"] span,
-[data-theme="light"] div,
-[data-theme="light"] label,
-[data-theme="light"] .text-sm,
-[data-theme="light"] .text-xs,
-.light h1,
-.light h2,
-.light h3,
-.light h4,
-.light h5,
-.light h6,
-.light p,
-.light span,
-.light div,
-.light label,
-.light .text-sm,
-.light .text-xs {
+/* Global text color fixes for both themes */
+
+/* Light theme - All text should be dark */
+[data-theme="light"] *:not(.btn-green):not(.live-badge):not(.slider-overlay):not(.carousel-overlay):not([data-state="active"]):not(.bg-green-600):not(.bg-mtta-green):not(.text-white),
+.light *:not(.btn-green):not(.live-badge):not(.slider-overlay):not(.carousel-overlay):not([data-state="active"]):not(.bg-green-600):not(.bg-mtta-green):not(.text-white) {
   color: #0f172a !important;
 }
 
-/* Ensure profile card text is visible in both themes */
-.profile-container h1,
-.profile-container h2,
-.profile-container h3,
-.profile-container h4,
-.profile-container p,
-.profile-container span,
-.profile-container div {
+/* Dark theme - All text should be light */
+[data-theme="dark"] *:not(.bg-white):not(.bg-gray-50):not(.bg-gray-100):not(.text-black),
+.dark *:not(.bg-white):not(.bg-gray-50):not(.bg-gray-100):not(.text-black) {
+  color: #f9fafb !important;
+}
+
+/* Profile container specific styling */
+.profile-container * {
   color: var(--text-primary) !important;
 }
 
-[data-theme="light"] .profile-container h1,
-[data-theme="light"] .profile-container h2,
-[data-theme="light"] .profile-container h3,
-[data-theme="light"] .profile-container h4,
-[data-theme="light"] .profile-container p,
-[data-theme="light"] .profile-container span,
-[data-theme="light"] .profile-container div,
-.light .profile-container h1,
-.light .profile-container h2,
-.light .profile-container h3,
-.light .profile-container h4,
-.light .profile-container p,
-.light .profile-container span,
-.light .profile-container div {
+[data-theme="light"] .profile-container *,
+.light .profile-container * {
   color: #0f172a !important;
 }
 
-[data-theme="dark"] .profile-container h1,
-[data-theme="dark"] .profile-container h2,
-[data-theme="dark"] .profile-container h3,
-[data-theme="dark"] .profile-container h4,
-[data-theme="dark"] .profile-container p,
-[data-theme="dark"] .profile-container span,
-[data-theme="dark"] .profile-container div,
-.dark .profile-container h1,
-.dark .profile-container h2,
-.dark .profile-container h3,
-.dark .profile-container h4,
-.dark .profile-container p,
-.dark .profile-container span,
-.dark .profile-container div {
+[data-theme="dark"] .profile-container *,
+.dark .profile-container * {
+  color: #ffffff !important;
+}
+
+/* Card content text visibility */
+[data-theme="light"] .card *,
+[data-theme="light"] .card-content *,
+[data-theme="light"] .theme-card *,
+.light .card *,
+.light .card-content *,
+.light .theme-card * {
+  color: #0f172a !important;
+}
+
+[data-theme="dark"] .card *,
+[data-theme="dark"] .card-content *,
+[data-theme="dark"] .theme-card *,
+.dark .card *,
+.dark .card-content *,
+.dark .theme-card * {
+  color: #ffffff !important;
+}
+
+/* Statistics card text */
+[data-theme="light"] .stat-card *,
+[data-theme="light"] .stats-card *,
+.light .stat-card *,
+.light .stats-card * {
+  color: #0f172a !important;
+}
+
+[data-theme="dark"] .stat-card *,
+[data-theme="dark"] .stats-card *,
+.dark .stat-card *,
+.dark .stats-card * {
+  color: #ffffff !important;
+}
+
+/* Badge and label text */
+[data-theme="light"] .badge,
+[data-theme="light"] label,
+.light .badge,
+.light label {
+  color: #0f172a !important;
+}
+
+[data-theme="dark"] .badge,
+[data-theme="dark"] label,
+.dark .badge,
+.dark label {
+  color: #ffffff !important;
+}
+
+/* Tab content and form elements */
+[data-theme="light"] .tabs-content *,
+[data-theme="light"] .form-control,
+[data-theme="light"] .input-dark,
+.light .tabs-content *,
+.light .form-control,
+.light .input-dark {
+  color: #0f172a !important;
+}
+
+[data-theme="dark"] .tabs-content *,
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .input-dark,
+.dark .tabs-content *,
+.dark .form-control,
+.dark .input-dark {
   color: #ffffff !important;
 }
 
@@ -1815,11 +1854,20 @@ select option {
   color: #0f172a !important;
 }
 
+/* Input and form element styling */
+input, textarea, select {
+  background: var(--input) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+}
+
 /* Light mode input improvements */
 [data-theme="light"] input,
 [data-theme="light"] textarea,
+[data-theme="light"] select,
 .light input,
-.light textarea {
+.light textarea,
+.light select {
   background: #ffffff !important;
   color: #0f172a !important;
   border: 2px solid #cbd5e1 !important;
@@ -1828,10 +1876,35 @@ select option {
 
 [data-theme="light"] input:focus,
 [data-theme="light"] textarea:focus,
+[data-theme="light"] select:focus,
 .light input:focus,
-.light textarea:focus {
+.light textarea:focus,
+.light select:focus {
   border-color: #16a34a !important;
   box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2) !important;
+  color: #0f172a !important;
+}
+
+/* Dark mode form elements */
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select,
+.dark input,
+.dark textarea,
+.dark select {
+  background: var(--card) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--border) !important;
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus,
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  border-color: var(--link) !important;
+  color: #ffffff !important;
 }
 
 
