@@ -2528,7 +2528,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                   id="linkUrl"
                   value={formData.linkUrl || ''}
                   onChange={(e) => setFormData({...formData, linkUrl: e.target.value})}
-                  placeholder="https://example.com эсвэл /page-name"
+                  placeholder="https://example.com /page-name"
                 />
               </div>
             )}
@@ -2648,9 +2648,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                       alt="Sponsor Logo"
                       className="w-16 h-16 object-contain border rounded"
                     />
-                    <div className="text-sm text-green-600">
-                      ✓ Лого хуулагдлаа
-                    </div>
+                    <div className="text-sm text-green-600">✓ Лого хуулагдлаа</div>
                   </div>
                 )}
               </div>
