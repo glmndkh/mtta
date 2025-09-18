@@ -382,7 +382,8 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         imageUrl: item.imageUrl || ''
       });
     } else if (selectedTab === "users") {
-      form.reset({
+      // For users, we don't use the form - users are edited through formData state
+      setFormData({
         firstName: item.firstName || "",
         lastName: item.lastName || "",
         email: item.email || "",
@@ -910,7 +911,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
     // Get available users who are not already in national team
     const availableUsers = users && Array.isArray(users) 
       ? users.filter((user: any) => 
-          !nationalTeam?.some((player: any) => player.userId === user.id)
+          !(nationalTeam && Array.isArray(nationalTeam) && nationalTeam.some((player: any) => player.userId === user.id))
         )
       : [];
 
@@ -1807,7 +1808,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
             <div>
               <Label>Хэрэглэгч эсвэл нэр</Label>
               <UserAutocomplete
-                users={allUsers || []}
+                users={Array.isArray(allUsers) ? allUsers : []}
                 value={formData.userId}
                 onSelect={(u) => setFormData({ ...formData, userId: u ? u.id : '', name: '' })}
                 placeholder="Хэрэглэгч хайх..."
@@ -2579,7 +2580,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                   <SelectValue placeholder="Тоглогч нэмэх" />
                 </SelectTrigger>
                 <SelectContent>
-                  {allUsers && Array.isArray(allUsers) && allUsers.filter((user: any) => user.role === 'player').map((player: any) => (
+                  {Array.isArray(allUsers) && allUsers.filter((user: any) => user.role === 'player').map((player: any) => (
                     <SelectItem key={player.id} value={player.id}>
                       {formatName(player.firstName, player.lastName)}
                     </SelectItem>
