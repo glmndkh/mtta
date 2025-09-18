@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { formatName } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
+import { ChampionsSpotlightDark } from "@/components/ChampionsSpotlightDark";
 
 interface NationalTeamPlayer {
   id: string;
@@ -43,157 +44,74 @@ export default function NationalTeamPage() {
   return (
     <PageWithLoading>
       <Navigation />
-      <div className="min-h-screen bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700">
+      <div className="min-h-screen">
         {isLoading ? (
-          <div className="flex justify-center items-center min-h-screen">
+          <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-800 via-gray-900 to-black">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white"></div>
           </div>
-        ) : players.length > 0 ? (
+        ) : (
           <>
-            {/* Main Champion Spotlight */}
-            <div className="relative min-h-screen flex items-center justify-center px-4 py-8">
-              {/* WTT Logo and Title */}
-              <div className="absolute top-8 left-8 text-white">
-                <div className="text-2xl font-bold mb-2"> MОНГОЛЫН ШИРЭЭНИЙ ТЕННИСНИЙ ХОЛБОО</div>
-                <div className="text-xl font-bold tracking-wider">ҮНДЭСНИЙ ШИГШЭЭ</div>
-              </div>
+            {/* Champions Spotlight Dark Component */}
+            <ChampionsSpotlightDark
+              variant="default"
+              players={players}
+              currentPlayerIndex={currentPlayerIndex}
+              onPrevious={goToPrevious}
+              onNext={goToNext}
+              onPlayerSelect={goToPlayer}
+            />
 
-              {/* Navigation Arrows */}
-              {players.length > 1 && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="lg"
-                    className="absolute left-8 top-1/2 transform -translate-y-1/2 text-white hover:bg-white/20 z-10"
-                    onClick={goToPrevious}
-                  >
-                    <ChevronLeft className="w-8 h-8" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="lg"
-                    className="absolute right-8 top-1/2 transform -translate-y-1/2 text-white hover:bg-white/20 z-10"
-                    onClick={goToNext}
-                  >
-                    <ChevronRight className="w-8 h-8" />
-                  </Button>
-                </>
-              )}
-
-              {/* Main Content */}
-              <div className="flex items-center gap-16 max-w-6xl mx-auto">
-                {/* Player Image */}
-                <div className="flex-shrink-0">
-                  {currentPlayer?.imageUrl ? (
-                    <img
-                      src={currentPlayer.imageUrl}
-                      alt={formatName(currentPlayer.firstName, currentPlayer.lastName)}
-                      className="w-[28rem] h-[32rem] object-cover rounded-lg border-0"
-                    />
-                  ) : (
-                    <div className="w-[28rem] h-[32rem] bg-white/20 rounded-lg flex items-center justify-center border-0">
-                      <div className="text-white text-8xl font-bold">
-                        {currentPlayer?.firstName?.[0]}{currentPlayer?.lastName?.[0]}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Player Info */}
-                <div className="text-white space-y-8">
-                  <div>
-                    <div className="mb-6">
-                      <h1 className="text-6xl font-bold mb-2">
-                        {currentPlayer?.firstName || ''}
-                      </h1>
-                      <h2 className="text-5xl font-bold text-white/90">
-                        {currentPlayer?.lastName || ''}
-                      </h2>
-                    </div>
-                    {currentPlayer?.age && (
-                      <div className="text-3xl">
-                        <span className="text-white/80">Нас:</span>
-                        <span className="font-bold ml-3">{currentPlayer.age}</span>
-                      </div>
-                    )}
+            {/* All Players Grid - Only show if there are players */}
+            {players.length > 0 && (
+              <div className="bg-white py-16">
+                <div className="container mx-auto px-4">
+                  <h2 className="text-3xl font-bold text-center mb-12 text-gray-900">
+                    Үндэсний шигшээний бүрэлдэхүүн
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {players.map((player, index) => (
+                      <Card 
+                        key={player.id} 
+                        className={`overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-xl transform hover:-translate-y-2 ${
+                          index === currentPlayerIndex ? 'ring-4 ring-green-500' : ''
+                        }`}
+                        onClick={() => goToPlayer(index)}
+                      >
+                        <div className="relative">
+                          {player.imageUrl ? (
+                            <img
+                              src={player.imageUrl}
+                              alt={formatName(player.firstName, player.lastName)}
+                              className="w-full h-96 object-contain bg-gray-100"
+                            />
+                          ) : (
+                            <div className="w-full h-96 bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
+                              <div className="text-white text-4xl font-bold">
+                                {player.firstName?.[0]}{player.lastName?.[0]}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <CardContent className="p-6 bg-white text-gray-800">
+                          <div className="text-center">
+                            <h3 className="text-lg font-bold mb-1 text-green-700">
+                              {player.firstName}
+                            </h3>
+                            <h4 className="text-lg font-bold mb-2 text-green-600">
+                              {player.lastName}
+                            </h4>
+                            {player.age !== undefined && (
+                              <p className="text-gray-600">{player.age} нас</p>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
                 </div>
               </div>
-
-              {/* Dots Indicator */}
-              {players.length > 1 && (
-                <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-3">
-                  {players.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => goToPlayer(index)}
-                      className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                        index === currentPlayerIndex 
-                          ? 'bg-white scale-125' 
-                          : 'bg-white/50 hover:bg-white/70'
-                      }`}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* All Players Grid */}
-            <div className="bg-white py-16">
-              <div className="container mx-auto px-4">
-                <h2 className="text-3xl font-bold text-center mb-12 text-gray-900">
-                  Үндэсний шигшээний бүрэлдэхүүн
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {players.map((player, index) => (
-                    <Card 
-                      key={player.id} 
-                      className={`overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-xl transform hover:-translate-y-2 ${
-                        index === currentPlayerIndex ? 'ring-4 ring-blue-500' : ''
-                      }`}
-                      onClick={() => goToPlayer(index)}
-                    >
-                      <div className="relative">
-                        {player.imageUrl ? (
-                          <img
-                            src={player.imageUrl}
-                            alt={formatName(player.firstName, player.lastName)}
-                            className="w-full h-96 object-contain bg-gray-100"
-                          />
-                        ) : (
-                          <div className="w-full h-96 bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                            <div className="text-white text-4xl font-bold">
-                              {player.firstName?.[0]}{player.lastName?.[0]}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      <CardContent className="p-6 bg-white text-gray-800">
-                        <div className="text-center">
-                          <h3 className="text-lg font-bold mb-1 text-blue-700">
-                            {player.firstName}
-                          </h3>
-                          <h4 className="text-lg font-bold mb-2 text-blue-600">
-                            {player.lastName}
-                          </h4>
-                          {player.age !== undefined && (
-                            <p className="text-gray-600">{player.age} нас</p>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            </div>
+            )}
           </>
-        ) : (
-          <div className="flex justify-center items-center min-h-screen text-white">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold mb-4">Үндэсний шигшээний тамирчид</h2>
-              <p>Одоогоор тамирчид бүртгэгдээгүй байна.</p>
-            </div>
-          </div>
         )}
       </div>
     </PageWithLoading>
