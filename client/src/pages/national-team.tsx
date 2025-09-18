@@ -54,7 +54,7 @@ export default function NationalTeamPage() {
             <div className="relative min-h-screen flex items-center justify-center px-4 py-8">
               {/* WTT Logo and Title */}
               <div className="absolute top-8 left-8 text-white">
-                <div className="text-2xl font-bold mb-2">🏓 MTTA</div>
+                <div className="text-2xl font-bold mb-2"> MОНГОЛЫН ШИРЭЭНИЙ ТЕННИСНИЙ ХОЛБОО</div>
                 <div className="text-xl font-bold tracking-wider">ҮНДЭСНИЙ ШИГШЭЭ</div>
               </div>
 
