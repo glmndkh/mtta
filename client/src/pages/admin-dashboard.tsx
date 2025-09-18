@@ -913,7 +913,16 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               onChange={(e) => setNationalTeamFilter(e.target.value)}
             />
           </div>
-          <Button onClick={openCreateDialog}>
+          <Button onClick={() => {
+            // Reset form data for national team
+            setFormData({
+              firstName: '',
+              lastName: '',
+              age: '',
+              imageUrl: '',
+            });
+            setIsCreateDialogOpen(true);
+          }}>
             <Plus className="w-4 h-4 mr-2" />
             Тоглогч нэмэх
           </Button>
