@@ -29,6 +29,7 @@ const registerSchema = z.object({
   password: z.string().min(6, "Нууц үг дор хаяж 6 тэмдэгт байх ёстой"),
   confirmPassword: z.string().min(1, "Нууц үгээ баталгаажуулна уу"),
   rank: z.enum([
+    "зэрэггүй",
     "3-р зэрэг",
     "2-р зэрэг",
     "1-р зэрэг",
@@ -259,7 +260,7 @@ export default function Register() {
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel>
-                          Клубгүй тоглогч
+                          Клубд харьяалагддаггүй
                         </FormLabel>
                       </div>
                     </FormItem>
@@ -269,24 +270,22 @@ export default function Register() {
                 {!form.watch("noClub") && (
                   <div className="space-y-2">
                     <Label>Клуб сонгох</Label>
-                    <div className="space-y-2">
-                      <Input
-                        placeholder="Клубын нэр эсвэл байршлаар хайх..."
-                        value={clubSearch}
-                        onChange={(e) => setClubSearch(e.target.value)}
-                      />
-                      {clubSearch && filteredClubs.length > 0 && (
-                        <div className="border rounded-md max-h-40 overflow-y-auto bg-white">
-                          {filteredClubs.slice(0, 10).map((club: any) => (
-                            <div
-                              key={club.id}
-                              className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
-                              onClick={() => {
-                                setSelectedClub(club);
-                                form.setValue("clubId", club.id);
-                                setClubSearch(club.name);
-                              }}
-                            >
+                    <Select onValueChange={(value) => {
+                      if (value) {
+                        const club = clubs.find((c: any) => c.id === value);
+                        if (club) {
+                          setSelectedClub(club);
+                          form.setValue("clubId", club.id);
+                        }
+                      }
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Клуб сонгоно уу" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clubs.map((club: any) => (
+                          <SelectItem key={club.id} value={club.id}>
+                            <div>
                               <div className="font-medium">{club.name}</div>
                               {(club.province || club.city) && (
                                 <div className="text-sm text-gray-500">
@@ -294,10 +293,11 @@ export default function Register() {
                                 </div>
                               )}
                             </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
                     {selectedClub && (
                       <div className="p-2 bg-green-50 border border-green-200 rounded-md">
                         <div className="font-medium text-green-800">{selectedClub.name}</div>
@@ -350,6 +350,7 @@ export default function Register() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="зэрэггүй">Зэрэггүй</SelectItem>
                         <SelectItem value="3-р зэрэг">3-р зэрэг</SelectItem>
                         <SelectItem value="2-р зэрэг">2-р зэрэг</SelectItem>
                         <SelectItem value="1-р зэрэг">1-р зэрэг</SelectItem>

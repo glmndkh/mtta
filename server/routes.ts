@@ -209,6 +209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .json({ message: "Нууц үг дор хаяж 6 тэмдэгт байх ёстой" });
 
       const validRanks = [
+        "зэрэггүй",
         "3-р зэрэг",
         "2-р зэрэг",
         "1-р зэрэг",
