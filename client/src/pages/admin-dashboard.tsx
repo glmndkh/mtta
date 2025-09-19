@@ -1653,7 +1653,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               <Input
                 id="headCoachName"
                 value={formData.headCoachName || ''}
-                onChange={(e) => setFormData({...formData, headCoachName: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, headCoachName: e.target.value, coachName: e.target.value })}
                 placeholder="Дасгалжуулагчийн нэр оруулна уу"
               />
             </div>
@@ -3157,7 +3157,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                 id="gender"
                 value={formData.gender || ''}
                 onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="">Хүйс сонгох</option>
                 <option value="male">Эрэгтэй</option>
@@ -3171,7 +3171,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                 id="championType"
                 value={formData.championType || ''}
                 onChange={(e) => setFormData({ ...formData, championType: e.target.value })}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="">Төрөл сонгох</option>
                 <option value="өсвөрийн">Өсвөрийн</option>
@@ -3305,9 +3305,38 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
       return;
     }
 
+    // Prepare data for API call
+    let dataToSend = sanitizeFormData(formData);
+
+    // Special handling for clubs to include coachName
+    if (selectedTab === 'clubs') {
+      const clubPayload = {
+        name: formData.name,
+        description: formData.description,
+        logoUrl: formData.logoUrl,
+        city: formData.city,
+        district: formData.district,
+        province: formData.province,
+        phone: formData.phone,
+        email: formData.email,
+        website: formData.website,
+        facebook: formData.facebook,
+        instagram: formData.instagram,
+        address: formData.address,
+        weeklySchedule: formData.weeklySchedule,
+        trainingInfo: formData.trainingInfo,
+        ownerName: formData.ownerName,
+        headCoachName: formData.headCoachName,
+        coachName: formData.headCoachName, // Add this for backend compatibility
+        status: formData.status || 'active',
+        extraData: formData.extraData
+      };
+      dataToSend = clubPayload;
+    }
+
     createMutation.mutate({
       endpoint: `/api/admin/${selectedTab}`,
-      data: sanitizeFormData(formData),
+      data: dataToSend,
     });
   };
 

@@ -2249,15 +2249,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/clubs", requireAuth, isAdminRole, async (req, res) => {
     try {
-      const { coachUserId, coachName, ...clubBody } = req.body as any;
+      const { coachUserId, coachName, headCoachName, ...clubBody } = req.body as any;
       const clubData = insertClubSchema.parse(clubBody);
       const club = await storage.createClub(clubData);
 
-      if (coachUserId || coachName) {
+      // Use headCoachName, coachName, or coachUserId in that order of preference
+      const finalCoachName = headCoachName || coachName;
+      if (coachUserId || finalCoachName) {
         const coachData = insertClubCoachSchema.parse({
           clubId: club.id,
           userId: coachUserId || undefined,
-          name: coachUserId ? undefined : coachName,
+          name: coachUserId ? undefined : finalCoachName,
         });
         await storage.createClubCoach(coachData);
       }
@@ -2275,11 +2277,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     isAdminRole,
     async (req, res) => {
       try {
-        const { coachUserId, coachName, ...clubBody } = req.body as any;
+        const { coachUserId, coachName, headCoachName, ...clubBody } = req.body as any;
         const club = await storage.updateClub(req.params.id, clubBody);
         if (!club) return res.status(404).json({ message: "Клуб олдсонгүй" });
 
-        if (coachUserId || coachName) {
+        // Use headCoachName, coachName, or coachUserId in that order of preference
+        const finalCoachName = headCoachName || coachName;
+        if (coachUserId || finalCoachName) {
           const existingCoaches = await storage.getClubCoachesByClub(req.params.id);
           for (const c of existingCoaches) {
             await storage.deleteClubCoach(c.id);
@@ -2287,7 +2291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const coachData = insertClubCoachSchema.parse({
             clubId: req.params.id,
             userId: coachUserId || undefined,
-            name: coachUserId ? undefined : coachName,
+            name: coachUserId ? undefined : finalCoachName,
           });
           await storage.createClubCoach(coachData);
         }
