@@ -290,10 +290,10 @@ export default function Clubs() {
                         href={club.facebook}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-500 hover:scale-110 flex items-center justify-center transition-all duration-200 shadow-lg"
+                        className="w-7 h-7 rounded-full bg-blue-600 hover:bg-blue-500 flex items-center justify-center transition-colors"
                         title="Facebook хуудас үзэх"
                       >
-                        <Facebook className="w-5 h-5 text-white" />
+                        <Facebook className="w-3.5 h-3.5 text-white" />
                       </a>
                     )}
                     {club.instagram && (
@@ -301,10 +301,10 @@ export default function Clubs() {
                         href={club.instagram}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-10 h-10 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 hover:scale-110 flex items-center justify-center transition-all duration-200 shadow-lg"
+                        className="w-7 h-7 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 hover:bg-pink-600 flex items-center justify-center transition-colors"
                         title="Instagram хуудас үзэх"
                       >
-                        <Instagram className="w-5 h-5 text-white" />
+                        <Instagram className="w-3.5 h-3.5 text-white" />
                       </a>
                     )}
                   </div>
