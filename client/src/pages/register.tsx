@@ -36,7 +36,9 @@ const registerSchema = z.object({
     "спортын дэд мастер",
     "спортын мастер",
     "олон улсын хэмжээний мастер",
-  ]).optional(),
+  ], {
+    required_error: "Зэрэг сонгоно уу",
+  }),
 }).refine(
   (data) => data.password === data.confirmPassword,
   {
@@ -55,7 +57,7 @@ type RegisterForm = z.infer<typeof registerSchema>;
 
 export default function Register() {
   const { toast } = useToast();
-  const [, setRankProof] = useState<File | null>(null);
+  const [rankProof, setRankProof] = useState<File | null>(null);
   const [clubSearch, setClubSearch] = useState("");
   const [selectedClub, setSelectedClub] = useState<any>(null);
 
@@ -90,7 +92,7 @@ export default function Register() {
       clubAffiliation: "",
       password: "",
       confirmPassword: "",
-      rank: undefined,
+      rank: "зэрэггүй",
     },
   });
 
@@ -124,6 +126,16 @@ export default function Register() {
   });
 
   const onSubmit = (data: RegisterForm) => {
+    // Check if rank proof is required but not provided
+    if (data.rank && data.rank !== "зэрэггүй" && !rankProof) {
+      toast({
+        title: "Алдаа",
+        description: "Зэргийн үнэмлэхний зургийг оруулна уу",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     registerMutation.mutate(data);
   };
 
@@ -342,7 +354,7 @@ export default function Register() {
                 name="rank"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Зэрэг <span className="text-gray-500 text-sm">(заавал биш)</span></FormLabel>
+                    <FormLabel>Зэрэг *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -365,17 +377,31 @@ export default function Register() {
               />
 
               <div className="space-y-2">
-                <Label htmlFor="rank-proof">Зэргийн үнэмлэхний зураг <span className="text-gray-500 text-sm">(заавал биш)</span></Label>
+                <Label htmlFor="rank-proof">
+                  Зэргийн үнэмлэхний зураг 
+                  {form.watch("rank") && form.watch("rank") !== "зэрэггүй" && (
+                    <span className="text-red-500"> *</span>
+                  )}
+                  {(!form.watch("rank") || form.watch("rank") === "зэрэггүй") && (
+                    <span className="text-gray-500 text-sm"> (заавал биш)</span>
+                  )}
+                </Label>
                 <Input
                   id="rank-proof"
                   type="file"
                   accept="image/*"
                   onChange={(e) => setRankProof(e.target.files?.[0] || null)}
                 />
-                <p className="text-sm text-gray-500">
-                  Зэргийн үнэмлэхний зургаа оруулж зэргээ батална уу! (Заавал биш. Таныг зэргээ батлах хүртэл таны оруулсан
-                  зэргийг хүчингүйд тооцохыг анхаарна уу)
-                </p>
+                {form.watch("rank") && form.watch("rank") !== "зэрэггүй" ? (
+                  <p className="text-sm text-red-600">
+                    Зэргийн үнэмлэхний зургийг заавал оруулна уу!
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-500">
+                    Зэргийн үнэмлэхний зургаа оруулж зэргээ батална уу! (Заавал биш. Таныг зэргээ батлах хүртэл таны оруулсан
+                    зэргийг хүчингүйд тооцохыг анхаарна уу)
+                  </p>
+                )}
               </div>
 
               <FormField
