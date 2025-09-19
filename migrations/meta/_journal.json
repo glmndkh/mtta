@@ -8,6 +8,13 @@
       "when": 1757326360176,
       "tag": "0000_tan_gambit",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1758260949811,
+      "tag": "0001_daily_nighthawk",
+      "breakpoints": true
     }
   ]
 }
