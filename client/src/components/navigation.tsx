@@ -425,13 +425,17 @@ export default function Navigation() {
 
       {/* Global Search Dialog */}
       <CommandDialog open={showSearch} onOpenChange={setShowSearch}>
-        <CommandInput placeholder="Тамирчин, тэмцээн, клуб..." />
+        <CommandInput placeholder="Хайх..." />
         <CommandList>
           <CommandEmpty>Илэрц олдсонгүй.</CommandEmpty>
-          <CommandGroup heading="Хуудас">
+          <CommandGroup>
             <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/"; }}>
               <Home className="mr-2 h-4 w-4" />
               <span>Нүүр хуудас</span>
+            </CommandItem>
+            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/about"; }}>
+              <User className="mr-2 h-4 w-4" />
+              <span>Тэнцэрийн холбоо</span>
             </CommandItem>
             <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/tournaments"; }}>
               <Trophy className="mr-2 h-4 w-4" />
@@ -441,19 +445,29 @@ export default function Navigation() {
               <Building className="mr-2 h-4 w-4" />
               <span>Клубууд</span>
             </CommandItem>
-            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/athletes"; }}>
-              <Users className="mr-2 h-4 w-4" />
-              <span>Тамирчид</span>
+            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/news"; }}>
+              <Newspaper className="mr-2 h-4 w-4" />
+              <span>Мэдээ</span>
             </CommandItem>
-          </CommandGroup>
-          <CommandGroup heading="Үйлдэл">
+            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/branches"; }}>
+              <Building className="mr-2 h-4 w-4" />
+              <span>Салбарууд</span>
+            </CommandItem>
+            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/national-team"; }}>
+              <Users className="mr-2 h-4 w-4" />
+              <span>Үндэсний шигшээ баг</span>
+            </CommandItem>
+            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/judges"; }}>
+              <User className="mr-2 h-4 w-4" />
+              <span>Шүүгчид</span>
+            </CommandItem>
+            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/past-champions"; }}>
+              <Medal className="mr-2 h-4 w-4" />
+              <span>Өмнөх аварагчид</span>
+            </CommandItem>
             <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/register"; }}>
               <UserPlus className="mr-2 h-4 w-4" />
               <span>Бүртгүүлэх</span>
-            </CommandItem>
-            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/results"; }}>
-              <Medal className="mr-2 h-4 w-4" />
-              <span>Үр дүн харах</span>
             </CommandItem>
           </CommandGroup>
         </CommandList>
