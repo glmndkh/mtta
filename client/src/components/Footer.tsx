@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -37,14 +36,14 @@ export default function Footer() {
     try {
       // TODO: Implement newsletter signup API
       await new Promise(resolve => setTimeout(resolve, 1000)); // Mock delay
-      
+
       toast({
         title: "Амжилттай бүртгүүллээ!",
         description: "Та мэдээний самбарт амжилттай бүртгүүллээ.",
       });
-      
+
       setEmail('');
-      
+
       // TODO: Send to Google Analytics as goal
       if (typeof gtag !== 'undefined') {
         gtag('event', 'newsletter_signup', {
@@ -103,7 +102,7 @@ export default function Footer() {
           {/* About Section */}
           <div>
             <h4 className="text-lg font-semibold mb-4 text-mtta-green">Холбооны тухай</h4>
-            <ul className="space-y-2 text-gray-400">
+            <ul className="space-y-2 text-gray-400 dark:text-gray-400 [data-theme='light']:text-gray-600 light:text-gray-600">
               <li>
                 <Link href="/about">
                   <span className="hover:text-mtta-green transition-colors cursor-pointer">Танилцуулга</span>
@@ -135,7 +134,7 @@ export default function Footer() {
           {/* Sports Section */}
           <div>
             <h4 className="text-lg font-semibold mb-4 text-mtta-green">Спорт</h4>
-            <ul className="space-y-2 text-gray-400">
+            <ul className="space-y-2 text-gray-400 dark:text-gray-400 [data-theme='light']:text-gray-600 light:text-gray-600">
               <li>
                 <Link href="/tournaments">
                   <span className="hover:text-mtta-green transition-colors cursor-pointer">Тэмцээнүүд</span>
@@ -167,7 +166,7 @@ export default function Footer() {
           {/* Resources Section */}
           <div>
             <h4 className="text-lg font-semibold mb-4 text-mtta-green">Нөөц</h4>
-            <ul className="space-y-2 text-gray-400">
+            <ul className="space-y-2 text-gray-400 dark:text-gray-400 [data-theme='light']:text-gray-600 light:text-gray-600">
               <li>
                 <Link href="/news">
                   <span className="hover:text-mtta-green transition-colors cursor-pointer">Мэдээ</span>
@@ -204,7 +203,7 @@ export default function Footer() {
           {/* Contact Section */}
           <div>
             <h4 className="text-lg font-semibold mb-4 text-mtta-green">Холбоо барих</h4>
-            <div className="space-y-3 text-gray-400">
+            <div className="space-y-3 text-gray-400 dark:text-gray-400 [data-theme='light']:text-gray-600 light:text-gray-600">
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 flex-shrink-0" />
                 <span className="text-sm">+976-11-123456</span>
@@ -285,10 +284,10 @@ export default function Footer() {
         {/* Bottom Section */}
         <div className="border-t border-gray-800 pt-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="text-sm text-gray-400">
+            <div className="text-sm text-gray-400 dark:text-gray-400 [data-theme='light']:text-gray-600 light:text-gray-600">
               © {new Date().getFullYear()} Монголын Ширээний Теннисний Холбоо. Бүх эрх хуулиар хамгаалагдсан.
             </div>
-            <div className="flex items-center gap-6 text-sm text-gray-400">
+            <div className="flex items-center gap-6 text-sm text-gray-400 dark:text-gray-400 [data-theme='light']:text-gray-600 light:text-gray-600">
               <Link href="/privacy">
                 <span className="hover:text-mtta-green transition-colors cursor-pointer">Нууцлалын бодлого</span>
               </Link>
