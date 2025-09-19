@@ -252,18 +252,7 @@ export default function Clubs() {
                     </div>
                   </div>
 
-                  {/* Tags */}
-                  <div className="mb-4 flex gap-2 flex-wrap">
-                    <Badge variant="outline" className="border-gray-600 text-gray-400 text-xs">
-                      Олимпийн бэлтгэл
-                    </Badge>
-                    <Badge variant="outline" className="border-gray-600 text-gray-400 text-xs">
-                      Зочид нэгэдэн авчдаг
-                    </Badge>
-                    <Badge variant="outline" className="border-gray-600 text-gray-400 text-xs">
-                      Хуваарасан
-                    </Badge>
-                  </div>
+                  
 
                   {/* Contact Icons */}
                   <div className="flex items-center gap-2 mb-4">
