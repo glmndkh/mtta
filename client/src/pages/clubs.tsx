@@ -155,9 +155,6 @@ export default function Clubs() {
                     <div className="flex-1 min-w-0">
                       <h3 className="text-white font-semibold text-lg mb-2 truncate">{club.name}</h3>
                       <div className="flex gap-2 flex-wrap">
-                        {club.status === 'active' && (
-                          <Badge className="bg-green-600 text-white text-xs">Идэвхтэй</Badge>
-                        )}
                         {club.verified && (
                           <Badge className="bg-blue-600 text-white text-xs">Баталгаажсан</Badge>
                         )}
