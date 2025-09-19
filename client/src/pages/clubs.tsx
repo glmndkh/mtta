@@ -159,19 +159,42 @@ export default function Clubs() {
                     </div>
                   </div>
 
-                  {/* Schedule */}
-                  {club.schedule && (
-                    <div className="mb-4">
-                      <div className="flex items-center gap-2 text-gray-300 text-sm mb-1">
-                        <Clock className="w-4 h-4" />
-                        <span>Өнөөдөр: {club.schedule}</span>
+                  {/* Current Day Schedule */}
+                  {(() => {
+                    const getCurrentDaySchedule = () => {
+                      if (!club.weeklySchedule) return null;
+                      
+                      const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                      const today = new Date().getDay();
+                      const currentDay = days[today];
+                      
+                      return club.weeklySchedule[currentDay as keyof typeof club.weeklySchedule];
+                    };
+
+                    const getDayName = () => {
+                      const dayNames = ['Ням', 'Даваа', 'Мягмар', 'Лхагва', 'Пүрэв', 'Баасан', 'Бямба'];
+                      return dayNames[new Date().getDay()];
+                    };
+
+                    const todaySchedule = getCurrentDaySchedule();
+                    
+                    return (
+                      <div className="mb-4">
+                        <div className="flex items-center gap-2 text-gray-300 text-sm mb-1">
+                          <Clock className="w-4 h-4" />
+                          <span>
+                            {getDayName()}: {todaySchedule || 'Хаалттай'}
+                          </span>
+                        </div>
+                        {club.schedule && (
+                          <div className="flex items-center gap-2 text-gray-400 text-sm">
+                            <MapPin className="w-4 h-4" />
+                            <span>Ерөнхий хуваарь</span>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2 text-gray-400 text-sm">
-                        <MapPin className="w-4 h-4" />
-                        <span>Цагийн увжвар</span>
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {/* Owner and Coaches */}
                   <div className="mb-4 space-y-2">
