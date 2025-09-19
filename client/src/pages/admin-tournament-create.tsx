@@ -69,6 +69,7 @@ export default function AdminTournamentCreate() {
   const [minAge, setMinAge] = useState("");
   const [maxAge, setMaxAge] = useState("");
   const [gender, setGender] = useState("male");
+  const [participationType, setParticipationType] = useState("singles");
   const [participationCategories, setParticipationCategories] = useState<any[]>([]);
   const [richDescription, setRichDescription] = useState("");
   const [previewMode, setPreviewMode] = useState(false);
@@ -235,9 +236,14 @@ export default function AdminTournamentCreate() {
       if (tournament.participationTypes) {
         const categories = tournament.participationTypes.map((type: string) => {
           try {
-            return JSON.parse(type);
+            const parsed = JSON.parse(type);
+            // Ensure backward compatibility - if no type field, default to singles
+            if (!parsed.type) {
+              parsed.type = "singles";
+            }
+            return parsed;
           } catch {
-            return { minAge: null, maxAge: null, gender: "male" };
+            return { minAge: null, maxAge: null, gender: "male", type: "singles" };
           }
         });
         setParticipationCategories(categories);
@@ -323,6 +329,7 @@ export default function AdminTournamentCreate() {
       minAge: minAge ? parseInt(minAge) : null,
       maxAge: maxAge ? parseInt(maxAge) : null,
       gender,
+      type: participationType,
     };
 
     // Create JSON string format for the category
@@ -348,14 +355,26 @@ export default function AdminTournamentCreate() {
 
   const formatCategoryLabel = (category: any) => {
     let label = "";
+    
+    // Add participation type
+    if (category.type === "singles") {
+      label += "Дангаар";
+    } else if (category.type === "doubles") {
+      label += "Хос";
+    } else if (category.type === "team") {
+      label += "Баг";
+    }
+    
+    // Add age range
     if (category.minAge !== null && category.maxAge !== null) {
-      label += `${category.minAge}–${category.maxAge}`;
+      label += ` ${category.minAge}–${category.maxAge}`;
     } else if (category.minAge !== null) {
-      label += `${category.minAge}+`;
+      label += ` ${category.minAge}+`;
     } else if (category.maxAge !== null) {
-      label += `Under ${category.maxAge}`;
+      label += ` Under ${category.maxAge}`;
     }
 
+    // Add gender
     if (category.gender === "male") {
       label += " (Эрэгтэй)";
     } else if (category.gender === "female") {
@@ -994,48 +1013,66 @@ export default function AdminTournamentCreate() {
 
                       <Separator />
 
-                      <div className="flex space-x-2">
-                        <Input
-                          value={minAge}
-                          onChange={(e) => setMinAge(e.target.value)}
-                          placeholder="Насны доод хязгаар"
-                          type="number"
-                          min="0"
-                          onKeyPress={(e) =>
-                            e.key === "Enter" &&
-                            (e.preventDefault(), addParticipationCategory())
-                          }
-                        />
-                        <Input
-                          value={maxAge}
-                          onChange={(e) => setMaxAge(e.target.value)}
-                          placeholder="Насны дээд хязгаар"
-                          type="number"
-                          min="0"
-                          onKeyPress={(e) =>
-                            e.key === "Enter" &&
-                            (e.preventDefault(), addParticipationCategory())
-                          }
-                        />
-                        <Select value={gender} onValueChange={setGender}>
-                          <SelectTrigger className="w-[120px]">
-                            <SelectValue placeholder="Хүйс" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="male">Эрэгтэй</SelectItem>
-                            <SelectItem value="female">Эмэгтэй</SelectItem>
-                            <SelectItem value="other">Бусад</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={addParticipationCategory}
-                          disabled={!minAge && !maxAge}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
+                      <div className="space-y-2">
+                        <div className="flex space-x-2">
+                          <Select value={participationType} onValueChange={setParticipationType}>
+                            <SelectTrigger className="w-[140px]">
+                              <SelectValue placeholder="Төрөл" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="singles">Дангаар</SelectItem>
+                              <SelectItem value="doubles">Хос</SelectItem>
+                              <SelectItem value="team">Баг</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            value={minAge}
+                            onChange={(e) => setMinAge(e.target.value)}
+                            placeholder="Доод нас"
+                            type="number"
+                            min="0"
+                            className="w-[100px]"
+                            onKeyPress={(e) =>
+                              e.key === "Enter" &&
+                              (e.preventDefault(), addParticipationCategory())
+                            }
+                          />
+                          <Input
+                            value={maxAge}
+                            onChange={(e) => setMaxAge(e.target.value)}
+                            placeholder="Дээд нас"
+                            type="number"
+                            min="0"
+                            className="w-[100px]"
+                            onKeyPress={(e) =>
+                              e.key === "Enter" &&
+                              (e.preventDefault(), addParticipationCategory())
+                            }
+                          />
+                        </div>
+                        <div className="flex space-x-2">
+                          <Select value={gender} onValueChange={setGender}>
+                            <SelectTrigger className="w-[120px]">
+                              <SelectValue placeholder="Хүйс" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="male">Эрэгтэй</SelectItem>
+                              <SelectItem value="female">Эмэгтэй</SelectItem>
+                              <SelectItem value="other">Бусад</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={addParticipationCategory}
+                            disabled={!minAge && !maxAge}
+                            className="flex-1"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Ангилал нэмэх
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
