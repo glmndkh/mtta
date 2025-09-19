@@ -265,7 +265,7 @@ export interface IStorage {
 
   // Password Reset Methods
   createPasswordResetToken(email: string): Promise<string>;
-  getPasswordResetToken(token: string);
+  getPasswordResetToken(token: string): Promise<any>;
   usePasswordResetToken(token: string): Promise<boolean>;
   resetUserPassword(email: string, newPassword: string): Promise<boolean>;
 }
@@ -612,7 +612,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createClub(clubData: InsertClub): Promise<Club> {
-    const [club] = await db.insert(clubs).values(clubData).returning();
+    const [club] = await db.insert(clubs).values([clubData]).returning();
     return club;
   }
 
@@ -627,7 +627,7 @@ export class DatabaseStorage implements IStorage {
   async updateClub(id: string, clubData: Partial<InsertClub>): Promise<Club | undefined> {
     const [club] = await db
       .update(clubs)
-      .set(clubData)
+      .set(clubData as any)
       .where(eq(clubs.id, id))
       .returning();
     return club;
@@ -1033,7 +1033,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createNews(newsData: InsertNews): Promise<News> {
-    const [news] = await db.insert(newsFeed).values(newsData).returning();
+    const [news] = await db.insert(newsFeed).values([newsData]).returning();
     return news;
   }
 
@@ -1082,7 +1082,7 @@ export class DatabaseStorage implements IStorage {
       .set({
         ...newsData,
         updatedAt: new Date()
-      })
+      } as any)
       .where(eq(newsFeed.id, id))
       .returning();
     return news;
@@ -1398,7 +1398,7 @@ export class DatabaseStorage implements IStorage {
   async deleteJudge(id: string): Promise<boolean> {
     try {
       const deleted = await db.delete(judges).where(eq(judges.id, id));
-      return deleted.rowCount > 0;
+      return (deleted.rowCount || 0) > 0;
     } catch (error) {
       console.error('Error deleting judge:', error);
       return false;
@@ -1445,7 +1445,7 @@ export class DatabaseStorage implements IStorage {
         .set({ used: true })
         .where(eq(passwordResetTokens.token, token));
 
-      return updated.rowCount > 0;
+      return (updated.rowCount || 0) > 0;
     } catch (error) {
       console.error('Error using password reset token:', error);
       return false;
@@ -1459,7 +1459,7 @@ export class DatabaseStorage implements IStorage {
         .set({ password: newPassword })
         .where(eq(users.email, email));
 
-      return updated.rowCount > 0;
+      return (updated.rowCount || 0) > 0;
     } catch (error) {
       console.error('Error resetting password:', error);
       return false;
@@ -1548,6 +1548,10 @@ export class DatabaseStorage implements IStorage {
   // Player tournament match history
   async getPlayerTournamentMatches(playerId: string): Promise<any[]> {
     const tournamentMatches: any[] = [];
+
+    // Get player's user ID for matching
+    const playerRecord = await db.select().from(players).where(eq(players.id, playerId)).limit(1);
+    const userId = playerRecord.length > 0 ? playerRecord[0].userId : null;
 
     // Get all published tournament results where this player participated
     const results = await db
