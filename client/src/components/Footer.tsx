@@ -63,12 +63,12 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-gray-900 text-white border-t border-gray-800">
+    <footer className="bg-gray-900 dark:bg-gray-900 [data-theme='light']:bg-gray-100 light:bg-gray-100 text-white dark:text-white [data-theme='light']:text-gray-900 light:text-gray-900 border-t border-gray-800 dark:border-gray-800 [data-theme='light']:border-gray-300 light:border-gray-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Newsletter Section */}
         <div className="text-center mb-12">
-          <h3 className="text-2xl font-bold mb-4">Мэдээний самбар</h3>
-          <p className="text-gray-400 mb-6 max-w-lg mx-auto">
+          <h3 className="text-2xl font-bold mb-4 text-white dark:text-white [data-theme='light']:text-gray-900 light:text-gray-900">Мэдээний самбар</h3>
+          <p className="text-gray-400 dark:text-gray-400 [data-theme='light']:text-gray-600 light:text-gray-600 mb-6 max-w-lg mx-auto">
             Ширээний теннисний сүүлийн үеийн мэдээ, тэмцээний мэдээллийг цаг алдалгүй авах
           </p>
           <form onSubmit={handleNewsletterSubmit} className="flex gap-2 max-w-md mx-auto">
@@ -77,7 +77,7 @@ export default function Footer() {
               placeholder="И-мэйл хаяг"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="bg-gray-800 border-gray-700 text-white placeholder-gray-400"
+              className="bg-gray-800 dark:bg-gray-800 [data-theme='light']:bg-white light:bg-white border-gray-700 dark:border-gray-700 [data-theme='light']:border-gray-300 light:border-gray-300 text-white dark:text-white [data-theme='light']:text-gray-900 light:text-gray-900 placeholder-gray-400 dark:placeholder-gray-400 [data-theme='light']:placeholder-gray-500 light:placeholder-gray-500"
               required
             />
             <Button 
@@ -101,7 +101,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           {/* About Section */}
           <div>
-            <h4 className="text-lg font-semibold mb-4 text-mtta-green">Холбооны тухай</h4>
+            <h4 className="text-lg font-semibold mb-4 text-mtta-green dark:text-mtta-green [data-theme='light']:text-green-600 light:text-green-600">Холбооны тухай</h4>
             <ul className="space-y-2 text-gray-400 dark:text-gray-400 [data-theme='light']:text-gray-600 light:text-gray-600">
               <li>
                 <Link href="/about">
@@ -133,7 +133,7 @@ export default function Footer() {
 
           {/* Sports Section */}
           <div>
-            <h4 className="text-lg font-semibold mb-4 text-mtta-green">Спорт</h4>
+            <h4 className="text-lg font-semibold mb-4 text-mtta-green dark:text-mtta-green [data-theme='light']:text-green-600 light:text-green-600">Спорт</h4>
             <ul className="space-y-2 text-gray-400 dark:text-gray-400 [data-theme='light']:text-gray-600 light:text-gray-600">
               <li>
                 <Link href="/tournaments">
@@ -165,7 +165,7 @@ export default function Footer() {
 
           {/* Resources Section */}
           <div>
-            <h4 className="text-lg font-semibold mb-4 text-mtta-green">Нөөц</h4>
+            <h4 className="text-lg font-semibold mb-4 text-mtta-green dark:text-mtta-green [data-theme='light']:text-green-600 light:text-green-600">Нөөц</h4>
             <ul className="space-y-2 text-gray-400 dark:text-gray-400 [data-theme='light']:text-gray-600 light:text-gray-600">
               <li>
                 <Link href="/news">
@@ -202,7 +202,7 @@ export default function Footer() {
 
           {/* Contact Section */}
           <div>
-            <h4 className="text-lg font-semibold mb-4 text-mtta-green">Холбоо барих</h4>
+            <h4 className="text-lg font-semibold mb-4 text-mtta-green dark:text-mtta-green [data-theme='light']:text-green-600 light:text-green-600">Холбоо барих</h4>
             <div className="space-y-3 text-gray-400 dark:text-gray-400 [data-theme='light']:text-gray-600 light:text-gray-600">
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 flex-shrink-0" />
@@ -232,7 +232,7 @@ export default function Footer() {
                 href="https://facebook.com/mtta.mn" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
+                className="w-8 h-8 bg-gray-800 dark:bg-gray-800 [data-theme='light']:bg-gray-200 light:bg-gray-200 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors text-white dark:text-white [data-theme='light']:text-gray-700 light:text-gray-700"
               >
                 <Facebook className="w-4 h-4" />
               </a>
@@ -240,7 +240,7 @@ export default function Footer() {
                 href="https://instagram.com/mtta.mn" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center hover:bg-pink-600 transition-colors"
+                className="w-8 h-8 bg-gray-800 dark:bg-gray-800 [data-theme='light']:bg-gray-200 light:bg-gray-200 rounded-full flex items-center justify-center hover:bg-pink-600 transition-colors text-white dark:text-white [data-theme='light']:text-gray-700 light:text-gray-700"
               >
                 <Instagram className="w-4 h-4" />
               </a>
@@ -248,7 +248,7 @@ export default function Footer() {
                 href="https://youtube.com/@mtta.mn" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                className="w-8 h-8 bg-gray-800 dark:bg-gray-800 [data-theme='light']:bg-gray-200 light:bg-gray-200 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors text-white dark:text-white [data-theme='light']:text-gray-700 light:text-gray-700"
               >
                 <Youtube className="w-4 h-4" />
               </a>
@@ -257,8 +257,8 @@ export default function Footer() {
         </div>
 
         {/* Sponsors Section */}
-        <div className="border-t border-gray-800 pt-8 mb-8">
-          <h4 className="text-lg font-semibold mb-6 text-center text-mtta-green">Ивээн тэтгэгчид</h4>
+        <div className="border-t border-gray-800 dark:border-gray-800 [data-theme='light']:border-gray-300 light:border-gray-300 pt-8 mb-8">
+          <h4 className="text-lg font-semibold mb-6 text-center text-mtta-green dark:text-mtta-green [data-theme='light']:text-green-600 light:text-green-600">Ивээн тэтгэгчид</h4>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {sponsors.map((sponsor) => (
               <a
@@ -266,7 +266,7 @@ export default function Footer() {
                 href={sponsor.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center p-4 bg-gray-800 rounded-lg hover:bg-gray-700 transition-all duration-300 group"
+                className="flex items-center justify-center p-4 bg-gray-800 dark:bg-gray-800 [data-theme='light']:bg-white light:bg-white [data-theme='light']:border [data-theme='light']:border-gray-200 light:border light:border-gray-200 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-700 [data-theme='light']:hover:bg-gray-50 light:hover:bg-gray-50 transition-all duration-300 group"
               >
                 <img
                   src={sponsor.logo}
@@ -282,7 +282,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom Section */}
-        <div className="border-t border-gray-800 pt-6">
+        <div className="border-t border-gray-800 dark:border-gray-800 [data-theme='light']:border-gray-300 light:border-gray-300 pt-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-sm text-gray-400 dark:text-gray-400 [data-theme='light']:text-gray-600 light:text-gray-600">
               © {new Date().getFullYear()} Монголын Ширээний Теннисний Холбоо. Бүх эрх хуулиар хамгаалагдсан.
