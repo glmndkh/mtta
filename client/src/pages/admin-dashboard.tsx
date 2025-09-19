@@ -766,6 +766,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               onChange={(e) => setUserFilter(e.target.value)}
             />
           </div>
+
         </div>
 
         {usersLoading ? (
@@ -1225,7 +1226,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-sm truncate">
-                                {formatName(player.firstName || '', player.lastName || '')}
+                                {formatName(player.firstName, player.lastName)}
                               </p>
                               <p className="text-xs text-muted-foreground">
                                 {player.age || 'Нас тодорхойгүй'} нас
