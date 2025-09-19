@@ -25,6 +25,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { getImageUrl, formatName } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import type { RankChangeRequest } from "@shared/schema";
 
 
 // Form schema and initialization for judges
@@ -244,7 +245,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
   });
 
   // Fetch rank change requests for the 'rank-requests' tab
-  const { data: rankChangeRequests = [] } = useQuery({
+  const { data: rankChangeRequests = [] } = useQuery<RankChangeRequest[]>({
     queryKey: ['/api/admin/rank-change-requests'],
     enabled: selectedTab === 'rank-requests',
   });
@@ -4243,7 +4244,6 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
             </DialogContent>
           </Dialog>
         </>
-      </div>
     </div>
   );
 }
