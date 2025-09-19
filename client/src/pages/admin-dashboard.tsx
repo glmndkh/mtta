@@ -4057,10 +4057,33 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                             <div className="mt-2">
                               {request.proofImageUrl ? (
                                 <div className="space-y-2">
+                                  <div className="flex items-center gap-3">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        const imageUrl = request.proofImageUrl.startsWith('http') 
+                                          ? request.proofImageUrl 
+                                          : `/objects/${request.proofImageUrl}`;
+                                        window.open(imageUrl, '_blank');
+                                      }}
+                                      className="flex items-center gap-2"
+                                    >
+                                      <Images className="w-4 h-4" />
+                                      Зураг харах
+                                    </Button>
+                                    <p className="text-xs text-gray-500">Зурагны хаяг: {request.proofImageUrl}</p>
+                                  </div>
                                   <img
                                     src={request.proofImageUrl.startsWith('http') ? request.proofImageUrl : `/objects/${request.proofImageUrl}`}
                                     alt="Зэрэгийн үнэмлэх"
-                                    className="max-w-md max-h-64 object-contain border border-gray-300 rounded-lg"
+                                    className="max-w-md max-h-64 object-contain border border-gray-300 rounded-lg cursor-pointer"
+                                    onClick={() => {
+                                      const imageUrl = request.proofImageUrl.startsWith('http') 
+                                        ? request.proofImageUrl 
+                                        : `/objects/${request.proofImageUrl}`;
+                                      window.open(imageUrl, '_blank');
+                                    }}
                                     onError={(e) => {
                                       const target = e.currentTarget as HTMLImageElement;
                                       if (!target.hasAttribute('data-fallback-tried')) {
@@ -4081,7 +4104,6 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                                       }
                                     }}
                                   />
-                                  <p className="text-xs text-gray-500">Зурагны хаяг: {request.proofImageUrl}</p>
                                 </div>
                               ) : (
                                 <p className="text-gray-500">Зураг байхгүй</p>
