@@ -343,12 +343,29 @@ export default function Clubs() {
                   </div>
 
                   {/* Action Button */}
-                  <Button 
-                    className="w-full bg-green-600 hover:bg-green-700 text-white"
-                    size="sm"
-                  >
-                    Идэвхтэй
-                  </Button>
+                  {(() => {
+                    const getCurrentDaySchedule = () => {
+                      if (!club.weeklySchedule) return null;
+                      
+                      const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                      const today = new Date().getDay();
+                      const currentDay = days[today];
+                      
+                      return club.weeklySchedule[currentDay as keyof typeof club.weeklySchedule];
+                    };
+
+                    const todaySchedule = getCurrentDaySchedule();
+                    const isOpen = todaySchedule && todaySchedule.trim() !== '';
+                    
+                    return (
+                      <Button 
+                        className={`w-full ${isOpen ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} text-white`}
+                        size="sm"
+                      >
+                        {isOpen ? 'Нээлттэй' : 'Хаалттай'}
+                      </Button>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             ))}
