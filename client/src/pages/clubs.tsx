@@ -122,13 +122,6 @@ export default function Clubs() {
                   className="pl-12 h-12 bg-[#1a1a1a] border-gray-700 text-white placeholder-gray-400 focus:border-gray-500"
                 />
               </div>
-              <Button 
-                variant="outline"
-                size="lg"
-                className="h-12 px-4 bg-[#1a1a1a] border-gray-700 hover:bg-gray-800 text-white"
-              >
-                <Grid3x3 className="h-5 w-5" />
-              </Button>
             </div>
           </div>
 
