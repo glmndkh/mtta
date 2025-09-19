@@ -66,6 +66,7 @@ app.get("/public-objects/*", async (req, res) => {
 });
 
 
+
 (async () => {
   const server = await registerRoutes(app);
 
