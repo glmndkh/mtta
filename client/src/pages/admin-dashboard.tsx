@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Trash2, Plus, Users, Shield, Building, Trophy, Calendar, Newspaper, Images, TrendingUp, Upload, Link as LinkIcon, ArrowLeft, Settings, UserPlus, Play, Zap, X, Crown, FileText, UserCog, User as UserIcon, Flag } from "lucide-react";
+import { Pencil, Trash2, Plus, Users, Shield, Building, Trophy, Calendar, Newspaper, Images, TrendingUp, Upload, Link as LinkIcon, ArrowLeft, Settings, UserPlus, Play, X, Crown, FileText, UserCog, User as UserIcon, Flag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import AdminStatsDashboard from "@/components/admin-stats-dashboard";
@@ -499,8 +499,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         name: item.name || '',
         year: item.year || '',
         gender: item.gender || '',
-        championType: item.championType || '',
-        imageUrl: item.imageUrl || ''
+        championType: item.championType || ''
       });
     } else if (selectedTab === "users") {
       // For users, we don't use the form - users are edited through formData state
@@ -4062,8 +4061,8 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                                       variant="outline"
                                       size="sm"
                                       onClick={() => {
-                                        const imageUrl = request.proofImageUrl.startsWith('http') 
-                                          ? request.proofImageUrl 
+                                        const imageUrl = request.proofImageUrl.startsWith('http')
+                                          ? request.proofImageUrl
                                           : `/objects/${request.proofImageUrl}`;
                                         window.open(imageUrl, '_blank');
                                       }}
@@ -4079,8 +4078,8 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                                     alt="Зэрэгийн үнэмлэх"
                                     className="max-w-md max-h-64 object-contain border border-gray-300 rounded-lg cursor-pointer"
                                     onClick={() => {
-                                      const imageUrl = request.proofImageUrl.startsWith('http') 
-                                        ? request.proofImageUrl 
+                                      const imageUrl = request.proofImageUrl.startsWith('http')
+                                        ? request.proofImageUrl
                                         : `/objects/${request.proofImageUrl}`;
                                       window.open(imageUrl, '_blank');
                                     }}
