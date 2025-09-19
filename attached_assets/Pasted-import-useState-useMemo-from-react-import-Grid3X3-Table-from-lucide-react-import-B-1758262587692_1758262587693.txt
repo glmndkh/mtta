@@ -1,0 +1,88 @@
+import { useState, useMemo } from "react";
+import { Grid3X3, Table } from "lucide-react";
+import { Button } from "./components/ui/button";
+import { Header } from "./components/Header";
+import { SearchBar } from "./components/SearchBar";
+import { ClubCard } from "./components/ClubCard";
+import { ClubTable } from "./components/ClubTable";
+import { mockClubs } from "./data/mockClubs";
+
+export default function App() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+
+  const filteredClubs = useMemo(() => {
+    let filtered = mockClubs;
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (club) =>
+          club.name.toLowerCase().includes(query) ||
+          club.city.toLowerCase().includes(query) ||
+          club.owner.toLowerCase().includes(query) ||
+          club.headCoaches.some((coach) => coach.toLowerCase().includes(query))
+      );
+    }
+
+    return filtered;
+  }, [searchQuery]);
+
+  return (
+    <div className="min-h-screen bg-background dark">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <Header totalCount={filteredClubs.length} />
+        
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <SearchBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+          />
+          
+          <div className="flex border rounded-lg p-1 bg-muted/50">
+            <Button
+              variant={viewMode === "grid" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("grid")}
+              className="h-8 w-8 p-0"
+            >
+              <Grid3X3 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "table" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("table")}
+              className="h-8 w-8 p-0"
+            >
+              <Table className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {filteredClubs.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="text-muted-foreground text-lg mb-2">
+              Клуб олдсонгүй
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Өөр түлхүүр үгээр хайж үзнэ үү
+            </div>
+          </div>
+        ) : (
+          <>
+            {viewMode === "grid" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredClubs.map((club) => (
+                  <ClubCard key={club.id} club={club} />
+                ))}
+              </div>
+            ) : (
+              <ClubTable clubs={filteredClubs} />
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
