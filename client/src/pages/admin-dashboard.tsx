@@ -471,6 +471,8 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         ownerName: item.ownerName || "",
         extraData: item.extraData || [],
         instagramLink: item.instagramLink || "",
+        headCoachName: item.headCoachName || item.coachName || "",
+        coachName: item.coachName || item.headCoachName || "",
         facebookLink: item.facebookLink || "",
         weeklySchedule: {
           monday: item.weeklySchedule?.monday || "",

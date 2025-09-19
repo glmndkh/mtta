@@ -2256,12 +2256,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Use headCoachName, coachName, or coachUserId in that order of preference
       const finalCoachName = headCoachName || coachName;
       if (coachUserId || finalCoachName) {
-        const coachData = insertClubCoachSchema.parse({
-          clubId: club.id,
-          userId: coachUserId || undefined,
-          name: coachUserId ? undefined : finalCoachName,
-        });
-        await storage.createClubCoach(coachData);
+        try {
+          const coachData = insertClubCoachSchema.parse({
+            clubId: club.id,
+            userId: coachUserId || undefined,
+            name: coachUserId ? undefined : finalCoachName,
+          });
+          await storage.createClubCoach(coachData);
+          console.log("Coach created successfully:", coachData);
+        } catch (coachError) {
+          console.error("Error creating coach:", coachError);
+          // Don't fail the entire club creation if coach creation fails
+        }
       }
 
       res.json(club);
@@ -2284,16 +2290,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Use headCoachName, coachName, or coachUserId in that order of preference
         const finalCoachName = headCoachName || coachName;
         if (coachUserId || finalCoachName) {
-          const existingCoaches = await storage.getClubCoachesByClub(req.params.id);
-          for (const c of existingCoaches) {
-            await storage.deleteClubCoach(c.id);
+          try {
+            // Delete existing coaches first
+            const existingCoaches = await storage.getClubCoachesByClub(req.params.id);
+            for (const c of existingCoaches) {
+              await storage.deleteClubCoach(c.id);
+            }
+            
+            // Create new coach
+            const coachData = insertClubCoachSchema.parse({
+              clubId: req.params.id,
+              userId: coachUserId || undefined,
+              name: coachUserId ? undefined : finalCoachName,
+            });
+            await storage.createClubCoach(coachData);
+            console.log("Coach updated successfully:", coachData);
+          } catch (coachError) {
+            console.error("Error updating coach:", coachError);
+            // Don't fail the entire club update if coach update fails
           }
-          const coachData = insertClubCoachSchema.parse({
-            clubId: req.params.id,
-            userId: coachUserId || undefined,
-            name: coachUserId ? undefined : finalCoachName,
-          });
-          await storage.createClubCoach(coachData);
         }
 
         res.json(club);
