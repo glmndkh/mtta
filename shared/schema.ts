@@ -41,6 +41,9 @@ export const matchStatusEnum = pgEnum("match_status", ["scheduled", "ongoing", "
 // Gender enum
 export const genderEnum = pgEnum("gender", ["male", "female", "other"]);
 
+// Club status enum
+export const clubStatusEnum = pgEnum("club_status", ["active", "inactive"]);
+
 // Player rank enum
 export const playerRankEnum = pgEnum("player_rank", [
   "Шинэ тоглогч",
@@ -119,16 +122,32 @@ export const clubs = pgTable("clubs", {
   description: text("description"),
   ownerId: varchar("owner_id").references(() => users.id),
   ownerName: varchar("owner_name"),
+  // Address fields
   address: text("address"),
   country: varchar("country"),
   province: varchar("province"),
   city: varchar("city"),
+  district: varchar("district"),
+  street: varchar("street"),
+  // Contact information
   phone: varchar("phone"),
   email: varchar("email"),
-  logoUrl: varchar("logo_url"),
-  colorTheme: varchar("color_theme").default("var(--success)"),
-  schedule: text("schedule"),
   website: varchar("website"),
+  facebook: varchar("facebook"),
+  instagram: varchar("instagram"),
+  // Club details
+  logoUrl: varchar("logo_url"),
+  verified: boolean("verified").default(false),
+  status: clubStatusEnum("status").default("active"),
+  colorTheme: varchar("color_theme").default("var(--success)"),
+  // Lists stored as JSON arrays
+  coaches: jsonb("coaches").$type<string[]>().default([]),
+  tags: jsonb("tags").$type<string[]>().default([]),
+  // Schedules and info
+  openingHours: jsonb("opening_hours").$type<{
+    [key: string]: { open: string; close: string; closed?: boolean }
+  }>(),
+  schedule: text("schedule"),
   trainingInfo: text("training_info"),
   extraData: jsonb("extra_data"),
   createdAt: timestamp("created_at").defaultNow(),
