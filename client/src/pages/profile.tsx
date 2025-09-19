@@ -14,11 +14,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, CheckCircle, Clock, User, Camera, MapPin, Phone, Mail, Calendar, Trophy, Target, CreditCard, Users, History, Shield, UserCog } from "lucide-react";
+import { AlertCircle, CheckCircle, Clock, User, Camera, MapPin, Phone, Mail, Calendar, Trophy, Target, CreditCard, Users, History, Shield, UserCog, Upload, FileImage } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { formatName } from "@/lib/utils";
+import { ObjectUploader } from "@/components/ObjectUploader";
 
 interface PlayerStats {
   rank?: string;
@@ -187,6 +188,20 @@ export default function Profile() {
   });
 
   const [selectedProvince, setSelectedProvince] = useState<string>('');
+  const [showRankChangeForm, setShowRankChangeForm] = useState(false);
+  const [newRank, setNewRank] = useState('');
+  const [proofImageUrl, setProofImageUrl] = useState('');
+
+  // Valid ranks for selection
+  const validRanks = [
+    "зэрэггүй",
+    "3-р зэрэг",
+    "2-р зэрэг", 
+    "1-р зэрэг",
+    "спортын дэд мастер",
+    "спортын мастер",
+    "олон улсын хэмжээний мастер"
+  ];
 
   // Get available cities based on selected province OR the profile's province (for initial load)
   const province = selectedProvince || profileData.province;
@@ -229,6 +244,39 @@ export default function Profile() {
   const { data: medals = [] } = useQuery({
     queryKey: ['/api/user/medals'],
     enabled: !!profile,
+  });
+
+  // Fetch user's rank change requests
+  const { data: rankChangeRequests = [] } = useQuery({
+    queryKey: ['/api/rank-change-requests/me'],
+    enabled: !!profile,
+  });
+
+  // Submit rank change request mutation
+  const submitRankChangeRequest = useMutation({
+    mutationFn: async (data: { requestedRank: string; proofImageUrl: string }) => {
+      return apiRequest('/api/rank-change-request', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Амжилттай!",
+        description: "Зэрэг өөрчлөх хүсэлт амжилттай илгээгдлээ",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/rank-change-requests/me'] });
+      setShowRankChangeForm(false);
+      setNewRank('');
+      setProofImageUrl('');
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Алдаа гарлаа",
+        description: error?.message || "Хүсэлт илгээхэд алдаа гарлаа",
+        variant: "destructive",
+      });
+    }
   });
 
   // Update profile mutation
@@ -367,6 +415,67 @@ export default function Profile() {
         }));
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle rank change request submission
+  const handleRankChangeSubmit = () => {
+    if (!newRank || !proofImageUrl) {
+      toast({
+        title: "Алдаа",
+        description: "Зэрэг болон баталгаажуулах зураг заавал оруулна уу",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    submitRankChangeRequest.mutate({
+      requestedRank: newRank,
+      proofImageUrl
+    });
+  };
+
+  // Get upload parameters for proof image
+  const getProofImageUploadParams = async () => {
+    const response = await apiRequest('/api/objects/upload', { method: 'POST' });
+    const data = await response.json();
+    return {
+      method: 'PUT' as const,
+      url: data.uploadURL,
+    };
+  };
+
+  // Handle proof image upload completion
+  const handleProofImageUploadComplete = async (result: any) => {
+    if (result.successful && result.successful[0]) {
+      const fileURL = result.successful[0].uploadURL;
+      
+      // Set ACL policy to make image accessible
+      try {
+        const aclResponse = await apiRequest('/api/objects/finalize', {
+          method: 'PUT',
+          body: JSON.stringify({
+            fileURL,
+            isPublic: false // Private for admin review
+          })
+        });
+        
+        if (aclResponse.ok) {
+          const aclData = await aclResponse.json();
+          setProofImageUrl(aclData.objectPath);
+          toast({
+            title: "Амжилттай",
+            description: "Зураг амжилттай байршуулагдлаа"
+          });
+        }
+      } catch (error) {
+        console.error('Error setting ACL:', error);
+        toast({
+          title: "Анхааруулга",
+          description: "Зураг байршуулагдсан боловч эрх тохируулахад алдаа гарлаа",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -532,9 +641,21 @@ export default function Profile() {
           {profile?.playerStats && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="w-5 h-5" />
-                  Тоглогчийн статистик
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="w-5 h-5" />
+                    Тоглогчийн статистик
+                  </div>
+                  {!showRankChangeForm && !rankChangeRequests.find((req: any) => req.status === 'pending') && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setShowRankChangeForm(true)}
+                      className="text-sm"
+                    >
+                      Зэрэг өөрчлөх
+                    </Button>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -576,6 +697,105 @@ export default function Profile() {
                     <div className="text-sm text-gray-600 mt-1">Ялагдал</div>
                   </div>
                 </div>
+
+                {/* Rank Change Form */}
+                {showRankChangeForm && (
+                  <div className="mt-6 p-4 border border-blue-200 bg-blue-50 rounded-lg">
+                    <h4 className="font-semibold text-blue-900 mb-4">Зэрэг өөрчлөх хүсэлт</h4>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="newRank">Шинэ зэрэг</Label>
+                        <Select value={newRank} onValueChange={setNewRank}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Зэрэг сонгоно уу" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {validRanks.map(rank => (
+                              <SelectItem key={rank} value={rank}>{rank}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label>Зэрэгийн үнэмлэхийн зураг</Label>
+                        <div className="mt-2">
+                          <ObjectUploader
+                            maxNumberOfFiles={1}
+                            maxFileSize={5 * 1024 * 1024} // 5MB
+                            onGetUploadParameters={getProofImageUploadParams}
+                            onComplete={handleProofImageUploadComplete}
+                            buttonClassName="w-full"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Upload className="w-4 h-4" />
+                              {proofImageUrl ? 'Зураг солих' : 'Зураг оруулах'}
+                            </div>
+                          </ObjectUploader>
+                          {proofImageUrl && (
+                            <div className="mt-2 flex items-center gap-2 text-green-600 text-sm">
+                              <CheckCircle className="w-4 h-4" />
+                              Зураг амжилттай байршуулагдлаа
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button 
+                          onClick={handleRankChangeSubmit}
+                          disabled={submitRankChangeRequest.isPending || !newRank || !proofImageUrl}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          {submitRankChangeRequest.isPending ? 'Илгээж байна...' : 'Хүсэлт илгээх'}
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => {
+                            setShowRankChangeForm(false);
+                            setNewRank('');
+                            setProofImageUrl('');
+                          }}
+                        >
+                          Цуцлах
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Rank Change Requests Status */}
+                {rankChangeRequests.length > 0 && (
+                  <div className="mt-6">
+                    <h4 className="font-semibold mb-3">Зэрэг өөрчлөх хүсэлтүүд</h4>
+                    <div className="space-y-2">
+                      {rankChangeRequests.map((request: any) => (
+                        <div key={request.id} className="p-3 border rounded-lg bg-gray-50">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="font-medium">{request.currentRank} → {request.requestedRank}</span>
+                              <p className="text-sm text-gray-600">
+                                {new Date(request.createdAt).toLocaleDateString('mn-MN')}
+                              </p>
+                            </div>
+                            <Badge variant={
+                              request.status === 'approved' ? 'default' :
+                              request.status === 'rejected' ? 'destructive' : 'secondary'
+                            }>
+                              {request.status === 'approved' ? 'Батлагдсан' :
+                               request.status === 'rejected' ? 'Цуцлагдсан' : 'Хүлээгдэж буй'}
+                            </Badge>
+                          </div>
+                          {request.adminNotes && (
+                            <p className="text-sm text-gray-600 mt-2">
+                              <strong>Админ тайлбар:</strong> {request.adminNotes}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {profile.playerStats.achievements && (
                   <div className="mt-4 p-4 bg-purple-50 rounded-lg">

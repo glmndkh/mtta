@@ -24,6 +24,8 @@ import {
   tournamentTeamPlayers,
   leagueMatches,
   leaguePlayerMatches,
+  passwordResetTokens,
+  rankChangeRequests,
   type User,
   type UpsertUser,
   type Player,
@@ -70,7 +72,8 @@ import {
   type LeaguePlayerMatch,
   type InsertLeaguePlayerMatch,
   type TournamentParticipant,
-  passwordResetTokens,
+  type InsertRankChangeRequest,
+  type RankChangeRequest,
 } from "../shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, or, gt } from "drizzle-orm";
@@ -268,6 +271,13 @@ export interface IStorage {
   getPasswordResetToken(token: string): Promise<any>;
   usePasswordResetToken(token: string): Promise<boolean>;
   resetUserPassword(email: string, newPassword: string): Promise<boolean>;
+
+  // Rank Change Request Methods
+  createRankChangeRequest(data: InsertRankChangeRequest): Promise<RankChangeRequest>;
+  getAllRankChangeRequests(): Promise<any[]>;
+  getRankChangeRequestsByUserId(userId: string): Promise<any[]>;
+  updateRankChangeRequestStatus(id: string, status: string, adminId: string, adminNotes?: string): Promise<RankChangeRequest | null>;
+  deleteRankChangeRequest(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -620,25 +630,8 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(clubs).where(eq(clubs.ownerId, ownerId));
   }
 
-  async getAllClubs(): Promise<any[]> {
-    const clubList = await db.select().from(clubs).orderBy(clubs.name);
-    
-    // Add coach information to each club
-    const clubsWithCoaches = await Promise.all(
-      clubList.map(async (club) => {
-        const coaches = await this.getClubCoachesByClub(club.id);
-        const headCoach = coaches.length > 0 ? coaches[0] : null;
-        
-        return {
-          ...club,
-          headCoachName: headCoach ? (headCoach.name || `${headCoach.firstName || ''} ${headCoach.lastName || ''}`.trim()) : null,
-          coachName: headCoach ? (headCoach.name || `${headCoach.firstName || ''} ${headCoach.lastName || ''}`.trim()) : null,
-          coaches: coaches.map(c => c.name || `${c.firstName || ''} ${c.lastName || ''}`.trim()).filter(Boolean)
-        };
-      })
-    );
-    
-    return clubsWithCoaches;
+  async getAllClubs(): Promise<Club[]> {
+    return await db.select().from(clubs).orderBy(clubs.name);
   }
 
   async updateClub(id: string, clubData: Partial<InsertClub>): Promise<Club | undefined> {
@@ -1479,6 +1472,100 @@ export class DatabaseStorage implements IStorage {
       return (updated.rowCount || 0) > 0;
     } catch (error) {
       console.error('Error resetting password:', error);
+      return false;
+    }
+  }
+
+  // Rank Change Request Methods
+  async createRankChangeRequest(data: InsertRankChangeRequest): Promise<RankChangeRequest> {
+    const [request] = await db.insert(rankChangeRequests).values({
+      ...data,
+      id: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }).returning();
+    return request;
+  }
+
+  async getAllRankChangeRequests(): Promise<any[]> {
+    return await db
+      .select({
+        id: rankChangeRequests.id,
+        userId: rankChangeRequests.userId,
+        playerId: rankChangeRequests.playerId,
+        currentRank: rankChangeRequests.currentRank,
+        requestedRank: rankChangeRequests.requestedRank,
+        proofImageUrl: rankChangeRequests.proofImageUrl,
+        status: rankChangeRequests.status,
+        adminNotes: rankChangeRequests.adminNotes,
+        reviewedBy: rankChangeRequests.reviewedBy,
+        reviewedAt: rankChangeRequests.reviewedAt,
+        createdAt: rankChangeRequests.createdAt,
+        updatedAt: rankChangeRequests.updatedAt,
+        user: {
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        },
+        player: {
+          memberNumber: players.memberNumber,
+          rank: players.rank,
+        },
+        reviewer: {
+          firstName: sql`reviewer.first_name`,
+          lastName: sql`reviewer.last_name`,
+        }
+      })
+      .from(rankChangeRequests)
+      .leftJoin(users, eq(rankChangeRequests.userId, users.id))
+      .leftJoin(players, eq(rankChangeRequests.playerId, players.id))
+      .leftJoin(sql`users AS reviewer`, sql`${rankChangeRequests.reviewedBy} = reviewer.id`)
+      .orderBy(desc(rankChangeRequests.createdAt));
+  }
+
+  async getRankChangeRequestsByUserId(userId: string): Promise<any[]> {
+    return await db
+      .select()
+      .from(rankChangeRequests)
+      .where(eq(rankChangeRequests.userId, userId))
+      .orderBy(desc(rankChangeRequests.createdAt));
+  }
+
+  async updateRankChangeRequestStatus(id: string, status: string, adminId: string, adminNotes?: string): Promise<RankChangeRequest | null> {
+    try {
+      const [request] = await db
+        .update(rankChangeRequests)
+        .set({
+          status,
+          adminNotes,
+          reviewedBy: adminId,
+          reviewedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(rankChangeRequests.id, id))
+        .returning();
+
+      // If approved, update player's rank
+      if (status === 'approved' && request) {
+        await db
+          .update(players)
+          .set({ rank: request.requestedRank })
+          .where(eq(players.id, request.playerId));
+      }
+
+      return request || null;
+    } catch (error) {
+      console.error('Error updating rank change request:', error);
+      return null;
+    }
+  }
+
+  async deleteRankChangeRequest(id: string): Promise<boolean> {
+    try {
+      const result = await db.delete(rankChangeRequests).where(eq(rankChangeRequests.id, id));
+      return (result.rowCount || 0) > 0;
+    } catch (error) {
+      console.error('Error deleting rank change request:', error);
       return false;
     }
   }

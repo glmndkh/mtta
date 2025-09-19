@@ -243,6 +243,12 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
     enabled: selectedTab === 'champions'
   });
 
+  // Fetch rank change requests for the 'rank-requests' tab
+  const { data: rankChangeRequests = [] } = useQuery({
+    queryKey: ['/api/admin/rank-change-requests'],
+    enabled: selectedTab === 'rank-requests',
+  });
+
   // Generic mutations
   const createMutation = useMutation({
     mutationFn: async ({ endpoint, data }: { endpoint: string; data: any }) => {
@@ -303,28 +309,83 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (endpoint: string) => {
-      return apiRequest(endpoint, { method: 'DELETE' });
+    mutationFn: async (id: string) => {
+      const endpoint = getDeleteEndpoint(selectedTab, id); // Ensure selectedTab is used correctly
+      const response = await apiRequest(endpoint, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Устгахад алдаа гарлаа');
     },
     onSuccess: () => {
       toast({ title: "Амжилттай устгагдлаа" });
       queryClient.invalidateQueries({ queryKey: [`/api/admin/${selectedTab}`] });
-      if (selectedTab === 'news') {
-        queryClient.invalidateQueries({ queryKey: ['/api/news'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/news/latest'] });
-      }
-      if (selectedTab === 'leagues') {
-        queryClient.invalidateQueries({ queryKey: ['/api/leagues'] });
-      }
-      if (selectedTab === 'national-team') {
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/national-team'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
-      }
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
     },
     onError: (error: any) => {
       toast({ title: "Алдаа гарлаа", description: error.message, variant: "destructive" });
     }
   });
+
+  const rankChangeRequestMutation = useMutation({
+    mutationFn: async ({ id, status, adminNotes }: { id: string, status: string, adminNotes?: string }) => {
+      const response = await apiRequest(`/api/admin/rank-change-requests/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status, adminNotes })
+      });
+      if (!response.ok) throw new Error('Хүсэлт шинэчлэхэд алдаа гарлаа');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Амжилттай",
+        description: `Хүсэлт ${data.status === 'approved' ? 'батлагдлаа' : 'цуцлагдлаа'}`
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/rank-change-requests'] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Алдаа гарлаа", description: error.message, variant: "destructive" });
+    }
+  });
+
+  // Helper function to get the correct endpoint for deletion
+  const getDeleteEndpoint = (tab: string, id: string): string => {
+    switch (tab) {
+      case 'users': return `/api/admin/users/${id}`;
+      case 'clubs': return `/api/admin/clubs/${id}`;
+      case 'tournaments': return `/api/admin/tournaments/${id}`;
+      case 'news': return `/api/admin/news/${id}`;
+      case 'sliders': return `/api/admin/sliders/${id}`;
+      case 'sponsors': return `/api/admin/sponsors/${id}`;
+      case 'champions': return `/api/admin/champions/${id}`;
+      case 'branches': return `/api/admin/branches/${id}`;
+      case 'federation-members': return `/api/admin/federation-members/${id}`;
+      case 'national-team': return `/api/admin/national-team/${id}`;
+      case 'judges': return `/api/admin/judges/${id}`;
+      case 'coaches': return `/api/admin/coaches/${id}`;
+      case 'leagues': return `/api/admin/leagues/${id}`;
+      case 'teams': return `/api/admin/teams/${id}`;
+      default: return `/api/admin/${tab}/${id}`; // Fallback for other tabs
+    }
+  };
+
+  // Helper function to get the correct query key for invalidation
+  const getQueryKey = (tab: string): string => {
+    switch (tab) {
+      case 'users': return '/api/admin/users';
+      case 'clubs': return '/api/admin/clubs';
+      case 'tournaments': return '/api/admin/tournaments';
+      case 'news': return '/api/admin/news';
+      case 'sliders': return '/api/admin/sliders';
+      case 'sponsors': return '/api/admin/sponsors';
+      case 'champions': return '/api/admin/champions';
+      case 'branches': return '/api/admin/branches';
+      case 'federation-members': return '/api/admin/federation-members';
+      case 'national-team': return '/api/admin/national-team';
+      case 'judges': return '/api/admin/judges';
+      case 'coaches': return '/api/admin/coaches';
+      case 'leagues': return '/api/admin/leagues';
+      case 'teams': return '/api/admin/teams';
+      default: return `/api/admin/${tab}`; // Fallback
+    }
+  };
 
   const sanitizeFormData = (data: any) => {
     const cleaned: any = {};
@@ -375,7 +436,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
 
   const handleDelete = (id: string) => {
     if (confirm("Устгахдаа итгэлтэй байна уу?")) {
-      deleteMutation.mutate(`/api/admin/${selectedTab}/${id}`);
+      deleteMutation.mutate(id);
     }
   };
 
@@ -1101,7 +1162,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                   Одоогоор нэмэх боломжтой хэрэглэгч байхгүй байна
                 </p>
                 <p className="text-sm text-gray-500">
-                  Бүх бүртгэгдсэн хэрэглэгчид аль хэдийн үндэсний шигшээнд орсон эсвэл шинэ хэрэглэгч бүртгүүлээгүй байна
+                  Бүх бүртгэгдсэн хэрэглэгч аль хэдийн үндэсний шигшээнд орсон эсвэл шинэ хэрэглэгч бүртгүүлээгүй байна
                 </p>
               </div>
             )}
@@ -3580,6 +3641,11 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
     </div>
   );
 
+  const renderOtherTabs = () => {
+    // This function is a placeholder for any other tabs you might add in the future
+    return <div className="text-center py-8 text-muted-foreground">Бусад хэсэг</div>;
+  }
+
   return (
     <div className="container mx-auto p-6">
       <div className="mb-8">
@@ -3659,6 +3725,10 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
             <Zap className="w-4 h-4" />
             Ивээн тэтгэгчид
           </TabsTrigger>
+          <TabsTrigger value="rank-requests" className="admin-tab-trigger flex items-center gap-2 data-[state=active]:bg-green-600 font-semibold text-base">
+            <FileText className="w-4 h-4" />
+            Зэрэг хүсэлт
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="users">
@@ -3689,7 +3759,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
           <Card>
             <CardHeader>
               <CardTitle>Нүүр хуудасны слайдер</CardTitle>
-              <CardDescription>Нүүр хуудасны слайдер зургууд удирдах</CardDescription>
+              <CardDescription>Нүүр хуудасны слайдер зургуудыг удирдах</CardDescription>
             </CardHeader>
             <CardContent>
               {renderSlidersTab()}
@@ -3933,123 +4003,246 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
 
-      {/* Create Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader className="flex-shrink-0">
-            <DialogTitle>Шинэ зүйл нэмэх</DialogTitle>
-            <DialogDescription>
-              Доорх талбаруудыг бөглөнө үү
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 overflow-y-auto flex-1 pr-2">
-            {renderFormFields()}
-            <DialogFooter className="flex-shrink-0 pt-4 border-t">
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                Цуцлах
-              </Button>
-              <Button onClick={handleCreate} disabled={createMutation.isPending}>
-                {createMutation.isPending ? "Үүсгэж байна..." : "Үүсгэх"}
-              </Button>
-            </DialogFooter>
-          </div>
-        </DialogContent>
-      </Dialog>
+        <TabsContent value="rank-requests" className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold">Зэрэг өөрчлөх хүсэлтүүд ({rankChangeRequests.length})</h2>
+              </div>
 
-      {/* Edit Dialog */}
-      <Dialog open={showDialog} onOpenChange={() => {
-        setShowDialog(false);
-        setEditingItem(null);
-        setFormData({}); // Reset form data on close
-      }}>
-        <DialogContent
-          className={`${selectedTab === 'tournaments' ? 'max-w-[90vw] max-h-[95vh]' : 'max-w-4xl max-h-[90vh]'} overflow-y-auto`}
-        >
-          <DialogHeader>
-            <DialogTitle>
-              {selectedTab === 'users' ? 'Хэрэглэгч засах' :
-               selectedTab === 'clubs' ? 'Клуб засах' :
-               selectedTab === 'coaches' ? 'Дасгалжуулагч засах' :
-               selectedTab === 'branches' ? 'Салбар холбоо засах' :
-               selectedTab === 'federation-members' ? 'Холбооны гишүүн засах' :
-               selectedTab === 'national-team' ? 'Үндэсний шигшээ тоглогч засах' :
-               selectedTab === 'judges' ? 'Шүүгч засах' :
-               selectedTab === 'leagues' ? 'Лиг засах' :
-               selectedTab === 'news' ? 'Мэдээ засах' :
-               selectedTab === 'teams' ? 'Баг засах' :
-               selectedTab === 'sliders' ? 'Слайдер засах' :
-               selectedTab === 'sponsors' ? 'Ивээн тэтгэгч засах' :
-               selectedTab === 'tournaments' ? 'Тэмцээн засах' :
-               selectedTab === 'champions' ? 'Аварга засах' : 'Засах'}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {renderFormFields()}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDialog(false)}>
-              Цуцлах
-            </Button>
-            <Button onClick={handleUpdate} disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? 'Шинэчилж байна...' : 'Шинэчлэх'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              {rankChangeRequests.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Зэрэг өөрчлөх хүсэлт байхгүй байна</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {rankChangeRequests.map((request: any) => (
+                    <Card key={request.id} className="p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-4 mb-4">
+                            <div>
+                              <h3 className="font-semibold text-lg">
+                                {request.user?.firstName} {request.user?.lastName}
+                              </h3>
+                              <p className="text-sm text-gray-600">{request.user?.email}</p>
+                              {request.player?.memberNumber && (
+                                <p className="text-sm text-gray-600">Гишүүн №: {request.player.memberNumber}</p>
+                              )}
+                            </div>
+                            <Badge variant={
+                              request.status === 'approved' ? 'default' :
+                              request.status === 'rejected' ? 'destructive' : 'secondary'
+                            }>
+                              {request.status === 'approved' ? 'Батлагдсан' :
+                               request.status === 'rejected' ? 'Цуцлагдсан' : 'Хүлээгдэж буй'}
+                            </Badge>
+                          </div>
 
-      {/* Team Enrollment Dialog */}
-      <Dialog open={isTeamEnrollmentDialogOpen} onOpenChange={setIsTeamEnrollmentDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Лигт баг нэмэх</DialogTitle>
-            <DialogDescription>
-              {selectedLeague?.name} лигт бүртгэгдээгүй багуудаас сонгож нэмээрэй
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            {teams && Array.isArray(teams) ? (
-              <div className="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto">
-                {teams.filter((team: any) =>
-                  !selectedLeague?.teams?.some((enrolledTeam: any) => enrolledTeam.id === team.id)
-                ).map((team: any) => (
-                  <div key={team.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      {team.logoUrl && (
-                        <img src={team.logoUrl} alt={team.name} className="w-10 h-10 rounded-full" />
-                      )}
-                      <div>
-                        <div className="font-medium">{team.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {team.players?.length || 0} тоглогч
-                          {team.ownerName && ` • ${team.ownerName}`}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <Label className="text-sm font-medium text-gray-700">Одоогийн зэрэг:</Label>
+                              <p className="text-lg">{request.currentRank || 'Байхгүй'}</p>
+                            </div>
+                            <div>
+                              <Label className="text-sm font-medium text-gray-700">Хүссэн зэрэг:</Label>
+                              <p className="text-lg font-semibold text-blue-600">{request.requestedRank}</p>
+                            </div>
+                          </div>
+
+                          <div className="mb-4">
+                            <Label className="text-sm font-medium text-gray-700">Баталгаажуулах зураг:</Label>
+                            <div className="mt-2">
+                              {request.proofImageUrl ? (
+                                <img
+                                  src={`/objects/${request.proofImageUrl}`}
+                                  alt="Зэрэгийн үнэмлэх"
+                                  className="max-w-md max-h-64 object-contain border border-gray-300 rounded-lg"
+                                />
+                              ) : (
+                                <p className="text-gray-500">Зураг байхгүй</p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="text-sm text-gray-600">
+                            <p>Илгээсэн огноо: {new Date(request.createdAt).toLocaleDateString('mn-MN')}</p>
+                            {request.reviewedAt && (
+                              <p>Шалгасан огноо: {new Date(request.reviewedAt).toLocaleDateString('mn-MN')}</p>
+                            )}
+                          </div>
+
+                          {request.adminNotes && (
+                            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                              <Label className="text-sm font-medium text-yellow-800">Админ тайлбар:</Label>
+                              <p className="text-yellow-700">{request.adminNotes}</p>
+                            </div>
+                          )}
                         </div>
+
+                        {request.status === 'pending' && (
+                          <div className="ml-4 space-y-2">
+                            <Button
+                              onClick={() => {
+                                const adminNotes = prompt('Тайлбар оруулна уу (заавал биш):');
+                                rankChangeRequestMutation.mutate({
+                                  id: request.id,
+                                  status: 'approved',
+                                  adminNotes: adminNotes || undefined
+                                });
+                              }}
+                              disabled={rankChangeRequestMutation.isPending}
+                              className="bg-green-600 hover:bg-green-700 w-full"
+                            >
+                              Батлах
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              onClick={() => {
+                                const adminNotes = prompt('Цуцлах шалтгаан оруулна уу:');
+                                if (adminNotes) {
+                                  rankChangeRequestMutation.mutate({
+                                    id: request.id,
+                                    status: 'rejected',
+                                    adminNotes
+                                  });
+                                }
+                              }}
+                              disabled={rankChangeRequestMutation.isPending}
+                              className="w-full"
+                            >
+                              Цуцлах
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                    <Button
-                      size="sm"
-                      onClick={() => enrollTeamInLeague(team.id)}
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Нэмэх
-                    </Button>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="other" className="space-y-6">
+              {renderOtherTabs()}
+            </TabsContent>
+          </Tabs>
+
+          {/* Create Dialog */}
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+              <DialogHeader className="flex-shrink-0">
+                <DialogTitle>Шинэ зүйл нэмэх</DialogTitle>
+                <DialogDescription>
+                  Доорх талбаруудыг бөглөнө үү
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 overflow-y-auto flex-1 pr-2">
+                {renderFormFields()}
+                <DialogFooter className="flex-shrink-0 pt-4 border-t">
+                  <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                    Цуцлах
+                  </Button>
+                  <Button onClick={handleCreate} disabled={createMutation.isPending}>
+                    {createMutation.isPending ? "Үүсгэж байна..." : "Үүсгэх"}
+                  </Button>
+                </DialogFooter>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit Dialog */}
+          <Dialog open={showDialog} onOpenChange={() => {
+            setShowDialog(false);
+            setEditingItem(null);
+            setFormData({}); // Reset form data on close
+          }}>
+            <DialogContent
+              className={`${selectedTab === 'tournaments' ? 'max-w-[90vw] max-h-[95vh]' : 'max-w-4xl max-h-[90vh]'} overflow-y-auto`}
+            >
+              <DialogHeader>
+                <DialogTitle>
+                  {selectedTab === 'users' ? 'Хэрэглэгч засах' :
+                   selectedTab === 'clubs' ? 'Клуб засах' :
+                   selectedTab === 'coaches' ? 'Дасгалжуулагч засах' :
+                   selectedTab === 'branches' ? 'Салбар холбоо засах' :
+                   selectedTab === 'federation-members' ? 'Холбооны гишүүн засах' :
+                   selectedTab === 'national-team' ? 'Үндэсний шигшээ тоглогч засах' :
+                   selectedTab === 'judges' ? 'Шүүгч засах' :
+                   selectedTab === 'leagues' ? 'Лиг засах' :
+                   selectedTab === 'news' ? 'Мэдээ засах' :
+                   selectedTab === 'teams' ? 'Баг засах' :
+                   selectedTab === 'sliders' ? 'Слайдер засах' :
+                   selectedTab === 'sponsors' ? 'Ивээн тэтгэгч засах' :
+                   selectedTab === 'tournaments' ? 'Тэмцээн засах' :
+                   selectedTab === 'champions' ? 'Аварга засах' : 'Засах'}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                {renderFormFields()}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowDialog(false)}>
+                  Цуцлах
+                </Button>
+                <Button onClick={handleUpdate} disabled={updateMutation.isPending}>
+                  {updateMutation.isPending ? 'Шинэчилж байна...' : 'Шинэчлэх'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Team Enrollment Dialog */}
+          <Dialog open={isTeamEnrollmentDialogOpen} onOpenChange={setIsTeamEnrollmentDialogOpen}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Лигт баг нэмэх</DialogTitle>
+                <DialogDescription>
+                  {selectedLeague?.name} лигт бүртгэгдээгүй багуудаас сонгож нэмээрэй
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                {teams && Array.isArray(teams) ? (
+                  <div className="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto">
+                    {teams.filter((team: any) =>
+                      !selectedLeague?.teams?.some((enrolledTeam: any) => enrolledTeam.id === team.id)
+                    ).map((team: any) => (
+                      <div key={team.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          {team.logoUrl && (
+                            <img src={team.logoUrl} alt={team.name} className="w-10 h-10 rounded-full" />
+                          )}
+                          <div>
+                            <div className="font-medium">{team.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {team.players?.length || 0} тоглогч
+                              {team.ownerName && ` • ${team.ownerName}`}
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => enrollTeamInLeague(team.id)}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Нэмэх
+                        </Button>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Баг байхгүй байна
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                Баг байхгүй байна
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsTeamEnrollmentDialogOpen(false)}>
-              Хаах
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsTeamEnrollmentDialogOpen(false)}>
+                  Хаах
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </Tabs>
     </div>
   );
 }

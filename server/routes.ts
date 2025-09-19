@@ -403,6 +403,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rank Change Request Routes
+  app.post("/api/rank-change-request", requireAuth, async (req: any, res) => {
+    try {
+      const { requestedRank, proofImageUrl } = req.body;
+      const userId = req.session.userId;
+
+      if (!requestedRank || !proofImageUrl) {
+        return res.status(400).json({ message: "Зэрэг болон баталгаажуулах зураг заавал оруулна уу" });
+      }
+
+      // Get player
+      const player = await storage.getPlayerByUserId(userId);
+      if (!player) {
+        return res.status(404).json({ message: "Тоглогчийн мэдээлэл олдсонгүй" });
+      }
+
+      // Check if user already has pending request
+      const existingRequests = await storage.getRankChangeRequestsByUserId(userId);
+      const pendingRequest = existingRequests.find(req => req.status === 'pending');
+      
+      if (pendingRequest) {
+        return res.status(400).json({ message: "Та аль хэдийн зэрэг өөрчлөх хүсэлт илгээсэн байна" });
+      }
+
+      const request = await storage.createRankChangeRequest({
+        userId,
+        playerId: player.id,
+        currentRank: player.rank,
+        requestedRank,
+        proofImageUrl,
+      });
+
+      res.json({ message: "Зэрэг өөрчлөх хүсэлт амжилттай илгээгдлээ", request });
+    } catch (e) {
+      console.error("Error creating rank change request:", e);
+      res.status(500).json({ message: "Хүсэлт илгээхэд алдаа гарлаа" });
+    }
+  });
+
+  app.get("/api/rank-change-requests/me", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.session.userId;
+      const requests = await storage.getRankChangeRequestsByUserId(userId);
+      res.json(requests);
+    } catch (e) {
+      console.error("Error fetching user rank change requests:", e);
+      res.status(500).json({ message: "Хүсэлтүүд авахад алдаа гарлаа" });
+    }
+  });
+
+  // Admin rank change request routes
+  app.get("/api/admin/rank-change-requests", requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const requests = await storage.getAllRankChangeRequests();
+      res.json(requests);
+    } catch (e) {
+      console.error("Error fetching rank change requests:", e);
+      res.status(500).json({ message: "Хүсэлтүүд авахад алдаа гарлаа" });
+    }
+  });
+
+  app.put("/api/admin/rank-change-requests/:id", requireAuth, isAdminRole, async (req: any, res) => {
+    try {
+      const { status, adminNotes } = req.body;
+      const adminId = req.session.userId;
+
+      if (!['approved', 'rejected'].includes(status)) {
+        return res.status(400).json({ message: "Буруу статус" });
+      }
+
+      const request = await storage.updateRankChangeRequestStatus(req.params.id, status, adminId, adminNotes);
+      
+      if (!request) {
+        return res.status(404).json({ message: "Хүсэлт олдсонгүй" });
+      }
+
+      res.json({ message: `Хүсэлт ${status === 'approved' ? 'батлагдлаа' : 'цуцлагдлаа'}`, request });
+    } catch (e) {
+      console.error("Error updating rank change request:", e);
+      res.status(500).json({ message: "Хүсэлт шинэчлэхэд алдаа гарлаа" });
+    }
+  });
+
+  app.delete("/api/admin/rank-change-requests/:id", requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const success = await storage.deleteRankChangeRequest(req.params.id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Хүсэлт олдсонгүй" });
+      }
+
+      res.json({ message: "Хүсэлт амжилттай устгагдлаа" });
+    } catch (e) {
+      console.error("Error deleting rank change request:", e);
+      res.status(500).json({ message: "Хүсэлт устгахад алдаа гарлаа" });
+    }
+  });
+
   // -------------
   // Profile
   // -------------

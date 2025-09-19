@@ -454,6 +454,22 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Rank change requests table
+export const rankChangeRequests = pgTable("rank_change_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  playerId: varchar("player_id").references(() => players.id).notNull(),
+  currentRank: playerRankEnum("current_rank"),
+  requestedRank: playerRankEnum("requested_rank").notNull(),
+  proofImageUrl: varchar("proof_image_url").notNull(), // Object storage path for rank proof image
+  status: varchar("status").notNull().default("pending"), // "pending", "approved", "rejected"
+  adminNotes: text("admin_notes"), // Admin feedback/notes
+  reviewedBy: varchar("reviewed_by").references(() => users.id), // Admin who reviewed
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   player: one(players, {
@@ -656,6 +672,15 @@ export const insertTournamentResultsSchema = createInsertSchema(tournamentResult
 export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens);
 export const selectPasswordResetTokenSchema = createSelectSchema(passwordResetTokens);
 
+// Rank change request schemas
+export const insertRankChangeRequestSchema = createInsertSchema(rankChangeRequests).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  reviewedAt: true,
+});
+export const selectRankChangeRequestSchema = createSelectSchema(rankChangeRequests);
+
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -711,6 +736,10 @@ export const insertTournamentTeamPlayerSchema = createInsertSchema(tournamentTea
 });
 export type InsertTournamentTeamPlayer = z.infer<typeof insertTournamentTeamPlayerSchema>;
 export type TournamentTeamPlayer = typeof tournamentTeamPlayers.$inferSelect;
+
+// Rank change request types
+export type InsertRankChangeRequest = z.infer<typeof insertRankChangeRequestSchema>;
+export type RankChangeRequest = typeof rankChangeRequests.$inferSelect;
 
 // League match schemas
 export const insertLeagueMatchSchema = createInsertSchema(leagueMatches).omit({
