@@ -256,30 +256,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Sponsors Section */}
-        <div className="border-t border-gray-800 dark:border-gray-800 [data-theme='light']:border-gray-300 light:border-gray-300 pt-8 mb-8">
-          <h4 className="text-lg font-semibold mb-6 text-center text-mtta-green dark:text-mtta-green [data-theme='light']:text-green-600 light:text-green-600">Ивээн тэтгэгчид</h4>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {sponsors.map((sponsor) => (
-              <a
-                key={sponsor.name}
-                href={sponsor.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center p-4 bg-gray-800 dark:bg-gray-800 [data-theme='light']:bg-white light:bg-white [data-theme='light']:border [data-theme='light']:border-gray-200 light:border light:border-gray-200 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-700 [data-theme='light']:hover:bg-gray-50 light:hover:bg-gray-50 transition-all duration-300 group"
-              >
-                <img
-                  src={sponsor.logo}
-                  alt={sponsor.name}
-                  className="h-12 object-contain grayscale group-hover:grayscale-0 transition-all duration-300"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/objects/uploads/placeholder-sponsor.png';
-                  }}
-                />
-              </a>
-            ))}
-          </div>
-        </div>
+        
 
         {/* Bottom Section */}
         <div className="border-t border-gray-800 dark:border-gray-800 [data-theme='light']:border-gray-300 light:border-gray-300 pt-6">
