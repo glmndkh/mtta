@@ -2407,6 +2407,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.error("Error updating coach:", coachError);
             // Don't fail the entire club update if coach update fails
           }
+        } else {
+          // If no coach data provided, remove existing coaches
+          try {
+            const existingCoaches = await storage.getClubCoachesByClub(req.params.id);
+            for (const c of existingCoaches) {
+              await storage.deleteClubCoach(c.id);
+            }
+          } catch (coachError) {
+            console.error("Error removing coaches:", coachError);
+          }
         }
 
         res.json(club);

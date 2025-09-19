@@ -533,8 +533,8 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         ownerName: item.ownerName || "",
         extraData: item.extraData || [],
         instagramLink: item.instagramLink || "",
-        headCoachName: item.headCoachName || item.coachName || "",
-        coachName: item.coachName || item.headCoachName || "",
+        headCoachName: item.headCoachName || item.coachName || (item.coaches && item.coaches.length > 0 ? item.coaches[0] : "") || "",
+        coachName: item.coachName || item.headCoachName || (item.coaches && item.coaches.length > 0 ? item.coaches[0] : "") || "",
         facebookLink: item.facebookLink || "",
         weeklySchedule: {
           monday: item.weeklySchedule?.monday || "",
@@ -1716,7 +1716,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               <Label htmlFor="headCoachName">Клубын багш дасгалжуулагч</Label>
               <Input
                 id="headCoachName"
-                value={formData.headCoachName || ''}
+                value={formData.headCoachName || formData.coachName || ''}
                 onChange={(e) => setFormData({ ...formData, headCoachName: e.target.value, coachName: e.target.value })}
                 placeholder="Дасгалжуулагчийн нэр оруулна уу"
               />

@@ -630,8 +630,25 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(clubs).where(eq(clubs.ownerId, ownerId));
   }
 
-  async getAllClubs(): Promise<Club[]> {
-    return await db.select().from(clubs).orderBy(clubs.name);
+  async getAllClubs(): Promise<any[]> {
+    const clubsData = await db.select().from(clubs).orderBy(clubs.name);
+    
+    // Get coaches for each club
+    const clubsWithCoaches = await Promise.all(
+      clubsData.map(async (club) => {
+        const coaches = await this.getClubCoachesByClub(club.id);
+        const headCoachName = coaches.length > 0 ? (coaches[0].name || `${coaches[0].firstName || ''} ${coaches[0].lastName || ''}`.trim()) : '';
+        
+        return {
+          ...club,
+          coaches: coaches.map(c => c.name || `${c.firstName || ''} ${c.lastName || ''}`.trim()).filter(name => name),
+          headCoachName: headCoachName,
+          coachName: headCoachName, // For backward compatibility
+        };
+      })
+    );
+    
+    return clubsWithCoaches;
   }
 
   async updateClub(id: string, clubData: Partial<InsertClub>): Promise<Club | undefined> {
