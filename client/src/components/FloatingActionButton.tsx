@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { X, MessageCircle, Home, Trophy, Calendar, Users } from 'lucide-react';
 
@@ -41,19 +40,22 @@ const FloatingActionButton: React.FC = () => {
             <X size={16} />
           </button>
         </div>
-        
+
         <div className="fab-panel-content">
-          {quickActions.map((action, index) => (
-            <a
-              key={index}
-              href={action.href}
-              className="fab-action-item"
-              onClick={() => setIsPanelOpen(false)}
-            >
-              <action.icon size={18} />
-              <span>{action.label}</span>
-            </a>
-          ))}
+          {quickActions.map((action, index) => {
+            const IconComponent = action.icon;
+            return (
+              <a
+                key={index}
+                href={action.href}
+                className="fab-action-item"
+                onClick={() => setIsPanelOpen(false)}
+              >
+                <IconComponent size={18} />
+                <span>{action.label}</span>
+              </a>
+            );
+          })}
         </div>
       </div>
 
@@ -85,7 +87,7 @@ const FloatingActionButton: React.FC = () => {
           justify-content: center;
           padding: 0;
           outline: none;
-          
+
           /* Safe area support */
           bottom: max(24px, env(safe-area-inset-bottom, 24px));
           left: max(24px, env(safe-area-inset-left, 24px));
@@ -138,7 +140,7 @@ const FloatingActionButton: React.FC = () => {
           opacity: 0;
           pointer-events: none;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          
+
           /* Safe area support */
           bottom: max(92px, calc(env(safe-area-inset-bottom, 24px) + 68px));
           left: max(24px, env(safe-area-inset-left, 24px));
