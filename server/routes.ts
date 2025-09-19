@@ -446,6 +446,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isJudge: !!judge,
         judgeType: judge?.judgeType,
         isCoach: !!coach,
+        rank: playerStats?.rank,
         playerStats: playerStats
           ? {
               rank: playerStats.rank,
@@ -487,6 +488,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         membershipEndDate,
         membershipActive,
         membershipAmount,
+        rank,
       } = req.body;
 
       const [firstName, ...restName] = (name || "").trim().split(" ");
@@ -517,6 +519,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         membershipActive,
         membershipAmount,
       });
+
+      // Update player rank if user is a player and rank is provided
+      if (rank && updatedUser) {
+        const player = await storage.getPlayerByUserId(userId);
+        if (player) {
+          await storage.updatePlayerAdminFields(player.id, { rank });
+        }
+      }
 
       if (!updatedUser)
         return res.status(404).json({ message: "Хэрэглэгч олдсонгүй" });

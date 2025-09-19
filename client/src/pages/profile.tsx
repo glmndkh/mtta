@@ -187,7 +187,7 @@ export default function Profile() {
   });
 
   const [selectedProvince, setSelectedProvince] = useState<string>('');
-  
+
   // Get available cities based on selected province OR the profile's province (for initial load)
   const province = selectedProvince || profileData.province;
   const availableCities = province ? (MONGOLIA_CITIES as any)[province] || [] : [];
@@ -300,10 +300,10 @@ export default function Profile() {
         membershipActive: profile.membershipActive || false,
         membershipAmount: profile.membershipAmount || 0
       };
-      
+
       setProfileData(newProfileData);
       setSelectedProvince(profile.province || '');
-      
+
       // Debug log to check what values we're getting
       console.log('Profile loaded - province:', profile.province, 'city:', profile.city);
     }
@@ -341,7 +341,18 @@ export default function Profile() {
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfileMutation.mutate(profileData);
+    updateProfileMutation.mutate({
+      ...profileData,
+      playerStats: {
+        ...profileData.playerStats,
+        rank: profileData.playerStats?.rank, // Ensure rank is included
+        points: profileData.playerStats?.points,
+        achievements: profileData.playerStats?.achievements,
+        wins: profileData.playerStats?.wins,
+        losses: profileData.playerStats?.losses,
+        memberNumber: profileData.playerStats?.memberNumber
+      }
+    });
   };
 
   // Handle profile picture upload
@@ -398,7 +409,7 @@ export default function Profile() {
   return (
     <div className="profile-container">
       <Navigation />
-      
+
       <main className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="space-y-8">
           {/* Profile Header */}
@@ -536,28 +547,28 @@ export default function Profile() {
                       <div className="text-sm text-gray-600 mt-1">Гишүүний дугаар</div>
                     </div>
                   )}
-                  
+
                   <div className="text-center p-4 bg-green-50 rounded-lg">
                     <div className="text-2xl font-bold text-green-600">
                       {profile.playerStats.rank || 'Шинэ тоглогч'}
                     </div>
                     <div className="text-sm text-gray-600 mt-1">Зэрэглэл</div>
                   </div>
-                  
+
                   <div className="text-center p-4 bg-yellow-50 rounded-lg">
                     <div className="text-2xl font-bold text-yellow-600">
                       {profile.playerStats.points || 0}
                     </div>
                     <div className="text-sm text-gray-600 mt-1">Оноо</div>
                   </div>
-                  
+
                   <div className="text-center p-4 bg-emerald-50 rounded-lg">
                     <div className="text-2xl font-bold text-emerald-600">
                       {profile.playerStats.wins || 0}
                     </div>
                     <div className="text-sm text-gray-600 mt-1">Хожил</div>
                   </div>
-                  
+
                   <div className="text-center p-4 bg-red-50 rounded-lg">
                     <div className="text-2xl font-bold text-red-600">
                       {profile.playerStats.losses || 0}
@@ -565,7 +576,7 @@ export default function Profile() {
                     <div className="text-sm text-gray-600 mt-1">Ялагдал</div>
                   </div>
                 </div>
-                
+
                 {profile.playerStats.achievements && (
                   <div className="mt-4 p-4 bg-purple-50 rounded-lg">
                     <h4 className="font-semibold text-purple-900 mb-2 flex items-center gap-2">
@@ -680,7 +691,7 @@ export default function Profile() {
                         />
                       </div>
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="bio" className="text-white">Товч танилцуулга</Label>
                       <Textarea
@@ -1014,7 +1025,7 @@ export default function Profile() {
                               const opponentName = typeof match.opponent === 'string' ? match.opponent : 
                                                  typeof match.opponent === 'object' ? match.opponent?.name || 'Тодорхойгүй' : 
                                                  'Тодорхойгүй';
-                              
+
                               // Parse score from match.score (format like "3:2" or "2-1")
                               let playerScore = '';
                               let opponentScore = '';
@@ -1030,7 +1041,7 @@ export default function Profile() {
                                   }
                                 }
                               }
-                              
+
                               return (
                                 <div 
                                   key={match.id || index} 
@@ -1045,7 +1056,7 @@ export default function Profile() {
                                       match.result === 'win' ? 'bg-green-500' : 
                                       match.result === 'loss' ? 'bg-red-500' : 'bg-gray-500'
                                     }`}></div>
-                                    
+
                                     {/* Content */}
                                     <div className="flex-1 p-4">
                                       {/* Date and match info */}
@@ -1061,7 +1072,7 @@ export default function Profile() {
                                            'Шууд хасагдах шат'}
                                         </span>
                                       </div>
-                                      
+
                                       {/* Match result */}
                                       <div className="flex items-center justify-between">
                                         <div className="flex-1 text-right pr-4">
@@ -1072,7 +1083,7 @@ export default function Profile() {
                                             {profile?.name}
                                           </button>
                                         </div>
-                                        
+
                                         {playerScore && opponentScore ? (
                                           <div className="text-xl font-bold text-white px-4">
                                             {playerScore} : {opponentScore}
@@ -1082,7 +1093,7 @@ export default function Profile() {
                                             - : -
                                           </div>
                                         )}
-                                        
+
                                         <div className="flex-1 text-left pl-4">
                                           {typeof match.opponent === 'object' && match.opponent?.user ? (
                                             <button
