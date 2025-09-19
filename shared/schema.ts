@@ -148,6 +148,12 @@ export const clubs = pgTable("clubs", {
     [key: string]: { open: string; close: string; closed?: boolean }
   }>(),
   schedule: text("schedule"),
+  weeklySchedule: jsonb("weekly_schedule").$type<{
+    [key: string]: { 
+      closed?: boolean; 
+      sessions?: Array<{ start: string; end: string; description?: string }>
+    }
+  }>(),
   trainingInfo: text("training_info"),
   extraData: jsonb("extra_data"),
   createdAt: timestamp("created_at").defaultNow(),

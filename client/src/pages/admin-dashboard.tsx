@@ -24,16 +24,50 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { getImageUrl, formatName } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 
-// Import Form components
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+
+// Form schema and initialization for judges
+const judgeSchema = z.object({
+  firstName: z.string().min(1, "Нэр заавал оруулна уу"),
+  lastName: z.string().min(1, "Овог заавал оруулна уу"),
+  userId: z.string().optional(),
+  judgeType: z.enum(["domestic", "international"]),
+  imageUrl: z.string().optional(),
+});
+
+// Schema for Clubs, including social media links and detailed schedule
+const clubSchema = z.object({
+  name: z.string().min(1, "Клубын нэр заавал оруулна уу"),
+  description: z.string().optional(),
+  address: z.string().optional(),
+  country: z.string().optional(),
+  province: z.string().optional(),
+  city: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().email("Буруу и-мэйл хаяг").optional(),
+  website: z.string().url("Буруу вэбсайт холбоос").optional(),
+  logoUrl: z.string().optional(),
+  colorTheme: z.string().optional(),
+  trainingInfo: z.string().optional(),
+  ownerId: z.string().optional(),
+  ownerName: z.string().optional(),
+  extraData: z.array(z.object({ key: z.string(), value: z.string() })).optional(),
+  instagramLink: z.string().url("Буруу Instagram холбоос").optional(),
+  facebookLink: z.string().url("Буруу Facebook холбоос").optional(),
+  weeklySchedule: z.object({
+    monday: z.string().optional(),
+    tuesday: z.string().optional(),
+    wednesday: z.string().optional(),
+    thursday: z.string().optional(),
+    friday: z.string().optional(),
+    saturday: z.string().optional(),
+    sunday: z.string().optional(),
+  }).optional(),
+});
+
+// Form schema for creating/editing clubs
+type ClubFormValues = z.infer<typeof clubSchema>;
 
 export default function AdminDashboard() {
   const [selectedTab, setSelectedTab] = useState("stats");
@@ -54,15 +88,6 @@ export default function AdminDashboard() {
   const [editingId, setEditingId] = useState<string | null>(null); // State to track the item being edited
   const [isDialogOpen, setIsDialogOpen] = useState(false); // State to control dialog visibility
 
-
-  // Form schema and initialization for judges
-  const judgeSchema = z.object({
-    firstName: z.string().min(1, "Нэр заавал оруулна уу"),
-    lastName: z.string().min(1, "Овог заавал оруулна уу"),
-    userId: z.string().optional(),
-    judgeType: z.enum(["domestic", "international"]),
-    imageUrl: z.string().optional(),
-  });
   const form = useForm<z.infer<typeof judgeSchema>>({
     resolver: zodResolver(judgeSchema),
     defaultValues: {
@@ -73,6 +98,40 @@ export default function AdminDashboard() {
       imageUrl: "",
     },
   });
+
+  // Schema for club form using react-hook-form
+  const clubForm = useForm<ClubFormValues>({
+    resolver: zodResolver(clubSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      address: "",
+      country: "",
+      province: "",
+      city: "",
+      phone: "",
+      email: "",
+      website: "",
+      logoUrl: "",
+      colorTheme: "var(--success)",
+      trainingInfo: "",
+      ownerId: "",
+      ownerName: "",
+      instagramLink: "",
+      facebookLink: "",
+      weeklySchedule: {
+        monday: "",
+        tuesday: "",
+        wednesday: "",
+        thursday: "",
+        friday: "",
+        saturday: "",
+        sunday: "",
+      },
+      extraData: [],
+    },
+  });
+
   const currentTab = selectedTab; // Use selectedTab for currentTab
 
   // Data queries
@@ -411,6 +470,17 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         ownerId: item.ownerId || "",
         ownerName: item.ownerName || "",
         extraData: item.extraData || [],
+        instagramLink: item.instagramLink || "",
+        facebookLink: item.facebookLink || "",
+        weeklySchedule: {
+          monday: item.weeklySchedule?.monday || "",
+          tuesday: item.weeklySchedule?.tuesday || "",
+          wednesday: item.weeklySchedule?.wednesday || "",
+          thursday: item.weeklySchedule?.thursday || "",
+          friday: item.weeklySchedule?.friday || "",
+          saturday: item.weeklySchedule?.saturday || "",
+          sunday: item.weeklySchedule?.sunday || "",
+        },
       });
     } else if (selectedTab === "tournaments") {
       setFormData({
@@ -547,6 +617,17 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         website: '',
         trainingInfo: '',
         extraData: [],
+        instagramLink: "",
+        facebookLink: "",
+        weeklySchedule: {
+          monday: "",
+          tuesday: "",
+          wednesday: "",
+          thursday: "",
+          friday: "",
+          saturday: "",
+          sunday: "",
+        },
       };
     } else if (selectedTab === 'teams') {
       defaultData = {
@@ -909,8 +990,8 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
       : [];
 
     // Get available users who are not already in national team
-    const availableUsers = users && Array.isArray(users) 
-      ? users.filter((user: any) => 
+    const availableUsers = users && Array.isArray(users)
+      ? users.filter((user: any) =>
           !(nationalTeam && Array.isArray(nationalTeam) && nationalTeam.some((player: any) => player.userId === user.id))
         )
       : [];
@@ -937,7 +1018,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                 onChange={(e) => setNationalTeamFilter(e.target.value)}
               />
             </div>
-            <Button 
+            <Button
               onClick={() => {
                 console.log('Opening create dialog for national team');
                 openCreateDialog();
@@ -992,8 +1073,8 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                         const playerData = {
                           firstName: user.firstName || '',
                           lastName: user.lastName || '',
-                          age: user.age || user.dateOfBirth ? 
-                            (new Date().getFullYear() - new Date(user.dateOfBirth).getFullYear()) : 
+                          age: user.age || user.dateOfBirth ?
+                            (new Date().getFullYear() - new Date(user.dateOfBirth).getFullYear()) :
                             25, // Calculate age from dateOfBirth or default to 25
                           imageUrl: user.imageUrl || user.avatarUrl || '',
                           userId: user.id
@@ -1038,7 +1119,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                   {nationalTeamLoading ? 'Ачааллаж байна...' : `${filteredPlayers.length} тамирчин үндэсний шигшээнд байна`}
                 </CardDescription>
               </div>
-              <Button 
+              <Button
                 onClick={() => {
                   console.log('Opening create dialog for national team from main section');
                   openCreateDialog();
@@ -1123,7 +1204,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                       Одоогоор үндэсний шигшээнд тамирчид байхгүй байна. Эхний тамирчинг нэмж эхлүүлээрэй.
                     </p>
                     <div className="flex gap-3 justify-center">
-                      <Button 
+                      <Button
                         onClick={() => {
                           console.log('Opening create dialog from empty state');
                           openCreateDialog();
@@ -1169,10 +1250,10 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                               <TableCell>{player.age || 'Тодорхойгүй'}</TableCell>
                               <TableCell>
                                 {player.imageUrl ? (
-                                  <img 
-                                    src={player.imageUrl} 
-                                    alt={formatName(player.firstName, player.lastName)} 
-                                    className="w-10 h-10 rounded-full object-cover" 
+                                  <img
+                                    src={player.imageUrl}
+                                    alt={formatName(player.firstName, player.lastName)}
+                                    className="w-10 h-10 rounded-full object-cover"
                                   />
                                 ) : (
                                   <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
@@ -1185,9 +1266,9 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                                   <Button size="sm" variant="outline" onClick={() => openEditDialog(player)}>
                                     <Pencil className="w-4 h-4" />
                                   </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="destructive" 
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
                                     onClick={() => {
                                       if (confirm(`${formatName(player.firstName, player.lastName)}-г үндэсний шигшээнээс хасахдаа итгэлтэй байна уу?`)) {
                                         handleDelete(player.id);
@@ -1727,6 +1808,66 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                 value={formData.trainingInfo || ''}
                 onChange={(e) => setFormData({ ...formData, trainingInfo: e.target.value })}
               />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="instagramLink">Instagram Холбоос</Label>
+                <Input
+                  id="instagramLink"
+                  value={formData.instagramLink || ''}
+                  onChange={(e) => setFormData({ ...formData, instagramLink: e.target.value })}
+                  placeholder="https://instagram.com/your_club"
+                />
+              </div>
+              <div>
+                <Label htmlFor="facebookLink">Facebook Холбоос</Label>
+                <Input
+                  id="facebookLink"
+                  value={formData.facebookLink || ''}
+                  onChange={(e) => setFormData({ ...formData, facebookLink: e.target.value })}
+                  placeholder="https://facebook.com/your_club"
+                />
+              </div>
+            </div>
+            <div>
+              <Label>7 Хоногийн Хуваарь</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
+                  <div key={day} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={day}
+                      checked={!!formData.weeklySchedule?.[day]}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          weeklySchedule: {
+                            ...formData.weeklySchedule,
+                            [day]: checked ? formData.weeklySchedule?.[day] || '09:00 - 18:00' : '',
+                          },
+                        })
+                      }
+                    />
+                    <Label htmlFor={day} className="capitalize">{day}</Label>
+                    {formData.weeklySchedule?.[day] && (
+                      <Input
+                        type="text"
+                        placeholder="Цаг (e.g., 09:00 - 18:00)"
+                        value={formData.weeklySchedule[day]}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            weeklySchedule: {
+                              ...formData.weeklySchedule,
+                              [day]: e.target.value,
+                            },
+                          })
+                        }
+                        className="ml-2"
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
             <div>
               <Label className="flex items-center gap-2">Нэмэлт мэдээлэл

@@ -17,6 +17,12 @@ export interface Club {
   description?: string;
   address?: string;
   schedule?: string;
+  weeklySchedule?: {
+    [key: string]: { 
+      closed?: boolean; 
+      sessions?: Array<{ start: string; end: string; description?: string }>
+    }
+  };
   trainingInfo?: string;
   ownerId?: string;
   ownerName?: string;
