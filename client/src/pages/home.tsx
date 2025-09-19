@@ -352,7 +352,7 @@ export default function Home() {
             )}
           </section>
 
-          
+
 
           {/* 3. Ивээн тэтгэгчид */}
           <section>
