@@ -1,18 +1,17 @@
 
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Grid3X3, Table, Search, Filter, MapPin, Phone, Mail, Star, Building2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Table as TableComponent, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { MapPin, Globe, Phone, Mail, Building2, Star, Clock, GraduationCap, Users, Search, Filter } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import Navigation from '@/components/navigation';
 import PageWithLoading from '@/components/PageWithLoading';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Club } from '@/types/club';
+import { tokens } from '@/lib/design-tokens';
 
 // Fetch clubs from API
 const fetchClubs = async (): Promise<Club[]> => {
@@ -142,7 +141,41 @@ const ClubDetailDialog = ({ club, isOpen, onClose }: { club: Club | null, isOpen
             <section>
               <h3 className="font-medium mb-2 text-gray-900">Цагийн хуваарь</h3>
               <div className="flex items-start gap-2">
+                <Clock className="w-4 h-4 mt-1 text-gray-500" />
                 <span className="text-gray-600">{club.schedule}</span>
+              </div>
+            </section>
+          )}
+
+          {/* Training */}
+          {club.training && (
+            <section>
+              <h3 className="font-medium mb-2 text-gray-900">Сургалт</h3>
+              <div className="flex items-start gap-2">
+                <GraduationCap className="w-4 h-4 mt-1 text-gray-500" />
+                <span className="text-gray-600">{club.training}</span>
+              </div>
+            </section>
+          )}
+
+          {/* Coaches */}
+          {club.coaches && club.coaches.length > 0 && (
+            <section>
+              <h3 className="font-medium mb-2 text-gray-900">Дасгалжуулагч</h3>
+              <div className="flex items-start gap-2">
+                <Users className="w-4 h-4 mt-1 text-gray-500" />
+                <span className="text-gray-600">{club.coaches.join(', ')}</span>
+              </div>
+            </section>
+          )}
+
+          {/* Equipment */}
+          {club.equipment && club.equipment.length > 0 && (
+            <section>
+              <h3 className="font-medium mb-2 text-gray-900">Тоног төхөөрөмж</h3>
+              <div className="flex items-start gap-2">
+                <Building2 className="w-4 h-4 mt-1 text-gray-500" />
+                <span className="text-gray-600">{club.equipment.join(', ')}</span>
               </div>
             </section>
           )}
@@ -174,7 +207,7 @@ const ClubDetailDialog = ({ club, isOpen, onClose }: { club: Club | null, isOpen
 
 const ClubCard = ({ club, onDetailClick }: { club: Club; onDetailClick: (club: Club) => void }) => {
   return (
-    <Card className="hover:shadow-lg transition-all duration-300 rounded-2xl h-full cursor-pointer group" onClick={() => onDetailClick(club)}>
+    <Card className="hover:shadow-lg transition-shadow duration-300 rounded-2xl h-full">
       <CardHeader className="pb-4">
         <div className="flex items-start gap-4">
           {club.logo && (
@@ -182,7 +215,7 @@ const ClubCard = ({ club, onDetailClick }: { club: Club; onDetailClick: (club: C
               <img
                 src={getImageUrl(club.logo)}
                 alt={`${club.name} лого`}
-                className="w-16 h-16 object-cover rounded-xl border-2 border-gray-100 group-hover:scale-105 transition-transform"
+                className="w-16 h-16 object-cover rounded-xl border-2 border-gray-100"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                 }}
@@ -190,7 +223,7 @@ const ClubCard = ({ club, onDetailClick }: { club: Club; onDetailClick: (club: C
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <CardTitle className="text-lg leading-tight mb-2 text-gray-900 group-hover:text-mtta-green transition-colors">
+            <CardTitle className="text-lg leading-tight mb-2 text-gray-900">
               {club.name}
             </CardTitle>
             <div className="flex items-center gap-2 flex-wrap">
@@ -229,20 +262,26 @@ const ClubCard = ({ club, onDetailClick }: { club: Club; onDetailClick: (club: C
         {/* Contact Info */}
         <div className="flex gap-2 flex-wrap">
           {club.phone && (
-            <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-mtta-green/10 text-mtta-green border border-mtta-green/20">
+            <a
+              href={`tel:${club.phone}`}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-105 bg-mtta-green/10 text-mtta-green border border-mtta-green/20"
+            >
               <Phone className="w-4 h-4" />
-              Холбогдох
-            </div>
+              Залгах
+            </a>
           )}
           {club.email && (
-            <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 border border-gray-200">
+            <a
+              href={`mailto:${club.email}`}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-105 bg-gray-100 text-gray-700 border border-gray-200"
+            >
               <Mail className="w-4 h-4" />
               И-мэйл
-            </div>
+            </a>
           )}
         </div>
 
-        {/* Status */}
+        {/* Status and Detail button */}
         <div className="flex items-center justify-between pt-2 border-t border-gray-100">
           <div className="flex items-center gap-2">
             <div
@@ -258,101 +297,25 @@ const ClubCard = ({ club, onDetailClick }: { club: Club; onDetailClick: (club: C
               {club.status === 'active' ? 'Идэвхтэй' : 'Идэвхгүй'}
             </span>
           </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onDetailClick(club)}
+            className="text-mtta-green hover:text-mtta-green/80"
+          >
+            Дэлгэрэнгүй
+          </Button>
         </div>
       </CardContent>
     </Card>
   );
 };
 
-const ClubTable = ({ clubs, onDetailClick }: { clubs: Club[], onDetailClick: (club: Club) => void }) => {
-  return (
-    <div className="rounded-lg border bg-white">
-      <TableComponent>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Клуб</TableHead>
-            <TableHead>Байршил</TableHead>
-            <TableHead>Холбоо барих</TableHead>
-            <TableHead>Төлөв</TableHead>
-            <TableHead></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {clubs.map((club) => (
-            <TableRow key={club.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => onDetailClick(club)}>
-              <TableCell>
-                <div className="flex items-center gap-3">
-                  {club.logo && (
-                    <img
-                      src={getImageUrl(club.logo)}
-                      alt={club.name}
-                      className="w-10 h-10 rounded-lg object-cover border"
-                    />
-                  )}
-                  <div>
-                    <div className="font-medium">{club.name}</div>
-                    <div className="text-sm text-gray-500">{club.type}</div>
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="text-sm">
-                  <div>{club.city}</div>
-                  <div className="text-gray-500">{club.district}</div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  {club.phone && (
-                    <div className="text-sm flex items-center gap-1">
-                      <Phone className="w-3 h-3" />
-                      {club.phone}
-                    </div>
-                  )}
-                  {club.email && (
-                    <div className="text-sm flex items-center gap-1">
-                      <Mail className="w-3 h-3" />
-                      {club.email}
-                    </div>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      club.status === 'active' ? 'bg-green-500' : 'bg-gray-400'
-                    }`}
-                  />
-                  <span
-                    className={`text-sm ${
-                      club.status === 'active' ? 'text-green-600' : 'text-gray-500'
-                    }`}
-                  >
-                    {club.status === 'active' ? 'Идэвхтэй' : 'Идэвхгүй'}
-                  </span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <Button variant="ghost" size="sm" className="text-mtta-green hover:text-mtta-green/80">
-                  Дэлгэрэнгүй
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </TableComponent>
-    </div>
-  );
-};
-
 export default function Clubs() {
   const [selectedClub, setSelectedClub] = useState<Club | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("active");
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [cityFilter, setCityFilter] = useState("all");
 
   // Fetch clubs from database
   const { data: allClubs = [], isLoading, error } = useQuery({
@@ -375,13 +338,10 @@ export default function Clubs() {
     let filtered = allClubs;
 
     // Filter by status
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((club: Club) => club.status === statusFilter);
-    }
-
-    // Filter by city
-    if (cityFilter !== "all") {
-      filtered = filtered.filter((club: Club) => club.city === cityFilter);
+    if (activeTab === "active") {
+      filtered = filtered.filter((club: Club) => club.status === 'active');
+    } else if (activeTab === "inactive") {
+      filtered = filtered.filter((club: Club) => club.status === 'inactive');
     }
 
     // Search filter
@@ -396,12 +356,11 @@ export default function Clubs() {
     }
 
     return filtered;
-  }, [allClubs, statusFilter, cityFilter, searchQuery]);
+  }, [allClubs, activeTab, searchQuery]);
 
-  // Get unique cities for filter
-  const cities = useMemo(() => {
-    return Array.from(new Set(allClubs.map((club: Club) => club.city)));
-  }, [allClubs]);
+  // Get active and inactive counts
+  const activeClubs = allClubs.filter((club: Club) => club.status === 'active');
+  const inactiveClubs = allClubs.filter((club: Club) => club.status === 'inactive');
 
   if (isLoading) {
     return (
@@ -436,106 +395,120 @@ export default function Clubs() {
 
         {/* Header */}
         <section className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="max-w-7xl mx-auto px-4 py-6">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h1 className="text-4xl font-bold text-gray-900 mb-2">Клубууд</h1>
-                <p className="text-gray-600">
+                <h1 className="text-3xl font-bold text-gray-900">Клубууд</h1>
+                <p className="text-gray-600 mt-2">
                   Монгол орны ширээний теннисний клубуудын бүртгэл
                 </p>
               </div>
               <Badge className="bg-mtta-green text-white text-lg px-4 py-2">
-                {filteredClubs.length} клуб
+                {allClubs.length} клуб
               </Badge>
             </div>
 
-            {/* Search and Filters */}
-            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-              <div className="flex flex-col sm:flex-row gap-4 flex-1">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder="Клуб хайх..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                
-                <div className="flex gap-2">
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Төлөв" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Бүгд</SelectItem>
-                      <SelectItem value="active">Идэвхтэй</SelectItem>
-                      <SelectItem value="inactive">Идэвхгүй</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={cityFilter} onValueChange={setCityFilter}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Хот" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Бүх хот</SelectItem>
-                      {cities.map(city => (
-                        <SelectItem key={city} value={city}>{city}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* View Mode Toggle */}
-              <div className="flex border rounded-lg p-1 bg-gray-100">
-                <Button
-                  variant={viewMode === "grid" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                  className="h-8 w-8 p-0"
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "table" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("table")}
-                  className="h-8 w-8 p-0"
-                >
-                  <Table className="h-4 w-4" />
-                </Button>
-              </div>
+            {/* Search */}
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Клуб хайх..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
             </div>
           </div>
         </section>
 
         {/* Main Content */}
         <section className="max-w-7xl mx-auto px-4 py-8">
-          {filteredClubs.length === 0 ? (
-            <div className="text-center py-16">
-              <Building2 className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Клуб олдсонгүй
-              </h3>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-8">
+              <TabsTrigger value="all" className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Бүх клуб ({allClubs.length})
+              </TabsTrigger>
+              <TabsTrigger value="active" className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full" />
+                Идэвхтэй ({activeClubs.length})
+              </TabsTrigger>
+              <TabsTrigger value="inactive" className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-gray-400 rounded-full" />
+                Идэвхгүй ({inactiveClubs.length})
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="all" className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {allClubs.map((club: Club) => (
+                  <ClubCard key={club.id} club={club} onDetailClick={handleClubClick} />
+                ))}
+                {allClubs.length === 0 && (
+                  <div className="col-span-full text-center py-12 text-gray-500">
+                    <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p>Клуб олдсонгүй</p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="active" className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredClubs.map((club: Club) => (
+                  <ClubCard key={club.id} club={club} onDetailClick={handleClubClick} />
+                ))}
+                {filteredClubs.length === 0 && (
+                  <div className="col-span-full text-center py-12 text-gray-500">
+                    <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p>Хайлтанд тохирох идэвхтэй клуб олдсонгүй</p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="inactive" className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredClubs.map((club: Club) => (
+                  <ClubCard key={club.id} club={club} onDetailClick={handleClubClick} />
+                ))}
+                {filteredClubs.length === 0 && (
+                  <div className="col-span-full text-center py-12 text-gray-500">
+                    <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p>Хайлтанд тохирох идэвхгүй клуб олдсонгүй</p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </section>
+
+        {/* Map Section */}
+        <section id="map" className="w-full bg-white border-t">
+          <div className="max-w-7xl mx-auto px-4 py-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Клубуудын байршил
+              </h2>
               <p className="text-gray-600">
-                Хайлтын нөхцлөө өөрчилж үзнэ үү
+                Клубуудын байршлыг газрын зураг дээрээс харна уу
               </p>
             </div>
-          ) : (
-            <>
-              {viewMode === "grid" ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredClubs.map((club: Club) => (
-                    <ClubCard key={club.id} club={club} onDetailClick={handleClubClick} />
-                  ))}
+
+            <div className="w-full h-96 rounded-2xl overflow-hidden border shadow-sm bg-gray-50">
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Газрын зураг удахгүй нэмэгдэнэ
+                  </h3>
+                  <p className="text-gray-600">
+                    Клубуудын байршлыг харуулах газрын зураг хэсгийг бэлтгэж байна
+                  </p>
                 </div>
-              ) : (
-                <ClubTable clubs={filteredClubs} onDetailClick={handleClubClick} />
-              )}
-            </>
-          )}
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* Club Detail Dialog */}
