@@ -4062,9 +4062,21 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                                     variant="outline"
                                     size="sm"
                                     onClick={() => {
-                                      const imageUrl = request.proofImageUrl.startsWith('http')
-                                        ? request.proofImageUrl
-                                        : `/public-objects/${request.proofImageUrl}`;
+                                      let imageUrl = request.proofImageUrl;
+                                      
+                                      if (!imageUrl.startsWith('http')) {
+                                        // Remove leading slash if present
+                                        const cleanPath = imageUrl.replace(/^\/+/, '');
+                                        
+                                        // If it already starts with objects/, use as is
+                                        if (cleanPath.startsWith('objects/')) {
+                                          imageUrl = `/${cleanPath}`;
+                                        } else {
+                                          // Otherwise add objects/ prefix
+                                          imageUrl = `/objects/${cleanPath}`;
+                                        }
+                                      }
+                                      
                                       setSelectedImageUrl(imageUrl);
                                       setImageModalOpen(true);
                                     }}
@@ -4276,14 +4288,19 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                       const target = e.currentTarget as HTMLImageElement;
                       if (!target.hasAttribute('data-fallback-tried')) {
                         target.setAttribute('data-fallback-tried', 'true');
-                        // Try alternative path
-                        const alternativeUrl = selectedImageUrl.replace('/public-objects/', '/objects/');
-                        target.src = alternativeUrl;
+                        // Try with public-objects prefix
+                        const cleanPath = selectedImageUrl.replace(/^\/+/, '').replace(/^objects\//, '');
+                        target.src = `/public-objects/${cleanPath}`;
                       } else if (!target.hasAttribute('data-fallback-2-tried')) {
                         target.setAttribute('data-fallback-2-tried', 'true');
-                        // Try without prefix
-                        const cleanPath = selectedImageUrl.replace(/^.*\/([^\/]+)$/, '$1');
-                        target.src = `/public-objects/${cleanPath}`;
+                        // Try without any prefix, just filename
+                        const filename = selectedImageUrl.replace(/^.*\/([^\/]+)$/, '$1');
+                        target.src = `/objects/uploads/${filename}`;
+                      } else if (!target.hasAttribute('data-fallback-3-tried')) {
+                        target.setAttribute('data-fallback-3-tried', 'true');
+                        // Try with public-objects/uploads
+                        const filename = selectedImageUrl.replace(/^.*\/([^\/]+)$/, '$1');
+                        target.src = `/public-objects/uploads/${filename}`;
                       } else {
                         target.style.display = 'none';
                         target.parentElement!.innerHTML = '<p class="text-red-500 text-center">Зураг ачаалахад алдаа гарлаа</p>';
