@@ -4057,9 +4057,19 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                             <div className="mt-2">
                               {request.proofImageUrl ? (
                                 <img
-                                  src={`/objects/${request.proofImageUrl}`}
+                                  src={request.proofImageUrl.startsWith('http') ? request.proofImageUrl : `/public-objects/${request.proofImageUrl}`}
                                   alt="Зэрэгийн үнэмлэх"
                                   className="max-w-md max-h-64 object-contain border border-gray-300 rounded-lg"
+                                  onError={(e) => {
+                                    const target = e.currentTarget as HTMLImageElement;
+                                    if (!target.hasAttribute('data-fallback-tried')) {
+                                      target.setAttribute('data-fallback-tried', 'true');
+                                      target.src = `/objects/${request.proofImageUrl}`;
+                                    } else {
+                                      target.style.display = 'none';
+                                      target.parentElement!.innerHTML = '<p class="text-red-500">Зураг ачаалахад алдаа гарлаа</p>';
+                                    }
+                                  }}
                                 />
                               ) : (
                                 <p className="text-gray-500">Зураг байхгүй</p>
