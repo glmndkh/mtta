@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Menu, X, Home, Trophy, Building, Users, Newspaper, User, LogOut, ChevronDown, UserPlus, Medal } from "lucide-react";
+import { Menu, X, Home, Trophy, Building, Users, Newspaper, User, LogOut, ChevronDown, UserPlus, Medal, Search } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -218,6 +218,18 @@ export default function Navigation() {
               <div className="flex items-center space-x-2">
                 <LanguageSwitcher />
                 <ThemeToggle />
+                
+                {/* Search button */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowSearch(true)}
+                  className="h-9 w-9 text-white hover:text-green-300"
+                  data-testid="search-toggle"
+                  title="Search"
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
                 
                 {/* Mobile menu button */}
                 <Button
