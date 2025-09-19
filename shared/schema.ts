@@ -149,10 +149,13 @@ export const clubs = pgTable("clubs", {
   }>(),
   schedule: text("schedule"),
   weeklySchedule: jsonb("weekly_schedule").$type<{
-    [key: string]: { 
-      closed?: boolean; 
-      sessions?: Array<{ start: string; end: string; description?: string }>
-    }
+    monday?: string;
+    tuesday?: string;
+    wednesday?: string;
+    thursday?: string;
+    friday?: string;
+    saturday?: string;
+    sunday?: string;
   }>(),
   trainingInfo: text("training_info"),
   extraData: jsonb("extra_data"),

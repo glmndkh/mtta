@@ -18,10 +18,13 @@ export interface Club {
   address?: string;
   schedule?: string;
   weeklySchedule?: {
-    [key: string]: { 
-      closed?: boolean; 
-      sessions?: Array<{ start: string; end: string; description?: string }>
-    }
+    monday?: string;
+    tuesday?: string;
+    wednesday?: string;
+    thursday?: string;
+    friday?: string;
+    saturday?: string;
+    sunday?: string;
   };
   trainingInfo?: string;
   ownerId?: string;

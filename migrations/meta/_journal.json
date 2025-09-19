@@ -12,8 +12,15 @@
     {
       "idx": 1,
       "version": "7",
-      "when": 1758260949811,
+      "when": 1672531200000,
       "tag": "0001_daily_nighthawk",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1672617600000,
+      "tag": "0002_add_weekly_schedule",
       "breakpoints": true
     }
   ]

@@ -52,9 +52,8 @@ export default function Clubs() {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter((club: Club) => 
         club.name.toLowerCase().includes(query) ||
-        club.city.toLowerCase().includes(query) ||
-        club.district.toLowerCase().includes(query) ||
-        club.type.toLowerCase().includes(query)
+        (club.city || '').toLowerCase().includes(query) ||
+        (club.province || '').toLowerCase().includes(query)
       );
     }
 
@@ -260,7 +259,7 @@ export default function Clubs() {
                   <div className="mb-4">
                     <div className="flex items-center gap-2 text-gray-300 text-sm">
                       <MapPin className="w-4 h-4" />
-                      <span>{club.city}, {club.district}</span>
+                      <span>{club.city || club.province || 'Байршил тодорхойгүй'}</span>
                     </div>
                   </div>
 
