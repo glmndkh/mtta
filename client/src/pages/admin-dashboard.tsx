@@ -1559,43 +1559,21 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               />
             </div>
             <div>
-              <Label>Клубын эзэн</Label>
-              <UserAutocomplete
-                users={allUsers as any[] || []}
-                value={formData.ownerId}
-                onSelect={(u) =>
-                  setFormData({
-                    ...formData,
-                    ownerId: u ? u.id : '',
-                    ownerName: u ? '' : formData.ownerName,
-                  })
-                }
-                placeholder="Эзэн хайх..."
-                allowCustomName
-                customNameValue={formData.ownerName || ''}
-                onCustomNameChange={(name) =>
-                  setFormData({ ...formData, ownerName: name, ownerId: '' })
-                }
+              <Label htmlFor="ownerName">Клубын эзэн</Label>
+              <Input
+                id="ownerName"
+                value={formData.ownerName || ''}
+                onChange={(e) => setFormData({...formData, ownerName: e.target.value})}
+                placeholder="Эзний нэр оруулна уу"
               />
             </div>
             <div>
-              <Label>Клубын багш дасгалжуулагч</Label>
-              <UserAutocomplete
-                users={allUsers as any[] || []}
-                value={formData.coachUserId}
-                onSelect={(u) =>
-                  setFormData({
-                    ...formData,
-                    coachUserId: u ? u.id : '',
-                    coachName: u ? '' : formData.coachName,
-                  })
-                }
-                placeholder="Дасгалжуулагч хайх..."
-                allowCustomName
-                customNameValue={formData.coachName || ''}
-                onCustomNameChange={(name) =>
-                  setFormData({ ...formData, coachName: name, coachUserId: '' })
-                }
+              <Label htmlFor="coachName">Клубын багш дасгалжуулагч</Label>
+              <Input
+                id="coachName"
+                value={formData.coachName || ''}
+                onChange={(e) => setFormData({...formData, coachName: e.target.value})}
+                placeholder="Дасгалжуулагчийн нэр оруулна уу"
               />
             </div>
             <div>
@@ -3161,8 +3139,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
       case 'sliders':
         return formData.imageUrl; // Title заавал биш, зөвхөн зураг л заавал
       case 'clubs':
-        // Add validation for location fields
-        return formData.name && formData.country && formData.province && formData.city;
+        return formData.name;
       case 'branches':
         return formData.name && formData.imageUrl; // Add validation for imageUrl
       case 'federation-members':
