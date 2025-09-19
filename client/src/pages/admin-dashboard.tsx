@@ -1785,14 +1785,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                 />
               </div>
             </div>
-            <div>
-              <Label htmlFor="schedule">Цагийн хуваарь</Label>
-              <Textarea
-                id="schedule"
-                value={formData.schedule || ''}
-                onChange={(e) => setFormData({ ...formData, schedule: e.target.value })}
-              />
-            </div>
+            
             <div>
               <Label htmlFor="website">Холбоос</Label>
               <Input
