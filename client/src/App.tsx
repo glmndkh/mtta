@@ -10,6 +10,8 @@ import Landing from "@/pages/landing";
 import Home from "@/pages/home";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import ForgotPassword from "@/pages/forgot-password";
+import ResetPassword from "@/pages/reset-password";
 import PlayerDashboard from "@/pages/player-dashboard";
 import TournamentsPage from '@/pages/tournaments';
 import Clubs from "@/pages/clubs";
@@ -49,6 +51,8 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/reset-password" component={ResetPassword} />
       <Route path="/tournament-landing" component={TournamentLanding} />
       <Route path="/tournament/:id" component={TournamentPage} />
       <Route path="/tournament/:id/results" component={TournamentResults} />

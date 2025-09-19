@@ -120,7 +120,12 @@ export default function Login() {
             </form>
           </Form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center space-y-2">
+            <p className="text-sm text-gray-600">
+              <a href="/forgot-password" className="text-mtta-green hover:underline font-medium">
+                Нууц үг мартсан уу?
+              </a>
+            </p>
             <p className="text-sm text-gray-600">
               Бүртгэл байхгүй юу?{" "}
               <a href="/register" className="text-mtta-green hover:underline font-medium">

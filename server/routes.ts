@@ -336,6 +336,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "И-мэйл хаяг заавал оруулна уу" });
+      }
+
+      // Хэрэглэгч байгаа эсэхийг шалгах
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ message: "Энэ и-мэйл хаягаар бүртгэгдсэн хэрэглэгч олдсонгүй" });
+      }
+
+      // Password reset token үүсгэх
+      const token = await storage.createPasswordResetToken(email);
+
+      // Энд и-мэйл илгээх логик байх ёстой
+      // Одоохондоо зөвхөн console.log хийе
+      console.log(`Password reset token for ${email}: ${token}`);
+      console.log(`Reset URL: ${req.protocol}://${req.get('host')}/reset-password?token=${token}`);
+
+      res.json({ 
+        message: "Нууц үг сэргээх код таны и-мэйлд илгээгдлээ",
+        // Development-д л token буцаах
+        ...(process.env.NODE_ENV === 'development' && { token })
+      });
+    } catch (e) {
+      console.error("Error in forgot password:", e);
+      res.status(500).json({ message: "Серверийн алдаа гарлаа" });
+    }
+  });
+
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { token, password } = req.body;
+      
+      if (!token || !password) {
+        return res.status(400).json({ message: "Код болон нууц үг заавал оруулна уу" });
+      }
+
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Нууц үг дор хаяж 6 тэмдэгт байх ёстой" });
+      }
+
+      // Token-г шалгах
+      const resetToken = await storage.getPasswordResetToken(token);
+      if (!resetToken) {
+        return res.status(400).json({ message: "Буруу эсвэл хугацаа дууссан код" });
+      }
+
+      // Нууц үг шинэчлэх
+      const success = await storage.resetUserPassword(resetToken.email, password);
+      if (!success) {
+        return res.status(500).json({ message: "Нууц үг шинэчлэхэд алдаа гарлаа" });
+      }
+
+      // Token-г ашигласан гэж тэмдэглэх
+      await storage.usePasswordResetToken(token);
+
+      res.json({ message: "Нууц үг амжилттай шинэчлэгдлээ" });
+    } catch (e) {
+      console.error("Error in reset password:", e);
+      res.status(500).json({ message: "Серверийн алдаа гарлаа" });
+    }
+  });
+
   // -------------
   // Profile
   // -------------

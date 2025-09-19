@@ -11,7 +11,7 @@ import {
   decimal,
   pgEnum,
 } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
@@ -59,7 +59,7 @@ export const users = pgTable("users", {
   phone: varchar("phone").unique(),
   password: varchar("password"), // Added password field
   firstName: varchar("first_name"),
-  lastName: varchar("last_name"), 
+  lastName: varchar("last_name"),
   gender: genderEnum("gender"),
   dateOfBirth: timestamp("date_of_birth"),
   clubAffiliation: varchar("club_affiliation"), // Club name or location where they usually play
@@ -416,6 +416,16 @@ export const pastChampions = pgTable("past_champions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Password reset tokens table
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").notNull(),
+  token: varchar("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  used: boolean("used").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   player: one(players, {
@@ -613,6 +623,10 @@ export const insertTournamentResultsSchema = createInsertSchema(tournamentResult
   createdAt: true,
   updatedAt: true,
 });
+
+// Password reset token insert schema
+export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens);
+export const selectPasswordResetTokenSchema = createSelectSchema(passwordResetTokens);
 
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;

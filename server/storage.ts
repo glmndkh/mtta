@@ -70,9 +70,10 @@ import {
   type LeaguePlayerMatch,
   type InsertLeaguePlayerMatch,
   type TournamentParticipant,
-} from "@shared/schema";
+  passwordResetTokens,
+} from "../shared/schema";
 import { db } from "./db";
-import { eq, desc, and, sql, or } from "drizzle-orm";
+import { eq, desc, and, sql, or, gt } from "drizzle-orm";
 
 const getRoundTitle = (round: number, totalRounds: number): string => {
   const matchesInRound = Math.pow(2, totalRounds - round);
@@ -261,6 +262,12 @@ export interface IStorage {
   // Tournament Results Operations
   getTournamentResults(tournamentId: string): Promise<TournamentResults | null>;
   upsertTournamentResults(data: InsertTournamentResults): Promise<TournamentResults>;
+
+  // Password Reset Methods
+  createPasswordResetToken(email: string): Promise<string>;
+  getPasswordResetToken(token: string);
+  usePasswordResetToken(token: string): Promise<boolean>;
+  resetUserPassword(email: string, newPassword: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -791,49 +798,49 @@ export class DatabaseStorage implements IStorage {
   async deleteTournament(id: string): Promise<boolean> {
     try {
       console.log(`Starting tournament deletion for ID: ${id}`);
-      
+
       // Delete in order: child records first, then parent
-      
+
       // 1. Delete match sets first (child of matches)
       const tournamentMatches = await db.select().from(matches).where(eq(matches.tournamentId, id));
       for (const match of tournamentMatches) {
         await db.delete(matchSets).where(eq(matchSets.matchId, match.id));
       }
       console.log(`Deleted match sets for ${tournamentMatches.length} matches`);
-      
+
       // 2. Delete matches
       await db.delete(matches).where(eq(matches.tournamentId, id));
       console.log('Deleted tournament matches');
-      
+
       // 3. Delete tournament results
       await db.delete(tournamentResults).where(eq(tournamentResults.tournamentId, id));
       console.log('Deleted tournament results');
-      
+
       // 4. Delete tournament team players
       const teams = await db.select().from(tournamentTeams).where(eq(tournamentTeams.tournamentId, id));
       for (const team of teams) {
         await db.delete(tournamentTeamPlayers).where(eq(tournamentTeamPlayers.tournamentTeamId, team.id));
       }
       console.log(`Deleted players from ${teams.length} tournament teams`);
-      
+
       // 5. Delete tournament teams
       await db.delete(tournamentTeams).where(eq(tournamentTeams.tournamentId, id));
       console.log('Deleted tournament teams');
-      
+
       // 6. Delete tournament participants
       const participantsResult = await db.delete(tournamentParticipants).where(eq(tournamentParticipants.tournamentId, id));
       console.log(`Deleted ${participantsResult.rowCount || 0} tournament participants`);
-      
+
       // 7. Finally delete the tournament
       const result = await db.delete(tournaments).where(eq(tournaments.id, id));
       const success = (result.rowCount || 0) > 0;
-      
+
       if (success) {
         console.log(`Successfully deleted tournament ${id}`);
       } else {
         console.log(`No tournament found with ID ${id}`);
       }
-      
+
       return success;
     } catch (error) {
       console.error("Error deleting tournament:", error);
@@ -1389,13 +1396,74 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteJudge(id: string): Promise<boolean> {
-    const result = await db.delete(judges).where(eq(judges.id, id));
-    return (result.rowCount || 0) > 0;
+    try {
+      const deleted = await db.delete(judges).where(eq(judges.id, id));
+      return deleted.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting judge:', error);
+      return false;
+    }
   }
 
   async getJudgeByUserId(userId: string): Promise<Judge | undefined> {
     const [judge] = await db.select().from(judges).where(eq(judges.userId, userId));
     return judge;
+  }
+
+  // Password Reset Methods
+  async createPasswordResetToken(email: string): Promise<string> {
+    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await db.insert(passwordResetTokens).values({
+      email,
+      token,
+      expiresAt,
+    });
+
+    return token;
+  }
+
+  async getPasswordResetToken(token: string) {
+    const result = await db
+      .select()
+      .from(passwordResetTokens)
+      .where(and(
+        eq(passwordResetTokens.token, token),
+        eq(passwordResetTokens.used, false),
+        gt(passwordResetTokens.expiresAt, new Date())
+      ))
+      .limit(1);
+
+    return result[0] || null;
+  }
+
+  async usePasswordResetToken(token: string): Promise<boolean> {
+    try {
+      const updated = await db
+        .update(passwordResetTokens)
+        .set({ used: true })
+        .where(eq(passwordResetTokens.token, token));
+
+      return updated.rowCount > 0;
+    } catch (error) {
+      console.error('Error using password reset token:', error);
+      return false;
+    }
+  }
+
+  async resetUserPassword(email: string, newPassword: string): Promise<boolean> {
+    try {
+      const updated = await db
+        .update(users)
+        .set({ password: newPassword })
+        .where(eq(users.email, email));
+
+      return updated.rowCount > 0;
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      return false;
+    }
   }
 
   // Membership operations
