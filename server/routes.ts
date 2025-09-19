@@ -851,9 +851,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/clubs", async (_req, res) => {
+  app.get("/api/clubs", async (req, res) => {
     try {
-      const clubs = await storage.getAllClubs();
+      const { search, city, status, sort } = req.query;
+      
+      let clubs = await storage.getAllClubs();
+      
+      // Apply search filter
+      if (search && typeof search === 'string') {
+        const searchLower = search.toLowerCase();
+        clubs = clubs.filter(club => 
+          club.name?.toLowerCase().includes(searchLower) ||
+          club.city?.toLowerCase().includes(searchLower) ||
+          club.district?.toLowerCase().includes(searchLower) ||
+          club.ownerName?.toLowerCase().includes(searchLower) ||
+          club.coaches?.some(coach => coach.toLowerCase().includes(searchLower))
+        );
+      }
+      
+      // Apply city filter
+      if (city && typeof city === 'string' && city !== 'all') {
+        clubs = clubs.filter(club => club.city === city);
+      }
+      
+      // Apply status filter
+      if (status && typeof status === 'string' && status !== 'all') {
+        clubs = clubs.filter(club => club.status === status);
+      }
+      
+      // Apply sorting
+      if (sort && typeof sort === 'string') {
+        switch (sort) {
+          case 'name':
+            clubs.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            break;
+          case 'city':
+            clubs.sort((a, b) => (a.city || '').localeCompare(b.city || ''));
+            break;
+          case 'newest':
+            clubs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            break;
+          case 'oldest':
+            clubs.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+            break;
+          default:
+            // Default sort by name
+            clubs.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        }
+      }
+      
       res.json(clubs);
     } catch (e) {
       console.error("Error fetching clubs:", e);
@@ -883,6 +929,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (e) {
       console.error("Error fetching club:", e);
       res.status(500).json({ message: "Клубын мэдээлэл авахад алдаа гарлаа" });
+    }
+  });
+
+  app.put("/api/clubs/:id", requireAuth, async (req: any, res) => {
+    try {
+      const clubId = req.params.id;
+      const currentUserId = req.session.userId;
+      
+      // Check if club exists and user has permission to edit
+      const existingClub = await storage.getClub(clubId);
+      if (!existingClub) {
+        return res.status(404).json({ message: "Клуб олдсонгүй" });
+      }
+      
+      // Check ownership or admin permission
+      const user = await storage.getUser(currentUserId);
+      if (existingClub.ownerId !== currentUserId && user?.role !== 'admin') {
+        return res.status(403).json({ message: "Энэ үйлдэл хийх эрх танд байхгүй" });
+      }
+
+      const clubData = insertClubSchema.partial().parse(req.body);
+      const updatedClub = await storage.updateClub(clubId, clubData);
+      
+      if (!updatedClub) {
+        return res.status(404).json({ message: "Клуб шинэчлэхэд алдаа гарлаа" });
+      }
+      
+      res.json(updatedClub);
+    } catch (e) {
+      console.error("Error updating club:", e);
+      res.status(400).json({ message: "Клуб шинэчлэхэд алдаа гарлаа" });
+    }
+  });
+
+  app.delete("/api/clubs/:id", requireAuth, async (req: any, res) => {
+    try {
+      const clubId = req.params.id;
+      const currentUserId = req.session.userId;
+      
+      // Check if club exists and user has permission to delete
+      const existingClub = await storage.getClub(clubId);
+      if (!existingClub) {
+        return res.status(404).json({ message: "Клуб олдсонгүй" });
+      }
+      
+      // Check ownership or admin permission
+      const user = await storage.getUser(currentUserId);
+      if (existingClub.ownerId !== currentUserId && user?.role !== 'admin') {
+        return res.status(403).json({ message: "Энэ үйлдэл хийх эрх танд байхгүй" });
+      }
+
+      const deleted = await storage.deleteClub(clubId);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Клуб устгахад алдаа гарлаа" });
+      }
+      
+      res.json({ message: "Клуб амжилттай устгагдлаа" });
+    } catch (e) {
+      console.error("Error deleting club:", e);
+      res.status(500).json({ message: "Клуб устгахад алдаа гарлаа" });
     }
   });
 
