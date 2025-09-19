@@ -889,10 +889,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             clubs.sort((a, b) => (a.city || '').localeCompare(b.city || ''));
             break;
           case 'newest':
-            clubs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            clubs.sort((a, b) => (b.createdAt ? new Date(b.createdAt).getTime() : 0) - (a.createdAt ? new Date(a.createdAt).getTime() : 0));
             break;
           case 'oldest':
-            clubs.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+            clubs.sort((a, b) => (a.createdAt ? new Date(a.createdAt).getTime() : 0) - (b.createdAt ? new Date(b.createdAt).getTime() : 0));
             break;
           default:
             // Default sort by name
@@ -949,7 +949,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Энэ үйлдэл хийх эрх танд байхгүй" });
       }
 
-      const clubData = insertClubSchema.partial().parse(req.body);
+      const clubData = z.object(insertClubSchema._def.schema.shape).omit({ ownerId: true }).partial().parse(req.body);
       const updatedClub = await storage.updateClub(clubId, clubData);
       
       if (!updatedClub) {
@@ -1454,26 +1454,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         // Get user's player profile - if not found, create one from user data
-        let playerProfile = await storage.getPlayerProfile(user.id);
+        let playerProfile = await storage.getPlayerByUserId(user.id);
         if (!playerProfile) {
           // Create a basic player profile from user information
           const userData = await storage.getUserById(user.id);
           if (userData) {
             await storage.createPlayer({
-              id: user.id,
-              fullName: userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
-              email: userData.email,
-              phone: userData.phone,
-              gender: userData.gender,
-              dateOfBirth: userData.dateOfBirth,
-              club: userData.club,
-              playingStyle: null,
-              strongHand: null,
-              coachName: null,
+              userId: user.id,
+              memberNumber: null,
+              clubId: null,
+              rankingAllAges: null,
+              rankingOwnAge: null,
+              rank: null,
+              points: 0,
               achievements: null,
-              profileImageUrl: userData.profileImageUrl
+              dateOfBirth: userData.dateOfBirth
             });
-            playerProfile = await storage.getPlayerProfile(user.id);
+            playerProfile = await storage.getPlayerByUserId(user.id);
           }
         }
 
@@ -1482,7 +1479,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         // Register for tournament
-        await storage.registerForTournament(tournamentId, user.id);
+        await storage.registerForTournament({ tournamentId, playerId: user.id, participationType: 'singles' });
 
         res.json({ 
           message: "Амжилттай бүртгүүллээ",
@@ -1689,21 +1686,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update match players
-  app.put('/api/matches/:matchId/players', async (req: Request, res: Response) => {
-    try {
-      const { matchId } = req.params;
-      const { playerAId, playerBId, override } = req.body;
-
-      // TODO: Implement match player update logic
-      // This would update the knockout matches in the tournament results
-
-      res.json({ success: true, message: 'Match players updated' });
-    } catch (error) {
-      console.error('Error updating match players:', error);
-      res.status(500).json({ message: 'Failed to update match players' });
-    }
-  });
 
   // Update match players
   app.put('/api/matches/:matchId/players', requireAuth, async (req: any, res) => {
@@ -1760,9 +1742,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Save updated results
               await storage.upsertTournamentResults({
                 tournamentId: tournament.id,
-                groupStageResults: results.groupStageResults,
-                knockoutResults: results.knockoutResults,
-                finalRankings: results.finalRankings,
+                groupStageResults: results.groupStageResults as any,
+                knockoutResults: results.knockoutResults as any,
+                finalRankings: results.finalRankings as any,
                 isPublished: results.isPublished
               });
 
