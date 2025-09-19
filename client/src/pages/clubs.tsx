@@ -135,9 +135,9 @@ export default function Clubs() {
                   {/* Header with avatar and info */}
                   <div className="flex items-start gap-4 mb-4">
                     <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-700 flex-shrink-0">
-                      {club.logo ? (
+                      {club.logoUrl ? (
                         <img
-                          src={getImageUrl(club.logo)}
+                          src={getImageUrl(club.logoUrl)}
                           alt={`${club.name} лого`}
                           className="w-full h-full object-cover"
                         />
@@ -174,13 +174,13 @@ export default function Clubs() {
                     </div>
                   )}
 
-                  {/* Location and Coaches */}
+                  {/* Owner and Coaches */}
                   <div className="mb-4 space-y-2">
                     <div className="text-gray-300 text-sm">
-                      <span className="text-gray-400">Эзэмшигч:</span> {club.coaches?.join(', ') || 'Тодорхойгүй'}
+                      <span className="text-gray-400">Эзэмшигч:</span> {club.ownerName || 'Тодорхойгүй'}
                     </div>
                     <div className="text-gray-300 text-sm">
-                      <span className="text-gray-400">Ахлах дасгалжуулагч:</span> {club.coaches?.[0] || 'Тодорхойгүй'}
+                      <span className="text-gray-400">Ахлах дасгалжуулагч:</span> {club.coaches?.join(', ') || 'Тодорхойгүй'}
                     </div>
                   </div>
 

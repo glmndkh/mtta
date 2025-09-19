@@ -2,24 +2,30 @@
 export interface Club {
   id: string;
   name: string;
-  logo?: string;
-  verified: boolean;
-  city: string;
-  district: string;
-  type: string;
+  logoUrl?: string;
+  verified?: boolean;
+  city?: string;
+  district?: string;
+  province?: string;
+  country?: string;
   phone?: string;
   email?: string;
-  status: 'active' | 'inactive';
+  website?: string;
+  facebook?: string;
+  instagram?: string;
+  status?: 'active' | 'inactive';
   description?: string;
   address?: string;
-  coordinates?: {
-    lat: number;
-    lng: number;
-  };
   schedule?: string;
-  training?: string;
+  trainingInfo?: string;
+  ownerId?: string;
+  ownerName?: string;
   coaches?: string[];
-  equipment?: string[];
-  rating?: number;
+  tags?: string[];
+  openingHours?: {
+    [key: string]: { open: string; close: string; closed?: boolean }
+  };
+  colorTheme?: string;
+  extraData?: any;
   createdAt: string;
 }
