@@ -43,6 +43,7 @@ import { useAuth } from "@/hooks/useAuth";
 import AdminPlayerDetailsPage from "@/pages/admin-player-details"; // Import the new page
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import EventDetail from "@/pages/event-detail";
+import FloatingActionButton from "@/components/FloatingActionButton";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -132,6 +133,7 @@ function App() {
             <div className="main-bg">
               <Toaster />
               <Router />
+              <FloatingActionButton />
             </div>
           </TooltipProvider>
         </LanguageProvider>
