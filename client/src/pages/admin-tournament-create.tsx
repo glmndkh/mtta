@@ -1013,66 +1013,106 @@ export default function AdminTournamentCreate() {
 
                       <Separator />
 
-                      <div className="space-y-2">
-                        <div className="flex space-x-2">
+                      <div className="space-y-4">
+                        <div>
+                          <Label className="text-sm font-medium mb-2 block">Оролцооны төрөл</Label>
                           <Select value={participationType} onValueChange={setParticipationType}>
-                            <SelectTrigger className="w-[140px]">
-                              <SelectValue placeholder="Төрөл" />
+                            <SelectTrigger>
+                              <SelectValue placeholder="Тэмцээний төрөл сонгох" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="singles">Дангаар</SelectItem>
-                              <SelectItem value="doubles">Хос</SelectItem>
-                              <SelectItem value="team">Баг</SelectItem>
+                              <SelectItem value="singles">
+                                <div className="flex flex-col">
+                                  <span className="font-medium">Дангаар тэмцээн</span>
+                                  <span className="text-xs text-gray-500">Нэг тоглогчийн тэмцээн</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="doubles">
+                                <div className="flex flex-col">
+                                  <span className="font-medium">Хос тэмцээн</span>
+                                  <span className="text-xs text-gray-500">Хоёр тоглогчийн баг</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="team">
+                                <div className="flex flex-col">
+                                  <span className="font-medium">Багийн тэмцээн</span>
+                                  <span className="text-xs text-gray-500">Олон тоглогчийн баг</span>
+                                </div>
+                              </SelectItem>
                             </SelectContent>
                           </Select>
-                          <Input
-                            value={minAge}
-                            onChange={(e) => setMinAge(e.target.value)}
-                            placeholder="Доод нас"
-                            type="number"
-                            min="0"
-                            className="w-[100px]"
-                            onKeyPress={(e) =>
-                              e.key === "Enter" &&
-                              (e.preventDefault(), addParticipationCategory())
-                            }
-                          />
-                          <Input
-                            value={maxAge}
-                            onChange={(e) => setMaxAge(e.target.value)}
-                            placeholder="Дээд нас"
-                            type="number"
-                            min="0"
-                            className="w-[100px]"
-                            onKeyPress={(e) =>
-                              e.key === "Enter" &&
-                              (e.preventDefault(), addParticipationCategory())
-                            }
-                          />
                         </div>
-                        <div className="flex space-x-2">
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label className="text-sm font-medium mb-1 block">Хамгийн бага нас</Label>
+                            <Input
+                              value={minAge}
+                              onChange={(e) => setMinAge(e.target.value)}
+                              placeholder="Жишээ: 18"
+                              type="number"
+                              min="0"
+                              max="100"
+                              onKeyPress={(e) =>
+                                e.key === "Enter" &&
+                                (e.preventDefault(), addParticipationCategory())
+                              }
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-sm font-medium mb-1 block">Хамгийн их нас</Label>
+                            <Input
+                              value={maxAge}
+                              onChange={(e) => setMaxAge(e.target.value)}
+                              placeholder="Жишээ: 35"
+                              type="number"
+                              min="0"
+                              max="100"
+                              onKeyPress={(e) =>
+                                e.key === "Enter" &&
+                                (e.preventDefault(), addParticipationCategory())
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label className="text-sm font-medium mb-1 block">Хүйс</Label>
                           <Select value={gender} onValueChange={setGender}>
-                            <SelectTrigger className="w-[120px]">
-                              <SelectValue placeholder="Хүйс" />
+                            <SelectTrigger>
+                              <SelectValue placeholder="Хүйс сонгох" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="male">Эрэгтэй</SelectItem>
                               <SelectItem value="female">Эмэгтэй</SelectItem>
-                              <SelectItem value="other">Бусад</SelectItem>
+                              <SelectItem value="other">Бүх хүйс</SelectItem>
                             </SelectContent>
                           </Select>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={addParticipationCategory}
-                            disabled={!minAge && !maxAge}
-                            className="flex-1"
-                          >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Ангилал нэмэх
-                          </Button>
                         </div>
+
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={addParticipationCategory}
+                          disabled={!participationType || (!minAge && !maxAge)}
+                          className="w-full"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Ангилал нэмэх
+                        </Button>
+
+                        {participationType && (
+                          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p className="text-sm text-blue-800">
+                              <strong>Тайлбар:</strong> {
+                                participationType === "singles" ? "Дангаар тэмцээнд нэг тоглогч өөрийн нэрээр оролцоно." :
+                                participationType === "doubles" ? "Хос тэмцээнд хоёр тоглогч нэгдсэн багаар оролцоно." :
+                                participationType === "team" ? "Багийн тэмцээнд олон тоглогч нэгдсэн багаар оролцоно." : ""
+                              }
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
