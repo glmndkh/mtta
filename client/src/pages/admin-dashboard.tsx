@@ -1471,8 +1471,8 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                       className="w-12 h-12 object-contain rounded"
                     />
                   ) : (
-                    <div className="w-12 h-12 bg-secondary rounded flex items-center justify-center">
-                      <Upload className="w-6 h-6 text-text-secondary" />
+                    <div className="w-12 h-12 rounded overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                      <Upload className="w-6 h-6 text-gray-400" />
                     </div>
                   )}
                 </TableCell>
@@ -2674,7 +2674,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                     alt="Sponsor Logo"
                     className="w-16 h-16 object-contain border rounded"
                     onError={(e) => {
-                      console.error('Image load error:', e);
+                      console.error('Sponsor logo load error:', e);
                       e.currentTarget.style.display = 'none';
                     }}
                   />
@@ -3271,30 +3271,34 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
 
   const validateForm = () => {
     switch (selectedTab) {
-      case 'news':
-        return formData.title; // Зөвхөн гарчиг л заавал, бусад талбар заавал биш
+      case 'users':
+        return formData.firstName && formData.lastName && formData.email;
       case 'tournaments':
         return formData.name && formData.startDate && formData.endDate && formData.location;
-      case 'sponsors':
-        return formData.name && formData.logoUrl;
+      case 'teams':
+        return formData.name;
+      case 'leagues':
+        return formData.name && formData.startDate && formData.endDate;
+      case 'news':
+        return formData.title && formData.content;
+      case 'judges':
+        return formData.firstName && formData.lastName && formData.judgeType;
       case 'sliders':
         return formData.imageUrl; // Title заавал биш, зөвхөн зураг л заавал
       case 'clubs':
-        return formData.name;
+        return formData.name; // Only name is required for clubs
       case 'branches':
-        return formData.name && formData.imageUrl; // Add validation for imageUrl
+        return formData.name; // Remove imageUrl requirement
       case 'federation-members':
-        return formData.name;
+        return formData.name && formData.position;
       case 'national-team':
-        return formData.firstName && formData.lastName && formData.age;
-      case 'judges':
         return formData.firstName && formData.lastName;
       case 'coaches':
         return formData.clubId && (formData.userId || formData.name);
+      case 'sponsors':
+        return formData.name && formData.logoUrl;
       case 'champions':
-        return formData.name && formData.year && formData.gender && formData.championType;
-      case 'teams':
-        return formData.name;
+        return formData.name && formData.year;
       default:
         return true;
     }
