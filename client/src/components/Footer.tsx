@@ -63,12 +63,12 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-gray-900 dark:bg-gray-900 [data-theme='light']:bg-gray-100 text-white dark:text-white [data-theme='light']:text-gray-900 border-t border-gray-800 dark:border-gray-800 [data-theme='light']:border-gray-300">
+    <footer className="bg-gray-100 text-gray-900 border-t border-gray-300 dark:bg-gray-900 dark:text-white dark:border-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Newsletter Section */}
         <div className="text-center mb-12">
-          <h3 className="text-2xl font-bold mb-4 text-white dark:text-white [data-theme='light']:text-gray-900 light:text-gray-900">Мэдээний самбар</h3>
-          <p className="text-gray-400 dark:text-gray-400 [data-theme='light']:text-gray-600 light:text-gray-600 mb-6 max-w-lg mx-auto">
+          <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Мэдээний самбар</h3>
+          <p className="text-slate-600 dark:text-gray-400 mb-6 max-w-lg mx-auto">
             Ширээний теннисний сүүлийн үеийн мэдээ, тэмцээний мэдээллийг цаг алдалгүй авах
           </p>
           <form onSubmit={handleNewsletterSubmit} className="flex gap-2 max-w-md mx-auto">
@@ -77,7 +77,7 @@ export default function Footer() {
               placeholder="И-мэйл хаяг"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="bg-gray-800 dark:bg-gray-800 [data-theme='light']:bg-white light:bg-white border-gray-700 dark:border-gray-700 [data-theme='light']:border-gray-300 light:border-gray-300 text-white dark:text-white [data-theme='light']:text-gray-900 light:text-gray-900 placeholder-gray-400 dark:placeholder-gray-400 [data-theme='light']:placeholder-gray-500 light:placeholder-gray-500"
+              className="bg-white border border-gray-300 text-gray-900 placeholder-gray-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:placeholder-gray-400"
               required
             />
             <Button 
@@ -101,8 +101,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           {/* About Section */}
           <div>
-            <h4 className="text-lg font-semibold mb-4 text-mtta-green dark:text-mtta-green [data-theme='light']:text-green-600 light:text-green-600">Холбооны тухай</h4>
-            <ul className="space-y-2 text-gray-400 dark:text-gray-400 [data-theme='light']:text-gray-600 light:text-gray-600">
+            <h4 className="text-lg font-semibold mb-4 text-green-600 dark:text-mtta-green">Холбооны тухай</h4>
+            <ul className="space-y-2 text-slate-600 dark:text-gray-400">
               <li>
                 <Link href="/about">
                   <span className="hover:text-mtta-green transition-colors cursor-pointer">Танилцуулга</span>
@@ -134,7 +134,7 @@ export default function Footer() {
           {/* Sports Section */}
           <div>
             <h4 className="text-lg font-semibold mb-4 text-mtta-green dark:text-mtta-green [data-theme='light']:text-green-600 light:text-green-600">Спорт</h4>
-            <ul className="space-y-2 text-gray-400 dark:text-gray-400 [data-theme='light']:text-gray-600 light:text-gray-600">
+            <ul className="space-y-2 text-slate-600 dark:text-gray-400">
               <li>
                 <Link href="/tournaments">
                   <span className="hover:text-mtta-green transition-colors cursor-pointer">Тэмцээнүүд</span>
@@ -166,7 +166,7 @@ export default function Footer() {
           {/* Resources Section */}
           <div>
             <h4 className="text-lg font-semibold mb-4 text-mtta-green dark:text-mtta-green [data-theme='light']:text-green-600 light:text-green-600">Нөөц</h4>
-            <ul className="space-y-2 text-gray-400 dark:text-gray-400 [data-theme='light']:text-gray-600 light:text-gray-600">
+            <ul className="space-y-2 text-slate-600 dark:text-gray-400">
               <li>
                 <Link href="/news">
                   <span className="hover:text-mtta-green transition-colors cursor-pointer">Мэдээ</span>
