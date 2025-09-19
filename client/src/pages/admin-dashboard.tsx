@@ -3663,7 +3663,8 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         </div>
       </div>
 
-      <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+      <>
+        <Tabs value={selectedTab} onValueChange={setSelectedTab}>
         <TabsList className="flex flex-wrap gap-2 h-auto items-start w-full bg-background border border-border">
           <TabsTrigger value="stats" className="admin-tab-trigger flex items-center gap-2 data-[state=active]:bg-green-600 font-semibold text-base">
             <TrendingUp className="w-4 h-4" />
@@ -4241,8 +4242,8 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               </DialogFooter>
             </DialogContent>
           </Dialog>
-        </div>
-      </Tabs>
+        </>
+      </div>
     </div>
   );
 }
