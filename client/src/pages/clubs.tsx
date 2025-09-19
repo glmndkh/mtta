@@ -179,7 +179,7 @@ export default function Clubs() {
                       <span className="text-gray-400">Эзэмшигч:</span> {club.ownerName || 'Тодорхойгүй'}
                     </div>
                     <div className="text-gray-300 text-sm">
-                      <span className="text-gray-400">Ахлах дасгалжуулагч:</span> {club.coaches?.join(', ') || 'Тодорхойгүй'}
+                      <span className="text-gray-400">Ахлах дасгалжуулагч:</span> {club.headCoachName || 'Тодорхойгүй'}
                     </div>
                   </div>
 
@@ -192,7 +192,7 @@ export default function Clubs() {
                       Зочид нэгэдэн авчдаг
                     </Badge>
                     <Badge variant="outline" className="border-gray-600 text-gray-400 text-xs">
-                      Хувааарасан
+                      Хуваарасан
                     </Badge>
                   </div>
 

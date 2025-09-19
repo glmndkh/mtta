@@ -633,7 +633,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
       defaultData = {
         name: '',
         ownerName: '',
-        coachName: '',
+        coachName: '', // This will be changed to headCoachName
         sponsorLogo: '',
         playerIds: [],
       };
@@ -1649,11 +1649,11 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               />
             </div>
             <div>
-              <Label htmlFor="coachName">Клубын багш дасгалжуулагч</Label>
+              <Label htmlFor="headCoachName">Клубын багш дасгалжуулагч</Label>
               <Input
-                id="coachName"
-                value={formData.coachName || ''}
-                onChange={(e) => setFormData({...formData, coachName: e.target.value})}
+                id="headCoachName"
+                value={formData.headCoachName || ''}
+                onChange={(e) => setFormData({...formData, headCoachName: e.target.value})}
                 placeholder="Дасгалжуулагчийн нэр оруулна уу"
               />
             </div>
@@ -1785,7 +1785,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                 />
               </div>
             </div>
-            
+
             <div>
               <Label htmlFor="website">Холбоос</Label>
               <Input
