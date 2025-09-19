@@ -82,6 +82,8 @@ export default function AdminDashboard() {
   const [branchFilter, setBranchFilter] = useState("");
   const [memberFilter, setMemberFilter] = useState("");
   const [nationalTeamFilter, setNationalTeamFilter] = useState("");
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -4055,54 +4057,24 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                             <Label className="text-sm font-medium text-gray-700">Баталгаажуулах зураг:</Label>
                             <div className="mt-2">
                               {request.proofImageUrl ? (
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-3">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => {
-                                        const imageUrl = request.proofImageUrl.startsWith('http')
-                                          ? request.proofImageUrl
-                                          : `/objects/${request.proofImageUrl}`;
-                                        window.open(imageUrl, '_blank');
-                                      }}
-                                      className="flex items-center gap-2"
-                                    >
-                                      <Images className="w-4 h-4" />
-                                      Зураг харах
-                                    </Button>
-                                    <p className="text-xs text-gray-500">Зурагны хаяг: {request.proofImageUrl}</p>
-                                  </div>
-                                  <img
-                                    src={request.proofImageUrl.startsWith('http') ? request.proofImageUrl : `/objects/${request.proofImageUrl}`}
-                                    alt="Зэрэгийн үнэмлэх"
-                                    className="max-w-md max-h-64 object-contain border border-gray-300 rounded-lg cursor-pointer"
+                                <div className="flex items-center gap-3">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
                                     onClick={() => {
                                       const imageUrl = request.proofImageUrl.startsWith('http')
                                         ? request.proofImageUrl
-                                        : `/objects/${request.proofImageUrl}`;
-                                      window.open(imageUrl, '_blank');
+                                        : `/public-objects/${request.proofImageUrl}`;
+                                      setSelectedImageUrl(imageUrl);
+                                      setImageModalOpen(true);
                                     }}
-                                    onError={(e) => {
-                                      const target = e.currentTarget as HTMLImageElement;
-                                      if (!target.hasAttribute('data-fallback-tried')) {
-                                        target.setAttribute('data-fallback-tried', 'true');
-                                        target.src = `/public-objects/${request.proofImageUrl}`;
-                                      } else if (!target.hasAttribute('data-fallback-2-tried')) {
-                                        target.setAttribute('data-fallback-2-tried', 'true');
-                                        // Try direct path without objects prefix
-                                        const cleanPath = request.proofImageUrl.replace(/^\/+/, '').replace(/^(public-)?objects\//, '');
-                                        target.src = `/objects/${cleanPath}`;
-                                      } else if (!target.hasAttribute('data-fallback-3-tried')) {
-                                        target.setAttribute('data-fallback-3-tried', 'true');
-                                        // Try the raw path as-is
-                                        target.src = request.proofImageUrl;
-                                      } else {
-                                        target.style.display = 'none';
-                                        target.parentElement!.innerHTML = '<p class="text-red-500">Зураг ачаалахад алдаа гарлаа</p>';
-                                      }
-                                    }}
-                                  />
+                                    className="flex items-center gap-2"
+                                    data-testid={`button-view-image-${request.id}`}
+                                  >
+                                    <Images className="w-4 h-4" />
+                                    Зураг харах
+                                  </Button>
+                                  <p className="text-xs text-gray-500">Зураг байгаа</p>
                                 </div>
                               ) : (
                                 <p className="text-gray-500">Зураг байхгүй</p>
@@ -4282,6 +4254,46 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsTeamEnrollmentDialogOpen(false)}>
+                  Хаах
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Image Modal */}
+          <Dialog open={imageModalOpen} onOpenChange={setImageModalOpen}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+              <DialogHeader>
+                <DialogTitle>Зэрэгийн баталгаажуулах зураг</DialogTitle>
+              </DialogHeader>
+              <div className="flex justify-center">
+                {selectedImageUrl && (
+                  <img
+                    src={selectedImageUrl}
+                    alt="Зэрэгийн үнэмлэх"
+                    className="max-w-full max-h-[70vh] object-contain"
+                    onError={(e) => {
+                      const target = e.currentTarget as HTMLImageElement;
+                      if (!target.hasAttribute('data-fallback-tried')) {
+                        target.setAttribute('data-fallback-tried', 'true');
+                        // Try alternative path
+                        const alternativeUrl = selectedImageUrl.replace('/public-objects/', '/objects/');
+                        target.src = alternativeUrl;
+                      } else if (!target.hasAttribute('data-fallback-2-tried')) {
+                        target.setAttribute('data-fallback-2-tried', 'true');
+                        // Try without prefix
+                        const cleanPath = selectedImageUrl.replace(/^.*\/([^\/]+)$/, '$1');
+                        target.src = `/public-objects/${cleanPath}`;
+                      } else {
+                        target.style.display = 'none';
+                        target.parentElement!.innerHTML = '<p class="text-red-500 text-center">Зураг ачаалахад алдаа гарлаа</p>';
+                      }
+                    }}
+                  />
+                )}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setImageModalOpen(false)}>
                   Хаах
                 </Button>
               </DialogFooter>
