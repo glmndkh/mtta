@@ -4242,6 +4242,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
             </DialogContent>
           </Dialog>
         </div>
+      </div>
       </Tabs>
     </div>
   );
