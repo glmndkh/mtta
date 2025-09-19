@@ -4056,21 +4056,33 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                             <Label className="text-sm font-medium text-gray-700">Баталгаажуулах зураг:</Label>
                             <div className="mt-2">
                               {request.proofImageUrl ? (
-                                <img
-                                  src={request.proofImageUrl.startsWith('http') ? request.proofImageUrl : `/public-objects/${request.proofImageUrl}`}
-                                  alt="Зэрэгийн үнэмлэх"
-                                  className="max-w-md max-h-64 object-contain border border-gray-300 rounded-lg"
-                                  onError={(e) => {
-                                    const target = e.currentTarget as HTMLImageElement;
-                                    if (!target.hasAttribute('data-fallback-tried')) {
-                                      target.setAttribute('data-fallback-tried', 'true');
-                                      target.src = `/objects/${request.proofImageUrl}`;
-                                    } else {
-                                      target.style.display = 'none';
-                                      target.parentElement!.innerHTML = '<p class="text-red-500">Зураг ачаалахад алдаа гарлаа</p>';
-                                    }
-                                  }}
-                                />
+                                <div className="space-y-2">
+                                  <img
+                                    src={request.proofImageUrl.startsWith('http') ? request.proofImageUrl : `/objects/${request.proofImageUrl}`}
+                                    alt="Зэрэгийн үнэмлэх"
+                                    className="max-w-md max-h-64 object-contain border border-gray-300 rounded-lg"
+                                    onError={(e) => {
+                                      const target = e.currentTarget as HTMLImageElement;
+                                      if (!target.hasAttribute('data-fallback-tried')) {
+                                        target.setAttribute('data-fallback-tried', 'true');
+                                        target.src = `/public-objects/${request.proofImageUrl}`;
+                                      } else if (!target.hasAttribute('data-fallback-2-tried')) {
+                                        target.setAttribute('data-fallback-2-tried', 'true');
+                                        // Try direct path without objects prefix
+                                        const cleanPath = request.proofImageUrl.replace(/^\/+/, '').replace(/^(public-)?objects\//, '');
+                                        target.src = `/objects/${cleanPath}`;
+                                      } else if (!target.hasAttribute('data-fallback-3-tried')) {
+                                        target.setAttribute('data-fallback-3-tried', 'true');
+                                        // Try the raw path as-is
+                                        target.src = request.proofImageUrl;
+                                      } else {
+                                        target.style.display = 'none';
+                                        target.parentElement!.innerHTML = '<p class="text-red-500">Зураг ачаалахад алдаа гарлаа</p>';
+                                      }
+                                    }}
+                                  />
+                                  <p className="text-xs text-gray-500">Зурагны хаяг: {request.proofImageUrl}</p>
+                                </div>
                               ) : (
                                 <p className="text-gray-500">Зураг байхгүй</p>
                               )}
