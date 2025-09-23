@@ -202,7 +202,7 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
             alt='Event cover'
             className='absolute inset-0 h-full w-full object-cover object-center'
             loading={priority ? 'eager' : 'lazy'}
-            fetchPriority={priority ? 'high' : 'auto'}
+            fetchpriority={priority ? 'high' : 'auto'}
           />
         ) : (
           <div className='absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300' />
