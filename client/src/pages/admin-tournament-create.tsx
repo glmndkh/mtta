@@ -1213,12 +1213,23 @@ export default function AdminTournamentCreate() {
                         </div>
 
                         <div className="space-y-3">
-                          <Label className="text-sm font-medium mb-1 block">Насны ангилал</Label>
+                          <Label className="text-sm font-medium mb-1 block">
+                            Насны ангилал
+                            {(currentEvent.type === 'DOUBLES' || currentEvent.type === 'TEAM') && (
+                              <span className="text-xs text-blue-600 ml-2">
+                                {currentEvent.type === 'DOUBLES' ? 'Хосын тэмцээнд' : 'Багийн тэмцээнд'} насны ангилал нэмж болно
+                              </span>
+                            )}
+                          </Label>
                           <div className="grid grid-cols-3 gap-2">
                             <Input
                               value={currentDivision.name}
                               onChange={(e) => setCurrentDivision({ ...currentDivision, name: e.target.value })}
-                              placeholder="Ангилал (жишээ: U18)"
+                              placeholder={
+                                currentEvent.type === 'DOUBLES' ? "Жишээ: 18-25 нас хос" :
+                                currentEvent.type === 'TEAM' ? "Жишээ: Залуучуудын баг" :
+                                "Ангилал (жишээ: U18)"
+                              }
                               className="col-span-1"
                             />
                             <Input
@@ -1240,6 +1251,12 @@ export default function AdminTournamentCreate() {
                               className="col-span-1"
                             />
                           </div>
+                          {(currentEvent.type === 'DOUBLES' || currentEvent.type === 'TEAM') && (
+                            <p className="text-xs text-gray-600">
+                              💡 {currentEvent.type === 'DOUBLES' ? 'Хосын' : 'Багийн'} тэмцээнд олон насны ангилал үүсгэж болно. 
+                              Жишээ: 18-25 нас, 26-35 нас, 35+ нас
+                            </p>
+                          )}
                         </div>
 
                         <Button
@@ -1251,7 +1268,9 @@ export default function AdminTournamentCreate() {
                           className="w-full"
                         >
                           <Plus className="h-4 w-4 mr-2" />
-                          Насны ангилал нэмэх
+                          {currentEvent.type === 'DOUBLES' ? 'Хосын насны ангилал нэмэх' :
+                           currentEvent.type === 'TEAM' ? 'Багийн насны ангилал нэмэх' :
+                           'Насны ангилал нэмэх'}
                         </Button>
 
                         {currentEvent.divisions.length > 0 && (
