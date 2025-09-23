@@ -68,7 +68,7 @@ const FloatingActionButton: React.FC = () => {
         <img src="/logo.svg" alt="MTTA" className="fab-logo" />
       </button>
 
-      <style jsx>{`
+      <style>{`
         .fab-button {
           position: fixed;
           bottom: 24px;
