@@ -143,7 +143,9 @@ export default function AdminTournamentCreate() {
   });
 
   useEffect(() => {
-    form.setValue("events", events);
+    if (events.length > 0) {
+      form.setValue("events", events);
+    }
   }, [events, form]);
 
   // File upload handlers
@@ -340,7 +342,23 @@ export default function AdminTournamentCreate() {
   });
 
   const onSubmit = (data: any) => {
-    createTournamentMutation.mutate(data);
+    // Ensure we have events data
+    if (events.length === 0) {
+      toast({
+        title: "Алдаа",
+        description: "Хамгийн багадаа нэг тэмцээний төрөл нэмнэ үү",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Use events state instead of form data to ensure latest data
+    const submissionData = {
+      ...data,
+      events: events
+    };
+    
+    createTournamentMutation.mutate(submissionData);
   };
 
   // Helper function to generate age group label
@@ -403,8 +421,13 @@ export default function AdminTournamentCreate() {
       })),
     };
 
-    setEvents([...events, newEvent]);
-    // Reset current event form but preserve type-specific defaults
+    const updatedEvents = [...events, newEvent];
+    setEvents(updatedEvents);
+    
+    // Update form events immediately to prevent sync issues
+    form.setValue("events", updatedEvents);
+    
+    // Reset current event form
     setCurrentEvent({
       type: 'SINGLES',
       subType: '',
@@ -412,6 +435,11 @@ export default function AdminTournamentCreate() {
       divisions: []
     });
     setCurrentDivision({ name: '', minAge: '', maxAge: '' });
+    
+    toast({
+      title: "Амжилттай",
+      description: "Тэмцээний төрөл нэмэгдлээ",
+    });
   };
 
   const removeEvent = (eventToRemove: any) => {
