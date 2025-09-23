@@ -1563,6 +1563,164 @@ label {
   opacity: 1 !important;
 }
 
+/* Light mode specific fixes for clubs page and components */
+[data-theme="light"] .bg-black,
+.light .bg-black {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .text-white,
+.light .text-white {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .text-gray-200,
+[data-theme="light"] .text-gray-300,
+.light .text-gray-200,
+.light .text-gray-300 {
+  color: #475569 !important;
+}
+
+/* Club cards in light mode */
+[data-theme="light"] .bg-white .text-gray-900,
+[data-theme="light"] .card .text-gray-900,
+.light .bg-white .text-gray-900,
+.light .card .text-gray-900 {
+  color: #0f172a !important;
+}
+
+/* Search input in light mode */
+[data-theme="light"] .bg-white input,
+[data-theme="light"] .card input,
+.light .bg-white input,
+.light .card input {
+  color: #0f172a !important;
+  background: #ffffff !important;
+}
+
+/* Club detail content */
+[data-theme="light"] .bg-white p,
+[data-theme="light"] .bg-white span,
+[data-theme="light"] .bg-white div,
+[data-theme="light"] .card p,
+[data-theme="light"] .card span,
+[data-theme="light"] .card div,
+.light .bg-white p,
+.light .bg-white span,
+.light .bg-white div,
+.light .card p,
+.light .card span,
+.light .card div {
+  color: #0f172a !important;
+}
+
+/* Club badges and status indicators */
+[data-theme="light"] .bg-white .badge,
+[data-theme="light"] .card .badge,
+.light .bg-white .badge,
+.light .card .badge {
+  color: #0f172a !important;
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+/* Navigation in light mode */
+[data-theme="light"] .nav-dark,
+.light .nav-dark {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="light"] .nav-dark .nav-link,
+.light .nav-dark .nav-link {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .nav-dark .nav-link:hover,
+.light .nav-dark .nav-link:hover {
+  color: #16a34a !important;
+  background: rgba(22, 163, 74, 0.1) !important;
+}
+
+/* Modal and sheet backgrounds in light mode */
+[data-theme="light"] .sheet-content,
+[data-theme="light"] .modal-content,
+[data-theme="light"] .dialog-content,
+.light .sheet-content,
+.light .modal-content,
+.light .dialog-content {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+/* Hero section text in light mode */
+[data-theme="light"] .hero-text,
+[data-theme="light"] .hero-title,
+[data-theme="light"] .hero-description,
+.light .hero-text,
+.light .hero-title,
+.light .hero-description {
+  color: #0f172a !important;
+  text-shadow: none !important;
+}
+
+/* Ensure all text in light backgrounds is dark */
+[data-theme="light"] .bg-white *,
+[data-theme="light"] .bg-gray-50 *,
+[data-theme="light"] .bg-gray-100 *,
+[data-theme="light"] .card *,
+.light .bg-white *,
+.light .bg-gray-50 *,
+.light .bg-gray-100 *,
+.light .card * {
+  color: #0f172a !important;
+}
+
+/* Exception for buttons and special elements that should stay as designed */
+[data-theme="light"] .bg-white .btn-green,
+[data-theme="light"] .card .btn-green,
+[data-theme="light"] .bg-white .live-badge,
+[data-theme="light"] .card .live-badge,
+[data-theme="light"] .bg-white .badge.bg-green-500,
+[data-theme="light"] .card .badge.bg-green-500,
+.light .bg-white .btn-green,
+.light .card .btn-green,
+.light .bg-white .live-badge,
+.light .card .live-badge,
+.light .bg-white .badge.bg-green-500,
+.light .card .badge.bg-green-500 {
+  color: #ffffff !important;
+}
+
+/* Fix avatar and image overlays in light mode */
+[data-theme="light"] .avatar,
+.light .avatar {
+  border: 2px solid #e2e8f0 !important;
+}
+
+/* Dropdown content in light mode */
+[data-theme="light"] .dropdown-content,
+.light .dropdown-content {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 2px solid #cbd5e1 !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Page backgrounds for light mode */
+[data-theme="light"] .min-h-screen,
+[data-theme="light"] body,
+[data-theme="light"] html,
+.light .min-h-screen,
+.light body,
+.light html {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
 /* Global text color fixes for both themes */
 
 /* Light theme - All text should be dark */
