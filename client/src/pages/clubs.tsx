@@ -69,10 +69,10 @@ export default function Clubs() {
   if (isLoading) {
     return (
       <PageWithLoading>
-        <div className="min-h-screen bg-[#0a0a0a]">
+        <div className="min-h-screen bg-background text-foreground transition-colors">
           <Navigation />
           <div className="flex items-center justify-center h-64">
-            <div className="text-lg text-gray-300">Клубуудыг ачааллаж байна...</div>
+            <div className="text-lg text-muted-foreground">Клубуудыг ачааллаж байна...</div>
           </div>
         </div>
       </PageWithLoading>
@@ -82,10 +82,10 @@ export default function Clubs() {
   if (error) {
     return (
       <PageWithLoading>
-        <div className="min-h-screen bg-[#0a0a0a]">
+        <div className="min-h-screen bg-background text-foreground transition-colors">
           <Navigation />
           <div className="flex items-center justify-center h-64">
-            <div className="text-lg text-red-400">Клубууд ачаалахад алдаа гарлаа</div>
+            <div className="text-lg text-error">Клубууд ачаалахад алдаа гарлаа</div>
           </div>
         </div>
       </PageWithLoading>
@@ -94,19 +94,19 @@ export default function Clubs() {
 
   return (
     <PageWithLoading>
-      <div className="min-h-screen bg-[#0a0a0a]">
+      <div className="min-h-screen bg-background text-foreground transition-colors">
         <Navigation />
 
         {/* Header */}
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-white mb-2">Клубууд</h1>
-              <p className="text-gray-400">Спортын клубуудын бүртгэл</p>
+              <h1 className="text-3xl font-bold text-foreground mb-2">Клубууд</h1>
+              <p className="text-muted-foreground">Спортын клубуудын бүртгэл</p>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-white text-2xl font-bold">{allClubs.length}</span>
-              <span className="text-gray-400">клуб</span>
+              <span className="text-foreground text-2xl font-bold">{allClubs.length}</span>
+              <span className="text-muted-foreground">клуб</span>
             </div>
           </div>
 
@@ -114,12 +114,12 @@ export default function Clubs() {
           <div className="relative mb-8">
             <div className="flex gap-3">
               <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   placeholder="Клуб хайх..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 h-12 bg-[#1a1a1a] border-gray-700 text-white placeholder-gray-400 focus:border-gray-500"
+                  className="pl-12 h-12 rounded-lg border border-border bg-muted text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring"
                 />
               </div>
             </div>
@@ -128,11 +128,14 @@ export default function Clubs() {
           {/* Clubs Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredClubs.map((club: Club) => (
-              <Card key={club.id} className="bg-[#1a1a1a] border-gray-800 hover:border-gray-700 transition-all duration-200">
+              <Card
+                key={club.id}
+                className="border border-border text-card-foreground shadow-sm transition-colors duration-200 hover:border-ring"
+              >
                 <CardContent className="p-6">
                   {/* Header with avatar and info */}
                   <div className="flex items-start gap-4 mb-4">
-                    <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-700 flex-shrink-0">
+                    <div className="w-12 h-12 rounded-full overflow-hidden bg-muted flex-shrink-0">
                       {club.logoUrl ? (
                         <img
                           src={getImageUrl(club.logoUrl)}
@@ -146,10 +149,10 @@ export default function Clubs() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-white font-semibold text-lg mb-2 truncate">{club.name}</h3>
+                      <h3 className="mb-2 truncate text-lg font-semibold text-card-foreground">{club.name}</h3>
                       <div className="flex gap-2 flex-wrap">
                         {club.verified && (
-                          <Badge className="bg-blue-600 text-white text-xs">Баталгаажсан</Badge>
+                          <Badge className="text-xs">Баталгаажсан</Badge>
                         )}
                       </div>
                     </div>
@@ -177,32 +180,32 @@ export default function Clubs() {
                     return (
                       <div className="mb-4">
                         <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center gap-2 text-gray-300 text-sm">
-                            <Clock className="w-4 h-4" />
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Clock className="w-4 h-4 text-muted-foreground" />
                             <span>
                               {getDayName()}: {todaySchedule || 'Хаалттай'}
                             </span>
                           </div>
-                          
+
                           {/* Schedule Dropdown */}
                           {club.weeklySchedule && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="h-6 px-2 text-xs text-gray-300 hover:text-white hover:bg-gray-700"
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                                 >
                                   Цагийн хуваарь
                                   <ChevronDown className="w-3 h-3 ml-1" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent 
-                                align="end" 
-                                className="w-56 bg-[#2a2a2a] border-gray-600"
+                              <DropdownMenuContent
+                                align="end"
+                                className="w-56 border border-border bg-popover text-popover-foreground shadow-lg"
                               >
                                 <div className="p-2">
-                                  <h4 className="text-sm font-medium text-white mb-2">Цагийн хуваарь</h4>
+                                  <h4 className="mb-2 text-sm font-medium text-popover-foreground">Цагийн хуваарь</h4>
                                   <div className="space-y-1">
                                     {[
                                       { key: 'monday', label: 'Даваа' },
@@ -215,12 +218,12 @@ export default function Clubs() {
                                     ].map(({ key, label }) => {
                                       const schedule = club.weeklySchedule?.[key as keyof typeof club.weeklySchedule];
                                       return (
-                                        <div 
+                                        <div
                                           key={key}
-                                          className="flex justify-between items-center py-1 text-xs"
+                                          className="flex items-center justify-between py-1 text-xs text-muted-foreground"
                                         >
-                                          <span className="text-gray-300">{label}</span>
-                                          <span className="text-gray-400">
+                                          <span>{label}</span>
+                                          <span className="opacity-80">
                                             {schedule || 'Хаалттай'}
                                           </span>
                                         </div>
@@ -233,8 +236,8 @@ export default function Clubs() {
                           )}
                         </div>
                         {club.schedule && (
-                          <div className="flex items-center gap-2 text-gray-400 text-sm">
-                            <MapPin className="w-4 h-4" />
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <MapPin className="w-4 h-4 text-muted-foreground" />
                             <span>Ерөнхий хуваарь</span>
                           </div>
                         )}
@@ -244,34 +247,34 @@ export default function Clubs() {
 
                   {/* Owner and Coaches */}
                   <div className="mb-4 space-y-2">
-                    <div className="text-gray-300 text-sm">
-                      <span className="text-gray-400">Эзэмшигч:</span> {club.ownerName || 'Тодорхойгүй'}
+                    <div className="text-sm text-muted-foreground">
+                      <span className="opacity-80">Эзэмшигч:</span> {club.ownerName || 'Тодорхойгүй'}
                     </div>
-                    <div className="text-gray-300 text-sm">
-                      <span className="text-gray-400">Ахлах дасгалжуулагч:</span> {club.headCoachName || 'Тодорхойгүй'}
+                    <div className="text-sm text-muted-foreground">
+                      <span className="opacity-80">Ахлах дасгалжуулагч:</span> {club.headCoachName || 'Тодорхойгүй'}
                     </div>
                   </div>
 
-                  
+
 
                   {/* Contact Icons */}
                   <div className="flex items-center gap-2 mb-4">
                     {club.phone && (
                       <a
                         href={`tel:${club.phone}`}
-                        className="w-7 h-7 rounded-full bg-gray-700 hover:bg-gray-600 flex items-center justify-center transition-colors"
+                        className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:opacity-80"
                         title="Утасаар холбогдох"
                       >
-                        <Phone className="w-3.5 h-3.5 text-gray-300" />
+                        <Phone className="h-3.5 w-3.5" />
                       </a>
                     )}
                     {club.email && (
                       <a
                         href={`mailto:${club.email}`}
-                        className="w-7 h-7 rounded-full bg-gray-700 hover:bg-gray-600 flex items-center justify-center transition-colors"
+                        className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:opacity-80"
                         title="И-мэйлээр холбогдох"
                       >
-                        <Mail className="w-3.5 h-3.5 text-gray-300" />
+                        <Mail className="h-3.5 w-3.5" />
                       </a>
                     )}
                     {club.website && (
@@ -279,10 +282,10 @@ export default function Clubs() {
                         href={club.website}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-7 h-7 rounded-full bg-gray-700 hover:bg-gray-600 flex items-center justify-center transition-colors"
+                        className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:opacity-80"
                         title="Вэбсайт үзэх"
                       >
-                        <Globe className="w-3.5 h-3.5 text-gray-300" />
+                        <Globe className="h-3.5 w-3.5" />
                       </a>
                     )}
                     {club.facebook && (
@@ -311,8 +314,8 @@ export default function Clubs() {
 
                   {/* Location */}
                   <div className="mb-4">
-                    <div className="flex items-center gap-2 text-gray-300 text-sm">
-                      <MapPin className="w-4 h-4" />
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <MapPin className="w-4 h-4 text-muted-foreground" />
                       <span>{club.city || club.province || 'Байршил тодорхойгүй'}</span>
                     </div>
                   </div>
@@ -333,8 +336,12 @@ export default function Clubs() {
                     const isOpen = todaySchedule && todaySchedule.trim() !== '';
                     
                     return (
-                      <Button 
-                        className={`w-full ${isOpen ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} text-white`}
+                      <Button
+                        className={`w-full ${
+                          isOpen
+                            ? 'bg-success text-success-foreground hover:opacity-90'
+                            : 'bg-error text-error-foreground hover:opacity-90'
+                        }`}
                         size="sm"
                       >
                         {isOpen ? 'Нээлттэй' : 'Хаалттай'}
@@ -349,13 +356,13 @@ export default function Clubs() {
           {/* Empty State */}
           {filteredClubs.length === 0 && (
             <div className="text-center py-12">
-              <div className="w-16 h-16 rounded-full bg-gray-800 mx-auto mb-4 flex items-center justify-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
                 <span className="text-2xl">🏢</span>
               </div>
-              <h3 className="text-lg font-medium mb-2 text-white">
+              <h3 className="mb-2 text-lg font-medium text-foreground">
                 Клуб олдсонгүй
               </h3>
-              <p className="text-gray-400">
+              <p className="text-muted-foreground">
                 Хайлтын нөхцлөө өөрчилж үзнэ үү
               </p>
             </div>
