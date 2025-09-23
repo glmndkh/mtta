@@ -1,0 +1,188 @@
+1) Админ тал — мэдээллийн бүтэц
+
+Тэмцээн (Tournament)
+
+title, venue, start_date, end_date, reg_deadline
+
+rules_url, organizer, contact
+
+Төрөл/Ивэнт (Event)
+
+type: SINGLES | DOUBLES | TEAM
+
+name: “Эрэгтэй ганцаар”, “Хос U15”, “Багийн лиг”
+
+divisions: нас/рейтингийн ангилал (ж. “U13”, “1500–1799”)
+
+constraints: min_age, max_age, min_rating, max_rating, gender
+
+limits: max_entries, per_club_limit, per_player_event_limit
+
+fees: entry_fee_per_player, (per_team_fee багийн төрөлд)
+
+team_rules (TEAM): min_players, max_players, max_subs, mixed_required? гэх мэт
+
+Тамирчин (Player)
+
+uid, full_name, gender, birthdate, club, rating, phone/email, membership_status
+
+Хос (Pair) — DOUBLES
+
+pair_id, partner1_id, partner2_id, event_id, status: INVITED | CONFIRMED
+
+Баг (Team) — TEAM
+
+team_id, team_name, captain_id, event_id
+
+TeamMember: (team_id, player_id, role: CAPTAIN | PLAYER | SUB)
+
+Бүртгэл (Entry)
+
+entry_id, event_id, player_id (SINGLES)
+
+pair_id (DOUBLES) / team_id (TEAM)
+
+payment_status: PENDING | PAID | WAIVED
+
+seed_requested? (байрлал/сугалаанд зориулав)
+
+2) UI/UX урсгал
+A. Админ — “Тэмцээн үүсгэх”
+
+Ерөнхий мэдээлэл → 2) Төрөл/Ивэнт нэмэх (Add Event)
+
+Төрөл: ганцаар/хос/баг
+
+Нас/рейтингийн ангилал, хүйсийн шалгуур
+
+Дүрэм ба лимит: нэг тамирчин энэ ивэнтийн хүрээнд дээд тал нь N удаа бүртгүүлэх (ихэнхдээ 1), клуб тутмын лимит, нийт оролцогчийн дээд тоо
+
+Төлбөрийн бүтэц (хүний тоонд/багт тооцож салгах)
+
+Багийн төрөлд дор хаяж/дээд талын тоглогчийн тоо, сэлгээний тоо
+
+B. Тамирчны тал — “Бүртгүүлэх”
+
+1-р алхам: Нэвтрэх/үүдэх (утас+OTP эсвэл имэйл)
+
+2-р алхам: Профайл баталгаажуулах (төрсөн он, клуб, рейтинг)
+
+3-р алхам: Тэмцээн → Ивэнт сонгох
+
+Ганцаар: “Оролцоно” → систем шууд шалгуур (нас/рейтинг/хүйс) → OK бол Entry үүснэ.
+
+Хос:
+
+A) “Хос үүсгэх” (капитан маягаар өөрийгөө partner1 хийж, partner2-г хайж урьдаг)
+
+B) Урилга очсон тамирчин “Зөвшөөрөх” дарж байж Pair=CONFIRMED болно (хоёуланд нь нас/рейтинг/хүйсийн шалгуур давхцаж байгааг систем автоматаар шалгана).
+
+Баг:
+
+“Шинэ баг үүсгэх” → багийн нэр → капитан=өөрөө
+
+Гишүүдийг хайж Invite → хүн бүр Accept хийж байж баг VALID болно
+
+Систем min_players биелсэн эсэхийг, мөн mixed эсвэл клубын лимит зэрэг дүрмийг шалгана.
+
+4-р алхам: Төлбөр → нэг дор/тус бүр (ивэнтийн fee-н логикоос шалтгаална)
+
+5-р алхам: Баталгаажуулалт → Entry статус PAID бол “Бүртгэл амжилттай” + QR/ID
+
+3) Алгоритмын гол шалгалтууд (server-side rules)
+
+Eligibility check (ивэнт бүр):
+
+age_on(start_date) ∈ [min_age, max_age]
+
+rating ∈ [min_rating, max_rating]
+
+gender == required_gender (хэрэв заасан бол)
+
+membership_status == “valid” (шаардлагатай бол)
+
+Duplicate prevention:
+
+SINGLES: (event_id, player_id) уник.
+
+DOUBLES: (event_id, unordered_set{p1, p2}) уник.
+
+TEAM: (event_id, team_name) уник; team_member-д нэг тамирчин нэг ивэнтэд нэг багт л багтана.
+
+Capacity/Limit:
+
+event.max_entries хүрсэн бол Waitlist.
+
+per_club_limit, per_player_event_limit-г бүртгэл тутамд шалгах.
+
+Pair/Team Confirmation:
+
+DOUBLES: хоёр тал “confirm” болтлоо төлбөр нээгдэхгүй/эсвэл pending fee.
+
+TEAM: min_players биетэлгүй бол төлбөрт оруулахгүй (эсвэл captain-д хэсэгчлэн төлөх горим нээж болно).
+
+4) Төлбөрийн логик
+
+SINGLES: fee per player → Entry(PAID)
+
+DOUBLES: fee per player (2x) эсвэл pair total fee (капитан төлдөг)
+
+TEAM: per team fee эсвэл per player fee
+
+Хувааж төлөхийг зөвшөөрвөл: DOUBLES/TEAM-д partial payment tracking (payer_id, amount).
+
+5) Админ панель — практик үйлдлүүд
+
+Тэмцээн доторх Ивэнтүүдийн жагсаалт → оролцогчийн тоо/лимит/төлбөрийн статус харуулна.
+
+Хос/Багийн статус: INVITED / CONFIRMED / INCOMPLETE шүүлтүүр.
+
+Шууд засвар: багийн гишүүн солих, капитан солих (дедлайн дотор).
+
+Экспорт: Entries.csv (name, club, rating, event, paid), Pairs.csv, Teams.csv
+
+Сугалаа/Seeding: rating буюу өнгөрсөн амжилтаар seed → bracket үүсгэх (ганцаар/хос), TEAM round-robin/knockout сонголт.
+
+6) Өгөгдлийн схем (тойм)
+Tournaments(id, title, start_date, end_date, reg_deadline, venue, rules_url)
+Events(id, tournament_id, type, name, division, min_age, max_age, min_rating, max_rating, gender, max_entries, per_club_limit, per_player_event_limit, fee_per_player, fee_per_team, min_players, max_players, max_subs)
+
+Players(id, full_name, gender, birthdate, club, rating, phone, email, membership_status)
+
+Entries(id, event_id, player_id, pair_id, team_id, payment_status, created_at)
+
+Pairs(id, event_id, partner1_id, partner2_id, status) -- DOUBLES
+Teams(id, event_id, team_name, captain_id, status)     -- TEAM
+TeamMembers(team_id, player_id, role)                  -- CAPTAIN|PLAYER|SUB
+
+Payments(id, entry_id/null, pair_id/null, team_id/null, payer_id, amount, status)
+
+7) API/Action жишээ (frontend-д ойлгомжтой)
+
+POST /events/{id}/entries/singles → {player_id}
+
+POST /events/{id}/pairs → {partner2_id} (partner1 == current_user)
+
+POST /pairs/{id}/accept → partner2 confirm
+
+POST /events/{id}/teams → {team_name} (captain == current_user)
+
+POST /teams/{id}/invite → {player_id, role}
+
+POST /teams/{id}/accept → invited player confirm
+
+POST /checkout → {scope: "entry|pair|team", id, split?: true}
+
+8) Edge cases ба бодлого
+
+Cut-off date: Насыг тэмцээний эхлэх өдөр дээр тооц.
+
+Gender-mixed events: rule mixed_required=true бол DOUBLES/TEAM бүрд “наад зах нь 1 эмэгтэй/эрэгтэй” шалгалт.
+
+Club limit: Нэг клубээс ирсэн баг/хос/ганцаар нийт бүртгэл X-аас хэтрэхгүй.
+
+Waitlist: capacity дүүрвэл дараалал; хэн нэгэн цуцлавал автоматаар дуудах.
+
+Цуцлалт: дедлайн дотор/дараа — төлбөр буцаалтын бодлого.
+
+Seeding/Draw lock: Сугалаа нийтлэгдсэний дараа бүртгэл түгжинэ.
