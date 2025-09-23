@@ -341,13 +341,30 @@ const EventSelectionStep = ({
 
         let ageLabel = '';
         if (parsed.minAge && parsed.maxAge) {
-          ageLabel = `${parsed.minAge}-${parsed.maxAge}`;
+          // Enhanced age display for team and doubles
+          if (parsed.type === 'team' || parsed.type === 'doubles') {
+            ageLabel = `(${parsed.minAge}-${parsed.maxAge} нас)`;
+          } else {
+            ageLabel = `${parsed.minAge}-${parsed.maxAge}`;
+          }
         } else if (parsed.minAge) {
-          ageLabel = `${parsed.minAge}+`;
+          if (parsed.type === 'team' || parsed.type === 'doubles') {
+            ageLabel = `(${parsed.minAge}+ нас)`;
+          } else {
+            ageLabel = `${parsed.minAge}+`;
+          }
         } else if (parsed.maxAge) {
-          ageLabel = `U${parsed.maxAge}`;
+          if (parsed.type === 'team' || parsed.type === 'doubles') {
+            ageLabel = `(${parsed.maxAge} нас хүртэл)`;
+          } else {
+            ageLabel = `U${parsed.maxAge}`;
+          }
         } else {
-          ageLabel = 'Нээлттэй';
+          if (parsed.type === 'team' || parsed.type === 'doubles') {
+            ageLabel = '(насны хязгааргүй)';
+          } else {
+            ageLabel = 'Нээлттэй';
+          }
         }
 
         return `${typeLabel} ${genderLabel} ${ageLabel}`;
@@ -374,8 +391,31 @@ const EventSelectionStep = ({
     try {
       const parsed = JSON.parse(eventType);
 
+      const details = [];
+
+      // Enhanced details for team and doubles types
+      if (parsed.type === 'team' || parsed.type === 'doubles') {
+        if (parsed.minAge || parsed.maxAge) {
+          let ageDetails = 'Насны шаардлага: ';
+          if (parsed.minAge && parsed.maxAge) {
+            ageDetails += `${parsed.minAge}-${parsed.maxAge} нас`;
+          } else if (parsed.minAge) {
+            ageDetails += `${parsed.minAge} наснаас дээш`;
+          } else if (parsed.maxAge) {
+            ageDetails += `${parsed.maxAge} нас хүртэл`;
+          }
+          details.push(ageDetails);
+        }
+
+        // Add participation format info
+        if (parsed.type === 'team') {
+          details.push('Багийн тэмцээн');
+        } else if (parsed.type === 'doubles') {
+          details.push('Хосын тэмцээн');
+        }
+      }
+
       if (parsed.metadata) {
-        const details = [];
         if (parsed.metadata.isOpen) details.push('Нээлттэй');
         if (parsed.metadata.isJunior) details.push('Өсвөрийн');
         if (parsed.metadata.isSenior) details.push('Ахмадын');
@@ -389,11 +429,9 @@ const EventSelectionStep = ({
           };
           details.push(levelLabels[parsed.metadata.competitionLevel] || parsed.metadata.competitionLevel);
         }
-
-        return details.length > 0 ? details.join(' • ') : null;
       }
 
-      return null;
+      return details.length > 0 ? details.join(' • ') : null;
     } catch {
       return null;
     }
@@ -632,13 +670,30 @@ const ConfirmationStep = ({
 
         let ageLabel = '';
         if (parsed.minAge && parsed.maxAge) {
-          ageLabel = `${parsed.minAge}-${parsed.maxAge}`;
+          // Enhanced age display for team and doubles
+          if (parsed.type === 'team' || parsed.type === 'doubles') {
+            ageLabel = `(${parsed.minAge}-${parsed.maxAge} нас)`;
+          } else {
+            ageLabel = `${parsed.minAge}-${parsed.maxAge}`;
+          }
         } else if (parsed.minAge) {
-          ageLabel = `${parsed.minAge}+`;
+          if (parsed.type === 'team' || parsed.type === 'doubles') {
+            ageLabel = `(${parsed.minAge}+ нас)`;
+          } else {
+            ageLabel = `${parsed.minAge}+`;
+          }
         } else if (parsed.maxAge) {
-          ageLabel = `U${parsed.maxAge}`;
+          if (parsed.type === 'team' || parsed.type === 'doubles') {
+            ageLabel = `(${parsed.maxAge} нас хүртэл)`;
+          } else {
+            ageLabel = `U${parsed.maxAge}`;
+          }
         } else {
-          ageLabel = 'Нээлттэй';
+          if (parsed.type === 'team' || parsed.type === 'doubles') {
+            ageLabel = '(насны хязгааргүй)';
+          } else {
+            ageLabel = 'Нээлттэй';
+          }
         }
 
         return `${typeLabel} ${genderLabel} ${ageLabel}`;
