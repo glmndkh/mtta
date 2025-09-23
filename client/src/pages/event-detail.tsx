@@ -230,22 +230,6 @@ export default function EventDetail() {
                 )}
 
                 <div className="flex items-center gap-2">
-                  {/* Category Selection Dropdown */}
-                  {tournament.participationTypes && tournament.participationTypes.length > 0 && (
-                    <select
-                      className="rounded-full bg-white/20 text-white border border-white/30 px-3 py-2 text-sm font-medium backdrop-blur-sm focus:bg-white/30 focus:outline-none focus:ring-2 focus:ring-green-600"
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                    >
-                      <option value="" disabled>Ангилал сонгох</option>
-                      {tournament.participationTypes.map((type) => (
-                        <option key={type} value={type} className="text-gray-900">
-                          {type}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-
                   {!isUserRegistered ? (
                     <Button
                       onClick={() => {
