@@ -314,16 +314,47 @@ const EventSelectionStep = ({
     try {
       const parsed = JSON.parse(eventType);
       
+      // Handle new detailed structure
+      if (parsed.division) {
+        return parsed.division;
+      }
+      
+      // Handle legacy age format
       if (parsed.age) {
         const genderLabel = parsed.gender === 'female' ? 'Эмэгтэй' : 'Эрэгтэй';
         return `${parsed.age} нас ${genderLabel}`;
       }
       
+      // Handle min/max age format
       if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
         const genderLabel = parsed.gender === 'female' ? 'Эмэгтэй' : 'Эрэгтэй';
         return `${parsed.minAge}–${parsed.maxAge} нас ${genderLabel}`;
       }
       
+      // Generate label from type, gender, and age
+      if (parsed.type) {
+        const typeLabel = parsed.type === 'singles' ? 'Дангаар' : 
+                         parsed.type === 'doubles' ? 'Хос' : 
+                         parsed.type === 'team' ? 'Баг' : parsed.type;
+        
+        const genderLabel = parsed.gender === 'male' ? 'Эрэгтэй' : 
+                           parsed.gender === 'female' ? 'Эмэгтэй' : 'Нийт';
+        
+        let ageLabel = '';
+        if (parsed.minAge && parsed.maxAge) {
+          ageLabel = `${parsed.minAge}-${parsed.maxAge}`;
+        } else if (parsed.minAge) {
+          ageLabel = `${parsed.minAge}+`;
+        } else if (parsed.maxAge) {
+          ageLabel = `U${parsed.maxAge}`;
+        } else {
+          ageLabel = 'Нээлттэй';
+        }
+        
+        return `${typeLabel} ${genderLabel} ${ageLabel}`;
+      }
+      
+      // Fallback to predefined labels
       const labels: Record<string, string> = {
         'singles_men': 'Эрэгтэй дан',
         'singles_women': 'Эмэгтэй дан',
@@ -337,6 +368,35 @@ const EventSelectionStep = ({
       return labels[parsed.category || eventType] || eventType;
     } catch {
       return eventType;
+    }
+  };
+
+  const getEventDetails = (eventType: string): string | null => {
+    try {
+      const parsed = JSON.parse(eventType);
+      
+      if (parsed.metadata) {
+        const details = [];
+        if (parsed.metadata.isOpen) details.push('Нээлттэй');
+        if (parsed.metadata.isJunior) details.push('Өсвөрийн');
+        if (parsed.metadata.isSenior) details.push('Ахмадын');
+        if (parsed.metadata.competitionLevel) {
+          const levelLabels: Record<string, string> = {
+            'children': 'Хүүхдийн',
+            'junior': 'Өсвөрийн',
+            'adult': 'Том хүүхдийн',
+            'veterans': 'Ахмадын',
+            'open': 'Нээлттэй'
+          };
+          details.push(levelLabels[parsed.metadata.competitionLevel] || parsed.metadata.competitionLevel);
+        }
+        
+        return details.length > 0 ? details.join(' • ') : null;
+      }
+      
+      return null;
+    } catch {
+      return null;
     }
   };
 
@@ -394,6 +454,11 @@ const EventSelectionStep = ({
                     <label className="font-medium cursor-pointer">
                       {getEventLabel(eventType)}
                     </label>
+                    {getEventDetails(eventType) && (
+                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                        {getEventDetails(eventType)}
+                      </p>
+                    )}
                     {validation.error && (
                       <p className="text-xs text-red-500 mt-1">
                         {validation.error}

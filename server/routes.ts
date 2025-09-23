@@ -68,6 +68,8 @@ async function validateTournamentEligibility(
   if (!user) throw new Error("Хэрэглэгч олдсонгүй");
 
   const age = calculateAge(user.dateOfBirth || player.dateOfBirth);
+  
+  // Check tournament-wide requirements
   let requirements: any = {};
   if (tournament.requirements) {
     try {
@@ -76,48 +78,83 @@ async function validateTournamentEligibility(
   }
 
   if (requirements.minAge && age < requirements.minAge)
-    throw new Error("Нас шаардлага хангахгүй байна");
+    throw new Error("Тэмцээний ерөнхий нас шаардлага хангахгүй байна");
   if (requirements.maxAge && age > requirements.maxAge)
-    throw new Error("Нас шаардлага хангахгүй байна");
+    throw new Error("Тэмцээний ерөнхий нас шаардлага хангахгүй байна");
   if (requirements.gender && requirements.gender !== user.gender)
-    throw new Error("Хүйс тохирохгүй");
+    throw new Error("Тэмцээний хүйсний шаардлага хангахгүй");
 
+  // Validate specific participation type/division
   if (participationType) {
     if (
       tournament.participationTypes &&
       !tournament.participationTypes.includes(participationType)
     )
-      throw new Error("Буруу ангилал");
+      throw new Error("Буруу ангилал сонгогдсон");
+    
     let cat: any = {};
     try {
       cat = JSON.parse(participationType);
     } catch {
       cat = { age: participationType, gender: "male" };
     }
-    if (cat.gender && cat.gender !== user.gender)
-      throw new Error("Хүйс тохирохгүй");
 
-    let minAgeCat: number | undefined;
-    let maxAgeCat: number | undefined;
-
-    if (cat.minAge !== undefined || cat.maxAge !== undefined) {
-      if (typeof cat.minAge === "number") minAgeCat = cat.minAge;
-      if (typeof cat.maxAge === "number") maxAgeCat = cat.maxAge;
-    } else {
-      const ageStr = String(cat.age || "");
-      const nums = ageStr.match(/\d+/g)?.map(Number) || [];
-      if (nums.length === 1) {
-        if (/хүртэл/i.test(ageStr)) maxAgeCat = nums[0];
-        else minAgeCat = nums[0];
-      } else if (nums.length >= 2) {
-        [minAgeCat, maxAgeCat] = nums;
+    // Enhanced validation for detailed category structure
+    if (cat.id) {
+      // New detailed structure validation
+      if (cat.gender && cat.gender !== "other" && cat.gender !== user.gender) {
+        const requiredGender = cat.gender === "male" ? "эрэгтэй" : "эмэгтэй";
+        throw new Error(`Энэ ангилалд зөвхөн ${requiredGender} хүйстэн оролцох боломжтой`);
       }
-    }
 
-    if (minAgeCat !== undefined && age < minAgeCat)
-      throw new Error("Нас шаардлага хангахгүй байна");
-    if (maxAgeCat !== undefined && age > maxAgeCat)
-      throw new Error("Нас шаардлага хангахгүй байна");
+      if (cat.minAge !== null && age < cat.minAge) {
+        throw new Error(`Энэ ангилалд хамгийн багадаа ${cat.minAge} настай байх ёстой`);
+      }
+      
+      if (cat.maxAge !== null && age > cat.maxAge) {
+        throw new Error(`Энэ ангилалд хамгийн ихдээ ${cat.maxAge} настай байх ёстой`);
+      }
+
+      // Check metadata requirements if available
+      if (cat.metadata?.entryRequirements?.length > 0) {
+        for (const requirement of cat.metadata.entryRequirements) {
+          // Additional custom validation can be added here
+          console.log("Checking entry requirement:", requirement);
+        }
+      }
+
+      // Check if division has participant limits
+      if (cat.metadata?.maxParticipants) {
+        // This would require checking current registrations for this specific division
+        // Implementation depends on how you want to track division-specific registrations
+      }
+    } else {
+      // Legacy validation for backwards compatibility
+      if (cat.gender && cat.gender !== user.gender)
+        throw new Error("Хүйс тохирохгүй");
+
+      let minAgeCat: number | undefined;
+      let maxAgeCat: number | undefined;
+
+      if (cat.minAge !== undefined || cat.maxAge !== undefined) {
+        if (typeof cat.minAge === "number") minAgeCat = cat.minAge;
+        if (typeof cat.maxAge === "number") maxAgeCat = cat.maxAge;
+      } else {
+        const ageStr = String(cat.age || "");
+        const nums = ageStr.match(/\d+/g)?.map(Number) || [];
+        if (nums.length === 1) {
+          if (/хүртэл/i.test(ageStr)) maxAgeCat = nums[0];
+          else minAgeCat = nums[0];
+        } else if (nums.length >= 2) {
+          [minAgeCat, maxAgeCat] = nums;
+        }
+      }
+
+      if (minAgeCat !== undefined && age < minAgeCat)
+        throw new Error("Нас шаардлага хангахгүй байна");
+      if (maxAgeCat !== undefined && age > maxAgeCat)
+        throw new Error("Нас шаардлага хангахгүй байна");
+    }
   }
 }
 

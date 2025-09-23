@@ -316,6 +316,15 @@ export default function AdminTournamentCreate() {
   };
 
   const addParticipationCategory = () => {
+    if (!participationType) {
+      toast({
+        title: "Алдаа",
+        description: "Тэмцээний төрөл сонгоно уу",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!minAge && !maxAge) {
       toast({
         title: "Алдаа",
@@ -325,11 +334,27 @@ export default function AdminTournamentCreate() {
       return;
     }
 
+    // Create detailed category structure
     const category = {
+      id: `${participationType}_${gender}_${minAge || 'open'}_${maxAge || 'open'}_${Date.now()}`,
+      type: participationType, // "singles", "doubles", "team"
+      gender: gender, // "male", "female", "other"
       minAge: minAge ? parseInt(minAge) : null,
       maxAge: maxAge ? parseInt(maxAge) : null,
-      gender,
-      type: participationType,
+      ageGroup: generateAgeGroupLabel(minAge, maxAge),
+      division: generateDivisionName(participationType, gender, minAge, maxAge),
+      // Additional metadata for better organization
+      metadata: {
+        isOpen: !minAge && !maxAge, // Open age category
+        isJunior: maxAge && parseInt(maxAge) <= 18,
+        isSenior: minAge && parseInt(minAge) >= 35,
+        isAdult: (!minAge || parseInt(minAge) <= 18) && (!maxAge || parseInt(maxAge) >= 35),
+        competitionLevel: determineCompetitionLevel(minAge, maxAge),
+        entryRequirements: [],
+        maxParticipants: null,
+        entryFee: null,
+      },
+      createdAt: new Date().toISOString(),
     };
 
     // Create JSON string format for the category
@@ -345,6 +370,31 @@ export default function AdminTournamentCreate() {
     setMaxAge("");
   };
 
+  // Helper function to generate age group label
+  const generateAgeGroupLabel = (minAge: string, maxAge: string): string => {
+    if (!minAge && !maxAge) return "Open";
+    if (minAge && !maxAge) return `${minAge}+`;
+    if (!minAge && maxAge) return `U${maxAge}`;
+    return `${minAge}-${maxAge}`;
+  };
+
+  // Helper function to generate division name
+  const generateDivisionName = (type: string, gender: string, minAge: string, maxAge: string): string => {
+    const typeLabel = type === "singles" ? "Дангаар" : type === "doubles" ? "Хос" : "Баг";
+    const genderLabel = gender === "male" ? "Эрэгтэй" : gender === "female" ? "Эмэгтэй" : "Нийт";
+    const ageLabel = generateAgeGroupLabel(minAge, maxAge);
+    return `${typeLabel} ${genderLabel} ${ageLabel}`;
+  };
+
+  // Helper function to determine competition level
+  const determineCompetitionLevel = (minAge: string, maxAge: string): string => {
+    if (!minAge && !maxAge) return "open";
+    if (maxAge && parseInt(maxAge) <= 12) return "children";
+    if (maxAge && parseInt(maxAge) <= 18) return "junior";
+    if (minAge && parseInt(minAge) >= 35) return "veterans";
+    return "adult";
+  };
+
   const removeParticipationCategory = (categoryToRemove: any) => {
     setParticipationCategories(participationCategories.filter((t) => t !== categoryToRemove));
 
@@ -354,6 +404,12 @@ export default function AdminTournamentCreate() {
   };
 
   const formatCategoryLabel = (category: any) => {
+    // Use the division name if available (from enhanced structure)
+    if (category.division) {
+      return category.division;
+    }
+
+    // Fallback to legacy format
     let label = "";
     
     // Add participation type
@@ -383,6 +439,18 @@ export default function AdminTournamentCreate() {
       label += " (Бусад)";
     }
     return label;
+  };
+
+  const formatCategoryDetails = (category: any) => {
+    if (!category.metadata) return null;
+    
+    const details = [];
+    if (category.metadata.isOpen) details.push("Нээлттэй");
+    if (category.metadata.isJunior) details.push("Өсвөрийн");
+    if (category.metadata.isSenior) details.push("Ахмадын");
+    if (category.metadata.competitionLevel) details.push(category.metadata.competitionLevel);
+    
+    return details.length > 0 ? details.join(", ") : null;
   };
 
 
@@ -987,16 +1055,39 @@ export default function AdminTournamentCreate() {
                         render={() => (
                           <FormItem>
                             <FormLabel>Ангиллууд *</FormLabel>
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                               {participationCategories.map((type, index) => (
-                                <div key={index} className="flex items-center space-x-2">
-                                  <span className="text-sm">{formatCategoryLabel(type)}</span>
+                                <div key={index} className="flex items-start justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+                                  <div className="flex-1">
+                                    <div className="flex items-center space-x-2 mb-1">
+                                      <span className="text-sm font-medium">{formatCategoryLabel(type)}</span>
+                                      {type.metadata?.isOpen && (
+                                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Нээлттэй</span>
+                                      )}
+                                      {type.metadata?.isJunior && (
+                                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Өсвөрийн</span>
+                                      )}
+                                      {type.metadata?.isSenior && (
+                                        <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">Ахмадын</span>
+                                      )}
+                                    </div>
+                                    {type.ageGroup && (
+                                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                                        Насны хүрээ: {type.ageGroup} | Төрөл: {type.type} | Хүйс: {type.gender === "male" ? "Эрэгтэй" : type.gender === "female" ? "Эмэгтэй" : "Бүгд"}
+                                      </p>
+                                    )}
+                                    {type.metadata?.competitionLevel && (
+                                      <p className="text-xs text-gray-500 dark:text-gray-500">
+                                        Түвшин: {type.metadata.competitionLevel}
+                                      </p>
+                                    )}
+                                  </div>
                                   <Button
                                     type="button"
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => removeParticipationCategory(type)}
-                                    className="h-4 w-4 p-0 text-red-500 hover:text-red-700"
+                                    className="h-6 w-6 p-0 text-red-500 hover:text-red-700 ml-2"
                                   >
                                     <X className="h-3 w-3" />
                                   </Button>
