@@ -249,23 +249,27 @@ export default function AdminTournamentCreate() {
       setRegulationDocumentUrl(tournament.regulationDocumentUrl || "");
 
       // Parse participation types
-      if (tournament.participationTypes) {
-        const categories = tournament.participationTypes.map((type: string) => {
+      if (tournament.events) { // Changed from tournament.participationTypes to tournament.events
+        const parsedEvents = tournament.events.map((eventData: any) => {
           try {
-            const parsed = JSON.parse(type);
-            // Ensure backward compatibility - if no type field, default to singles
-            if (!parsed.type) {
-              parsed.type = "singles";
-            }
-            return parsed;
-          } catch {
-            return { minAge: null, maxAge: null, gender: "male", type: "singles" };
+            const parsed = typeof eventData === 'string' ? JSON.parse(eventData) : eventData;
+            // Ensure required fields exist and have default values if necessary
+            return {
+              type: parsed.type || 'SINGLES',
+              subType: parsed.subType || '',
+              genderReq: parsed.genderReq || 'ANY',
+              divisions: parsed.divisions || [{ name: '', minAge: null, maxAge: null }]
+            };
+          } catch (e) {
+            console.error("Error parsing event data:", e);
+            // Return a default structure or handle error appropriately
+            return { type: 'SINGLES', genderReq: 'ANY', divisions: [{ name: '', minAge: null, maxAge: null }] };
           }
         });
-        setParticipationCategories(categories);
+        setEvents(parsedEvents);
 
-        // Update form participationTypes with the existing data
-        form.setValue("participationTypes", tournament.participationTypes || []);
+        // Update form events with the existing data
+        form.setValue("events", parsedEvents);
       }
     }
   }, [isEditing, existingTournament, form]);
@@ -284,6 +288,14 @@ export default function AdminTournamentCreate() {
           backgroundImageUrl,
           regulationDocumentUrl,
           schedule: data.schedule ? JSON.stringify({ description: data.schedule }) : null,
+          events: data.events.map((event: any) => ({ // Ensure events are stringified if necessary by the API
+            ...event,
+            divisions: event.divisions.map((div: any) => ({
+              name: div.name,
+              minAge: div.minAge !== null && div.minAge !== '' ? parseInt(div.minAge) : null,
+              maxAge: div.maxAge !== null && div.maxAge !== '' ? parseInt(div.maxAge) : null,
+            }))
+          }))
         })
       });
     },
@@ -292,8 +304,8 @@ export default function AdminTournamentCreate() {
         title: "Амжилттай",
         description: isEditing ? "Тэмцээн амжилттай шинэчлэгдлээ" : "Тэмцээн амжилттай үүсгэгдлээ",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/tournaments"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/tournaments"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tournaments'] });
 
       if (isEditing) {
         // Navigate back to tournament list after editing
@@ -331,144 +343,111 @@ export default function AdminTournamentCreate() {
     createTournamentMutation.mutate(data);
   };
 
-  const addParticipationCategory = () => {
-    if (!participationType) {
-      toast({
-        title: "Алдаа",
-        description: "Тэмцээний төрөл сонгоно уу",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!minAge && !maxAge) {
-      toast({
-        title: "Алдаа",
-        description: "Хамгийн багадаа нэг нас оруулна уу",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Create detailed category structure
-    const category = {
-      id: `${participationType}_${gender}_${minAge || 'open'}_${maxAge || 'open'}_${Date.now()}`,
-      type: participationType, // "singles", "doubles", "team"
-      gender: gender, // "male", "female", "other"
-      minAge: minAge ? parseInt(minAge) : null,
-      maxAge: maxAge ? parseInt(maxAge) : null,
-      ageGroup: generateAgeGroupLabel(minAge, maxAge),
-      division: generateDivisionName(participationType, gender, minAge, maxAge),
-      // Additional metadata for better organization
-      metadata: {
-        isOpen: !minAge && !maxAge, // Open age category
-        isJunior: maxAge && parseInt(maxAge) <= 18,
-        isSenior: minAge && parseInt(minAge) >= 35,
-        isAdult: (!minAge || parseInt(minAge) <= 18) && (!maxAge || parseInt(maxAge) >= 35),
-        competitionLevel: determineCompetitionLevel(minAge, maxAge),
-        entryRequirements: [],
-        maxParticipants: null,
-        entryFee: null,
-      },
-      createdAt: new Date().toISOString(),
-    };
-
-    // Create JSON string format for the category
-    const categoryString = JSON.stringify(category);
-
-    setParticipationCategories([...participationCategories, category]);
-
-    // Update form participationTypes with JSON string
-    const currentTypes = form.getValues("participationTypes") || [];
-    form.setValue("participationTypes", [...currentTypes, categoryString]);
-
-    setMinAge("");
-    setMaxAge("");
-  };
-
   // Helper function to generate age group label
-  const generateAgeGroupLabel = (minAge: string, maxAge: string): string => {
-    if (!minAge && !maxAge) return "Open";
-    if (minAge && !maxAge) return `${minAge}+`;
-    if (!minAge && maxAge) return `U${maxAge}`;
-    return `${minAge}-${maxAge}`;
+  const generateAgeGroupLabel = (minAge: string | number | null, maxAge: string | number | null): string => {
+    if (minAge === null && maxAge === null) return "Open";
+    if (minAge !== null && maxAge !== null) return `${minAge}-${maxAge}`;
+    if (minAge !== null) return `${minAge}+`;
+    if (maxAge !== null) return `U${maxAge}`;
+    return "";
   };
 
   // Helper function to generate division name
-  const generateDivisionName = (type: string, gender: string, minAge: string, maxAge: string): string => {
+  const generateDivisionName = (type: string, gender: string, minAge: string | number | null, maxAge: string | number | null): string => {
     const typeLabel = type === "singles" ? "Дангаар" : type === "doubles" ? "Хос" : "Баг";
-    const genderLabel = gender === "male" ? "Эрэгтэй" : gender === "female" ? "Эмэгтэй" : "Нийт";
+    const genderLabel = gender === "male" ? "Эрэгтэй" : gender === "female" ? "Эмэгтэй" : "Холимог";
     const ageLabel = generateAgeGroupLabel(minAge, maxAge);
     return `${typeLabel} ${genderLabel} ${ageLabel}`;
   };
 
   // Helper function to determine competition level
-  const determineCompetitionLevel = (minAge: string, maxAge: string): string => {
-    if (!minAge && !maxAge) return "open";
-    if (maxAge && parseInt(maxAge) <= 12) return "children";
-    if (maxAge && parseInt(maxAge) <= 18) return "junior";
-    if (minAge && parseInt(minAge) >= 35) return "veterans";
+  const determineCompetitionLevel = (minAge: string | number | null, maxAge: string | number | null): string => {
+    if (minAge === null && maxAge === null) return "open";
+    const currentMaxAge = maxAge !== null ? parseInt(maxAge as string) : null;
+    const currentMinAge = minAge !== null ? parseInt(minAge as string) : null;
+
+    if (currentMaxAge !== null && currentMaxAge <= 12) return "children";
+    if (currentMaxAge !== null && currentMaxAge <= 18) return "junior";
+    if (currentMinAge !== null && currentMinAge >= 35) return "veterans";
     return "adult";
   };
 
-  const removeParticipationCategory = (categoryToRemove: any) => {
-    setParticipationCategories(participationCategories.filter((t) => t !== categoryToRemove));
+  const addEvent = () => {
+    // Basic validation
+    if (!currentEvent.type) {
+      toast({ title: "Алдаа", description: "Тэмцээний төрөл сонгоно уу", variant: "destructive" });
+      return;
+    }
+    if (currentEvent.divisions.length === 0) {
+      toast({ title: "Алдаа", description: "Хамгийн багадаа нэг насны ангилал оруулна уу", variant: "destructive" });
+      return;
+    }
 
-    const currentTypes = form.getValues("participationTypes") || [];
-    const updatedTypes = currentTypes.filter(type => type !== JSON.stringify(categoryToRemove));
-    form.setValue("participationTypes", updatedTypes);
+    const newEvent = {
+      ...currentEvent,
+      divisions: currentEvent.divisions.map(div => ({
+        name: div.name || generateDivisionName(currentEvent.type, currentEvent.genderReq.toLowerCase() as any, div.minAge, div.maxAge),
+        minAge: div.minAge !== '' ? parseInt(div.minAge as string) : null,
+        maxAge: div.maxAge !== '' ? parseInt(div.maxAge as string) : null,
+      })),
+    };
+
+    setEvents([...events, newEvent]);
+    // Reset current event form
+    setCurrentEvent({
+      type: 'SINGLES',
+      subType: '',
+      genderReq: 'ANY',
+      divisions: []
+    });
+    setCurrentDivision({ name: '', minAge: '', maxAge: '' });
   };
 
-  const formatCategoryLabel = (category: any) => {
-    // Use the division name if available (from enhanced structure)
-    if (category.division) {
-      return category.division;
+  const removeEvent = (eventToRemove: any) => {
+    setEvents(events.filter((e) => e !== eventToRemove));
+  };
+
+  const addDivisionToEvent = () => {
+    if (!currentDivision.name && (!currentDivision.minAge && !currentDivision.maxAge)) {
+      toast({ title: "Алдаа", description: "Ангилалын нэр эсвэл насны хязгаар оруулна уу", variant: "destructive" });
+      return;
     }
 
-    // Fallback to legacy format
-    let label = "";
-    
-    // Add participation type
-    if (category.type === "singles") {
-      label += "Дангаар";
-    } else if (category.type === "doubles") {
-      label += "Хос";
-    } else if (category.type === "team") {
-      label += "Баг";
-    }
-    
-    // Add age range
-    if (category.minAge !== null && category.maxAge !== null) {
-      label += ` ${category.minAge}–${category.maxAge}`;
-    } else if (category.minAge !== null) {
-      label += ` ${category.minAge}+`;
-    } else if (category.maxAge !== null) {
-      label += ` Under ${category.maxAge}`;
-    }
+    // Generate default name if not provided
+    const divisionName = currentDivision.name || generateDivisionName(currentEvent.type, currentEvent.genderReq.toLowerCase() as any, currentDivision.minAge, currentDivision.maxAge);
 
-    // Add gender
-    if (category.gender === "male") {
-      label += " (Эрэгтэй)";
-    } else if (category.gender === "female") {
-      label += " (Эмэгтэй)";
-    } else if (category.gender === "other") {
-      label += " (Бусад)";
+    const newDivision = {
+      name: divisionName,
+      minAge: currentDivision.minAge,
+      maxAge: currentDivision.maxAge,
+    };
+
+    setCurrentEvent({
+      ...currentEvent,
+      divisions: [...currentEvent.divisions, newDivision],
+    });
+    setCurrentDivision({ name: '', minAge: '', maxAge: '' }); // Reset division form
+  };
+
+  const removeDivisionFromEvent = (divisionToRemove: any) => {
+    setCurrentEvent({
+      ...currentEvent,
+      divisions: currentEvent.divisions.filter((d) => d !== divisionToRemove),
+    });
+  };
+
+
+  const formatEventLabel = (event: any) => {
+    let label = `${event.type === "SINGLES" ? "Дангаар" : event.type === "DOUBLES" ? "Хос" : "Баг"}`;
+    if (event.genderReq !== 'ANY') {
+      label += ` (${event.genderReq === 'MALE' ? 'Эрэгтэй' : event.genderReq === 'FEMALE' ? 'Эмэгтэй' : 'Холимог'})`;
+    }
+    if (event.divisions && event.divisions.length > 0) {
+      const divisionLabels = event.divisions.map((div: any) => div.name || generateDivisionName(event.type, event.genderReq.toLowerCase() as any, div.minAge, div.maxAge));
+      label += `: ${divisionLabels.join(', ')}`;
     }
     return label;
   };
-
-  const formatCategoryDetails = (category: any) => {
-    if (!category.metadata) return null;
-    
-    const details = [];
-    if (category.metadata.isOpen) details.push("Нээлттэй");
-    if (category.metadata.isJunior) details.push("Өсвөрийн");
-    if (category.metadata.isSenior) details.push("Ахмадын");
-    if (category.metadata.competitionLevel) details.push(category.metadata.competitionLevel);
-    
-    return details.length > 0 ? details.join(", ") : null;
-  };
-
 
   if (isLoading || (isEditing && tournamentLoading)) {
     return (
@@ -588,12 +567,12 @@ export default function AdminTournamentCreate() {
                   <div>
                     <h3 className="font-medium mb-2">Оролцооны төрлүүд:</h3>
                     <div className="flex flex-wrap gap-2">
-                      {participationCategories.length > 0 ? participationCategories.map((type: any, index: number) => (
+                      {events.length > 0 ? events.map((event: any, index: number) => (
                         <span
                           key={index}
                           className="px-3 py-1 bg-mtta-green text-white rounded-full text-sm"
                         >
-                          {formatCategoryLabel(type)}
+                          {formatEventLabel(event)}
                         </span>
                       )) : (
                         <span className="text-gray-500 text-sm">Ангилал нэмээгүй байна</span>
@@ -682,7 +661,7 @@ export default function AdminTournamentCreate() {
                       />
 
                       <div>
-                        <Label>Дэлгэрэнгүй тайлбар (зураг, видео, файл хавсаргах боломжтой)</Label>
+                        <Label className="text-sm font-medium mb-2 block">Дэлгэрэнгүй тайлбар (зураг, видео, файл хавсаргах боломжтой)</Label>
                         <RichTextEditor
                           content={richDescription}
                           onChange={setRichDescription}
@@ -1046,8 +1025,8 @@ export default function AdminTournamentCreate() {
                                 checked={field.value}
                                 onCheckedChange={field.onChange}
                                 className={`${
-                                  field.value 
-                                    ? 'data-[state=checked]:bg-green-500' 
+                                  field.value
+                                    ? 'data-[state=checked]:bg-green-500'
                                     : 'data-[state=unchecked]:bg-white border-2 border-gray-300'
                                 }`}
                                 data-testid="switch-publish"
@@ -1059,58 +1038,44 @@ export default function AdminTournamentCreate() {
                     </CardContent>
                   </Card>
 
-                  {/* Participation Categories */}
+                  {/* Participation Categories (Now Events) */}
                   <Card>
                     <CardHeader>
-                      <CardTitle>Насны ангилал</CardTitle>
+                      <CardTitle>Тэмцээний төрлүүд ба ангилал</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <FormField
                         control={form.control}
-                        name="participationTypes"
+                        name="events"
                         render={() => (
                           <FormItem>
-                            <FormLabel>Ангиллууд *</FormLabel>
+                            <FormLabel>Тэмцээний төрлүүд *</FormLabel>
                             <div className="space-y-3">
-                              {participationCategories.map((type, index) => (
+                              {events.map((event, index) => (
                                 <div key={index} className="flex items-start justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border">
                                   <div className="flex-1">
                                     <div className="flex items-center space-x-2 mb-1">
-                                      <span className="text-sm font-medium">{formatCategoryLabel(type)}</span>
-                                      {type.metadata?.isOpen && (
-                                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Нээлттэй</span>
-                                      )}
-                                      {type.metadata?.isJunior && (
-                                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Өсвөрийн</span>
-                                      )}
-                                      {type.metadata?.isSenior && (
-                                        <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">Ахмадын</span>
-                                      )}
+                                      <span className="text-sm font-medium">{formatEventLabel(event)}</span>
                                     </div>
-                                    {type.ageGroup && (
-                                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                                        Насны хүрээ: {type.ageGroup} | Төрөл: {type.type} | Хүйс: {type.gender === "male" ? "Эрэгтэй" : type.gender === "female" ? "Эмэгтэй" : "Бүгд"}
-                                      </p>
-                                    )}
-                                    {type.metadata?.competitionLevel && (
-                                      <p className="text-xs text-gray-500 dark:text-gray-500">
-                                        Түвшин: {type.metadata.competitionLevel}
-                                      </p>
+                                    {event.divisions && event.divisions.length > 0 && (
+                                      <div className="text-xs text-gray-600 dark:text-gray-400">
+                                        Ангилалууд: {event.divisions.map((div: any) => div.name).join(', ')}
+                                      </div>
                                     )}
                                   </div>
                                   <Button
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => removeParticipationCategory(type)}
+                                    onClick={() => removeEvent(event)}
                                     className="h-6 w-6 p-0 text-red-500 hover:text-red-700 ml-2"
                                   >
                                     <X className="h-3 w-3" />
                                   </Button>
                                 </div>
                               ))}
-                              {participationCategories.length === 0 && (
-                                <p className="text-sm text-gray-500">Ангилал нэмээгүй байна</p>
+                              {events.length === 0 && (
+                                <p className="text-sm text-gray-500">Тэмцээний төрөл нэмээгүй байна</p>
                               )}
                             </div>
                             <FormMessage />
@@ -1122,25 +1087,25 @@ export default function AdminTournamentCreate() {
 
                       <div className="space-y-4">
                         <div>
-                          <Label className="text-sm font-medium mb-2 block">Оролцооны төрөл</Label>
-                          <Select value={participationType} onValueChange={setParticipationType}>
+                          <Label className="text-sm font-medium mb-1 block">Төрөл</Label>
+                          <Select value={currentEvent.type} onValueChange={(value: any) => setCurrentEvent({ ...currentEvent, type: value })}>
                             <SelectTrigger>
                               <SelectValue placeholder="Тэмцээний төрөл сонгох" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="singles">
+                              <SelectItem value="SINGLES">
                                 <div className="flex flex-col">
                                   <span className="font-medium">Дангаар тэмцээн</span>
                                   <span className="text-xs text-gray-500">Нэг тоглогчийн тэмцээн</span>
                                 </div>
                               </SelectItem>
-                              <SelectItem value="doubles">
+                              <SelectItem value="DOUBLES">
                                 <div className="flex flex-col">
                                   <span className="font-medium">Хос тэмцээн</span>
                                   <span className="text-xs text-gray-500">Хоёр тоглогчийн баг</span>
                                 </div>
                               </SelectItem>
-                              <SelectItem value="team">
+                              <SelectItem value="TEAM">
                                 <div className="flex flex-col">
                                   <span className="font-medium">Багийн тэмцээн</span>
                                   <span className="text-xs text-gray-500">Олон тоглогчийн баг</span>
@@ -1150,77 +1115,86 @@ export default function AdminTournamentCreate() {
                           </Select>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <Label className="text-sm font-medium mb-1 block">Хамгийн бага нас</Label>
-                            <Input
-                              value={minAge}
-                              onChange={(e) => setMinAge(e.target.value)}
-                              placeholder="Жишээ: 18"
-                              type="number"
-                              min="0"
-                              max="100"
-                              onKeyPress={(e) =>
-                                e.key === "Enter" &&
-                                (e.preventDefault(), addParticipationCategory())
-                              }
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-sm font-medium mb-1 block">Хамгийн их нас</Label>
-                            <Input
-                              value={maxAge}
-                              onChange={(e) => setMaxAge(e.target.value)}
-                              placeholder="Жишээ: 35"
-                              type="number"
-                              min="0"
-                              max="100"
-                              onKeyPress={(e) =>
-                                e.key === "Enter" &&
-                                (e.preventDefault(), addParticipationCategory())
-                              }
-                            />
-                          </div>
-                        </div>
-
                         <div>
                           <Label className="text-sm font-medium mb-1 block">Хүйс</Label>
-                          <Select value={gender} onValueChange={setGender}>
+                          <Select value={currentEvent.genderReq} onValueChange={(value: any) => setCurrentEvent({ ...currentEvent, genderReq: value })}>
                             <SelectTrigger>
                               <SelectValue placeholder="Хүйс сонгох" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="male">Эрэгтэй</SelectItem>
-                              <SelectItem value="female">Эмэгтэй</SelectItem>
-                              <SelectItem value="other">Бүх хүйс</SelectItem>
+                              <SelectItem value="ANY">Бүгд</SelectItem>
+                              <SelectItem value="MALE">Эрэгтэй</SelectItem>
+                              <SelectItem value="FEMALE">Эмэгтэй</SelectItem>
+                              <SelectItem value="MIXED">Холимог</SelectItem>
                             </SelectContent>
                           </Select>
+                        </div>
+
+                        <div className="space-y-3">
+                          <Label className="text-sm font-medium mb-1 block">Насны ангилал</Label>
+                          <div className="grid grid-cols-3 gap-2">
+                            <Input
+                              value={currentDivision.name}
+                              onChange={(e) => setCurrentDivision({ ...currentDivision, name: e.target.value })}
+                              placeholder="Ангилал (жишээ: U18)"
+                              className="col-span-1"
+                            />
+                            <Input
+                              value={currentDivision.minAge}
+                              onChange={(e) => setCurrentDivision({ ...currentDivision, minAge: e.target.value })}
+                              placeholder="Нас (хамгийн бага)"
+                              type="number"
+                              min="0"
+                              max="100"
+                              className="col-span-1"
+                            />
+                            <Input
+                              value={currentDivision.maxAge}
+                              onChange={(e) => setCurrentDivision({ ...currentDivision, maxAge: e.target.value })}
+                              placeholder="Нас (хамгийн их)"
+                              type="number"
+                              min="0"
+                              max="100"
+                              className="col-span-1"
+                            />
+                          </div>
                         </div>
 
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={addParticipationCategory}
-                          disabled={!participationType || (!minAge && !maxAge)}
+                          onClick={addDivisionToEvent}
+                          disabled={!currentDivision.name && !currentDivision.minAge && !currentDivision.maxAge}
                           className="w-full"
                         >
                           <Plus className="h-4 w-4 mr-2" />
-                          Ангилал нэмэх
+                          Насны ангилал нэмэх
                         </Button>
 
-                        {participationType && (
+                        {currentEvent.divisions.length > 0 && (
                           <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                             <p className="text-sm text-blue-800">
-                              <strong>Тайлбар:</strong> {
-                                participationType === "singles" ? "Дангаар тэмцээнд нэг тоглогч өөрийн нэрээр оролцоно." :
-                                participationType === "doubles" ? "Хос тэмцээнд хоёр тоглогч нэгдсэн багаар оролцоно." :
-                                participationType === "team" ? "Багийн тэмцээнд олон тоглогч нэгдсэн багаар оролцоно." : ""
-                              }
+                              <strong>Одоогийн ангилалууд:</strong> {currentEvent.divisions.map((div: any, idx: number) => (
+                                <span key={idx} className="mr-2">
+                                  {div.name || generateDivisionName(currentEvent.type, currentEvent.genderReq.toLowerCase() as any, div.minAge, div.maxAge)}
+                                  {idx < currentEvent.divisions.length - 1 && ','}
+                                </span>
+                              ))}
                             </p>
                           </div>
                         )}
                       </div>
+
+                      <Button
+                        type="button"
+                        onClick={addEvent}
+                        disabled={!currentEvent.type || currentEvent.divisions.length === 0}
+                        className="w-full mt-4"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Төрөл нэмэх
+                      </Button>
                     </CardContent>
                   </Card>
 
