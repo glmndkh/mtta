@@ -353,16 +353,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Password reset token үүсгэх
       const token = await storage.createPasswordResetToken(email);
 
-      // Энд и-мэйл илгээх логик байх ёстой
-      // Одоохондоо зөвхөн console.log хийе
-      console.log(`Password reset token for ${email}: ${token}`);
-      console.log(`Reset URL: ${req.protocol}://${req.get('host')}/reset-password?token=${token}`);
-
-      res.json({ 
-        message: "Нууц үг сэргээх код таны и-мэйлд илгээгдлээ",
-        // Development-д л token буцаах
-        ...(process.env.NODE_ENV === 'development' && { token })
-      });
+      // И-мэйл илгээх
+      try {
+        const { emailService } = await import('./emailService');
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        await emailService.sendPasswordResetEmail(email, token, baseUrl);
+        
+        console.log(`Password reset email sent to ${email}`);
+        
+        res.json({ 
+          message: "Нууц үг сэргээх код таны и-мэйлд илгээгдлээ",
+          // Development-д л token буцаах
+          ...(process.env.NODE_ENV === 'development' && { token })
+        });
+      } catch (emailError) {
+        console.error("Failed to send password reset email:", emailError);
+        
+        // И-мэйл илгээх амжилтгүй болсон ч token-г console-д хэвлэе
+        console.log(`Password reset token for ${email}: ${token}`);
+        console.log(`Reset URL: ${req.protocol}://${req.get('host')}/reset-password?token=${token}`);
+        
+        // Хэрэглэгчид амжилттай гэж хариулах (security-гийн хувьд)
+        res.json({ 
+          message: "Нууц үг сэргээх код таны и-мэйлд илгээгдлээ",
+          ...(process.env.NODE_ENV === 'development' && { token, error: "Email service unavailable" })
+        });
+      }
     } catch (e) {
       console.error("Error in forgot password:", e);
       res.status(500).json({ message: "Серверийн алдаа гарлаа" });
