@@ -622,7 +622,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createClub(clubData: InsertClub): Promise<Club> {
-    const [club] = await db.insert(clubs).values([clubData]).returning();
+    const [club] = await db.insert(clubs).values(clubData).returning();
     return club;
   }
 
@@ -1060,7 +1060,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createNews(newsData: InsertNews): Promise<News> {
-    const [news] = await db.insert(newsFeed).values([newsData]).returning();
+    const [news] = await db.insert(newsFeed).values(newsData).returning();
     return news;
   }
 
