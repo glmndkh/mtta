@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import { Button } from "@/components/ui/button";
@@ -56,8 +55,8 @@ type RegistrationFormProps = {
 };
 
 // Step indicator component
-const StepIndicator = ({ currentStep, completedSteps }: { 
-  currentStep: RegistrationStep; 
+const StepIndicator = ({ currentStep, completedSteps }: {
+  currentStep: RegistrationStep;
   completedSteps: Set<RegistrationStep>;
 }) => {
   const steps: { key: RegistrationStep; label: string; icon: React.ComponentType }[] = [
@@ -84,8 +83,8 @@ const StepIndicator = ({ currentStep, completedSteps }: {
             )}>
               <div className={cn(
                 "w-10 h-10 rounded-full flex items-center justify-center border-2",
-                isActive ? "border-green-600 bg-green-50" : 
-                isCompleted ? "border-green-500 bg-green-500" : 
+                isActive ? "border-green-600 bg-green-50" :
+                isCompleted ? "border-green-500 bg-green-500" :
                 "border-gray-300 bg-white",
                 isCompleted && "text-white"
               )}>
@@ -107,11 +106,11 @@ const StepIndicator = ({ currentStep, completedSteps }: {
 };
 
 // Profile verification step
-const ProfileVerificationStep = ({ 
-  profile, 
-  tournament, 
-  onNext, 
-  onBack 
+const ProfileVerificationStep = ({
+  profile,
+  tournament,
+  onNext,
+  onBack
 }: {
   profile: any;
   tournament: RegistrationFormProps['tournament'];
@@ -163,7 +162,7 @@ const ProfileVerificationStep = ({
           <div>
             <Label className="text-sm font-medium">Хүйс</Label>
             <div className="mt-1 p-3 border rounded-md bg-gray-50">
-              {profile?.gender === 'male' ? 'Эрэгтэй' : 
+              {profile?.gender === 'male' ? 'Эрэгтэй' :
                profile?.gender === 'female' ? 'Эмэгтэй' : 'Тодорхойгүй'}
             </div>
           </div>
@@ -226,7 +225,7 @@ const ProfileVerificationStep = ({
           <ul className="text-sm text-green-700 dark:text-green-300 space-y-1">
             <li>• Нас нь тэмцээний эхлэх өдрөөр тооцогдоно</li>
             <li>• Профайлын мэдээлэл буруу бол тэмцээнээс хасагдах магадлалтай</li>
-            <li>• Рейтинг тодорхойгүй бол системд бүртгэгдсэний дараа нэмнэ үү</li>
+            <li>• Рейтинг тодорхойгүй бол системд бүртгэгдсний дараа нэмнэ үү</li>
           </ul>
         </div>
 
@@ -256,13 +255,13 @@ const ProfileVerificationStep = ({
 };
 
 // Event selection step
-const EventSelectionStep = ({ 
+const EventSelectionStep = ({
   tournament,
   profile,
   selectedEvent,
   setSelectedEvent,
   onNext,
-  onBack 
+  onBack
 }: {
   tournament: RegistrationFormProps['tournament'];
   profile: any;
@@ -290,7 +289,7 @@ const EventSelectionStep = ({
 
     try {
       const parsed = JSON.parse(eventType);
-      
+
       if (parsed.gender && profile.gender && parsed.gender !== profile.gender) {
         const requiredGender = parsed.gender === 'male' ? 'эрэгтэй' : 'эмэгтэй';
         return { valid: false, error: `Энэ төрөлд зөвхөн ${requiredGender} оролцох боломжтой` };
@@ -299,7 +298,7 @@ const EventSelectionStep = ({
       if (parsed.minAge && age < parsed.minAge) {
         return { valid: false, error: `Хамгийн багадаа ${parsed.minAge} настай байх ёстой` };
       }
-      
+
       if (parsed.maxAge && age > parsed.maxAge) {
         return { valid: false, error: `Хамгийн ихдээ ${parsed.maxAge} настай байх ёстой` };
       }
@@ -313,33 +312,33 @@ const EventSelectionStep = ({
   const getEventLabel = (eventType: string): string => {
     try {
       const parsed = JSON.parse(eventType);
-      
+
       // Handle new detailed structure
       if (parsed.division) {
         return parsed.division;
       }
-      
+
       // Handle legacy age format
       if (parsed.age) {
         const genderLabel = parsed.gender === 'female' ? 'Эмэгтэй' : 'Эрэгтэй';
         return `${parsed.age} нас ${genderLabel}`;
       }
-      
+
       // Handle min/max age format
       if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
         const genderLabel = parsed.gender === 'female' ? 'Эмэгтэй' : 'Эрэгтэй';
         return `${parsed.minAge}–${parsed.maxAge} нас ${genderLabel}`;
       }
-      
+
       // Generate label from type, gender, and age
       if (parsed.type) {
-        const typeLabel = parsed.type === 'singles' ? 'Дангаар' : 
-                         parsed.type === 'doubles' ? 'Хос' : 
+        const typeLabel = parsed.type === 'singles' ? 'Дангаар' :
+                         parsed.type === 'doubles' ? 'Хос' :
                          parsed.type === 'team' ? 'Баг' : parsed.type;
-        
-        const genderLabel = parsed.gender === 'male' ? 'Эрэгтэй' : 
+
+        const genderLabel = parsed.gender === 'male' ? 'Эрэгтэй' :
                            parsed.gender === 'female' ? 'Эмэгтэй' : 'Нийт';
-        
+
         let ageLabel = '';
         if (parsed.minAge && parsed.maxAge) {
           ageLabel = `${parsed.minAge}-${parsed.maxAge}`;
@@ -350,10 +349,10 @@ const EventSelectionStep = ({
         } else {
           ageLabel = 'Нээлттэй';
         }
-        
+
         return `${typeLabel} ${genderLabel} ${ageLabel}`;
       }
-      
+
       // Fallback to predefined labels
       const labels: Record<string, string> = {
         'singles_men': 'Эрэгтэй дан',
@@ -374,7 +373,7 @@ const EventSelectionStep = ({
   const getEventDetails = (eventType: string): string | null => {
     try {
       const parsed = JSON.parse(eventType);
-      
+
       if (parsed.metadata) {
         const details = [];
         if (parsed.metadata.isOpen) details.push('Нээлттэй');
@@ -390,10 +389,10 @@ const EventSelectionStep = ({
           };
           details.push(levelLabels[parsed.metadata.competitionLevel] || parsed.metadata.competitionLevel);
         }
-        
+
         return details.length > 0 ? details.join(' • ') : null;
       }
-      
+
       return null;
     } catch {
       return null;
@@ -476,8 +475,8 @@ const EventSelectionStep = ({
             <ChevronLeft className="w-4 h-4" />
             Буцах
           </Button>
-          <Button 
-            onClick={onNext} 
+          <Button
+            onClick={onNext}
             disabled={!selectedEvent || !validateEligibility(selectedEvent).valid}
             className="flex items-center gap-2"
           >
@@ -491,11 +490,11 @@ const EventSelectionStep = ({
 };
 
 // Payment step
-const PaymentStep = ({ 
+const PaymentStep = ({
   tournament,
   selectedEvent,
   onNext,
-  onBack 
+  onBack
 }: {
   tournament: RegistrationFormProps['tournament'];
   selectedEvent: string;
@@ -577,8 +576,8 @@ const PaymentStep = ({
             <ChevronLeft className="w-4 h-4" />
             Буцах
           </Button>
-          <Button 
-            onClick={onNext} 
+          <Button
+            onClick={onNext}
             disabled={!paymentMethod}
             className="flex items-center gap-2"
           >
@@ -592,15 +591,106 @@ const PaymentStep = ({
 };
 
 // Confirmation step
-const ConfirmationStep = ({ 
+const ConfirmationStep = ({
   tournament,
   selectedEvent,
-  onBack 
+  onBack
 }: {
   tournament: RegistrationFormProps['tournament'];
   selectedEvent: string;
   onBack: () => void;
 }) => {
+  const getEventLabel = (eventType: string): string => {
+    try {
+      const parsed = JSON.parse(eventType);
+
+      // Handle new detailed structure
+      if (parsed.division) {
+        return parsed.division;
+      }
+
+      // Handle legacy age format
+      if (parsed.age) {
+        const genderLabel = parsed.gender === 'female' ? 'Эмэгтэй' : 'Эрэгтэй';
+        return `${parsed.age} нас ${genderLabel}`;
+      }
+
+      // Handle min/max age format
+      if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
+        const genderLabel = parsed.gender === 'female' ? 'Эмэгтэй' : 'Эрэгтэй';
+        return `${parsed.minAge}–${parsed.maxAge} нас ${genderLabel}`;
+      }
+
+      // Generate label from type, gender, and age
+      if (parsed.type) {
+        const typeLabel = parsed.type === 'singles' ? 'Дангаар' :
+                         parsed.type === 'doubles' ? 'Хос' :
+                         parsed.type === 'team' ? 'Баг' : parsed.type;
+
+        const genderLabel = parsed.gender === 'male' ? 'Эрэгтэй' :
+                           parsed.gender === 'female' ? 'Эмэгтэй' : 'Нийт';
+
+        let ageLabel = '';
+        if (parsed.minAge && parsed.maxAge) {
+          ageLabel = `${parsed.minAge}-${parsed.maxAge}`;
+        } else if (parsed.minAge) {
+          ageLabel = `${parsed.minAge}+`;
+        } else if (parsed.maxAge) {
+          ageLabel = `U${parsed.maxAge}`;
+        } else {
+          ageLabel = 'Нээлттэй';
+        }
+
+        return `${typeLabel} ${genderLabel} ${ageLabel}`;
+      }
+
+      // Fallback to predefined labels
+      const labels: Record<string, string> = {
+        'singles_men': 'Эрэгтэй дан',
+        'singles_women': 'Эмэгтэй дан',
+        'doubles_men': 'Эрэгтэй хос',
+        'doubles_women': 'Эмэгтэй хос',
+        'mixed_doubles': 'Холимог хос',
+        'singles': 'Дан',
+        'doubles': 'Хос',
+        'team': 'Баг',
+      };
+      return labels[parsed.category || eventType] || eventType;
+    } catch {
+      return eventType;
+    }
+  };
+
+  const getEventDetails = (eventType: string): string | null => {
+    try {
+      const parsed = JSON.JSON.parse(eventType);
+
+      if (parsed.metadata) {
+        const details = [];
+        if (parsed.metadata.isOpen) details.push('Нээлттэй');
+        if (parsed.metadata.isJunior) details.push('Өсвөрийн');
+        if (parsed.metadata.isSenior) details.push('Ахмадын');
+        if (parsed.metadata.competitionLevel) {
+          const levelLabels: Record<string, string> = {
+            'children': 'Хүүхдийн',
+            'junior': 'Өсвөрийн',
+            'adult': 'Том хүүхдийн',
+            'veterans': 'Ахмадын',
+            'open': 'Нээлттэй'
+          };
+          details.push(levelLabels[parsed.metadata.competitionLevel] || parsed.metadata.competitionLevel);
+        }
+
+        return details.length > 0 ? details.join(' • ') : null;
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+
   return (
     <Card className="max-w-2xl mx-auto">
       <CardHeader>
@@ -621,16 +711,25 @@ const ConfirmationStep = ({
           <p className="text-gray-600 dark:text-gray-400 mb-6">
             Таны тэмцээнд оролцох бүртгэл амжилттай хийгдлээ
           </p>
-          
+
           <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg border border-green-200 dark:border-green-800">
             <div className="space-y-3 text-left">
               <div className="flex justify-between">
                 <span className="font-medium">Тэмцээн:</span>
                 <span>{tournament.name}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Төрөл:</span>
-                <span>{selectedEvent}</span>
+              <div className="flex flex-col gap-2">
+                <span className="font-medium">Бүртгэгдсэн төрөл:</span>
+                <div className="bg-green-100 border border-green-300 rounded-lg p-3">
+                  <div className="font-medium text-green-800 mb-1">
+                    {getEventLabel(selectedEvent)}
+                  </div>
+                  {getEventDetails(selectedEvent) && (
+                    <div className="text-sm text-green-600">
+                      {getEventDetails(selectedEvent)}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">Бүртгэгдсэн:</span>
@@ -638,7 +737,7 @@ const ConfirmationStep = ({
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">Статус:</span>
-                <Badge className="bg-green-600 text-white">Төлсөн</Badge>
+                <Badge className="bg-green-600 text-white">Бүртгэгдсэн</Badge>
               </div>
             </div>
           </div>
@@ -744,9 +843,9 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
   const handleNext = () => {
     const stepOrder: RegistrationStep[] = ['auth', 'profile', 'event-selection', 'payment', 'confirmation'];
     const currentIndex = stepOrder.indexOf(currentStep);
-    
+
     setCompletedSteps(prev => new Set([...prev, currentStep]));
-    
+
     if (currentIndex < stepOrder.length - 1) {
       setCurrentStep(stepOrder[currentIndex + 1]);
     }
@@ -755,7 +854,7 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
   const handleBack = () => {
     const stepOrder: RegistrationStep[] = ['auth', 'profile', 'event-selection', 'payment', 'confirmation'];
     const currentIndex = stepOrder.indexOf(currentStep);
-    
+
     if (currentIndex > 0) {
       setCurrentStep(stepOrder[currentIndex - 1]);
     }
@@ -792,7 +891,7 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
   return (
     <div className="max-w-4xl mx-auto">
       <StepIndicator currentStep={currentStep} completedSteps={completedSteps} />
-      
+
       {currentStep === 'auth' && (
         <Card className="max-w-2xl mx-auto">
           <CardHeader className="text-center">
@@ -815,7 +914,7 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
       )}
 
       {currentStep === 'profile' && profile && (
-        <ProfileVerificationStep 
+        <ProfileVerificationStep
           profile={profile}
           tournament={tournament}
           onNext={handleNext}

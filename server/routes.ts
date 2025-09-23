@@ -67,7 +67,13 @@ async function validateTournamentEligibility(
   const user = await storage.getUser(player.userId);
   if (!user) throw new Error("Хэрэглэгч олдсонгүй");
 
-  const age = calculateAge(user.dateOfBirth || player.dateOfBirth);
+  const tournamentStartDate = new Date(tournament.startDate);
+  const birthDate = new Date(user.dateOfBirth || player.dateOfBirth || '1990-01-01');
+  let age = tournamentStartDate.getFullYear() - birthDate.getFullYear();
+  const monthDiff = tournamentStartDate.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && tournamentStartDate.getDate() < birthDate.getDate())) {
+    age--;
+  }
   
   // Check tournament-wide requirements
   let requirements: any = {};
@@ -84,7 +90,7 @@ async function validateTournamentEligibility(
   if (requirements.gender && requirements.gender !== user.gender)
     throw new Error("Тэмцээний хүйсний шаардлага хангахгүй");
 
-  // Validate specific participation type/division
+  // Validate specific participation type/event
   if (participationType) {
     if (
       tournament.participationTypes &&
@@ -92,55 +98,71 @@ async function validateTournamentEligibility(
     )
       throw new Error("Буруу ангилал сонгогдсон");
     
-    let cat: any = {};
+    let event: any = {};
     try {
-      cat = JSON.parse(participationType);
+      event = JSON.parse(participationType);
     } catch {
-      cat = { age: participationType, gender: "male" };
+      // Legacy format fallback
+      event = { type: "SINGLES", divisions: [{ name: participationType }] };
     }
 
-    // Enhanced validation for detailed category structure
-    if (cat.id) {
-      // New detailed structure validation
-      if (cat.gender && cat.gender !== "other" && cat.gender !== user.gender) {
-        const requiredGender = cat.gender === "male" ? "эрэгтэй" : "эмэгтэй";
-        throw new Error(`Энэ ангилалд зөвхөн ${requiredGender} хүйстэн оролцох боломжтой`);
-      }
-
-      if (cat.minAge !== null && age < cat.minAge) {
-        throw new Error(`Энэ ангилалд хамгийн багадаа ${cat.minAge} настай байх ёстой`);
+    // Validate event structure
+    if (event.type && event.divisions && event.divisions.length > 0) {
+      // New event structure validation
+      const division = event.divisions[0]; // For registration, we typically select one division
+      
+      // Check age requirements for the division
+      if (division.minAge !== undefined && age < division.minAge) {
+        throw new Error(`Энэ ангилалд хамгийн багадаа ${division.minAge} настай байх ёстой (таны нас: ${age})`);
       }
       
-      if (cat.maxAge !== null && age > cat.maxAge) {
-        throw new Error(`Энэ ангилалд хамгийн ихдээ ${cat.maxAge} настай байх ёстой`);
+      if (division.maxAge !== undefined && age > division.maxAge) {
+        throw new Error(`Энэ ангилалд хамгийн ихдээ ${division.maxAge} настай байх ёстой (таны нас: ${age})`);
       }
 
-      // Check metadata requirements if available
-      if (cat.metadata?.entryRequirements?.length > 0) {
-        for (const requirement of cat.metadata.entryRequirements) {
-          // Additional custom validation can be added here
-          console.log("Checking entry requirement:", requirement);
+      // Check gender requirements based on event type and subType
+      if (event.type === 'DOUBLES') {
+        if (event.subType === 'MEN_DOUBLES' && user.gender !== 'male') {
+          throw new Error("Эрэгтэй хос тэмцээнд зөвхөн эрэгтэй тоглогч оролцох боломжтой");
         }
+        if (event.subType === 'WOMEN_DOUBLES' && user.gender !== 'female') {
+          throw new Error("Эмэгтэй хос тэмцээнд зөвхөн эмэгтэй тоглогч оролцох боломжтой");
+        }
+        // MIXED_DOUBLES - both genders allowed
+      }
+      
+      if (event.type === 'TEAM') {
+        if (event.subType === 'MEN_TEAM' && user.gender !== 'male') {
+          throw new Error("Эрэгтэй багийн тэмцээнд зөвхөн эрэгтэй тоглогч оролцох боломжтой");
+        }
+        if (event.subType === 'WOMEN_TEAM' && user.gender !== 'female') {
+          throw new Error("Эмэгтэй багийн тэмцээнд зөвхөн эмэгтэй тоглогч оролцох боломжтой");
+        }
+        // MIXED_TEAM - both genders allowed
       }
 
-      // Check if division has participant limits
-      if (cat.metadata?.maxParticipants) {
-        // This would require checking current registrations for this specific division
-        // Implementation depends on how you want to track division-specific registrations
+      // Check general gender requirements
+      if (event.genderReq) {
+        if (event.genderReq === 'MALE' && user.gender !== 'male') {
+          throw new Error("Энэ төрөлд зөвхөн эрэгтэй тоглогч оролцох боломжтой");
+        }
+        if (event.genderReq === 'FEMALE' && user.gender !== 'female') {
+          throw new Error("Энэ төрөлд зөвхөн эмэгтэй тоглогч оролцох боломжтой");
+        }
       }
     } else {
       // Legacy validation for backwards compatibility
-      if (cat.gender && cat.gender !== user.gender)
+      if (event.gender && event.gender !== user.gender)
         throw new Error("Хүйс тохирохгүй");
 
       let minAgeCat: number | undefined;
       let maxAgeCat: number | undefined;
 
-      if (cat.minAge !== undefined || cat.maxAge !== undefined) {
-        if (typeof cat.minAge === "number") minAgeCat = cat.minAge;
-        if (typeof cat.maxAge === "number") maxAgeCat = cat.maxAge;
+      if (event.minAge !== undefined || event.maxAge !== undefined) {
+        if (typeof event.minAge === "number") minAgeCat = event.minAge;
+        if (typeof event.maxAge === "number") maxAgeCat = event.maxAge;
       } else {
-        const ageStr = String(cat.age || "");
+        const ageStr = String(event.age || "");
         const nums = ageStr.match(/\d+/g)?.map(Number) || [];
         if (nums.length === 1) {
           if (/хүртэл/i.test(ageStr)) maxAgeCat = nums[0];
@@ -151,9 +173,9 @@ async function validateTournamentEligibility(
       }
 
       if (minAgeCat !== undefined && age < minAgeCat)
-        throw new Error("Нас шаардлага хангахгүй байна");
+        throw new Error(`Нас шаардлага хангахгүй байна (хэрэгтэй: ${minAgeCat}+, таны нас: ${age})`);
       if (maxAgeCat !== undefined && age > maxAgeCat)
-        throw new Error("Нас шаардлага хангахгүй байна");
+        throw new Error(`Нас шаардлага хангахгүй байна (хэрэгтэй: ${maxAgeCat}-аас доош, таны нас: ${age})`);
     }
   }
 }
@@ -1313,6 +1335,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Байршил заавал байх ёстой" });
       }
 
+      // Validate event structure
+      if (!req.body.events || !Array.isArray(req.body.events) || req.body.events.length === 0) {
+        return res.status(400).json({ message: "Хамгийн багадаа нэг ивэнт байх ёстой" });
+      }
+
+      // Validate each event
+      for (const event of req.body.events) {
+        if (!event.type || !['SINGLES', 'DOUBLES', 'TEAM'].includes(event.type)) {
+          return res.status(400).json({ message: "Ивэнтийн төрөл буруу байна" });
+        }
+        
+        if ((event.type === 'DOUBLES' || event.type === 'TEAM') && !event.subType) {
+          return res.status(400).json({ message: `${event.type} төрөлд дэд төрөл заавал оруулах ёстой` });
+        }
+
+        if (event.type === 'DOUBLES' && !['MEN_DOUBLES', 'WOMEN_DOUBLES', 'MIXED_DOUBLES'].includes(event.subType)) {
+          return res.status(400).json({ message: "Хосын төрөл буруу байна" });
+        }
+
+        if (event.type === 'TEAM' && event.subType && !['MEN_TEAM', 'WOMEN_TEAM', 'MIXED_TEAM'].includes(event.subType)) {
+          return res.status(400).json({ message: "Багийн төрөл буруу байна" });
+        }
+
+        if (!event.divisions || !Array.isArray(event.divisions) || event.divisions.length === 0) {
+          return res.status(400).json({ message: "Ивэнт бүрт хамгийн багадаа нэг насны ангилал байх ёстой" });
+        }
+
+        for (const division of event.divisions) {
+          if (!division.name) {
+            return res.status(400).json({ message: "Насны ангиллын нэр заавал оруулах ёстой" });
+          }
+        }
+      }
+
       // Validate dates
       const startDate = new Date(req.body.startDate);
       const endDate = new Date(req.body.endDate);
@@ -1335,6 +1391,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Convert events to participationTypes format for backwards compatibility
+      const participationTypes = req.body.events.map((event: any) => JSON.stringify(event));
+
       const tournamentData = {
         name: req.body.name,
         description: req.body.description || null,
@@ -1347,16 +1406,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         maxParticipants: parseInt(req.body.maxParticipants) || 32,
         entryFee: req.body.entryFee ? req.body.entryFee.toString() : "0",
         status: "registration" as any,
-        participationTypes: req.body.participationTypes || [],
+        participationTypes: participationTypes,
         rules: req.body.rules || null,
         prizes: req.body.prizes || null,
         contactInfo: req.body.contactInfo || null,
         schedule: req.body.schedule || null,
         requirements: req.body.requirements || null,
-        // Ensure we always store a proper boolean value
-        // This avoids cases where "isPublished" might come through as a string
-        // like "true" or "false" which would otherwise be treated as truthy
-        // when using the `||` operator above.
         isPublished: Boolean(req.body.isPublished),
         organizerId: req.session.userId,
         clubId: null,

@@ -34,7 +34,16 @@ const tournamentSchema = z.object({
   organizer: z.string().optional(),
   maxParticipants: z.number().min(1, "Хамгийн багадаа 1 оролцогч байх ёстой"),
   entryFee: z.number().min(0, "Оролцооны төлбөр 0 болон түүнээс дээш байх ёстой"),
-  participationTypes: z.array(z.string()).min(1, "Хамгийн багадаа 1 төрөл сонгоно уу"),
+  events: z.array(z.object({
+    type: z.enum(['SINGLES', 'DOUBLES', 'TEAM']),
+    subType: z.string().optional(),
+    genderReq: z.enum(['ANY', 'MALE', 'FEMALE', 'MIXED']).optional(),
+    divisions: z.array(z.object({
+      name: z.string(),
+      minAge: z.number().optional(),
+      maxAge: z.number().optional(),
+    })).min(1, "Хамгийн багадаа нэг насны ангилал байх ёстой")
+  })).min(1, "Хамгийн багадаа нэг ивэнт байх ёстой"),
   rules: z.string().optional(),
   prizes: z.string().optional(),
   contactInfo: z.string().optional(),
@@ -66,11 +75,18 @@ export default function AdminTournamentCreate() {
     enabled: isEditing && !!editingId,
   });
 
-  const [minAge, setMinAge] = useState("");
-  const [maxAge, setMaxAge] = useState("");
-  const [gender, setGender] = useState("male");
-  const [participationType, setParticipationType] = useState("singles");
-  const [participationCategories, setParticipationCategories] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
+  const [currentEvent, setCurrentEvent] = useState({
+    type: 'SINGLES' as 'SINGLES' | 'DOUBLES' | 'TEAM',
+    subType: '',
+    genderReq: 'ANY' as 'ANY' | 'MALE' | 'FEMALE' | 'MIXED',
+    divisions: [] as any[]
+  });
+  const [currentDivision, setCurrentDivision] = useState({
+    name: '',
+    minAge: '',
+    maxAge: ''
+  });
   const [richDescription, setRichDescription] = useState("");
   const [previewMode, setPreviewMode] = useState(false);
   const [backgroundImageUrl, setBackgroundImageUrl] = useState("");
@@ -112,7 +128,7 @@ export default function AdminTournamentCreate() {
       organizer: "",
       maxParticipants: 32,
       entryFee: 0,
-      participationTypes: [],
+      events: [],
       rules: "",
       prizes: "",
       contactInfo: "",
@@ -127,8 +143,8 @@ export default function AdminTournamentCreate() {
   });
 
   useEffect(() => {
-    form.setValue("participationTypes", participationCategories as any);
-  }, [participationCategories, form]);
+    form.setValue("events", events);
+  }, [events, form]);
 
   // File upload handlers
   const handleBackgroundImageUpload = async () => {
