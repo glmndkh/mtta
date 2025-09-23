@@ -61,8 +61,15 @@ export default function AdminTournamentGenerator() {
   const [minAge, setMinAge] = useState("");
   const [maxAge, setMaxAge] = useState("");
   const [gender, setGender] = useState("male");
+  const [participationFormat, setParticipationFormat] = useState("individual");
   const [participationCategories, setParticipationCategories] = useState<
-    Array<{ minAge: number | null; maxAge: number | null; gender: string }>
+    Array<{ 
+      type: string; 
+      minAge: number | null; 
+      maxAge: number | null; 
+      gender: string;
+      teamSize?: number;
+    }>
   >([]);
   const [richDescription, setRichDescription] = useState("");
   const [previewMode, setPreviewMode] = useState(false);
@@ -136,8 +143,22 @@ export default function AdminTournamentGenerator() {
           const parsedCats = (data.participationTypes || []).map((t: string) => {
             try {
               const obj = JSON.parse(t);
+              
+              // Handle new format with type field
+              if ("type" in obj) {
+                return {
+                  type: obj.type || "individual",
+                  minAge: obj.minAge ?? null,
+                  maxAge: obj.maxAge ?? null,
+                  gender: obj.gender || "male",
+                  teamSize: obj.teamSize,
+                };
+              }
+              
+              // Handle legacy format for backward compatibility
               if ("minAge" in obj || "maxAge" in obj) {
                 return {
+                  type: "individual",
                   minAge: obj.minAge ?? null,
                   maxAge: obj.maxAge ?? null,
                   gender: obj.gender || "male",
@@ -154,9 +175,19 @@ export default function AdminTournamentGenerator() {
                 } else if (nums.length >= 2) {
                   [min, max] = nums;
                 }
-                return { minAge: min, maxAge: max, gender: obj.gender || "male" };
+                return { 
+                  type: "individual",
+                  minAge: min, 
+                  maxAge: max, 
+                  gender: obj.gender || "male" 
+                };
               }
-              return { minAge: null, maxAge: null, gender: obj.gender || "male" };
+              return { 
+                type: "individual",
+                minAge: null, 
+                maxAge: null, 
+                gender: obj.gender || "male" 
+              };
             } catch {
               const ageStr = t;
               const nums = ageStr.match(/\d+/g)?.map(Number) || [];
@@ -168,7 +199,12 @@ export default function AdminTournamentGenerator() {
               } else if (nums.length >= 2) {
                 [min, max] = nums;
               }
-              return { minAge: null, maxAge: null, gender: "male" };
+              return { 
+                type: "individual",
+                minAge: null, 
+                maxAge: null, 
+                gender: "male" 
+              };
             }
           });
           setParticipationCategories(parsedCats);
@@ -282,9 +318,9 @@ export default function AdminTournamentGenerator() {
   // Participation type management
 
   const addParticipationCategory = () => {
-    if (!minAge && !maxAge) {
+    if (participationFormat === "individual" && !minAge && !maxAge) {
       toast({
-        title: "Алдаа",
+        title: "Алдаа", 
         description: "Хамгийн багадаа нэг нас оруулна уу",
         variant: "destructive",
       });
@@ -292,9 +328,12 @@ export default function AdminTournamentGenerator() {
     }
 
     const category = {
+      type: participationFormat,
       minAge: minAge ? parseInt(minAge) : null,
       maxAge: maxAge ? parseInt(maxAge) : null,
       gender,
+      ...(participationFormat === "team" && { teamSize: 2 }),
+      ...(participationFormat === "pair" && { teamSize: 2 }),
     };
 
     // Create JSON string format for the category
@@ -623,8 +662,12 @@ export default function AdminTournamentGenerator() {
                         <FormControl>
                           <Input 
                             type="number" 
+                            min="1"
                             {...field} 
-                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                            onChange={(e) => {
+                              const value = parseInt(e.target.value);
+                              field.onChange(isNaN(value) ? 1 : Math.max(1, value));
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -710,22 +753,42 @@ export default function AdminTournamentGenerator() {
                 {/* Participation Types */}
                 <div>
                   <Label className="text-sm font-medium mb-4 block">Оролцооны төрөл *</Label>
-                  <div className="space-y-2">
+                  <div className="space-y-4">
+                    {/* Format Selection */}
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">Оролцооны хэлбэр</Label>
+                      <Select value={participationFormat} onValueChange={setParticipationFormat}>
+                        <SelectTrigger className="w-[200px]">
+                          <SelectValue placeholder="Хэлбэр сонгоно уу" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="individual">Хувь хүн</SelectItem>
+                          <SelectItem value="team">Баг</SelectItem>
+                          <SelectItem value="pair">Хос</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    {/* Category Input */}
                     <div className="flex gap-2">
-                      <Input
-                        type="number"
-                        value={minAge}
-                        onChange={(e) => setMinAge(e.target.value)}
-                        placeholder="Доод нас"
-                        className="w-24"
-                      />
-                      <Input
-                        type="number"
-                        value={maxAge}
-                        onChange={(e) => setMaxAge(e.target.value)}
-                        placeholder="Дээд нас"
-                        className="w-24"
-                      />
+                      {participationFormat === "individual" && (
+                        <>
+                          <Input
+                            type="number"
+                            value={minAge}
+                            onChange={(e) => setMinAge(e.target.value)}
+                            placeholder="Доод нас"
+                            className="w-24"
+                          />
+                          <Input
+                            type="number"
+                            value={maxAge}
+                            onChange={(e) => setMaxAge(e.target.value)}
+                            placeholder="Дээд нас"
+                            className="w-24"
+                          />
+                        </>
+                      )}
                       <Select value={gender} onValueChange={setGender}>
                         <SelectTrigger className="w-[140px]">
                           <SelectValue placeholder="Хүйс" />
@@ -733,6 +796,7 @@ export default function AdminTournamentGenerator() {
                         <SelectContent>
                           <SelectItem value="male">Эрэгтэй</SelectItem>
                           <SelectItem value="female">Эмэгтэй</SelectItem>
+                          <SelectItem value="mixed">Холимог</SelectItem>
                         </SelectContent>
                       </Select>
                       <Button type="button" onClick={addParticipationCategory} size="sm">
@@ -743,14 +807,33 @@ export default function AdminTournamentGenerator() {
                       <div className="flex flex-wrap gap-2">
                         {participationCategories.map((cat, idx) => {
                           let label = "";
-                          if (cat.minAge !== null && cat.maxAge !== null)
-                            label = `${cat.minAge}-${cat.maxAge}`;
-                          else if (cat.minAge !== null) label = `${cat.minAge}+`;
-                          else if (cat.maxAge !== null) label = `${cat.maxAge}-аас доош`;
-                          else label = "Нас хязгааргүй";
+                          let formatLabel = "";
+                          
+                          // Format type
+                          if (cat.type === "team") formatLabel = "Баг";
+                          else if (cat.type === "pair") formatLabel = "Хос";
+                          else formatLabel = "Хувь хүн";
+                          
+                          // Age range (only for individual)
+                          if (cat.type === "individual") {
+                            if (cat.minAge !== null && cat.maxAge !== null)
+                              label = `${cat.minAge}-${cat.maxAge}`;
+                            else if (cat.minAge !== null) label = `${cat.minAge}+`;
+                            else if (cat.maxAge !== null) label = `${cat.maxAge}-аас доош`;
+                            else label = "Нас хязгааргүй";
+                          }
+                          
+                          // Gender
+                          const genderLabel = cat.gender === 'male' ? 'эрэгтэй' : 
+                                             cat.gender === 'female' ? 'эмэгтэй' : 'холимог';
+                          
+                          const displayText = cat.type === "individual" 
+                            ? `${formatLabel} - ${label} ${genderLabel}`
+                            : `${formatLabel} - ${genderLabel}`;
+                            
                           return (
                             <div key={idx} className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-                              {`${label} ${cat.gender === 'male' ? 'эрэгтэй' : 'эмэгтэй'}`}
+                              {displayText}
                               <button
                                 type="button"
                                 onClick={() => {
