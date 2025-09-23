@@ -394,31 +394,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const { emailService } = await import('./emailService');
         const baseUrl = `${req.protocol}://${req.get('host')}`;
+        
+        console.log(`Attempting to send password reset email to: ${email}`);
+        console.log(`Reset URL will be: ${baseUrl}/reset-password?token=${token}`);
+        
         await emailService.sendPasswordResetEmail(email, token, baseUrl);
         
-        console.log(`Password reset email sent to ${email}`);
+        console.log(`Password reset email sent successfully to ${email}`);
         
         res.json({ 
           message: "Нууц үг сэргээх код таны и-мэйлд илгээгдлээ",
           // Development-д л token буцаах
-          ...(process.env.NODE_ENV === 'development' && { token })
+          ...(process.env.NODE_ENV === 'development' && { token, resetUrl: `${baseUrl}/reset-password?token=${token}` })
         });
       } catch (emailError) {
         console.error("Failed to send password reset email:", emailError);
         
         // И-мэйл илгээх амжилтгүй болсон ч token-г console-д хэвлэе
-        console.log(`Password reset token for ${email}: ${token}`);
+        console.log(`PASSWORD RESET TOKEN (EMAIL FAILED): ${token}`);
         console.log(`Reset URL: ${req.protocol}://${req.get('host')}/reset-password?token=${token}`);
         
-        // Хэрэглэгчид амжилттай гэж хариулах (security-гийн хувьд)
+        // Development mode-д алдааг илүү дэлгэрэнгүй харуулах
+        if (process.env.NODE_ENV === 'development') {
+          return res.json({ 
+            message: "И-мэйл илгээхэд алдаа гарсан боловч token үүсгэгдлээ",
+            token, 
+            resetUrl: `${req.protocol}://${req.get('host')}/reset-password?token=${token}`,
+            error: emailError instanceof Error ? emailError.message : "Email service unavailable"
+          });
+        }
+        
+        // Production mode-д хэрэглэгчид амжилттай гэж хариулах (security-гийн хувьд)
         res.json({ 
-          message: "Нууц үг сэргээх код таны и-мэйлд илгээгдлээ",
-          ...(process.env.NODE_ENV === 'development' && { token, error: "Email service unavailable" })
+          message: "Нууц үг сэргээх код таны и-мэйлд илгээгдлээ"
         });
       }
     } catch (e) {
       console.error("Error in forgot password:", e);
       res.status(500).json({ message: "Серверийн алдаа гарлаа" });
+    }
+  });
+
+  // Test email service endpoint (development only)
+  app.post("/api/test-email", async (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(404).json({ message: "Not found" });
+    }
+    
+    try {
+      const { emailService } = await import('./emailService');
+      await emailService.sendEmail({
+        to: process.env.EMAIL_USER || 'test@example.com',
+        subject: 'MTTA Email Service Test',
+        html: '<h1>Email Service Test</h1><p>If you receive this, the email service is working correctly.</p>',
+        text: 'Email Service Test - If you receive this, the email service is working correctly.'
+      });
+      
+      res.json({ message: "Test email sent successfully" });
+    } catch (error) {
+      console.error("Test email failed:", error);
+      res.status(500).json({ 
+        message: "Test email failed", 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
     }
   });
 

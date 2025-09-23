@@ -45,11 +45,17 @@ class EmailService {
     };
 
     try {
+      console.log('Attempting to send email to:', options.to);
+      console.log('Email user:', process.env.EMAIL_USER);
+      console.log('Email password configured:', !!process.env.EMAIL_PASS);
+      
       const result = await this.transporter.sendMail(mailOptions);
       console.log('Email sent successfully:', result.messageId);
+      console.log('Full result:', result);
     } catch (error) {
       console.error('Failed to send email:', error);
-      throw new Error('И-мэйл илгээхэд алдаа гарлаа');
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      throw new Error(`И-мэйл илгээхэд алдаа гарлаа: ${error instanceof Error ? error.message : 'Тодорхойгүй алдаа'}`);
     }
   }
 

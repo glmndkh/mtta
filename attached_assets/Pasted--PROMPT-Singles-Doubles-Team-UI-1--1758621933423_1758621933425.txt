@@ -1,0 +1,146 @@
+✅ PROMPT: “Тэмцээний төрөл, насны ангилал — Singles/Doubles/Team + UI текст чипс”
+1) Зорилго
+
+Админ талд тэмцээн үүсгэх үед:
+
+Төрөл: SINGLES, DOUBLES, TEAM гурвыг дэмж.
+
+DOUBLES дэд төрөл: MEN_DOUBLES (Дан эр), WOMEN_DOUBLES (Дан эм), MIXED_DOUBLES (Холимог) 3-г заавал.
+
+TEAM дэд төрөл (заавал биш, гэхдээ боломжтой): MEN_TEAM, WOMEN_TEAM, MIXED_TEAM.
+
+Насны ангилал (Division): name, minAge, maxAge.
+
+Хэрэглэгч (тамирчин) бүртгүүлэхэд нас/хүйс/төрлийн шалгалт автоматаар хийгдэж, UI дээр текстээр (чипс) “U15 • Эрэгтэй • Холимог хос” гэх мэтээр гарч харагддаг байх.
+
+2) Өгөгдлийн талбарууд (зөвхөн нэршил)
+
+Event: type(SINGLES|DOUBLES|TEAM), subType (DOUBLES/TEAM үед заавал), genderReq(ANY|MALE|FEMALE|MIXED), divisions[]
+
+Division: name, minAge?, maxAge?
+
+Entry eligibility-д хэрэглэх: player.gender, player.birthdate, tournament.startDate
+
+Тайлбар: DOUBLES/TEAM үед subType утга нь дээрх 3-ын нэг байх (ж: MIXED_DOUBLES). genderReq нь ерөнхий дүрэм, харин subType нь илүү нарийн шалгалт гүйцэтгэнэ:
+
+MEN_DOUBLES → хоёулаа эр
+
+WOMEN_DOUBLES → хоёулаа эм
+
+MIXED_DOUBLES → 1 эр + 1 эм
+(TEAM хувилбарт энэтэй адил логик.)
+
+3) UI шаардлага (админ + хэрэглэгч)
+Админ — “Ивэнт нэмэх” (1 мөр = 1 event)
+
+Төрөл сонгох (Singles/Doubles/Team)
+
+Хэрэв Doubles/Team бол Дэд төрөл (MEN/WOMEN/MIXED) сонгох албатай.
+
+Насны ангилал: пресетээс (U11/U13/U15/U18/Open/Masters40+) эсвэл custom нэмнэ.
+
+Preview (чипс): админ харах үед сонголтуудыг текстээр:
+
+“Төрөл: Холимог хос”
+
+“Нас: U15 (≤15)” гэх мэт badge/чипс хэлбэрээр дүрслэ.
+
+Хэрэглэгч — “Бүртгэл амжилттай” дэлгэц
+
+Одоогийн JSON тэмдэглэгээг бүү харуул.
+
+Дараах текст чипс/ мөрөөр тод харуул:
+
+“Та ‘Холимог хос • U15 • Эрэгтэй’ төрөлд бүртгэгдлээ.”
+
+Доор нь: “Насны шалгуур: ≤15 | Хүйс: эрэгтэй | Хос: 1 эр + 1 эм заавал”
+
+Алдаа үед хүний ойлгохоор:
+
+“Энэ төрөл нь Холимог хос тул нэг эр, нэг эм тоглогч шаардлагатай.”
+
+“U15 ангилал: таны нас 2025-11-15 байдлаар 16 болж байна.”
+
+4) Eligibility дүрэм (server-side)
+
+Нас = ageOn(player.birthdate, tournament.startDate).
+
+minAge ≤ nas ≤ maxAge (хоосон бол хязгааргүй гэж үз).
+
+Хүйс:
+
+genderReq=MALE → зөвхөн эр; FEMALE → зөвхөн эм; MIXED → DOUBLES/TEAM логик доорхтой уялдуул.
+
+DOUBLES subType:
+
+MEN_DOUBLES: partner1.gender=male && partner2.gender=male
+
+WOMEN_DOUBLES: хоёулаа female
+
+MIXED_DOUBLES: genders={male,female}
+
+TEAM subType (хэрэв хэрэглэвэл):
+
+MEN_TEAM: бүх гишүүн male
+
+WOMEN_TEAM: бүх гишүүн female
+
+MIXED_TEAM: багт дор хаяж 1 эр, 1 эм
+
+Division: event бүр дор хаяж 1 division заавал.
+
+Дахин бүртгэл, capacity зэрэг өмнөх логикоор үргэлжилнэ.
+
+5) UI текстийн формат (chips)
+
+Чипсийн дараалал: Насны ангилал • Хүйс • Төрөл/Дэд төрөл
+
+Жишээ рэндэр:
+
+U13 • Эрэгтэй • Дан хос
+
+U18 • Эмэгтэй • Ганцаарчилсан
+
+Open • Холимог • Холимог хос
+
+Амжилтын баннерт: ✅ “Бүртгэгдсэн” (metadata-гүй, JSON-гүй)
+
+6) Preset Division (идемпотент)
+
+U11 (maxAge=11), U13 (13), U15 (15), U18 (18), Open (хязгааргүй), Masters 40+ (minAge=40)
+
+7) Done критерийн жагсаалт
+
+ Админ Doubles төрлийг сонгоход MEN/WOMEN/MIXED дэд төрөл албадан гарч ирдэг.
+
+ Хосын бүртгэлд дэд төрлөөс хамаарсан хүйсийн шалгалт ажилладаг.
+
+ Насны ангилал сонгох үед UI дээр чипсээр (текст) тод харагдана (админ ба хэрэглэгчийн тал аль аль).
+
+ Амжилтын/алдааны мэдэгдэл зөвхөн монгол текстээр, JSON огт харагдахгүй.
+
+ Preset division-үүдийг нэг товчоор нэмэх боломжтой.
+
+ Хэрэглэгчийн нас startDate-аар тооцогдож eligibility зөв ажиллана.
+
+8) Туршилтын тохиолдлууд
+
+Mixed Doubles U15:
+
+P1=male 14 нас, P2=female 13 нас → ✅
+
+P2=male 13 нас → ❌ (Холимог биш)
+
+P1=female 16 нас → ❌ (U15-д нас хэтэрсэн)
+
+Men Doubles Open:
+
+P1=male, P2=male (аль ч нас) → ✅
+
+P2=female → ❌
+
+Women Team U18:
+
+Багийн бүх гишүүн female, нас ≤18 → ✅
+
+Нэг гишүүн male → ❌
