@@ -404,7 +404,7 @@ export default function AdminTournamentCreate() {
     };
 
     setEvents([...events, newEvent]);
-    // Reset current event form
+    // Reset current event form but preserve type-specific defaults
     setCurrentEvent({
       type: 'SINGLES',
       subType: '',
@@ -1113,7 +1113,7 @@ export default function AdminTournamentCreate() {
                       <div className="space-y-4">
                         <div>
                           <Label className="text-sm font-medium mb-1 block">Төрөл</Label>
-                          <Select value={currentEvent.type} onValueChange={(value: any) => setCurrentEvent({ ...currentEvent, type: value })}>
+                          <Select value={currentEvent.type} onValueChange={(value: any) => setCurrentEvent({ ...currentEvent, type: value, subType: '' })}>
                             <SelectTrigger>
                               <SelectValue placeholder="Тэмцээний төрөл сонгох" />
                             </SelectTrigger>
