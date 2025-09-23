@@ -378,6 +378,17 @@ export default function AdminTournamentCreate() {
       toast({ title: "Алдаа", description: "Тэмцээний төрөл сонгоно уу", variant: "destructive" });
       return;
     }
+    
+    // Validate subType for DOUBLES and TEAM
+    if ((currentEvent.type === 'DOUBLES' || currentEvent.type === 'TEAM') && !currentEvent.subType) {
+      toast({ 
+        title: "Алдаа", 
+        description: `${currentEvent.type === 'DOUBLES' ? 'Хосийн төрөл' : 'Багийн төрөл'} сонгоно уу`, 
+        variant: "destructive" 
+      });
+      return;
+    }
+    
     if (currentEvent.divisions.length === 0) {
       toast({ title: "Алдаа", description: "Хамгийн багадаа нэг насны ангилал оруулна уу", variant: "destructive" });
       return;
@@ -439,6 +450,20 @@ export default function AdminTournamentCreate() {
 
   const formatEventLabel = (event: any) => {
     let label = `${event.type === "SINGLES" ? "Дангаар" : event.type === "DOUBLES" ? "Хос" : "Баг"}`;
+    
+    // Add subType label for DOUBLES and TEAM
+    if (event.subType) {
+      const subTypeLabels: { [key: string]: string } = {
+        'MEN_DOUBLES': 'Дан эр',
+        'WOMEN_DOUBLES': 'Дан эм', 
+        'MIXED_DOUBLES': 'Холимог хос',
+        'MEN_TEAM': 'Эрэгтэйчүүдийн баг',
+        'WOMEN_TEAM': 'Эмэгтэйчүүдийн баг',
+        'MIXED_TEAM': 'Холимог баг'
+      };
+      label += ` - ${subTypeLabels[event.subType] || event.subType}`;
+    }
+    
     if (event.genderReq !== 'ANY') {
       label += ` (${event.genderReq === 'MALE' ? 'Эрэгтэй' : event.genderReq === 'FEMALE' ? 'Эмэгтэй' : 'Холимог'})`;
     }
@@ -1115,6 +1140,35 @@ export default function AdminTournamentCreate() {
                           </Select>
                         </div>
 
+                        {/* Sub-type selection for DOUBLES and TEAM */}
+                        {(currentEvent.type === 'DOUBLES' || currentEvent.type === 'TEAM') && (
+                          <div>
+                            <Label className="text-sm font-medium mb-1 block">
+                              {currentEvent.type === 'DOUBLES' ? 'Хосийн төрөл' : 'Багийн төрөл'}
+                            </Label>
+                            <Select value={currentEvent.subType} onValueChange={(value: any) => setCurrentEvent({ ...currentEvent, subType: value })}>
+                              <SelectTrigger>
+                                <SelectValue placeholder={currentEvent.type === 'DOUBLES' ? 'Хосийн төрөл сонгох' : 'Багийн төрөл сонгох'} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {currentEvent.type === 'DOUBLES' ? (
+                                  <>
+                                    <SelectItem value="MEN_DOUBLES">Дан эр</SelectItem>
+                                    <SelectItem value="WOMEN_DOUBLES">Дан эм</SelectItem>
+                                    <SelectItem value="MIXED_DOUBLES">Холимог хос</SelectItem>
+                                  </>
+                                ) : (
+                                  <>
+                                    <SelectItem value="MEN_TEAM">Эрэгтэйчүүдийн баг</SelectItem>
+                                    <SelectItem value="WOMEN_TEAM">Эмэгтэйчүүдийн баг</SelectItem>
+                                    <SelectItem value="MIXED_TEAM">Холимог баг</SelectItem>
+                                  </>
+                                )}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+
                         <div>
                           <Label className="text-sm font-medium mb-1 block">Хүйс</Label>
                           <Select value={currentEvent.genderReq} onValueChange={(value: any) => setCurrentEvent({ ...currentEvent, genderReq: value })}>
@@ -1189,7 +1243,11 @@ export default function AdminTournamentCreate() {
                       <Button
                         type="button"
                         onClick={addEvent}
-                        disabled={!currentEvent.type || currentEvent.divisions.length === 0}
+                        disabled={
+                          !currentEvent.type || 
+                          currentEvent.divisions.length === 0 ||
+                          ((currentEvent.type === 'DOUBLES' || currentEvent.type === 'TEAM') && !currentEvent.subType)
+                        }
                         className="w-full mt-4"
                       >
                         <Plus className="h-4 w-4 mr-2" />
