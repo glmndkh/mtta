@@ -1357,503 +1357,6 @@ label {
   color: var(--muted-foreground) !important;
 }
 
-/* Input enhancements */
-.input-dark {
-  background: rgba(26, 26, 26, 0.8);
-  border: 1px solid rgba(34, 197, 94, 0.3);
-  color: hsl(210, 40%, 98%);
-}
-
-.input-dark:focus {
-  border-color: rgba(34, 197, 94, 0.8);
-  box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
-}
-
-/* Table enhancements */
-.table-dark {
-  background: rgba(26, 26, 26, 0.9);
-}
-
-.table-dark th {
-  background: rgba(34, 197, 94, 0.1);
-  border-bottom: 1px solid rgba(34, 197, 94, 0.3);
-}
-
-.table-dark td {
-  border-bottom: 1px solid rgba(34, 197, 94, 0.1);
-}
-
-.table-dark tr:hover {
-  background: rgba(34, 197, 94, 0.05);
-}
-
-/* Green Button Styles */
-.btn-green {
-  background: linear-gradient(135deg, var(--success), var(--link));
-  color: var(--text-primary);
-  border: none;
-  padding: 12px 24px;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(var(--link-rgb), 0.3);
-}
-
-.btn-green:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(var(--link-rgb), 0.4);
-  background: linear-gradient(135deg, var(--success), var(--link));
-}
-
-.btn-green:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 10px rgba(var(--link-rgb), 0.3);
-}
-
-/* Tab Styles */
-.tabs {
-  display: flex;
-  gap: 4px;
-  background: var(--muted);
-  padding: 6px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-}
-
-/* Admin Dashboard Tab Text Colors - Always white for visibility */
-.admin-tab-trigger {
-  color: #ffffff !important; /* Always white text */
-  font-weight: 500;
-  opacity: 1 !important; /* Ensure full opacity */
-}
-
-.admin-tab-trigger[data-state="active"] {
-  color: #ffffff !important; /* Active tab text color - white */
-  font-weight: 600;
-  opacity: 1 !important; /* Ensure full opacity */
-}
-
-.admin-tab-trigger[data-state="inactive"] {
-  color: #ffffff !important; /* Inactive tab text also white */
-  font-weight: 500;
-  opacity: 0.9 !important; /* Slightly less opacity for inactive state */
-}
-
-/* Dark theme overrides for admin tabs */
-[data-theme="dark"] .admin-tab-trigger {
-  color: #ffffff !important; /* Always white for dark theme */
-  opacity: 1 !important;
-}
-
-[data-theme="dark"] .admin-tab-trigger[data-state="active"] {
-  color: #ffffff !important; /* Keep white for active state */
-  opacity: 1 !important;
-}
-
-[data-theme="dark"] .admin-tab-trigger[data-state="inactive"] {
-  color: #ffffff !important; /* Keep white for inactive state */
-  opacity: 0.9 !important;
-}
-
-/* Light theme overrides for admin tabs */
-[data-theme="light"] .admin-tab-trigger {
-  color: #0f172a !important; /* Dark text for light theme */
-  opacity: 1 !important;
-  background: #f8fafc !important;
-  border: 1px solid #cbd5e1 !important;
-}
-
-[data-theme="light"] .admin-tab-trigger[data-state="active"] {
-  color: #ffffff !important; /* White text on green background */
-  background: #16a34a !important;
-  border-color: #16a34a !important;
-  opacity: 1 !important;
-}
-
-[data-theme="light"] .admin-tab-trigger[data-state="inactive"] {
-  color: #475569 !important; /* Muted dark text for inactive */
-  background: #ffffff !important;
-  border: 1px solid #cbd5e1 !important;
-  opacity: 1 !important;
-}
-
-/* Tournament Details Tab Styling - Ensure white text always */
-.tabs-list [role="tab"],
-.tablist [role="tab"],
-[data-radix-collection-item][role="tab"],
-.tabs-trigger {
-  color: #ffffff !important; /* Always white text for all tabs */
-  font-weight: 500 !important;
-  opacity: 1 !important;
-}
-
-.tabs-list [role="tab"][data-state="active"],
-.tablist [role="tab"][data-state="active"],
-[data-radix-collection-item][role="tab"][data-state="active"],
-.tabs-trigger[data-state="active"] {
-  color: #ffffff !important; /* Active tab text always white */
-  font-weight: 600 !important;
-  opacity: 1 !important;
-}
-
-.tabs-list [role="tab"][data-state="inactive"],
-.tablist [role="tab"][data-state="inactive"],
-[data-radix-collection-item][role="tab"][data-state="inactive"],
-.tabs-trigger[data-state="inactive"] {
-  color: #ffffff !important; /* Inactive tab text always white */
-  font-weight: 500 !important;
-  opacity: 0.9 !important;
-}
-
-/* Tournament page specific tab styling */
-.tournament-tabs [role="tab"],
-.tournament-details-tabs [role="tab"] {
-  color: #ffffff !important;
-  opacity: 1 !important;
-}
-
-.tournament-tabs [role="tab"][data-state="active"],
-.tournament-details-tabs [role="tab"][data-state="active"] {
-  color: #ffffff !important;
-  font-weight: 600 !important;
-  opacity: 1 !important;
-}
-
-.tournament-tabs [role="tab"][data-state="inactive"],
-.tournament-details-tabs [role="tab"][data-state="inactive"] {
-  color: #ffffff !important;
-  font-weight: 500 !important;
-  opacity: 0.9 !important;
-}
-
-/* Light theme specific tournament tab styling */
-[data-theme="light"] .tournament-tabs [role="tab"],
-[data-theme="light"] .tournament-details-tabs [role="tab"],
-.light .tournament-tabs [role="tab"],
-.light .tournament-details-tabs [role="tab"] {
-  color: #475569 !important;
-  background: #ffffff !important;
-  border: 1px solid #cbd5e1 !important;
-  opacity: 1 !important;
-}
-
-[data-theme="light"] .tournament-tabs [role="tab"][data-state="active"],
-[data-theme="light"] .tournament-details-tabs [role="tab"][data-state="active"],
-.light .tournament-tabs [role="tab"][data-state="active"],
-.light .tournament-details-tabs [role="tab"][data-state="active"] {
-  color: #ffffff !important;
-  background: #16a34a !important;
-  border-color: #16a34a !important;
-  font-weight: 600 !important;
-  opacity: 1 !important;
-}
-
-[data-theme="light"] .tournament-tabs [role="tab"][data-state="inactive"],
-[data-theme="light"] .tournament-details-tabs [role="tab"][data-state="inactive"],
-.light .tournament-tabs [role="tab"][data-state="inactive"],
-.light .tournament-details-tabs [role="tab"][data-state="inactive"] {
-  color: #64748b !important;
-  background: #f8fafc !important;
-  border: 1px solid #e2e8f0 !important;
-  font-weight: 500 !important;
-  opacity: 1 !important;
-}
-
-/* Global text color fixes for both themes */
-
-/* Light theme - All text should be dark */
-[data-theme="light"] *:not(.btn-green):not(.live-badge):not(.slider-overlay):not(.carousel-overlay):not([data-state="active"]):not(.bg-green-600):not(.bg-mtta-green):not(.text-white),
-.light *:not(.btn-green):not(.live-badge):not(.slider-overlay):not(.carousel-overlay):not([data-state="active"]):not(.bg-green-600):not(.bg-mtta-green):not(.text-white) {
-  color: #0f172a !important;
-}
-
-/* Dark theme - All text should be light */
-[data-theme="dark"] *:not(.bg-white):not(.bg-gray-50):not(.bg-gray-100):not(.text-black),
-.dark *:not(.bg-white):not(.bg-gray-50):not(.bg-gray-100):not(.text-black) {
-  color: #f9fafb !important;
-}
-
-/* Profile container specific styling */
-.profile-container * {
-  color: var(--text-primary) !important;
-}
-
-[data-theme="light"] .profile-container *,
-.light .profile-container * {
-  color: #0f172a !important;
-}
-
-[data-theme="dark"] .profile-container *,
-.dark .profile-container * {
-  color: #ffffff !important;
-}
-
-/* Card content text visibility */
-[data-theme="light"] .card *,
-[data-theme="light"] .card-content *,
-[data-theme="light"] .theme-card *,
-.light .card *,
-.light .card-content *,
-.light .theme-card * {
-  color: #0f172a !important;
-}
-
-[data-theme="dark"] .card *,
-[data-theme="dark"] .card-content *,
-[data-theme="dark"] .theme-card *,
-.dark .card *,
-.dark .card-content *,
-.dark .theme-card * {
-  color: #ffffff !important;
-}
-
-/* Statistics card text */
-[data-theme="light"] .stat-card *,
-[data-theme="light"] .stats-card *,
-.light .stat-card *,
-.light .stats-card * {
-  color: #0f172a !important;
-}
-
-[data-theme="dark"] .stat-card *,
-[data-theme="dark"] .stats-card *,
-.dark .stat-card *,
-.dark .stats-card * {
-  color: #ffffff !important;
-}
-
-/* Badge and label text */
-[data-theme="light"] .badge,
-[data-theme="light"] label,
-.light .badge,
-.light label {
-  color: #0f172a !important;
-}
-
-[data-theme="dark"] .badge,
-[data-theme="dark"] label,
-.dark .badge,
-.dark label {
-  color: #ffffff !important;
-}
-
-/* Tab content and form elements */
-[data-theme="light"] .tabs-content *,
-[data-theme="light"] .form-control,
-[data-theme="light"] .input-dark,
-.light .tabs-content *,
-.light .form-control,
-.light .input-dark {
-  color: #0f172a !important;
-}
-
-[data-theme="dark"] .tabs-content *,
-[data-theme="dark"] .form-control,
-[data-theme="dark"] .input-dark,
-.dark .tabs-content *,
-.dark .form-control,
-.dark .input-dark {
-  color: #ffffff !important;
-}
-
-/* Fix card content text in light mode */
-[data-theme="light"] .card-dark h3,
-[data-theme="light"] .card-dark h4,
-[data-theme="light"] .card-dark p,
-[data-theme="light"] .card-dark div,
-[data-theme="light"] .card-dark span,
-.light .card-dark h3,
-.light .card-dark h4,
-.light .card-dark p,
-.light .card-dark div,
-.light .card-dark span {
-  color: #0f172a !important;
-}
-
-/* Fix slider and carousel text colors in light mode */
-[data-theme="light"] .slider-title,
-[data-theme="light"] .carousel-title,
-[data-theme="light"] .slider-description,
-[data-theme="light"] .carousel-description,
-.light .slider-title,
-.light .carousel-title,
-.light .slider-description,
-.light .carousel-description {
-  color: #0f172a !important;
-  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8) !important;
-}
-
-/* Fix theme text colors in light mode */
-[data-theme="light"] .theme-text,
-.light .theme-text {
-  color: #0f172a !important;
-}
-
-[data-theme="light"] .theme-text-secondary,
-.light .theme-text-secondary {
-  color: #64748b !important;
-}
-
-/* Fix navigation text in light mode */
-[data-theme="light"] .nav-link,
-.light .nav-link {
-  color: #0f172a !important;
-}
-
-[data-theme="light"] .nav-link:hover,
-.light .nav-link:hover {
-  color: #16a34a !important;
-}
-
-/* Fix all text that was forced to white */
-[data-theme="light"] *:not(.slider-overlay):not(.carousel-overlay):not(.btn-green):not([data-state="active"]),
-.light *:not(.slider-overlay):not(.carousel-overlay):not(.btn-green):not([data-state="active"]) {
-  color: inherit;
-}
-
-/* Ensure body and main containers have proper light mode colors */
-[data-theme="light"] body,
-[data-theme="light"] #root,
-[data-theme="light"] .main-bg,
-.light body,
-.light #root,
-.light .main-bg {
-  background: #ffffff !important;
-  color: #0f172a !important;
-}
-
-.tab {
-  padding: 10px 20px;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text-secondary);
-  font-weight: 500;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid transparent;
-}
-
-.tab:hover {
-  color: var(--link);
-  background: var(--accent);
-  border-color: var(--border);
-}
-
-.tab.active {
-  background: linear-gradient(135deg, var(--success), var(--link));
-  color: var(--text-primary);
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(var(--link-rgb), 0.3);
-  border-color: var(--link);
-}
-
-/* Dropdown Menu Styles */
-.dropdown {
-  position: relative;
-}
-
-/* Dropdown content styling */
-.dropdown-content {
-  display: block;
-  position: absolute;
-  top: 110%;
-  left: 0;
-  background-color: var(--card) !important;
-  backdrop-filter: blur(6px);
-  min-width: 200px;
-  border-radius: 6px;
-  overflow: hidden;
-  border: 1px solid var(--border) !important;
-  z-index: 50;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
-}
-
-.dropdown-content a {
-  display: block;
-  padding: 12px 16px;
-  font-size: 0.9rem;
-  color: var(--text-primary) !important;
-  text-decoration: none;
-  text-transform: none;
-  letter-spacing: normal;
-  transition: all 0.3s ease;
-}
-
-.dropdown-content a:hover {
-  background-color: var(--accent) !important;
-  color: var(--link) !important;
-}
-
-/* Light mode specific dropdown improvements */
-[data-theme="light"] .dropdown-content,
-.light .dropdown-content {
-  background-color: #ffffff !important;
-  border: 2px solid #cbd5e1 !important;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
-}
-
-[data-theme="light"] .dropdown-content a,
-.light .dropdown-content a {
-  color: #0f172a !important;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-[data-theme="light"] .dropdown-content a:hover,
-.light .dropdown-content a:hover {
-  background-color: #f1f5f9 !important;
-  color: #16a34a !important;
-}
-
-/* Select elements styling */
-select,
-.select-trigger {
-  background: var(--card) !important;
-  color: var(--text-primary) !important;
-  border: 1px solid var(--border) !important;
-}
-
-select:focus,
-.select-trigger:focus {
-  border-color: var(--link) !important;
-  box-shadow: 0 0 0 2px rgba(var(--link-rgb), 0.2) !important;
-}
-
-/* Select dropdown options */
-select option {
-  background: var(--card) !important;
-  color: var(--text-primary) !important;
-}
-
-/* Light mode specific select improvements */
-[data-theme="light"] select,
-[data-theme="light"] .select-trigger,
-.light select,
-.light .select-trigger {
-  background: #ffffff !important;
-  color: #0f172a !important;
-  border: 2px solid #cbd5e1 !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
-}
-
-[data-theme="light"] select:focus,
-[data-theme="light"] .select-trigger:focus,
-.light select:focus,
-.light .select-trigger:focus {
-  border-color: #16a34a !important;
-  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2) !important;
-}
-
-[data-theme="light"] select option,
-.light select option {
-  background: #ffffff !important;
-  color: #0f172a !important;
-}
-
 /* Input and form element styling */
 input, textarea, select {
   background: var(--input) !important;
@@ -2561,4 +2064,154 @@ input, textarea, select {
     height: 220px; /* Significantly reduced small mobile height for better image visibility */
     min-height: 200px;
   }
+}
+
+/* Club cards specific styling - ensure proper text visibility */
+.club-card {
+  background: var(--card) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+  transition: all 0.3s ease;
+}
+
+.club-card:hover {
+  border-color: var(--link) !important;
+  box-shadow: 0 4px 12px rgba(var(--link-rgb), 0.2) !important;
+}
+
+/* Club card content - ensure all text is visible */
+.club-card h3,
+.club-card h4,
+.club-card p,
+.club-card span,
+.club-card div,
+.club-card small,
+.club-card .text-sm,
+.club-card .text-xs,
+.club-card .text-muted-foreground,
+.club-card .badge {
+  color: var(--text-primary) !important;
+}
+
+/* Light theme club cards - MAXIMUM CONTRAST */
+[data-theme="light"] .club-card,
+.light .club-card {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #d1d5db !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+[data-theme="light"] .club-card *,
+.light .club-card * {
+  color: #000000 !important;
+}
+
+[data-theme="light"] .club-card h3,
+[data-theme="light"] .club-card h4,
+[data-theme="light"] .club-card p,
+[data-theme="light"] .club-card span,
+[data-theme="light"] .club-card div,
+[data-theme="light"] .club-card small,
+[data-theme="light"] .club-card .text-sm,
+[data-theme="light"] .club-card .text-xs,
+[data-theme="light"] .club-card .text-muted-foreground,
+[data-theme="light"] .club-card .badge,
+.light .club-card h3,
+.light .club-card h4,
+.light .club-card p,
+.light .club-card span,
+.light .club-card div,
+.light .club-card small,
+.light .club-card .text-sm,
+.light .club-card .text-xs,
+.light .club-card .text-muted-foreground,
+.light .club-card .badge {
+  color: #000000 !important;
+  font-weight: 500;
+  text-shadow: none !important;
+}
+
+[data-theme="light"] .club-card:hover,
+.light .club-card:hover {
+  border-color: #16a34a !important;
+  box-shadow: 0 4px 16px rgba(22, 163, 74, 0.25) !important;
+  background: #fefefe !important;
+}
+
+/* Dark theme club cards */
+[data-theme="dark"] .club-card,
+.dark .club-card {
+  background: #1a1a1a !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .club-card *,
+.dark .club-card * {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .club-card h3,
+[data-theme="dark"] .club-card h4,
+[data-theme="dark"] .club-card p,
+[data-theme="dark"] .club-card span,
+[data-theme="dark"] .club-card div,
+[data-theme="dark"] .club-card small,
+[data-theme="dark"] .club-card .text-sm,
+[data-theme="dark"] .club-card .text-xs,
+[data-theme="dark"] .club-card .text-muted-foreground,
+[data-theme="dark"] .club-card .badge,
+.dark .club-card h3,
+.dark .club-card h4,
+.dark .club-card p,
+.dark .club-card span,
+.dark .club-card div,
+.dark .club-card small,
+.dark .club-card .text-sm,
+.dark .club-card .text-xs,
+.dark .club-card .text-muted-foreground,
+.dark .club-card .badge {
+  color: #ffffff !important;
+}
+
+/* Club page container styling */
+.clubs-container {
+  background: var(--background) !important;
+  color: var(--text-primary) !important;
+  min-height: 100vh;
+}
+
+[data-theme="light"] .clubs-container,
+.light .clubs-container {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+[data-theme="dark"] .clubs-container,
+.dark .clubs-container {
+  background: var(--background) !important;
+  color: #ffffff !important;
+}
+
+/* Club search input styling */
+.club-search-input {
+  background: var(--card) !important;
+  color: var(--text-primary) !important;
+  border: 2px solid var(--border) !important;
+}
+
+[data-theme="light"] .club-search-input,
+.light .club-search-input {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #d1d5db !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="dark"] .club-search-input,
+.dark .club-search-input {
+  background: var(--card) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--border) !important;
 }
