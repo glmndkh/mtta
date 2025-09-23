@@ -100,32 +100,23 @@ export default function Home() {
   const getImageUrl = (imageUrl: string): string => {
     if (!imageUrl) return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI0MCIgdmlld0JveD0iMCAwIDQwMCAyNDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNjAgMTAwSDI0MFYxNDBIMTYwVjEwMFoiIGZpbGw9IiNEMUQ1REIiLz4KPHBhdGggZD0iTTE3NSAxMTVIMjI1VjEyNUgxNzVWMTE1WiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K';
 
-    // Already full URL
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
       return imageUrl;
     }
 
-    // Data URL
     if (imageUrl.startsWith('data:')) {
       return imageUrl;
     }
 
-    // Already has public-objects prefix
-    if (imageUrl.startsWith('/public-objects/')) {
-      return imageUrl;
-    }
-
-    // Has objects prefix, keep as is
+    if (imageUrl.startsWith('/public-objects/')) return imageUrl;
     if (imageUrl.startsWith('/objects/')) {
       return imageUrl;
     }
 
-    // Starts with slash, add public-objects prefix
     if (imageUrl.startsWith('/')) {
       return `/public-objects${imageUrl}`;
     }
 
-    // Relative path, add public-objects prefix
     return `/public-objects/${imageUrl}`;
   };
 
@@ -193,39 +184,14 @@ export default function Home() {
                     className="w-full flex-shrink-0 relative"
                     style={{
                       backgroundImage: slide.imageUrl
-                        ? `url("${getImageUrl(slide.imageUrl)}")`
+                        ? `url(${getImageUrl(slide.imageUrl)})`
                         : 'linear-gradient(to right, #10b981, #047857)',
                       backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                      backgroundRepeat: 'no-repeat'
+                      backgroundPosition: 'center'
                     }}
                   >
-                    {/* Image preloader for better loading */}
-                    {slide.imageUrl && (
-                      <img
-                        src={getImageUrl(slide.imageUrl)}
-                        alt=""
-                        className="absolute inset-0 w-full h-full object-cover opacity-0 pointer-events-none"
-                        onLoad={(e) => {
-                          // Image loaded successfully, apply as background
-                          const target = e.currentTarget;
-                          const parent = target.parentElement;
-                          if (parent) {
-                            parent.style.backgroundImage = `url("${getImageUrl(slide.imageUrl!)}")`;
-                          }
-                        }}
-                        onError={(e) => {
-                          // Image failed to load, use gradient fallback
-                          const target = e.currentTarget;
-                          const parent = target.parentElement;
-                          if (parent) {
-                            parent.style.backgroundImage = 'linear-gradient(to right, #10b981, #047857)';
-                          }
-                        }}
-                      />
-                    )}
                     <div className="absolute inset-0 bg-black bg-opacity-40"></div>
-                    <div className="relative max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 h-full flex items-center z-10">
+                    <div className="relative max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 h-full flex items-center">
                       <div className="text-white space-y-2 sm:space-y-3 md:space-y-4 animate-fade-in">
                         {slide.title && slide.title.trim() && (
                           <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight">{slide.title}</h1>
