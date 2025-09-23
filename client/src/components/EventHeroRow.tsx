@@ -193,7 +193,6 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
   });
 
   return (
-    <Link href={`/events/${event.id}`}>
       <div className="relative h-[280px] sm:h-[320px] md:h-[360px] w-full overflow-hidden rounded-xl sm:rounded-2xl cursor-pointer transition-all duration-300 hover:scale-[1.01] sm:hover:scale-[1.02] hover:shadow-xl sm:hover:shadow-2xl" onClick={handleCardClick}>
         {bg ? (
           <img
@@ -352,6 +351,5 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
           <span>{participants.length} оролцогч</span>
         </div>
       </div>
-    </Link>
   );
 }
