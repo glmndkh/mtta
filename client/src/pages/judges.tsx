@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
@@ -15,7 +15,20 @@ interface Judge {
 }
 
 export default function JudgesPage() {
-  const [tab, setTab] = useState("domestic");
+  const [tab, setTab] = useState(() => {
+    if (typeof window === "undefined") return "domestic";
+    const params = new URLSearchParams(window.location.search);
+    const type = params.get("type");
+    return type === "international" ? "international" : "domestic";
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    params.set("type", tab);
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState(null, "", newUrl);
+  }, [tab]);
 
   const {
     data: judges,

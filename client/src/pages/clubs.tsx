@@ -41,7 +41,11 @@ function getImageUrl(imageUrl?: string): string {
 }
 
 export default function Clubs() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const params = new URLSearchParams(window.location.search);
+    return params.get("q") || "";
+  });
 
   // Fetch clubs from database
   const { data: allClubs = [], isLoading, error } = useQuery({

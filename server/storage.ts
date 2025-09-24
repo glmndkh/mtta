@@ -76,7 +76,7 @@ import {
   type RankChangeRequest,
 } from "../shared/schema";
 import { db } from "./db";
-import { eq, desc, and, sql, or, gt } from "drizzle-orm";
+import { eq, desc, and, sql, or, gt, ilike } from "drizzle-orm";
 
 const getRoundTitle = (round: number, totalRounds: number): string => {
   const matchesInRound = Math.pow(2, totalRounds - round);
@@ -92,6 +92,77 @@ const getRoundTitle = (round: number, totalRounds: number): string => {
       return `1/${matchesInRound * 2} финал`;
   }
 };
+
+export interface PlayerSearchResult {
+  id: string;
+  userId: string;
+  firstName: string | null;
+  lastName: string | null;
+  rank: string | null;
+  clubName: string | null;
+}
+
+export interface TournamentSearchResult {
+  id: string;
+  name: string;
+  location: string | null;
+  startDate: Date | null;
+  status: string | null;
+}
+
+export interface NewsSearchResult {
+  id: string;
+  title: string;
+  category: string | null;
+  excerpt: string | null;
+  publishedAt: Date | null;
+}
+
+export interface ClubSearchResult {
+  id: string;
+  name: string;
+  province: string | null;
+  city: string | null;
+  district: string | null;
+}
+
+export interface BranchSearchResult {
+  id: string;
+  name: string;
+  leader: string | null;
+  location: string | null;
+}
+
+export interface FederationMemberSearchResult {
+  id: string;
+  name: string;
+  position: string | null;
+}
+
+export interface JudgeSearchResult {
+  id: string;
+  firstName: string;
+  lastName: string;
+  judgeType: string;
+}
+
+export interface NationalTeamPlayerSearchResult {
+  id: string;
+  firstName: string;
+  lastName: string;
+  age: number | null;
+}
+
+export interface GlobalSearchResults {
+  players: PlayerSearchResult[];
+  tournaments: TournamentSearchResult[];
+  news: NewsSearchResult[];
+  clubs: ClubSearchResult[];
+  branches: BranchSearchResult[];
+  federationMembers: FederationMemberSearchResult[];
+  judges: JudgeSearchResult[];
+  nationalTeamPlayers: NationalTeamPlayerSearchResult[];
+}
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -278,6 +349,9 @@ export interface IStorage {
   getRankChangeRequestsByUserId(userId: string): Promise<any[]>;
   updateRankChangeRequestStatus(id: string, status: string, adminId: string, adminNotes?: string): Promise<RankChangeRequest | null>;
   deleteRankChangeRequest(id: string): Promise<boolean>;
+
+  // Global search
+  searchSiteContent(query: string, limit?: number): Promise<GlobalSearchResults>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -704,6 +778,171 @@ export class DatabaseStorage implements IStorage {
   async deleteClubCoach(id: string): Promise<boolean> {
     const result = await db.delete(clubCoaches).where(eq(clubCoaches.id, id));
     return (result.rowCount || 0) > 0;
+  }
+
+  async searchSiteContent(query: string, limit: number = 5): Promise<GlobalSearchResults> {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) {
+      return {
+        players: [],
+        tournaments: [],
+        news: [],
+        clubs: [],
+        branches: [],
+        federationMembers: [],
+        judges: [],
+        nationalTeamPlayers: [],
+      };
+    }
+
+    const likeQuery = `%${trimmedQuery}%`;
+
+    const [playerRows, tournamentRows, newsRows, clubRows, branchRows, federationRows, judgeRows, nationalTeamRows] = await Promise.all([
+      db
+        .select({
+          id: players.id,
+          userId: players.userId,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          rank: players.rank,
+          clubName: clubs.name,
+        })
+        .from(players)
+        .leftJoin(users, eq(players.userId, users.id))
+        .leftJoin(clubs, eq(players.clubId, clubs.id))
+        .where(
+          or(
+            ilike(users.firstName, likeQuery),
+            ilike(users.lastName, likeQuery),
+            ilike(players.memberNumber, likeQuery),
+            ilike(clubs.name, likeQuery),
+          ),
+        )
+        .limit(limit),
+      db
+        .select({
+          id: tournaments.id,
+          name: tournaments.name,
+          location: tournaments.location,
+          startDate: tournaments.startDate,
+          status: tournaments.status,
+        })
+        .from(tournaments)
+        .where(
+          or(
+            ilike(tournaments.name, likeQuery),
+            ilike(tournaments.location, likeQuery),
+            ilike(tournaments.organizer, likeQuery),
+          ),
+        )
+        .limit(limit),
+      db
+        .select({
+          id: newsFeed.id,
+          title: newsFeed.title,
+          category: newsFeed.category,
+          excerpt: newsFeed.excerpt,
+          publishedAt: newsFeed.publishedAt,
+        })
+        .from(newsFeed)
+        .where(
+          or(
+            ilike(newsFeed.title, likeQuery),
+            ilike(newsFeed.excerpt, likeQuery),
+            ilike(newsFeed.content, likeQuery),
+          ),
+        )
+        .limit(limit),
+      db
+        .select({
+          id: clubs.id,
+          name: clubs.name,
+          province: clubs.province,
+          city: clubs.city,
+          district: clubs.district,
+        })
+        .from(clubs)
+        .where(
+          or(
+            ilike(clubs.name, likeQuery),
+            ilike(clubs.city, likeQuery),
+            ilike(clubs.province, likeQuery),
+            ilike(clubs.district, likeQuery),
+          ),
+        )
+        .limit(limit),
+      db
+        .select({
+          id: branches.id,
+          name: branches.name,
+          leader: branches.leader,
+          location: branches.location,
+        })
+        .from(branches)
+        .where(
+          or(
+            ilike(branches.name, likeQuery),
+            ilike(branches.leader, likeQuery),
+            ilike(branches.location, likeQuery),
+          ),
+        )
+        .limit(limit),
+      db
+        .select({
+          id: federationMembers.id,
+          name: federationMembers.name,
+          position: federationMembers.position,
+        })
+        .from(federationMembers)
+        .where(
+          or(
+            ilike(federationMembers.name, likeQuery),
+            ilike(federationMembers.position, likeQuery),
+          ),
+        )
+        .limit(limit),
+      db
+        .select({
+          id: judges.id,
+          firstName: judges.firstName,
+          lastName: judges.lastName,
+          judgeType: judges.judgeType,
+        })
+        .from(judges)
+        .where(
+          or(
+            ilike(judges.firstName, likeQuery),
+            ilike(judges.lastName, likeQuery),
+          ),
+        )
+        .limit(limit),
+      db
+        .select({
+          id: nationalTeamPlayers.id,
+          firstName: nationalTeamPlayers.firstName,
+          lastName: nationalTeamPlayers.lastName,
+          age: nationalTeamPlayers.age,
+        })
+        .from(nationalTeamPlayers)
+        .where(
+          or(
+            ilike(nationalTeamPlayers.firstName, likeQuery),
+            ilike(nationalTeamPlayers.lastName, likeQuery),
+          ),
+        )
+        .limit(limit),
+    ]);
+
+    return {
+      players: playerRows,
+      tournaments: tournamentRows,
+      news: newsRows,
+      clubs: clubRows,
+      branches: branchRows,
+      federationMembers: federationRows,
+      judges: judgeRows,
+      nationalTeamPlayers: nationalTeamRows,
+    };
   }
 
   async getClubCoachByUserId(userId: string): Promise<ClubCoach | undefined> {
