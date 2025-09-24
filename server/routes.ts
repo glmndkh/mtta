@@ -2295,6 +2295,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Authentication required" });
       }
 
+      // Allow administrators to access all private objects
+      let isAdmin = req.session.user?.role === "admin";
+      if (!isAdmin) {
+        try {
+          const sessionUser = await storage.getUser(req.session.userId);
+          isAdmin = sessionUser?.role === "admin";
+        } catch (err) {
+          console.error("Error verifying admin access:", err);
+        }
+      }
+
+      if (isAdmin) {
+        await oss.downloadObject(objectFile, res);
+        return;
+      }
+
       const canAccess = await oss.canAccessObjectEntity({
         objectFile,
         userId: req.session.userId,
