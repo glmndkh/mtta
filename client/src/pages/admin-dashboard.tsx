@@ -4062,22 +4062,8 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                                     variant="outline"
                                     size="sm"
                                     onClick={() => {
-                                      let imageUrl = request.proofImageUrl;
-                                      
-                                      if (!imageUrl.startsWith('http')) {
-                                        // Remove leading slash if present
-                                        const cleanPath = imageUrl.replace(/^\/+/, '');
-                                        
-                                        // If it already starts with objects/, use as is
-                                        if (cleanPath.startsWith('objects/')) {
-                                          imageUrl = `/${cleanPath}`;
-                                        } else {
-                                          // Otherwise add objects/ prefix
-                                          imageUrl = `/objects/${cleanPath}`;
-                                        }
-                                      }
-                                      
-                                      setSelectedImageUrl(imageUrl);
+                                      const normalizedUrl = getImageUrl(request.proofImageUrl);
+                                      setSelectedImageUrl(normalizedUrl);
                                       setImageModalOpen(true);
                                     }}
                                     className="flex items-center gap-2"
