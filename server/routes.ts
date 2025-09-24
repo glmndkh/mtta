@@ -1058,6 +1058,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // --------------
+  // Global Search
+  // --------------
+  app.get("/api/search", async (req, res) => {
+    try {
+      const query = typeof req.query.q === "string" ? req.query.q : "";
+      const limitParam = typeof req.query.limit === "string" ? parseInt(req.query.limit, 10) : undefined;
+      const limit = Number.isFinite(limitParam) && limitParam && limitParam > 0 ? Math.min(limitParam, 25) : 5;
+
+      if (query.trim().length < 2) {
+        return res.json({
+          players: [],
+          tournaments: [],
+          news: [],
+          clubs: [],
+          branches: [],
+          federationMembers: [],
+          judges: [],
+          nationalTeamPlayers: [],
+        });
+      }
+
+      const results = await storage.searchSiteContent(query, limit);
+      res.json(results);
+    } catch (e) {
+      console.error("Error performing global search:", e);
+      res.status(500).json({ message: "Хайлт хийхэд алдаа гарлаа" });
+    }
+  });
+
+  // --------------
   // Clubs / Branches / Federation members / Judges
   // --------------
   app.post("/api/clubs", requireAuth, async (req: any, res) => {

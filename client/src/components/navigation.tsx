@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Menu, X, Home, Trophy, Building, Users, Newspaper, User, LogOut, ChevronDown, UserPlus, Medal, Search } from "lucide-react";
+import { Menu, X, Home, Trophy, Building, Users, Newspaper, User, LogOut, ChevronDown, UserPlus, Medal, Search, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -28,6 +28,88 @@ import mttaLogo from "@assets/logoweb_1754749015700.png";
 const isActive = (current: string, href: string) =>
   href === "/" ? current === "/" : current.startsWith(href);
 
+type PlayerSearchResult = {
+  id: string;
+  userId: string;
+  firstName: string | null;
+  lastName: string | null;
+  rank: string | null;
+  clubName: string | null;
+};
+
+type TournamentSearchResult = {
+  id: string;
+  name: string;
+  location: string | null;
+  startDate: string | null;
+  status: string | null;
+};
+
+type NewsSearchResult = {
+  id: string;
+  title: string;
+  category: string | null;
+  excerpt: string | null;
+  publishedAt: string | null;
+};
+
+type ClubSearchResult = {
+  id: string;
+  name: string;
+  province: string | null;
+  city: string | null;
+  district: string | null;
+};
+
+type BranchSearchResult = {
+  id: string;
+  name: string;
+  leader: string | null;
+  location: string | null;
+};
+
+type FederationMemberSearchResult = {
+  id: string;
+  name: string;
+  position: string | null;
+};
+
+type JudgeSearchResult = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  judgeType: string;
+};
+
+type NationalTeamPlayerSearchResult = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  age: number | null;
+};
+
+type GlobalSearchResults = {
+  players: PlayerSearchResult[];
+  tournaments: TournamentSearchResult[];
+  news: NewsSearchResult[];
+  clubs: ClubSearchResult[];
+  branches: BranchSearchResult[];
+  federationMembers: FederationMemberSearchResult[];
+  judges: JudgeSearchResult[];
+  nationalTeamPlayers: NationalTeamPlayerSearchResult[];
+};
+
+const createEmptyResults = (): GlobalSearchResults => ({
+  players: [],
+  tournaments: [],
+  news: [],
+  clubs: [],
+  branches: [],
+  federationMembers: [],
+  judges: [],
+  nationalTeamPlayers: [],
+});
+
 export default function Navigation() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -36,6 +118,11 @@ export default function Navigation() {
   const { t } = useLanguage();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<GlobalSearchResults>(() => createEmptyResults());
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!showMobileMenu) return;
@@ -61,6 +148,85 @@ export default function Navigation() {
     if (showMobileMenu) document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = prev; };
   }, [showMobileMenu]);
+
+  useEffect(() => {
+    if (!showSearch) {
+      setSearchQuery("");
+      setSearchResults(createEmptyResults());
+      setSearchError(null);
+      setHasSearched(false);
+      setSearchLoading(false);
+    }
+  }, [showSearch]);
+
+  useEffect(() => {
+    if (!showSearch) return;
+    const trimmed = searchQuery.trim();
+
+    if (trimmed.length < 2) {
+      setHasSearched(false);
+      setSearchResults(createEmptyResults());
+      setSearchError(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      setSearchLoading(true);
+      fetch(`/api/search?q=${encodeURIComponent(trimmed)}`, {
+        signal: controller.signal,
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`Search failed with status ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          setSearchResults({
+            players: Array.isArray(data.players) ? data.players : [],
+            tournaments: Array.isArray(data.tournaments) ? data.tournaments : [],
+            news: Array.isArray(data.news) ? data.news : [],
+            clubs: Array.isArray(data.clubs) ? data.clubs : [],
+            branches: Array.isArray(data.branches) ? data.branches : [],
+            federationMembers: Array.isArray(data.federationMembers) ? data.federationMembers : [],
+            judges: Array.isArray(data.judges) ? data.judges : [],
+            nationalTeamPlayers: Array.isArray(data.nationalTeamPlayers) ? data.nationalTeamPlayers : [],
+          });
+          setSearchError(null);
+          setHasSearched(true);
+        })
+        .catch((error) => {
+          if (error.name === "AbortError") return;
+          console.error("Global search error:", error);
+          setSearchError("Хайлт амжилтгүй боллоо. Дахин оролдоно уу.");
+          setSearchResults(createEmptyResults());
+          setHasSearched(true);
+        })
+        .finally(() => {
+          setSearchLoading(false);
+        });
+    }, 250);
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [searchQuery, showSearch]);
+
+  const formatFullName = (firstName?: string | null, lastName?: string | null) =>
+    `${firstName || ""} ${lastName || ""}`.trim() || "Нэр тодорхойгүй";
+
+  const formatDate = (value?: string | null) => {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleDateString("mn-MN");
+  };
+
+  const trimmedQuery = searchQuery.trim();
+  const isQueryTooShort = trimmedQuery.length > 0 && trimmedQuery.length < 2;
+  const showQuickLinks = trimmedQuery.length === 0;
 
   const navigationLinks = [
     {
@@ -425,51 +591,303 @@ export default function Navigation() {
 
       {/* Global Search Dialog */}
       <CommandDialog open={showSearch} onOpenChange={setShowSearch}>
-        <CommandInput placeholder="Хайх..." />
+        <CommandInput
+          placeholder="Хайх..."
+          value={searchQuery}
+          onValueChange={setSearchQuery}
+        />
         <CommandList>
-          <CommandEmpty>Илэрц олдсонгүй.</CommandEmpty>
-          <CommandGroup>
-            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/"; }}>
-              <Home className="mr-2 h-4 w-4" />
-              <span>Нүүр хуудас</span>
-            </CommandItem>
-            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/about"; }}>
-              <User className="mr-2 h-4 w-4" />
-              <span>Тэнцэрийн холбоо</span>
-            </CommandItem>
-            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/tournaments"; }}>
-              <Trophy className="mr-2 h-4 w-4" />
-              <span>Тэмцээнүүд</span>
-            </CommandItem>
-            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/clubs"; }}>
-              <Building className="mr-2 h-4 w-4" />
-              <span>Клубууд</span>
-            </CommandItem>
-            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/news"; }}>
-              <Newspaper className="mr-2 h-4 w-4" />
-              <span>Мэдээ</span>
-            </CommandItem>
-            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/branches"; }}>
-              <Building className="mr-2 h-4 w-4" />
-              <span>Салбарууд</span>
-            </CommandItem>
-            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/national-team"; }}>
-              <Users className="mr-2 h-4 w-4" />
-              <span>Үндэсний шигшээ баг</span>
-            </CommandItem>
-            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/judges"; }}>
-              <User className="mr-2 h-4 w-4" />
-              <span>Шүүгчид</span>
-            </CommandItem>
-            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/past-champions"; }}>
-              <Medal className="mr-2 h-4 w-4" />
-              <span>Өмнөх аварагчид</span>
-            </CommandItem>
-            <CommandItem onSelect={() => { setShowSearch(false); window.location.href = "/register"; }}>
-              <UserPlus className="mr-2 h-4 w-4" />
-              <span>Бүртгүүлэх</span>
-            </CommandItem>
-          </CommandGroup>
+          <CommandEmpty>
+            {searchLoading
+              ? "Хайлтыг ачааллаж байна..."
+              : isQueryTooShort
+                ? "Хайлт хийхийн тулд дор хаяж 2 тэмдэгт оруулна уу."
+                : "Илэрц олдсонгүй."}
+          </CommandEmpty>
+
+          {searchLoading && (
+            <CommandGroup heading="Хайлт">
+              <CommandItem value="loading" disabled>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <span>Хайлтыг ачааллаж байна...</span>
+              </CommandItem>
+            </CommandGroup>
+          )}
+
+          {searchError && (
+            <CommandGroup heading="Алдаа">
+              <CommandItem value="error" disabled>
+                <span className="text-red-400">{searchError}</span>
+              </CommandItem>
+            </CommandGroup>
+          )}
+
+          {hasSearched && !searchLoading && !searchError && (
+            <>
+              {searchResults.players.length > 0 && (
+                <CommandGroup heading="Тоглогчид">
+                  {searchResults.players.map((player) => {
+                    const fullName = formatFullName(player.firstName, player.lastName);
+                    const meta = [player.rank, player.clubName].filter(Boolean).join(" • ");
+                    return (
+                      <CommandItem
+                        key={`player-${player.id}`}
+                        value={`player ${fullName} ${meta}`}
+                        onSelect={() => {
+                          setShowSearch(false);
+                          window.location.href = `/player/${player.id}`;
+                        }}
+                      >
+                        <User className="mr-2 h-4 w-4" />
+                        <div className="flex flex-col">
+                          <span>{fullName}</span>
+                          {meta && (
+                            <span className="text-xs text-muted-foreground">{meta}</span>
+                          )}
+                        </div>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              )}
+
+              {searchResults.tournaments.length > 0 && (
+                <CommandGroup heading="Тэмцээнүүд">
+                  {searchResults.tournaments.map((tournament) => {
+                    const info = [tournament.location, formatDate(tournament.startDate)].filter(Boolean).join(" • ");
+                    return (
+                      <CommandItem
+                        key={`tournament-${tournament.id}`}
+                        value={`tournament ${tournament.name} ${info}`}
+                        onSelect={() => {
+                          setShowSearch(false);
+                          window.location.href = `/tournament/${tournament.id}`;
+                        }}
+                      >
+                        <Trophy className="mr-2 h-4 w-4" />
+                        <div className="flex flex-col">
+                          <span>{tournament.name}</span>
+                          {info && (
+                            <span className="text-xs text-muted-foreground">{info}</span>
+                          )}
+                        </div>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              )}
+
+              {searchResults.news.length > 0 && (
+                <CommandGroup heading="Мэдээ">
+                  {searchResults.news.map((item) => {
+                    const info = [item.category, formatDate(item.publishedAt)].filter(Boolean).join(" • ");
+                    return (
+                      <CommandItem
+                        key={`news-${item.id}`}
+                        value={`news ${item.title} ${info}`}
+                        onSelect={() => {
+                          setShowSearch(false);
+                          window.location.href = `/news/${item.id}`;
+                        }}
+                      >
+                        <Newspaper className="mr-2 h-4 w-4" />
+                        <div className="flex flex-col">
+                          <span>{item.title}</span>
+                          {info && (
+                            <span className="text-xs text-muted-foreground">{info}</span>
+                          )}
+                        </div>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              )}
+
+              {searchResults.clubs.length > 0 && (
+                <CommandGroup heading="Клубууд">
+                  {searchResults.clubs.map((club) => {
+                    const locationLabel = [club.province, club.city].filter(Boolean).join(", ");
+                    return (
+                      <CommandItem
+                        key={`club-${club.id}`}
+                        value={`club ${club.name} ${locationLabel}`}
+                        onSelect={() => {
+                          setShowSearch(false);
+                          const params = new URLSearchParams();
+                          params.set("q", club.name);
+                          window.location.href = `/clubs?${params.toString()}`;
+                        }}
+                      >
+                        <Building className="mr-2 h-4 w-4" />
+                        <div className="flex flex-col">
+                          <span>{club.name}</span>
+                          {locationLabel && (
+                            <span className="text-xs text-muted-foreground">{locationLabel}</span>
+                          )}
+                        </div>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              )}
+
+              {searchResults.branches.length > 0 && (
+                <CommandGroup heading="Салбарууд">
+                  {searchResults.branches.map((branch) => {
+                    const info = [branch.leader, branch.location].filter(Boolean).join(" • ");
+                    return (
+                      <CommandItem
+                        key={`branch-${branch.id}`}
+                        value={`branch ${branch.name} ${info}`}
+                        onSelect={() => {
+                          setShowSearch(false);
+                          window.location.href = `/branch-details/${branch.id}`;
+                        }}
+                      >
+                        <Building className="mr-2 h-4 w-4" />
+                        <div className="flex flex-col">
+                          <span>{branch.name}</span>
+                          {info && (
+                            <span className="text-xs text-muted-foreground">{info}</span>
+                          )}
+                        </div>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              )}
+
+              {searchResults.federationMembers.length > 0 && (
+                <CommandGroup heading="Холбооны гишүүд">
+                  {searchResults.federationMembers.map((member) => {
+                    const info = member.position || "";
+                    return (
+                      <CommandItem
+                        key={`federation-${member.id}`}
+                        value={`federation ${member.name} ${info}`}
+                        onSelect={() => {
+                          setShowSearch(false);
+                          window.location.href = "/about#leadership";
+                        }}
+                      >
+                        <Users className="mr-2 h-4 w-4" />
+                        <div className="flex flex-col">
+                          <span>{member.name}</span>
+                          {info && (
+                            <span className="text-xs text-muted-foreground">{info}</span>
+                          )}
+                        </div>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              )}
+
+              {searchResults.judges.length > 0 && (
+                <CommandGroup heading="Шүүгчид">
+                  {searchResults.judges.map((judge) => {
+                    const fullName = formatFullName(judge.firstName, judge.lastName);
+                    const typeLabel = judge.judgeType === "international" ? "Олон улсын шүүгч" : "Дотоодын шүүгч";
+                    return (
+                      <CommandItem
+                        key={`judge-${judge.id}`}
+                        value={`judge ${fullName} ${typeLabel}`}
+                        onSelect={() => {
+                          setShowSearch(false);
+                          const params = new URLSearchParams();
+                          params.set("type", judge.judgeType);
+                          window.location.href = `/judges?${params.toString()}`;
+                        }}
+                      >
+                        <User className="mr-2 h-4 w-4" />
+                        <div className="flex flex-col">
+                          <span>{fullName}</span>
+                          {typeLabel && (
+                            <span className="text-xs text-muted-foreground">{typeLabel}</span>
+                          )}
+                        </div>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              )}
+
+              {searchResults.nationalTeamPlayers.length > 0 && (
+                <CommandGroup heading="Үндэсний шигшээ баг">
+                  {searchResults.nationalTeamPlayers.map((player) => {
+                    const fullName = formatFullName(player.firstName, player.lastName);
+                    const info = typeof player.age === "number" && player.age > 0 ? `${player.age} нас` : "";
+                    return (
+                      <CommandItem
+                        key={`national-${player.id}`}
+                        value={`national ${fullName} ${info}`}
+                        onSelect={() => {
+                          setShowSearch(false);
+                          window.location.href = "/national-team";
+                        }}
+                      >
+                        <Users className="mr-2 h-4 w-4" />
+                        <div className="flex flex-col">
+                          <span>{fullName}</span>
+                          {info && (
+                            <span className="text-xs text-muted-foreground">{info}</span>
+                          )}
+                        </div>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              )}
+
+            </>
+          )}
+
+          {showQuickLinks && (
+            <>
+              <CommandGroup heading="Шуурхай холбоос">
+                <CommandItem value="home" onSelect={() => { setShowSearch(false); window.location.href = "/"; }}>
+                  <Home className="mr-2 h-4 w-4" />
+                  <span>Нүүр хуудас</span>
+                </CommandItem>
+                <CommandItem value="about" onSelect={() => { setShowSearch(false); window.location.href = "/about"; }}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Тэнцэрийн холбоо</span>
+                </CommandItem>
+                <CommandItem value="tournaments" onSelect={() => { setShowSearch(false); window.location.href = "/tournaments"; }}>
+                  <Trophy className="mr-2 h-4 w-4" />
+                  <span>Тэмцээнүүд</span>
+                </CommandItem>
+                <CommandItem value="clubs" onSelect={() => { setShowSearch(false); window.location.href = "/clubs"; }}>
+                  <Building className="mr-2 h-4 w-4" />
+                  <span>Клубууд</span>
+                </CommandItem>
+                <CommandItem value="news" onSelect={() => { setShowSearch(false); window.location.href = "/news"; }}>
+                  <Newspaper className="mr-2 h-4 w-4" />
+                  <span>Мэдээ</span>
+                </CommandItem>
+                <CommandItem value="branches" onSelect={() => { setShowSearch(false); window.location.href = "/branches"; }}>
+                  <Building className="mr-2 h-4 w-4" />
+                  <span>Салбарууд</span>
+                </CommandItem>
+                <CommandItem value="national-team" onSelect={() => { setShowSearch(false); window.location.href = "/national-team"; }}>
+                  <Users className="mr-2 h-4 w-4" />
+                  <span>Үндэсний шигшээ баг</span>
+                </CommandItem>
+                <CommandItem value="judges" onSelect={() => { setShowSearch(false); window.location.href = "/judges"; }}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Шүүгчид</span>
+                </CommandItem>
+                <CommandItem value="past-champions" onSelect={() => { setShowSearch(false); window.location.href = "/past-champions"; }}>
+                  <Medal className="mr-2 h-4 w-4" />
+                  <span>Өмнөх аварагчид</span>
+                </CommandItem>
+                <CommandItem value="register" onSelect={() => { setShowSearch(false); window.location.href = "/register"; }}>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  <span>Бүртгүүлэх</span>
+                </CommandItem>
+              </CommandGroup>
+            </>
+          )}
         </CommandList>
       </CommandDialog>
     </>
