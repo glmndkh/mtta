@@ -224,7 +224,7 @@ export default function Navigation() {
                   variant="ghost"
                   size="icon"
                   onClick={() => setShowSearch(true)}
-                  className="h-9 w-9 text-white hover:text-green-300"
+                  className="h-9 w-9 text-slate-900 hover:text-green-600 dark:text-white dark:hover:text-green-300"
                   data-testid="search-toggle"
                   title="Search"
                 >
@@ -236,7 +236,7 @@ export default function Navigation() {
                   ref={triggerRef}
                   variant="ghost"
                   size="sm"
-                  className="lg:hidden text-white hover:text-mtta-green p-2"
+                  className="lg:hidden p-2 text-slate-900 hover:text-mtta-green dark:text-white"
                   onClick={() => setShowMobileMenu((v) => !v)}
                   data-testid="mobile-menu-toggle"
                 >
