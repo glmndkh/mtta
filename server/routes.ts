@@ -1365,38 +1365,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Байршил заавал байх ёстой" });
       }
 
-      // Validate event structure
-      if (!req.body.events || !Array.isArray(req.body.events) || req.body.events.length === 0) {
-        return res.status(400).json({ message: "Хамгийн багадаа нэг ивэнт байх ёстой" });
+      const hasEventsArray = Array.isArray(req.body.events) && req.body.events.length > 0;
+      const hasLegacyParticipationTypes =
+        Array.isArray(req.body.participationTypes) && req.body.participationTypes.length > 0;
+
+      if (!hasEventsArray && !hasLegacyParticipationTypes) {
+        return res
+          .status(400)
+          .json({ message: "Хамгийн багадаа нэг ивэнт эсвэл төрөл байх ёстой" });
       }
 
-      // Validate each event
-      for (const event of req.body.events) {
-        if (!event.type || !['SINGLES', 'DOUBLES', 'TEAM'].includes(event.type)) {
-          return res.status(400).json({ message: "Ивэнтийн төрөл буруу байна" });
-        }
-        
-        if ((event.type === 'DOUBLES' || event.type === 'TEAM') && !event.subType) {
-          return res.status(400).json({ message: `${event.type} төрөлд дэд төрөл заавал оруулах ёстой` });
-        }
-
-        if (event.type === 'DOUBLES' && !['MEN_DOUBLES', 'WOMEN_DOUBLES', 'MIXED_DOUBLES'].includes(event.subType)) {
-          return res.status(400).json({ message: "Хосын төрөл буруу байна" });
-        }
-
-        if (event.type === 'TEAM' && event.subType && !['MEN_TEAM', 'WOMEN_TEAM', 'MIXED_TEAM'].includes(event.subType)) {
-          return res.status(400).json({ message: "Багийн төрөл буруу байна" });
-        }
-
-        if (!event.divisions || !Array.isArray(event.divisions) || event.divisions.length === 0) {
-          return res.status(400).json({ message: "Ивэнт бүрт хамгийн багадаа нэг насны ангилал байх ёстой" });
-        }
-
-        for (const division of event.divisions) {
-          if (!division.name) {
-            return res.status(400).json({ message: "Насны ангиллын нэр заавал оруулах ёстой" });
+      let normalizedEvents: any[] = [];
+      if (hasEventsArray) {
+        for (const event of req.body.events) {
+          if (typeof event === 'string') {
+            try {
+              normalizedEvents.push(JSON.parse(event));
+            } catch {
+              return res.status(400).json({ message: "Ивэнтийн мэдээлэл буруу байна" });
+            }
+          } else {
+            normalizedEvents.push(event);
           }
         }
+
+        // Validate each event
+        for (const event of normalizedEvents) {
+          if (!event.type || !['SINGLES', 'DOUBLES', 'TEAM'].includes(event.type)) {
+            return res.status(400).json({ message: "Ивэнтийн төрөл буруу байна" });
+          }
+
+          if ((event.type === 'DOUBLES' || event.type === 'TEAM') && !event.subType) {
+            return res
+              .status(400)
+              .json({ message: `${event.type} төрөлд дэд төрөл заавал оруулах ёстой` });
+          }
+
+          if (
+            event.type === 'DOUBLES' &&
+            !['MEN_DOUBLES', 'WOMEN_DOUBLES', 'MIXED_DOUBLES'].includes(event.subType)
+          ) {
+            return res.status(400).json({ message: "Хосын төрөл буруу байна" });
+          }
+
+          if (
+            event.type === 'TEAM' &&
+            event.subType &&
+            !['MEN_TEAM', 'WOMEN_TEAM', 'MIXED_TEAM'].includes(event.subType)
+          ) {
+            return res.status(400).json({ message: "Багийн төрөл буруу байна" });
+          }
+
+          if (!event.divisions || !Array.isArray(event.divisions) || event.divisions.length === 0) {
+            return res
+              .status(400)
+              .json({ message: "Ивэнт бүрт хамгийн багадаа нэг насны ангилал байх ёстой" });
+          }
+
+          for (const division of event.divisions) {
+            if (!division.name) {
+              return res.status(400).json({ message: "Насны ангиллын нэр заавал оруулах ёстой" });
+            }
+          }
+        }
+      }
+
+      let participationTypes: string[] = [];
+      if (hasEventsArray) {
+        participationTypes = normalizedEvents.map(event => JSON.stringify(event));
+      } else if (hasLegacyParticipationTypes) {
+        participationTypes = req.body.participationTypes.map((type: any) =>
+          typeof type === 'string' ? type : JSON.stringify(type),
+        );
       }
 
       // Validate dates
@@ -1420,9 +1460,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: "Бүртгэлийн эцсийн хугацаа буруу байна" });
         }
       }
-
-      // Convert events to participationTypes format for backwards compatibility
-      const participationTypes = req.body.events.map((event: any) => JSON.stringify(event));
 
       const tournamentData = {
         name: req.body.name,
