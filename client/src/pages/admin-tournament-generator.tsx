@@ -770,25 +770,21 @@ export default function AdminTournamentGenerator() {
                     </div>
                     
                     {/* Category Input */}
-                    <div className="flex gap-2">
-                      {participationFormat === "individual" && (
-                        <>
-                          <Input
-                            type="number"
-                            value={minAge}
-                            onChange={(e) => setMinAge(e.target.value)}
-                            placeholder="Доод нас"
-                            className="w-24"
-                          />
-                          <Input
-                            type="number"
-                            value={maxAge}
-                            onChange={(e) => setMaxAge(e.target.value)}
-                            placeholder="Дээд нас"
-                            className="w-24"
-                          />
-                        </>
-                      )}
+                    <div className="flex gap-2 flex-wrap">
+                      <Input
+                        type="number"
+                        value={minAge}
+                        onChange={(e) => setMinAge(e.target.value)}
+                        placeholder="Доод нас"
+                        className="w-24"
+                      />
+                      <Input
+                        type="number"
+                        value={maxAge}
+                        onChange={(e) => setMaxAge(e.target.value)}
+                        placeholder="Дээд нас"
+                        className="w-24"
+                      />
                       <Select value={gender} onValueChange={setGender}>
                         <SelectTrigger className="w-[140px]">
                           <SelectValue placeholder="Хүйс" />
@@ -814,20 +810,17 @@ export default function AdminTournamentGenerator() {
                           else if (cat.type === "pair") formatLabel = "Хос";
                           else formatLabel = "Хувь хүн";
                           
-                          // Age range (only for individual)
-                          if (cat.type === "individual") {
-                            if (cat.minAge !== null && cat.maxAge !== null)
-                              label = `${cat.minAge}-${cat.maxAge}`;
-                            else if (cat.minAge !== null) label = `${cat.minAge}+`;
-                            else if (cat.maxAge !== null) label = `${cat.maxAge}-аас доош`;
-                            else label = "Нас хязгааргүй";
-                          }
-                          
+                          if (cat.minAge !== null && cat.maxAge !== null)
+                            label = `${cat.minAge}-${cat.maxAge}`;
+                          else if (cat.minAge !== null) label = `${cat.minAge}+`;
+                          else if (cat.maxAge !== null) label = `${cat.maxAge}-аас доош`;
+                          else if (cat.type === "individual") label = "Нас хязгааргүй";
+
                           // Gender
-                          const genderLabel = cat.gender === 'male' ? 'эрэгтэй' : 
+                          const genderLabel = cat.gender === 'male' ? 'эрэгтэй' :
                                              cat.gender === 'female' ? 'эмэгтэй' : 'холимог';
-                          
-                          const displayText = cat.type === "individual" 
+
+                          const displayText = label
                             ? `${formatLabel} - ${label} ${genderLabel}`
                             : `${formatLabel} - ${genderLabel}`;
                             
