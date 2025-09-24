@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
@@ -20,6 +20,17 @@ import { apiRequest } from "@/lib/queryClient";
 import { useTheme } from "@/contexts/ThemeContext";
 import { formatName } from "@/lib/utils";
 import { ObjectUploader } from "@/components/ObjectUploader";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { getImageUrl } from "@/lib/utils";
 
 interface PlayerStats {
   rank?: string;
@@ -56,6 +67,22 @@ interface UserProfile {
   judgeType?: string;
   isCoach?: boolean;
   playerStats?: PlayerStats;
+}
+
+interface UpdateProfilePayload {
+  name: string;
+  email: string;
+  phone?: string;
+  gender?: string;
+  dateOfBirth?: string;
+  clubName?: string;
+  profilePicture?: string;
+  province?: string;
+  city?: string;
+  rubberTypes?: string[];
+  handedness?: "right" | "left";
+  playingStyles?: string[];
+  bio?: string;
 }
 
 interface Club {
@@ -191,6 +218,8 @@ export default function Profile() {
   const [showRankChangeForm, setShowRankChangeForm] = useState(false);
   const [newRank, setNewRank] = useState('');
   const [proofImageUrl, setProofImageUrl] = useState('');
+  const [pendingProfileUpdate, setPendingProfileUpdate] = useState<UpdateProfilePayload | null>(null);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
   // Valid ranks for selection
   const validRanks = [
@@ -281,7 +310,7 @@ export default function Profile() {
 
   // Update profile mutation
   const updateProfileMutation = useMutation({
-    mutationFn: (data: UserProfile) => apiRequest(`/api/user/profile`, {
+    mutationFn: (data: UpdateProfilePayload) => apiRequest(`/api/user/profile`, {
       method: 'PUT',
       body: JSON.stringify(data)
     }),
@@ -291,6 +320,9 @@ export default function Profile() {
         description: "Профайл амжилттай шинэчлэгдлээ",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/user/profile'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      setPendingProfileUpdate(null);
+      setIsConfirmDialogOpen(false);
     },
     onError: (error: any) => {
       console.error('Profile update error:', error);
@@ -335,7 +367,7 @@ export default function Profile() {
         gender: profile.gender || '',
         dateOfBirth: profile.dateOfBirth ? profile.dateOfBirth.split('T')[0] : '',
         clubName: profile.clubName || '',
-        profilePicture: profile.profilePicture || '',
+        profilePicture: profile.profilePicture ? getImageUrl(profile.profilePicture) : '',
         province: profile.province || '',
         city: profile.city || '',
         rubberTypes: profile.rubberTypes || [],
@@ -387,20 +419,27 @@ export default function Profile() {
   };
 
   // Handle form submission
+  const buildProfileUpdatePayload = (): UpdateProfilePayload => ({
+    name: profileData.name?.trim() || '',
+    email: profileData.email?.trim() || '',
+    phone: profileData.phone?.trim() || '',
+    gender: profileData.gender,
+    dateOfBirth: profileData.dateOfBirth,
+    clubName: profileData.clubName,
+    profilePicture: profileData.profilePicture,
+    province: profileData.province,
+    city: profileData.city,
+    rubberTypes: profileData.rubberTypes || [],
+    handedness: profileData.handedness,
+    playingStyles: profileData.playingStyles || [],
+    bio: profileData.bio,
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfileMutation.mutate({
-      ...profileData,
-      playerStats: {
-        ...profileData.playerStats,
-        rank: profileData.playerStats?.rank, // Ensure rank is included
-        points: profileData.playerStats?.points,
-        achievements: profileData.playerStats?.achievements,
-        wins: profileData.playerStats?.wins,
-        losses: profileData.playerStats?.losses,
-        memberNumber: profileData.playerStats?.memberNumber
-      }
-    });
+    const payload = buildProfileUpdatePayload();
+    setPendingProfileUpdate(payload);
+    setIsConfirmDialogOpen(true);
   };
 
   // Handle profile picture upload
@@ -417,6 +456,21 @@ export default function Profile() {
       reader.readAsDataURL(file);
     }
   };
+
+  const confirmProfileUpdate = () => {
+    if (!pendingProfileUpdate) return;
+    updateProfileMutation.mutate(pendingProfileUpdate);
+  };
+
+  const profilePicturePreview = useMemo(() => {
+    if (!profileData.profilePicture) return '';
+    return getImageUrl(profileData.profilePicture);
+  }, [profileData.profilePicture]);
+
+  const pendingProfilePicture = useMemo(() => {
+    if (!pendingProfileUpdate?.profilePicture) return '';
+    return getImageUrl(pendingProfileUpdate.profilePicture);
+  }, [pendingProfileUpdate?.profilePicture]);
 
   // Handle rank change request submission
   const handleRankChangeSubmit = () => {
@@ -527,7 +581,10 @@ export default function Profile() {
               <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                 <div className="relative">
                   <Avatar className="w-24 h-24">
-                    <AvatarImage src={profile?.profilePicture} alt={profile?.firstName} />
+                    <AvatarImage
+                      src={profile?.profilePicture ? getImageUrl(profile.profilePicture) : undefined}
+                      alt={profile?.firstName}
+                    />
                     <AvatarFallback className="text-2xl">
                       {(profile?.lastName?.[0] || '') + (profile?.firstName?.[0] || '')}
                     </AvatarFallback>
@@ -833,7 +890,7 @@ export default function Profile() {
                   <CardContent>
                     <div className="flex items-center gap-6">
                       <Avatar className="w-24 h-24">
-                        <AvatarImage src={profileData.profilePicture} />
+                        <AvatarImage src={profilePicturePreview || undefined} />
                         <AvatarFallback className="text-2xl">
                           {profileData.name?.charAt(0) || 'U'}
                         </AvatarFallback>
@@ -1349,6 +1406,74 @@ export default function Profile() {
           </Tabs>
         </div>
       </main>
+      <AlertDialog
+        open={isConfirmDialogOpen}
+        onOpenChange={(open) => {
+          if (updateProfileMutation.isPending) return;
+          if (!open) {
+            setPendingProfileUpdate(null);
+          }
+          setIsConfirmDialogOpen(open);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Мэдээллээ шинэчлэх үү?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Та профайлын мэдээлэлдээ хийсэн өөрчлөлтүүдээ баталгаажуулах гэж байна. Дараах мэдээлэл хадгалагдана:
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {pendingProfileUpdate && (
+            <div className="mt-4 space-y-3 rounded-lg border border-gray-700 bg-gray-900/80 p-4 text-sm text-gray-200">
+              <div>
+                <span className="font-semibold text-white">Нэр:</span> {pendingProfileUpdate.name || '—'}
+              </div>
+              <div>
+                <span className="font-semibold text-white">И-мэйл:</span> {pendingProfileUpdate.email || '—'}
+              </div>
+              <div>
+                <span className="font-semibold text-white">Утас:</span> {pendingProfileUpdate.phone || '—'}
+              </div>
+              <div>
+                <span className="font-semibold text-white">Клуб:</span> {pendingProfileUpdate.clubName || '—'}
+              </div>
+              <div>
+                <span className="font-semibold text-white">Байршил:</span> {pendingProfileUpdate.province || '—'}
+                {pendingProfileUpdate.city ? `, ${pendingProfileUpdate.city}` : ''}
+              </div>
+              <div>
+                <span className="font-semibold text-white">Хүйс:</span> {pendingProfileUpdate.gender ? (pendingProfileUpdate.gender === 'male' ? 'Эрэгтэй' : pendingProfileUpdate.gender === 'female' ? 'Эмэгтэй' : 'Бусад') : '—'}
+              </div>
+              {pendingProfilePicture && (
+                <div className="flex items-center gap-3">
+                  <span className="font-semibold text-white">Профайл зураг:</span>
+                  <Avatar className="h-12 w-12 border border-gray-700">
+                    <AvatarImage src={pendingProfilePicture} />
+                    <AvatarFallback>{pendingProfileUpdate.name?.charAt(0) || 'U'}</AvatarFallback>
+                  </Avatar>
+                </div>
+              )}
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                if (updateProfileMutation.isPending) return;
+                setPendingProfileUpdate(null);
+              }}
+              disabled={updateProfileMutation.isPending}
+            >
+              Буцах
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmProfileUpdate}
+              disabled={updateProfileMutation.isPending}
+            >
+              {updateProfileMutation.isPending ? 'Хадгалж байна...' : 'Баталгаажуулах'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
