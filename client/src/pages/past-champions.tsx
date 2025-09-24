@@ -3,7 +3,8 @@ import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
-import { getImageUrl } from "@/lib/utils";
+import { useTheme } from "@/contexts/ThemeContext";
+import { cn, getImageUrl } from "@/lib/utils";
 
 interface Champion {
   id: string;
@@ -19,6 +20,16 @@ export default function PastChampions() {
   const [champions, setChampions] = useState<Champion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { theme } = useTheme();
+
+  const isDark = theme === "dark";
+  const backgroundClass = isDark
+    ? "bg-gradient-to-b from-gray-900 via-gray-800 to-black"
+    : "bg-gradient-to-b from-slate-100 via-white to-slate-200";
+  const headingTextClass = isDark ? "text-white" : "text-slate-900";
+  const loadingTextClass = isDark ? "text-white" : "text-slate-900";
+  const emptyStateTextClass = isDark ? "text-gray-300" : "text-slate-600";
+  const cardBorderClass = isDark ? "border-slate-500/60" : "border-slate-200";
 
   useEffect(() => {
     fetchChampions();
@@ -44,9 +55,9 @@ export default function PastChampions() {
     return (
       <PageWithLoading>
         <Navigation />
-        <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black py-10">
+        <div className={cn("min-h-screen py-10 transition-colors duration-500", backgroundClass)}>
           <div className="container mx-auto flex flex-col items-center">
-            <div className="text-white text-center">
+            <div className={cn("text-center", loadingTextClass)}>
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400 mx-auto mb-4"></div>
               <p>Аваргуудыг ачааллаж байна...</p>
             </div>
@@ -60,9 +71,14 @@ export default function PastChampions() {
     return (
       <PageWithLoading>
         <Navigation />
-        <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black py-10">
+        <div className={cn("min-h-screen py-10 transition-colors duration-500", backgroundClass)}>
           <div className="container mx-auto flex flex-col items-center">
-            <div className="text-red-400 text-center">
+            <div
+              className={cn(
+                "text-center",
+                isDark ? "text-red-400" : "text-red-500"
+              )}
+            >
               <p>{error}</p>
             </div>
           </div>
@@ -72,13 +88,23 @@ export default function PastChampions() {
   }
 
   return (
-    <PageWithLoading>
-      <Navigation />
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black py-10">
+      <PageWithLoading>
+        <Navigation />
+      <div
+        className={cn(
+          "min-h-screen py-10 transition-colors duration-500",
+          backgroundClass
+        )}
+      >
         <div className="container mx-auto flex flex-col items-center px-4">
           {/* Header */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            <h1
+              className={cn(
+                "text-4xl md:text-5xl font-bold mb-4 transition-colors duration-500",
+                headingTextClass
+              )}
+            >
               Үе үеийн аваргууд
             </h1>
             <div className="w-24 h-1 bg-gradient-to-r from-yellow-400 to-yellow-600 mx-auto"></div>
@@ -87,16 +113,19 @@ export default function PastChampions() {
           {/* Champions Grid */}
           <div className="flex flex-wrap justify-center gap-8 max-w-6xl">
             {champions.map((champion) => (
-              <Card 
-                key={champion.id} 
-                className="w-64 md:w-72 bg-white/95 backdrop-blur-sm shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 border-0 rounded-xl overflow-hidden"
+              <Card
+                key={champion.id}
+                className={cn(
+                  "champion-card w-64 md:w-72 backdrop-blur-sm shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 rounded-xl overflow-hidden border",
+                  cardBorderClass
+                )}
               >
-                <CardHeader className="p-6 pb-3 text-center bg-gradient-to-b from-gray-50 to-white">
-                  <CardTitle className="text-2xl font-bold text-gray-800 tracking-wide">
+                <CardHeader className="p-6 pb-3 text-center bg-slate-50 dark:bg-slate-100">
+                  <CardTitle className="text-2xl font-bold text-slate-900 tracking-wide">
                     {champion.year}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-0 flex flex-col items-center">
+                <CardContent className="p-0 flex flex-col items-center text-slate-900">
                   {/* Champion Image */}
                   <div className="w-full px-6 pb-4">
                     <div className="aspect-[3/4] w-full overflow-hidden rounded-lg shadow-lg">
@@ -114,11 +143,11 @@ export default function PastChampions() {
                   
                   {/* Champion Name */}
                   <div className="w-full px-6 pb-6 text-center">
-                    <h3 className="text-lg font-semibold text-gray-800 leading-tight">
+                    <h3 className="text-lg font-semibold text-slate-900 leading-tight">
                       {champion.name}
                     </h3>
                     {champion.championType && (
-                      <p className="text-sm text-gray-600 mt-1 capitalize">
+                      <p className="text-sm text-slate-600 mt-1 capitalize">
                         {champion.championType.replace('_', ' ')}
                       </p>
                     )}
@@ -129,8 +158,10 @@ export default function PastChampions() {
           </div>
 
           {champions.length === 0 && !loading && !error && (
-            <div className="text-center text-gray-400 mt-12">
-              <p className="text-xl">Одоогоор аваргууд бүртгэгдээгүй байна</p>
+            <div className="text-center mt-12">
+              <p className={cn("text-xl", emptyStateTextClass)}>
+                Одоогоор аваргууд бүртгэгдээгүй байна
+              </p>
             </div>
           )}
         </div>
