@@ -23,7 +23,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import mttaLogo from "@assets/new-mtta-logo.png";
+import mttaLogo from "@/assets/new-mtta-logo.png";
 
 const isActive = (current: string, href: string) =>
   href === "/" ? current === "/" : current.startsWith(href);
