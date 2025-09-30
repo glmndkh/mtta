@@ -267,7 +267,11 @@ export default function Navigation() {
             {/* Logo */}
             <Link href="/">
               <div className="flex items-center cursor-pointer logo-glow flex-shrink-0">
-                <img src={mttaLogo} alt="MTTA Logo" className="h-10 w-auto filter brightness-0 invert dark:filter-none" />
+                <img
+              src={mttaLogo}
+              alt="MTTA Logo"
+              className="h-8 w-auto object-contain"
+            />
               </div>
             </Link>
 
@@ -384,7 +388,7 @@ export default function Navigation() {
               <div className="flex items-center space-x-2">
                 <LanguageSwitcher />
                 <ThemeToggle />
-                
+
                 {/* Search button */}
                 <Button
                   variant="ghost"
@@ -396,7 +400,7 @@ export default function Navigation() {
                 >
                   <Search className="h-4 w-4" />
                 </Button>
-                
+
                 {/* Mobile menu button */}
                 <Button
                   ref={triggerRef}
