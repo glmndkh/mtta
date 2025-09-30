@@ -117,13 +117,14 @@ const parseParticipation = (value: string): ParticipationCategory => {
   }
 };
 
-const formatParticipation = (cat: ParticipationCategory) => {
+const formatParticipationType = (type: string): string => {
+  const category = parseParticipation(type);
   let label = "";
-  if (cat.minAge !== null && cat.maxAge !== null) label = `${cat.minAge}-${cat.maxAge}`;
-  else if (cat.minAge !== null) label = `${cat.minAge}+`;
-  else if (cat.maxAge !== null) label = `${cat.maxAge}-аас доош`;
+  if (category.minAge !== null && category.maxAge !== null) label = `${category.minAge}-${category.maxAge}`;
+  else if (category.minAge !== null) label = `${category.minAge}+`;
+  else if (category.maxAge !== null) label = `${category.maxAge}-аас доош`;
   else label = "Нас хязгааргүй";
-  return `${label} ${cat.gender === "male" ? "эрэгтэй" : "эмэгтэй"}`;
+  return `${label} ${category.gender === "male" ? "эрэгтэй" : "эмэгтэй"}`;
 };
 
 // Medal Winners Component
@@ -408,7 +409,7 @@ function TournamentParticipants({ tournamentId }: { tournamentId: string }) {
                 <SelectItem value="all" className="text-white hover:bg-gray-700">Бүх төрөл</SelectItem>
                 {uniqueParticipationTypes.map(type => (
                   <SelectItem key={type} value={type} className="text-white hover:bg-gray-700">
-                    {participationTypeLabels[type] || formatParticipation(parseParticipation(type))}
+                    {participationTypeLabels[type] || formatParticipationType(type)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -451,7 +452,7 @@ function TournamentParticipants({ tournamentId }: { tournamentId: string }) {
                   <TableCell className="text-gray-300">{participant.clubAffiliation || "Тодорхойгүй"}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="border-green-400 text-green-400">
-                      {participationTypeLabels[participant.participationType] || formatParticipation(parseParticipation(participant.participationType))}
+                      {participationTypeLabels[participant.participationType] || formatParticipationType(participant.participationType)}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-gray-300">{participant.rank || "Тодорхойгүй"}</TableCell>
@@ -663,7 +664,7 @@ export default function TournamentPage() {
                     <div className="flex flex-wrap gap-1">
                       {tournament.participationTypes.map(type => (
                         <Badge key={type} variant="outline" className="border-green-400 text-green-400">
-                          {participationTypeLabels[type] || formatParticipation(parseParticipation(type))}
+                          {participationTypeLabels[type] || formatParticipationType(type)}
                         </Badge>
                       ))}
                     </div>

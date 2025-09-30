@@ -44,58 +44,49 @@ interface FinalRanking {
   prize?: string;
 }
 
-interface ParticipationCategory {
-  minAge: number | null;
-  maxAge: number | null;
-  gender: string;
-}
-
-const parseParticipationType = (value: string): ParticipationCategory => {
+// Simple text display for participation types
+const formatParticipationType = (value: string): string => {
+  // If it's already a readable text, return as is
+  if (!value.startsWith('{') && !value.startsWith('[')) {
+    return value;
+  }
+  
   try {
     const obj = JSON.parse(value);
-    if ("minAge" in obj || "maxAge" in obj) {
-      return {
-        minAge: obj.minAge ?? null,
-        maxAge: obj.maxAge ?? null,
-        gender: obj.gender || "male",
-      };
-    }
-    if ("age" in obj) {
-      const ageStr = String(obj.age);
-      const nums = ageStr.match(/\d+/g)?.map(Number) || [];
-      let min: number | null = null;
-      let max: number | null = null;
-      if (nums.length === 1) {
-        if (/хүртэл/i.test(ageStr)) max = nums[0];
-        else min = nums[0];
-      } else if (nums.length >= 2) {
-        [min, max] = nums;
+    
+    // Handle age-based categories
+    if ("minAge" in obj || "maxAge" in obj || "age" in obj) {
+      const minAge = obj.minAge;
+      const maxAge = obj.maxAge;
+      const gender = obj.gender || "male";
+      
+      let ageLabel = "";
+      if (minAge !== null && maxAge !== null) {
+        ageLabel = `${minAge}-${maxAge} нас`;
+      } else if (minAge !== null) {
+        ageLabel = `${minAge}+ нас`;
+      } else if (maxAge !== null) {
+        ageLabel = `${maxAge}-аас доош нас`;
+      } else if (obj.age) {
+        ageLabel = `${obj.age} нас`;
+      } else {
+        ageLabel = "Нас хязгааргүй";
       }
-      return { minAge: min, maxAge: max, gender: obj.gender || "male" };
+      
+      const genderLabel = gender === "male" ? "эрэгтэй" : "эмэгтэй";
+      return `${ageLabel} ${genderLabel}`;
     }
-    return { minAge: null, maxAge: null, gender: obj.gender || "male" };
+    
+    // Handle simple type categories
+    if (obj.type) {
+      return obj.type;
+    }
+    
+    return value;
   } catch {
-    const ageStr = value;
-    const nums = ageStr.match(/\d+/g)?.map(Number) || [];
-    let min: number | null = null;
-    let max: number | null = null;
-    if (nums.length === 1) {
-      if (/хүртэл/i.test(ageStr)) max = nums[0];
-      else min = nums[0];
-    } else if (nums.length >= 2) {
-      [min, max] = nums;
-    }
-    return { minAge: min, maxAge: max, gender: "male" };
+    // If not JSON, return as is
+    return value;
   }
-};
-
-const formatParticipationType = (cat: ParticipationCategory) => {
-  let range = "";
-  if (cat.minAge !== null && cat.maxAge !== null) range = `${cat.minAge}-${cat.maxAge} нас`;
-  else if (cat.minAge !== null) range = `${cat.minAge}+ нас`;
-  else if (cat.maxAge !== null) range = `${cat.maxAge}-аас доош нас`;
-  else range = "Нас хязгааргүй";
-  return `${range} ${cat.gender === 'male' ? 'эрэгтэй' : 'эмэгтэй'}`;
 };
 
 export default function TournamentFullInfo() {
@@ -327,10 +318,9 @@ interface Participant {
                     </SelectTrigger>
                     <SelectContent>
                       {tournament?.participationTypes?.map((type) => {
-                        const cat = parseParticipationType(type);
                         return (
                           <SelectItem key={type} value={type}>
-                            {formatParticipationType(cat)}
+                            {formatParticipationType(type)}
                           </SelectItem>
                         );
                       })}
@@ -504,10 +494,9 @@ interface Participant {
                       </SelectTrigger>
                       <SelectContent>
                         {tournament?.participationTypes?.map((type) => {
-                          const cat = parseParticipationType(type);
                           return (
                             <SelectItem key={type} value={type}>
-                              {formatParticipationType(cat)}
+                              {formatParticipationType(type)}
                             </SelectItem>
                           );
                         })}
@@ -610,7 +599,6 @@ interface Participant {
                                     return typeof ageA === 'number' && typeof ageB === 'number' ? ageA - ageB : 0;
                                   })
                                   .map((p) => {
-                                    const cat = parseParticipationType(p.participationType);
                                     return (
                                       <TableRow key={p.id}>
                                         <TableCell>
@@ -628,7 +616,7 @@ interface Participant {
                                         </TableCell>
                                         <TableCell>{calculateAge(p.dateOfBirth)}</TableCell>
                                         <TableCell>
-                                          {cat.gender === 'male' ? 'Эрэгтэй' : 'Эмэгтэй'}
+                                          {p.gender === 'male' ? 'Эрэгтэй' : 'Эмэгтэй'}
                                         </TableCell>
                                         {user?.role === 'admin' && (
                                           <TableCell>
