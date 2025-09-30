@@ -23,7 +23,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import mttaLogo from "@assets/logoweb_1754749015700.png";
+import mttaLogo from "@assets/new-mtta-logo.png";
 
 const isActive = (current: string, href: string) =>
   href === "/" ? current === "/" : current.startsWith(href);
@@ -267,7 +267,7 @@ export default function Navigation() {
             {/* Logo */}
             <Link href="/">
               <div className="flex items-center cursor-pointer logo-glow flex-shrink-0">
-                <img src={mttaLogo} alt="MTTA Logo" className="h-10 w-auto" />
+                <img src={mttaLogo} alt="MTTA Logo" className="h-10 w-auto filter brightness-0 invert dark:filter-none" />
               </div>
             </Link>
 
