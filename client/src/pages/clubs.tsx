@@ -98,7 +98,7 @@ export default function Clubs() {
 
   return (
     <PageWithLoading>
-      <div className="min-h-screen bg-background text-foreground transition-colors">
+      <div className="min-h-screen bg-background text-foreground transition-colors overflow-x-hidden">
         <Navigation />
 
         {/* Header */}
