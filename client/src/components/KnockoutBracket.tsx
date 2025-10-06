@@ -209,14 +209,19 @@ export function KnockoutBracket({
       </div>
 
       <div className="bracket-container">
-        {rounds.map((round) => (
+        {rounds.map((round) => {
+          const roundMatches = matchesByRound[round] ?? [];
+          const isBronzeRound = roundMatches.some(m => m.id === 'bronze_medal_match');
+          const roundTitle = isBronzeRound ? 'ХҮРЭЛ МЕДАЛИЙН ТОГЛОЛТ' : getRoundTitle(round, rounds.length);
+          
+          return (
           <div key={round} className="round-column">
             <div className="round-header">
-              <h3>{getRoundTitle(round, rounds.length)}</h3>
+              <h3>{roundTitle}</h3>
             </div>
 
             <div className="matches-container">
-              {[...(matchesByRound[round] ?? [])]
+              {[...roundMatches]
                 .sort((a, b) => (a.position?.y || 0) - (b.position?.y || 0))
                 .map((match) => (
                   <div
@@ -386,7 +391,8 @@ export function KnockoutBracket({
                 ))}
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
     </div>

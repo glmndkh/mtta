@@ -583,12 +583,12 @@ const AdminTournamentResults: React.FC = () => {
       }
     }
 
-    // Add third place playoff for tournaments with more than 4 players
+    // Add bronze medal match (third place playoff) for tournaments with more than 4 players
     if (playerCount > 4) {
       matches.push({
-        id: 'third_place_playoff',
-        round: totalRounds.toString(),
-        roundName: "3-р байрын тоглолт",
+        id: 'bronze_medal_match',
+        round: (totalRounds + 1).toString(),
+        roundName: "Хүрэл медалийн тоглолт",
         isFinished: false
       });
     }
@@ -980,13 +980,22 @@ const AdminTournamentResults: React.FC = () => {
                           <h5 className="text-sm font-medium text-white mb-3">Тоглогч сонгох</h5>
                           <div className="space-y-3">
                             <UserAutocomplete
-                              users={(users || []).filter(user => {
-                                // Filter out users already in groups
-                                const usedUserIds = Array.isArray(groupStageResults) ? groupStageResults.flatMap(g => 
-                                  g.players.map(p => p.userId).filter(Boolean) // Use userId for filtering
-                                ) : [];
-                                return !usedUserIds.includes(user.id);
-                              })}
+                              users={(participants || [])
+                                .filter(participant => {
+                                  // Filter out participants already in groups
+                                  const usedPlayerIds = Array.isArray(groupStageResults) ? groupStageResults.flatMap(g => 
+                                    g.players.map(p => p.id).filter(Boolean)
+                                  ) : [];
+                                  return !usedPlayerIds.includes(participant.playerId);
+                                })
+                                .map(participant => ({
+                                  id: participant.playerId,
+                                  firstName: participant.firstName || '',
+                                  lastName: participant.lastName || '',
+                                  email: participant.email || '',
+                                  phone: participant.phone || '',
+                                  role: 'player' as const,
+                                }))}
                               value={selectedNewPlayerId}
                               onSelect={(user) => {
                                 if (user && user.id) {
