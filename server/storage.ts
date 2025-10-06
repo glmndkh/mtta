@@ -581,7 +581,7 @@ export class DatabaseStorage implements IStorage {
       .values({
         ...playerData,
         memberNumber,
-        rank: playerData.rank || "Шинэ тоглогч"
+        rank: playerData.rank || "Зэрэггүй"
       })
       .returning();
     return player;

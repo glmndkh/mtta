@@ -28,17 +28,6 @@ const registerSchema = z.object({
   clubAffiliation: z.string().optional(),
   password: z.string().min(6, "Нууц үг дор хаяж 6 тэмдэгт байх ёстой"),
   confirmPassword: z.string().min(1, "Нууц үгээ баталгаажуулна уу"),
-  rank: z.enum([
-    "зэрэггүй",
-    "3-р зэрэг",
-    "2-р зэрэг",
-    "1-р зэрэг",
-    "спортын дэд мастер",
-    "спортын мастер",
-    "олон улсын хэмжээний мастер",
-  ], {
-    required_error: "Зэрэг сонгоно уу",
-  }),
 }).refine(
   (data) => data.password === data.confirmPassword,
   {
@@ -91,7 +80,6 @@ export default function Register() {
       clubAffiliation: "",
       password: "",
       confirmPassword: "",
-      rank: "Шинэ тоглогч",
     },
   });
 
@@ -344,36 +332,14 @@ export default function Register() {
                 )}
               </div>
 
-              <FormField
-                control={form.control}
-                name="rank"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Зэрэг *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Зэрэг сонгоно уу" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Шинэ тоглогч">Шинэ тоглогч</SelectItem>
-                        <SelectItem value="3-р зэрэг">3-р зэрэг</SelectItem>
-                        <SelectItem value="2-р зэрэг">2-р зэрэг</SelectItem>
-                        <SelectItem value="1-р зэрэг">1-р зэрэг</SelectItem>
-                        <SelectItem value="спортын дэд мастер">спортын дэд мастер</SelectItem>
-                        <SelectItem value="спортын мастер">спортын мастер</SelectItem>
-                        <SelectItem value="олон улсын хэмжээний мастер">олон улсын хэмжээний мастер</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <p className="text-sm text-blue-600 bg-blue-50 p-3 rounded-lg">
-                💡 Бүртгэл амжилттай болсны дараа профайл хэсэгт ороод зэргийн үнэмлэхний зураг оруулж батлуулах боломжтой.
-              </p>
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2 flex items-center gap-2">
+                  <span className="text-lg">💡</span> Зэргийн тухай
+                </h4>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Бүртгэл амжилттай болсны дараа профайл хэсэгт ороод зэргийн үнэмлэхний зураг оруулж батлуулах боломжтой. Зэргийн хүсэлт батлагдах хүртэл та "Зэрэггүй" статустай харагдана.
+                </p>
+              </div>
 
               <FormField
                 control={form.control}

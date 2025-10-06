@@ -46,7 +46,7 @@ export const clubStatusEnum = pgEnum("club_status", ["active", "inactive"]);
 
 // Player rank enum
 export const playerRankEnum = pgEnum("player_rank", [
-  "Шинэ тоглогч",
+  "Зэрэггүй",
   "3-р зэрэг",
   "2-р зэрэг",
   "1-р зэрэг",

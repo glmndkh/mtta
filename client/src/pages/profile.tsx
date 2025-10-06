@@ -667,7 +667,7 @@ export default function Profile() {
                         Удахгүй дуусах
                       </Badge>
                     )}
-                    {profile?.playerStats && (
+                    {profile?.playerStats && profile.playerStats.rank && profile.playerStats.rank !== "Зэрэггүй" && (
                       <Badge variant="secondary">
                         <User className="w-3 h-3 mr-1" />
                         Тоглогч
@@ -728,7 +728,7 @@ export default function Profile() {
 
                   <div className="text-center p-4 bg-green-50 rounded-lg">
                     <div className="text-2xl font-bold text-green-600">
-                      {profile.playerStats.rank || 'Шинэ тоглогч'}
+                      {profile.playerStats.rank || 'Зэрэггүй'}
                     </div>
                     <div className="text-sm text-gray-600 mt-1">Зэрэглэл</div>
                   </div>

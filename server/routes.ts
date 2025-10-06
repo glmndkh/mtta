@@ -233,10 +233,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email,
         clubAffiliation,
         password,
-        rank,
         clubId, // Added clubId
         noClub, // Added noClub flag
-        rankProofUrl, // Rank proof image URL
       } = req.body;
 
       if (!firstName || !lastName)
@@ -268,17 +266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .status(400)
           .json({ message: "Нууц үг дор хаяж 6 тэмдэгт байх ёстой" });
 
-      const validRanks = [
-        "зэрэггүй",
-        "3-р зэрэг",
-        "2-р зэрэг",
-        "1-р зэрэг",
-        "спортын дэд мастер",
-        "спортын мастер",
-        "олон улсын хэмжээний мастер",
-      ];
-      if (rank && !validRanks.includes(rank))
-        return res.status(400).json({ message: "Буруу зэрэг" });
+      
 
       if (await storage.getUserByEmail(email))
         return res
@@ -306,11 +294,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password, // NOTE: plaintext as requested
       });
 
-      // Create player record - always set rank as "Шинэ тоглогч" initially
+      // Create player record - always set rank as "Зэрэггүй" initially
       const player = await storage.createPlayer({
         userId: user.id,
         dateOfBirth: new Date(dateOfBirth),
-        rank: "Шинэ тоглогч", // Always start with default rank, will be updated after admin approval
+        rank: "Зэрэггүй", // Always start with default rank, will be updated after admin approval
         clubId: clubId && !noClub ? clubId : undefined,
       });
 
@@ -326,10 +314,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Note: Rank proof upload will be handled through profile page after login
-
       const { password: _pw, ...userResponse } = user;
-      res.json({ message: "Амжилттай бүртгэгдлээ", user: userResponse });
+      res.json({ 
+        message: "Амжилттай бүртгэгдлээ. Зэргийн үнэмлэхээ профайл хэсгээс оруулж батлуулна уу.", 
+        user: userResponse 
+      });
     } catch (e) {
       console.error("Registration error:", e);
       res.status(500).json({ message: "Бүртгэлд алдаа гарлаа" });
