@@ -1283,7 +1283,7 @@ export default function TournamentManagement() {
                                           <CommandInput placeholder="Тоглогчийн нэр эсвэл имэйлээр хайх..." />
                                           <CommandList>
                                             <CommandEmpty>Хэрэглэгч олдсонгүй. Хайлт хийхийн тулд нэр бичнэ үү.</CommandEmpty>
-                                            <CommandGroup heading={groupMatchType === 'team' ? "Лигийн багууд" : "Бүртгэлтэй хэрэглэгчид"}>
+                                            <CommandGroup heading={groupMatchType === 'team' ? "Лигийн багууд" : "Бүртгүүлсэн тамирчид"}>
                                               {groupMatchType === 'team' ? (
                                                 // Show teams for team match type
                                                 validExistingTeams && validExistingTeams.length > 0 ? validExistingTeams.map((team: any) => (
@@ -1328,16 +1328,16 @@ export default function TournamentManagement() {
                                                   return tournamentParticipants.map((participant: any, index: number) => {
                                                     const playerName = participant.playerName || 
                                                       `${participant.firstName || ''} ${participant.lastName || ''}`.trim() ||
-                                                      participant.playerEmail ||
-                                                      `Тоглогч ${participant.id}`;
+                                                      participant.email ||
+                                                      `Тоглогч ${participant.playerId}`;
 
                                                     return (
                                                       <CommandItem
                                                         key={`${participant.playerId}-${index}`}
-                                                        value={`${playerName} ${participant.playerClub || ''}`}
+                                                        value={`${playerName} ${participant.clubAffiliation || ''}`}
                                                         onSelect={() => {
                                                           handleGroupPlayerChange(player.id, 'name', playerName);
-                                                          handleGroupPlayerChange(player.id, 'club', participant.playerClub || '');
+                                                          handleGroupPlayerChange(player.id, 'club', participant.clubAffiliation || '');
                                                           setSearchOpen({ ...searchOpen, [`group-${player.id}`]: false });
                                                         }}
                                                         className="flex items-center justify-between"
@@ -1347,7 +1347,7 @@ export default function TournamentManagement() {
                                                             {playerName}
                                                           </div>
                                                           <div className="text-xs text-gray-500">
-                                                            {participant.playerClub || 'Клубгүй'} • {participant.participationType || 'Тэмцээний оролцогч'}
+                                                            {participant.clubAffiliation || 'Клубгүй'} • {participant.participationType || 'Тэмцээний оролцогч'}
                                                           </div>
                                                         </div>
                                                       </CommandItem>
