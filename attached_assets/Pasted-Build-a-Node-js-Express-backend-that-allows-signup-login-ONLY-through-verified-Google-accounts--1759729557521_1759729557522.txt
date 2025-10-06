@@ -1,0 +1,75 @@
+Build a Node.js + Express backend that allows signup/login ONLY through verified Google accounts.
+
+Requirements:
+1. Tech Stack:
+   - Node.js + Express
+   - Passport.js with passport-google-oauth20
+   - SQLite (better-sqlite3)
+   - cookie-session
+   - Helmet for security headers
+   - dotenv for env vars
+   - CORS only from APP_URL
+
+2. Google OAuth 2.0:
+   - Endpoints:
+     - GET /auth/google → starts OAuth with scopes: ["openid","email","profile"]
+     - GET /auth/google/callback → handles callback, verifies Google ID token
+     - GET /me → returns logged-in user info from session
+     - POST /logout → clears session
+
+3. Email verification:
+   - Only accept login if Google returns `email_verified = true`.
+   - If `email_verified` is false → return 403 with Mongolian HTML message:
+     “Google-ийн имэйл баталгаажаагүй байна.”
+   - If `ALLOWED_EMAIL_DOMAIN` is set (e.g., "gmail.com"), only allow users whose email ends with that domain.
+   - If no domain set, allow any verified Google account.
+
+4. Database (SQLite):
+   - Table `users`:
+     id, google_id, email, name, picture, email_verified, created_at, updated_at, last_login_at
+   - On first login → insert user
+   - On later login → update last_login_at
+   - Users with unverified email are never stored.
+
+5. Security:
+   - cookie-session using `SESSION_SECRET`
+   - Helmet for headers
+   - Validate ID token fields: iss (accounts.google.com), aud (GOOGLE_CLIENT_ID), exp validity
+   - Use HTTPS (APP_URL with https://)
+   - Trust proxy for Replit
+   - CORS allow only APP_URL origin
+   - Rate limit /auth/* routes
+   - Include CSRF state check for OAuth flow
+
+6. .env variables:
+   - GOOGLE_CLIENT_ID=
+   - GOOGLE_CLIENT_SECRET=
+   - OAUTH_CALLBACK_URL= https://<your-repl-subdomain>.replit.app/auth/google/callback
+   - APP_URL= https://<your-repl-subdomain>.replit.app
+   - SESSION_SECRET= change-me
+   - ALLOWED_EMAIL_DOMAIN=gmail.com   # optional
+
+7. UI:
+   - Simple HTML page `/` with:
+     - “Sign in with Google” button
+     - If logged in, show user info (name, email, picture)
+     - Logout button
+     - If login rejected, show Mongolian error in red text.
+
+8. Example Mongolian error pages:
+   - `email_unverified.html`: “Google-ийн имэйл баталгаажаагүй байна.”
+   - `domain_restricted.html`: “Таны имэйл зөвшөөрөгдсөн домэйн биш байна.”
+
+9. README (auto-print in console):
+   - Steps to get Google OAuth credentials:
+     1) Go to Google Cloud Console → Credentials → OAuth Client (Web)
+     2) Authorized redirect URI = OAUTH_CALLBACK_URL from .env
+     3) Fill GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+     4) Set APP_URL = your Replit domain (https://your-repl.replit.app)
+     5) npm install && npm start
+     6) Open browser and click “Sign in with Google”
+
+10. Goal:
+   ✅ Only real, verified Google accounts can register.
+   ❌ Fake, unverified or typoed emails (like example@gmal.com) are completely blocked.
+   ✅ Odoo or any external form can integrate with this API via webhook to check `email_verified` true before saving.
