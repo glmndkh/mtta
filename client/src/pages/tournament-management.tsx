@@ -599,65 +599,41 @@ export default function TournamentManagement() {
         return;
       }
 
-      // Check if this is a tournament or league by trying to fetch tournament data
-      let entityType = 'tournament';
-      let tournamentExists = false;
-
-      try {
-        const checkResponse = await fetch(`/api/tournaments/${id}`);
-        if (checkResponse.ok) {
-          tournamentExists = true;
-        } else {
-          // Check if it's a league
-          const leagueResponse = await fetch(`/api/leagues/${id}`);
-          if (leagueResponse.ok) {
-            entityType = 'league';
-          }
-        }
-      } catch (error) {
-        console.log('Entity check failed, assuming league');
-        entityType = 'league';
-      }
-
-      // Prepare group stage results data
+      // Prepare group stage results data with proper structure
       const groupStageData = {
         tournamentId: id,
-        participationType: groupMatchType === 'team' ? 'team_group' : 'individual_group',
         groupStageResults: [{
-          groupName: currentGroup.name,
+          id: currentGroup.id.toString(),
+          name: currentGroup.name,
           players: playersWithData.map(player => ({
             id: player.id.toString(),
             name: player.name,
-            club: player.club || '',
-            wins: player.wins || 0,
-            losses: player.losses || 0,
-            position: player.rank || 0,
-            matches: player.matches || {}
+            club: player.club || ''
           })),
           resultMatrix: playersWithData.map((player, i) => 
             playersWithData.map((opponent, j) => 
               i === j ? 'X' : (player.matches[opponent.id] || '')
             )
           ),
-          standings: playersWithData.map((player, index) => ({
+          playerStats: playersWithData.map((player) => ({
             playerId: player.id.toString(),
-            playerName: player.name,
             wins: player.wins || 0,
             losses: player.losses || 0,
-            points: (player.wins || 0) * 2, // 2 points per win
-            position: player.rank || (index + 1)
+            points: (player.wins || 0) * 2,
+            setsWon: 0,
+            setsLost: 0
           }))
         }],
-        knockoutResults: [],
-        finalRankings: [],
-        isPublished: false,
-        entityType: entityType // Add entity type to help backend determine storage method
+        isPublished: true
       };
+
+      console.log('Saving group table data:', groupStageData);
 
       const response = await fetch('/api/admin/tournament-results', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
         },
         body: JSON.stringify(groupStageData),
       });
@@ -667,14 +643,18 @@ export default function TournamentManagement() {
         throw new Error(errorData.message || 'Failed to save group table');
       }
 
+      const result = await response.json();
+      console.log("Group table saved successfully:", result);
+
       toast({ 
         description: `${currentGroup.name} амжилттай хадгалагдлаа`,
         variant: "default"
       });
 
-      console.log("Group table saved successfully:", groupStageData);
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/tournaments', id, 'results'] });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving group table:', error);
       toast({ 
         description: `Группын хүснэгт хадгалахад алдаа гарлаа: ${error.message}`,

@@ -266,7 +266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .status(400)
           .json({ message: "Нууц үг дор хаяж 6 тэмдэгт байх ёстой" });
 
-      
+
 
       if (await storage.getUserByEmail(email))
         return res
@@ -3581,51 +3581,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Save tournament results
-  app.post('/api/admin/tournament-results', requireAuth, async (req, res) => {
-    try {
-      const userId = req.session?.userId;
-      if (!userId) {
-        console.log('Unauthorized: No user session');
-        return res.status(401).json({ message: "Нэвтрэх шаардлагатай" });
+  app.post(
+    "/api/admin/tournament-results",
+    requireAuth,
+    isAdminRole,
+    async (req, res) => {
+      try {
+        const {
+          tournamentId,
+          groupStageResults,
+          knockoutResults,
+          finalRankings,
+          isPublished,
+          entityType
+        } = req.body;
+
+        console.log('[Admin] Saving tournament results for tournament:', tournamentId);
+        console.log('[Admin] Results data:', { groupStageResults, knockoutResults, finalRankings, isPublished });
+
+        // Validate required fields
+        if (!tournamentId) {
+          return res.status(400).json({ message: "tournamentId шаардлагатай" });
+        }
+
+        // Check if tournament exists
+        const tournament = await storage.getTournament(tournamentId);
+        if (!tournament) {
+          return res.status(404).json({ message: "Тэмцээн олдсонгүй" });
+        }
+
+        // Save or update tournament results
+        const results = await storage.upsertTournamentResults({
+          tournamentId,
+          groupStageResults: groupStageResults || null,
+          knockoutResults: knockoutResults || null,
+          finalRankings: finalRankings || null,
+          isPublished: isPublished !== undefined ? isPublished : false,
+        });
+
+        console.log('[Admin] Tournament results saved successfully:', results);
+
+        // Invalidate cache
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+
+        res.json({
+          message: "Тэмцээний үр дүн амжилттай хадгалагдлаа",
+          results,
+        });
+      } catch (error: any) {
+        console.error("[Admin] Error saving tournament results:", error);
+        res.status(500).json({
+          message: "Тэмцээний үр дүн хадгалахад алдаа гарлаа",
+          error: error.message,
+        });
       }
-
-      const user = await storage.getUserById(userId);
-      if (!user || user.role !== 'admin') {
-        console.log('Forbidden: User is not admin', user?.role);
-        return res.status(403).json({ message: "Зөвхөн админ хэрэглэгч үр дүн хадгалах боломжтой" });
-      }
-
-      const { tournamentId, groupStageResults, knockoutResults, finalRankings, isPublished } = req.body;
-
-      if (!tournamentId) {
-        console.log('Bad request: Missing tournament ID');
-        return res.status(400).json({ message: "Тэмцээний ID шаардлагатай" });
-      }
-
-      console.log('Saving tournament results:', {
-        tournamentId,
-        hasGroupStage: !!groupStageResults,
-        hasKnockout: !!knockoutResults,
-        hasFinalRankings: !!finalRankings,
-        isPublished,
-        knockoutResultsCount: knockoutResults?.length || 0
-      });
-
-      const results = await storage.upsertTournamentResults({
-        tournamentId,
-        groupStageResults: groupStageResults || null,
-        knockoutResults: knockoutResults || null,
-        finalRankings: finalRankings || null,
-        isPublished: isPublished || false,
-      });
-
-      console.log("Tournament results saved successfully:", tournamentId, "Published:", results.isPublished);
-      res.json(results);
-    } catch (error: any) {
-      console.error("Error saving tournament results:", error);
-      res.status(500).json({ message: error.message || 'Үр дүн хадгалахад алдаа гарлаа' });
     }
-  });
+  );
 
 
   // --------------

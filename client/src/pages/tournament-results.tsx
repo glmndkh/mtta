@@ -89,11 +89,23 @@ const TournamentResults: React.FC = () => {
   const knockoutResults = normalizeKnockoutMatches(rawKnockoutResults) as KnockoutMatch[];
   const finalRankings: FinalRanking[] = (results?.finalRankings as any) || [];
 
-  // Check if results exist
+  // Check if results exist - be more lenient with checking
   const hasImages = results?.finalRankings && typeof results.finalRankings === 'object' && 'images' in results.finalRankings && Array.isArray(results.finalRankings.images) && results.finalRankings.images.length > 0;
   const hasFinalRankings = results?.finalRankings && Array.isArray(results.finalRankings) && results.finalRankings.length > 0;
-  const hasGroupStage = groupStageResults && groupStageResults.length > 0;
-  const hasKnockout = knockoutResults && knockoutResults.length > 0;
+  const hasGroupStage = groupStageResults && Array.isArray(groupStageResults) && groupStageResults.length > 0;
+  const hasKnockout = knockoutResults && Array.isArray(knockoutResults) && knockoutResults.length > 0;
+
+  // Debug logging
+  console.log('Tournament results check:', {
+    hasResults: !!results,
+    hasImages,
+    hasFinalRankings,
+    hasGroupStage,
+    hasKnockout,
+    groupStageResults,
+    knockoutResults,
+    finalRankings
+  });
 
   if (!results || (!hasImages && !hasFinalRankings && !hasGroupStage && !hasKnockout)) {
     return (
