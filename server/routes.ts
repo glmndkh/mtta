@@ -2311,17 +2311,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const oss = new ObjectStorageService();
       const uploadURL = await oss.getObjectEntityUploadURL();
+      
+      if (!uploadURL) {
+        throw new Error("Upload URL үүсгэж чадсангүй");
+      }
+      
       res.json({ uploadURL });
     } catch (e) {
       console.error("Error getting upload URL:", e);
-      res.status(500).json({ message: "Upload URL авахад алдаа гарлаа" });
+      res.status(500).json({ 
+        message: "Upload URL авахад алдаа гарлаа",
+        error: e instanceof Error ? e.message : "Тодорхойгүй алдаа"
+      });
     }
   });
 
   app.put("/api/objects/finalize", requireAuth, async (req: any, res) => {
     try {
-      if (!req.body.fileURL)
-        return res.status(400).json({ error: "fileURL is required" });
+      if (!req.body.fileURL) {
+        return res.status(400).json({ error: "fileURL заавал оруулна уу" });
+      }
+      
       const oss = new ObjectStorageService();
       const objectPath = await oss.trySetObjectEntityAclPolicy(
         req.body.fileURL,
@@ -2330,10 +2340,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           visibility: req.body.isPublic ? "public" : "private",
         },
       );
+      
+      if (!objectPath) {
+        throw new Error("Object path үүсгэж чадсангүй");
+      }
+      
       res.status(200).json({ objectPath });
     } catch (e) {
       console.error("Error finalizing upload:", e);
-      res.status(500).json({ error: "Internal server error" });
+      res.status(500).json({ 
+        error: "Зураг баталгаажуулахад алдаа гарлаа",
+        details: e instanceof Error ? e.message : "Тодорхойгүй алдаа"
+      });
     }
   });
 

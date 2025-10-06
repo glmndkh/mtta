@@ -106,16 +106,26 @@ export default function Register() {
           const uploadResponse = await apiRequest("/api/objects/upload", {
             method: "POST",
           });
+          
+          if (!uploadResponse.ok) {
+            const errorData = await uploadResponse.json();
+            throw new Error(errorData.message || "Upload URL авахад алдаа гарлаа");
+          }
+          
           const { uploadURL } = await uploadResponse.json();
 
           // Upload the file
-          await fetch(uploadURL, {
+          const uploadFileResponse = await fetch(uploadURL, {
             method: "PUT",
             body: rankProof,
             headers: {
               "Content-Type": rankProof.type,
             },
           });
+
+          if (!uploadFileResponse.ok) {
+            throw new Error("Зураг хуулахад алдаа гарлаа");
+          }
 
           // Finalize the upload
           const finalizeResponse = await apiRequest("/api/objects/finalize", {
@@ -126,11 +136,17 @@ export default function Register() {
               isPublic: false 
             }),
           });
+          
+          if (!finalizeResponse.ok) {
+            const errorData = await finalizeResponse.json();
+            throw new Error(errorData.error || "Зураг баталгаажуулахад алдаа гарлаа");
+          }
+          
           const { objectPath } = await finalizeResponse.json();
           rankProofUrl = objectPath;
         } catch (error) {
           console.error("Error uploading rank proof:", error);
-          throw new Error("Зэргийн баталгаажуулах зураг хуулахад алдаа гарлаа");
+          throw new Error(error instanceof Error ? error.message : "Зэргийн баталгаажуулах зураг хуулахад алдаа гарлаа");
         }
       }
 
@@ -159,9 +175,10 @@ export default function Register() {
       window.location.href = "/login";
     },
     onError: (error: Error) => {
+      console.error("Registration error:", error);
       toast({
-        title: "Алдаа",
-        description: error.message,
+        title: "Бүртгэлд алдаа гарлаа",
+        description: error.message || "Дахин оролдоно уу",
         variant: "destructive",
       });
     },
