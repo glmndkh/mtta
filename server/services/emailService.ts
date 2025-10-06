@@ -1,4 +1,5 @@
 import sgMail from '@sendgrid/mail';
+import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 
 // Initialize SendGrid with API key from environment
@@ -6,6 +7,28 @@ const apiKey = process.env.SENDGRID_API_KEY;
 if (apiKey) {
   sgMail.setApiKey(apiKey);
 }
+
+// Fallback to Ethereal for development
+let etherealTransporter: any = null;
+const initEthereal = async () => {
+  if (!etherealTransporter && !apiKey) {
+    try {
+      const testAccount = await nodemailer.createTestAccount();
+      etherealTransporter = nodemailer.createTransporter({
+        host: 'smtp.ethereal.email',
+        port: 587,
+        secure: false,
+        auth: {
+          user: testAccount.user,
+          pass: testAccount.pass,
+        },
+      });
+      console.log('📧 Ethereal email initialized for development');
+    } catch (error) {
+      console.error('Failed to initialize Ethereal:', error);
+    }
+  }
+};
 
 const APP_URL = process.env.APP_URL || 'http://localhost:5000';
 const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@mtta.mn';
