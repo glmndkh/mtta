@@ -1,0 +1,46 @@
+
+5:20:32 AM [express] serving on port 5000
+Browserslist: browsers data (caniuse-lite) is 12 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+5:20:53 AM [express] GET /api/auth/user 401 in 54ms :: {"message":"Unauthorized"}
+5:20:53 AM [express] GET /api/tournaments/upcoming 304 in 182ms :: []
+5:20:53 AM [express] GET /api/sponsors 304 in 208ms :: [{"id":"449916ff-ab2a-407a-b6eb-ad43bc6ac4a7"…
+5:20:53 AM [express] GET /api/news/latest 200 in 250ms :: [{"id":"4cb8d55a-b676-48e7-a7e4-eb74680eb4…
+5:20:53 AM [express] GET /api/sliders 304 in 288ms :: [{"id":"0be55c1f-35f9-4519-a404-fdf87516e440",…
+5:21:11 AM [express] GET /api/auth/user 401 in 42ms :: {"message":"Unauthorized"}
+5:21:11 AM [express] GET /api/sponsors 304 in 154ms :: [{"id":"449916ff-ab2a-407a-b6eb-ad43bc6ac4a7"…
+5:21:11 AM [express] GET /api/sliders 304 in 148ms :: [{"id":"0be55c1f-35f9-4519-a404-fdf87516e440",…
+5:21:11 AM [express] GET /api/tournaments/upcoming 304 in 199ms :: []
+5:21:42 AM [express] GET /api/auth/user 401 in 44ms :: {"message":"Unauthorized"}
+5:21:42 AM [express] GET /api/clubs 304 in 261ms :: [{"id":"50abaec1-2156-40e2-93fc-c5af0f6750c8","n…
+5:25:03 AM [express] GET /api/news/latest 200 in 4840ms :: [{"id":"4cb8d55a-b676-48e7-a7e4-eb74680eb…
+5:25:04 AM [express] GET /api/clubs 200 in 2324ms :: [{"id":"50abaec1-2156-40e2-93fc-c5af0f6750c8","…
+PayloadTooLargeError: request entity too large
+    at readStream (/home/runner/workspace/node_modules/raw-body/index.js:163:17)
+    at getRawBody (/home/runner/workspace/node_modules/raw-body/index.js:116:12)
+    at read (/home/runner/workspace/node_modules/body-parser/lib/read.js:79:3)
+    at jsonParser (/home/runner/workspace/node_modules/body-parser/lib/types/json.js:138:5)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at expressInit (/home/runner/workspace/node_modules/express/lib/middleware/init.js:40:5)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at query (/home/runner/workspace/node_modules/express/lib/middleware/query.js:45:5)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at Function.handle (/home/runner/workspace/node_modules/express/lib/router/index.js:175:3)
+    at Function.handle (/home/runner/workspace/node_modules/express/lib/application.js:181:10)
+    at Server.app (/home/runner/workspace/node_modules/express/lib/express.js:39:9)
+    at Server.emit (node:events:524:28)
+    at parserOnIncoming (node:_http_server:1141:12)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:118:17)
