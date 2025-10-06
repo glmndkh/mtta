@@ -83,7 +83,7 @@ const AdminTournamentResults: React.FC = () => {
   const [groupStageResults, setGroupStageResults] = useState<GroupStageGroup[]>([]);
   const [knockoutResults, setKnockoutResults] = useState<KnockoutMatch[]>([]);
   const [finalRankings, setFinalRankings] = useState<FinalRanking[]>([]);
-  const [isPublished, setIsPublished] = useState(false);
+  const [isPublished, setIsPublished] = useState(true);
   const [selectedPlayerTab, setSelectedPlayerTab] = useState<string>("all");
   const [qualifiedPlayers, setQualifiedPlayers] = useState<QualifiedPlayer[]>([]);
   const [showAddPlayerToGroup, setShowAddPlayerToGroup] = useState<string | null>(null);
