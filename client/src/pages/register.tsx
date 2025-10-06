@@ -92,7 +92,7 @@ export default function Register() {
       clubAffiliation: "",
       password: "",
       confirmPassword: "",
-      rank: "зэрэггүй",
+      rank: "Шинэ тоглогч",
     },
   });
 
@@ -396,7 +396,7 @@ export default function Register() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="зэрэггүй">Зэрэггүй</SelectItem>
+                        <SelectItem value="Шинэ тоглогч">Шинэ тоглогч</SelectItem>
                         <SelectItem value="3-р зэрэг">3-р зэрэг</SelectItem>
                         <SelectItem value="2-р зэрэг">2-р зэрэг</SelectItem>
                         <SelectItem value="1-р зэрэг">1-р зэрэг</SelectItem>
@@ -421,13 +421,13 @@ export default function Register() {
                   accept="image/*"
                   onChange={(e) => setRankProof(e.target.files?.[0] || null)}
                 />
-                {form.watch("rank") && form.watch("rank") !== "зэрэггүй" ? (
+                {form.watch("rank") && form.watch("rank") !== "Шинэ тоглогч" ? (
                   <p className="text-sm text-orange-600">
-                    Зэргийн үнэмлэхний зураг оруулсан тохиолдолд админ баталгаажуулах хүсэлт илгээгдэнэ. Баталгаажуулах хүртэл профайл дээр "зэрэггүй" гэж харагдана.
+                    Зэргийн үнэмлэхний зураг оруулсан тохиолдолд админ баталгаажуулах хүсэлт илгээгдэнэ. Баталгаажуулах хүртэл профайл дээр "Шинэ тоглогч" гэж харагдана.
                   </p>
                 ) : (
                   <p className="text-sm text-gray-500">
-                    Зэргийн үнэмлэхний зургаа оруулж зэргээ батлуулна уу. Админ баталгаажуулах хүртэл "зэрэггүй" гэж харагдана.
+                    Зэргийн үнэмлэхний зургаа оруулж зэргээ батлуулна уу. Админ баталгаажуулах хүртэл "Шинэ тоглогч" гэж харагдана.
                   </p>
                 )}
               </div>

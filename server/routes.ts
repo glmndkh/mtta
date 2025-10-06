@@ -306,11 +306,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password, // NOTE: plaintext as requested
       });
 
-      // Create player record - always set rank as "зэрэггүй" initially
+      // Create player record - always set rank as "Шинэ тоглогч" initially
       const player = await storage.createPlayer({
         userId: user.id,
         dateOfBirth: new Date(dateOfBirth),
-        rank: "зэрэггүй", // Always start with no rank, will be updated after admin approval
+        rank: "Шинэ тоглогч", // Always start with default rank, will be updated after admin approval
         clubId: clubId && !noClub ? clubId : undefined,
       });
 
@@ -327,11 +327,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Create rank change request if rank proof provided
-      if (rankProofUrl && rank && rank !== "зэрэггүй") {
+      if (rankProofUrl && rank && rank !== "Шинэ тоглогч") {
         await storage.createRankChangeRequest({
           userId: user.id,
           playerId: player.id,
-          currentRank: "зэрэггүй",
+          currentRank: "Шинэ тоглогч",
           requestedRank: rank,
           proofImageUrl: rankProofUrl,
         });
