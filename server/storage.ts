@@ -1216,15 +1216,17 @@ export class DatabaseStorage implements IStorage {
     console.log(`Found ${participants.length} participants for tournament ${tournamentId}`);
 
     return participants.map(p => ({
-      id: p.id,
+      id: p.playerId!, // Use playerId as the main ID for autocomplete
       playerId: p.playerId,
       participationType: p.participationType,
       registeredAt: p.registeredAt,
+      firstName: p.firstName,
+      lastName: p.lastName,
       playerName: `${p.firstName || ''} ${p.lastName || ''}`.trim() || 'Unknown Player',
-      playerEmail: p.email,
-      playerGender: p.gender,
-      playerRank: p.rank,
-      playerClub: p.clubAffiliation,
+      email: p.email,
+      gender: p.gender,
+      rank: p.rank,
+      clubAffiliation: p.clubAffiliation,
     }));
   }
 
