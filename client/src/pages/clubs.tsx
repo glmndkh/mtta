@@ -153,7 +153,7 @@ export default function Clubs() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="mb-2 truncate text-lg font-semibold text-card-foreground">{club.name}</h3>
+                      <h3 className="mb-2 truncate text-lg font-semibold text-card-foreground no-underline">{club.name}</h3>
                       <div className="flex gap-2 flex-wrap">
                         {club.verified && (
                           <Badge className="text-xs">Баталгаажсан</Badge>
