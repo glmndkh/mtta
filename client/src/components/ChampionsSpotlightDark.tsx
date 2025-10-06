@@ -70,8 +70,26 @@ export const ChampionsSpotlightDark: React.FC<ChampionsSpotlightDarkProps> = ({
 
       {/* Main Content - Vertical on mobile, horizontal on desktop */}
       <div className="relative h-screen flex flex-col items-center justify-center px-4 sm:px-8 md:flex-row md:justify-between md:px-16 lg:px-24 pt-20 md:pt-0">
-        {/* Content Section - Top on mobile, Left on desktop */}
-        <div className="text-black dark:text-white text-center md:text-left space-y-2 sm:space-y-3 md:space-y-6 max-w-xs sm:max-w-sm md:max-w-lg lg:max-w-2xl md:mr-8 z-10">
+        {/* Player Image - Top on mobile, Right on desktop */}
+        <div className="flex-shrink-0 order-1 md:order-2 mb-6 sm:mb-8 md:mb-0 md:mt-0">
+          {currentPlayer?.imageUrl ? (
+            <img
+              src={currentPlayer.imageUrl}
+              alt={`${currentPlayer.firstName} ${currentPlayer.lastName}`}
+              className="w-40 h-48 sm:w-52 sm:h-60 md:w-64 md:h-80 lg:w-80 lg:h-96 xl:w-96 xl:h-[28rem] object-cover rounded-xl md:rounded-2xl shadow-2xl"
+              style={{ filter: 'drop-shadow(0 10px 30px rgba(0,0,0,0.7))' }}
+            />
+          ) : (
+            <div className="w-40 h-48 sm:w-52 sm:h-60 md:w-64 md:h-80 lg:w-80 lg:h-96 xl:w-96 xl:h-[28rem] bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl md:rounded-2xl flex items-center justify-center shadow-2xl">
+              <div className="text-black dark:text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold opacity-60">
+                {currentPlayer?.firstName?.[0]}{currentPlayer?.lastName?.[0]}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Content Section - Bottom on mobile, Left on desktop */}
+        <div className="text-black dark:text-white text-center md:text-left space-y-2 sm:space-y-3 md:space-y-6 max-w-xs sm:max-w-sm md:max-w-lg lg:max-w-2xl md:mr-8 z-10 order-2 md:order-1">
           {/* National Team Label */}
           <div className="mb-2 md:mb-6">
             <h2 className="text-green-500 text-xs sm:text-sm md:text-base font-bold tracking-widest uppercase">
@@ -106,24 +124,6 @@ export const ChampionsSpotlightDark: React.FC<ChampionsSpotlightDarkProps> = ({
             <div className="text-base sm:text-lg md:text-2xl font-medium">
               <span className="text-black/90 dark:text-white/90">Нас</span>
               <span className="font-bold ml-2 text-black dark:text-white">{currentPlayer.age}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Player Image - Bottom on mobile, Right on desktop */}
-        <div className="flex-shrink-0 mt-6 sm:mt-8 md:mt-0 mb-24 md:mb-0">
-          {currentPlayer?.imageUrl ? (
-            <img
-              src={currentPlayer.imageUrl}
-              alt={`${currentPlayer.firstName} ${currentPlayer.lastName}`}
-              className="w-40 h-48 sm:w-52 sm:h-60 md:w-64 md:h-80 lg:w-80 lg:h-96 xl:w-96 xl:h-[28rem] object-cover rounded-xl md:rounded-2xl shadow-2xl"
-              style={{ filter: 'drop-shadow(0 10px 30px rgba(0,0,0,0.7))' }}
-            />
-          ) : (
-            <div className="w-40 h-48 sm:w-52 sm:h-60 md:w-64 md:h-80 lg:w-80 lg:h-96 xl:w-96 xl:h-[28rem] bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl md:rounded-2xl flex items-center justify-center shadow-2xl">
-              <div className="text-black dark:text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold opacity-60">
-                {currentPlayer?.firstName?.[0]}{currentPlayer?.lastName?.[0]}
-              </div>
             </div>
           )}
         </div>
