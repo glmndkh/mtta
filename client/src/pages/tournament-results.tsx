@@ -93,8 +93,14 @@ const TournamentResults: React.FC = () => {
     hasFinalRankings: !!(results?.finalRankings)
   });
 
-  // Check if results are published
-  if (!results || !results.isPublished) {
+  // Check if results exist and are published
+  const hasResults = results && results.isPublished;
+  const hasImages = results?.finalRankings && typeof results.finalRankings === 'object' && 'images' in results.finalRankings && Array.isArray(results.finalRankings.images) && results.finalRankings.images.length > 0;
+  const hasFinalRankings = results?.finalRankings && Array.isArray(results.finalRankings) && results.finalRankings.length > 0;
+  const hasGroupStage = groupStageResults && groupStageResults.length > 0;
+  const hasKnockout = knockoutResults && knockoutResults.length > 0;
+
+  if (!hasResults || (!hasImages && !hasFinalRankings && !hasGroupStage && !hasKnockout)) {
     return (
       <PageWithLoading>
         <Navigation />
@@ -165,17 +171,17 @@ const TournamentResults: React.FC = () => {
           </Card>
 
           {/* Final Rankings with Images */}
-          {results.finalRankings?.images && results.finalRankings.images.length > 0 ? (
+          {hasImages && (
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle>Тэмцээний үр дүн</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {results.finalRankings.images.map((image: any, index: number) => (
+                  {(results.finalRankings as any).images.map((image: any, index: number) => (
                     <div key={index} className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-md">
                       <img 
-                        src={image.url} 
+                        src={image.url.startsWith('/') ? image.url : `/objects/${image.url}`}
                         alt={image.description || `Үр дүн ${index + 1}`}
                         className="w-full h-64 object-cover"
                       />
@@ -189,7 +195,10 @@ const TournamentResults: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-          ) : finalRankings.length > 0 && (
+          )}
+          
+          {/* Final Rankings Table */}
+          {hasFinalRankings && (
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle>Эцсийн байрлалт</CardTitle>

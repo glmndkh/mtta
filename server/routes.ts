@@ -74,7 +74,7 @@ async function validateTournamentEligibility(
   if (monthDiff < 0 || (monthDiff === 0 && tournamentStartDate.getDate() < birthDate.getDate())) {
     age--;
   }
-  
+
   // Check tournament-wide requirements
   let requirements: any = {};
   if (tournament.requirements) {
@@ -97,7 +97,7 @@ async function validateTournamentEligibility(
       !tournament.participationTypes.includes(participationType)
     )
       throw new Error("Буруу ангилал сонгогдсон");
-    
+
     let event: any = {};
     try {
       event = JSON.parse(participationType);
@@ -110,12 +110,12 @@ async function validateTournamentEligibility(
     if (event.type && event.divisions && event.divisions.length > 0) {
       // New event structure validation
       const division = event.divisions[0]; // For registration, we typically select one division
-      
+
       // Check age requirements for the division
       if (division.minAge !== undefined && age < division.minAge) {
         throw new Error(`Энэ ангилалд хамгийн багадаа ${division.minAge} настай байх ёстой (таны нас: ${age})`);
       }
-      
+
       if (division.maxAge !== undefined && age > division.maxAge) {
         throw new Error(`Энэ ангилалд хамгийн ихдээ ${division.maxAge} настай байх ёстой (таны нас: ${age})`);
       }
@@ -130,7 +130,7 @@ async function validateTournamentEligibility(
         }
         // MIXED_DOUBLES - both genders allowed
       }
-      
+
       if (event.type === 'TEAM') {
         if (event.subType === 'MEN_TEAM' && user.gender !== 'male') {
           throw new Error("Эрэгтэй багийн тэмцээнд зөвхөн эрэгтэй тоглогч оролцох боломжтой");
@@ -401,7 +401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/forgot-password", async (req, res) => {
     try {
       const { email } = req.body;
-      
+
       if (!email) {
         return res.status(400).json({ message: "И-мэйл хаяг заавал оруулна уу" });
       }
@@ -419,14 +419,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const { emailService } = await import('./emailService');
         const baseUrl = `${req.protocol}://${req.get('host')}`;
-        
+
         console.log(`Attempting to send password reset email to: ${email}`);
         console.log(`Reset URL will be: ${baseUrl}/reset-password?token=${token}`);
-        
+
         await emailService.sendPasswordResetEmail(email, token, baseUrl);
-        
+
         console.log(`Password reset email sent successfully to ${email}`);
-        
+
         res.json({ 
           message: "Нууц үг сэргээх код таны и-мэйлд илгээгдлээ",
           // Development-д л token буцаах
@@ -434,11 +434,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (emailError) {
         console.error("Failed to send password reset email:", emailError);
-        
+
         // И-мэйл илгээх амжилтгүй болсон ч token-г console-д хэвлэе
         console.log(`PASSWORD RESET TOKEN (EMAIL FAILED): ${token}`);
         console.log(`Reset URL: ${req.protocol}://${req.get('host')}/reset-password?token=${token}`);
-        
+
         // Development mode-д алдааг илүү дэлгэрэнгүй харуулах
         if (process.env.NODE_ENV === 'development') {
           return res.json({ 
@@ -448,7 +448,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             error: emailError instanceof Error ? emailError.message : "Email service unavailable"
           });
         }
-        
+
         // Production mode-д хэрэглэгчид амжилттай гэж хариулах (security-гийн хувьд)
         res.json({ 
           message: "Нууц үг сэргээх код таны и-мэйлд илгээгдлээ"
@@ -465,7 +465,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (process.env.NODE_ENV === 'production') {
       return res.status(404).json({ message: "Not found" });
     }
-    
+
     try {
       const { emailService } = await import('./emailService');
       await emailService.sendEmail({
@@ -474,7 +474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         html: '<h1>Email Service Test</h1><p>If you receive this, the email service is working correctly.</p>',
         text: 'Email Service Test - If you receive this, the email service is working correctly.'
       });
-      
+
       res.json({ message: "Test email sent successfully" });
     } catch (error) {
       console.error("Test email failed:", error);
@@ -488,7 +488,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/reset-password", async (req, res) => {
     try {
       const { token, password } = req.body;
-      
+
       if (!token || !password) {
         return res.status(400).json({ message: "Код болон нууц үг заавал оруулна уу" });
       }
@@ -538,7 +538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if user already has pending request
       const existingRequests = await storage.getRankChangeRequestsByUserId(userId);
       const pendingRequest = existingRequests.find(req => req.status === 'pending');
-      
+
       if (pendingRequest) {
         return res.status(400).json({ message: "Та аль хэдийн зэрэг өөрчлөх хүсэлт илгээсэн байна" });
       }
@@ -590,7 +590,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const request = await storage.updateRankChangeRequestStatus(req.params.id, status, adminId, adminNotes);
-      
+
       if (!request) {
         return res.status(404).json({ message: "Хүсэлт олдсонгүй" });
       }
@@ -605,7 +605,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/rank-change-requests/:id", requireAuth, isAdminRole, async (req, res) => {
     try {
       const success = await storage.deleteRankChangeRequest(req.params.id);
-      
+
       if (!success) {
         return res.status(404).json({ message: "Хүсэлт олдсонгүй" });
       }
@@ -1108,9 +1108,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/clubs", async (req, res) => {
     try {
       const { search, city, status, sort } = req.query;
-      
+
       let clubs = await storage.getAllClubs();
-      
+
       // Apply search filter
       if (search && typeof search === 'string') {
         const searchLower = search.toLowerCase();
@@ -1122,17 +1122,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           club.coaches?.some(coach => coach.toLowerCase().includes(searchLower))
         );
       }
-      
+
       // Apply city filter
       if (city && typeof city === 'string' && city !== 'all') {
         clubs = clubs.filter(club => club.city === city);
       }
-      
+
       // Apply status filter
       if (status && typeof status === 'string' && status !== 'all') {
         clubs = clubs.filter(club => club.status === status);
       }
-      
+
       // Apply sorting
       if (sort && typeof sort === 'string') {
         switch (sort) {
@@ -1153,7 +1153,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             clubs.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         }
       }
-      
+
       res.json(clubs);
     } catch (e) {
       console.error("Error fetching clubs:", e);
@@ -1190,13 +1190,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const clubId = req.params.id;
       const currentUserId = req.session.userId;
-      
+
       // Check if club exists and user has permission to edit
       const existingClub = await storage.getClub(clubId);
       if (!existingClub) {
         return res.status(404).json({ message: "Клуб олдсонгүй" });
       }
-      
+
       // Check ownership or admin permission
       const user = await storage.getUser(currentUserId);
       if (existingClub.ownerId !== currentUserId && user?.role !== 'admin') {
@@ -1205,11 +1205,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const clubData = z.object(insertClubSchema._def.schema.shape).omit({ ownerId: true }).partial().parse(req.body);
       const updatedClub = await storage.updateClub(clubId, clubData);
-      
+
       if (!updatedClub) {
         return res.status(404).json({ message: "Клуб шинэчлэхэд алдаа гарлаа" });
       }
-      
+
       res.json(updatedClub);
     } catch (e) {
       console.error("Error updating club:", e);
@@ -1221,13 +1221,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const clubId = req.params.id;
       const currentUserId = req.session.userId;
-      
+
       // Check if club exists and user has permission to delete
       const existingClub = await storage.getClub(clubId);
       if (!existingClub) {
         return res.status(404).json({ message: "Клуб олдсонгүй" });
       }
-      
+
       // Check ownership or admin permission
       const user = await storage.getUser(currentUserId);
       if (existingClub.ownerId !== currentUserId && user?.role !== 'admin') {
@@ -1235,11 +1235,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const deleted = await storage.deleteClub(clubId);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "Клуб устгахад алдаа гарлаа" });
       }
-      
+
       res.json({ message: "Клуб амжилттай устгагдлаа" });
     } catch (e) {
       console.error("Error deleting club:", e);
@@ -2302,11 +2302,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const oss = new ObjectStorageService();
       const uploadURL = await oss.getObjectEntityUploadURL();
-      
+
       if (!uploadURL) {
         throw new Error("Upload URL үүсгэж чадсангүй");
       }
-      
+
       res.json({ uploadURL });
     } catch (e) {
       console.error("Error getting upload URL:", e);
@@ -2322,7 +2322,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.body.fileURL) {
         return res.status(400).json({ error: "fileURL заавал оруулна уу" });
       }
-      
+
       const oss = new ObjectStorageService();
       const objectPath = await oss.trySetObjectEntityAclPolicy(
         req.body.fileURL,
@@ -2331,11 +2331,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           visibility: req.body.isPublic ? "public" : "private",
         },
       );
-      
+
       if (!objectPath) {
         throw new Error("Object path үүсгэж чадсангүй");
       }
-      
+
       res.status(200).json({ objectPath });
     } catch (e) {
       console.error("Error finalizing upload:", e);
@@ -2644,7 +2644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             for (const c of existingCoaches) {
               await storage.deleteClubCoach(c.id);
             }
-            
+
             // Create new coach
             const coachData = insertClubCoachSchema.parse({
               clubId: req.params.id,
@@ -3578,13 +3578,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // --------------
   // Tournament Results (admin)
   // --------------
-  app.get('/api/tournaments/:tournamentId/results', async (req, res) => {
+  app.get('/api/tournaments/:id/results', async (req, res) => {
     try {
-      const results = await storage.getTournamentResults(req.params.tournamentId);
+      const results = await storage.getTournamentResults(req.params.id);
+      console.log(`Tournament ${req.params.id} results:`, JSON.stringify(results, null, 2));
       res.json(results);
-    } catch (error: any) {
-      console.error("Error fetching tournament results:", error);
-      res.status(500).json({ message: error.message });
+    } catch (e) {
+      console.error("Error fetching tournament results:", e);
+      res
+        .status(500)
+        .json({ message: "Тэмцээний үр дүн авахад алдаа гарлаа" });
     }
   });
 
