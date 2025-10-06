@@ -98,17 +98,50 @@ export default function Register() {
 
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterForm) => {
-      const formData = new FormData();
-      Object.keys(data).forEach(key => {
-        formData.append(key, data[key as keyof RegisterForm]);
-      });
+      // If there's a rank proof file, we need to upload it first
+      let rankProofUrl = null;
       if (rankProof) {
-        formData.append("rankProof", rankProof);
+        try {
+          // Get upload URL
+          const uploadResponse = await apiRequest("/api/objects/upload", {
+            method: "POST",
+          });
+          const { uploadURL } = await uploadResponse.json();
+
+          // Upload the file
+          await fetch(uploadURL, {
+            method: "PUT",
+            body: rankProof,
+            headers: {
+              "Content-Type": rankProof.type,
+            },
+          });
+
+          // Finalize the upload
+          const finalizeResponse = await apiRequest("/api/objects/finalize", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+              fileURL: uploadURL, 
+              isPublic: false 
+            }),
+          });
+          const { objectPath } = await finalizeResponse.json();
+          rankProofUrl = objectPath;
+        } catch (error) {
+          console.error("Error uploading rank proof:", error);
+          throw new Error("Зэргийн баталгаажуулах зураг хуулахад алдаа гарлаа");
+        }
       }
 
+      // Send registration data as JSON
       const response = await apiRequest("/api/auth/register", {
         method: "POST",
-        body: formData, // Use FormData directly for file uploads
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...data,
+          rankProofUrl,
+        }),
       });
       
       if (!response.ok) {

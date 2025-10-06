@@ -236,6 +236,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rank,
         clubId, // Added clubId
         noClub, // Added noClub flag
+        rankProofUrl, // Rank proof image URL
       } = req.body;
 
       if (!firstName || !lastName)
@@ -322,6 +323,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
           amount: 0, // Free initial membership
           paid: false,
+        });
+      }
+
+      // Create rank change request if rank proof provided
+      if (rankProofUrl && rank && rank !== "зэрэггүй") {
+        await storage.createRankChangeRequest({
+          userId: user.id,
+          playerId: player.id,
+          currentRank: "зэрэггүй",
+          requestedRank: rank,
+          proofImageUrl: rankProofUrl,
         });
       }
 
