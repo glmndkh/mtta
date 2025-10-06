@@ -326,16 +326,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Create rank change request if rank proof provided
-      if (rankProofUrl && rank && rank !== "Шинэ тоглогч") {
-        await storage.createRankChangeRequest({
-          userId: user.id,
-          playerId: player.id,
-          currentRank: "Шинэ тоглогч",
-          requestedRank: rank,
-          proofImageUrl: rankProofUrl,
-        });
-      }
+      // Note: Rank proof upload will be handled through profile page after login
 
       const { password: _pw, ...userResponse } = user;
       res.json({ message: "Амжилттай бүртгэгдлээ", user: userResponse });

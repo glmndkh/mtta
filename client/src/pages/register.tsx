@@ -57,7 +57,6 @@ type RegisterForm = z.infer<typeof registerSchema>;
 
 export default function Register() {
   const { toast } = useToast();
-  const [rankProof, setRankProof] = useState<File | null>(null);
   const [clubSearch, setClubSearch] = useState("");
   const [selectedClub, setSelectedClub] = useState<any>(null);
 
@@ -98,66 +97,11 @@ export default function Register() {
 
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterForm) => {
-      // If there's a rank proof file, we need to upload it first
-      let rankProofUrl = null;
-      if (rankProof) {
-        try {
-          // Get upload URL
-          const uploadResponse = await apiRequest("/api/objects/upload", {
-            method: "POST",
-          });
-          
-          if (!uploadResponse.ok) {
-            const errorData = await uploadResponse.json();
-            throw new Error(errorData.message || "Upload URL авахад алдаа гарлаа");
-          }
-          
-          const { uploadURL } = await uploadResponse.json();
-
-          // Upload the file
-          const uploadFileResponse = await fetch(uploadURL, {
-            method: "PUT",
-            body: rankProof,
-            headers: {
-              "Content-Type": rankProof.type,
-            },
-          });
-
-          if (!uploadFileResponse.ok) {
-            throw new Error("Зураг хуулахад алдаа гарлаа");
-          }
-
-          // Finalize the upload
-          const finalizeResponse = await apiRequest("/api/objects/finalize", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-              fileURL: uploadURL, 
-              isPublic: false 
-            }),
-          });
-          
-          if (!finalizeResponse.ok) {
-            const errorData = await finalizeResponse.json();
-            throw new Error(errorData.error || "Зураг баталгаажуулахад алдаа гарлаа");
-          }
-          
-          const { objectPath } = await finalizeResponse.json();
-          rankProofUrl = objectPath;
-        } catch (error) {
-          console.error("Error uploading rank proof:", error);
-          throw new Error(error instanceof Error ? error.message : "Зэргийн баталгаажуулах зураг хуулахад алдаа гарлаа");
-        }
-      }
-
       // Send registration data as JSON
       const response = await apiRequest("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...data,
-          rankProofUrl,
-        }),
+        body: JSON.stringify(data),
       });
       
       if (!response.ok) {
@@ -169,7 +113,7 @@ export default function Register() {
     onSuccess: () => {
       toast({
         title: "Амжилттай бүртгэгдлээ",
-        description: "Таны бүртгэл амжилттай үүсгэгдлээ. Та одоо нэвтэрч орох боломжтой.",
+        description: "Нэвтэрсний дараа профайл хэсэгт зэргийн үнэмлэхний зураг оруулж батлуулна уу.",
       });
       // Redirect to login page
       window.location.href = "/login";
@@ -427,27 +371,9 @@ export default function Register() {
                 )}
               />
 
-              <div className="space-y-2">
-                <Label htmlFor="rank-proof">
-                  Зэргийн үнэмлэхний зураг
-                  <span className="text-gray-500 text-sm"> (заавал биш)</span>
-                </Label>
-                <Input
-                  id="rank-proof"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setRankProof(e.target.files?.[0] || null)}
-                />
-                {form.watch("rank") && form.watch("rank") !== "Шинэ тоглогч" ? (
-                  <p className="text-sm text-orange-600">
-                    Зэргийн үнэмлэхний зураг оруулсан тохиолдолд админ баталгаажуулах хүсэлт илгээгдэнэ. Баталгаажуулах хүртэл профайл дээр "Шинэ тоглогч" гэж харагдана.
-                  </p>
-                ) : (
-                  <p className="text-sm text-gray-500">
-                    Зэргийн үнэмлэхний зургаа оруулж зэргээ батлуулна уу. Админ баталгаажуулах хүртэл "Шинэ тоглогч" гэж харагдана.
-                  </p>
-                )}
-              </div>
+              <p className="text-sm text-blue-600 bg-blue-50 p-3 rounded-lg">
+                💡 Бүртгэл амжилттай болсны дараа профайл хэсэгт ороод зэргийн үнэмлэхний зураг оруулж батлуулах боломжтой.
+              </p>
 
               <FormField
                 control={form.control}
