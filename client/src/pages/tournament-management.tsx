@@ -191,10 +191,16 @@ export default function TournamentManagement() {
     setLocation("/admin/dashboard");
   };
 
-  // Fetch all users
+  // Fetch all users for team creation
   const { data: allUsers = [] } = useQuery({
     queryKey: ['/api/admin/users'],
-    enabled: activeSection === 'add-team' || activeSection === 'add-group-match'
+    enabled: activeSection === 'add-team'
+  });
+
+  // Fetch tournament participants for group matches
+  const { data: tournamentParticipants = [] } = useQuery({
+    queryKey: ['/api/tournaments', id, 'participants'],
+    enabled: activeSection === 'add-group-match'
   });
 
   // Load existing tournament teams
@@ -1302,62 +1308,36 @@ export default function TournamentManagement() {
                                                 )) : (
                                                   <CommandItem disabled>
                                                     <div className="text-center text-gray-500">
-                                                      Энэ лигт баг нэмэгдээгүй байна. Эхлээд "Баг нэмэх" хэсгээс баг нэмнэ үү.
+                                                      Энэ тэмцээнд баг нэмэгдээгүй байна. Эхлээд "Баг нэмэх" хэсгээс баг нэмнэ үү.
                                                     </div>
                                                   </CommandItem>
                                                 )
                                               ) : (
-                                                // Show league team players for individual match type
+                                                // Show only tournament participants for individual match type
                                                 (() => {
-                                                  // Get all players from league teams
-                                                  const leagueTeamPlayers: any[] = [];
-
-                                                  if (validExistingTeams && validExistingTeams.length > 0) {
-                                                    validExistingTeams.forEach((team: any) => {
-                                                      if (team.players && Array.isArray(team.players)) {
-                                                        team.players.forEach((teamPlayer: any) => {
-                                                          // Use playerName field directly from database or construct from user data
-                                                          const displayName = teamPlayer.playerName || 
-                                                            (teamPlayer.firstName && teamPlayer.lastName 
-                                                              ? `${teamPlayer.firstName} ${teamPlayer.lastName}`
-                                                              : teamPlayer.email || `Тоглогч ${teamPlayer.id}`);
-                                                          
-                                                          leagueTeamPlayers.push({
-                                                            ...teamPlayer,
-                                                            playerName: displayName, // Ensure playerName is set
-                                                            displayName,
-                                                            teamName: team.name,
-                                                            teamId: team.id
-                                                          });
-                                                        });
-                                                      }
-                                                    });
-                                                  }
-
-                                                  if (leagueTeamPlayers.length === 0) {
+                                                  if (!tournamentParticipants || tournamentParticipants.length === 0) {
                                                     return (
                                                       <CommandItem disabled>
                                                         <div className="text-center text-gray-500">
-                                                          Энэ лигт баг болон тоглогч нэмэгдээгүй байна. Эхлээд "Баг нэмэх" хэсгээс баг нэмнэ үү.
+                                                          Энэ тэмцээнд бүртгүүлсэн тоглогч байхгүй байна.
                                                         </div>
                                                       </CommandItem>
                                                     );
                                                   }
 
-                                                  return leagueTeamPlayers.map((teamPlayer: any, index: number) => {
-                                                    // Use playerName field directly from the database
-                                                    const playerName = teamPlayer.playerName || 
-                                                      (teamPlayer.firstName && teamPlayer.lastName 
-                                                        ? `${teamPlayer.firstName} ${teamPlayer.lastName}`
-                                                        : `Тоглогч ${teamPlayer.id}`);
+                                                  return tournamentParticipants.map((participant: any, index: number) => {
+                                                    const playerName = participant.playerName || 
+                                                      `${participant.firstName || ''} ${participant.lastName || ''}`.trim() ||
+                                                      participant.playerEmail ||
+                                                      `Тоглогч ${participant.id}`;
 
                                                     return (
                                                       <CommandItem
-                                                        key={`${teamPlayer.teamId}-${teamPlayer.id}-${index}`}
-                                                        value={`${playerName} ${teamPlayer.teamName}`}
+                                                        key={`${participant.playerId}-${index}`}
+                                                        value={`${playerName} ${participant.playerClub || ''}`}
                                                         onSelect={() => {
                                                           handleGroupPlayerChange(player.id, 'name', playerName);
-                                                          handleGroupPlayerChange(player.id, 'club', teamPlayer.teamName);
+                                                          handleGroupPlayerChange(player.id, 'club', participant.playerClub || '');
                                                           setSearchOpen({ ...searchOpen, [`group-${player.id}`]: false });
                                                         }}
                                                         className="flex items-center justify-between"
@@ -1367,7 +1347,7 @@ export default function TournamentManagement() {
                                                             {playerName}
                                                           </div>
                                                           <div className="text-xs text-gray-500">
-                                                            {teamPlayer.teamName} • Багийн гишүүн
+                                                            {participant.playerClub || 'Клубгүй'} • {participant.participationType || 'Тэмцээний оролцогч'}
                                                           </div>
                                                         </div>
                                                       </CommandItem>
