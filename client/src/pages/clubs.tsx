@@ -153,7 +153,7 @@ export default function Clubs() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="mb-2 text-lg font-bold text-card-foreground leading-tight break-words" style={{ fontFamily: "'Inter', 'Noto Sans', sans-serif" }}>
+                      <h3 className="mb-2 text-lg font-bold text-card-foreground leading-tight break-words whitespace-normal" style={{ fontFamily: "'Inter', 'Noto Sans', sans-serif" }}>
                         {club.name}
                       </h3>
                       <div className="flex gap-2 flex-wrap">
