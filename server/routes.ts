@@ -305,11 +305,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password, // NOTE: plaintext as requested
       });
 
-      // Create player record
+      // Create player record - always set rank as "зэрэггүй" initially
       const player = await storage.createPlayer({
         userId: user.id,
         dateOfBirth: new Date(dateOfBirth),
-        rank,
+        rank: "зэрэггүй", // Always start with no rank, will be updated after admin approval
         clubId: clubId && !noClub ? clubId : undefined,
       });
 

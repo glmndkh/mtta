@@ -98,10 +98,19 @@ export default function Register() {
 
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterForm) => {
+      const formData = new FormData();
+      Object.keys(data).forEach(key => {
+        formData.append(key, data[key as keyof RegisterForm]);
+      });
+      if (rankProof) {
+        formData.append("rankProof", rankProof);
+      }
+
       const response = await apiRequest("/api/auth/register", {
         method: "POST",
-        body: JSON.stringify(data)
+        body: formData, // Use FormData directly for file uploads
       });
+      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Бүртгэлд алдаа гарлаа");
@@ -126,16 +135,8 @@ export default function Register() {
   });
 
   const onSubmit = (data: RegisterForm) => {
-    // Check if rank proof is required but not provided
-    if (data.rank && data.rank !== "зэрэггүй" && !rankProof) {
-      toast({
-        title: "Алдаа",
-        description: "Зэргийн үнэмлэхний зургийг оруулна уу",
-        variant: "destructive",
-      });
-      return;
-    }
-    
+    // The backend will handle the rank approval process.
+    // If rankProof is provided, it will be flagged for admin review.
     registerMutation.mutate(data);
   };
 
@@ -309,7 +310,7 @@ export default function Register() {
                         ))}
                       </SelectContent>
                     </Select>
-                    
+
                     {selectedClub && (
                       <div className="p-2 bg-green-50 border border-green-200 rounded-md">
                         <div className="font-medium text-green-800">{selectedClub.name}</div>
@@ -378,13 +379,8 @@ export default function Register() {
 
               <div className="space-y-2">
                 <Label htmlFor="rank-proof">
-                  Зэргийн үнэмлэхний зураг 
-                  {form.watch("rank") && form.watch("rank") !== "зэрэггүй" && (
-                    <span className="text-red-500"> *</span>
-                  )}
-                  {(!form.watch("rank") || form.watch("rank") === "зэрэггүй") && (
-                    <span className="text-gray-500 text-sm"> (заавал биш)</span>
-                  )}
+                  Зэргийн үнэмлэхний зураг
+                  <span className="text-gray-500 text-sm"> (заавал биш)</span>
                 </Label>
                 <Input
                   id="rank-proof"
@@ -393,13 +389,12 @@ export default function Register() {
                   onChange={(e) => setRankProof(e.target.files?.[0] || null)}
                 />
                 {form.watch("rank") && form.watch("rank") !== "зэрэггүй" ? (
-                  <p className="text-sm text-red-600">
-                    Зэргийн үнэмлэхний зургийг заавал оруулна уу!
+                  <p className="text-sm text-orange-600">
+                    Зэргийн үнэмлэхний зураг оруулсан тохиолдолд админ баталгаажуулах хүсэлт илгээгдэнэ. Баталгаажуулах хүртэл профайл дээр "зэрэггүй" гэж харагдана.
                   </p>
                 ) : (
                   <p className="text-sm text-gray-500">
-                    Зэргийн үнэмлэхний зургаа оруулж зэргээ батална уу! (Заавал биш. Таныг зэргээ батлах хүртэл таны оруулсан
-                    зэргийг хүчингүйд тооцохыг анхаарна уу)
+                    Зэргийн үнэмлэхний зургаа оруулж зэргээ батлуулна уу. Админ баталгаажуулах хүртэл "зэрэггүй" гэж харагдана.
                   </p>
                 )}
               </div>
