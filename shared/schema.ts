@@ -741,6 +741,54 @@ export type TournamentTeamPlayer = typeof tournamentTeamPlayers.$inferSelect;
 export type InsertRankChangeRequest = z.infer<typeof insertRankChangeRequestSchema>;
 export type RankChangeRequest = typeof rankChangeRequests.$inferSelect;
 
+// Pending registrations table (for verified registration flow)
+export const pendingRegistrations = pgTable("pending_registrations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  email: varchar("email").notNull(),
+  phone: varchar("phone").notNull(),
+  passwordHash: varchar("password_hash"),
+  uploadedFilename: varchar("uploaded_filename"),
+  createdAt: timestamp("created_at").defaultNow(),
+  emailVerified: boolean("email_verified").default(false).notNull(),
+  phoneVerified: boolean("phone_verified").default(false).notNull(),
+  adminApproved: boolean("admin_approved").default(false).notNull(),
+  otpCodeHash: varchar("otp_code_hash"),
+  otpExpiresAt: timestamp("otp_expires_at"),
+  emailVerificationTokenHash: varchar("email_verification_token_hash"),
+  emailVerificationExpiresAt: timestamp("email_verification_expires_at"),
+  otpAttempts: integer("otp_attempts").default(0),
+  rejectionReason: text("rejection_reason"),
+  status: varchar("status").default("pending"), // pending, approved, rejected, migrated
+});
+
+// Audit logs table
+export const auditLogs = pgTable("audit_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  pendingId: varchar("pending_id").references(() => pendingRegistrations.id),
+  eventType: varchar("event_type").notNull(), // registration_started, email_verified, phone_verified, admin_approved, etc.
+  data: jsonb("data"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Pending registration schemas
+export const insertPendingRegistrationSchema = createInsertSchema(pendingRegistrations).omit({
+  id: true,
+  createdAt: true,
+});
+export const selectPendingRegistrationSchema = createSelectSchema(pendingRegistrations);
+export type InsertPendingRegistration = z.infer<typeof insertPendingRegistrationSchema>;
+export type PendingRegistration = typeof pendingRegistrations.$inferSelect;
+
+// Audit log schemas
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
+  id: true,
+  createdAt: true,
+});
+export const selectAuditLogSchema = createSelectSchema(auditLogs);
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+export type AuditLog = typeof auditLogs.$inferSelect;
+
 // League match schemas
 export const insertLeagueMatchSchema = createInsertSchema(leagueMatches).omit({
   id: true,

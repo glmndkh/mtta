@@ -1,0 +1,116 @@
+You are a senior Node.js/Express security engineer. Build or patch a registration backend so that the current problem is fully fixed:
+
+Problem summary (from user):
+- Users who submit registration form with Gmail + phone are immediately stored in DB but they do not receive the "successfully registered" message.
+- Gmail is not being checked/verified.
+- Phone OTP messages are not sent.
+- Admin approval requests (with uploaded verification image) are not delivered to admin.
+- Overall flow should require email verification (for Gmail), phone verification (OTP), and admin approval (with image) before final "successful registration" state.
+
+Deliverable:
+Produce a complete Node.js (Express) app (or patch) with clear instructions and code. The app must implement the full verified registration flow and include a simple front-end HTML form to demo.
+
+Tech stack & libs:
+- Node.js + Express
+- better-sqlite3 (SQLite) for DB
+- SendGrid (or Mailgun) for email sending
+- Twilio for SMS OTP (or pluggable SMS provider)
+- multer for file uploads
+- cookie-session (for session)
+- helmet, express-rate-limit, cors
+- dotenv for env
+- joi or express-validator for input validation
+- Optional: passport-google-oauth20 support to accept Google OAuth token (bonus)
+
+Environment variables (.env):
+- APP_URL=https://<your-repl>.replit.app
+- PORT=3000
+- DATABASE_FILE=./data/db.sqlite
+- SENDGRID_API_KEY=
+- FROM_EMAIL=noreply@yourdomain.com
+- TWILIO_ACCOUNT_SID=
+- TWILIO_AUTH_TOKEN=
+- TWILIO_FROM_NUMBER=
+- SESSION_SECRET=
+- ADMIN_EMAIL=admin@yourdomain.com
+- OTP_TTL_SECONDS=300
+- ALLOWED_EMAIL_DOMAIN= (optional, e.g., gmail.com — when set, only allow that domain)
+
+Database schema (auto-migrate on startup):
+Tables:
+1) pending_registrations:
+   - id (uuid), name, email, phone, password_hash (nullable), uploaded_filename (nullable), created_at, email_verified (bool default false), phone_verified (bool default false), admin_approved (bool default false), otp_code_hash, otp_expires_at, email_verification_token_hash, email_verification_expires_at
+
+2) users:
+   - id, name, email UNIQUE, phone UNIQUE, password_hash (nullable), created_at, activated_at
+
+3) audit_logs:
+   - id, pending_id, event_type, data (json), created_at
+
+Flow (must implement exactly):
+1. Client POST /register (multipart/form-data) with: name, email, phone, optional password, uploaded verification image (file).
+   - Server validates input.
+   - Normalize email/phone.
+   - If ALLOWED_EMAIL_DOMAIN set -> enforce email domain check and reject early with 400 if mismatch (return Mongolian error).
+   - Create a row in pending_registrations (NOT in users!) with `email_verified=false`, `phone_verified=false`, `admin_approved=false`.
+   - Generate:
+     - email_verification_token (random 48 bytes hex). Store SHA256(token) in email_verification_token_hash and expiry (now + 24h).
+     - otp_code (6-digit numeric). Store SHA256(otp) and expiry (now + OTP_TTL_SECONDS).
+   - Save uploaded file securely to disk (or /tmp) and store filename in DB.
+   - Send email to the user with verification link:
+       `${APP_URL}/verify-email?token=RAW_TOKEN&pending=${pending_id}` using SendGrid. Email body in Mongolian with clear button and expiry.
+   - Send SMS OTP to phone via Twilio with short Mongolian text containing the 6-digit code.
+   - Send immediate email to ADMIN_EMAIL notifying of new pending registration, include a secure admin link to review (`${APP_URL}/admin/review?pending=${pending_id}`) and include the uploaded image as attachment or link.
+   - Respond to client: HTTP 200 with JSON `{ status: 'pending', message: 'Бүртгэл хүлээгдэж байна. Имэйл болон утсаа баталгаажуулна уу.' }`
+   - Do NOT set user session or create users table row.
+
+2. GET /verify-email?token=...&pending=...
+   - Hash the token, find pending_registrations row by id and token hash.
+   - If token expired or missing -> show friendly Mongolian HTML error.
+   - If valid -> set email_verified=true for that pending row; log event in audit_logs.
+   - If phone_verified is already true and admin_approved is already true -> create final user row in users table, set activated_at, delete pending row (or mark migrated).
+   - Show Mongolian HTML success page: "Имэйл баталгаажсан. Утасны баталгаажуулалт хүлээгдэж байна / Админын баталгаажуулалт хүлээгдэж байна" depending on other statuses.
+
+3. POST /verify-phone (body: pending, otp)
+   - Hash otp and compare with stored otp_code_hash and expiry.
+   - If correct -> set phone_verified=true in pending. If email_verified && admin_approved true -> finalize user creation.
+   - Return JSON status success or friendly error in Mongolian.
+
+4. Admin Review UI:
+   - GET /admin/review?pending=... (protected via simple ADMIN_SECRET query or basic auth)
+   - Page shows pending user details and uploaded image, buttons: Approve / Reject with reason.
+   - On Approve -> set admin_approved=true; if email_verified && phone_verified true -> finalize user creation: insert into users table, send final notification email to user "Бүртгэл амжилттай" in Mongolian.
+   - On Reject -> send email to user with reason, keep pending row with status rejected or delete.
+
+5. Finalization:
+   - When all three flags true (email_verified && phone_verified && admin_approved), create users row atomically (transaction). Send user final "Амжилттай бүртгэгдлээ" email and optionally an SMS confirmation.
+
+6. Robustness & Security:
+   - All tokens & OTPs stored hashed (SHA256) only.
+   - Rate-limit registration and OTP verification endpoints (e.g., 5 req / 15 min per IP).
+   - Prevent replay: single-use tokens and OTPs set used=true on success.
+   - Sanitize uploaded filenames; restrict file types (jpg/png/pdf) and max size 5MB.
+   - Use helmet, CORS only from APP_URL, trust proxy true.
+   - Log all key actions into audit_logs for admin debugging.
+   - Provide clear Mongolian error messages everywhere.
+
+7. Testing / Acceptance criteria (automated manual steps to verify):
+   - Submit registration with valid gmail and phone -> Receive email with link and SMS OTP, pending DB row exists.
+   - Click verify-email link -> pending.email_verified = true; user not yet created until phone + admin approved.
+   - POST correct OTP -> pending.phone_verified = true.
+   - Admin approves via admin page -> final users row created and user receives "Амжилттай бүртгэл" email.
+   - If email token expired -> link shows expiry message and offers resend endpoint.
+   - If OTP wrong more than 5 tries -> block further attempts and require resend.
+   - Uploaded image must be visible in admin review email and page.
+
+8. Provide:
+   - Full code: server.js, db.js (migration), views (simple HTML templates), public JS for client form (show UX states).
+   - README with env setup, Twilio/SendGrid setup instructions, how to run locally and on Replit.
+   - Example .env.example content.
+   - Short test script or curl commands to simulate registration, email verification, phone verification, and admin approval.
+
+Important: keep UI/response texts in Mongolian; log messages in English are ok.
+
+Finish by printing a short "what I changed / how to test" checklist in console on server start.
+
+End of prompt.
