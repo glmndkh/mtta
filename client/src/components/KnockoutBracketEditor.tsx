@@ -552,38 +552,38 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
     }
 
     // Handle third place match for semifinal losers
-    if (match.roundName === 'Хагас финал' && match.winner) {
-      const thirdIdx = updatedMatches.findIndex(m => m.id === 'third_place_playoff');
-      if (thirdIdx !== -1) {
-        const thirdMatch = { ...updatedMatches[thirdIdx] } as Match;
-        const participants = [match.player1, match.player2];
+      if (match.roundName === 'Хагас финал' && match.winner) {
+        const thirdIdx = updatedMatches.findIndex(m => m.id === 'third_place_playoff');
+        if (thirdIdx !== -1) {
+          const thirdMatch = { ...updatedMatches[thirdIdx] } as Match;
+          const participants = [match.player1, match.player2];
 
-        // Clear existing participants from this semifinal
-        if (thirdMatch.player1 && participants.some(p => p?.id === thirdMatch.player1!.id)) {
-          thirdMatch.player1 = undefined;
-        }
-        if (thirdMatch.player2 && participants.some(p => p?.id === thirdMatch.player2!.id)) {
-          thirdMatch.player2 = undefined;
-        }
-        if (thirdMatch.winner && participants.some(p => p?.id === thirdMatch.winner!.id)) {
-          thirdMatch.winner = undefined;
-          thirdMatch.player1Score = undefined;
-          thirdMatch.player2Score = undefined;
-        }
-
-        // Add the loser to the third place match
-        const loser = match.player1?.id === match.winner.id ? match.player2 : match.player1;
-        if (loser) {
-          if (!thirdMatch.player1) {
-            thirdMatch.player1 = loser;
-          } else if (!thirdMatch.player2) {
-            thirdMatch.player2 = loser;
+          // Clear existing participants from this semifinal
+          if (thirdMatch.player1 && participants.some(p => p?.id === thirdMatch.player1!.id)) {
+            thirdMatch.player1 = undefined;
           }
-        }
+          if (thirdMatch.player2 && participants.some(p => p?.id === thirdMatch.player2!.id)) {
+            thirdMatch.player2 = undefined;
+          }
+          if (thirdMatch.winner && participants.some(p => p?.id === thirdMatch.winner!.id)) {
+            thirdMatch.winner = undefined;
+            thirdMatch.player1Score = undefined;
+            thirdMatch.player2Score = undefined;
+          }
 
-        updatedMatches[thirdIdx] = thirdMatch;
+          // Add the loser to the third place match
+          const loser = match.player1?.id === match.winner.id ? match.player2 : match.player1;
+          if (loser && loser.id !== 'bye') {
+            if (!thirdMatch.player1) {
+              thirdMatch.player1 = loser;
+            } else if (!thirdMatch.player2) {
+              thirdMatch.player2 = loser;
+            }
+          }
+
+          updatedMatches[thirdIdx] = thirdMatch;
+        }
       }
-    }
 
     return updatedMatches;
   };
