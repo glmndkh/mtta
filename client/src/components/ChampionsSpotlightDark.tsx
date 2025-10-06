@@ -68,12 +68,12 @@ export const ChampionsSpotlightDark: React.FC<ChampionsSpotlightDarkProps> = ({
         </>
       )}
 
-      {/* Main Content - Horizontal layout with text left, image right */}
-      <div className="relative h-screen flex flex-col md:flex-row items-center justify-between px-4 sm:px-8 md:px-16 lg:px-24">
-        {/* Content Section - Left Side */}
-        <div className="text-black dark:text-white text-left space-y-4 md:space-y-6 max-w-xs sm:max-w-sm md:max-w-lg lg:max-w-2xl md:mr-8">
+      {/* Main Content - Vertical on mobile, horizontal on desktop */}
+      <div className="relative h-screen flex flex-col items-center justify-center px-4 sm:px-8 md:flex-row md:justify-between md:px-16 lg:px-24 pt-20 md:pt-0">
+        {/* Content Section - Top on mobile, Left on desktop */}
+        <div className="text-black dark:text-white text-center md:text-left space-y-2 sm:space-y-3 md:space-y-6 max-w-xs sm:max-w-sm md:max-w-lg lg:max-w-2xl md:mr-8 z-10">
           {/* National Team Label */}
-          <div className="mb-4 md:mb-6">
+          <div className="mb-2 md:mb-6">
             <h2 className="text-green-500 text-xs sm:text-sm md:text-base font-bold tracking-widest uppercase">
               ҮНДЭСНИЙ ШИГШЭЭ
             </h2>
@@ -82,7 +82,7 @@ export const ChampionsSpotlightDark: React.FC<ChampionsSpotlightDarkProps> = ({
           {/* Player Name */}
           <div className="space-y-1 md:space-y-2">
             <h1 
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-none tracking-tight"
+              className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-none tracking-tight"
               style={{ 
                 fontFamily: 'Arial, sans-serif',
                 textShadow: '0 0 20px rgba(255,255,255,0.3), 0 4px 8px rgba(0,0,0,0.8)'
@@ -91,7 +91,7 @@ export const ChampionsSpotlightDark: React.FC<ChampionsSpotlightDarkProps> = ({
               {currentPlayer?.firstName || 'Тамирчин'}
             </h1>
             <h2 
-              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold text-black/95 dark:text-white/95 leading-none tracking-tight"
+              className="text-xl sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold text-black/95 dark:text-white/95 leading-none tracking-tight"
               style={{ 
                 fontFamily: 'Arial, sans-serif',
                 textShadow: '0 0 20px rgba(255,255,255,0.3), 0 4px 8px rgba(0,0,0,0.8)'
@@ -103,24 +103,24 @@ export const ChampionsSpotlightDark: React.FC<ChampionsSpotlightDarkProps> = ({
 
           {/* Player Age */}
           {currentPlayer?.age && (
-            <div className="text-lg sm:text-xl md:text-2xl font-medium">
+            <div className="text-base sm:text-lg md:text-2xl font-medium">
               <span className="text-black/90 dark:text-white/90">Нас</span>
               <span className="font-bold ml-2 text-black dark:text-white">{currentPlayer.age}</span>
             </div>
           )}
         </div>
 
-        {/* Player Image - Right Side */}
-        <div className="flex-shrink-0 mt-8 md:mt-0">
+        {/* Player Image - Bottom on mobile, Right on desktop */}
+        <div className="flex-shrink-0 mt-6 sm:mt-8 md:mt-0 mb-24 md:mb-0">
           {currentPlayer?.imageUrl ? (
             <img
               src={currentPlayer.imageUrl}
               alt={`${currentPlayer.firstName} ${currentPlayer.lastName}`}
-              className="w-48 h-56 sm:w-56 sm:h-64 md:w-64 md:h-80 lg:w-80 lg:h-96 xl:w-96 xl:h-[28rem] object-cover rounded-xl md:rounded-2xl shadow-2xl"
+              className="w-40 h-48 sm:w-52 sm:h-60 md:w-64 md:h-80 lg:w-80 lg:h-96 xl:w-96 xl:h-[28rem] object-cover rounded-xl md:rounded-2xl shadow-2xl"
               style={{ filter: 'drop-shadow(0 10px 30px rgba(0,0,0,0.7))' }}
             />
           ) : (
-            <div className="w-48 h-56 sm:w-56 sm:h-64 md:w-64 md:h-80 lg:w-80 lg:h-96 xl:w-96 xl:h-[28rem] bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl md:rounded-2xl flex items-center justify-center shadow-2xl">
+            <div className="w-40 h-48 sm:w-52 sm:h-60 md:w-64 md:h-80 lg:w-80 lg:h-96 xl:w-96 xl:h-[28rem] bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl md:rounded-2xl flex items-center justify-center shadow-2xl">
               <div className="text-black dark:text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold opacity-60">
                 {currentPlayer?.firstName?.[0]}{currentPlayer?.lastName?.[0]}
               </div>
