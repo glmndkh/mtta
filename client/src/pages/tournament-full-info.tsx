@@ -353,7 +353,7 @@ interface Participant {
 
             {/* Overview */}
             <TabsContent value="overview">
-              {results?.isPublished && results?.finalRankings?.images && results.finalRankings.images.length > 0 ? (
+              {results?.finalRankings?.images && results.finalRankings.images.length > 0 ? (
                 <Card className="mb-6">
                   <CardHeader>
                     <CardTitle>Тэмцээний үр дүн</CardTitle>

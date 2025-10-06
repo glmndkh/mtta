@@ -84,23 +84,18 @@ const TournamentResults: React.FC = () => {
     );
   }
 
-  // Debug logging
-  console.log('Tournament results data:', {
-    hasResults: !!results,
-    isPublished: results?.isPublished,
-    hasGroupStage: !!(results?.groupStageResults),
-    hasKnockout: !!(results?.knockoutResults),
-    hasFinalRankings: !!(results?.finalRankings)
-  });
+  const groupStageResults: GroupStageGroup[] = (results?.groupStageResults as any) || [];
+  const rawKnockoutResults: KnockoutMatch[] = (results?.knockoutResults as any) || [];
+  const knockoutResults = normalizeKnockoutMatches(rawKnockoutResults) as KnockoutMatch[];
+  const finalRankings: FinalRanking[] = (results?.finalRankings as any) || [];
 
-  // Check if results exist and are published
-  const hasResults = results && results.isPublished;
+  // Check if results exist
   const hasImages = results?.finalRankings && typeof results.finalRankings === 'object' && 'images' in results.finalRankings && Array.isArray(results.finalRankings.images) && results.finalRankings.images.length > 0;
   const hasFinalRankings = results?.finalRankings && Array.isArray(results.finalRankings) && results.finalRankings.length > 0;
   const hasGroupStage = groupStageResults && groupStageResults.length > 0;
   const hasKnockout = knockoutResults && knockoutResults.length > 0;
 
-  if (!hasResults || (!hasImages && !hasFinalRankings && !hasGroupStage && !hasKnockout)) {
+  if (!results || (!hasImages && !hasFinalRankings && !hasGroupStage && !hasKnockout)) {
     return (
       <PageWithLoading>
         <Navigation />
@@ -121,18 +116,8 @@ const TournamentResults: React.FC = () => {
                 <div className="text-center py-12">
                   <Trophy className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                   <p className="text-gray-600 dark:text-gray-400">
-                    Тэмцээний үр дүн хараахан нийтлэгдээгүй байна
+                    Тэмцээний үр дүн хараахан оруулаагүй байна
                   </p>
-                  {!results && (
-                    <p className="text-sm text-gray-500 mt-2">
-                      Үр дүн оруулаагүй байна
-                    </p>
-                  )}
-                  {results && !results.isPublished && (
-                    <p className="text-sm text-gray-500 mt-2">
-                      Үр дүн хадгалагдсан боловч хараахан нийтлэгдээгүй
-                    </p>
-                  )}
                 </div>
               </CardContent>
             </Card>
@@ -141,11 +126,6 @@ const TournamentResults: React.FC = () => {
       </PageWithLoading>
     );
   }
-
-  const groupStageResults: GroupStageGroup[] = (results?.groupStageResults as any) || [];
-  const rawKnockoutResults: KnockoutMatch[] = (results?.knockoutResults as any) || [];
-  const knockoutResults = normalizeKnockoutMatches(rawKnockoutResults) as KnockoutMatch[];
-  const finalRankings: FinalRanking[] = (results?.finalRankings as any) || [];
 
   return (
     <PageWithLoading>
