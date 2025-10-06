@@ -268,7 +268,7 @@ export default function Navigation() {
             <Link href="/">
               <div className="flex items-center cursor-pointer logo-glow flex-shrink-0">
                 <img
-              src={mttaLogo}
+              src="/assets/logoweb_1754749015700-7dq4WozA.png"
               alt="MTTA Logo"
               className="h-8 w-auto object-contain"
             />
