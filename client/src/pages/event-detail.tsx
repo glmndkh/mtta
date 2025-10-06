@@ -14,10 +14,14 @@ import PageWithLoading from "@/components/PageWithLoading";
 import RegistrationForm from "@/components/RegistrationForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { EventHeroRow } from '@/components/EventHeroRow';
 import { LoadingAnimation } from '@/components/LoadingAnimation';
 import { ParticipantsTab } from '@/components/ParticipantsTab';
 import { queryClient } from '@/lib/queryClient';
+import { KnockoutBracket } from "@/components/KnockoutBracket";
+import { normalizeKnockoutMatches } from "@/lib/knockout";
+import type { TournamentResults } from "@shared/schema";
 
 interface Tournament {
   id: string;
@@ -51,6 +55,44 @@ interface Tournament {
   prizes?: string;
 }
 
+interface GroupStageGroup {
+  id: string;
+  name: string;
+  players: Array<{ id: string; name: string; club?: string }>;
+  resultMatrix: string[][];
+  playerStats: Array<{
+    playerId: string;
+    wins: number;
+    losses: number;
+    points: number;
+    setsWon?: number;
+    setsLost?: number;
+  }>;
+}
+
+interface KnockoutMatch {
+  id: string;
+  round: number | string;
+  roundName?: string;
+  player1?: { id: string; name: string };
+  player2?: { id: string; name: string };
+  player1Score?: string;
+  player2Score?: string;
+  score?: string;
+  winner?: { id: string; name: string };
+  position: { x: number; y: number };
+}
+
+interface FinalRanking {
+  position: number;
+  player: {
+    id: string;
+    name: string;
+  };
+  points?: number;
+  note?: string;
+}
+
 export default function EventDetail() {
   const { id } = useParams();
   const [location] = useLocation();
@@ -61,6 +103,12 @@ export default function EventDetail() {
   // Fetch tournament data
   const { data: tournament, isLoading } = useQuery<Tournament>({
     queryKey: [`/api/tournaments/${id}`],
+    enabled: !!id,
+  });
+
+  // Fetch tournament results
+  const { data: results } = useQuery<TournamentResults>({
+    queryKey: ['/api/tournaments', id, 'results'],
     enabled: !!id,
   });
 
@@ -421,17 +469,189 @@ export default function EventDetail() {
                 </TabsContent>
 
                 <TabsContent value="results" className="space-y-8">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Тэмцээний үр дүн</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-center py-12">
-                        <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-500">Тэмцээний үр дүнгүүд удахгүй нэмэгдэх болно.</p>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  {(() => {
+                    const groupStageResults: GroupStageGroup[] = (results?.groupStageResults as any) || [];
+                    const rawKnockoutResults: KnockoutMatch[] = (results?.knockoutResults as any) || [];
+                    const knockoutResults = normalizeKnockoutMatches(rawKnockoutResults) as KnockoutMatch[];
+                    const finalRankings: FinalRanking[] = (results?.finalRankings as any) || [];
+
+                    const hasImages = results?.finalRankings && typeof results.finalRankings === 'object' && 'images' in results.finalRankings && Array.isArray(results.finalRankings.images) && results.finalRankings.images.length > 0;
+                    const hasFinalRankings = results?.finalRankings && Array.isArray(results.finalRankings) && results.finalRankings.length > 0;
+                    const hasGroupStage = groupStageResults && Array.isArray(groupStageResults) && groupStageResults.length > 0;
+                    const hasKnockout = knockoutResults && Array.isArray(knockoutResults) && knockoutResults.length > 0;
+
+                    if (!results || (!hasImages && !hasFinalRankings && !hasGroupStage && !hasKnockout)) {
+                      return (
+                        <Card>
+                          <CardHeader>
+                            <CardTitle>Тэмцээний үр дүн</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-center py-12">
+                              <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                              <p className="text-gray-500">Тэмцээний үр дүн хараахан оруулаагүй байна</p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    }
+
+                    return (
+                      <>
+                        {/* Final Rankings with Images */}
+                        {hasImages && (
+                          <Card>
+                            <CardHeader>
+                              <CardTitle>Тэмцээний үр дүн</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {(results.finalRankings as any).images.map((image: any, index: number) => (
+                                  <div key={index} className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-md">
+                                    <img 
+                                      src={image.url.startsWith('/') ? image.url : `/objects/${image.url}`}
+                                      alt={image.description || `Үр дүн ${index + 1}`}
+                                      className="w-full h-64 object-cover"
+                                    />
+                                    {image.description && (
+                                      <div className="p-3">
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">{image.description}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
+                        
+                        {/* Final Rankings Table */}
+                        {hasFinalRankings && (
+                          <Card>
+                            <CardHeader>
+                              <CardTitle>Эцсийн байрлалт</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Байр</TableHead>
+                                    <TableHead>Тоглогч</TableHead>
+                                    <TableHead>Оноо</TableHead>
+                                    <TableHead>Тэмдэглэл</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {finalRankings.map((ranking) => (
+                                    <TableRow key={ranking.player.id}>
+                                      <TableCell className="font-bold">
+                                        {ranking.position === 1 && '🥇'}
+                                        {ranking.position === 2 && '🥈'}
+                                        {ranking.position === 3 && '🥉'}
+                                        {ranking.position > 3 && ranking.position}
+                                      </TableCell>
+                                      <TableCell>{ranking.player.name}</TableCell>
+                                      <TableCell>{ranking.points || '-'}</TableCell>
+                                      <TableCell>{ranking.note || '-'}</TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </CardContent>
+                          </Card>
+                        )}
+
+                        {/* Group Stage Results */}
+                        {hasGroupStage && (
+                          <div>
+                            <h2 className="text-xl font-semibold mb-4">Хэсгийн шатны үр дүн</h2>
+                            <div className="space-y-4">
+                              {groupStageResults.map((group) => (
+                                <Card key={group.id}>
+                                  <CardHeader>
+                                    <CardTitle>{group.name}</CardTitle>
+                                  </CardHeader>
+                                  <CardContent>
+                                    <Table>
+                                      <TableHeader>
+                                        <TableRow>
+                                          <TableHead>Байр</TableHead>
+                                          <TableHead>Тоглогч</TableHead>
+                                          <TableHead>Хожсон</TableHead>
+                                          <TableHead>Хожигдсон</TableHead>
+                                          <TableHead>Оноо</TableHead>
+                                          <TableHead>Сэт +/-</TableHead>
+                                        </TableRow>
+                                      </TableHeader>
+                                      <TableBody>
+                                        {group.players
+                                          .map((player, index) => {
+                                            const stats = group.playerStats?.find(s => s.playerId === player.id) || {
+                                              wins: 0,
+                                              losses: 0,
+                                              points: 0,
+                                              setsWon: 0,
+                                              setsLost: 0
+                                            };
+                                            return { player, stats, index };
+                                          })
+                                          .sort((a, b) => {
+                                            if (b.stats.points !== a.stats.points) {
+                                              return b.stats.points - a.stats.points;
+                                            }
+                                            const setsDiffA = (a.stats.setsWon || 0) - (a.stats.setsLost || 0);
+                                            const setsDiffB = (b.stats.setsWon || 0) - (b.stats.setsLost || 0);
+                                            return setsDiffB - setsDiffA;
+                                          })
+                                          .map(({ player, stats }, position) => (
+                                            <TableRow key={player.id}>
+                                              <TableCell className="font-bold">{position + 1}</TableCell>
+                                              <TableCell>{player.name}</TableCell>
+                                              <TableCell>{stats.wins}</TableCell>
+                                              <TableCell>{stats.losses}</TableCell>
+                                              <TableCell className="font-bold">{stats.points}</TableCell>
+                                              <TableCell>
+                                                <span className={`${(stats.setsWon || 0) - (stats.setsLost || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                  {(stats.setsWon || 0) - (stats.setsLost || 0) >= 0 ? '+' : ''}
+                                                  {(stats.setsWon || 0) - (stats.setsLost || 0)}
+                                                </span>
+                                              </TableCell>
+                                            </TableRow>
+                                          ))}
+                                      </TableBody>
+                                    </Table>
+                                  </CardContent>
+                                </Card>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Knockout Bracket */}
+                        {hasKnockout && (
+                          <div>
+                            <h2 className="text-xl font-semibold mb-4">Шигшээ тоглолт</h2>
+                            <Card>
+                              <CardContent className="p-6">
+                                <KnockoutBracket
+                                  matches={knockoutResults.map(match => ({
+                                    id: match.id,
+                                    round: Number(match.round),
+                                    player1: match.player1,
+                                    player2: match.player2,
+                                    winner: match.winner,
+                                    score1: match.player1Score ? parseInt(match.player1Score, 10) : undefined,
+                                    score2: match.player2Score ? parseInt(match.player2Score, 10) : undefined,
+                                    position: match.position
+                                  }))}
+                                />
+                              </CardContent>
+                            </Card>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </TabsContent>
               </div>
             </Tabs>
