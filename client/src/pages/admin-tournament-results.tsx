@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, Trash2, Save, Users, Trophy, Target, Download, Upload, FileSpreadsheet, Minus, Eye, EyeOff, Medal, Crown, Award, User, X } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, Users, Trophy, Target, Download, Upload, FileSpreadsheet, Minus, Eye, EyeOff, Medal, Crown, Award, User, X, RotateCcw } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -925,6 +925,23 @@ const AdminTournamentResults: React.FC = () => {
                 <Trophy className="w-4 h-4 mr-2" />
                 Шигшээ тоглолт үүсгэх
               </Button>
+              {existingResults?.knockoutResults && Array.isArray(existingResults.knockoutResults) && existingResults.knockoutResults.length > 0 && (
+                <Button
+                  onClick={() => {
+                    setKnockoutResults(existingResults.knockoutResults as KnockoutMatch[]);
+                    toast({
+                      title: "Үр дүн сэргээгдлээ",
+                      description: "Хадгалсан шигшээ тоглолтын үр дүн сэргээгдлээ"
+                    });
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white"
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Хадгалсан үр дүн
+                </Button>
+              )}
               <Button variant="outline" size="sm">
                 <Download className="w-4 h-4 mr-2" />
                 Excel татах
@@ -1182,6 +1199,22 @@ const AdminTournamentResults: React.FC = () => {
                 <Trophy className="w-4 h-4 mr-2" />
                 Шигшээ тоглолт үүсгэх
               </Button>
+              {existingResults?.knockoutResults && Array.isArray(existingResults.knockoutResults) && existingResults.knockoutResults.length > 0 && (
+                <Button
+                  onClick={() => {
+                    setKnockoutResults(existingResults.knockoutResults as KnockoutMatch[]);
+                    toast({
+                      title: "Үр дүн сэргээгдлээ",
+                      description: "Хадгалсан шигшээ тоглолтын үр дүн сэргээгдлээ"
+                    });
+                  }}
+                  variant="outline"
+                  className="border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white"
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Хадгалсан үр дүн сэргээх
+                </Button>
+              )}
               <Button variant="outline" size="sm">
                 <Download className="w-4 h-4 mr-2" />
                 Excel татах
