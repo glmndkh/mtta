@@ -120,8 +120,8 @@ export default function PastChampions() {
                   cardBorderClass
                 )}
               >
-                <CardHeader className="p-6 pb-3 text-center bg-slate-50 dark:bg-slate-100">
-                  <CardTitle className="text-2xl font-bold text-slate-900 tracking-wide">
+                <CardHeader className="p-6 pb-3 text-center bg-slate-50 dark:bg-slate-800">
+                  <CardTitle className="text-2xl font-bold text-slate-900 dark:text-white tracking-wide">
                     {champion.year}
                   </CardTitle>
                 </CardHeader>
