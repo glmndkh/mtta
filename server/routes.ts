@@ -3593,19 +3593,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.session?.userId;
       if (!userId) {
+        console.log('Unauthorized: No user session');
         return res.status(401).json({ message: "Нэвтрэх шаардлагатай" });
       }
 
       const user = await storage.getUserById(userId);
       if (!user || user.role !== 'admin') {
+        console.log('Forbidden: User is not admin', user?.role);
         return res.status(403).json({ message: "Зөвхөн админ хэрэглэгч үр дүн хадгалах боломжтой" });
       }
 
       const { tournamentId, groupStageResults, knockoutResults, finalRankings, isPublished } = req.body;
 
       if (!tournamentId) {
+        console.log('Bad request: Missing tournament ID');
         return res.status(400).json({ message: "Тэмцээний ID шаардлагатай" });
       }
+
+      console.log('Saving tournament results:', {
+        tournamentId,
+        hasGroupStage: !!groupStageResults,
+        hasKnockout: !!knockoutResults,
+        hasFinalRankings: !!finalRankings,
+        isPublished,
+        knockoutResultsCount: knockoutResults?.length || 0
+      });
 
       const results = await storage.upsertTournamentResults({
         tournamentId,
@@ -3615,11 +3627,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isPublished: isPublished || false,
       });
 
-      console.log("Tournament results saved successfully:", tournamentId);
+      console.log("Tournament results saved successfully:", tournamentId, "Published:", results.isPublished);
       res.json(results);
     } catch (error: any) {
       console.error("Error saving tournament results:", error);
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: error.message || 'Үр дүн хадгалахад алдаа гарлаа' });
     }
   });
 

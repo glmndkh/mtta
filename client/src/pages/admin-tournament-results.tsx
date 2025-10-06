@@ -159,14 +159,18 @@ const AdminTournamentResults: React.FC = () => {
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Tournament results saved successfully:', data);
       toast({
         title: "Амжилттай хадгалагдлаа",
-        description: "Тэмцээний үр дүн амжилттай хадгалагдлаа",
+        description: isPublished 
+          ? "Тэмцээний үр дүн нийтлэгдлээ" 
+          : "Тэмцээний үр дүн хадгалагдлаа (хараахан нийтлэгдээгүй)",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/tournaments', params?.tournamentId, 'results'] });
     },
     onError: (error: any) => {
+      console.error('Error saving tournament results:', error);
       toast({
         title: "Алдаа гарлаа",
         description: error.message || "Үр дүн хадгалахад алдаа гарлаа",
@@ -618,14 +622,28 @@ const AdminTournamentResults: React.FC = () => {
   const handleSave = () => {
     if (!params?.tournamentId) return;
 
+    // Prepare knockout results with proper structure
+    const preparedKnockoutResults = knockoutResults.map(match => ({
+      id: match.id,
+      round: match.round,
+      roundName: match.roundName,
+      player1: match.player1 || null,
+      player2: match.player2 || null,
+      player1Score: match.player1Score || null,
+      player2Score: match.player2Score || null,
+      winner: match.winner || null,
+      isFinished: !!match.winner
+    }));
+
     const data = {
       tournamentId: params.tournamentId,
       groupStageResults: groupStageResults.length > 0 ? groupStageResults : null,
-      knockoutResults: knockoutResults.length > 0 ? knockoutResults : null,
+      knockoutResults: preparedKnockoutResults.length > 0 ? preparedKnockoutResults : null,
       finalRankings: finalRankings.length > 0 ? finalRankings : null,
       isPublished,
     };
 
+    console.log('Saving tournament results with data:', data);
     saveResultsMutation.mutate(data);
   };
 

@@ -84,6 +84,15 @@ const TournamentResults: React.FC = () => {
     );
   }
 
+  // Debug logging
+  console.log('Tournament results data:', {
+    hasResults: !!results,
+    isPublished: results?.isPublished,
+    hasGroupStage: !!(results?.groupStageResults),
+    hasKnockout: !!(results?.knockoutResults),
+    hasFinalRankings: !!(results?.finalRankings)
+  });
+
   // Check if results are published
   if (!results || !results.isPublished) {
     return (
@@ -108,6 +117,16 @@ const TournamentResults: React.FC = () => {
                   <p className="text-gray-600 dark:text-gray-400">
                     Тэмцээний үр дүн хараахан нийтлэгдээгүй байна
                   </p>
+                  {!results && (
+                    <p className="text-sm text-gray-500 mt-2">
+                      Үр дүн оруулаагүй байна
+                    </p>
+                  )}
+                  {results && !results.isPublished && (
+                    <p className="text-sm text-gray-500 mt-2">
+                      Үр дүн хадгалагдсан боловч хараахан нийтлэгдээгүй
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
