@@ -1,4 +1,3 @@
-
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -140,7 +139,7 @@ export default function PastChampions() {
                       />
                     </div>
                   </div>
-                  
+
                   {/* Champion Name */}
                   <div className="w-full px-6 pb-6 text-center">
                     <h3 className="text-lg font-semibold text-slate-900 leading-tight">
