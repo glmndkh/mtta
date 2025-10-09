@@ -290,6 +290,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: "player",
         password, // NOTE: plaintext as requested
       });
+      console.log("User created successfully:", user.id);
 
       // Create player record - always set rank as "Зэрэггүй" initially
       const player = await storage.createPlayer({
@@ -298,6 +299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rank: "Зэрэггүй", // Always start with default rank, will be updated after admin approval
         clubId: clubId && !noClub ? clubId : undefined,
       });
+      console.log("Player created successfully:", player.id);
 
       // Create club membership if club is selected
       if (clubId && !noClub) {
@@ -323,7 +325,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (e) {
       console.error("Registration error:", e);
-      res.status(500).json({ message: "Бүртгэлд алдаа гарлаа" });
+      // Return more specific error message if available
+      const errorMessage = e instanceof Error ? e.message : "Бүртгэлд алдаа гарлаа";
+      return res.status(500).json({ message: errorMessage });
     }
   });
 
