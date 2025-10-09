@@ -98,13 +98,16 @@ export default function Register() {
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Registration successful:", data);
       toast({
         title: "Амжилттай бүртгэгдлээ",
-        description: "Нэвтэрсний дараа профайл хэсэгт зэргийн үнэмлэхний зураг оруулж батлуулна уу.",
+        description: data.message || "Нэвтэрсний дараа профайл хэсэгт зэргийн үнэмлэхний зураг оруулж батлуулна уу.",
       });
-      // Redirect to login page
-      window.location.href = "/login";
+      // Redirect to login page after showing toast
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 2000);
     },
     onError: (error: Error) => {
       console.error("Registration error:", error);
