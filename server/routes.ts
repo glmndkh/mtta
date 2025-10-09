@@ -304,18 +304,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create club membership if club is selected
       if (clubId && !noClub) {
-        await storage.createMembership({
-          playerId: player.id,
-          type: "adult", // Use enum value from schema
-          startDate: new Date(),
-          endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
-          amount: 0, // Free initial membership
-          paid: false,
-        });
+        try {
+          await storage.createMembership({
+            playerId: player.id,
+            type: "adult", // Use enum value from schema
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
+            amount: 0, // Free initial membership
+            paid: false,
+          });
+        } catch (membershipError) {
+          console.error("Error creating membership (non-fatal):", membershipError);
+          // Don't fail registration if membership creation fails
+        }
       }
 
       const { password: _pw, ...userResponse } = user;
-      res.json({ 
+      return res.status(200).json({ 
         message: "Амжилттай бүртгэгдлээ. Зэргийн үнэмлэхээ профайл хэсгээс оруулж батлуулна уу.", 
         user: userResponse 
       });
