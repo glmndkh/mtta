@@ -23,6 +23,24 @@ import { KnockoutBracket } from "@/components/KnockoutBracket";
 import { normalizeKnockoutMatches } from "@/lib/knockout";
 import type { TournamentResults } from "@shared/schema";
 
+// Helper function to format participation type from JSON string to readable text
+const formatParticipationType = (jsonString: string): string => {
+  try {
+    const parsed = JSON.parse(jsonString);
+    const typeMap: Record<string, string> = {
+      individual: "Individual",
+      pair: "Pair",
+      team: "Team"
+    };
+    
+    const typeName = typeMap[parsed.type] || parsed.type;
+    return `${typeName} ${parsed.minAge}–${parsed.maxAge} years`;
+  } catch {
+    // If parsing fails, return the original string
+    return jsonString;
+  }
+};
+
 interface Tournament {
   id: string;
   name: string;
@@ -413,9 +431,9 @@ export default function EventDetail() {
                       </CardHeader>
                       <CardContent>
                         <div className="flex flex-wrap gap-2">
-                          {tournament.participationTypes.map((type) => (
-                            <Badge key={type} variant="secondary">
-                              {type}
+                          {tournament.participationTypes.map((type, index) => (
+                            <Badge key={`${type}-${index}`} variant="secondary">
+                              {formatParticipationType(type)}
                             </Badge>
                           ))}
                         </div>

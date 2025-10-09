@@ -8,6 +8,24 @@ import { Calendar, MapPin, Users, Clock, Trophy, UserPlus, UserCheck } from 'luc
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
 
+// Helper function to format participation type from JSON string to readable text
+const formatParticipationType = (jsonString: string): string => {
+  try {
+    const parsed = JSON.parse(jsonString);
+    const typeMap: Record<string, string> = {
+      individual: "Individual",
+      pair: "Pair",
+      team: "Team"
+    };
+    
+    const typeName = typeMap[parsed.type] || parsed.type;
+    return `${typeName} ${parsed.minAge}–${parsed.maxAge} years`;
+  } catch {
+    // If parsing fails, return the original string
+    return jsonString;
+  }
+};
+
 interface Event {
   id: string;
   name: string;
@@ -237,9 +255,9 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
                         defaultValue=""
                       >
                         <option value="" disabled>Ангилал сонгох</option>
-                        {event.participationTypes.map((type: string) => (
-                          <option key={type} value={type} className="text-gray-900">
-                            {type}
+                        {event.participationTypes.map((type: string, index: number) => (
+                          <option key={`${type}-${index}`} value={type} className="text-gray-900">
+                            {formatParticipationType(type)}
                           </option>
                         ))}
                       </select>
