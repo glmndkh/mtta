@@ -45,21 +45,21 @@ interface FinalRanking {
 }
 
 // Simple text display for participation types
-const formatParticipationType = (value: string): string => {
+const formatParticipationType = (value: string | Record<string, any>): string => {
   // If it's already a readable text, return as is
-  if (!value.startsWith('{') && !value.startsWith('[')) {
+  if (typeof value === 'string' && !value.startsWith('{') && !value.startsWith('[')) {
     return value;
   }
-  
+
   try {
-    const obj = JSON.parse(value);
-    
+    const obj = typeof value === 'string' ? JSON.parse(value) : value;
+
     // Handle age-based categories
     if ("minAge" in obj || "maxAge" in obj || "age" in obj) {
       const minAge = obj.minAge;
       const maxAge = obj.maxAge;
       const gender = obj.gender || "male";
-      
+
       let ageLabel = "";
       if (minAge !== null && maxAge !== null) {
         ageLabel = `${minAge}-${maxAge} нас`;
@@ -72,21 +72,33 @@ const formatParticipationType = (value: string): string => {
       } else {
         ageLabel = "Нас хязгааргүй";
       }
-      
-      const genderLabel = gender === "male" ? "эрэгтэй" : "эмэгтэй";
+
+      const genderLabel = gender === "male" ? "эрэгтэй" : gender === "female" ? "эмэгтэй" : gender;
       return `${ageLabel} ${genderLabel}`;
     }
-    
+
     // Handle simple type categories
     if (obj.type) {
       return obj.type;
     }
-    
-    return value;
+
+    return JSON.stringify(obj);
   } catch {
     // If not JSON, return as is
-    return value;
+    return String(value);
   }
+};
+
+// Helper to parse participation type for filtering and display
+const parseParticipationType = (type: string | Record<string, any>): Record<string, any> => {
+  if (typeof type === 'string') {
+    try {
+      return JSON.parse(type);
+    } catch {
+      return { type: type }; // Treat as simple string if parsing fails
+    }
+  }
+  return type;
 };
 
 export default function TournamentFullInfo() {
@@ -542,7 +554,7 @@ interface Participant {
                       const getAgeGroup = (age: number | string) => {
                         const ageNum = typeof age === 'string' ? parseInt(age) : age;
                         if (isNaN(ageNum) || ageNum < 0) return 'Тодорхойгүй нас';
-                        
+
                         if (ageNum <= 12) return '8-12 нас';
                         if (ageNum <= 15) return '13-15 нас';
                         if (ageNum <= 18) return '16-18 нас';
@@ -559,9 +571,9 @@ interface Participant {
                         const age = calculateAge(p.dateOfBirth);
                         const ageGroup = getAgeGroup(age);
                         const cat = parseParticipationType(p.participationType);
-                        const genderStr = cat.gender === 'male' ? 'эрэгтэй' : 'эмэгтэй';
+                        const genderStr = cat.gender === 'male' ? 'эрэгтэй' : cat.gender === 'female' ? 'эмэгтэй' : cat.gender;
                         const categoryKey = `${ageGroup} ${genderStr}`;
-                        
+
                         if (!acc[categoryKey]) {
                           acc[categoryKey] = [];
                         }
@@ -616,7 +628,7 @@ interface Participant {
                                         </TableCell>
                                         <TableCell>{calculateAge(p.dateOfBirth)}</TableCell>
                                         <TableCell>
-                                          {p.gender === 'male' ? 'Эрэгтэй' : 'Эмэгтэй'}
+                                          {p.gender === 'male' ? 'Эрэгтэй' : p.gender === 'female' ? 'Эмэгтэй' : p.gender}
                                         </TableCell>
                                         {user?.role === 'admin' && (
                                           <TableCell>
