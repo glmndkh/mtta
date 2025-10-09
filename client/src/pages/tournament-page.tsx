@@ -118,13 +118,38 @@ const parseParticipation = (value: string): ParticipationCategory => {
 };
 
 const formatParticipationType = (type: string): string => {
-  const category = parseParticipation(type);
-  let label = "";
-  if (category.minAge !== null && category.maxAge !== null) label = `${category.minAge}-${category.maxAge}`;
-  else if (category.minAge !== null) label = `${category.minAge}+`;
-  else if (category.maxAge !== null) label = `${category.maxAge}-аас доош`;
-  else label = "Нас хязгааргүй";
-  return `${label} ${category.gender === "male" ? "эрэгтэй" : "эмэгтэй"}`;
+  try {
+    const parsed = JSON.parse(type);
+    
+    // Map type and gender to Mongolian text
+    let typeName = "";
+    if (parsed.type === "individual") {
+      if (parsed.gender === "male") {
+        typeName = "Эрэгтэй-ганцаарчилсан";
+      } else if (parsed.gender === "female") {
+        typeName = "Эмэгтэй-ганцаарчилсан";
+      } else {
+        typeName = "Ганцаарчилсан";
+      }
+    } else if (parsed.type === "pair") {
+      typeName = "Хос";
+    } else if (parsed.type === "team") {
+      typeName = "Баг";
+    } else {
+      typeName = parsed.type;
+    }
+    
+    return `${typeName} ${parsed.minAge}–${parsed.maxAge} нас`;
+  } catch {
+    // Fallback to old parsing logic for non-JSON strings
+    const category = parseParticipation(type);
+    let label = "";
+    if (category.minAge !== null && category.maxAge !== null) label = `${category.minAge}-${category.maxAge}`;
+    else if (category.minAge !== null) label = `${category.minAge}+`;
+    else if (category.maxAge !== null) label = `${category.maxAge}-аас доош`;
+    else label = "Нас хязгааргүй";
+    return `${label} ${category.gender === "male" ? "эрэгтэй" : "эмэгтэй"}`;
+  }
 };
 
 // Medal Winners Component

@@ -12,14 +12,26 @@ import { useAuth } from '../hooks/useAuth';
 const formatParticipationType = (jsonString: string): string => {
   try {
     const parsed = JSON.parse(jsonString);
-    const typeMap: Record<string, string> = {
-      individual: "Individual",
-      pair: "Pair",
-      team: "Team"
-    };
     
-    const typeName = typeMap[parsed.type] || parsed.type;
-    return `${typeName} ${parsed.minAge}–${parsed.maxAge} years`;
+    // Map type and gender to Mongolian text
+    let typeName = "";
+    if (parsed.type === "individual") {
+      if (parsed.gender === "male") {
+        typeName = "Эрэгтэй-ганцаарчилсан";
+      } else if (parsed.gender === "female") {
+        typeName = "Эмэгтэй-ганцаарчилсан";
+      } else {
+        typeName = "Ганцаарчилсан";
+      }
+    } else if (parsed.type === "pair") {
+      typeName = "Хос";
+    } else if (parsed.type === "team") {
+      typeName = "Баг";
+    } else {
+      typeName = parsed.type;
+    }
+    
+    return `${typeName} ${parsed.minAge}–${parsed.maxAge} нас`;
   } catch {
     // If parsing fails, return the original string
     return jsonString;

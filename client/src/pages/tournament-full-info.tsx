@@ -46,16 +46,28 @@ interface FinalRanking {
 
 // Simple text display for participation types
 const formatParticipationType = (value: string | Record<string, any>): string => {
-  // If it's already a readable text, return as is
-  if (typeof value === 'string' && !value.startsWith('{') && !value.startsWith('[')) {
-    return value;
-  }
-
   try {
     const obj = typeof value === 'string' ? JSON.parse(value) : value;
-
-    // Handle age-based categories
-    if ("minAge" in obj || "maxAge" in obj || "age" in obj) {
+    
+    // Map type and gender to Mongolian text
+    let typeName = "";
+    if (obj.type === "individual") {
+      if (obj.gender === "male") {
+        typeName = "Эрэгтэй-ганцаарчилсан";
+      } else if (obj.gender === "female") {
+        typeName = "Эмэгтэй-ганцаарчилсан";
+      } else {
+        typeName = "Ганцаарчилсан";
+      }
+    } else if (obj.type === "pair") {
+      typeName = "Хос";
+    } else if (obj.type === "team") {
+      typeName = "Баг";
+    } else if (obj.type) {
+      // If there's a type but we don't recognize it
+      typeName = obj.type;
+    } else {
+      // Fallback to old logic for age-based categories
       const minAge = obj.minAge;
       const maxAge = obj.maxAge;
       const gender = obj.gender || "male";
@@ -76,13 +88,8 @@ const formatParticipationType = (value: string | Record<string, any>): string =>
       const genderLabel = gender === "male" ? "эрэгтэй" : gender === "female" ? "эмэгтэй" : gender;
       return `${ageLabel} ${genderLabel}`;
     }
-
-    // Handle simple type categories
-    if (obj.type) {
-      return obj.type;
-    }
-
-    return JSON.stringify(obj);
+    
+    return `${typeName} ${obj.minAge}–${obj.maxAge} нас`;
   } catch {
     // If not JSON, return as is
     return String(value);
