@@ -145,11 +145,6 @@ export default function PastChampions() {
                     <h3 className="text-lg font-semibold text-slate-900 leading-tight">
                       {champion.name}
                     </h3>
-                    {champion.championType && (
-                      <p className="text-sm text-slate-600 mt-1 capitalize">
-                        {champion.championType.replace('_', ' ')}
-                      </p>
-                    )}
                   </div>
                 </CardContent>
               </Card>
