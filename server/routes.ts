@@ -239,7 +239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!firstName || !lastName)
         return res.status(400).json({ message: "Нэр, овог заавал оруулна уу" });
-      if (!gender || !["male", "female", "other"].includes(gender))
+      if (!gender || !["male", "female"].includes(gender))
         return res.status(400).json({ message: "Хүйс заавал сонгоно уу" });
       if (!dateOfBirth)
         return res
@@ -249,10 +249,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res
           .status(400)
           .json({ message: "Утасны дугаар заавал оруулна уу" });
-      if (!email)
-        return res
-          .status(400)
-          .json({ message: "И-мэйл хаяг заавал оруулна уу" });
       if (!clubId && !noClub && !clubAffiliation)
         return res
           .status(400)
@@ -266,12 +262,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .status(400)
           .json({ message: "Нууц үг дор хаяж 6 тэмдэгт байх ёстой" });
 
-
-
-      if (await storage.getUserByEmail(email))
+      // Check email only if provided
+      if (email && await storage.getUserByEmail(email))
         return res
           .status(400)
           .json({ message: "Энэ и-мэйл хаяг аль хэдийн бүртгэгдсэн байна" });
+      
+      // Always check phone
       if (phone) {
         const byPhone = await storage.getUserByPhone(phone);
         if (byPhone)
@@ -283,7 +280,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const user = await storage.createSimpleUser({
-        email,
+        email: email || null,
         phone,
         firstName,
         lastName,

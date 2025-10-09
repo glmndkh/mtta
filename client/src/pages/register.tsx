@@ -17,12 +17,12 @@ import logoPath from "@assets/logo.svg";
 const registerSchema = z.object({
   firstName: z.string().min(1, "Нэрээ оруулна уу"),
   lastName: z.string().min(1, "Овгоо оруулна уу"),
-  gender: z.enum(["male", "female", "other"], {
+  gender: z.enum(["male", "female"], {
     required_error: "Хүйсээ сонгоно уу",
   }),
   dateOfBirth: z.string().min(1, "Төрсөн огноогоо оруулна уу"),
-  phone: z.string().optional(),
-  email: z.string().email("И-мэйл хаягаа зөв оруулна уу"),
+  phone: z.string().min(1, "Утасны дугаар заавал оруулна уу"),
+  email: z.string().email("И-мэйл хаягаа зөв оруулна уу").optional().or(z.literal("")),
   clubId: z.string().optional(),
   noClub: z.boolean().default(false),
   clubAffiliation: z.string().optional(),
@@ -186,7 +186,6 @@ export default function Register() {
                       <SelectContent>
                         <SelectItem value="male">Эр</SelectItem>
                         <SelectItem value="female">Эм</SelectItem>
-                        <SelectItem value="other">Бусад</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -213,7 +212,7 @@ export default function Register() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>И-мэйл хаяг</FormLabel>
+                    <FormLabel>И-мэйл хаяг <span className="text-gray-500 text-sm">(заавал биш)</span></FormLabel>
                     <FormControl>
                       <Input type="email" placeholder="example@email.com" {...field} />
                     </FormControl>
@@ -227,7 +226,7 @@ export default function Register() {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Утасны дугаар <span className="text-gray-500 text-sm">(заавал биш)</span></FormLabel>
+                    <FormLabel>Утасны дугаар</FormLabel>
                     <FormControl>
                       <Input placeholder="+976 xxxxxxxx" {...field} />
                     </FormControl>
