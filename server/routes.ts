@@ -296,7 +296,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const player = await storage.createPlayer({
         userId: user.id,
         dateOfBirth: new Date(dateOfBirth),
-        rank: null, // Start with no rank, will be set after admin approval
+        rank: "Зэрэггүй", // Default rank, can be updated after admin approval
         clubId: clubId && !noClub ? clubId : undefined,
       });
       console.log("Player created successfully:", player.id);
