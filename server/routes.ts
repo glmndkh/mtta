@@ -286,7 +286,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastName,
         gender,
         dateOfBirth: new Date(dateOfBirth),
-        clubAffiliation: noClub ? clubAffiliation : null, // Use clubAffiliation if noClub is true
+        clubAffiliation: noClub && clubAffiliation ? clubAffiliation : null, // Use clubAffiliation if noClub is true
         role: "player",
         password, // NOTE: plaintext as requested
       });
@@ -297,7 +297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: user.id,
         dateOfBirth: new Date(dateOfBirth),
         rank: "Зэрэггүй", // Default rank, can be updated after admin approval
-        clubId: clubId && !noClub ? clubId : undefined,
+        clubId: clubId && !noClub ? clubId : null,
       });
       console.log("Player created successfully:", player.id);
 
@@ -320,7 +320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { password: _pw, ...userResponse } = user;
       return res.status(200).json({ 
-        message: "Амжилттай бүртгэгдлээ. Зэргийн үнэмлэхээ профайл хэсгээс оруулж батлуулна уу.", 
+        message: "Амжилттай бүртгэгдлээ! Нэвтэрсний дараа профайл хэсэгт зэргийн үнэмлэхийг оруулж батлуулна уу.", 
         user: userResponse 
       });
     } catch (e) {

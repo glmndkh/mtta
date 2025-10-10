@@ -101,8 +101,8 @@ export default function Register() {
     onSuccess: (data) => {
       console.log("Registration successful:", data);
       toast({
-        title: "Амжилттай бүртгэгдлээ",
-        description: data.message || "Нэвтэрсний дараа профайл хэсэгт зэргийн үнэмлэхний зураг оруулж батлуулна уу.",
+        title: "Амжилттай бүртгэгдлээ!",
+        description: data.message || "Нэвтэрсний дараа профайл хэсэгт зэргийн үнэмлэхийг оруулж батлуулна уу.",
       });
       // Redirect to login page after showing toast
       setTimeout(() => {
