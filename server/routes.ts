@@ -231,72 +231,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dateOfBirth,
         phone,
         email,
+        clubId,
+        noClub,
         clubAffiliation,
         password,
-        clubId, // Added clubId
-        noClub, // Added noClub flag
       } = req.body;
 
-      if (!firstName || !lastName)
-        return res.status(400).json({ message: "Нэр, овог заавал оруулна уу" });
-      if (!gender || !["male", "female"].includes(gender))
-        return res.status(400).json({ message: "Хүйс заавал сонгоно уу" });
-      if (!dateOfBirth)
-        return res
-          .status(400)
-          .json({ message: "Төрсөн огноо заавал оруулна уу" });
-      if (!phone)
-        return res
-          .status(400)
-          .json({ message: "Утасны дугаар заавал оруулна уу" });
-      if (!clubId && !noClub && !clubAffiliation)
-        return res
-          .status(400)
-          .json({
-            message: "Клуб сонгох эсвэл 'Клубгүй' гэдгийг тэмдэглэх эсвэл тоглодог газрын мэдээлэл заавал оруулна уу",
-          });
-      if (!password)
-        return res.status(400).json({ message: "Нууц үг заавал оруулна уу" });
-      if (String(password).length < 6)
-        return res
-          .status(400)
-          .json({ message: "Нууц үг дор хаяж 6 тэмдэгт байх ёстой" });
-
-      // Check email only if provided
-      if (email && await storage.getUserByEmail(email))
-        return res
-          .status(400)
-          .json({ message: "Энэ и-мэйл хаяг аль хэдийн бүртгэгдсэн байна" });
-      
-      // Always check phone
-      if (phone) {
-        const byPhone = await storage.getUserByPhone(phone);
-        if (byPhone)
-          return res
-            .status(400)
-            .json({
-              message: "Энэ утасны дугаар аль хэдийн бүртгэгдсэн байна",
-            });
+      // Validate required fields
+      if (!firstName || !lastName || !gender || !dateOfBirth || !phone || !password) {
+        return res.status(400).json({ message: "Шаардлагатай талбаруудыг бөглөнө үү" });
       }
 
-      const user = await storage.createSimpleUser({
-        email: email || null,
-        phone,
+      // Check if user already exists
+      const existingUser = await storage.getUserByPhone(phone);
+
+
+      if (existingUser) {
+        return res.status(400).json({ message: "Энэ утасны дугаараар бүртгэгдсэн хэрэглэгч байна" });
+      }
+
+      // Hash password
+      const hashedPassword = await storage.hashPassword(password);
+
+      // Create user without rank (will be set later via rank change request)
+      const newUser = await storage.createUser({
         firstName,
         lastName,
-        gender,
+        gender: gender as "male" | "female",
         dateOfBirth: new Date(dateOfBirth),
+        phone,
+        email: email || null,
+        clubId: clubId && !noClub ? clubId : null,
         clubAffiliation: noClub && clubAffiliation ? clubAffiliation : null, // Use clubAffiliation if noClub is true
         role: "player",
-        password, // NOTE: plaintext as requested
+        password: hashedPassword,
       });
-      console.log("User created successfully:", user.id);
+      console.log("User created successfully:", newUser.id);
 
-      // Create player record - always set rank as "Зэрэггүй" initially
+      // Create player record - no default rank
       const player = await storage.createPlayer({
-        userId: user.id,
+        userId: newUser.id,
         dateOfBirth: new Date(dateOfBirth),
-        rank: "Зэрэггүй", // Default rank, can be updated after admin approval
+        rank: null, // No rank during registration
         clubId: clubId && !noClub ? clubId : null,
       });
       console.log("Player created successfully:", player.id);
@@ -318,10 +294,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const { password: _pw, ...userResponse } = user;
-      return res.status(200).json({ 
-        message: "Амжилттай бүртгэгдлээ! Нэвтэрсний дараа профайл хэсэгт зэргийн үнэмлэхийг оруулж батлуулна уу.", 
-        user: userResponse 
+      const { password: _pw, ...userResponse } = newUser;
+      return res.status(200).json({
+        message: "Амжилттай бүртгэгдлээ! Нэвтэрсний дараа профайл хэсэгт зэргийн үнэмлэхийг оруулж батлуулна уу.",
+        user: userResponse
       });
     } catch (e) {
       console.error("Registration error:", e);
@@ -351,7 +327,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res
           .status(400)
           .json({ message: "Энэ хэрэглэгч нууц үг тохируулаагүй байна" });
-      if (password !== user.password)
+      if (!await storage.comparePassword(password, user.password))
         return res.status(401).json({ message: "Буруу нууц үг" });
 
       (req as any).session.userId = user.id;
@@ -422,7 +398,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         console.log(`Password reset email sent successfully to ${email}`);
 
-        res.json({ 
+        res.json({
           message: "Нууц үг сэргээх код таны и-мэйлд илгээгдлээ",
           // Development-д л token буцаах
           ...(process.env.NODE_ENV === 'development' && { token, resetUrl: `${baseUrl}/reset-password?token=${token}` })
@@ -436,16 +412,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Development mode-д алдааг илүү дэлгэрэнгүй харуулах
         if (process.env.NODE_ENV === 'development') {
-          return res.json({ 
+          return res.json({
             message: "И-мэйл илгээхэд алдаа гарсан боловч token үүсгэгдлээ",
-            token, 
+            token,
             resetUrl: `${req.protocol}://${req.get('host')}/reset-password?token=${token}`,
             error: emailError instanceof Error ? emailError.message : "Email service unavailable"
           });
         }
 
         // Production mode-д хэрэглэгчид амжилттай гэж хариулах (security-гийн хувьд)
-        res.json({ 
+        res.json({
           message: "Нууц үг сэргээх код таны и-мэйлд илгээгдлээ"
         });
       }
@@ -473,9 +449,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Test email sent successfully" });
     } catch (error) {
       console.error("Test email failed:", error);
-      res.status(500).json({ 
-        message: "Test email failed", 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      res.status(500).json({
+        message: "Test email failed",
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
@@ -1109,7 +1085,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Apply search filter
       if (search && typeof search === 'string') {
         const searchLower = search.toLowerCase();
-        clubs = clubs.filter(club => 
+        clubs = clubs.filter(club =>
           club.name?.toLowerCase().includes(searchLower) ||
           club.city?.toLowerCase().includes(searchLower) ||
           club.district?.toLowerCase().includes(searchLower) ||
@@ -1500,7 +1476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Public tournaments = active only
-  app.get("/api/tournaments", async (req: any, res) => {
+  app.get("/api/tournaments", async (req, res) => {
     try {
       let tournaments = await storage.getTournaments();
 
@@ -1526,7 +1502,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const tournaments = await storage.getTournaments();
       const now = new Date();
-      const upcomingTournaments = tournaments.filter(tournament => 
+      const upcomingTournaments = tournaments.filter(tournament =>
         new Date(tournament.startDate) >= now
       );
       res.json(upcomingTournaments);
@@ -1641,9 +1617,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (e) {
         console.error("Error updating tournament:", e);
         if (e instanceof z.ZodError) {
-          return res.status(422).json({ 
-            message: "Мэдээллийн алдаа", 
-            errors: e.errors 
+          return res.status(422).json({
+            message: "Мэдээллийн алдаа",
+            errors: e.errors
           });
         }
         res.status(400).json({ message: "Тэмцээн шинэчлэхэд алдаа гарлаа" });
@@ -1687,7 +1663,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         player = await storage.createPlayer({
           userId,
           dateOfBirth: user.dateOfBirth || new Date(),
-          rank: "Шинэ тоглогч",
+          rank: null, // No rank during registration
         });
         console.log(`Created new player record for user ${userId}:`, player);
       }
@@ -1784,7 +1760,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               clubId: null,
               rankingAllAges: null,
               rankingOwnAge: null,
-              rank: null,
+              rank: null, // No rank during registration
               points: 0,
               achievements: null,
               dateOfBirth: userData.dateOfBirth
@@ -1800,7 +1776,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Register for tournament
         await storage.registerForTournament({ tournamentId, playerId: user.id, participationType: 'singles' });
 
-        res.json({ 
+        res.json({
           message: "Амжилттай бүртгүүллээ",
           registration: {
             tournamentId,
@@ -1912,7 +1888,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             password: null,
             role: "player",
           });
-          const newPlayer = await storage.createPlayer({ userId: newUser.id });
+          const newPlayer = await storage.createPlayer({ userId: newUser.id, rank: null });
           finalPlayerId = newPlayer.id;
         } else {
           try {
@@ -2114,7 +2090,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (q && typeof q === 'string') {
         const query = q.toLowerCase();
-        news = news.filter((item: any) => 
+        news = news.filter((item: any) =>
           item.title?.toLowerCase().includes(query) ||
           item.excerpt?.toLowerCase().includes(query) ||
           item.content?.toLowerCase().includes(query)
@@ -2128,8 +2104,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         news.sort((a: any, b: any) => (b.viewCount || 0) - (a.viewCount || 0));
       } else {
         // Default: sort by date
-        news.sort((a: any, b: any) => 
-          new Date(b.createdAt || b.publishedAt).getTime() - 
+        news.sort((a: any, b: any) =>
+          new Date(b.createdAt || b.publishedAt).getTime() -
           new Date(a.createdAt || a.publishedAt).getTime()
         );
       }
@@ -2305,7 +2281,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ uploadURL });
     } catch (e) {
       console.error("Error getting upload URL:", e);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Upload URL авахад алдаа гарлаа",
         error: e instanceof Error ? e.message : "Тодорхойгүй алдаа"
       });
@@ -2334,7 +2310,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json({ objectPath });
     } catch (e) {
       console.error("Error finalizing upload:", e);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Зураг баталгаажуулахад алдаа гарлаа",
         details: e instanceof Error ? e.message : "Тодорхойгүй алдаа"
       });
@@ -2752,9 +2728,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (e) {
         console.error("Error updating tournament:", e);
         if (e instanceof z.ZodError) {
-          return res.status(422).json({ 
-            message: "Мэдээллийн алдаа", 
-            errors: e.errors 
+          return res.status(422).json({
+            message: "Мэдээллийн алдаа",
+            errors: e.errors
           });
         }
         res.status(400).json({ message: "Тэмцээн шинэчлэхэд алдаа гарлаа" });
