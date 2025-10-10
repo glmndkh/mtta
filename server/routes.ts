@@ -254,7 +254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hashedPassword = await storage.hashPassword(password);
 
       // Create user without rank (will be set later via rank change request)
-      const newUser = await storage.createUser({
+      const newUser = await storage.createSimpleUser({
         firstName,
         lastName,
         gender: gender as "male" | "female",
