@@ -407,6 +407,17 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async hashPassword(password: string): Promise<string> {
+    const bcrypt = await import('bcryptjs');
+    const salt = await bcrypt.genSalt(10);
+    return await bcrypt.hash(password, salt);
+  }
+
+  async comparePassword(password: string, hashedPassword: string): Promise<boolean> {
+    const bcrypt = await import('bcryptjs');
+    return await bcrypt.compare(password, hashedPassword);
+  }
+
   async getUserById(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
@@ -706,13 +717,13 @@ export class DatabaseStorage implements IStorage {
 
   async getAllClubs(): Promise<any[]> {
     const clubsData = await db.select().from(clubs).orderBy(clubs.name);
-    
+
     // Get coaches for each club
     const clubsWithCoaches = await Promise.all(
       clubsData.map(async (club) => {
         const coaches = await this.getClubCoachesByClub(club.id);
         const headCoachName = coaches.length > 0 ? (coaches[0].name || `${coaches[0].firstName || ''} ${coaches[0].lastName || ''}`.trim()) : '';
-        
+
         return {
           ...club,
           coaches: coaches.map(c => c.name || `${c.firstName || ''} ${c.lastName || ''}`.trim()).filter(name => name),
@@ -721,7 +732,7 @@ export class DatabaseStorage implements IStorage {
         };
       })
     );
-    
+
     return clubsWithCoaches;
   }
 
