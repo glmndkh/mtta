@@ -592,7 +592,7 @@ export class DatabaseStorage implements IStorage {
       .values({
         ...playerData,
         memberNumber,
-        rank: playerData.rank || "Зэрэггүй"
+        // rank will use default value from schema if not provided
       })
       .returning();
     return player;

@@ -46,7 +46,7 @@ export const clubStatusEnum = pgEnum("club_status", ["active", "inactive"]);
 
 // Player rank enum
 export const playerRankEnum = pgEnum("player_rank", [
-  "Зэрэггүй",
+  "Шинэ тоглогч",
   "3-р зэрэг",
   "2-р зэрэг",
   "1-р зэрэг",
@@ -93,7 +93,7 @@ export const players = pgTable("players", {
   clubId: varchar("club_id").references(() => clubs.id),
   rankingAllAges: integer("ranking_all_ages"),
   rankingOwnAge: integer("ranking_own_age"),
-  rank: playerRankEnum("rank"), // Admin-assigned rank using enum
+  rank: playerRankEnum("rank").default("Шинэ тоглогч"), // Admin-assigned rank using enum with default value
   points: integer("points").default(0), // Admin-only editable points field
   achievements: text("achievements"), // Admin-only editable achievements text field
   dateOfBirth: timestamp("date_of_birth"),
