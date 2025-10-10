@@ -268,10 +268,14 @@ export default function Navigation() {
             <Link href="/">
               <div className="flex items-center cursor-pointer logo-glow flex-shrink-0">
                 <img
-              src={mttaLogo}
-              alt="MTTA Logo"
-              className="h-12 w-auto object-contain"
-            />
+                  src={mttaLogo}
+                  alt="MTTA Logo"
+                  className="h-16 w-auto object-contain"
+                  onError={(e) => {
+                    console.error("Logo failed to load:", mttaLogo);
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
               </div>
             </Link>
 
@@ -434,7 +438,14 @@ export default function Navigation() {
           >
             {/* Header with logo and close button */}
             <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-800 border-b border-gray-700">
-              <img src={mttaLogo} alt="MTTA" className="h-10 sm:h-12" />
+              <img 
+                src={mttaLogo} 
+                alt="MTTA" 
+                className="h-12 sm:h-16 w-auto object-contain" 
+                onError={(e) => {
+                  console.error("Mobile logo failed to load:", mttaLogo);
+                }}
+              />
               <button
                 onClick={() => setShowMobileMenu(false)}
                 className="text-white p-2 hover:bg-gray-700 rounded min-w-[44px] min-h-[44px] flex items-center justify-center"
