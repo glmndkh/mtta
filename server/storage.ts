@@ -413,9 +413,16 @@ export class DatabaseStorage implements IStorage {
     return await bcrypt.hash(password, salt);
   }
 
-  async comparePassword(password: string, hashedPassword: string): Promise<boolean> {
-    const bcrypt = await import('bcryptjs');
-    return await bcrypt.compare(password, hashedPassword);
+  async comparePassword(password: string, storedPassword: string): Promise<boolean> {
+    // Check if stored password is a bcrypt hash (starts with $2a$, $2b$, or $2y$)
+    if (storedPassword.startsWith('$2a$') || storedPassword.startsWith('$2b$') || storedPassword.startsWith('$2y$')) {
+      // Use bcrypt for hashed passwords
+      const bcrypt = await import('bcryptjs');
+      return await bcrypt.compare(password, storedPassword);
+    } else {
+      // Plain text comparison for legacy passwords
+      return password === storedPassword;
+    }
   }
 
   async getUserById(id: string): Promise<User | undefined> {
