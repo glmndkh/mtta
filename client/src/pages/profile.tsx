@@ -477,20 +477,43 @@ export default function Profile() {
         
         if (aclResponse.ok) {
           const aclData = await aclResponse.json();
+          const newProfilePicture = aclData.objectPath;
+          
+          // Update local state
           setProfileData(prev => ({
             ...prev,
-            profilePicture: aclData.objectPath
+            profilePicture: newProfilePicture
           }));
-          toast({
-            title: "Амжилттай",
-            description: "Профайл зураг амжилттай шинэчлэгдлээ"
+          
+          // Save to database
+          updateProfileMutation.mutate({
+            name: `${profileData.firstName || ''} ${profileData.lastName || ''}`.trim(),
+            email: profileData.email || '',
+            phone: profileData.phone,
+            profilePicture: newProfilePicture,
+            gender: profileData.gender,
+            dateOfBirth: profileData.dateOfBirth,
+            clubName: profileData.clubName,
+            province: profileData.province,
+            city: profileData.city,
+            rubberTypes: profileData.rubberTypes,
+            handedness: profileData.handedness,
+            playingStyles: profileData.playingStyles,
+            bio: profileData.bio,
+          }, {
+            onSuccess: () => {
+              toast({
+                title: "Амжилттай",
+                description: "Профайл зураг амжилттай хадгалагдлаа"
+              });
+            }
           });
         }
       } catch (error) {
         console.error('Error setting ACL:', error);
         toast({
           title: "Анхааруулга",
-          description: "Зураг байршуулагдсан боловч эрх тохируулахад алдаа гарлаа",
+          description: "Зураг байршуулагдсан боловч хадгалахад алдаа гарлаа",
           variant: "destructive"
         });
       }
