@@ -488,7 +488,7 @@ export default function Profile() {
 
   // Build payload for profile update mutation
   const buildProfileUpdatePayload = (): UpdateProfilePayload => ({
-    name: formData.name?.trim() || '',
+    name: `${formData.lastName?.trim() || ''} ${formData.firstName?.trim() || ''}`.trim(),
     firstName: formData.firstName?.trim() || '',
     lastName: formData.lastName?.trim() || '',
     email: formData.email?.trim() || '',

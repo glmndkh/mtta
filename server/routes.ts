@@ -660,13 +660,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updatedAt: new Date()
       };
 
-      if (name) {
+      // Prioritize firstName and lastName if provided directly
+      if (firstName !== undefined || lastName !== undefined) {
+        if (firstName !== undefined) updateData.firstName = firstName.trim();
+        if (lastName !== undefined) updateData.lastName = lastName.trim();
+      } else if (name) {
+        // Fallback to splitting name if firstName/lastName not provided
         const nameParts = name.trim().split(/\s+/);
         updateData.firstName = nameParts[0];
         updateData.lastName = nameParts.slice(1).join(' ') || '';
-      } else {
-        if (firstName !== undefined) updateData.firstName = firstName.trim();
-        if (lastName !== undefined) updateData.lastName = lastName.trim();
       }
 
       if (email !== undefined) updateData.email = email.trim();
