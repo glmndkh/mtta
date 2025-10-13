@@ -666,9 +666,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (lastName !== undefined) updateData.lastName = lastName.trim();
       } else if (name) {
         // Fallback to splitting name if firstName/lastName not provided
+        // Mongolian name format: lastName firstName (Овог Нэр)
         const nameParts = name.trim().split(/\s+/);
-        updateData.firstName = nameParts[0];
-        updateData.lastName = nameParts.slice(1).join(' ') || '';
+        updateData.lastName = nameParts[0]; // First part is lastName (овог)
+        updateData.firstName = nameParts.slice(1).join(' ') || ''; // Rest is firstName (нэр)
       }
 
       if (email !== undefined) updateData.email = email.trim();
