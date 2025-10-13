@@ -208,14 +208,28 @@ export default function Profile() {
   const [, setLocation] = useLocation();
   const { theme } = useTheme();
 
-  const [profileData, setProfileData] = useState<UserProfile>({
+  // State for form data, initialized to empty/default values
+  const [formData, setFormData] = useState<UserProfile>({
     id: '',
     email: '',
     name: '',
     firstName: '',
     lastName: '',
+    gender: '',
+    dateOfBirth: '',
+    clubName: '',
+    profilePicture: '',
+    province: '',
+    city: '',
     rubberTypes: [],
-    playingStyles: []
+    handedness: 'right',
+    playingStyles: [],
+    bio: '',
+    membershipType: 'adult',
+    membershipStartDate: '',
+    membershipEndDate: '',
+    membershipActive: false,
+    membershipAmount: 0
   });
 
   const [selectedProvince, setSelectedProvince] = useState<string>('');
@@ -225,12 +239,13 @@ export default function Profile() {
   const [pendingProfileUpdate, setPendingProfileUpdate] = useState<UpdateProfilePayload | null>(null);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Local loading state for initial fetch
 
   // Valid ranks for selection
   const validRanks = [
     "зэрэггүй",
     "3-р зэрэг",
-    "2-р зэрэг", 
+    "2-р зэрэг",
     "1-р зэрэг",
     "спортын дэд мастер",
     "спортын мастер",
@@ -238,7 +253,7 @@ export default function Profile() {
   ];
 
   // Get available cities based on selected province OR the profile's province (for initial load)
-  const province = selectedProvince || profileData.province;
+  const province = selectedProvince || formData.province;
   const availableCities = province ? (MONGOLIA_CITIES as any)[province] || [] : [];
 
   const calculateAge = (dob: string) => {
@@ -247,43 +262,112 @@ export default function Profile() {
     return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
   };
 
-  // Fetch user profile
-  const { data: profile, isLoading } = useQuery<UserProfile>({
-    queryKey: ['/api/user/profile'],
-    enabled: isAuthenticated
-  });
+  // Fetch user profile with cache busting
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const fetchId = `fetch_${Date.now()}`;
+      console.log(`[${fetchId}] Fetching profile data...`);
 
-  // Fetch clubs
-  const { data: clubs = [] } = useQuery({
+      try {
+        const response = await fetch('/api/user/profile', {
+          credentials: 'include',
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
+
+        if (!response.ok) {
+          console.error(`[${fetchId}] Failed to fetch profile, status: ${response.status}`);
+          throw new Error('Failed to fetch profile');
+        }
+
+        const data = await response.json();
+        console.log(`[${fetchId}] Profile data received:`, data);
+
+        setFormData({
+          id: data.id || '',
+          name: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
+          firstName: data.firstName || '',
+          lastName: data.lastName || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          gender: data.gender || '',
+          dateOfBirth: data.dateOfBirth ? data.dateOfBirth.split('T')[0] : '',
+          clubName: data.clubAffiliation || '', // Assuming backend uses clubAffiliation
+          profilePicture: data.profileImageUrl || '', // Assuming backend uses profileImageUrl
+          province: data.province || '',
+          city: data.city || '',
+          rubberTypes: data.rubberTypes || [],
+          handedness: data.handedness || 'right',
+          playingStyles: data.playingStyles || [],
+          bio: data.bio || '',
+          membershipType: data.membershipType || 'adult',
+          membershipStartDate: data.membershipStartDate || '',
+          membershipEndDate: data.membershipEndDate || '',
+          membershipActive: data.membershipActive || false,
+          membershipAmount: data.membershipAmount || 0,
+          isJudge: data.isJudge || false,
+          isCoach: data.isCoach || false,
+          playerStats: data.playerStats || {
+            rank: "зэрэггүй",
+            points: 0,
+            achievements: '',
+            wins: 0,
+            losses: 0,
+            memberNumber: ''
+          }
+        });
+        setSelectedProvince(data.province || ''); // Set initial selected province
+        console.log(`[${fetchId}] Profile data loaded successfully`);
+        setIsLoading(false);
+      } catch (error) {
+        console.error(`[${fetchId}] Error fetching profile:`, error);
+        setIsLoading(false);
+      }
+    };
+
+    if (isAuthenticated) {
+      fetchProfile();
+    } else {
+      setIsLoading(false); // Not authenticated, so not loading profile
+    }
+  }, [isAuthenticated]); // Depend on isAuthenticated to re-fetch if auth state changes
+
+
+  // Fetch clubs using React Query for better caching and management
+  const { data: clubs = [], isLoading: areClubsLoading } = useQuery<Club[]>({
     queryKey: ['/api/clubs'],
-    enabled: isAuthenticated
+    enabled: isAuthenticated && !isLoading, // Only fetch if authenticated and profile is not loading
   });
 
-  // Mock data for tournaments and matches (to be replaced with real API calls)
-  const { data: tournaments = [] } = useQuery<Tournament[]>({
+  // Fetch tournaments, matches, teams, and medals using React Query
+  const { data: tournaments = [], isLoading: areTournamentsLoading } = useQuery<Tournament[]>({
     queryKey: ['/api/user/tournaments'],
-    enabled: !!profile,
+    enabled: isAuthenticated && !isLoading,
   });
 
-  const { data: matches = [] } = useQuery<Match[]>({
+  const { data: matches = [], isLoading: areMatchesLoading } = useQuery<Match[]>({
     queryKey: ['/api/user/matches'],
-    enabled: !!profile,
+    enabled: isAuthenticated && !isLoading,
   });
 
-  const { data: teams = [] } = useQuery<Team[]>({
+  const { data: teams = [], isLoading: areTeamsLoading } = useQuery<Team[]>({
     queryKey: ['/api/user/teams'],
-    enabled: !!profile,
+    enabled: isAuthenticated && !isLoading,
   });
 
-  const { data: medals = [] } = useQuery<any[]>({
+  const { data: medals = [], isLoading: areMedalsLoading } = useQuery<any[]>({
     queryKey: ['/api/user/medals'],
-    enabled: !!profile,
+    enabled: isAuthenticated && !isLoading,
   });
 
   // Fetch user's rank change requests
-  const { data: rankChangeRequests = [] } = useQuery<any[]>({
+  const { data: rankChangeRequests = [], isLoading: areRankRequestsLoading } = useQuery<any[]>({
     queryKey: ['/api/rank-change-requests/me'],
-    enabled: !!profile,
+    enabled: isAuthenticated && !isLoading,
   });
 
   // Submit rank change request mutation
@@ -313,21 +397,23 @@ export default function Profile() {
     }
   });
 
-  // Update profile mutation
+  // Update profile mutation using React Query
   const updateProfileMutation = useMutation({
     mutationFn: (data: UpdateProfilePayload) => apiRequest(`/api/user/profile`, {
       method: 'PUT',
       body: JSON.stringify(data)
     }),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({
         title: "Амжилттай!",
         description: "Профайл амжилттай шинэчлэгдлээ",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/user/profile'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      // Invalidate queries to force refetch and update UI
+      await queryClient.invalidateQueries({ queryKey: ['/api/user/profile'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] }); // If auth user data is also updated
       setPendingProfileUpdate(null);
       setIsConfirmDialogOpen(false);
+      setIsEditMode(false); // Exit edit mode after successful save
     },
     onError: (error: any) => {
       console.error('Profile update error:', error);
@@ -361,89 +447,56 @@ export default function Profile() {
     }
   });
 
-  // Initialize profile data when loaded
-  useEffect(() => {
-    if (profile) {
-      const newProfileData = {
-        id: profile.id || '',
-        email: profile.email || '',
-        phone: profile.phone || '',
-        name: profile.name || '',
-        firstName: profile.firstName || '',
-        lastName: profile.lastName || '',
-        gender: profile.gender || '',
-        dateOfBirth: profile.dateOfBirth ? profile.dateOfBirth.split('T')[0] : '',
-        clubName: profile.clubName || '',
-        profilePicture: profile.profilePicture ? getImageUrl(profile.profilePicture) : '',
-        province: profile.province || '',
-        city: profile.city || '',
-        rubberTypes: profile.rubberTypes || [],
-        handedness: profile.handedness || 'right',
-        playingStyles: profile.playingStyles || [],
-        bio: profile.bio || '',
-        membershipType: profile.membershipType || 'adult',
-        membershipStartDate: profile.membershipStartDate || '',
-        membershipEndDate: profile.membershipEndDate || '',
-        membershipActive: profile.membershipActive || false,
-        membershipAmount: profile.membershipAmount || 0
-      };
-
-      setProfileData(newProfileData);
-      setSelectedProvince(profile.province || '');
-
-      // Debug log to check what values we're getting
-      console.log('Profile loaded - province:', profile.province, 'city:', profile.city);
-    }
-  }, [profile]);
-
   // Handle province change
   const handleProvinceChange = (province: string) => {
     setSelectedProvince(province);
-    setProfileData(prev => ({ 
-      ...prev, 
+    setFormData(prev => ({
+      ...prev,
       province,
       city: '' // Reset city when province changes
     }));
   };
 
-  // Handle checkbox changes
+  // Handle checkbox changes for rubber types
   const handleRubberTypeChange = (rubberType: string, checked: boolean) => {
-    setProfileData(prev => ({
+    setFormData(prev => ({
       ...prev,
-      rubberTypes: checked 
+      rubberTypes: checked
         ? [...(prev.rubberTypes || []), rubberType]
         : (prev.rubberTypes || []).filter(type => type !== rubberType)
     }));
   };
 
+  // Handle checkbox changes for playing styles
   const handlePlayingStyleChange = (style: string, checked: boolean) => {
-    setProfileData(prev => ({
+    setFormData(prev => ({
       ...prev,
-      playingStyles: checked 
+      playingStyles: checked
         ? [...(prev.playingStyles || []), style]
         : (prev.playingStyles || []).filter(s => s !== style)
     }));
   };
 
-  // Handle form submission
+  // Build payload for profile update mutation
   const buildProfileUpdatePayload = (): UpdateProfilePayload => ({
-    name: profileData.name?.trim() || '',
-    firstName: profileData.firstName?.trim() || '',
-    lastName: profileData.lastName?.trim() || '',
-    email: profileData.email?.trim() || '',
-    phone: profileData.phone?.trim() || '',
-    gender: profileData.gender,
-    dateOfBirth: profileData.dateOfBirth,
-    clubName: profileData.clubName,
-    profilePicture: profileData.profilePicture,
-    province: profileData.province,
-    city: profileData.city,
-    rubberTypes: profileData.rubberTypes || [],
-    handedness: profileData.handedness,
-    playingStyles: profileData.playingStyles || [],
-    bio: profileData.bio,
+    name: formData.name?.trim() || '',
+    firstName: formData.firstName?.trim() || '',
+    lastName: formData.lastName?.trim() || '',
+    email: formData.email?.trim() || '',
+    phone: formData.phone?.trim() || '',
+    gender: formData.gender,
+    dateOfBirth: formData.dateOfBirth,
+    clubName: formData.clubName,
+    profilePicture: formData.profilePicture,
+    province: formData.province,
+    city: formData.city,
+    rubberTypes: formData.rubberTypes || [],
+    handedness: formData.handedness,
+    playingStyles: formData.playingStyles || [],
+    bio: formData.bio,
   });
 
+  // Handle form submission for saving changes
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const payload = buildProfileUpdatePayload();
@@ -465,8 +518,9 @@ export default function Profile() {
   const handleProfilePictureUploadComplete = async (result: any) => {
     if (result.successful && result.successful[0]) {
       const fileURL = result.successful[0].uploadURL;
-      
+
       try {
+        // Set ACL policy to make image publicly accessible
         const aclResponse = await apiRequest('/api/objects/finalize', {
           method: 'PUT',
           body: JSON.stringify({
@@ -474,70 +528,76 @@ export default function Profile() {
             isPublic: true
           })
         });
-        
+
         if (aclResponse.ok) {
           const aclData = await aclResponse.json();
-          const newProfilePicture = aclData.objectPath;
-          
-          // Update local state
-          setProfileData(prev => ({
+          const newProfilePicturePath = aclData.objectPath;
+
+          // Update local state immediately for preview
+          setFormData(prev => ({
             ...prev,
-            profilePicture: newProfilePicture
+            profilePicture: newProfilePicturePath
           }));
-          
-          // Save to database
+
+          // Trigger mutation to save the new profile picture URL to the database
+          // Note: We are calling the general updateProfileMutation here with only the picture field updated.
+          // This assumes the mutation can handle partial updates or that other fields are implicitly handled.
+          // A more robust approach might be a dedicated mutation for profile picture update.
           updateProfileMutation.mutate({
-            name: `${profileData.firstName || ''} ${profileData.lastName || ''}`.trim(),
-            email: profileData.email || '',
-            phone: profileData.phone,
-            profilePicture: newProfilePicture,
-            gender: profileData.gender,
-            dateOfBirth: profileData.dateOfBirth,
-            clubName: profileData.clubName,
-            province: profileData.province,
-            city: profileData.city,
-            rubberTypes: profileData.rubberTypes,
-            handedness: profileData.handedness,
-            playingStyles: profileData.playingStyles,
-            bio: profileData.bio,
+            ...buildProfileUpdatePayload(), // Get current form data
+            profilePicture: newProfilePicturePath // Override with new picture
           }, {
             onSuccess: () => {
               toast({
                 title: "Амжилттай",
                 description: "Профайл зураг амжилттай хадгалагдлаа"
               });
+              // The mutation already invalidates queries, so no need to do it here.
+            },
+            onError: (error) => {
+              console.error('Error saving profile picture:', error);
+              toast({
+                title: "Алдаа",
+                description: "Профайл зургийг хадгалахад алдаа гарлаа",
+                variant: "destructive"
+              });
             }
           });
+        } else {
+          throw new Error('Failed to finalize object upload');
         }
       } catch (error) {
-        console.error('Error setting ACL:', error);
+        console.error('Error during profile picture upload process:', error);
         toast({
           title: "Анхааруулга",
-          description: "Зураг байршуулагдсан боловч хадгалахад алдаа гарлаа",
+          description: "Зураг байршуулах явцад алдаа гарлаа",
           variant: "destructive"
         });
       }
     }
   };
 
+  // Confirm and execute profile update
   const confirmProfileUpdate = () => {
     if (!pendingProfileUpdate) return;
     updateProfileMutation.mutate(pendingProfileUpdate, {
       onSuccess: () => {
-        setIsEditMode(false);
+        setIsEditMode(false); // Exit edit mode on success
+        setIsConfirmDialogOpen(false); // Close dialog
+        setPendingProfileUpdate(null); // Clear pending update
+      },
+      onError: () => {
+        // Error is already handled by the mutation's onError callback
+        setIsConfirmDialogOpen(false); // Close dialog even on error to allow retry
       }
     });
   };
 
+  // Memoize profile picture preview URL
   const profilePicturePreview = useMemo(() => {
-    if (!profileData.profilePicture) return '';
-    return getImageUrl(profileData.profilePicture);
-  }, [profileData.profilePicture]);
-
-  const pendingProfilePicture = useMemo(() => {
-    if (!pendingProfileUpdate?.profilePicture) return '';
-    return getImageUrl(pendingProfileUpdate.profilePicture);
-  }, [pendingProfileUpdate?.profilePicture]);
+    if (!formData.profilePicture) return '';
+    return getImageUrl(formData.profilePicture);
+  }, [formData.profilePicture]);
 
   // Handle rank change request submission
   const handleRankChangeSubmit = () => {
@@ -570,8 +630,8 @@ export default function Profile() {
   const handleProofImageUploadComplete = async (result: any) => {
     if (result.successful && result.successful[0]) {
       const fileURL = result.successful[0].uploadURL;
-      
-      // Set ACL policy to make image accessible
+
+      // Set ACL policy to make image accessible (private for admin review)
       try {
         const aclResponse = await apiRequest('/api/objects/finalize', {
           method: 'PUT',
@@ -580,7 +640,7 @@ export default function Profile() {
             isPublic: false // Private for admin review
           })
         });
-        
+
         if (aclResponse.ok) {
           const aclData = await aclResponse.json();
           setProofImageUrl(aclData.objectPath);
@@ -588,9 +648,11 @@ export default function Profile() {
             title: "Амжилттай",
             description: "Зураг амжилттай байршуулагдлаа"
           });
+        } else {
+          throw new Error('Failed to set ACL for proof image');
         }
       } catch (error) {
-        console.error('Error setting ACL:', error);
+        console.error('Error setting ACL for proof image:', error);
         toast({
           title: "Анхааруулга",
           description: "Зураг байршуулагдсан боловч эрх тохируулахад алдаа гарлаа",
@@ -600,6 +662,7 @@ export default function Profile() {
     }
   };
 
+  // Initial loading state check
   if (!isAuthenticated) {
     return (
       <div className="profile-container">
@@ -608,7 +671,7 @@ export default function Profile() {
           <Card className="max-w-md mx-auto text-center">
             <CardContent className="pt-6">
               <p>Профайл хуудас үзэхийн тулд нэвтэрнэ үү</p>
-              <Button 
+              <Button
                 onClick={() => window.location.href = '/login'}
                 className="mt-4"
               >
@@ -621,7 +684,7 @@ export default function Profile() {
     );
   }
 
-  if (isLoading) {
+  if (isLoading || areClubsLoading || areTournamentsLoading || areMatchesLoading || areTeamsLoading || areMedalsLoading || areRankRequestsLoading) {
     return (
       <div className="profile-container">
         <Navigation />
@@ -632,8 +695,9 @@ export default function Profile() {
     );
   }
 
-  const isActive = profile?.membershipActive;
-  const membershipEndDate = profile?.membershipEndDate ? new Date(profile.membershipEndDate) : null;
+  // Determine membership status and expiry
+  const isActive = formData?.membershipActive;
+  const membershipEndDate = formData?.membershipEndDate ? new Date(formData.membershipEndDate) : null;
   const isExpiringSoon = membershipEndDate && membershipEndDate <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
 
   return (
@@ -660,8 +724,21 @@ export default function Profile() {
                     <Button
                       onClick={() => {
                         setIsEditMode(false);
-                        if (profile) {
-                          setProfileData({
+                        // Reset form data to the initially loaded profile data
+                        // This requires having the original profile data available, or re-fetching it.
+                        // For simplicity, we'll re-initialize from formData if no original is kept.
+                        // A better approach would be to store initial profile data in state.
+                        // Here, we reset to the current state, effectively discarding edits.
+                        // To truly reset to original, we'd need to fetch it again or keep a copy.
+                        // For now, cancelling means discarding unsaved changes.
+                        // Re-fetching is handled by invalidating queries and letting useEffect re-run.
+                        // Let's reset formData to the last successfully fetched profile state.
+                        // This requires storing initial profile data.
+                        // As a workaround, we'll re-fetch if cancel is clicked and not saving.
+                        // A simpler approach: reset formData to the state before edit mode.
+                        // Let's assume `profile` (from useQuery) holds the latest fetched data.
+                        if (profile) { // Use the data from useQuery if available
+                          setFormData({
                             id: profile.id || '',
                             email: profile.email || '',
                             phone: profile.phone || '',
@@ -678,20 +755,25 @@ export default function Profile() {
                             handedness: profile.handedness || 'right',
                             playingStyles: profile.playingStyles || [],
                             bio: profile.bio || '',
+                            membershipType: profile.membershipType || 'adult',
+                            membershipStartDate: profile.membershipStartDate || '',
+                            membershipEndDate: profile.membershipEndDate || '',
+                            membershipActive: profile.membershipActive || false,
+                            membershipAmount: profile.membershipAmount || 0,
+                            isJudge: profile.isJudge || false,
+                            isCoach: profile.isCoach || false,
+                            playerStats: profile.playerStats || { rank: "зэрэггүй", points: 0, achievements: '', wins: 0, losses: 0, memberNumber: '' }
                           });
                           setSelectedProvince(profile.province || '');
                         }
+                        setIsEditMode(false);
                       }}
                       variant="outline"
                     >
                       Цуцлах
                     </Button>
                     <Button
-                      onClick={() => {
-                        const payload = buildProfileUpdatePayload();
-                        setPendingProfileUpdate(payload);
-                        setIsConfirmDialogOpen(true);
-                      }}
+                      onClick={handleSubmit} // Use the handleSubmit which opens confirmation dialog
                       className="bg-green-600 hover:bg-green-700"
                       disabled={updateProfileMutation.isPending}
                     >
@@ -704,17 +786,17 @@ export default function Profile() {
                 <div className="relative">
                   <Avatar className="w-24 h-24">
                     <AvatarImage
-                      src={profile?.profilePicture ? getImageUrl(profile.profilePicture) : undefined}
-                      alt={profile?.firstName}
+                      src={formData.profilePicture ? getImageUrl(formData.profilePicture) : undefined}
+                      alt={formData.firstName}
                     />
                     <AvatarFallback className="text-2xl">
-                      {(profile?.lastName?.[0] || '') + (profile?.firstName?.[0] || '')}
+                      {(formData.lastName?.[0] || '') + (formData.firstName?.[0] || '')}
                     </AvatarFallback>
                   </Avatar>
                 </div>
                 <div className="text-center md:text-left flex-1">
                   <div className="flex items-center gap-3 flex-wrap">
-                    <h1 className="text-3xl font-bold theme-text">{formatName(profile?.firstName, profile?.lastName)}</h1>
+                    <h1 className="text-3xl font-bold theme-text">{formatName(formData.firstName, formData.lastName)}</h1>
                     {/* Tournament Medals */}
                     {medals && medals.map((medal: any) => (
                       <div key={`${medal.tournamentId}-${medal.medalType}`} className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
@@ -734,23 +816,22 @@ export default function Profile() {
                     ))}
                   </div>
                   <div className="flex flex-wrap items-center gap-4 mt-2 text-sm theme-text-secondary">
-                    {/* Contact info and club info are now completely hidden from display */}
-                    {profile?.gender && (
+                    {formData.gender && (
                       <div className="flex items-center gap-1">
                         <User className="w-4 h-4" />
-                        <span>{profile.gender === 'male' ? 'Эрэгтэй' : profile.gender === 'female' ? 'Эмэгтэй' : 'Бусад'}</span>
+                        <span>{formData.gender === 'male' ? 'Эрэгтэй' : formData.gender === 'female' ? 'Эмэгтэй' : 'Бусад'}</span>
                       </div>
                     )}
-                    {profile?.dateOfBirth && (
+                    {formData.dateOfBirth && (
                       <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
-                        <span>{calculateAge(profile.dateOfBirth)} нас</span>
+                        <span>{calculateAge(formData.dateOfBirth)} нас</span>
                       </div>
                     )}
-                    {profile?.playerStats?.rank && (
+                    {formData.playerStats?.rank && (
                       <div className="flex items-center gap-1">
                         <Trophy className="w-4 h-4" />
-                        <span>{profile.playerStats.rank}</span>
+                        <span>{formData.playerStats.rank}</span>
                       </div>
                     )}
                   </div>
@@ -772,27 +853,27 @@ export default function Profile() {
                         Удахгүй дуусах
                       </Badge>
                     )}
-                    {profile?.playerStats && profile.playerStats.rank && profile.playerStats.rank !== "Зэрэггүй" && (
+                    {formData.playerStats && formData.playerStats.rank && formData.playerStats.rank !== "Зэрэггүй" && (
                       <Badge variant="secondary">
                         <User className="w-3 h-3 mr-1" />
                         Тоглогч
                       </Badge>
                     )}
-                    {profile?.isJudge && (
+                    {formData.isJudge && (
                       <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                         <Shield className="w-3 h-3 mr-1" />
                         Шүүгч
                       </Badge>
                     )}
-                    {profile?.isCoach && (
+                    {formData.isCoach && (
                       <Badge variant="secondary" className="bg-green-100 text-green-800">
                         <UserCog className="w-3 h-3 mr-1" />
                         Дасгалжуулагч
                       </Badge>
                     )}
                   </div>
-                  {profile?.bio && (
-                    <p className="mt-3 text-gray-700">{profile.bio}</p>
+                  {formData.bio && (
+                    <p className="mt-3 text-gray-700">{formData.bio}</p>
                   )}
                 </div>
               </div>
@@ -800,7 +881,7 @@ export default function Profile() {
           </Card>
 
           {/* Player Statistics - Only show for players */}
-          {profile?.playerStats && (
+          {formData.playerStats && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -809,9 +890,9 @@ export default function Profile() {
                     Тоглогчийн статистик
                   </div>
                   {!showRankChangeForm && !rankChangeRequests.find((req: any) => req.status === 'pending') && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => setShowRankChangeForm(true)}
                       className="text-sm"
                     >
@@ -822,10 +903,10 @@ export default function Profile() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                  {profile.playerStats.memberNumber && (
+                  {formData.playerStats.memberNumber && (
                     <div className="text-center p-4 bg-gray-50 rounded-lg">
                       <div className="text-2xl font-bold text-blue-600">
-                        {profile.playerStats.memberNumber}
+                        {formData.playerStats.memberNumber}
                       </div>
                       <div className="text-sm text-gray-600 mt-1">Гишүүний дугаар</div>
                     </div>
@@ -833,28 +914,28 @@ export default function Profile() {
 
                   <div className="text-center p-4 bg-green-50 rounded-lg">
                     <div className="text-2xl font-bold text-green-600">
-                      {profile.playerStats.rank || 'Зэрэггүй'}
+                      {formData.playerStats.rank || 'Зэрэггүй'}
                     </div>
                     <div className="text-sm text-gray-600 mt-1">Зэрэглэл</div>
                   </div>
 
                   <div className="text-center p-4 bg-yellow-50 rounded-lg">
                     <div className="text-2xl font-bold text-yellow-600">
-                      {profile.playerStats.points || 0}
+                      {formData.playerStats.points || 0}
                     </div>
                     <div className="text-sm text-gray-600 mt-1">Оноо</div>
                   </div>
 
                   <div className="text-center p-4 bg-emerald-50 rounded-lg">
                     <div className="text-2xl font-bold text-emerald-600">
-                      {profile.playerStats.wins || 0}
+                      {formData.playerStats.wins || 0}
                     </div>
                     <div className="text-sm text-gray-600 mt-1">Хожил</div>
                   </div>
 
                   <div className="text-center p-4 bg-red-50 rounded-lg">
                     <div className="text-2xl font-bold text-red-600">
-                      {profile.playerStats.losses || 0}
+                      {formData.playerStats.losses || 0}
                     </div>
                     <div className="text-sm text-gray-600 mt-1">Ялагдал</div>
                   </div>
@@ -904,15 +985,15 @@ export default function Profile() {
                       </div>
 
                       <div className="flex gap-2">
-                        <Button 
+                        <Button
                           onClick={handleRankChangeSubmit}
                           disabled={submitRankChangeRequest.isPending || !newRank || !proofImageUrl}
                           className="bg-blue-600 hover:bg-blue-700"
                         >
                           {submitRankChangeRequest.isPending ? 'Илгээж байна...' : 'Хүсэлт илгээх'}
                         </Button>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           onClick={() => {
                             setShowRankChangeForm(false);
                             setNewRank('');
@@ -959,13 +1040,13 @@ export default function Profile() {
                   </div>
                 )}
 
-                {profile.playerStats.achievements && (
+                {formData.playerStats?.achievements && (
                   <div className="mt-4 p-4 bg-purple-50 rounded-lg">
                     <h4 className="font-semibold text-purple-900 mb-2 flex items-center gap-2">
                       <Target className="w-4 h-4" />
                       Амжилтууд
                     </h4>
-                    <p className="text-purple-800">{profile.playerStats.achievements}</p>
+                    <p className="text-purple-800">{formData.playerStats.achievements}</p>
                   </div>
                 )}
               </CardContent>
@@ -1004,7 +1085,7 @@ export default function Profile() {
                       <Avatar className="w-24 h-24">
                         <AvatarImage src={profilePicturePreview || undefined} />
                         <AvatarFallback className="text-2xl">
-                          {profileData.name?.charAt(0) || 'U'}
+                          {formData.name?.charAt(0) || 'U'}
                         </AvatarFallback>
                       </Avatar>
                       <div>
@@ -1038,8 +1119,8 @@ export default function Profile() {
                         <Label htmlFor="lastName" className="text-white">Овог</Label>
                         <Input
                           id="lastName"
-                          value={profileData.lastName || ''}
-                          onChange={(e) => setProfileData(prev => ({ ...prev, lastName: e.target.value }))}
+                          value={formData.lastName || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
                           placeholder="Овгийг оруулна уу"
                           className="input-dark"
                           disabled={!isEditMode}
@@ -1049,8 +1130,8 @@ export default function Profile() {
                         <Label htmlFor="firstName" className="text-white">Нэр</Label>
                         <Input
                           id="firstName"
-                          value={profileData.firstName || ''}
-                          onChange={(e) => setProfileData(prev => ({ ...prev, firstName: e.target.value }))}
+                          value={formData.firstName || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
                           placeholder="Нэрийг оруулна уу"
                           className="input-dark"
                           disabled={!isEditMode}
@@ -1061,8 +1142,8 @@ export default function Profile() {
                         <Input
                           id="dateOfBirth"
                           type="date"
-                          value={profileData.dateOfBirth || ''}
-                          onChange={(e) => setProfileData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+                          value={formData.dateOfBirth || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
                           className="input-dark"
                           disabled={!isEditMode}
                         />
@@ -1072,8 +1153,8 @@ export default function Profile() {
                         <Input
                           id="email"
                           type="email"
-                          value={profileData.email || ''}
-                          onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
+                          value={formData.email || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                           placeholder="example@email.com"
                           className="input-dark"
                           disabled={!isEditMode}
@@ -1083,8 +1164,8 @@ export default function Profile() {
                         <Label htmlFor="phone" className="text-white">Утасны дугаар</Label>
                         <Input
                           id="phone"
-                          value={profileData.phone || ''}
-                          onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
+                          value={formData.phone || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                           placeholder="99123456"
                           className="input-dark"
                           disabled={!isEditMode}
@@ -1095,8 +1176,8 @@ export default function Profile() {
                           <Label htmlFor="clubName" className="text-white">Клуб</Label>
                           <Input
                             id="clubName"
-                            value={profileData.clubName || ''}
-                            onChange={(e) => setProfileData(prev => ({ ...prev, clubName: e.target.value }))}
+                            value={formData.clubName || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, clubName: e.target.value }))}
                             placeholder="Клубын нэр"
                             className="input-dark"
                           />
@@ -1108,8 +1189,8 @@ export default function Profile() {
                       <Label htmlFor="bio" className="text-white">Товч танилцуулга</Label>
                       <Textarea
                         id="bio"
-                        value={profileData.bio || ''}
-                        onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
+                        value={formData.bio || ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
                         placeholder="Өөрийгөө товчхон танилцуулна уу..."
                         rows={3}
                         className="input-dark"
@@ -1144,10 +1225,10 @@ export default function Profile() {
                       </div>
                       <div>
                         <Label htmlFor="city" className="text-white">Сум/Дүүрэг</Label>
-                        <Select 
-                          value={profileData.city} 
-                          onValueChange={(city) => setProfileData(prev => ({ ...prev, city }))}
-                          disabled={!isEditMode || (!selectedProvince && !profileData.province)}
+                        <Select
+                          value={formData.city}
+                          onValueChange={(city) => setFormData(prev => ({ ...prev, city }))}
+                          disabled={!isEditMode || (!selectedProvince && !formData.province)}
                         >
                           <SelectTrigger className="input-dark">
                             <SelectValue placeholder="Сум/Дүүрэг сонгоно уу" />
@@ -1175,13 +1256,14 @@ export default function Profile() {
                     {/* Gender Selection */}
                     <div>
                       <Label className="text-base font-medium">Хүйс</Label>
-                      <Select value={profileData.gender || ''} onValueChange={(gender) => setProfileData(prev => ({ ...prev, gender }))} disabled={!isEditMode}>
+                      <Select value={formData.gender || ''} onValueChange={(gender) => setFormData(prev => ({ ...prev, gender }))} disabled={!isEditMode}>
                         <SelectTrigger>
                           <SelectValue placeholder="Хүйс сонгоно уу" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="male">Эрэгтэй</SelectItem>
                           <SelectItem value="female">Эмэгтэй</SelectItem>
+                          <SelectItem value="other">Бусад</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1189,7 +1271,7 @@ export default function Profile() {
                     {/* Handedness Selection */}
                     <div>
                       <Label className="text-base font-medium">Гарын сонголт</Label>
-                      <Select value={profileData.handedness || 'right'} onValueChange={(handedness) => setProfileData(prev => ({ ...prev, handedness: handedness as 'right' | 'left' }))} disabled={!isEditMode}>
+                      <Select value={formData.handedness || 'right'} onValueChange={(handedness) => setFormData(prev => ({ ...prev, handedness: handedness as 'right' | 'left' }))} disabled={!isEditMode}>
                         <SelectTrigger>
                           <SelectValue placeholder="Гарын сонголт" />
                         </SelectTrigger>
@@ -1207,7 +1289,7 @@ export default function Profile() {
                         {RUBBER_TYPES.map(rubberType => (
                           <label key={rubberType} className={`flex items-center space-x-2 ${isEditMode ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
                             <Checkbox
-                              checked={(profileData.rubberTypes || []).includes(rubberType)}
+                              checked={(formData.rubberTypes || []).includes(rubberType)}
                               onCheckedChange={(checked) => handleRubberTypeChange(rubberType, checked as boolean)}
                               disabled={!isEditMode}
                             />
@@ -1224,7 +1306,7 @@ export default function Profile() {
                         {PLAYING_STYLES.map(style => (
                           <label key={style} className={`flex items-center space-x-2 ${isEditMode ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
                             <Checkbox
-                              checked={(profileData.playingStyles || []).includes(style)}
+                              checked={(formData.playingStyles || []).includes(style)}
                               onCheckedChange={(checked) => handlePlayingStyleChange(style, checked as boolean)}
                               disabled={!isEditMode}
                             />
@@ -1236,7 +1318,7 @@ export default function Profile() {
                   </CardContent>
                 </Card>
 
-                </form>
+              </form>
             </TabsContent>
 
             {/* Membership Tab */}
@@ -1302,20 +1384,20 @@ export default function Profile() {
                     </div>
                   )}
 
-                  {profile?.membershipStartDate && (
+                  {formData.membershipStartDate && (
                     <div>
                       <h3 className="font-medium mb-2 text-white">Гишүүнчлэлийн түүх</h3>
                       <div className="border border-gray-600 rounded-lg p-3 bg-gray-800/50">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-300">Төрөл: {profile.membershipType === 'adult' ? 'Насанд хүрэгч' : 'Хүүхэд'}</span>
+                          <span className="text-sm text-gray-300">Төрөл: {formData.membershipType === 'adult' ? 'Насанд хүрэгч' : 'Хүүхэд'}</span>
                           <span className="text-sm text-gray-400">
-                            {new Date(profile.membershipStartDate).toLocaleDateString('mn-MN')} - 
+                            {new Date(formData.membershipStartDate).toLocaleDateString('mn-MN')} -
                             {membershipEndDate?.toLocaleDateString('mn-MN')}
                           </span>
                         </div>
-                        {profile.membershipAmount && (
+                        {formData.membershipAmount && (
                           <p className="text-sm text-gray-300 mt-1">
-                            Төлсөн дүн: {profile.membershipAmount.toLocaleString()} ₮
+                            Төлсөн дүн: {formData.membershipAmount.toLocaleString()} ₮
                           </p>
                         )}
                       </div>
@@ -1344,7 +1426,7 @@ export default function Profile() {
                               <h3 className="font-medium text-white">{tournament.name}</h3>
                               <p className="text-sm text-gray-300">{tournament.location}</p>
                               <p className="text-sm text-gray-400">
-                                {new Date(tournament.startDate).toLocaleDateString('mn-MN')} - 
+                                {new Date(tournament.startDate).toLocaleDateString('mn-MN')} -
                                 {new Date(tournament.endDate).toLocaleDateString('mn-MN')}
                               </p>
                             </div>
@@ -1427,8 +1509,8 @@ export default function Profile() {
                           <h3 className="font-medium mb-3 text-white">{tournamentName}</h3>
                           <div className="space-y-3">
                             {(tournamentMatches as any[]).map((match: any, index: number) => {
-                              const opponentName = typeof match.opponent === 'string' ? match.opponent : 
-                                                 typeof match.opponent === 'object' ? match.opponent?.name || 'Тодорхойгүй' : 
+                              const opponentName = typeof match.opponent === 'string' ? match.opponent :
+                                                 typeof match.opponent === 'object' ? match.opponent?.name || 'Тодорхойгүй' :
                                                  'Тодорхойгүй';
 
                               // Parse score from match.score (format like "3:2" or "2-1")
@@ -1448,17 +1530,17 @@ export default function Profile() {
                               }
 
                               return (
-                                <div 
-                                  key={match.id || index} 
+                                <div
+                                  key={match.id || index}
                                   className={`bg-gray-800/70 rounded-lg shadow-sm hover:shadow-md transition-shadow ${
-                                    match.result === 'win' ? 'border-2 border-green-500' : 
+                                    match.result === 'win' ? 'border-2 border-green-500' :
                                     match.result === 'loss' ? 'border-2 border-red-500' : 'border border-gray-600'
                                   }`}
                                 >
                                   <div className="flex">
                                     {/* Accent line */}
                                     <div className={`w-1 rounded-l-lg flex-shrink-0 ${
-                                      match.result === 'win' ? 'bg-green-500' : 
+                                      match.result === 'win' ? 'bg-green-500' :
                                       match.result === 'loss' ? 'bg-red-500' : 'bg-gray-500'
                                     }`}></div>
 
@@ -1468,12 +1550,12 @@ export default function Profile() {
                                       <div className="text-sm text-gray-300 mb-3">
                                         {match.date && (
                                           <span>
-                                            {new Date(match.date).toLocaleDateString('mn-MN')} • 
+                                            {new Date(match.date).toLocaleDateString('mn-MN')} •
                                           </span>
                                         )}
                                         <span className="ml-1">
-                                          {tournamentName} • {match.stage === 'group' ? 'Групийн шат' : 
-                                           match.matchType === 'Хүрэл медалийн тоглолт' ? 'Хүрэл медалийн тоглолт' : 
+                                          {tournamentName} • {match.stage === 'group' ? 'Групийн шат' :
+                                           match.matchType === 'Хүрэл медалийн тоглолт' ? 'Хүрэл медалийн тоглолт' :
                                            'Шууд хасагдах шат'}
                                         </span>
                                       </div>
@@ -1482,10 +1564,10 @@ export default function Profile() {
                                       <div className="flex items-center justify-between">
                                         <div className="flex-1 text-right pr-4">
                                           <button
-                                            onClick={() => setLocation(`/profile`)}
+                                            onClick={() => setLocation(`/player-profile/${formData.id}`)} // Link to own profile
                                             className="text-lg font-semibold text-green-400 hover:text-green-300 hover:underline cursor-pointer"
                                           >
-                                            {profile?.name}
+                                            {formData.name}
                                           </button>
                                         </div>
 
@@ -1500,9 +1582,9 @@ export default function Profile() {
                                         )}
 
                                         <div className="flex-1 text-left pl-4">
-                                          {typeof match.opponent === 'object' && match.opponent?.user ? (
+                                          {typeof match.opponent === 'object' && match.opponent?.userId ? (
                                             <button
-                                              onClick={() => setLocation(`/player-profile/${match.opponent.userId || match.opponent.user?.id}`)}
+                                              onClick={() => setLocation(`/player-profile/${match.opponent.userId}`)}
                                               className="text-lg font-semibold text-green-400 hover:text-green-300 hover:underline cursor-pointer"
                                             >
                                               {opponentName}

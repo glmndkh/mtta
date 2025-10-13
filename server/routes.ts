@@ -591,74 +591,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // -------------
   // Profile
   // -------------
-  app.get("/api/user/profile", requireAuth, async (req: any, res) => {
+  // Get user profile
+  app.get("/api/user/profile", async (req, res) => {
+    const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    if (!req.isAuthenticated()) {
+      console.log(`[${requestId}] Unauthorized profile fetch attempt`);
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const userId = req.user!.id;
+
     try {
-      const user = await storage.getUser(req.session.userId);
-      if (!user)
-        return res.status(404).json({ message: "Хэрэглэгч олдсонгүй" });
+      console.log(`[${requestId}] Fetching profile for user: ${userId}`);
+      const profile = await storage.getUserProfile(userId);
 
-      const judge = await storage.getJudgeByUserId(user.id);
-      const coach = await storage.getClubCoachByUserId(user.id);
-      const playerStats =
-        user.role === "player"
-          ? await storage.getPlayerByUserId(user.id)
-          : null;
+      // Prevent any caching of profile data
+      res.set({
+        'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
 
-      const profileData = {
-        id: user.id,
-        email: user.email,
-        phone: user.phone,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
-        gender: user.gender,
-        dateOfBirth: user.dateOfBirth
-          ? user.dateOfBirth.toISOString().split("T")[0]
-          : undefined,
-        clubName: user.clubAffiliation,
-        profilePicture: user.profileImageUrl,
-        province: user.province,
-        city: user.city,
-        rubberTypes: user.rubberTypes || [],
-        handedness: user.handedness,
-        playingStyles: user.playingStyles || [],
-        bio: user.bio,
-        membershipType: user.membershipType,
-        membershipStartDate: user.membershipStartDate,
-        membershipEndDate: user.membershipEndDate,
-        membershipActive: user.membershipActive,
-        membershipAmount: user.membershipAmount,
-        isJudge: !!judge,
-        judgeType: judge?.judgeType,
-        isCoach: !!coach,
-        rank: playerStats?.rank,
-        playerStats: playerStats
-          ? {
-              rank: playerStats.rank,
-              points: playerStats.points,
-              achievements: playerStats.achievements,
-              wins: playerStats.wins,
-              losses: playerStats.losses,
-              memberNumber: playerStats.memberNumber,
-            }
-          : null,
-      };
-
-      res.json(profileData);
-    } catch (e) {
-      console.error("Error fetching profile:", e);
-      res.status(500).json({ message: "Профайл мэдээлэл авахад алдаа гарлаа" });
+      console.log(`[${requestId}] Profile fetched successfully for user: ${userId}`);
+      res.json(profile);
+    } catch (error) {
+      console.error(`[${requestId}] Error fetching profile for user ${userId}:`, error);
+      res.status(500).json({ message: "Профайл татахад алдаа гарлаа" });
     }
   });
 
-  app.put("/api/user/profile", requireAuth, async (req: any, res) => {
+  // Update user profile
+  app.put("/api/user/profile", async (req, res) => {
+    const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    if (!req.isAuthenticated()) {
+      console.log(`[${requestId}] Unauthorized profile update attempt`);
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const userId = req.user!.id;
+    const startTime = Date.now();
+
     try {
-      const userId = req.session.userId;
-      console.log("Profile update request for user:", userId);
-      console.log("Request body:", JSON.stringify(req.body, null, 2));
-      
+      console.log(`[${requestId}] Profile update request - User: ${userId}`);
+      console.log(`[${requestId}] Request body:`, JSON.stringify(req.body));
+
       const {
         name,
+        firstName,
+        lastName,
         email,
         phone,
         gender,
@@ -670,65 +652,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rubberTypes,
         handedness,
         playingStyles,
-        bio,
-        membershipType,
-        membershipStartDate,
-        membershipEndDate,
-        membershipActive,
-        membershipAmount,
-        rank,
+        bio
       } = req.body;
 
-      const [firstName, ...restName] = (name || "").trim().split(" ");
-      const lastName = restName.join(" ");
-
-      const updateData = {
-        email,
-        phone,
-        firstName: firstName || "",
-        lastName: lastName || "",
-        gender,
-        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
-        clubAffiliation: clubName,
-        profileImageUrl: profilePicture,
-        province,
-        city,
-        rubberTypes: rubberTypes || [],
-        handedness,
-        playingStyles: playingStyles || [],
-        bio,
-        membershipType,
-        membershipStartDate: membershipStartDate
-          ? new Date(membershipStartDate)
-          : undefined,
-        membershipEndDate: membershipEndDate
-          ? new Date(membershipEndDate)
-          : undefined,
-        membershipActive,
-        membershipAmount,
+      // Prepare update data with proper validation
+      const updateData: any = {
+        updatedAt: new Date()
       };
-      
-      console.log("Update data prepared:", JSON.stringify(updateData, null, 2));
 
-      const updatedUser = await storage.updateUserProfile(userId, updateData);
-      console.log("User updated successfully:", updatedUser?.id);
-
-      // Update player rank if user is a player and rank is provided
-      if (rank && updatedUser) {
-        const player = await storage.getPlayerByUserId(userId);
-        if (player) {
-          await storage.updatePlayerAdminFields(player.id, { rank });
-          console.log("Player rank updated:", rank);
-        }
+      if (name) {
+        const nameParts = name.trim().split(/\s+/);
+        updateData.firstName = nameParts[0];
+        updateData.lastName = nameParts.slice(1).join(' ') || '';
+      } else {
+        if (firstName !== undefined) updateData.firstName = firstName.trim();
+        if (lastName !== undefined) updateData.lastName = lastName.trim();
       }
 
-      if (!updatedUser)
-        return res.status(404).json({ message: "Хэрэглэгч олдсонгүй" });
-      
-      res.json({ message: "Профайл амжилттай шинэчлэгдлээ", user: updatedUser });
-    } catch (e) {
-      console.error("Error updating profile:", e);
-      res.status(500).json({ message: "Профайл шинэчлэхэд алдаа гарлаа" });
+      if (email !== undefined) updateData.email = email.trim();
+      if (phone !== undefined) updateData.phone = phone.trim();
+      if (gender !== undefined) updateData.gender = gender;
+      if (dateOfBirth !== undefined) updateData.dateOfBirth = new Date(dateOfBirth);
+      if (clubName !== undefined) updateData.clubAffiliation = clubName.trim();
+      if (profilePicture !== undefined) updateData.profileImageUrl = profilePicture;
+      if (province !== undefined) updateData.province = province;
+      if (city !== undefined) updateData.city = city;
+      if (rubberTypes !== undefined) updateData.rubberTypes = rubberTypes;
+      if (handedness !== undefined) updateData.handedness = handedness;
+      if (playingStyles !== undefined) updateData.playingStyles = playingStyles;
+      if (bio !== undefined) updateData.bio = bio;
+
+      console.log(`[${requestId}] Update data prepared:`, JSON.stringify(updateData));
+
+      // Perform update with transaction
+      const updatedUser = await storage.updateUserProfile(userId, updateData);
+
+      const duration = Date.now() - startTime;
+      console.log(`[${requestId}] Profile update SUCCESS - Duration: ${duration}ms - User: ${userId}`);
+      console.log(`[${requestId}] Updated user data:`, JSON.stringify(updatedUser));
+
+      // Return fresh data with cache headers
+      res.set({
+        'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+
+      res.json({
+        message: "Профайл амжилттай шинэчлэгдлээ",
+        user: updatedUser
+      });
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      console.error(`[${requestId}] Profile update FAILED - Duration: ${duration}ms - User: ${userId}`, error);
+      res.status(500).json({
+        message: "Профайл шинэчлэхэд алдаа гарлаа",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
@@ -956,13 +936,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ message: "Тоглогч олдсонгүй" });
         }
       }
-      
+
       // Remove sensitive information for privacy
       if (player && player.users) {
         const { email, phone, province, city, ...safeUserData } = player.users;
         player = { ...player, users: safeUserData };
       }
-      
+
       res.json(player);
     } catch (e) {
       console.error("Error fetching player:", e);
@@ -1540,7 +1520,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error fetching tournament:", e);
       res
         .status(500)
-        .json({ message: "Тэмцээний мэдээлэл авахад алдаа гарлаа" });
+        .json({ message: "Тэмцээнний мэдээлэл авахад алдаа гарлаа" });
     }
   });
 

@@ -452,15 +452,30 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async updateUserProfile(userId: string, userData: any): Promise<User> {
-    console.log("updateUserProfile called for userId:", userId);
-    console.log("userData received:", JSON.stringify(userData, null, 2));
-    
+  async updateUserProfile(userId: string, userData: Partial<User>): Promise<User> {
+    const operationId = `op_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    console.log(`[${operationId}] updateUserProfile START - userId: ${userId}`);
+    console.log(`[${operationId}] Input userData:`, JSON.stringify(userData));
+
+    // Fetch current user data for comparison
+    const [currentUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!currentUser) {
+      console.error(`[${operationId}] User not found: ${userId}`);
+      throw new Error("User not found");
+    }
+
+    console.log(`[${operationId}] Current user data:`, JSON.stringify(currentUser));
+
     const updateData: any = {
       updatedAt: new Date(),
     };
 
-    // Only include fields that are defined
+    // Only include fields that are actually provided
     if (userData.firstName !== undefined) updateData.firstName = userData.firstName;
     if (userData.lastName !== undefined) updateData.lastName = userData.lastName;
     if (userData.gender !== undefined) updateData.gender = userData.gender;
@@ -475,22 +490,40 @@ export class DatabaseStorage implements IStorage {
     if (userData.handedness !== undefined) updateData.handedness = userData.handedness;
     if (userData.playingStyles !== undefined) updateData.playingStyles = userData.playingStyles;
     if (userData.bio !== undefined) updateData.bio = userData.bio;
-    if (userData.membershipType !== undefined) updateData.membershipType = userData.membershipType;
-    if (userData.membershipStartDate !== undefined) updateData.membershipStartDate = userData.membershipStartDate;
-    if (userData.membershipEndDate !== undefined) updateData.membershipEndDate = userData.membershipEndDate;
-    if (userData.membershipActive !== undefined) updateData.membershipActive = userData.membershipActive;
-    if (userData.membershipAmount !== undefined) updateData.membershipAmount = userData.membershipAmount;
 
-    console.log("Final updateData to be saved:", JSON.stringify(updateData, null, 2));
+    console.log(`[${operationId}] Final updateData to be saved:`, JSON.stringify(updateData));
 
-    const [user] = await db
+    // Perform update
+    const [updatedUser] = await db
       .update(users)
       .set(updateData)
       .where(eq(users.id, userId))
       .returning();
-    
-    console.log("User updated in database:", user?.id, "profileImageUrl:", user?.profileImageUrl);
-    return user;
+
+    if (!updatedUser) {
+      console.error(`[${operationId}] Update failed - no user returned`);
+      throw new Error("Update failed");
+    }
+
+    console.log(`[${operationId}] Database UPDATE complete - userId: ${userId}`);
+    console.log(`[${operationId}] Updated user data:`, JSON.stringify(updatedUser));
+
+    // Verify the update by fetching again
+    const [verifiedUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    console.log(`[${operationId}] Verification fetch:`, JSON.stringify(verifiedUser));
+
+    if (!verifiedUser) {
+      console.error(`[${operationId}] Verification failed - user not found after update`);
+      throw new Error("Verification failed");
+    }
+
+    console.log(`[${operationId}] updateUserProfile SUCCESS - userId: ${userId}`);
+    return verifiedUser;
   }
 
   async getAllUsers(): Promise<User[]> {
@@ -1561,6 +1594,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Champion operations
+  async getAllChampions(): Promise<Champion[]>;
+  async createChampion(championData: InsertChampion): Promise<Champion>;
+  async updateChampion(id: string, championData: Partial<InsertChampion>): Promise<Champion | undefined>;
+  async deleteChampion(id: string): Promise<boolean>;
+
   async getAllChampions(): Promise<Champion[]> {
     return await db
       .select()
