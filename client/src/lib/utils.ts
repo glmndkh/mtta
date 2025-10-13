@@ -32,77 +32,28 @@ export const placeholderImageData =
  * setups this helper now prefers the `/objects/` path while still attempting to
  * clean up any provided URLs.
  */
-export function getImageUrl(imageUrl: string): string {
-  if (!imageUrl?.trim()) {
-    console.log("getImageUrl: Empty or null URL, returning placeholder");
-    return placeholderImageData;
-  }
+export function getImageUrl(imageUrl: string | null | undefined): string {
+  if (!imageUrl) return '';
 
-  console.log("getImageUrl: Processing URL:", imageUrl);
-
-
-  // Handle data URLs (base64 encoded images)
+  // If it's already a data URL, return as-is
   if (imageUrl.startsWith('data:')) {
-    console.log("getImageUrl: Data URL detected, returning as-is");
     return imageUrl;
   }
 
-  // Convert Google Cloud Storage URLs to our objects endpoint
-  if (imageUrl.startsWith('https://storage.googleapis.com/')) {
-    console.log("getImageUrl: GCS URL detected, converting to object path");
-    try {
-      const url = new URL(imageUrl);
-      // Remove the bucket name from the path
-      const parts = url.pathname.split('/').filter(Boolean);
-      parts.shift(); // bucket
-      imageUrl = parts.join('/');
-    } catch (e) {
-      console.error("getImageUrl: Failed to parse GCS URL", e);
-      return placeholderImageData;
-    }
-  } else if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    // Handle other external URLs
-    console.log("getImageUrl: External URL detected, returning as-is");
+  // If it's already a full URL, return as-is
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
     return imageUrl;
   }
 
-  // Fix duplicate path segments that may appear in stored URLs
-  imageUrl = imageUrl
-    .replace(/\/public-objects\/public-objects\//g, '/public-objects/')
-    .replace(/\/objects\/objects\//g, '/objects/');
-
-  // Clean up the path - remove leading slashes and normalize
-  let cleanUrl = imageUrl.replace(/^\/+/, '');
-  console.log("getImageUrl: Cleaned URL:", cleanUrl);
-
-  // Prefer serving through the legacy /objects/ endpoint which works in all environments
-  if (cleanUrl.startsWith('objects/')) {
-    const objectPath = `/objects/${cleanUrl.replace(/^objects\//, '')}`;
-    console.log('getImageUrl: Object storage path:', objectPath);
-    return objectPath;
+  // If it's a path starting with /objects/, it's an object storage path
+  if (imageUrl.startsWith('/objects/')) {
+    return imageUrl;
   }
 
-  // Convert already-public paths back to the objects endpoint
-  if (cleanUrl.startsWith('public-objects/')) {
-    const objectPath = `/objects/${cleanUrl.replace(/^public-objects\//, '')}`;
-    console.log('getImageUrl: Converting public object path to objects path:', objectPath);
-    return objectPath;
+  // If it's a relative path, prepend with /objects/
+  if (!imageUrl.startsWith('/')) {
+    return `/objects/${imageUrl}`;
   }
 
-  // Paths beginning with uploads/ should also point to objects
-  if (cleanUrl.startsWith('uploads/')) {
-    const objectPath = `/objects/${cleanUrl}`;
-    console.log('getImageUrl: Converting uploads path to objects path:', objectPath);
-    return objectPath;
-  }
-
-  // For other relative paths, default to /objects/
-  if (!cleanUrl.startsWith('/')) {
-    const objectPath = `/objects/${cleanUrl}`;
-    console.log('getImageUrl: Defaulting to objects path:', objectPath);
-    return objectPath;
-  }
-
-  console.log('getImageUrl: Final URL:', cleanUrl);
-  return cleanUrl;
+  return imageUrl;
 }

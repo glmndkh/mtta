@@ -451,18 +451,49 @@ export default function Profile() {
     setIsConfirmDialogOpen(true);
   };
 
-  // Handle profile picture upload
-  const handleProfilePictureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setProfileData(prev => ({
-          ...prev,
-          profilePicture: event.target?.result as string
-        }));
-      };
-      reader.readAsDataURL(file);
+  // Get upload parameters for profile picture
+  const getProfilePictureUploadParams = async () => {
+    const response = await apiRequest('/api/objects/upload', { method: 'POST' });
+    const data = await response.json();
+    return {
+      method: 'PUT' as const,
+      url: data.uploadURL,
+    };
+  };
+
+  // Handle profile picture upload completion
+  const handleProfilePictureUploadComplete = async (result: any) => {
+    if (result.successful && result.successful[0]) {
+      const fileURL = result.successful[0].uploadURL;
+      
+      try {
+        const aclResponse = await apiRequest('/api/objects/finalize', {
+          method: 'PUT',
+          body: JSON.stringify({
+            fileURL,
+            isPublic: true
+          })
+        });
+        
+        if (aclResponse.ok) {
+          const aclData = await aclResponse.json();
+          setProfileData(prev => ({
+            ...prev,
+            profilePicture: aclData.objectPath
+          }));
+          toast({
+            title: "Амжилттай",
+            description: "Профайл зураг амжилттай шинэчлэгдлээ"
+          });
+        }
+      } catch (error) {
+        console.error('Error setting ACL:', error);
+        toast({
+          title: "Анхааруулга",
+          description: "Зураг байршуулагдсан боловч эрх тохируулахад алдаа гарлаа",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -954,21 +985,17 @@ export default function Profile() {
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleProfilePictureUpload}
-                          className="hidden"
-                          id="profile-picture"
-                        />
-                        <label
-                          htmlFor="profile-picture"
-                          className="cursor-pointer inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                        <ObjectUploader
+                          maxNumberOfFiles={1}
+                          maxFileSize={5 * 1024 * 1024}
+                          onGetUploadParameters={getProfilePictureUploadParams}
+                          onComplete={handleProfilePictureUploadComplete}
+                          buttonClassName="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
                         >
-                          <Camera className="w-4 h-4" />
+                          <Camera className="w-4 h-4 mr-2" />
                           Зураг солих
-                        </label>
-                        <p className="text-sm text-gray-500 mt-2">JPG, PNG файл байх ёстой</p>
+                        </ObjectUploader>
+                        <p className="text-sm text-gray-500 mt-2">JPG, PNG файл байх ёстой (Хамгийн ихдээ 5MB)</p>
                       </div>
                     </div>
                   </CardContent>
@@ -1527,12 +1554,12 @@ export default function Profile() {
               <div>
                 <span className="font-semibold text-white">Хүйс:</span> {pendingProfileUpdate.gender ? (pendingProfileUpdate.gender === 'male' ? 'Эрэгтэй' : pendingProfileUpdate.gender === 'female' ? 'Эмэгтэй' : 'Бусад') : '—'}
               </div>
-              {pendingProfilePicture && (
+              {pendingProfileUpdate?.profilePicture && (
                 <div className="flex items-center gap-3">
                   <span className="font-semibold text-white">Профайл зураг:</span>
                   <Avatar className="h-12 w-12 border border-gray-700">
-                    <AvatarImage src={pendingProfilePicture} />
-                    <AvatarFallback>{pendingProfileUpdate.name?.charAt(0) || 'U'}</AvatarFallback>
+                    <AvatarImage src={getImageUrl(pendingProfileUpdate.profilePicture)} />
+                    <AvatarFallback>{pendingProfileUpdate.firstName?.charAt(0) || pendingProfileUpdate.name?.charAt(0) || 'U'}</AvatarFallback>
                   </Avatar>
                 </div>
               )}
