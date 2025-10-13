@@ -1,0 +1,74 @@
+Зорилго:
+Шинэчлэлүүдийг сервер/DB-д найдвартай хадгалж, хуудсыг дахин ачаалахад заавал хамгийн сүүлийн profile өгөгдөл ачаалагддаг болго.
+
+Даалгавар:
+
+Асуудлыг баталгаажуул: Network/Console/Server log-оор дахин үүсгэж, яг ямар шатанд алдагдаж байгааг тэмдэглэ.
+
+API Update урсгал:
+
+PUT эсвэл PATCH /api/profile endpoint ашиглан authenticated хэрэглэгчийн userId-аар update хийж байгааг шалга.
+
+Request body валидаци, серверийн хариуд 200 болон шинэчлэгдсэн profile JSON буцаж байгааг баталгаажуул.
+
+DB update үнэхээр бүртгэгдэж буйг query-гаар шалга.
+
+DB & Schema:
+
+Migration зөрөө, nullable/unique/length constraints-ийг шалгаж зас.
+
+Transaction хэрэглэх (олон талбар нэг дор найдвартай хадгалах).
+
+Client state & Cache:
+
+Save амжилттай болсны дараа серверийн буцаасан profile JSON-оор state-ийг шинэчил (optimistic state-ийг зөв дарж бич).
+
+React Query/SWR/RTK Query хэрэглэж байгаа бол cache invalidate/rehydrate хийж, profile fetch-ийг дахин ажиллуул.
+
+LocalStorage/Context-д үлдэж буй хуучин утгаас болж overwrite хийх эрсдэлийг тэглэ.
+
+SSR/Browser/CDN Cache:
+
+Next.js (эсвэл SSR) хэрэглэж байвал profile API-д cache: no-store эсвэл зөв revalidate тохиргоо хий.
+
+Хэрэглэгчийн хувийн өгөгдөлд CDN/Browser cache-ийг идэвхгүй болго (no-cache, no-store, private headers).
+
+Auth/Env шалгалт:
+
+Dev/Prod env-д өөр BASE_URL/proxy-аас болж write өөр орчин руу яваагүйг баталгаажуул.
+
+CSRF/CORS токен/headers бүрэн дамжиж буй эсэхийг шалга.
+
+UI/Алдаа & Амжилтын урсгал:
+
+Амжилттай хадгалсан үед “Saved” мэдэгдэл гаргаад серверээс дахин fetch хийж харуул.
+
+Алдаануудыг ялгаж харуул: (Auth алдаа, Валидаци алдаа, DB алдаа, Network алдаа).
+
+Лог ба Тест:
+
+API-д structured log нэм (request id, user id, status, duration).
+
+E2E тест бич: “update → reload → server-ээс ирэх profile шинэ байна” кейс.
+
+Unit тест: reducer/state update, cache invalidation зөв ажиллаж буйг шалга.
+
+Acceptance Criteria (заавал биелнэ):
+
+Refresh (F5) дарахад шинэ нэр ба бусад талбар өөрчлөгдсөнөөрөө харагдана.
+
+API response 200 ба буцаасан body нь DB-ийн бодит шинэчлэлтэй таарна.
+
+Кэшээс болж хуучин өгөгдөл дахин харагдахгүй.
+
+Амжилтын болон алдааны мэдэгдлүүд тодорхой, давтагддаг.
+
+Буцааж өгөх зүйлс:
+
+Зассан хэсгүүдийн тайлбар (хаана, яагаад).
+
+Cache/SSR тохиргооны өөрчлөлтийн тайлбар.
+
+Log snapshot эсвэл текст log-оос ишлэл.
+
+Тестийн үр дүн (шинэ тестүүд ногоон болсон скрин/тайлан).
