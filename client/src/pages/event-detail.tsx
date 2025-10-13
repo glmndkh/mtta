@@ -15,8 +15,8 @@ import RegistrationForm from "@/components/RegistrationForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { EventHeroRow } from '@/components/EventHeroRow';
-import { LoadingAnimation } from '@/components/LoadingAnimation';
+import EventHeroRow from '@/components/EventHeroRow';
+import LoadingAnimation from '@/components/LoadingAnimation';
 import { ParticipantsTab } from '@/components/ParticipantsTab';
 import { queryClient } from '@/lib/queryClient';
 import { KnockoutBracket } from "@/components/KnockoutBracket";
@@ -530,8 +530,8 @@ export default function EventDetail() {
                     return (
                       <>
                         {/* Podium Section - Top 3 Winners */}
-                        {hasFinalRankings && finalRankings.length >= 3 && (
-                          <PodiumSection rankings={finalRankings.slice(0, 3)} />
+                        {hasFinalRankings && finalRankings.length > 0 && (
+                          <PodiumSection rankings={finalRankings} />
                         )}
 
                         {/* Final Rankings with Images */}
@@ -562,35 +562,40 @@ export default function EventDetail() {
                         )}
                         
                         {/* Final Rankings Table - 4th place and below */}
-                        {hasFinalRankings && finalRankings.length > 3 && (
-                          <Card>
-                            <CardHeader>
-                              <CardTitle>Бусад байрлалт</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead>Байр</TableHead>
-                                    <TableHead>Тоглогч</TableHead>
-                                    <TableHead>Оноо</TableHead>
-                                    <TableHead>Тэмдэглэл</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {finalRankings.slice(3).map((ranking) => (
-                                    <TableRow key={ranking.player.id}>
-                                      <TableCell className="font-bold">{ranking.position}</TableCell>
-                                      <TableCell>{ranking.player.name}</TableCell>
-                                      <TableCell>{ranking.points || '-'}</TableCell>
-                                      <TableCell>{ranking.note || '-'}</TableCell>
+                        {(() => {
+                          const lowerRankings = finalRankings.filter(r => r.position >= 4);
+                          if (lowerRankings.length === 0) return null;
+                          
+                          return (
+                            <Card>
+                              <CardHeader>
+                                <CardTitle>Бусад байрлалт</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Байр</TableHead>
+                                      <TableHead>Тоглогч</TableHead>
+                                      <TableHead>Оноо</TableHead>
+                                      <TableHead>Тэмдэглэл</TableHead>
                                     </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </CardContent>
-                          </Card>
-                        )}
+                                  </TableHeader>
+                                  <TableBody>
+                                    {lowerRankings.map((ranking) => (
+                                      <TableRow key={ranking.player.id}>
+                                        <TableCell className="font-bold">{ranking.position}</TableCell>
+                                        <TableCell>{ranking.player.name}</TableCell>
+                                        <TableCell>{ranking.points || '-'}</TableCell>
+                                        <TableCell>{ranking.note || '-'}</TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </CardContent>
+                            </Card>
+                          );
+                        })()}
 
                         {/* Group Stage Results */}
                         {hasGroupStage && (
