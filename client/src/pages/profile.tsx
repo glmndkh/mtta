@@ -403,19 +403,27 @@ export default function Profile() {
       method: 'PUT',
       body: JSON.stringify(data)
     }),
-    onSuccess: async () => {
+    onSuccess: async (response) => {
       toast({
         title: "Амжилттай!",
         description: "Профайл амжилттай шинэчлэгдлээ",
       });
-      // Invalidate queries to force refetch and update UI
+      
+      // Invalidate and refetch queries to force update
       await queryClient.invalidateQueries({ queryKey: ['/api/user/profile'] });
-      await queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] }); // If auth user data is also updated
+      await queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      
+      // Force immediate refetch to get latest data from server
+      await queryClient.refetchQueries({ queryKey: ['/api/user/profile'] });
+      
       setPendingProfileUpdate(null);
       setIsConfirmDialogOpen(false);
-      setIsEditMode(false); // Exit edit mode after successful save
+      setIsEditMode(false);
+      
+      // Reload the page to ensure all data is fresh
+      window.location.reload();
     },
-    onError: (error: any) => {
+    onError: (error: any) {
       console.error('Profile update error:', error);
       toast({
         title: "Алдаа гарлаа",
@@ -540,19 +548,21 @@ export default function Profile() {
           }));
 
           // Trigger mutation to save the new profile picture URL to the database
-          // Note: We are calling the general updateProfileMutation here with only the picture field updated.
-          // This assumes the mutation can handle partial updates or that other fields are implicitly handled.
-          // A more robust approach might be a dedicated mutation for profile picture update.
           updateProfileMutation.mutate({
-            ...buildProfileUpdatePayload(), // Get current form data
-            profilePicture: newProfilePicturePath // Override with new picture
+            ...buildProfileUpdatePayload(),
+            profilePicture: newProfilePicturePath
           }, {
-            onSuccess: () => {
+            onSuccess: async () => {
               toast({
                 title: "Амжилттай",
                 description: "Профайл зураг амжилттай хадгалагдлаа"
               });
-              // The mutation already invalidates queries, so no need to do it here.
+              
+              // Force refetch to get latest data
+              await queryClient.refetchQueries({ queryKey: ['/api/user/profile'] });
+              
+              // Reload page to ensure image is displayed correctly
+              window.location.reload();
             },
             onError: (error) => {
               console.error('Error saving profile picture:', error);
