@@ -71,6 +71,8 @@ interface UserProfile {
 
 interface UpdateProfilePayload {
   name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   phone?: string;
   gender?: string;
@@ -210,6 +212,8 @@ export default function Profile() {
     id: '',
     email: '',
     name: '',
+    firstName: '',
+    lastName: '',
     rubberTypes: [],
     playingStyles: []
   });
@@ -365,6 +369,8 @@ export default function Profile() {
         email: profile.email || '',
         phone: profile.phone || '',
         name: profile.name || '',
+        firstName: profile.firstName || '',
+        lastName: profile.lastName || '',
         gender: profile.gender || '',
         dateOfBirth: profile.dateOfBirth ? profile.dateOfBirth.split('T')[0] : '',
         clubName: profile.clubName || '',
@@ -422,6 +428,8 @@ export default function Profile() {
   // Handle form submission
   const buildProfileUpdatePayload = (): UpdateProfilePayload => ({
     name: profileData.name?.trim() || '',
+    firstName: profileData.firstName?.trim() || '',
+    lastName: profileData.lastName?.trim() || '',
     email: profileData.email?.trim() || '',
     phone: profileData.phone?.trim() || '',
     gender: profileData.gender,
@@ -604,6 +612,8 @@ export default function Profile() {
                             email: profile.email || '',
                             phone: profile.phone || '',
                             name: profile.name || '',
+                            firstName: profile.firstName || '',
+                            lastName: profile.lastName || '',
                             gender: profile.gender || '',
                             dateOfBirth: profile.dateOfBirth ? profile.dateOfBirth.split('T')[0] : '',
                             clubName: profile.clubName || '',
@@ -993,12 +1003,23 @@ export default function Profile() {
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="name" className="text-white">Нэр</Label>
+                        <Label htmlFor="lastName" className="text-white">Овог</Label>
                         <Input
-                          id="name"
-                          value={profileData.name || ''}
-                          onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
-                          placeholder="Таны нэрийг оруулна уу"
+                          id="lastName"
+                          value={profileData.lastName || ''}
+                          onChange={(e) => setProfileData(prev => ({ ...prev, lastName: e.target.value }))}
+                          placeholder="Овгийг оруулна уу"
+                          className="input-dark"
+                          disabled={!isEditMode}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="firstName" className="text-white">Нэр</Label>
+                        <Input
+                          id="firstName"
+                          value={profileData.firstName || ''}
+                          onChange={(e) => setProfileData(prev => ({ ...prev, firstName: e.target.value }))}
+                          placeholder="Нэрийг оруулна уу"
                           className="input-dark"
                           disabled={!isEditMode}
                         />
@@ -1489,7 +1510,10 @@ export default function Profile() {
           {pendingProfileUpdate && (
             <div className="mt-4 space-y-3 rounded-lg border border-gray-700 bg-gray-900/80 p-4 text-sm text-gray-200">
               <div>
-                <span className="font-semibold text-white">Нэр:</span> {pendingProfileUpdate.name || '—'}
+                <span className="font-semibold text-white">Овог:</span> {pendingProfileUpdate.lastName || '—'}
+              </div>
+              <div>
+                <span className="font-semibold text-white">Нэр:</span> {pendingProfileUpdate.firstName || '—'}
               </div>
               <div>
                 <span className="font-semibold text-white">И-мэйл:</span> {pendingProfileUpdate.email || '—'}
