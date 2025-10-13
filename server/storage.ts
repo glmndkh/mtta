@@ -452,6 +452,71 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUserProfile(userId: string): Promise<any> {
+    const requestId = `get_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    console.log(`[${requestId}] getUserProfile START - userId: ${userId}`);
+
+    try {
+      // Get user data
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (!user) {
+        console.error(`[${requestId}] User not found: ${userId}`);
+        throw new Error("User not found");
+      }
+
+      // Get player data if exists
+      const [player] = await db
+        .select()
+        .from(players)
+        .where(eq(players.userId, userId))
+        .limit(1);
+
+      console.log(`[${requestId}] getUserProfile SUCCESS - userId: ${userId}`);
+      
+      return {
+        id: user.id,
+        email: user.email,
+        phone: user.phone,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        gender: user.gender,
+        dateOfBirth: user.dateOfBirth,
+        clubAffiliation: user.clubAffiliation,
+        profileImageUrl: user.profileImageUrl,
+        province: user.province,
+        city: user.city,
+        rubberTypes: user.rubberTypes,
+        handedness: user.handedness,
+        playingStyles: user.playingStyles,
+        bio: user.bio,
+        membershipType: user.membershipType,
+        membershipStartDate: user.membershipStartDate,
+        membershipEndDate: user.membershipEndDate,
+        membershipActive: user.membershipActive,
+        membershipAmount: user.membershipAmount,
+        role: user.role,
+        isJudge: player?.id ? await this.getJudgeByUserId(userId).then(j => !!j) : false,
+        isCoach: player?.id ? await this.getClubCoachByUserId(userId).then(c => !!c) : false,
+        playerStats: player ? {
+          rank: player.rank,
+          points: player.points,
+          achievements: player.achievements,
+          wins: player.wins,
+          losses: player.losses,
+          memberNumber: player.memberNumber
+        } : null
+      };
+    } catch (error) {
+      console.error(`[${requestId}] getUserProfile ERROR:`, error);
+      throw error;
+    }
+  }
+
   async updateUserProfile(userId: string, userData: Partial<User>): Promise<User> {
     const operationId = `op_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     console.log(`[${operationId}] updateUserProfile START - userId: ${userId}`);
