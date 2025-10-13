@@ -654,6 +654,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/user/profile", requireAuth, async (req: any, res) => {
     try {
       const userId = req.session.userId;
+      console.log("Profile update request for user:", userId);
+      console.log("Request body:", JSON.stringify(req.body, null, 2));
+      
       const {
         name,
         email,
@@ -679,7 +682,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const [firstName, ...restName] = (name || "").trim().split(" ");
       const lastName = restName.join(" ");
 
-      const updatedUser = await storage.updateUserProfile(userId, {
+      const updateData = {
         email,
         phone,
         firstName: firstName || "",
@@ -703,19 +706,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           : undefined,
         membershipActive,
         membershipAmount,
-      });
+      };
+      
+      console.log("Update data prepared:", JSON.stringify(updateData, null, 2));
+
+      const updatedUser = await storage.updateUserProfile(userId, updateData);
+      console.log("User updated successfully:", updatedUser?.id);
 
       // Update player rank if user is a player and rank is provided
       if (rank && updatedUser) {
         const player = await storage.getPlayerByUserId(userId);
         if (player) {
           await storage.updatePlayerAdminFields(player.id, { rank });
+          console.log("Player rank updated:", rank);
         }
       }
 
       if (!updatedUser)
         return res.status(404).json({ message: "Хэрэглэгч олдсонгүй" });
-      res.json({ message: "Профайл амжилттай шинэчлэгдлээ" });
+      
+      res.json({ message: "Профайл амжилттай шинэчлэгдлээ", user: updatedUser });
     } catch (e) {
       console.error("Error updating profile:", e);
       res.status(500).json({ message: "Профайл шинэчлэхэд алдаа гарлаа" });

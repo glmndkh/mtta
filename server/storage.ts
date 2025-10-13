@@ -453,6 +453,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserProfile(userId: string, userData: any): Promise<User> {
+    console.log("updateUserProfile called for userId:", userId);
+    console.log("userData received:", JSON.stringify(userData, null, 2));
+    
     const updateData: any = {
       updatedAt: new Date(),
     };
@@ -478,11 +481,15 @@ export class DatabaseStorage implements IStorage {
     if (userData.membershipActive !== undefined) updateData.membershipActive = userData.membershipActive;
     if (userData.membershipAmount !== undefined) updateData.membershipAmount = userData.membershipAmount;
 
+    console.log("Final updateData to be saved:", JSON.stringify(updateData, null, 2));
+
     const [user] = await db
       .update(users)
       .set(updateData)
       .where(eq(users.id, userId))
       .returning();
+    
+    console.log("User updated in database:", user?.id, "profileImageUrl:", user?.profileImageUrl);
     return user;
   }
 
