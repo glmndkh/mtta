@@ -759,6 +759,64 @@ export default function TournamentPage() {
                   </>
                 )}
 
+                {/* Tournament Calendar/Schedule */}
+                <Separator className="bg-gray-700" />
+                <div>
+                  <h4 className="font-semibold mb-4 text-white flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-green-400" />
+                    Тэмцээний хуваарь
+                  </h4>
+                  <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                    <div className="space-y-4">
+                      {/* Start Date */}
+                      <div className="flex items-start gap-3 p-3 bg-gray-900/50 rounded-lg">
+                        <div className="flex-shrink-0 w-16 h-16 bg-green-600 rounded-lg flex flex-col items-center justify-center text-white">
+                          <div className="text-xs font-medium">{format(new Date(tournament.startDate), 'MMM')}</div>
+                          <div className="text-2xl font-bold">{format(new Date(tournament.startDate), 'd')}</div>
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-semibold text-white">Эхлэх өдөр</div>
+                          <div className="text-sm text-gray-400">{formatDateTime(tournament.startDate)}</div>
+                        </div>
+                      </div>
+
+                      {/* End Date */}
+                      <div className="flex items-start gap-3 p-3 bg-gray-900/50 rounded-lg">
+                        <div className="flex-shrink-0 w-16 h-16 bg-blue-600 rounded-lg flex flex-col items-center justify-center text-white">
+                          <div className="text-xs font-medium">{format(new Date(tournament.endDate), 'MMM')}</div>
+                          <div className="text-2xl font-bold">{format(new Date(tournament.endDate), 'd')}</div>
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-semibold text-white">Дуусах өдөр</div>
+                          <div className="text-sm text-gray-400">{formatDateTime(tournament.endDate)}</div>
+                        </div>
+                      </div>
+
+                      {/* Registration Deadline */}
+                      {tournament.registrationDeadline && (
+                        <div className="flex items-start gap-3 p-3 bg-gray-900/50 rounded-lg">
+                          <div className="flex-shrink-0 w-16 h-16 bg-orange-600 rounded-lg flex flex-col items-center justify-center text-white">
+                            <div className="text-xs font-medium">{format(new Date(tournament.registrationDeadline), 'MMM')}</div>
+                            <div className="text-2xl font-bold">{format(new Date(tournament.registrationDeadline), 'd')}</div>
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-semibold text-white">Бүртгэлийн хугацаа дуусах</div>
+                            <div className="text-sm text-gray-400">{formatDateTime(tournament.registrationDeadline)}</div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Schedule Details if available */}
+                      {tournament.schedule && (
+                        <div className="mt-4 p-3 bg-gray-900/50 rounded-lg">
+                          <div className="font-semibold text-white mb-2">Дэлгэрэнгүй хуваарь</div>
+                          <p className="text-sm text-gray-300 whitespace-pre-wrap">{tournament.schedule}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 {tournament.regulationDocumentUrl && (
                   <>
                     <Separator className="bg-gray-700" />
