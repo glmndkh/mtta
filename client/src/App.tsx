@@ -44,6 +44,7 @@ import AdminPlayerDetailsPage from "@/pages/admin-player-details"; // Import the
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import EventDetail from "@/pages/event-detail";
 import FloatingActionButton from "@/components/FloatingActionButton";
+import { lazy } from 'react';
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -73,6 +74,14 @@ function Router() {
       <Route path="/news" component={News} />
       <Route path="/about" component={AboutPage} />
       <Route path="/events/:id" component={EventDetail} />
+      <Route path="/about/branches" component={lazy(() => import("@/pages/about-branches"))} />
+      <Route path="/about/intro" component={lazy(() => import("@/pages/about-intro"))} />
+      <Route path="/about/history" component={lazy(() => import("@/pages/about-history"))} />
+      <Route path="/councils/coaches" component={lazy(() => import("@/pages/councils-coaches"))} />
+      <Route path="/councils/athletes" component={lazy(() => import("@/pages/councils-athletes"))} />
+      <Route path="/councils/veterans" component={lazy(() => import("@/pages/councils-veterans"))} />
+      <Route path="/councils/referees" component={lazy(() => import("@/pages/councils-referees"))} />
+      <Route path="/councils/women" component={lazy(() => import("@/pages/councils-women"))} />
 
       <Route path="/" component={Home} />
       {!isLoading && isAuthenticated && (

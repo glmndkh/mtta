@@ -234,19 +234,20 @@ export default function Navigation() {
       label: t('nav.about'),
       icon: User,
       dropdown: [
+        { href: "/about/branches", label: "Салбар холбоо" },
+        { href: "/about/intro", label: "Танилцуулга" },
+        { href: "/about/history", label: "Түүхэн замнал" },
+        { href: "/national-team", label: "Үндэсний шигшээ" },
         {
-          label: t('nav.federation'),
+          label: "Зөвлөлүүд",
           sublinks: [
-            { href: "/about#history", label: t('nav.introduction') },
-            { href: "/about#goals", label: t('nav.goals') },
-            { href: "/about#management", label: t('nav.history') },
-            { href: "/about#leadership", label: t('nav.members') },
+            { href: "/councils/coaches", label: "Дасгалжуулагчдын зөвлөл" },
+            { href: "/councils/athletes", label: "Тамирчдын зөвлөл" },
+            { href: "/councils/veterans", label: "Ахмадын зөвлөл" },
+            { href: "/councils/referees", label: "Шүүгчдийн зөвлөл" },
+            { href: "/councils/women", label: "Эмэгтэйчүүдийн зөвлөл" },
           ],
         },
-        { href: "/branches", label: t('nav.branches') },
-        { href: "/national-team", label: t('nav.nationalTeam') },
-        { href: "/judges", label: t('nav.judges') },
-        { href: "/past-champions", label: t('nav.pastChampions') },
       ],
     },
     { href: "/tournaments", label: t('nav.tournaments'), icon: Trophy },
@@ -289,9 +290,15 @@ export default function Navigation() {
                   return (
                     <DropdownMenu key={link.href}>
                       <DropdownMenuTrigger asChild>
-                        <div className={`nav-link flex items-center space-x-2 px-4 py-2 cursor-pointer text-sm font-medium transition-colors ${
-                          active ? 'active-nav-link' : ''
-                        }`}>
+                        <div 
+                          className={`nav-link flex items-center space-x-2 px-4 py-2 cursor-pointer text-sm font-medium transition-colors ${
+                            active ? 'active-nav-link' : ''
+                          }`}
+                          onMouseEnter={(e) => {
+                            const trigger = e.currentTarget;
+                            trigger.click();
+                          }}
+                        >
                           <Icon className="h-4 w-4" />
                           <span>{link.label}</span>
                           <ChevronDown className="h-3 w-3" />
