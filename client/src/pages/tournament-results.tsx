@@ -11,6 +11,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { KnockoutBracket } from "@/components/KnockoutBracket";
 import { ArrowLeft, Trophy } from "lucide-react";
 import { normalizeKnockoutMatches } from "@/lib/knockout";
+import { PodiumSection } from "@/components/PodiumSection";
 import type { Tournament, TournamentResults } from "@shared/schema";
 
 interface GroupStageGroup {
@@ -152,57 +153,7 @@ const TournamentResults: React.FC = () => {
 
           {/* Podium Section - Top 3 Winners */}
           {hasFinalRankings && finalRankings.length >= 3 && (
-            <div className="mb-8">
-              <div className="flex flex-col md:flex-row items-end justify-center gap-4 md:gap-6">
-                {/* 2nd Place - Left/Top */}
-                <Card className="w-full md:w-64 bg-gradient-to-br from-gray-200 via-gray-300 to-gray-400 dark:from-gray-600 dark:via-gray-700 dark:to-gray-800 border-gray-300 dark:border-gray-600 order-2 md:order-1">
-                  <CardContent className="p-6 text-center">
-                    <div className="text-5xl mb-3">🥈</div>
-                    <div className="text-xl font-bold text-gray-800 dark:text-white mb-2">2-р байр</div>
-                    <div className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">
-                      {finalRankings[1]?.player?.name || 'Тодорхойгүй'}
-                    </div>
-                    {finalRankings[1]?.points !== undefined && (
-                      <div className="text-lg text-gray-700 dark:text-gray-300">
-                        {finalRankings[1].points} оноо
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* 1st Place - Center - Larger */}
-                <Card className="w-full md:w-80 bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-500 dark:from-yellow-500 dark:via-yellow-600 dark:to-yellow-700 border-yellow-400 dark:border-yellow-500 order-1 md:order-2 md:mb-8">
-                  <CardContent className="p-8 text-center">
-                    <div className="text-7xl mb-4">🥇</div>
-                    <div className="text-2xl font-bold text-yellow-900 dark:text-yellow-100 mb-3">1-р байр</div>
-                    <div className="text-3xl font-bold text-yellow-950 dark:text-white mb-2">
-                      {finalRankings[0]?.player?.name || 'Тодорхойгүй'}
-                    </div>
-                    {finalRankings[0]?.points !== undefined && (
-                      <div className="text-xl font-semibold text-yellow-900 dark:text-yellow-200">
-                        {finalRankings[0].points} оноо
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* 3rd Place - Right/Bottom */}
-                <Card className="w-full md:w-64 bg-gradient-to-br from-orange-300 via-orange-400 to-orange-500 dark:from-orange-600 dark:via-orange-700 dark:to-orange-800 border-orange-400 dark:border-orange-600 order-3">
-                  <CardContent className="p-6 text-center">
-                    <div className="text-5xl mb-3">🥉</div>
-                    <div className="text-xl font-bold text-orange-900 dark:text-orange-100 mb-2">3-р байр</div>
-                    <div className="text-2xl font-semibold text-orange-950 dark:text-white mb-1">
-                      {finalRankings[2]?.player?.name || 'Тодорхойгүй'}
-                    </div>
-                    {finalRankings[2]?.points !== undefined && (
-                      <div className="text-lg text-orange-800 dark:text-orange-200">
-                        {finalRankings[2].points} оноо
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+            <PodiumSection rankings={finalRankings.slice(0, 3)} />
           )}
 
           {/* Final Rankings with Images */}
