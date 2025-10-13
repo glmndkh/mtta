@@ -1097,7 +1097,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           club.city?.toLowerCase().includes(searchLower) ||
           club.district?.toLowerCase().includes(searchLower) ||
           club.ownerName?.toLowerCase().includes(searchLower) ||
-          club.coaches?.some(coach => coach.toLowerCase().includes(searchLower))
+          club.coaches?.some((coach: string) => coach.toLowerCase().includes(searchLower))
         );
       }
 

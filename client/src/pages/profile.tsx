@@ -275,13 +275,13 @@ export default function Profile() {
     enabled: !!profile,
   });
 
-  const { data: medals = [] } = useQuery({
+  const { data: medals = [] } = useQuery<any[]>({
     queryKey: ['/api/user/medals'],
     enabled: !!profile,
   });
 
   // Fetch user's rank change requests
-  const { data: rankChangeRequests = [] } = useQuery({
+  const { data: rankChangeRequests = [] } = useQuery<any[]>({
     queryKey: ['/api/rank-change-requests/me'],
     enabled: !!profile,
   });
@@ -1130,7 +1130,7 @@ export default function Profile() {
                             <SelectValue placeholder="Сум/Дүүрэг сонгоно уу" />
                           </SelectTrigger>
                           <SelectContent>
-                            {availableCities.map(city => (
+                            {availableCities.map((city: string) => (
                               <SelectItem key={city} value={city}>{city}</SelectItem>
                             ))}
                           </SelectContent>
@@ -1459,7 +1459,7 @@ export default function Profile() {
                                       <div className="flex items-center justify-between">
                                         <div className="flex-1 text-right pr-4">
                                           <button
-                                            onClick={() => navigate(`/profile`)}
+                                            onClick={() => setLocation(`/profile`)}
                                             className="text-lg font-semibold text-green-400 hover:text-green-300 hover:underline cursor-pointer"
                                           >
                                             {profile?.name}
@@ -1479,7 +1479,7 @@ export default function Profile() {
                                         <div className="flex-1 text-left pl-4">
                                           {typeof match.opponent === 'object' && match.opponent?.user ? (
                                             <button
-                                              onClick={() => navigate(`/player-profile/${match.opponent.userId || match.opponent.user?.id}`)}
+                                              onClick={() => setLocation(`/player-profile/${match.opponent.userId || match.opponent.user?.id}`)}
                                               className="text-lg font-semibold text-green-400 hover:text-green-300 hover:underline cursor-pointer"
                                             >
                                               {opponentName}
