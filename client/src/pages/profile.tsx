@@ -220,6 +220,7 @@ export default function Profile() {
   const [proofImageUrl, setProofImageUrl] = useState('');
   const [pendingProfileUpdate, setPendingProfileUpdate] = useState<UpdateProfilePayload | null>(null);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // Valid ranks for selection
   const validRanks = [
@@ -459,7 +460,11 @@ export default function Profile() {
 
   const confirmProfileUpdate = () => {
     if (!pendingProfileUpdate) return;
-    updateProfileMutation.mutate(pendingProfileUpdate);
+    updateProfileMutation.mutate(pendingProfileUpdate, {
+      onSuccess: () => {
+        setIsEditMode(false);
+      }
+    });
   };
 
   const profilePicturePreview = useMemo(() => {
@@ -578,6 +583,59 @@ export default function Profile() {
           {/* Profile Header */}
           <Card className="theme-card">
             <CardContent className="pt-6">
+              <div className="flex justify-end mb-4">
+                {!isEditMode ? (
+                  <Button
+                    onClick={() => setIsEditMode(true)}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <UserCog className="w-4 h-4" />
+                    Мэдээлэл засах
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => {
+                        setIsEditMode(false);
+                        if (profile) {
+                          setProfileData({
+                            id: profile.id || '',
+                            email: profile.email || '',
+                            phone: profile.phone || '',
+                            name: profile.name || '',
+                            gender: profile.gender || '',
+                            dateOfBirth: profile.dateOfBirth ? profile.dateOfBirth.split('T')[0] : '',
+                            clubName: profile.clubName || '',
+                            profilePicture: profile.profilePicture ? getImageUrl(profile.profilePicture) : '',
+                            province: profile.province || '',
+                            city: profile.city || '',
+                            rubberTypes: profile.rubberTypes || [],
+                            handedness: profile.handedness || 'right',
+                            playingStyles: profile.playingStyles || [],
+                            bio: profile.bio || '',
+                          });
+                          setSelectedProvince(profile.province || '');
+                        }
+                      }}
+                      variant="outline"
+                    >
+                      Цуцлах
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        const payload = buildProfileUpdatePayload();
+                        setPendingProfileUpdate(payload);
+                        setIsConfirmDialogOpen(true);
+                      }}
+                      className="bg-green-600 hover:bg-green-700"
+                      disabled={updateProfileMutation.isPending}
+                    >
+                      {updateProfileMutation.isPending ? 'Хадгалж байна...' : 'Хадгалах'}
+                    </Button>
+                  </div>
+                )}
+              </div>
               <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                 <div className="relative">
                   <Avatar className="w-24 h-24">
@@ -612,20 +670,20 @@ export default function Profile() {
                     ))}
                   </div>
                   <div className="flex flex-wrap items-center gap-4 mt-2 text-sm theme-text-secondary">
-                    {/* Contact info (email, phone, address) visible to owner only */}
-                    {profile?.email && (
+                    {/* Contact info visible only in edit mode or to owner */}
+                    {(isEditMode || profile?.email) && profile?.email && (
                       <div className="flex items-center gap-1">
                         <Mail className="w-4 h-4" />
                         <span>{profile.email}</span>
                       </div>
                     )}
-                    {profile?.phone && (
+                    {(isEditMode || profile?.phone) && profile?.phone && (
                       <div className="flex items-center gap-1">
                         <Phone className="w-4 h-4" />
                         <span>{profile.phone}</span>
                       </div>
                     )}
-                    {profile?.province && (
+                    {(isEditMode || profile?.province) && profile?.province && (
                       <div className="flex items-center gap-1">
                         <MapPin className="w-4 h-4" />
                         <span>{profile.province}{profile?.city && `, ${profile.city}`}</span>
@@ -879,6 +937,13 @@ export default function Profile() {
 
             {/* Profile Tab */}
             <TabsContent value="profile" className="space-y-6">
+              {!isEditMode && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-blue-800">
+                    Мэдээллээ засахын тулд дээр байрлах "Мэдээлэл засах" товчийг дарна уу.
+                  </p>
+                </div>
+              )}
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Profile Picture Section */}
                 <Card>
@@ -935,6 +1000,7 @@ export default function Profile() {
                           onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
                           placeholder="Таны нэрийг оруулна уу"
                           className="input-dark"
+                          disabled={!isEditMode}
                         />
                       </div>
                       <div>
@@ -945,6 +1011,7 @@ export default function Profile() {
                           value={profileData.dateOfBirth || ''}
                           onChange={(e) => setProfileData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
                           className="input-dark"
+                          disabled={!isEditMode}
                         />
                       </div>
                       <div>
@@ -956,6 +1023,7 @@ export default function Profile() {
                           onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
                           placeholder="example@email.com"
                           className="input-dark"
+                          disabled={!isEditMode}
                         />
                       </div>
                       <div>
@@ -966,6 +1034,7 @@ export default function Profile() {
                           onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
                           placeholder="99123456"
                           className="input-dark"
+                          disabled={!isEditMode}
                         />
                       </div>
                     </div>
@@ -979,6 +1048,7 @@ export default function Profile() {
                         placeholder="Өөрийгөө товчхон танилцуулна уу..."
                         rows={3}
                         className="input-dark"
+                        disabled={!isEditMode}
                       />
                     </div>
                   </CardContent>
@@ -996,7 +1066,7 @@ export default function Profile() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="province" className="text-white">Аймаг/Хот</Label>
-                        <Select value={selectedProvince} onValueChange={handleProvinceChange}>
+                        <Select value={selectedProvince} onValueChange={handleProvinceChange} disabled={!isEditMode}>
                           <SelectTrigger className="input-dark">
                             <SelectValue placeholder="Аймаг/Хот сонгоно уу" />
                           </SelectTrigger>
@@ -1012,7 +1082,7 @@ export default function Profile() {
                         <Select 
                           value={profileData.city} 
                           onValueChange={(city) => setProfileData(prev => ({ ...prev, city }))}
-                          disabled={!selectedProvince && !profileData.province}
+                          disabled={!isEditMode || (!selectedProvince && !profileData.province)}
                         >
                           <SelectTrigger className="input-dark">
                             <SelectValue placeholder="Сум/Дүүрэг сонгоно уу" />
@@ -1040,7 +1110,7 @@ export default function Profile() {
                     {/* Gender Selection */}
                     <div>
                       <Label className="text-base font-medium">Хүйс</Label>
-                      <Select value={profileData.gender || ''} onValueChange={(gender) => setProfileData(prev => ({ ...prev, gender }))}>
+                      <Select value={profileData.gender || ''} onValueChange={(gender) => setProfileData(prev => ({ ...prev, gender }))} disabled={!isEditMode}>
                         <SelectTrigger>
                           <SelectValue placeholder="Хүйс сонгоно уу" />
                         </SelectTrigger>
@@ -1054,7 +1124,7 @@ export default function Profile() {
                     {/* Handedness Selection */}
                     <div>
                       <Label className="text-base font-medium">Гарын сонголт</Label>
-                      <Select value={profileData.handedness || 'right'} onValueChange={(handedness) => setProfileData(prev => ({ ...prev, handedness: handedness as 'right' | 'left' }))}>
+                      <Select value={profileData.handedness || 'right'} onValueChange={(handedness) => setProfileData(prev => ({ ...prev, handedness: handedness as 'right' | 'left' }))} disabled={!isEditMode}>
                         <SelectTrigger>
                           <SelectValue placeholder="Гарын сонголт" />
                         </SelectTrigger>
@@ -1070,10 +1140,11 @@ export default function Profile() {
                       <Label className="text-base font-medium">Резинэн төрөл</Label>
                       <div className="grid grid-cols-1 gap-3 mt-3">
                         {RUBBER_TYPES.map(rubberType => (
-                          <label key={rubberType} className="flex items-center space-x-2 cursor-pointer">
+                          <label key={rubberType} className={`flex items-center space-x-2 ${isEditMode ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
                             <Checkbox
                               checked={(profileData.rubberTypes || []).includes(rubberType)}
                               onCheckedChange={(checked) => handleRubberTypeChange(rubberType, checked as boolean)}
+                              disabled={!isEditMode}
                             />
                             <span className="text-sm">{rubberType}</span>
                           </label>
@@ -1086,10 +1157,11 @@ export default function Profile() {
                       <Label className="text-base font-medium">Тоглоомын арга барил</Label>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
                         {PLAYING_STYLES.map(style => (
-                          <label key={style} className="flex items-center space-x-2 cursor-pointer">
+                          <label key={style} className={`flex items-center space-x-2 ${isEditMode ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
                             <Checkbox
                               checked={(profileData.playingStyles || []).includes(style)}
                               onCheckedChange={(checked) => handlePlayingStyleChange(style, checked as boolean)}
+                              disabled={!isEditMode}
                             />
                             <span className="text-sm">{style}</span>
                           </label>
@@ -1099,17 +1171,7 @@ export default function Profile() {
                   </CardContent>
                 </Card>
 
-                {/* Submit Button */}
-                <div className="flex justify-end gap-4">
-                  <Button
-                    type="submit"
-                    disabled={updateProfileMutation.isPending}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    {updateProfileMutation.isPending ? 'Хадгалж байна...' : 'Хадгалах'}
-                  </Button>
-                </div>
-              </form>
+                </form>
             </TabsContent>
 
             {/* Membership Tab */}
