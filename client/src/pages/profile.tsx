@@ -240,6 +240,7 @@ export default function Profile() {
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // Local loading state for initial fetch
+  const [originalFormData, setOriginalFormData] = useState<UserProfile | null>(null); // Store original data for cancel
 
   // Valid ranks for selection
   const validRanks = [
@@ -287,7 +288,7 @@ export default function Profile() {
         const data = await response.json();
         console.log(`[${fetchId}] Profile data received:`, data);
 
-        setFormData({
+        const profileData = {
           id: data.id || '',
           name: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
           firstName: data.firstName || '',
@@ -319,7 +320,10 @@ export default function Profile() {
             losses: 0,
             memberNumber: ''
           }
-        });
+        };
+        
+        setFormData(profileData);
+        setOriginalFormData(profileData); // Store for cancel functionality
         setSelectedProvince(data.province || ''); // Set initial selected province
         console.log(`[${fetchId}] Profile data loaded successfully`);
         setIsLoading(false);
@@ -388,7 +392,7 @@ export default function Profile() {
       setNewRank('');
       setProofImageUrl('');
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
         title: "Алдаа гарлаа",
         description: error?.message || "Хүсэлт илгээхэд алдаа гарлаа",
@@ -403,18 +407,15 @@ export default function Profile() {
       method: 'PUT',
       body: JSON.stringify(data)
     }),
-    onSuccess: async (response) => {
+    onSuccess: (response) => {
       toast({
         title: "Амжилттай!",
         description: "Профайл амжилттай шинэчлэгдлээ",
       });
       
       // Invalidate and refetch queries to force update
-      await queryClient.invalidateQueries({ queryKey: ['/api/user/profile'] });
-      await queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-      
-      // Force immediate refetch to get latest data from server
-      await queryClient.refetchQueries({ queryKey: ['/api/user/profile'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user/profile'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       
       setPendingProfileUpdate(null);
       setIsConfirmDialogOpen(false);
@@ -423,7 +424,7 @@ export default function Profile() {
       // Reload the page to ensure all data is fresh
       window.location.reload();
     },
-    onError: (error: any) {
+    onError: (error) => {
       console.error('Profile update error:', error);
       toast({
         title: "Алдаа гарлаа",
@@ -446,7 +447,7 @@ export default function Profile() {
       });
       queryClient.invalidateQueries({ queryKey: ['/api/user/profile'] });
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
         title: "Алдаа гарлаа",
         description: error?.message || "Гишүүнчлэл худалдаж авахад алдаа гарлаа",
@@ -733,48 +734,10 @@ export default function Profile() {
                   <div className="flex gap-2">
                     <Button
                       onClick={() => {
-                        setIsEditMode(false);
-                        // Reset form data to the initially loaded profile data
-                        // This requires having the original profile data available, or re-fetching it.
-                        // For simplicity, we'll re-initialize from formData if no original is kept.
-                        // A better approach would be to store initial profile data in state.
-                        // Here, we reset to the current state, effectively discarding edits.
-                        // To truly reset to original, we'd need to fetch it again or keep a copy.
-                        // For now, cancelling means discarding unsaved changes.
-                        // Re-fetching is handled by invalidating queries and letting useEffect re-run.
-                        // Let's reset formData to the last successfully fetched profile state.
-                        // This requires storing initial profile data.
-                        // As a workaround, we'll re-fetch if cancel is clicked and not saving.
-                        // A simpler approach: reset formData to the state before edit mode.
-                        // Let's assume `profile` (from useQuery) holds the latest fetched data.
-                        if (profile) { // Use the data from useQuery if available
-                          setFormData({
-                            id: profile.id || '',
-                            email: profile.email || '',
-                            phone: profile.phone || '',
-                            name: profile.name || '',
-                            firstName: profile.firstName || '',
-                            lastName: profile.lastName || '',
-                            gender: profile.gender || '',
-                            dateOfBirth: profile.dateOfBirth ? profile.dateOfBirth.split('T')[0] : '',
-                            clubName: profile.clubName || '',
-                            profilePicture: profile.profilePicture ? getImageUrl(profile.profilePicture) : '',
-                            province: profile.province || '',
-                            city: profile.city || '',
-                            rubberTypes: profile.rubberTypes || [],
-                            handedness: profile.handedness || 'right',
-                            playingStyles: profile.playingStyles || [],
-                            bio: profile.bio || '',
-                            membershipType: profile.membershipType || 'adult',
-                            membershipStartDate: profile.membershipStartDate || '',
-                            membershipEndDate: profile.membershipEndDate || '',
-                            membershipActive: profile.membershipActive || false,
-                            membershipAmount: profile.membershipAmount || 0,
-                            isJudge: profile.isJudge || false,
-                            isCoach: profile.isCoach || false,
-                            playerStats: profile.playerStats || { rank: "зэрэггүй", points: 0, achievements: '', wins: 0, losses: 0, memberNumber: '' }
-                          });
-                          setSelectedProvince(profile.province || '');
+                        // Reset form data to originally loaded profile data
+                        if (originalFormData) {
+                          setFormData(originalFormData);
+                          setSelectedProvince(originalFormData.province || '');
                         }
                         setIsEditMode(false);
                       }}
