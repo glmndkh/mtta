@@ -612,6 +612,7 @@ export default function Profile() {
                     ))}
                   </div>
                   <div className="flex flex-wrap items-center gap-4 mt-2 text-sm theme-text-secondary">
+                    {/* Contact info (email, phone, address) visible to owner only */}
                     {profile?.email && (
                       <div className="flex items-center gap-1">
                         <Mail className="w-4 h-4" />

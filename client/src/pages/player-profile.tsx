@@ -78,8 +78,8 @@ export default function PlayerProfilePage() {
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => setLocation("/")}
             className="mb-4"
           >
@@ -93,12 +93,12 @@ export default function PlayerProfilePage() {
           {/* Player Profile Card */}
           <div className="lg:col-span-1">
             <Card className="bg-gradient-to-br from-mtta-green to-mtta-green-dark text-white">
-            <CardContent className="p-6 text-text-primary">
+              <CardContent className="p-6 text-text-primary">
                 <div className="text-center mb-6">
                   {user?.profileImageUrl ? (
-                    <img 
-                      src={user.profileImageUrl} 
-                      alt="Player profile" 
+                    <img
+                      src={user.profileImageUrl}
+                      alt="Player profile"
                       className="w-24 h-24 rounded-full object-cover mx-auto mb-4"
                     />
                   ) : (
@@ -114,22 +114,7 @@ export default function PlayerProfilePage() {
                 </div>
 
                 <div className="space-y-3">
-                  <div className="flex items-center">
-                    <Mail className="h-4 w-4 mr-2" />
-                    <span className="text-sm">{user?.email}</span>
-                  </div>
-                  {user?.phone && (
-                    <div className="flex items-center">
-                      <Phone className="h-4 w-4 mr-2" />
-                      <span className="text-sm">{user.phone}</span>
-                    </div>
-                  )}
-                  {user?.clubAffiliation && (
-                    <div className="flex items-center">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      <span className="text-sm">{user.clubAffiliation}</span>
-                    </div>
-                  )}
+                  {/* Email, phone and address are hidden from other users for privacy */}
                 </div>
 
                 {player?.rank && (
@@ -190,22 +175,22 @@ export default function PlayerProfilePage() {
                             const opponentName = match.opponent?.name ||
                                                 (match.opponent?.user ? formatName(match.opponent.user.firstName, match.opponent.user.lastName) :
                                                  'Харсагч олдсонгүй');
-                            
+
                             // Parse score from result (assuming format like "3-1" or "2:3")
                             let playerScore = '';
                             let opponentScore = '';
                             if (hasResult && match.result) {
                               const scoreMatch = match.result.match(/(\d+)[-:](\d+)/);
                               if (scoreMatch) {
-                                playerScore = isWinner ? Math.max(parseInt(scoreMatch[1]), parseInt(scoreMatch[2])).toString() : 
+                                playerScore = isWinner ? Math.max(parseInt(scoreMatch[1]), parseInt(scoreMatch[2])).toString() :
                                              Math.min(parseInt(scoreMatch[1]), parseInt(scoreMatch[2])).toString();
-                                opponentScore = isWinner ? Math.min(parseInt(scoreMatch[1]), parseInt(scoreMatch[2])).toString() : 
+                                opponentScore = isWinner ? Math.min(parseInt(scoreMatch[1]), parseInt(scoreMatch[2])).toString() :
                                                Math.max(parseInt(scoreMatch[1]), parseInt(scoreMatch[2])).toString();
                               }
                             }
-                            
+
                             return (
-                              <div 
+                              <div
                                 key={`tournament-${index}`}
                                 className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow ${
                                   hasResult
@@ -220,7 +205,7 @@ export default function PlayerProfilePage() {
                                 <div className="flex">
                                   {/* Red accent line */}
                                   <div className="w-1 bg-red-500 rounded-l-lg flex-shrink-0"></div>
-                                  
+
                                   {/* Content */}
                                   <div className="flex-1 p-4">
                                     {/* Date and tournament info */}
@@ -239,7 +224,7 @@ export default function PlayerProfilePage() {
                                         </span>
                                       )}
                                     </div>
-                                    
+
                                     {/* Match result */}
                                     <div className="flex items-center justify-between">
                                       <div className="flex-1 text-right pr-4">
@@ -250,7 +235,7 @@ export default function PlayerProfilePage() {
                                           {formatName(player?.firstName, player?.lastName)}
                                         </button>
                                       </div>
-                                      
+
                                       {hasResult && playerScore && opponentScore ? (
                                         <div className="text-xl font-bold text-gray-900 px-4">
                                           {playerScore} : {opponentScore}
@@ -260,7 +245,7 @@ export default function PlayerProfilePage() {
                                           - : -
                                         </div>
                                       )}
-                                      
+
                                       <div className="flex-1 text-left pl-4">
                                         {match.opponent?.user ? (
                                           <button
@@ -298,16 +283,16 @@ export default function PlayerProfilePage() {
                             const isWinner = match.winnerId === params?.id;
                             const opponent = isPlayer1 ? match.player2 : match.player1;
                             const opponentName = opponent?.user ? formatName(opponent.user.firstName, opponent.user.lastName) : 'Харсагч олдсонгүй';
-                            
+
                             // Calculate total score from sets
                             let playerTotalScore = 0;
                             let opponentTotalScore = 0;
-                            
+
                             if (match.sets && match.sets.length > 0) {
                               match.sets.forEach((set: any) => {
                                 const playerSetScore = isPlayer1 ? set.player1Score : set.player2Score;
                                 const opponentSetScore = isPlayer1 ? set.player2Score : set.player1Score;
-                                
+
                                 if (playerSetScore > opponentSetScore) {
                                   playerTotalScore++;
                                 } else if (opponentSetScore > playerSetScore) {
@@ -315,13 +300,13 @@ export default function PlayerProfilePage() {
                                 }
                               });
                             }
-                            
+
                             return (
-                              <div 
+                              <div
                                 key={match.id}
                                 className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow ${
                                   match.status === 'completed'
-                                    ? isWinner 
+                                    ? isWinner
                                       ? 'border-2 border-green-500'
                                       : 'border-2 border-red-500'
                                     : 'border border-gray-200'
@@ -330,7 +315,7 @@ export default function PlayerProfilePage() {
                                 <div className="flex">
                                   {/* Red accent line */}
                                   <div className="w-1 bg-red-500 rounded-l-lg flex-shrink-0"></div>
-                                  
+
                                   {/* Content */}
                                   <div className="flex-1 p-4">
                                     {/* Date and match info */}
@@ -349,7 +334,7 @@ export default function PlayerProfilePage() {
                                         </span>
                                       )}
                                     </div>
-                                    
+
                                     {/* Match result */}
                                     <div className="flex items-center justify-between">
                                       <div className="flex-1 text-right pr-4">
@@ -360,7 +345,7 @@ export default function PlayerProfilePage() {
                                           {formatName(player?.firstName, player?.lastName)}
                                         </button>
                                       </div>
-                                      
+
                                       {match.status === 'completed' && (playerTotalScore > 0 || opponentTotalScore > 0) ? (
                                         <div className="text-xl font-bold text-gray-900 px-4">
                                           {playerTotalScore} : {opponentTotalScore}
@@ -370,7 +355,7 @@ export default function PlayerProfilePage() {
                                           - : -
                                         </div>
                                       )}
-                                      
+
                                       <div className="flex-1 text-left pl-4">
                                         {opponent?.user ? (
                                           <button
@@ -411,7 +396,7 @@ export default function PlayerProfilePage() {
                 <CardContent>
                   <div className="space-y-3">
                     {achievements.map((achievement: any) => (
-                      <div 
+                      <div
                         key={achievement.id}
                         className="flex items-center p-3 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg"
                       >
@@ -422,7 +407,7 @@ export default function PlayerProfilePage() {
                           <h4 className="font-medium text-gray-900">{achievement.title}</h4>
                           <p className="text-sm text-gray-600">{achievement.description}</p>
                           <p className="text-xs text-gray-500 mt-1">
-                            {achievement.achievedAt 
+                            {achievement.achievedAt
                               ? new Date(achievement.achievedAt).toLocaleDateString('mn-MN')
                               : 'Огноо тодорхойгүй'
                             }

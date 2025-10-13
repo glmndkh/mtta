@@ -946,6 +946,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ message: "Тоглогч олдсонгүй" });
         }
       }
+      
+      // Remove sensitive information for privacy
+      if (player && player.users) {
+        const { email, phone, province, city, ...safeUserData } = player.users;
+        player = { ...player, users: safeUserData };
+      }
+      
       res.json(player);
     } catch (e) {
       console.error("Error fetching player:", e);
