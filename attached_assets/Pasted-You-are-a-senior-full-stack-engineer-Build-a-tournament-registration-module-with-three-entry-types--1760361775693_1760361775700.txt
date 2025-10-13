@@ -1,0 +1,293 @@
+You are a senior full-stack engineer. Build a tournament registration module with three entry types: Team (Баг), Pair/Doubles (Хос), Singles (Ганцаарчилсан). Tech stack: TypeScript, React + Vite, Node/Express, PostgreSQL with Drizzle ORM. Clean architecture, server-side validation, and modular UI. Language for UI labels: Mongolian.
+
+Functional Requirements
+
+Categories & Constraints
+
+Supported categories:
+
+Ганцаарчилсан (Singles):
+
+Эрэгтэй ганцаарчилсан, Эмэгтэй ганцаарчилсан.
+
+Must check both age and gender before accepting registration.
+
+Хос (Pairs/Doubles):
+
+Дан эрэгтэй хос, Дан эмэгтэй хос, Холимог хос.
+
+Validate gender composition:
+
+Дан эрэгтэй = 2 male
+
+Дан эмэгтэй = 2 female
+
+Холимог = 1 male + 1 female
+
+Баг (Teams):
+
+Эрэгтэй баг, Эмэгтэй баг.
+
+All members must match the team gender (all male or all female).
+
+Age groups (Насны бүлэг): dynamic per tournament (admin-defined ranges, e.g., U13, U15, U18, 18+). Applies to all entry types; every entry must specify an age group. Singles must always pass age + gender checks. For teams/pairs, apply age rule as min/max of all members must fit the chosen age group.
+
+Multi-entry allowed: A registered athlete may join multiple categories as long as each category’s constraints are satisfied.
+
+Uniqueness:
+
+The same athlete cannot register twice in the exact same category + age group.
+
+Within a pair/team, the same person cannot appear twice.
+
+Registration Flow
+
+Step 1 (Admin): Define tournament, age groups, and fees per category (Team/Pair/Singles) – fees may differ per category and per age group.
+
+Step 2 (Participant base): Register athletes to the tournament roster (Тэмцээнд бүртгэгдсэн тамирчид). Only these athletes are selectable when creating Teams/Pairs or Singles entries.
+
+Step 3 (Entries):
+
+Singles: Choose athlete → select gender category (эр/эм) + age group → validate → create entry → apply fee for Singles.
+
+Pair: Create pair by selecting two tournament-registered athletes → select pair category (дан эр/дан эм/холимог) + age group → validate → create entry → apply fee for Pair.
+
+Team: Create team (team name required) → add N athletes (admin sets min/max at tournament level; default 3–5) → select team category (эрэгтэй/эмэгтэй) + age group → validate → create entry → apply fee for Team.
+
+Fees & Payment State
+
+Admin sets separate fees for Team, Pair, Singles (optionally per age group).
+
+Each entry stores fee_amount and payment_status (UNPAID/PAID).
+
+Allow admin to mark payments.
+
+Filtering UI (Оролцогчид)
+
+Provide a page “Оролцогчид” that lists all entries with filters:
+
+Төрөл: Баг / Хос / Ганцаарчилсан
+
+Хүйс: Эрэгтэй / Эмэгтэй / Холимог (for teams: Эрэгтэй/Эмэгтэй; for pairs: Дан эр/Дан эм/Холимог; for singles: Эрэгтэй/Эмэгтэй)
+
+Насны бүлэг
+
+Төлөв: Төлбөр төлсөн / Төлбөр төлөөгүй
+
+Only show athletes selectable for teams/pairs if they are already registered to the tournament roster. This must be enforced in UI (disable unregistered) and server validation.
+
+Data Model (Drizzle ORM)
+
+Create tables (suggested columns):
+
+tournaments (id, name, start_date, end_date)
+
+age_groups (id, tournament_id, label, min_age, max_age)
+
+athletes (id, first_name, last_name, gender: 'MALE'|'FEMALE', birthdate)
+
+tournament_roster (id, tournament_id, athlete_id)
+
+Only athletes in this table can appear in entries.
+
+fees (id, tournament_id, entry_type: 'TEAM'|'PAIR'|'SINGLES', age_group_id nullable, amount_mnt numeric)
+
+entries_singles (id, tournament_id, athlete_id, gender_cat: 'MALE'|'FEMALE', age_group_id, fee_amount, payment_status)
+
+Unique index on (tournament_id, athlete_id, gender_cat, age_group_id)
+
+pairs (id, tournament_id, age_group_id, pair_type: 'MALE'|'FEMALE'|'MIXED', fee_amount, payment_status)
+
+pair_members (id, pair_id, athlete_id)
+
+Must be exactly 2 rows per pair.
+
+Constraint: pair_type must match members’ genders (M/M, F/F, or M/F).
+
+Unique index on (pair_id, athlete_id)
+
+teams (id, tournament_id, name, team_type: 'MALE'|'FEMALE', age_group_id, fee_amount, payment_status)
+
+team_members (id, team_id, athlete_id)
+
+Unique index on (team_id, athlete_id)
+
+Constraint: all member genders must match team_type.
+
+Add helper views or computed columns for age = floor((today - birthdate)/365.25).
+
+Validation Rules (Server)
+
+Implement reusable validators:
+
+isInRoster(tournament_id, athlete_id) → boolean.
+
+ageInGroup(athlete, age_group) → min_age ≤ athlete.age ≤ max_age.
+
+Singles:
+
+Require roster; require ageInGroup; require athlete.gender matches gender_cat.
+
+Uniqueness per (tournament, athlete, gender_cat, age_group).
+
+Pair:
+
+Both athletes must be in roster; must be 2 distinct people.
+
+pair_type rules:
+
+MALE → both male
+
+FEMALE → both female
+
+MIXED → one male + one female
+
+Age group rule: both athletes must satisfy the selected age_group.
+
+Team:
+
+All members must be in roster and distinct.
+
+team_type rule: all members same gender (male team = all male, female team = all female).
+
+Age group rule: all members must satisfy the selected age_group.
+
+Multiple entries allowed across different categories, but prevent duplicate within the same category+age group.
+
+Always block selection of any athlete not in roster (both UI and server).
+
+API Endpoints (Express)
+
+GET /api/tournaments/:id/config → tournament, age_groups, fees.
+
+POST /api/tournaments/:id/age-groups → create/update age groups.
+
+POST /api/tournaments/:id/fees → upsert fees (entry_type, optional age_group_id, amount_mnt).
+
+POST /api/tournaments/:id/roster → add athlete(s) to roster.
+
+Singles
+
+POST /api/tournaments/:id/entries/singles → { athlete_id, gender_cat, age_group_id } → validate + create (store fee_amount from fees table snapshot).
+
+Pairs
+
+POST /api/tournaments/:id/entries/pairs → { athlete_id_1, athlete_id_2, pair_type, age_group_id } → validate + create.
+
+Teams
+
+POST /api/tournaments/:id/entries/teams → { name, team_type, age_group_id, member_ids[] } → validate + create.
+
+Payments
+
+POST /api/entries/:type/:entryId/pay → mark payment status to PAID.
+
+Listing / Filters (Оролцогчид)
+
+GET /api/tournaments/:id/entries with query params:
+
+entry_type in TEAM|PAIR|SINGLES
+
+gender in MALE|FEMALE|MIXED
+
+age_group_id
+
+payment_status in PAID|UNPAID
+
+Return normalized list with union of entries:
+
+For TEAM and PAIR include members; for SINGLES include athlete.
+
+UI (React + TS)
+
+Admin Config Screen
+
+Tabs: “Насны бүлэг”, “Хураамж”, “Тэмцээний бүртгэл (ростер)”
+
+Age group CRUD (label, min_age, max_age).
+
+Fees editor table: rows = entry_type × (optional) age_group; columns: “Төрөл”, “Насны бүлэг”, “Хураамж (₮)”.
+
+Roster: searchable athlete add; show badge “Тэмцээний бүртгэлтэй”.
+
+Entry Creation Screens
+
+Singles: select athlete (dropdown filtered by roster), select gender (эрэгтэй/эмэгтэй), select age group, validate, show fee, “Бүртгэх”.
+
+Pair: select two roster athletes (prevent selecting same person), select pair type (дан эр/дан эм/холимог), age group, validate, show fee, “Бүртгэх”.
+
+Team: team name, select team type (эрэгтэй/эмэгтэй), age group, add members (multi-select from roster), show live gender/age validation ticks, show fee, “Бүртгэх”.
+
+Оролцогчид (Listing + Filters)
+
+Filters:
+
+Төрөл: Баг / Хос / Ганцаарчилсан
+
+Хүйс: Эрэгтэй / Эмэгтэй / Холимог
+
+Насны бүлэг: dropdown
+
+Төлөв: Төлбөр төлсөн / Төлбөр төлөөгүй
+
+Cards/tables per entry with chips: төрлийн шошго, насны бүлэг, төлбөрийн төлөв. Team/Pair cards show member chips (gender icons). Singles show one athlete.
+
+Selection Guardrails
+
+Athlete pickers must load from /roster only.
+
+If not in roster, disable with tooltip: “Зөвхөн тэмцээнд бүртгэгдсэн тамирчид харагдана”.
+
+Business Logic Details
+
+Age computation: compute on server at validation time from birthdate and tournament start_date (if available) or today.
+
+Min/Max team size: expose tournament config team_min_size/team_max_size (defaults 3–5). Validate on team creation.
+
+Fee resolution: find matching fee by (tournament_id, entry_type, age_group_id). If not set for that age group, fall back to entry_type base fee; error if no fee exists.
+
+Transactions: create entries and members in a DB transaction.
+
+Deliverables
+
+Drizzle schema + migrations.
+
+Express routes with zod validation and robust error messages (Mongolian).
+
+React pages/components:
+
+Admin config (age groups, fees, roster)
+
+Entry creation (Singles/Pair/Team)
+
+Оролцогчид list with filters
+
+E2E happy-path tests for entry validations.
+
+Seed script with sample tournament, age groups, fees, athletes.
+
+UX Copy (Mongolian labels)
+
+“Насны бүлэг”, “Хураамж”, “Тэмцээний бүртгэл”, “Оролцогчид”
+
+“Баг”, “Хос”, “Ганцаарчилсан”
+
+“Эрэгтэй”, “Эмэгтэй”, “Холимог”
+
+“Төлбөр төлсөн”, “Төлбөр төлөөгүй”
+
+Validation messages:
+
+“Тамирчин тэмцээний бүртгэлд байх ёстой.”
+
+“Насны бүлгийн шалгуур хангаагүй.”
+
+“Хүйсийн ангилал таарахгүй байна.”
+
+“Ижил ангилалд давхар бүртгэхийг хориглоно.”
+
+“Багийн бүрэлдэхүүнд ижил хүн давхцаж байна.”
+
+“Хосын бүрэлдэхүүн буруу (дан эр/дан эм/холимог).”
+
+Build this end-to-end and ensure all validations are enforced both client-side and server-side.
