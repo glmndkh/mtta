@@ -592,15 +592,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Profile
   // -------------
   // Get user profile
-  app.get("/api/user/profile", async (req, res) => {
+  app.get("/api/user/profile", async (req: any, res) => {
     const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    if (!req.isAuthenticated()) {
+    if (!req.session?.userId) {
       console.log(`[${requestId}] Unauthorized profile fetch attempt`);
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const userId = req.user!.id;
+    const userId = req.session.userId;
 
     try {
       console.log(`[${requestId}] Fetching profile for user: ${userId}`);
@@ -622,15 +622,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user profile
-  app.put("/api/user/profile", async (req, res) => {
+  app.put("/api/user/profile", async (req: any, res) => {
     const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    if (!req.isAuthenticated()) {
+    if (!req.session?.userId) {
       console.log(`[${requestId}] Unauthorized profile update attempt`);
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const userId = req.user!.id;
+    const userId = req.session.userId;
     const startTime = Date.now();
 
     try {
