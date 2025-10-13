@@ -680,25 +680,7 @@ export default function Profile() {
                     ))}
                   </div>
                   <div className="flex flex-wrap items-center gap-4 mt-2 text-sm theme-text-secondary">
-                    {/* Contact info visible only in edit mode or to owner */}
-                    {(isEditMode || profile?.email) && profile?.email && (
-                      <div className="flex items-center gap-1">
-                        <Mail className="w-4 h-4" />
-                        <span>{profile.email}</span>
-                      </div>
-                    )}
-                    {(isEditMode || profile?.phone) && profile?.phone && (
-                      <div className="flex items-center gap-1">
-                        <Phone className="w-4 h-4" />
-                        <span>{profile.phone}</span>
-                      </div>
-                    )}
-                    {(isEditMode || profile?.province) && profile?.province && (
-                      <div className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        <span>{profile.province}{profile?.city && `, ${profile.city}`}</span>
-                      </div>
-                    )}
+                    {/* Contact info and club info are now completely hidden from display */}
                     {profile?.gender && (
                       <div className="flex items-center gap-1">
                         <User className="w-4 h-4" />
@@ -1058,6 +1040,18 @@ export default function Profile() {
                           disabled={!isEditMode}
                         />
                       </div>
+                      {isEditMode && (
+                        <div>
+                          <Label htmlFor="clubName" className="text-white">Клуб</Label>
+                          <Input
+                            id="clubName"
+                            value={profileData.clubName || ''}
+                            onChange={(e) => setProfileData(prev => ({ ...prev, clubName: e.target.value }))}
+                            placeholder="Клубын нэр"
+                            className="input-dark"
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <div>
@@ -1521,9 +1515,11 @@ export default function Profile() {
               <div>
                 <span className="font-semibold text-white">Утас:</span> {pendingProfileUpdate.phone || '—'}
               </div>
-              <div>
-                <span className="font-semibold text-white">Клуб:</span> {pendingProfileUpdate.clubName || '—'}
-              </div>
+              {pendingProfileUpdate.clubName && (
+                <div>
+                  <span className="font-semibold text-white">Клуб:</span> {pendingProfileUpdate.clubName}
+                </div>
+              )}
               <div>
                 <span className="font-semibold text-white">Байршил:</span> {pendingProfileUpdate.province || '—'}
                 {pendingProfileUpdate.city ? `, ${pendingProfileUpdate.city}` : ''}
