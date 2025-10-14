@@ -76,7 +76,7 @@ function Router() {
       <Route path="/events/:id" component={EventDetail} />
       <Route path="/about/branches" component={lazy(() => import("@/pages/about-branches"))} />
       <Route path="/about/intro" component={lazy(() => import("@/pages/about-intro"))} />
-      <Route path="/about/history" component={lazy(() => import("@/pages/about-history"))} />
+      <Route path="/about/history" component={lazy(() => import("@/pages/about-history").then(module => ({ default: module.default })))} />
       <Route path="/councils/coaches" component={lazy(() => import("@/pages/councils-coaches"))} />
       <Route path="/councils/athletes" component={lazy(() => import("@/pages/councils-athletes"))} />
       <Route path="/councils/veterans" component={lazy(() => import("@/pages/councils-veterans"))} />
