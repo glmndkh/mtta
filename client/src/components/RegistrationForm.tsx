@@ -547,6 +547,12 @@ const PaymentStep = ({
   onBack: () => void;
 }) => {
   const [paymentMethod, setPaymentMethod] = useState('');
+  
+  // Calculate total fee based on number of selected events
+  const totalFee = useMemo(() => {
+    const baseFeePerEvent = 50000; // 50,000₮ per event
+    return selectedEvent.length * baseFeePerEvent;
+  }, [selectedEvent]);
 
   const getEventLabel = (eventType: string): string => {
     try {
@@ -636,7 +642,7 @@ const PaymentStep = ({
             <Separator />
             <div className="flex justify-between font-medium">
               <span>Нийт төлбөр:</span>
-              <span className="text-green-600">0₮</span>
+              <span className="text-green-600">{totalFee.toLocaleString()}₮</span>
             </div>
           </div>
         </div>
@@ -910,13 +916,16 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
     enabled: !!tournament.id && !!isAuthenticated,
   });
 
-  // Initialize step based on authentication status
+  // Initialize step - allow registration without login by starting at profile
   useEffect(() => {
     if (isAuthenticated && user) {
+      // If authenticated, skip auth and start at profile
       setCurrentStep('profile');
       setCompletedSteps(prev => new Set([...prev, 'auth']));
     } else {
-      setCurrentStep('auth');
+      // If not authenticated, skip auth and go to profile to collect guest information
+      setCurrentStep('profile');
+      setCompletedSteps(prev => new Set([...prev, 'auth']));
     }
   }, [isAuthenticated, user]);
 
