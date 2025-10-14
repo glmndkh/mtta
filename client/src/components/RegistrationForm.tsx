@@ -928,7 +928,7 @@ const ConfirmationStep = ({
           <div className="bg-orange-50 dark:bg-orange-900/20 p-6 rounded-lg border border-orange-200 dark:border-orange-800">
             <div className="flex items-start gap-3 mb-4">
               <span className="text-2xl">{teamOrDoublesEvents.length === 1 ? '⏳' : '👉'}</span>
-              <div>
+              <div className="flex-1">
                 <h4 className="font-bold text-orange-800 dark:text-orange-200 text-lg mb-2">
                   {teamOrDoublesEvents.length === 1 ? '⏳ Та 2 секундын дараа баг/хос бүрдүүлэх хэсэг рүү автоматаар шилжих болно...' : 'Одоо багаа эсвэл хосоо бүрдүүлнэ үү!'}
                 </h4>
