@@ -45,6 +45,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import EventDetail from "@/pages/event-detail";
 import FloatingActionButton from "@/components/FloatingActionButton";
 import { lazy } from 'react';
+import TeamFormation from "@/pages/team-formation";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -59,6 +60,8 @@ function Router() {
       <Route path="/tournament/:id" component={TournamentPage} />
       <Route path="/tournament/:id/results" component={TournamentResults} />
       <Route path="/tournament/:id/full" component={TournamentFullInfo} />
+      <Route path="/tournament/:id/form-team" component={TeamFormation} />
+      <Route path="/tournament/:id/manage" component={TournamentManagement} />
       <Route path="/player/:id" component={PlayerProfilePage} />
       <Route path="/tournaments" component={TournamentsPage} />
       <Route path="/clubs" component={Clubs} />

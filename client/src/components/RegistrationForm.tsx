@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -713,6 +713,9 @@ const ConfirmationStep = ({
   selectedEvent: string[];
   onBack: () => void;
 }) => {
+  const [, setLocation] = useLocation();
+  const { user } = useAuth();
+  
   const getEventLabel = (eventType: string): string => {
     try {
       const parsed = JSON.parse(eventType);
@@ -810,6 +813,46 @@ const ConfirmationStep = ({
     }
   };
 
+  const getEventType = (eventType: string): 'singles' | 'doubles' | 'team' | null => {
+    try {
+      const parsed = JSON.parse(eventType);
+      
+      if (parsed.type === 'DOUBLES' || parsed.subType?.includes('DOUBLES')) {
+        return 'doubles';
+      }
+      if (parsed.type === 'TEAM' || parsed.subType?.includes('TEAM')) {
+        return 'team';
+      }
+      if (parsed.type === 'SINGLES' || parsed.subType?.includes('SINGLES')) {
+        return 'singles';
+      }
+      
+      // Legacy format
+      if (parsed.type === 'pair') return 'doubles';
+      if (parsed.type === 'team') return 'team';
+      if (parsed.type === 'individual') return 'singles';
+      
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+  // Check if any selected event is team or doubles
+  const hasTeamOrDoubles = selectedEvent.some(event => {
+    const type = getEventType(event);
+    return type === 'team' || type === 'doubles';
+  });
+
+  const teamOrDoublesEvents = selectedEvent.filter(event => {
+    const type = getEventType(event);
+    return type === 'team' || type === 'doubles';
+  });
+
+  const handleFormTeam = (event: string) => {
+    // Navigate to team formation page with tournament and event info
+    setLocation(`/tournament/${tournament.id}/form-team?event=${encodeURIComponent(event)}`);
+  };
 
   return (
     <Card className="max-w-2xl mx-auto">
@@ -867,11 +910,58 @@ const ConfirmationStep = ({
           </div>
         </div>
 
+        {/* Team/Doubles Formation Section */}
+        {hasTeamOrDoubles && (
+          <div className="bg-orange-50 dark:bg-orange-900/20 p-6 rounded-lg border border-orange-200 dark:border-orange-800">
+            <div className="flex items-start gap-3 mb-4">
+              <span className="text-2xl">👉</span>
+              <div>
+                <h4 className="font-bold text-orange-800 dark:text-orange-200 text-lg mb-2">
+                  Одоо багаа эсвэл хосоо бүрдүүлнэ үү!
+                </h4>
+                <p className="text-sm text-orange-700 dark:text-orange-300 mb-4">
+                  Та багийн болон хосын тэмцээнд бүртгүүлсэн байна. Бүртгүүлсэн тамирчдаас хамтрагч сонгон багаа бүрдүүлнэ үү.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {teamOrDoublesEvents.map((event, index) => {
+                const type = getEventType(event);
+                const label = getEventLabel(event);
+                const actionText = type === 'team' ? 'Баг бүрдүүлэх' : 'Хос бүрдүүлэх';
+                
+                return (
+                  <div key={index} className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-orange-300 dark:border-orange-700">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">{label}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {type === 'team' ? 'Багийн гишүүдээ сонгоно уу' : 'Хамтрагчаа сонгоно уу'}
+                        </p>
+                      </div>
+                      <Button 
+                        onClick={() => handleFormTeam(event)}
+                        className="bg-orange-600 hover:bg-orange-700 text-white"
+                      >
+                        {actionText}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
           <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
             Дараагийн алхамууд
           </h4>
           <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+            {hasTeamOrDoubles && (
+              <li>• Багаа эсвэл хосоо бүрдүүлсний дараа тэмцээнд орох бэлтгэл хангагдана</li>
+            )}
             <li>• Тэмцээний хуваарь гарахад мэдэгдэл ирнэ</li>
             <li>• Профайл хэсгээс бүртгэлийн статусаа хянаж болно</li>
             <li>• Асуудал гарвал зохион байгуулагчтай холбогдоно уу</li>

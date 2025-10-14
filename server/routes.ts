@@ -1893,6 +1893,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create team/pair from registered participants
+  app.post("/api/tournaments/:id/create-team", requireAuth, async (req: any, res) => {
+    try {
+      const { id: tournamentId } = req.params;
+      const { eventType, teamName, members } = req.body;
+
+      if (!tournamentId || !eventType || !members || !Array.isArray(members)) {
+        return res.status(400).json({ message: "Tournament ID, event type, and members are required" });
+      }
+
+      const userId = req.session.userId;
+
+      // Verify user is in the members list
+      if (!members.includes(userId)) {
+        return res.status(403).json({ message: "You must be a member of the team" });
+      }
+
+      // Get event type category
+      let eventCategory: 'doubles' | 'team' | null = null;
+      try {
+        const parsed = JSON.parse(eventType);
+        if (parsed.type === 'DOUBLES' || parsed.subType?.includes('DOUBLES') || parsed.type === 'pair') {
+          eventCategory = 'doubles';
+        } else if (parsed.type === 'TEAM' || parsed.subType?.includes('TEAM') || parsed.type === 'team') {
+          eventCategory = 'team';
+        }
+      } catch {
+        return res.status(400).json({ message: "Invalid event type" });
+      }
+
+      // Validate team name for team events
+      if (eventCategory === 'team' && !teamName?.trim()) {
+        return res.status(400).json({ message: "Team name is required for team events" });
+      }
+
+      // Validate member count
+      if (eventCategory === 'doubles' && members.length !== 2) {
+        return res.status(400).json({ message: "Doubles requires exactly 2 members" });
+      }
+
+      if (eventCategory === 'team' && (members.length < 2 || members.length > 5)) {
+        return res.status(400).json({ message: "Team requires 2-5 members" });
+      }
+
+      // Verify all members are registered for this event
+      const participants = await storage.getTournamentParticipants(tournamentId);
+      const registeredForEvent = participants.filter(
+        p => p.participationType === eventType && members.includes(p.playerId)
+      );
+
+      if (registeredForEvent.length !== members.length) {
+        return res.status(400).json({ 
+          message: "All members must be registered for this event" 
+        });
+      }
+
+      // Create the team
+      const team = await storage.createLeagueTeam({
+        tournamentId,
+        name: teamName?.trim() || `${eventCategory === 'doubles' ? 'Хос' : 'Баг'} - ${Date.now()}`,
+        entityType: 'tournament',
+      });
+
+      // Add members to the team
+      for (const memberId of members) {
+        const user = await storage.getUser(memberId);
+        const memberName = user ? `${user.firstName} ${user.lastName}` : 'Unknown Player';
+        
+        await storage.addPlayerToLeagueTeam(team.id, memberId, memberName);
+      }
+
+      res.json({ 
+        message: "Team created successfully", 
+        team,
+        eventType: eventCategory 
+      });
+    } catch (error) {
+      console.error("Error creating team:", error);
+      res.status(500).json({ 
+        message: error instanceof Error ? error.message : "Failed to create team" 
+      });
+    }
+  });
+
   app.post(
     "/api/admin/tournaments/:tournamentId/participants",
     requireAuth,
