@@ -26,7 +26,7 @@ import {
 const isActive = (current: string, href: string) =>
   href === "/" ? current === "/" : current.startsWith(href);
 
-const mttaLogo = "picture/mtta-remove.png.png";
+const mttaLogo = "/mtta-logo.png";
 
 
 type PlayerSearchResult = {
