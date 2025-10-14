@@ -80,11 +80,24 @@ export default function AdminTournamentGenerator() {
     team: [],
   });
 
-  // Current config being edited
-  const [currentConfig, setCurrentConfig] = useState({
+  // Current config being edited - separate for each type
+  const [currentSinglesConfig, setCurrentSinglesConfig] = useState({
     minAge: "",
     maxAge: "",
     gender: "male",
+  });
+
+  const [currentDoublesConfig, setCurrentDoublesConfig] = useState({
+    minAge: "",
+    maxAge: "",
+    gender: "mixed",
+    subType: "",
+  });
+
+  const [currentTeamConfig, setCurrentTeamConfig] = useState({
+    minAge: "",
+    maxAge: "",
+    gender: "mixed",
     subType: "",
   });
 
@@ -832,19 +845,19 @@ export default function AdminTournamentGenerator() {
                           <div className="grid grid-cols-3 gap-2">
                             <Input
                               type="number"
-                              value={currentConfig.minAge}
-                              onChange={(e) => setCurrentConfig(prev => ({ ...prev, minAge: e.target.value }))}
+                              value={currentSinglesConfig.minAge}
+                              onChange={(e) => setCurrentSinglesConfig(prev => ({ ...prev, minAge: e.target.value }))}
                               placeholder="Доод нас"
                             />
                             <Input
                               type="number"
-                              value={currentConfig.maxAge}
-                              onChange={(e) => setCurrentConfig(prev => ({ ...prev, maxAge: e.target.value }))}
+                              value={currentSinglesConfig.maxAge}
+                              onChange={(e) => setCurrentSinglesConfig(prev => ({ ...prev, maxAge: e.target.value }))}
                               placeholder="Дээд нас"
                             />
                             <Select 
-                              value={currentConfig.gender} 
-                              onValueChange={(value) => setCurrentConfig(prev => ({ ...prev, gender: value }))}
+                              value={currentSinglesConfig.gender} 
+                              onValueChange={(value) => setCurrentSinglesConfig(prev => ({ ...prev, gender: value }))}
                             >
                               <SelectTrigger>
                                 <SelectValue />
@@ -860,12 +873,12 @@ export default function AdminTournamentGenerator() {
                             type="button"
                             size="sm"
                             onClick={() => {
-                              const newConfig = { ...currentConfig };
+                              const newConfig = { ...currentSinglesConfig };
                               setEventConfigs(prev => ({
                                 ...prev,
                                 singles: [...prev.singles, newConfig]
                               }));
-                              setCurrentConfig({ minAge: "", maxAge: "", gender: "male", subType: "" });
+                              setCurrentSinglesConfig({ minAge: "", maxAge: "", gender: "male" });
                             }}
                           >
                             <Plus className="h-4 w-4 mr-2" />
@@ -901,13 +914,13 @@ export default function AdminTournamentGenerator() {
                         <div className="space-y-3">
                           <div className="grid grid-cols-3 gap-2">
                             <Select 
-                              value={currentConfig.subType} 
+                              value={currentDoublesConfig.subType} 
                               onValueChange={(value) => {
                                 // Auto-set gender based on doubles type
                                 let gender = "mixed";
                                 if (value === "MEN_DOUBLES") gender = "male";
                                 if (value === "WOMEN_DOUBLES") gender = "female";
-                                setCurrentConfig(prev => ({ ...prev, subType: value, gender }));
+                                setCurrentDoublesConfig(prev => ({ ...prev, subType: value, gender }));
                               }}
                             >
                               <SelectTrigger>
@@ -921,14 +934,14 @@ export default function AdminTournamentGenerator() {
                             </Select>
                             <Input
                               type="number"
-                              value={currentConfig.minAge}
-                              onChange={(e) => setCurrentConfig(prev => ({ ...prev, minAge: e.target.value }))}
+                              value={currentDoublesConfig.minAge}
+                              onChange={(e) => setCurrentDoublesConfig(prev => ({ ...prev, minAge: e.target.value }))}
                               placeholder="Доод нас"
                             />
                             <Input
                               type="number"
-                              value={currentConfig.maxAge}
-                              onChange={(e) => setCurrentConfig(prev => ({ ...prev, maxAge: e.target.value }))}
+                              value={currentDoublesConfig.maxAge}
+                              onChange={(e) => setCurrentDoublesConfig(prev => ({ ...prev, maxAge: e.target.value }))}
                               placeholder="Дээд нас"
                             />
                           </div>
@@ -937,16 +950,16 @@ export default function AdminTournamentGenerator() {
                             size="sm"
                             onClick={() => {
                               const newConfig = { 
-                                minAge: currentConfig.minAge,
-                                maxAge: currentConfig.maxAge,
-                                gender: currentConfig.gender,
-                                subType: currentConfig.subType
+                                minAge: currentDoublesConfig.minAge,
+                                maxAge: currentDoublesConfig.maxAge,
+                                gender: currentDoublesConfig.gender,
+                                subType: currentDoublesConfig.subType
                               };
                               setEventConfigs(prev => ({
                                 ...prev,
                                 doubles: [...prev.doubles, newConfig]
                               }));
-                              setCurrentConfig({ minAge: "", maxAge: "", gender: "male", subType: "" });
+                              setCurrentDoublesConfig({ minAge: "", maxAge: "", gender: "mixed", subType: "" });
                             }}
                           >
                             <Plus className="h-4 w-4 mr-2" />
@@ -982,13 +995,13 @@ export default function AdminTournamentGenerator() {
                         <div className="space-y-3">
                           <div className="grid grid-cols-3 gap-2">
                             <Select 
-                              value={currentConfig.subType} 
+                              value={currentTeamConfig.subType} 
                               onValueChange={(value) => {
                                 // Auto-set gender based on team type
                                 let gender = "mixed";
                                 if (value === "MEN_TEAM") gender = "male";
                                 if (value === "WOMEN_TEAM") gender = "female";
-                                setCurrentConfig(prev => ({ ...prev, subType: value, gender }));
+                                setCurrentTeamConfig(prev => ({ ...prev, subType: value, gender }));
                               }}
                             >
                               <SelectTrigger>
@@ -1002,14 +1015,14 @@ export default function AdminTournamentGenerator() {
                             </Select>
                             <Input
                               type="number"
-                              value={currentConfig.minAge}
-                              onChange={(e) => setCurrentConfig(prev => ({ ...prev, minAge: e.target.value }))}
+                              value={currentTeamConfig.minAge}
+                              onChange={(e) => setCurrentTeamConfig(prev => ({ ...prev, minAge: e.target.value }))}
                               placeholder="Доод нас"
                             />
                             <Input
                               type="number"
-                              value={currentConfig.maxAge}
-                              onChange={(e) => setCurrentConfig(prev => ({ ...prev, maxAge: e.target.value }))}
+                              value={currentTeamConfig.maxAge}
+                              onChange={(e) => setCurrentTeamConfig(prev => ({ ...prev, maxAge: e.target.value }))}
                               placeholder="Дээд нас"
                             />
                           </div>
@@ -1018,16 +1031,16 @@ export default function AdminTournamentGenerator() {
                             size="sm"
                             onClick={() => {
                               const newConfig = { 
-                                minAge: currentConfig.minAge,
-                                maxAge: currentConfig.maxAge,
-                                gender: currentConfig.gender,
-                                subType: currentConfig.subType
+                                minAge: currentTeamConfig.minAge,
+                                maxAge: currentTeamConfig.maxAge,
+                                gender: currentTeamConfig.gender,
+                                subType: currentTeamConfig.subType
                               };
                               setEventConfigs(prev => ({
                                 ...prev,
                                 team: [...prev.team, newConfig]
                               }));
-                              setCurrentConfig({ minAge: "", maxAge: "", gender: "male", subType: "" });
+                              setCurrentTeamConfig({ minAge: "", maxAge: "", gender: "mixed", subType: "" });
                             }}
                           >
                             <Plus className="h-4 w-4 mr-2" />
