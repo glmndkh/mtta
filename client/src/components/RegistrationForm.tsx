@@ -854,75 +854,74 @@ const ConfirmationStep = ({
     setLocation(`/tournament/${tournament.id}/form-team?event=${encodeURIComponent(event)}`);
   };
 
-  // Removed auto-redirect - users will manually click the team formation button
-
   return (
     <Card className="max-w-2xl mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CheckCircle className="w-5 h-5 text-green-600" />
-          5-р алхам: Баталгаажуулалт
+          Бүртгэл амжилттай!
         </CardTitle>
         <CardDescription>
-          Таны бүртгэл амжилттай хийгдлээ
+          Таны тэмцээнд оролцох бүртгэл амжилттай хийгдлээ
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="text-center py-8">
+        <div className="text-center py-6">
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <h3 className="text-2xl font-bold text-green-800 dark:text-green-200 mb-2">
-            Бүртгэл амжилттай!
+            Амжилттай бүртгүүллээ!
           </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
             Таны тэмцээнд оролцох бүртгэл амжилттай хийгдлээ
           </p>
+        </div>
 
-          <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg border border-green-200 dark:border-green-800">
-            <div className="space-y-3 text-left">
-              <div className="flex justify-between">
-                <span className="font-medium">Тэмцээн:</span>
-                <span>{tournament.name}</span>
-              </div>
-              <div className="flex flex-col gap-2">
-                <span className="font-medium">Бүртгэгдсэн төрлүүд:</span>
-                <div className="space-y-2">
-                  {selectedEvent.map((event, index) => (
-                    <div key={index} className="bg-green-100 border border-green-300 rounded-lg p-3">
-                      <div className="font-medium text-green-800 mb-1">
-                        {getEventLabel(event)}
-                      </div>
-                      {getEventDetails(event) && (
-                        <div className="text-sm text-green-600">
-                          {getEventDetails(event)}
-                        </div>
-                      )}
+        <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg border border-green-200 dark:border-green-800">
+          <div className="space-y-3 text-left">
+            <div className="flex justify-between">
+              <span className="font-medium">Тэмцээн:</span>
+              <span>{tournament.name}</span>
+            </div>
+            <div className="flex flex-col gap-2">
+              <span className="font-medium">Бүртгэгдсэн төрлүүд:</span>
+              <div className="space-y-2">
+                {selectedEvent.map((event, index) => (
+                  <div key={index} className="bg-green-100 border border-green-300 rounded-lg p-3">
+                    <div className="font-medium text-green-800 mb-1">
+                      {getEventLabel(event)}
                     </div>
-                  ))}
-                </div>
+                    {getEventDetails(event) && (
+                      <div className="text-sm text-green-600">
+                        {getEventDetails(event)}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Бүртгэгдсэн:</span>
-                <span>{new Date().toLocaleDateString('mn-MN')}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Статус:</span>
-                <Badge className="bg-green-600 text-white">Бүртгэгдсэн</Badge>
-              </div>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium">Бүртгэгдсэн:</span>
+              <span>{new Date().toLocaleDateString('mn-MN')}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium">Статус:</span>
+              <Badge className="bg-green-600 text-white">Бүртгэгдсэн</Badge>
             </div>
           </div>
         </div>
 
         {/* Team/Doubles Formation Section */}
         {hasTeamOrDoubles && (
-          <div className="bg-orange-50 dark:bg-orange-900/20 p-6 rounded-lg border border-orange-200 dark:border-orange-800">
+          <div className="bg-blue-600 text-white p-6 rounded-lg border-2 border-blue-700">
             <div className="flex items-start gap-3 mb-4">
-              <span className="text-2xl">👉</span>
+              <span className="text-3xl">👥</span>
               <div className="flex-1">
-                <h4 className="font-bold text-orange-800 dark:text-orange-200 text-lg mb-2">
-                  Одоо багаа эсвэл хосоо бүрдүүлнэ үү!
+                <h4 className="font-bold text-xl mb-2">
+                  Дараагийн алхам: Багаа / Хосоо бүрдүүлэх
                 </h4>
-                <p className="text-sm text-orange-700 dark:text-orange-300 mb-4">
-                  Та багийн болон хосын тэмцээнд бүртгүүлсэн байна. Бүртгүүлсэн тамирчдаас хамтрагч сонгон багаа бүрдүүлнэ үү.
+                <p className="text-sm text-blue-100 mb-4">
+                  Та багийн болон/эсвэл хосын тэмцээнд бүртгүүлсэн байна. 
+                  Тэмцээнд оролцохын тулд багийн гишүүд эсвэл хамтрагчаа сонгоно уу.
                 </p>
               </div>
             </div>
@@ -932,19 +931,23 @@ const ConfirmationStep = ({
                 const type = getEventType(event);
                 const label = getEventLabel(event);
                 const actionText = type === 'team' ? 'Баг бүрдүүлэх' : 'Хос бүрдүүлэх';
+                const description = type === 'team' 
+                  ? '3-4 гишүүнтэй баг үүсгэнэ үү' 
+                  : 'Хамтрагчаа сонгож хос бүрдүүлнэ үү';
                 
                 return (
-                  <div key={index} className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-orange-300 dark:border-orange-700">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-gray-100">{label}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {type === 'team' ? 'Багийн гишүүдээ сонгоно уу' : 'Хамтрагчаа сонгоно уу'}
+                  <div key={index} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-900 dark:text-gray-100 text-lg">{label}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          {description}
                         </p>
                       </div>
                       <Button 
                         onClick={() => handleFormTeam(event)}
-                        className="bg-orange-600 hover:bg-orange-700 text-white"
+                        size="lg"
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg"
                       >
                         {actionText}
                       </Button>
@@ -956,13 +959,14 @@ const ConfirmationStep = ({
           </div>
         )}
 
-        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-          <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
+        <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+          <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
+            <span>ℹ️</span>
             Дараагийн алхамууд
           </h4>
-          <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+          <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
             {hasTeamOrDoubles && (
-              <li>• Багаа эсвэл хосоо бүрдүүлсний дараа тэмцээнд орох бэлтгэл хангагдана</li>
+              <li>• Багаа эсвэл хосоо бүрдүүлсний дараа тэмцээнд орох бэлтгэл бүрэн хангагдана</li>
             )}
             <li>• Тэмцээний хуваарь гарахад мэдэгдэл ирнэ</li>
             <li>• Профайл хэсгээс бүртгэлийн статусаа хянаж болно</li>
@@ -970,9 +974,15 @@ const ConfirmationStep = ({
           </ul>
         </div>
 
-        <div className="text-center">
+        <div className="flex justify-between items-center pt-4 border-t">
           <Button onClick={onBack} variant="outline">
             Буцах
+          </Button>
+          <Button 
+            onClick={() => setLocation(`/tournament/${tournament.id}/full`)}
+            variant="default"
+          >
+            Тэмцээн рүү буцах
           </Button>
         </div>
       </CardContent>

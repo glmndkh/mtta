@@ -1910,31 +1910,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "You must be a member of the team" });
       }
 
-      // Get event type category
+      // Parse event type and extract category and gender requirements
       let eventCategory: 'doubles' | 'team' | null = null;
+      let requiredGender: 'male' | 'female' | 'mixed' | null = null;
+      let minAge: number | undefined;
+      let maxAge: number | undefined;
+
       try {
         const parsed = JSON.parse(eventType);
+        
+        // Determine category
         if (parsed.type === 'DOUBLES' || parsed.subType?.includes('DOUBLES') || parsed.type === 'pair') {
           eventCategory = 'doubles';
         } else if (parsed.type === 'TEAM' || parsed.subType?.includes('TEAM') || parsed.type === 'team') {
           eventCategory = 'team';
         }
+
+        // Determine gender requirements
+        if (parsed.subType?.includes('MEN')) {
+          requiredGender = 'male';
+        } else if (parsed.subType?.includes('WOMEN')) {
+          requiredGender = 'female';
+        } else if (parsed.subType?.includes('MIXED')) {
+          requiredGender = 'mixed';
+        } else if (parsed.gender) {
+          requiredGender = parsed.gender;
+        }
+
+        // Extract age constraints
+        minAge = parsed.minAge;
+        maxAge = parsed.maxAge;
+
       } catch {
-        return res.status(400).json({ message: "Invalid event type" });
+        return res.status(400).json({ message: "Invalid event type format" });
+      }
+
+      if (!eventCategory) {
+        return res.status(400).json({ message: "Could not determine event category" });
       }
 
       // Validate team name for team events
       if (eventCategory === 'team' && !teamName?.trim()) {
-        return res.status(400).json({ message: "Team name is required for team events" });
+        return res.status(400).json({ message: "Багийн нэр заавал оруулна уу" });
       }
 
       // Validate member count
-      if (eventCategory === 'doubles' && members.length !== 2) {
-        return res.status(400).json({ message: "Doubles requires exactly 2 members" });
+      const minMembers = eventCategory === 'doubles' ? 2 : 4;
+      const maxMembers = eventCategory === 'doubles' ? 2 : 5;
+
+      if (members.length < minMembers) {
+        return res.status(400).json({ 
+          message: eventCategory === 'doubles' 
+            ? "Хос нь яг 2 тамирчнаас бүрдэх ёстой" 
+            : `Баг нь хамгийн багадаа ${minMembers} гишүүнтэй байх ёстой`
+        });
       }
 
-      if (eventCategory === 'team' && (members.length < 2 || members.length > 5)) {
-        return res.status(400).json({ message: "Team requires 2-5 members" });
+      if (members.length > maxMembers) {
+        return res.status(400).json({ 
+          message: `Хамгийн ихдээ ${maxMembers} гишүүн сонгох боломжтой`
+        });
+      }
+
+      // Check for duplicate members
+      const uniqueMembers = new Set(members);
+      if (uniqueMembers.size !== members.length) {
+        return res.status(400).json({ message: "Давхардсан гишүүд байна" });
       }
 
       // Verify all members are registered for this event
@@ -1945,8 +1986,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (registeredForEvent.length !== members.length) {
         return res.status(400).json({ 
-          message: "All members must be registered for this event" 
+          message: "Бүх гишүүд энэ төрөлд бүртгүүлсэн байх ёстой" 
         });
+      }
+
+      // Validate gender requirements for non-mixed events
+      if (requiredGender && requiredGender !== 'mixed') {
+        for (const memberId of members) {
+          const user = await storage.getUser(memberId);
+          if (user && user.gender !== requiredGender) {
+            return res.status(400).json({ 
+              message: `Бүх гишүүд ${requiredGender === 'male' ? 'эрэгтэй' : 'эмэгтэй'} байх ёстой`
+            });
+          }
+        }
+      }
+
+      // Validate age requirements if specified
+      if (minAge !== undefined || maxAge !== undefined) {
+        const tournament = await storage.getTournament(tournamentId);
+        if (!tournament) {
+          return res.status(404).json({ message: "Тэмцээн олдсонгүй" });
+        }
+
+        const tournamentStartDate = new Date(tournament.startDate);
+
+        for (const memberId of members) {
+          const user = await storage.getUser(memberId);
+          if (!user || !user.dateOfBirth) continue;
+
+          const birthDate = new Date(user.dateOfBirth);
+          let age = tournamentStartDate.getFullYear() - birthDate.getFullYear();
+          const monthDiff = tournamentStartDate.getMonth() - birthDate.getMonth();
+          if (monthDiff < 0 || (monthDiff === 0 && tournamentStartDate.getDate() < birthDate.getDate())) {
+            age--;
+          }
+
+          if (minAge !== undefined && age < minAge) {
+            return res.status(400).json({ 
+              message: `Бүх гишүүд хамгийн багадаа ${minAge} настай байх ёстой`
+            });
+          }
+
+          if (maxAge !== undefined && age > maxAge) {
+            return res.status(400).json({ 
+              message: `Бүх гишүүд хамгийн ихдээ ${maxAge} настай байх ёстой`
+            });
+          }
+        }
+      }
+
+      // Check if team/pair already exists for this event (prevent duplicates)
+      const existingTeams = await storage.getLeagueTeams(tournamentId);
+      const memberSet = new Set(members.sort());
+      
+      for (const existingTeam of existingTeams) {
+        const existingMembers = existingTeam.players?.map((p: any) => p.playerId).sort() || [];
+        const existingSet = new Set(existingMembers);
+        
+        if (memberSet.size === existingSet.size && 
+            [...memberSet].every(m => existingSet.has(m))) {
+          return res.status(400).json({ 
+            message: "Энэ гишүүдтэй баг/хос аль хэдийн үүссэн байна"
+          });
+        }
       }
 
       // Create the team
