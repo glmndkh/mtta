@@ -26,11 +26,13 @@ import {
 const isActive = (current: string, href: string) =>
   href === "/" ? current === "/" : current.startsWith(href);
 
-const mttaLogo = "/mtta-logo.png";
+const mttaLogo = "picture/mtta-remove.png.png";
+
 
 type PlayerSearchResult = {
   id: string;
   userId: string;
+
   firstName: string | null;
   lastName: string | null;
   rank: string | null;
