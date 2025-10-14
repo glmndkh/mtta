@@ -886,21 +886,27 @@ export default function AdminTournamentGenerator() {
                           </Button>
                           {eventConfigs.singles.length > 0 && (
                             <div className="flex flex-wrap gap-2 mt-2">
-                              {eventConfigs.singles.map((config, idx) => (
-                                <div key={idx} className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-                                  {config.minAge && config.maxAge ? `${config.minAge}-${config.maxAge}` : config.minAge ? `${config.minAge}+` : `U${config.maxAge}`} {config.gender === 'male' ? 'эрэгтэй' : config.gender === 'female' ? 'эмэгтэй' : 'холимог'}
-                                  <button
-                                    type="button"
-                                    onClick={() => setEventConfigs(prev => ({
-                                      ...prev,
-                                      singles: prev.singles.filter((_, i) => i !== idx)
-                                    }))}
-                                    className="ml-2"
-                                  >
-                                    <X className="h-3 w-3" />
-                                  </button>
-                                </div>
-                              ))}
+                              {eventConfigs.singles.map((config, idx) => {
+                                const genderLabel = config.gender === 'male' ? 'Эрэгтэй' : config.gender === 'female' ? 'Эмэгтэй' : 'Холимог';
+                                const ageRange = config.minAge && config.maxAge ? `${config.minAge}-${config.maxAge} нас` : 
+                                                config.minAge ? `${config.minAge}+ нас` : 
+                                                config.maxAge ? `${config.maxAge} нас хүртэл` : '';
+                                return (
+                                  <div key={idx} className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                                    {genderLabel}-ганцаарчилсан {ageRange}
+                                    <button
+                                      type="button"
+                                      onClick={() => setEventConfigs(prev => ({
+                                        ...prev,
+                                        singles: prev.singles.filter((_, i) => i !== idx)
+                                      }))}
+                                      className="ml-2"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
                         </div>
