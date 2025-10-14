@@ -345,6 +345,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       (req as any).session.userId = user.id;
       (req as any).session.user = user;
 
+      // Ensure session is saved before responding
+      await new Promise<void>((resolve, reject) => {
+        (req as any).session.save((err: any) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+
       const { password: _pw, ...userResponse } = user;
       res.json({ message: "Амжилттай нэвтэрлээ", user: userResponse });
     } catch (e) {
@@ -1659,7 +1667,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Registration endpoints
   app.post("/api/registrations", requireAuth, async (req: any, res) => {
     try {
-      if (!req.isAuthenticated()) {
+      const userId = req.session?.userId;
+      
+      if (!userId) {
         return res.status(401).json({ message: "Нэвтрэх шаардлагатай" });
       }
 
@@ -1672,19 +1682,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Тэмцээний ID болон ангилал шаардлагатай" });
       }
 
-      // Check if already registered for any of these categories
-      const existing = await db
-        .select()
-        .from(tournamentParticipants)
-        .where(
-          and(
-            eq(tournamentParticipants.tournamentId, tournamentId),
-            eq(tournamentParticipants.playerId, req.user!.id)
-          )
-        );
+      // Get the player for this user
+      const player = await storage.getPlayerByUserId(userId);
+      if (!player) {
+        // Create player if doesn't exist
+        const user = await storage.getUser(userId);
+        if (!user) {
+          return res.status(404).json({ message: "Хэрэглэгч олдсонгүй" });
+        }
+        
+        const newPlayer = await storage.createPlayer({
+          userId,
+          dateOfBirth: user.dateOfBirth,
+          rank: null,
+          clubId: null,
+        });
+        
+        if (!newPlayer) {
+          return res.status(500).json({ message: "Тоглогчийн профайл үүсгэж чадсангүй" });
+        }
+      }
 
-      // Filter out categories already registered
-      const existingTypes = existing.map(e => e.participationType);
+      const playerId = player?.id || (await storage.getPlayerByUserId(userId))?.id;
+      if (!playerId) {
+        return res.status(500).json({ message: "Тоглогчийн мэдээлэл олдсонгүй" });
+      }
+
+      // Check if already registered for any of these categories
+      const existing = await storage.getPlayerTournamentRegistrations(playerId);
+
+      // Filter out categories already registered for this tournament
+      const existingForTournament = existing.filter(e => e.tournamentId === tournamentId);
+      const existingTypes = existingForTournament.map(e => e.participationType);
       const newCategories = categoriesToRegister.filter(
         (cat: string) => !existingTypes.includes(cat)
       );
@@ -1696,18 +1725,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Register participant for each new category
-      const participants = await db
-        .insert(tournamentParticipants)
-        .values(
-          newCategories.map((cat: string) => ({
-            tournamentId,
-            playerId: req.user!.id,
-            participationType: cat,
-          }))
-        )
-        .returning();
+      const registrations = [];
+      for (const cat of newCategories) {
+        const registration = await storage.registerForTournament({
+          tournamentId,
+          playerId,
+          participationType: cat,
+        });
+        registrations.push(registration);
+      }
 
-      res.json(participants);
+      res.json(registrations);
     } catch (error: any) {
       console.error("Registration error:", error);
       res.status(500).json({ message: "Бүртгэлд алдаа гарлаа" });
