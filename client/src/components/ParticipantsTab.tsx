@@ -52,6 +52,95 @@ export function ParticipantsTab({ tournamentId }: ParticipantsTabProps) {
     return cat?.label || category;
   };
 
+  const getEventLabel = (eventType: string): string => {
+    try {
+      const parsed = JSON.parse(eventType);
+
+      // SUBTYPE_LABEL mapping
+      const SUBTYPE_LABEL: Record<string, string> = {
+        'MEN_SINGLES': 'Эрэгтэй ганцаарчилсан',
+        'WOMEN_SINGLES': 'Эмэгтэй ганцаарчилсан',
+        'MEN_DOUBLES': 'Дан эрэгтэй хос',
+        'WOMEN_DOUBLES': 'Дан эмэгтэй хос',
+        'MIXED_DOUBLES': 'Холимог хос',
+        'MEN_TEAM': 'Эрэгтэй баг',
+        'WOMEN_TEAM': 'Эмэгтэй баг',
+        'MIXED_TEAM': 'Холимог баг',
+      };
+
+      // Handle new detailed structure with subType
+      if (parsed.subType && SUBTYPE_LABEL[parsed.subType]) {
+        let label = SUBTYPE_LABEL[parsed.subType];
+
+        // Add age range if available
+        if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
+          label += ` (${parsed.minAge}–${parsed.maxAge} нас)`;
+        } else if (parsed.minAge !== undefined) {
+          label += ` (${parsed.minAge}+ нас)`;
+        } else if (parsed.maxAge !== undefined) {
+          label += ` (${parsed.maxAge} нас хүртэл)`;
+        }
+
+        return label;
+      }
+
+      // Handle division label
+      if (parsed.division) {
+        return parsed.division;
+      }
+
+      // Generate label from type and gender
+      if (parsed.type && parsed.gender) {
+        let typeLabel = '';
+
+        if (parsed.type === 'individual') {
+          typeLabel = parsed.gender === 'male' ? 'Эрэгтэй ганцаарчилсан' : 'Эмэгтэй ганцаарчилсан';
+        } else if (parsed.type === 'pair') {
+          typeLabel = parsed.gender === 'male' ? 'Дан эрэгтэй хос' : 'Дан эмэгтэй хос';
+        } else if (parsed.type === 'team') {
+          typeLabel = parsed.gender === 'male' ? 'Эрэгтэй баг' : 'Эмэгтэй баг';
+        }
+
+        // Add age range
+        if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
+          typeLabel += ` (${parsed.minAge}–${parsed.maxAge} нас)`;
+        } else if (parsed.minAge !== undefined) {
+          typeLabel += ` (${parsed.minAge}+ нас)`;
+        } else if (parsed.maxAge !== undefined) {
+          typeLabel += ` (${parsed.maxAge} нас хүртэл)`;
+        }
+
+        return typeLabel;
+      }
+
+      // Fallback to getCategoryLabel
+      return getCategoryLabel(eventType);
+    } catch {
+      // If not JSON, try legacy format mappings first
+      const LEGACY_MAPPINGS: Record<string, string> = {
+        'men_singles': 'Эрэгтэй ганцаарчилсан',
+        'women_singles': 'Эмэгтэй ганцаарчилсан',
+        'singles_men': 'Эрэгтэй ганцаарчилсан',
+        'singles_women': 'Эмэгтэй ганцаарчилсан',
+        'men_doubles': 'Дан эрэгтэй хос',
+        'women_doubles': 'Дан эмэгтэй хос',
+        'doubles_men': 'Дан эрэгтэй хос',
+        'doubles_women': 'Дан эмэгтэй хос',
+        'mixed_doubles': 'Холимог хос',
+        'men_team': 'Эрэгтэй баг',
+        'women_team': 'Эмэгтэй баг',
+        'mixed_team': 'Холимог баг',
+      };
+      
+      if (LEGACY_MAPPINGS[eventType]) {
+        return LEGACY_MAPPINGS[eventType];
+      }
+      
+      // Final fallback to category label
+      return getCategoryLabel(eventType);
+    }
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -158,7 +247,7 @@ export function ParticipantsTab({ tournamentId }: ParticipantsTabProps) {
                   </div>
 
                   <Badge variant="outline">
-                    {getCategoryLabel(participant.participationType)}
+                    {getEventLabel(participant.participationType)}
                   </Badge>
                 </div>
               ))}

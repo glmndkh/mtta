@@ -137,20 +137,81 @@ export default function ResultsRankingsPage() {
 
   const getParticipationChips = (types: string[] = []) => {
     return types.map(type => {
-      switch (type) {
-        case 'men_singles':
-          return { label: 'MS', color: 'bg-blue-600' };
-        case 'women_singles':
-          return { label: 'WS', color: 'bg-pink-600' };
-        case 'men_doubles':
-          return { label: 'MD', color: 'bg-green-600' };
-        case 'women_doubles':
-          return { label: 'WD', color: 'bg-purple-600' };
-        case 'mixed_doubles':
-          return { label: 'XD', color: 'bg-orange-600' };
-        default:
-          return { label: type.slice(0, 2).toUpperCase(), color: 'bg-gray-600' };
+      // Try to parse JSON to get the subType
+      try {
+        const parsed = JSON.parse(type);
+        
+        // Map subTypes to labels and colors
+        const SUBTYPE_CONFIG: Record<string, { label: string; color: string }> = {
+          'MEN_SINGLES': { label: 'Эрэгтэй ганцаарчилсан', color: 'bg-blue-600' },
+          'WOMEN_SINGLES': { label: 'Эмэгтэй ганцаарчилсан', color: 'bg-pink-600' },
+          'MEN_DOUBLES': { label: 'Дан эрэгтэй хос', color: 'bg-green-600' },
+          'WOMEN_DOUBLES': { label: 'Дан эмэгтэй хос', color: 'bg-purple-600' },
+          'MIXED_DOUBLES': { label: 'Холимог хос', color: 'bg-orange-600' },
+          'MEN_TEAM': { label: 'Эрэгтэй баг', color: 'bg-indigo-600' },
+          'WOMEN_TEAM': { label: 'Эмэгтэй баг', color: 'bg-rose-600' },
+          'MIXED_TEAM': { label: 'Холимог баг', color: 'bg-teal-600' },
+        };
+
+        if (parsed.subType && SUBTYPE_CONFIG[parsed.subType]) {
+          let label = SUBTYPE_CONFIG[parsed.subType].label;
+          
+          // Add age range if available
+          if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
+            label += ` (${parsed.minAge}–${parsed.maxAge})`;
+          }
+          
+          return { 
+            label, 
+            color: SUBTYPE_CONFIG[parsed.subType].color 
+          };
+        }
+
+        // Generate label from type and gender for old format
+        if (parsed.type && parsed.gender) {
+          let label = '';
+          let color = 'bg-gray-600';
+
+          if (parsed.type === 'individual') {
+            label = parsed.gender === 'male' ? 'Эрэгтэй ганцаарчилсан' : 'Эмэгтэй ганцаарчилсан';
+            color = parsed.gender === 'male' ? 'bg-blue-600' : 'bg-pink-600';
+          } else if (parsed.type === 'pair') {
+            label = parsed.gender === 'male' ? 'Дан эрэгтэй хос' : 'Дан эмэгтэй хос';
+            color = parsed.gender === 'male' ? 'bg-green-600' : 'bg-purple-600';
+          } else if (parsed.type === 'team') {
+            label = parsed.gender === 'male' ? 'Эрэгтэй баг' : 'Эмэгтэй баг';
+            color = parsed.gender === 'male' ? 'bg-indigo-600' : 'bg-rose-600';
+          }
+
+          if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
+            label += ` (${parsed.minAge}–${parsed.maxAge})`;
+          }
+
+          return { label, color };
+        }
+      } catch {
+        // Not JSON, try legacy format with full Mongolian labels
+        const LEGACY_MAPPINGS: Record<string, { label: string; color: string }> = {
+          'men_singles': { label: 'Эрэгтэй ганцаарчилсан', color: 'bg-blue-600' },
+          'women_singles': { label: 'Эмэгтэй ганцаарчилсан', color: 'bg-pink-600' },
+          'singles_men': { label: 'Эрэгтэй ганцаарчилсан', color: 'bg-blue-600' },
+          'singles_women': { label: 'Эмэгтэй ганцаарчилсан', color: 'bg-pink-600' },
+          'men_doubles': { label: 'Дан эрэгтэй хос', color: 'bg-green-600' },
+          'women_doubles': { label: 'Дан эмэгтэй хос', color: 'bg-purple-600' },
+          'doubles_men': { label: 'Дан эрэгтэй хос', color: 'bg-green-600' },
+          'doubles_women': { label: 'Дан эмэгтэй хос', color: 'bg-purple-600' },
+          'mixed_doubles': { label: 'Холимог хос', color: 'bg-orange-600' },
+          'men_team': { label: 'Эрэгтэй баг', color: 'bg-indigo-600' },
+          'women_team': { label: 'Эмэгтэй баг', color: 'bg-rose-600' },
+          'mixed_team': { label: 'Холимог баг', color: 'bg-teal-600' },
+        };
+        
+        if (LEGACY_MAPPINGS[type]) {
+          return LEGACY_MAPPINGS[type];
+        }
       }
+      
+      return { label: type, color: 'bg-gray-600' };
     });
   };
 

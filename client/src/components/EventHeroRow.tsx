@@ -9,32 +9,87 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
 
 // Helper function to format participation type from JSON string to readable text
-const formatParticipationType = (jsonString: string): string => {
+const formatParticipationType = (eventType: string): string => {
   try {
-    const parsed = JSON.parse(jsonString);
-    
-    // Map type and gender to Mongolian text
-    let typeName = "";
-    if (parsed.type === "individual") {
-      if (parsed.gender === "male") {
-        typeName = "Эрэгтэй-ганцаарчилсан";
-      } else if (parsed.gender === "female") {
-        typeName = "Эмэгтэй-ганцаарчилсан";
-      } else {
-        typeName = "Ганцаарчилсан";
+    const parsed = JSON.parse(eventType);
+
+    // SUBTYPE_LABEL mapping
+    const SUBTYPE_LABEL: Record<string, string> = {
+      'MEN_SINGLES': 'Эрэгтэй ганцаарчилсан',
+      'WOMEN_SINGLES': 'Эмэгтэй ганцаарчилсан',
+      'MEN_DOUBLES': 'Дан эрэгтэй хос',
+      'WOMEN_DOUBLES': 'Дан эмэгтэй хос',
+      'MIXED_DOUBLES': 'Холимог хос',
+      'MEN_TEAM': 'Эрэгтэй баг',
+      'WOMEN_TEAM': 'Эмэгтэй баг',
+      'MIXED_TEAM': 'Холимог баг',
+    };
+
+    // Handle new detailed structure with subType
+    if (parsed.subType && SUBTYPE_LABEL[parsed.subType]) {
+      let label = SUBTYPE_LABEL[parsed.subType];
+
+      // Add age range if available
+      if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
+        label += ` (${parsed.minAge}–${parsed.maxAge} нас)`;
+      } else if (parsed.minAge !== undefined) {
+        label += ` (${parsed.minAge}+ нас)`;
+      } else if (parsed.maxAge !== undefined) {
+        label += ` (${parsed.maxAge} нас хүртэл)`;
       }
-    } else if (parsed.type === "pair") {
-      typeName = "Хос";
-    } else if (parsed.type === "team") {
-      typeName = "Баг";
-    } else {
-      typeName = parsed.type;
+
+      return label;
     }
-    
-    return `${typeName} ${parsed.minAge}–${parsed.maxAge} нас`;
+
+    // Handle division label
+    if (parsed.division) {
+      return parsed.division;
+    }
+
+    // Generate label from type and gender
+    if (parsed.type && parsed.gender) {
+      let typeLabel = '';
+
+      if (parsed.type === 'individual') {
+        typeLabel = parsed.gender === 'male' ? 'Эрэгтэй ганцаарчилсан' : 'Эмэгтэй ганцаарчилсан';
+      } else if (parsed.type === 'pair') {
+        typeLabel = parsed.gender === 'male' ? 'Дан эрэгтэй хос' : 'Дан эмэгтэй хос';
+      } else if (parsed.type === 'team') {
+        typeLabel = parsed.gender === 'male' ? 'Эрэгтэй баг' : 'Эмэгтэй баг';
+      }
+
+      // Add age range
+      if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
+        typeLabel += ` (${parsed.minAge}–${parsed.maxAge} нас)`;
+      } else if (parsed.minAge !== undefined) {
+        typeLabel += ` (${parsed.minAge}+ нас)`;
+      } else if (parsed.maxAge !== undefined) {
+        typeLabel += ` (${parsed.maxAge} нас хүртэл)`;
+      }
+
+      return typeLabel;
+    }
+
+    // Fallback to original string
+    return eventType;
   } catch {
-    // If parsing fails, return the original string
-    return jsonString;
+    // If not JSON, try legacy format mappings
+    const LEGACY_MAPPINGS: Record<string, string> = {
+      'men_singles': 'Эрэгтэй ганцаарчилсан',
+      'women_singles': 'Эмэгтэй ганцаарчилсан',
+      'singles_men': 'Эрэгтэй ганцаарчилсан',
+      'singles_women': 'Эмэгтэй ганцаарчилсан',
+      'men_doubles': 'Дан эрэгтэй хос',
+      'women_doubles': 'Дан эмэгтэй хос',
+      'doubles_men': 'Дан эрэгтэй хос',
+      'doubles_women': 'Дан эмэгтэй хос',
+      'mixed_doubles': 'Холимог хос',
+      'men_team': 'Эрэгтэй баг',
+      'women_team': 'Эмэгтэй баг',
+      'mixed_team': 'Холимог баг',
+    };
+    
+    return LEGACY_MAPPINGS[eventType] || eventType;
   }
 };
 
@@ -231,7 +286,7 @@ export default function EventHeroRow({ event, priority = false }: EventHeroRowPr
             alt='Event cover'
             className='absolute inset-0 h-full w-full object-cover object-center'
             loading={priority ? 'eager' : 'lazy'}
-            fetchpriority={priority ? 'high' : 'auto'}
+            fetchPriority={priority ? 'high' : 'auto'}
           />
         ) : (
           <div className='absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300' />
