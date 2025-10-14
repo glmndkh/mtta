@@ -854,18 +854,7 @@ const ConfirmationStep = ({
     setLocation(`/tournament/${tournament.id}/form-team?event=${encodeURIComponent(event)}`);
   };
 
-  // Auto-redirect to team formation if only one team/doubles event
-  React.useEffect(() => {
-    if (hasTeamOrDoubles && teamOrDoublesEvents.length === 1) {
-      // Small delay for user to see success message
-      const timer = setTimeout(() => {
-        const event = teamOrDoublesEvents[0];
-        setLocation(`/tournament/${tournament.id}/form-team?event=${encodeURIComponent(event)}`);
-      }, 2000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [hasTeamOrDoubles, teamOrDoublesEvents, tournament.id, setLocation]);
+  // Removed auto-redirect - users will manually click the team formation button
 
   return (
     <Card className="max-w-2xl mx-auto">
@@ -927,15 +916,13 @@ const ConfirmationStep = ({
         {hasTeamOrDoubles && (
           <div className="bg-orange-50 dark:bg-orange-900/20 p-6 rounded-lg border border-orange-200 dark:border-orange-800">
             <div className="flex items-start gap-3 mb-4">
-              <span className="text-2xl">{teamOrDoublesEvents.length === 1 ? '⏳' : '👉'}</span>
+              <span className="text-2xl">👉</span>
               <div className="flex-1">
                 <h4 className="font-bold text-orange-800 dark:text-orange-200 text-lg mb-2">
-                  {teamOrDoublesEvents.length === 1 ? '⏳ Та 2 секундын дараа баг/хос бүрдүүлэх хэсэг рүү автоматаар шилжих болно...' : 'Одоо багаа эсвэл хосоо бүрдүүлнэ үү!'}
+                  Одоо багаа эсвэл хосоо бүрдүүлнэ үү!
                 </h4>
                 <p className="text-sm text-orange-700 dark:text-orange-300 mb-4">
-                  {teamOrDoublesEvents.length === 1 
-                    ? 'Баг/хос бүрдүүлэх хэсэг рүү автоматаар шилжиж байна...'
-                    : 'Та багийн болон хосын тэмцээнд бүртгүүлсэн байна. Бүртгүүлсэн тамирчдаас хамтрагч сонгон багаа бүрдүүлнэ үү.'}
+                  Та багийн болон хосын тэмцээнд бүртгүүлсэн байна. Бүртгүүлсэн тамирчдаас хамтрагч сонгон багаа бүрдүүлнэ үү.
                 </p>
               </div>
             </div>
