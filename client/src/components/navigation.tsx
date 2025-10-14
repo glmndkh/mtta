@@ -23,7 +23,8 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import mttaLogo from "@/assets/image_1760025251459.png";
+// Logo will be loaded from public directory
+const mttaLogo = "/mtta-logo.png";
 
 const isActive = (current: string, href: string) =>
   href === "/" ? current === "/" : current.startsWith(href);
@@ -272,10 +273,6 @@ export default function Navigation() {
                   src={mttaLogo}
                   alt="MTTA Logo"
                   className="h-16 w-auto object-contain"
-                  onError={(e) => {
-                    console.error("Logo failed to load:", mttaLogo);
-                    e.currentTarget.style.display = 'none';
-                  }}
                 />
               </div>
             </Link>
@@ -448,10 +445,7 @@ export default function Navigation() {
               <img 
                 src={mttaLogo} 
                 alt="MTTA" 
-                className="h-12 sm:h-16 w-auto object-contain" 
-                onError={(e) => {
-                  console.error("Mobile logo failed to load:", mttaLogo);
-                }}
+                className="h-12 sm:h-16 w-auto object-contain"
               />
               <button
                 onClick={() => setShowMobileMenu(false)}
