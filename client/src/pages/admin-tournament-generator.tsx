@@ -942,16 +942,18 @@ export default function AdminTournamentGenerator() {
                           <Button
                             type="button"
                             size="sm"
-                            disabled={!currentConfig.subType}
                             onClick={() => {
-                              if (currentConfig.subType) {
-                                const newConfig = { ...currentConfig };
-                                setEventConfigs(prev => ({
-                                  ...prev,
-                                  doubles: [...prev.doubles, newConfig]
-                                }));
-                                setCurrentConfig({ minAge: "", maxAge: "", gender: "male", subType: "" });
-                              }
+                              const newConfig = { 
+                                minAge: currentConfig.minAge,
+                                maxAge: currentConfig.maxAge,
+                                gender: currentConfig.gender,
+                                subType: currentConfig.subType
+                              };
+                              setEventConfigs(prev => ({
+                                ...prev,
+                                doubles: [...prev.doubles, newConfig]
+                              }));
+                              setCurrentConfig({ minAge: "", maxAge: "", gender: "male", subType: "" });
                             }}
                           >
                             <Plus className="h-4 w-4 mr-2" />
@@ -961,7 +963,7 @@ export default function AdminTournamentGenerator() {
                             <div className="flex flex-wrap gap-2 mt-2">
                               {eventConfigs.doubles.map((config, idx) => (
                                 <div key={idx} className="flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
-                                  {config.subType === 'MEN_DOUBLES' ? 'Дан эр' : config.subType === 'WOMEN_DOUBLES' ? 'Дан эм' : 'Холимог'} {config.minAge && config.maxAge ? `${config.minAge}-${config.maxAge}` : config.minAge ? `${config.minAge}+` : config.maxAge ? `U${config.maxAge}` : ''}
+                                  {config.subType === 'MEN_DOUBLES' ? 'Дан эр' : config.subType === 'WOMEN_DOUBLES' ? 'Дан эм' : config.subType === 'MIXED_DOUBLES' ? 'Холимог' : ''} {config.minAge && config.maxAge ? `${config.minAge}-${config.maxAge}` : config.minAge ? `${config.minAge}+` : config.maxAge ? `U${config.maxAge}` : ''}
                                   <button
                                     type="button"
                                     onClick={() => setEventConfigs(prev => ({
@@ -1028,16 +1030,18 @@ export default function AdminTournamentGenerator() {
                           <Button
                             type="button"
                             size="sm"
-                            disabled={!currentConfig.subType}
                             onClick={() => {
-                              if (currentConfig.subType) {
-                                const newConfig = { ...currentConfig };
-                                setEventConfigs(prev => ({
-                                  ...prev,
-                                  team: [...prev.team, newConfig]
-                                }));
-                                setCurrentConfig({ minAge: "", maxAge: "", gender: "male", subType: "" });
-                              }
+                              const newConfig = { 
+                                minAge: currentConfig.minAge,
+                                maxAge: currentConfig.maxAge,
+                                gender: currentConfig.gender,
+                                subType: currentConfig.subType
+                              };
+                              setEventConfigs(prev => ({
+                                ...prev,
+                                team: [...prev.team, newConfig]
+                              }));
+                              setCurrentConfig({ minAge: "", maxAge: "", gender: "male", subType: "" });
                             }}
                           >
                             <Plus className="h-4 w-4 mr-2" />
@@ -1047,7 +1051,7 @@ export default function AdminTournamentGenerator() {
                             <div className="flex flex-wrap gap-2 mt-2">
                               {eventConfigs.team.map((config, idx) => (
                                 <div key={idx} className="flex items-center bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">
-                                  {config.subType === 'MEN_TEAM' ? 'Эрэгтэй баг' : config.subType === 'WOMEN_TEAM' ? 'Эмэгтэй баг' : 'Холимог баг'} {config.minAge && config.maxAge ? `${config.minAge}-${config.maxAge}` : config.minAge ? `${config.minAge}+` : config.maxAge ? `U${config.maxAge}` : ''}
+                                  {config.subType === 'MEN_TEAM' ? 'Эрэгтэй баг' : config.subType === 'WOMEN_TEAM' ? 'Эмэгтэй баг' : config.subType === 'MIXED_TEAM' ? 'Холимог баг' : ''} {config.minAge && config.maxAge ? `${config.minAge}-${config.maxAge}` : config.minAge ? `${config.minAge}+` : config.maxAge ? `U${config.maxAge}` : ''}
                                   <button
                                     type="button"
                                     onClick={() => setEventConfigs(prev => ({
