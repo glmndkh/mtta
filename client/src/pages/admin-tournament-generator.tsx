@@ -899,10 +899,16 @@ export default function AdminTournamentGenerator() {
                       <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-900/20">
                         <h4 className="font-medium mb-3">Хосын тэмцээний тохиргоо</h4>
                         <div className="space-y-3">
-                          <div className="grid grid-cols-4 gap-2">
+                          <div className="grid grid-cols-3 gap-2">
                             <Select 
                               value={currentConfig.subType} 
-                              onValueChange={(value) => setCurrentConfig(prev => ({ ...prev, subType: value }))}
+                              onValueChange={(value) => {
+                                // Auto-set gender based on doubles type
+                                let gender = "mixed";
+                                if (value === "MEN_DOUBLES") gender = "male";
+                                if (value === "WOMEN_DOUBLES") gender = "female";
+                                setCurrentConfig(prev => ({ ...prev, subType: value, gender }));
+                              }}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Хосийн төрөл" />
@@ -925,19 +931,6 @@ export default function AdminTournamentGenerator() {
                               onChange={(e) => setCurrentConfig(prev => ({ ...prev, maxAge: e.target.value }))}
                               placeholder="Дээд нас"
                             />
-                            <Select 
-                              value={currentConfig.gender} 
-                              onValueChange={(value) => setCurrentConfig(prev => ({ ...prev, gender: value }))}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Хүйс" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="male">Эрэгтэй</SelectItem>
-                                <SelectItem value="female">Эмэгтэй</SelectItem>
-                                <SelectItem value="mixed">Холимог</SelectItem>
-                              </SelectContent>
-                            </Select>
                           </div>
                           <Button
                             type="button"
@@ -987,10 +980,16 @@ export default function AdminTournamentGenerator() {
                       <div className="p-4 border rounded-lg bg-purple-50 dark:bg-purple-900/20">
                         <h4 className="font-medium mb-3">Багийн тэмцээний тохиргоо</h4>
                         <div className="space-y-3">
-                          <div className="grid grid-cols-4 gap-2">
+                          <div className="grid grid-cols-3 gap-2">
                             <Select 
                               value={currentConfig.subType} 
-                              onValueChange={(value) => setCurrentConfig(prev => ({ ...prev, subType: value }))}
+                              onValueChange={(value) => {
+                                // Auto-set gender based on team type
+                                let gender = "mixed";
+                                if (value === "MEN_TEAM") gender = "male";
+                                if (value === "WOMEN_TEAM") gender = "female";
+                                setCurrentConfig(prev => ({ ...prev, subType: value, gender }));
+                              }}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Багийн төрөл" />
@@ -1013,19 +1012,6 @@ export default function AdminTournamentGenerator() {
                               onChange={(e) => setCurrentConfig(prev => ({ ...prev, maxAge: e.target.value }))}
                               placeholder="Дээд нас"
                             />
-                            <Select 
-                              value={currentConfig.gender} 
-                              onValueChange={(value) => setCurrentConfig(prev => ({ ...prev, gender: value }))}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Хүйс" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="male">Эрэгтэй</SelectItem>
-                                <SelectItem value="female">Эмэгтэй</SelectItem>
-                                <SelectItem value="mixed">Холимог</SelectItem>
-                              </SelectContent>
-                            </Select>
                           </div>
                           <Button
                             type="button"
