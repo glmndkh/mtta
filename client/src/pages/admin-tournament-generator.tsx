@@ -944,12 +944,14 @@ export default function AdminTournamentGenerator() {
                             size="sm"
                             disabled={!currentConfig.subType}
                             onClick={() => {
-                              const newConfig = { ...currentConfig };
-                              setEventConfigs(prev => ({
-                                ...prev,
-                                doubles: [...prev.doubles, newConfig]
-                              }));
-                              setCurrentConfig({ minAge: "", maxAge: "", gender: "male", subType: "" });
+                              if (currentConfig.subType) {
+                                const newConfig = { ...currentConfig };
+                                setEventConfigs(prev => ({
+                                  ...prev,
+                                  doubles: [...prev.doubles, newConfig]
+                                }));
+                                setCurrentConfig({ minAge: "", maxAge: "", gender: "male", subType: "" });
+                              }
                             }}
                           >
                             <Plus className="h-4 w-4 mr-2" />
@@ -1028,12 +1030,14 @@ export default function AdminTournamentGenerator() {
                             size="sm"
                             disabled={!currentConfig.subType}
                             onClick={() => {
-                              const newConfig = { ...currentConfig };
-                              setEventConfigs(prev => ({
-                                ...prev,
-                                team: [...prev.team, newConfig]
-                              }));
-                              setCurrentConfig({ minAge: "", maxAge: "", gender: "male", subType: "" });
+                              if (currentConfig.subType) {
+                                const newConfig = { ...currentConfig };
+                                setEventConfigs(prev => ({
+                                  ...prev,
+                                  team: [...prev.team, newConfig]
+                                }));
+                                setCurrentConfig({ minAge: "", maxAge: "", gender: "male", subType: "" });
+                              }
                             }}
                           >
                             <Plus className="h-4 w-4 mr-2" />
