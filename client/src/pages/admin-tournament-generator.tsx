@@ -967,21 +967,29 @@ export default function AdminTournamentGenerator() {
                           </Button>
                           {eventConfigs.doubles.length > 0 && (
                             <div className="flex flex-wrap gap-2 mt-2">
-                              {eventConfigs.doubles.map((config, idx) => (
-                                <div key={idx} className="flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
-                                  {config.subType === 'MEN_DOUBLES' ? 'Дан эр' : config.subType === 'WOMEN_DOUBLES' ? 'Дан эм' : config.subType === 'MIXED_DOUBLES' ? 'Холимог' : ''} {config.minAge && config.maxAge ? `${config.minAge}-${config.maxAge}` : config.minAge ? `${config.minAge}+` : config.maxAge ? `U${config.maxAge}` : ''}
-                                  <button
-                                    type="button"
-                                    onClick={() => setEventConfigs(prev => ({
-                                      ...prev,
-                                      doubles: prev.doubles.filter((_, i) => i !== idx)
-                                    }))}
-                                    className="ml-2"
-                                  >
-                                    <X className="h-3 w-3" />
-                                  </button>
-                                </div>
-                              ))}
+                              {eventConfigs.doubles.map((config, idx) => {
+                                const typeName = config.subType === 'MEN_DOUBLES' ? 'Эрэгтэй хос' : 
+                                                config.subType === 'WOMEN_DOUBLES' ? 'Эмэгтэй хос' : 
+                                                config.subType === 'MIXED_DOUBLES' ? 'Холимог хос' : 'Хос';
+                                const ageRange = config.minAge && config.maxAge ? `${config.minAge}-${config.maxAge}` : 
+                                                config.minAge ? `${config.minAge}+` : 
+                                                config.maxAge ? `${config.maxAge} хүртэл` : '';
+                                return (
+                                  <div key={idx} className="flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+                                    {typeName} {ageRange}
+                                    <button
+                                      type="button"
+                                      onClick={() => setEventConfigs(prev => ({
+                                        ...prev,
+                                        doubles: prev.doubles.filter((_, i) => i !== idx)
+                                      }))}
+                                      className="ml-2"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
                         </div>
@@ -1048,21 +1056,29 @@ export default function AdminTournamentGenerator() {
                           </Button>
                           {eventConfigs.team.length > 0 && (
                             <div className="flex flex-wrap gap-2 mt-2">
-                              {eventConfigs.team.map((config, idx) => (
-                                <div key={idx} className="flex items-center bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">
-                                  {config.subType === 'MEN_TEAM' ? 'Эрэгтэй баг' : config.subType === 'WOMEN_TEAM' ? 'Эмэгтэй баг' : config.subType === 'MIXED_TEAM' ? 'Холимог баг' : ''} {config.minAge && config.maxAge ? `${config.minAge}-${config.maxAge}` : config.minAge ? `${config.minAge}+` : config.maxAge ? `U${config.maxAge}` : ''}
-                                  <button
-                                    type="button"
-                                    onClick={() => setEventConfigs(prev => ({
-                                      ...prev,
-                                      team: prev.team.filter((_, i) => i !== idx)
-                                    }))}
-                                    className="ml-2"
-                                  >
-                                    <X className="h-3 w-3" />
-                                  </button>
-                                </div>
-                              ))}
+                              {eventConfigs.team.map((config, idx) => {
+                                const typeName = config.subType === 'MEN_TEAM' ? 'Эрэгтэй баг' : 
+                                                config.subType === 'WOMEN_TEAM' ? 'Эмэгтэй баг' : 
+                                                config.subType === 'MIXED_TEAM' ? 'Холимог баг' : 'Баг';
+                                const ageRange = config.minAge && config.maxAge ? `${config.minAge}-${config.maxAge}` : 
+                                                config.minAge ? `${config.minAge}+` : 
+                                                config.maxAge ? `${config.maxAge} хүртэл` : '';
+                                return (
+                                  <div key={idx} className="flex items-center bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">
+                                    {typeName} {ageRange}
+                                    <button
+                                      type="button"
+                                      onClick={() => setEventConfigs(prev => ({
+                                        ...prev,
+                                        team: prev.team.filter((_, i) => i !== idx)
+                                      }))}
+                                      className="ml-2"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
                         </div>
