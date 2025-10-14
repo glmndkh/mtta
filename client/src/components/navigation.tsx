@@ -381,9 +381,9 @@ export default function Navigation() {
               ) : (
                 <div className="hidden lg:flex items-center space-x-3">
                   <Link href="/register">
-                    <button className="btn-green text-sm px-4 py-2">
+                    <Button className="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2">
                       {t('nav.register')}
-                    </button>
+                    </Button>
                   </Link>
                   <Link href="/login">
                     <button className="btn-green text-sm px-4 py-2">

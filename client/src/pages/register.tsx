@@ -49,11 +49,13 @@ export default function Register() {
   const [clubSearch, setClubSearch] = useState("");
   const [selectedClub, setSelectedClub] = useState<any>(null);
 
-  // Fetch clubs
+  // Fetch clubs - no authentication required
   const { data: clubs = [] } = useQuery({
     queryKey: ['clubs'],
     queryFn: async () => {
-      const response = await apiRequest('/api/clubs');
+      const response = await fetch('/api/clubs', {
+        credentials: 'include'
+      });
       if (!response.ok) throw new Error('Failed to fetch clubs');
       return response.json();
     },
@@ -85,10 +87,11 @@ export default function Register() {
 
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterForm) => {
-      // Send registration data as JSON
-      const response = await apiRequest("/api/auth/register", {
+      // Send registration data as JSON - no authentication required
+      const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(data),
       });
       
