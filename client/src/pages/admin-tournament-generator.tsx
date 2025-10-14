@@ -898,11 +898,6 @@ export default function AdminTournamentGenerator() {
                     {selectedEventTypes.doubles && (
                       <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-900/20">
                         <h4 className="font-medium mb-3">Хосын тэмцээний тохиргоо</h4>
-                        {selectedEventTypes.team && (
-                          <p className="text-sm text-amber-600 dark:text-amber-400 mb-3">
-                            ⚠️ Багийн тэмцээн идэвхтэй байх үед ангилал нэмэх боломжгүй
-                          </p>
-                        )}
                         <div className="space-y-3">
                           <div className="grid grid-cols-3 gap-2">
                             <Select 
@@ -914,7 +909,6 @@ export default function AdminTournamentGenerator() {
                                 if (value === "WOMEN_DOUBLES") gender = "female";
                                 setCurrentConfig(prev => ({ ...prev, subType: value, gender }));
                               }}
-                              disabled={selectedEventTypes.team}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Хосийн төрөл" />
@@ -930,14 +924,12 @@ export default function AdminTournamentGenerator() {
                               value={currentConfig.minAge}
                               onChange={(e) => setCurrentConfig(prev => ({ ...prev, minAge: e.target.value }))}
                               placeholder="Доод нас"
-                              disabled={selectedEventTypes.team}
                             />
                             <Input
                               type="number"
                               value={currentConfig.maxAge}
                               onChange={(e) => setCurrentConfig(prev => ({ ...prev, maxAge: e.target.value }))}
                               placeholder="Дээд нас"
-                              disabled={selectedEventTypes.team}
                             />
                           </div>
                           <Button
@@ -956,7 +948,6 @@ export default function AdminTournamentGenerator() {
                               }));
                               setCurrentConfig({ minAge: "", maxAge: "", gender: "male", subType: "" });
                             }}
-                            disabled={selectedEventTypes.team}
                           >
                             <Plus className="h-4 w-4 mr-2" />
                             Ангилал нэмэх
@@ -988,11 +979,6 @@ export default function AdminTournamentGenerator() {
                     {selectedEventTypes.team && (
                       <div className="p-4 border rounded-lg bg-purple-50 dark:bg-purple-900/20">
                         <h4 className="font-medium mb-3">Багийн тэмцээний тохиргоо</h4>
-                        {selectedEventTypes.doubles && (
-                          <p className="text-sm text-amber-600 dark:text-amber-400 mb-3">
-                            ⚠️ Хосын тэмцээн идэвхтэй байх үед ангилал нэмэх боломжгүй
-                          </p>
-                        )}
                         <div className="space-y-3">
                           <div className="grid grid-cols-3 gap-2">
                             <Select 
@@ -1004,7 +990,6 @@ export default function AdminTournamentGenerator() {
                                 if (value === "WOMEN_TEAM") gender = "female";
                                 setCurrentConfig(prev => ({ ...prev, subType: value, gender }));
                               }}
-                              disabled={selectedEventTypes.doubles}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Багийн төрөл" />
@@ -1020,14 +1005,12 @@ export default function AdminTournamentGenerator() {
                               value={currentConfig.minAge}
                               onChange={(e) => setCurrentConfig(prev => ({ ...prev, minAge: e.target.value }))}
                               placeholder="Доод нас"
-                              disabled={selectedEventTypes.doubles}
                             />
                             <Input
                               type="number"
                               value={currentConfig.maxAge}
                               onChange={(e) => setCurrentConfig(prev => ({ ...prev, maxAge: e.target.value }))}
                               placeholder="Дээд нас"
-                              disabled={selectedEventTypes.doubles}
                             />
                           </div>
                           <Button
@@ -1046,7 +1029,6 @@ export default function AdminTournamentGenerator() {
                               }));
                               setCurrentConfig({ minAge: "", maxAge: "", gender: "male", subType: "" });
                             }}
-                            disabled={selectedEventTypes.doubles}
                           >
                             <Plus className="h-4 w-4 mr-2" />
                             Ангилал нэмэх
