@@ -854,6 +854,18 @@ const ConfirmationStep = ({
     setLocation(`/tournament/${tournament.id}/form-team?event=${encodeURIComponent(event)}`);
   };
 
+  // Auto-redirect to team formation if only one team/doubles event
+  React.useEffect(() => {
+    if (hasTeamOrDoubles && teamOrDoublesEvents.length === 1) {
+      // Small delay for user to see success message
+      const timer = setTimeout(() => {
+        handleFormTeam(teamOrDoublesEvents[0]);
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [hasTeamOrDoubles, teamOrDoublesEvents]);
+
   return (
     <Card className="max-w-2xl mx-auto">
       <CardHeader>
@@ -917,7 +929,7 @@ const ConfirmationStep = ({
               <span className="text-2xl">👉</span>
               <div>
                 <h4 className="font-bold text-orange-800 dark:text-orange-200 text-lg mb-2">
-                  Одоо багаа эсвэл хосоо бүрдүүлнэ үү!
+                  {teamOrDoublesEvents.length === 1 ? 'Та 2 секундын дараа баг/хос бүрдүүлэх хэсэг рүү шилжих болно...' : 'Одоо багаа эсвэл хосоо бүрдүүлнэ үү!'}
                 </h4>
                 <p className="text-sm text-orange-700 dark:text-orange-300 mb-4">
                   Та багийн болон хосын тэмцээнд бүртгүүлсэн байна. Бүртгүүлсэн тамирчдаас хамтрагч сонгон багаа бүрдүүлнэ үү.
