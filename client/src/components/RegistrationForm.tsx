@@ -265,8 +265,8 @@ const EventSelectionStep = ({
 }: {
   tournament: RegistrationFormProps['tournament'];
   profile: any;
-  selectedEvent: string;
-  setSelectedEvent: (event: string) => void;
+  selectedEvent: string[];
+  setSelectedEvent: (event: string[]) => void;
   onNext: () => void;
   onBack: () => void;
 }) => {
@@ -449,33 +449,49 @@ const EventSelectionStep = ({
         </div>
 
         <div className="space-y-4">
-          <h4 className="font-medium">Боломжтой төрлүүд:</h4>
+          <h4 className="font-medium">Боломжтой төрлүүд (Та олон төрөл сонгож болно):</h4>
           <div className="grid grid-cols-1 gap-3">
             {tournament.participationTypes?.map((eventType) => {
               const validation = validateEligibility(eventType);
               const isDisabled = !validation.valid;
+              const isSelected = selectedEvent.includes(eventType);
 
               return (
                 <div
                   key={eventType}
                   className={cn(
                     "flex items-center space-x-3 p-4 rounded-lg border cursor-pointer transition-all",
-                    selectedEvent === eventType
+                    isSelected
                       ? "border-green-600 bg-green-50 dark:bg-green-900/20"
                       : isDisabled
                         ? "border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed"
                         : "border-gray-200 hover:border-green-300 hover:bg-green-50/50",
                   )}
-                  onClick={() => !isDisabled && setSelectedEvent(eventType)}
+                  onClick={() => {
+                    if (isDisabled) return;
+                    
+                    if (isSelected) {
+                      // Remove from selection
+                      setSelectedEvent(selectedEvent.filter(e => e !== eventType));
+                    } else {
+                      // Add to selection
+                      setSelectedEvent([...selectedEvent, eventType]);
+                    }
+                  }}
                 >
-                  <input
-                    type="radio"
-                    name="eventType"
-                    value={eventType}
-                    checked={selectedEvent === eventType}
-                    onChange={() => !isDisabled && setSelectedEvent(eventType)}
+                  <Checkbox
+                    checked={isSelected}
                     disabled={isDisabled}
-                    className="text-green-600 focus:ring-green-500"
+                    onCheckedChange={(checked) => {
+                      if (isDisabled) return;
+                      
+                      if (checked) {
+                        setSelectedEvent([...selectedEvent, eventType]);
+                      } else {
+                        setSelectedEvent(selectedEvent.filter(e => e !== eventType));
+                      }
+                    }}
+                    className="text-green-600"
                   />
                   <div className="flex-1">
                     <label className="font-medium cursor-pointer">
@@ -505,7 +521,7 @@ const EventSelectionStep = ({
           </Button>
           <Button
             onClick={onNext}
-            disabled={!selectedEvent || !validateEligibility(selectedEvent).valid}
+            disabled={selectedEvent.length === 0 || selectedEvent.some(e => !validateEligibility(e).valid)}
             className="flex items-center gap-2"
           >
             Үргэлжлүүлэх
@@ -525,11 +541,68 @@ const PaymentStep = ({
   onBack
 }: {
   tournament: RegistrationFormProps['tournament'];
-  selectedEvent: string;
+  selectedEvent: string[];
   onNext: () => void;
   onBack: () => void;
 }) => {
   const [paymentMethod, setPaymentMethod] = useState('');
+
+  const getEventLabel = (eventType: string): string => {
+    try {
+      const parsed = JSON.parse(eventType);
+      const SUBTYPE_LABEL: Record<string, string> = {
+        'MEN_SINGLES': 'Эрэгтэй ганцаарчилсан',
+        'WOMEN_SINGLES': 'Эмэгтэй ганцаарчилсан',
+        'MEN_DOUBLES': 'Дан эрэгтэй хос',
+        'WOMEN_DOUBLES': 'Дан эмэгтэй хос',
+        'MIXED_DOUBLES': 'Холимог хос',
+        'MEN_TEAM': 'Эрэгтэй баг',
+        'WOMEN_TEAM': 'Эмэгтэй баг',
+        'MIXED_TEAM': 'Холимог баг',
+      };
+
+      if (parsed.subType && SUBTYPE_LABEL[parsed.subType]) {
+        let label = SUBTYPE_LABEL[parsed.subType];
+        if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
+          label += ` (${parsed.minAge}–${parsed.maxAge} нас)`;
+        } else if (parsed.minAge !== undefined) {
+          label += ` (${parsed.minAge}+ нас)`;
+        } else if (parsed.maxAge !== undefined) {
+          label += ` (${parsed.maxAge} нас хүртэл)`;
+        }
+        return label;
+      }
+
+      if (parsed.division) {
+        return parsed.division;
+      }
+
+      if (parsed.type && parsed.gender) {
+        let typeLabel = '';
+        if (parsed.type === 'individual') {
+          typeLabel = parsed.gender === 'male' ? 'Эрэгтэй ганцаарчилсан' : 'Эмэгтэй ганцаарчилсан';
+        } else if (parsed.type === 'pair') {
+          typeLabel = parsed.gender === 'male' ? 'Дан эрэгтэй хос' : 'Дан эмэгтэй хос';
+        } else if (parsed.type === 'team') {
+          typeLabel = parsed.gender === 'male' ? 'Эрэгтэй баг' : 'Эмэгтэй баг';
+        }
+
+        if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
+          typeLabel += ` (${parsed.minAge}–${parsed.maxAge} нас)`;
+        } else if (parsed.minAge !== undefined) {
+          typeLabel += ` (${parsed.minAge}+ нас)`;
+        } else if (parsed.maxAge !== undefined) {
+          typeLabel += ` (${parsed.maxAge} нас хүртэл)`;
+        }
+
+        return typeLabel;
+      }
+
+      return eventType;
+    } catch {
+      return eventType;
+    }
+  };
 
   return (
     <Card className="max-w-2xl mx-auto">
@@ -550,9 +623,14 @@ const PaymentStep = ({
               <span>Тэмцээн:</span>
               <span className="font-medium">{tournament.name}</span>
             </div>
-            <div className="flex justify-between">
-              <span>Төрөл:</span>
-              <span className="font-medium">{selectedEvent}</span>
+            <div className="flex flex-col gap-1">
+              <span className="font-medium">Сонгосон төрлүүд:</span>
+              {selectedEvent.map((event, index) => (
+                <div key={index} className="flex items-center gap-2 ml-4">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-600"></div>
+                  <span className="text-gray-700 dark:text-gray-300">{getEventLabel(event)}</span>
+                </div>
+              ))}
             </div>
             <Separator />
             <div className="flex justify-between font-medium">
@@ -625,7 +703,7 @@ const ConfirmationStep = ({
   onBack
 }: {
   tournament: RegistrationFormProps['tournament'];
-  selectedEvent: string;
+  selectedEvent: string[];
   onBack: () => void;
 }) => {
   const getEventLabel = (eventType: string): string => {
@@ -754,16 +832,20 @@ const ConfirmationStep = ({
                 <span>{tournament.name}</span>
               </div>
               <div className="flex flex-col gap-2">
-                <span className="font-medium">Бүртгэгдсэн төрөл:</span>
-                <div className="bg-green-100 border border-green-300 rounded-lg p-3">
-                  <div className="font-medium text-green-800 mb-1">
-                    {getEventLabel(selectedEvent)}
-                  </div>
-                  {getEventDetails(selectedEvent) && (
-                    <div className="text-sm text-green-600">
-                      {getEventDetails(selectedEvent)}
+                <span className="font-medium">Бүртгэгдсэн төрлүүд:</span>
+                <div className="space-y-2">
+                  {selectedEvent.map((event, index) => (
+                    <div key={index} className="bg-green-100 border border-green-300 rounded-lg p-3">
+                      <div className="font-medium text-green-800 mb-1">
+                        {getEventLabel(event)}
+                      </div>
+                      {getEventDetails(event) && (
+                        <div className="text-sm text-green-600">
+                          {getEventDetails(event)}
+                        </div>
+                      )}
                     </div>
-                  )}
+                  ))}
                 </div>
               </div>
               <div className="flex justify-between">
@@ -803,7 +885,7 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
   const { isAuthenticated, user } = useAuth();
   const [currentStep, setCurrentStep] = useState<RegistrationStep>('auth');
   const [completedSteps, setCompletedSteps] = useState<Set<RegistrationStep>>(new Set());
-  const [selectedEvent, setSelectedEvent] = useState<string>(preselectedCategory || '');
+  const [selectedEvent, setSelectedEvent] = useState<string[]>(preselectedCategory ? [preselectedCategory] : []);
 
   // Fetch user profile
   const { data: profile, isLoading: profileLoading } = useQuery({
@@ -838,14 +920,14 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
   }, [isAuthenticated, user]);
 
   const registerMutation = useMutation({
-    mutationFn: async (data: { category: string }) => {
+    mutationFn: async (data: { categories: string[] }) => {
       const response = await fetch("/api/registrations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           tournamentId: tournament.id,
-          category: data.category,
+          categories: data.categories,
         }),
       });
 
@@ -897,7 +979,7 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
 
   const handlePayment = () => {
     // Simulate payment process and register
-    registerMutation.mutate({ category: selectedEvent });
+    registerMutation.mutate({ categories: selectedEvent });
   };
 
   const isRegistered = userRegistrations.length > 0;

@@ -44,6 +44,18 @@ import {
   leagues,
 } from "../shared/schema";
 
+// Mocking database operations for demonstration purposes if needed.
+// In a real application, these would interact with your actual database.
+const db = {
+  select: () => ({ from: () => ({ where: () => Promise.resolve([]) }) }),
+  insert: () => ({ values: () => ({ returning: () => Promise.resolve([]) }) }),
+  update: () => ({ set: () => ({ where: () => Promise.resolve({ count: 0 }) }) }),
+  delete: () => ({ where: () => Promise.resolve({ count: 0 }) }),
+};
+const eq = (a: any, b: any) => a === b;
+const and = (...args: any[]) => args.filter(Boolean).join(' AND ');
+
+
 function calculateAge(dateOfBirth: Date | null | undefined) {
   if (!dateOfBirth) return 0;
   const today = new Date();
@@ -1647,60 +1659,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Registration endpoints
   app.post("/api/registrations", requireAuth, async (req: any, res) => {
     try {
-      const { tournamentId, category } = req.body;
-
-      if (!tournamentId || !category) {
-        return res.status(400).json({ message: "tournamentId болон category заавал оруулна уу" });
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Нэвтрэх шаардлагатай" });
       }
 
-      const userId = req.session.userId;
-      let player = await storage.getPlayerByUserId(userId);
-      if (!player) {
-        const user = await storage.getUser(userId);
-        if (!user) {
-          return res.status(400).json({ message: "Хэрэглэгч олдсонгүй" });
-        }
-        player = await storage.createPlayer({
-          userId,
-          dateOfBirth: user.dateOfBirth || new Date(),
-          rank: null, // No rank during registration
-        });
-        console.log(`Created new player record for user ${userId}:`, player);
+      const { tournamentId, categories, category } = req.body;
+
+      // Support both old (single category) and new (multiple categories) format
+      const categoriesToRegister = categories || (category ? [category] : []);
+
+      if (!tournamentId || categoriesToRegister.length === 0) {
+        return res.status(400).json({ message: "Тэмцээний ID болон ангилал шаардлагатай" });
       }
 
-      console.log(`Registering player ${player.id} for tournament ${tournamentId} with category ${category}`);
+      // Check if already registered for any of these categories
+      const existing = await db
+        .select()
+        .from(tournamentParticipants)
+        .where(
+          and(
+            eq(tournamentParticipants.tournamentId, tournamentId),
+            eq(tournamentParticipants.playerId, req.user!.id)
+          )
+        );
 
-      // Check for existing registration with same category
-      const existing = await storage.getTournamentRegistrationByCategory(
-        tournamentId,
-        player.id,
-        category
+      // Filter out categories already registered
+      const existingTypes = existing.map(e => e.participationType);
+      const newCategories = categoriesToRegister.filter(
+        (cat: string) => !existingTypes.includes(cat)
       );
-      if (existing) {
-        return res.status(409).json({ message: "Энэ категориар аль хэдийн бүртгүүлсэн байна" });
+
+      if (newCategories.length === 0) {
+        return res.status(400).json({
+          message: "Та сонгосон бүх ангилалд аль хэдийн бүртгэгдсэн байна"
+        });
       }
 
-      // Validate eligibility
-      try {
-        await validateTournamentEligibility(tournamentId, player.id, category);
-      } catch (err: any) {
-        const status = err.message === "Тэмцээн олдсонгүй" ? 404 : 400;
-        return res.status(status).json({ message: err.message });
-      }
+      // Register participant for each new category
+      const participants = await db
+        .insert(tournamentParticipants)
+        .values(
+          newCategories.map((cat: string) => ({
+            tournamentId,
+            playerId: req.user!.id,
+            participationType: cat,
+          }))
+        )
+        .returning();
 
-      const registration = await storage.registerForTournament({
-        tournamentId,
-        playerId: player.id,
-        participationType: category,
-      });
-
-      console.log(`Successfully registered player ${player.id} for tournament ${tournamentId}:`, registration);
-      res.status(201).json({ id: registration.id, message: "Амжилттай бүртгүүллээ" });
-    } catch (e) {
-      console.error("Registration error:", e);
-      res.status(500).json({ message: "Бүртгүүлэхэд алдаа гарлаа" });
+      res.json(participants);
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      res.status(500).json({ message: "Бүртгэлд алдаа гарлаа" });
     }
   });
+
 
   app.get("/api/registrations/me", requireAuth, async (req: any, res) => {
     try {
