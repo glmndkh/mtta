@@ -18,6 +18,64 @@ import { ChevronLeft, ChevronRight, User, CheckCircle, CreditCard, Trophy } from
 
 type RegistrationStep = 'auth' | 'profile' | 'event-selection' | 'payment' | 'confirmation';
 
+// Utility function to convert event JSON to readable Mongolian text
+const getEventLabel = (eventType: string): string => {
+  try {
+    const parsed = JSON.parse(eventType);
+    const SUBTYPE_LABEL: Record<string, string> = {
+      'MEN_SINGLES': 'Эрэгтэй ганцаарчилсан',
+      'WOMEN_SINGLES': 'Эмэгтэй ганцаарчилсан',
+      'MEN_DOUBLES': 'Дан эрэгтэй хос',
+      'WOMEN_DOUBLES': 'Дан эмэгтэй хос',
+      'MIXED_DOUBLES': 'Холимог хос',
+      'MEN_TEAM': 'Эрэгтэй баг',
+      'WOMEN_TEAM': 'Эмэгтэй баг',
+      'MIXED_TEAM': 'Холимог баг',
+    };
+
+    if (parsed.subType && SUBTYPE_LABEL[parsed.subType]) {
+      let label = SUBTYPE_LABEL[parsed.subType];
+      if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
+        label += ` (${parsed.minAge}–${parsed.maxAge} нас)`;
+      } else if (parsed.minAge !== undefined) {
+        label += ` (${parsed.minAge}+ нас)`;
+      } else if (parsed.maxAge !== undefined) {
+        label += ` (${parsed.maxAge} нас хүртэл)`;
+      }
+      return label;
+    }
+
+    if (parsed.division) {
+      return parsed.division;
+    }
+
+    if (parsed.type && parsed.gender) {
+      let typeLabel = '';
+      if (parsed.type === 'individual') {
+        typeLabel = parsed.gender === 'male' ? 'Эрэгтэй ганцаарчилсан' : 'Эмэгтэй ганцаарчилсан';
+      } else if (parsed.type === 'pair') {
+        typeLabel = parsed.gender === 'male' ? 'Дан эрэгтэй хос' : 'Дан эмэгтэй хос';
+      } else if (parsed.type === 'team') {
+        typeLabel = parsed.gender === 'male' ? 'Эрэгтэй баг' : 'Эмэгтэй баг';
+      }
+
+      if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
+        typeLabel += ` (${parsed.minAge}–${parsed.maxAge} нас)`;
+      } else if (parsed.minAge !== undefined) {
+        typeLabel += ` (${parsed.minAge}+ нас)`;
+      } else if (parsed.maxAge !== undefined) {
+        typeLabel += ` (${parsed.maxAge} нас хүртэл)`;
+      }
+
+      return typeLabel;
+    }
+
+    return eventType;
+  } catch {
+    return eventType;
+  }
+};
+
 interface Event {
   id: string;
   type: 'SINGLES' | 'DOUBLES' | 'TEAM';
@@ -310,74 +368,6 @@ const EventSelectionStep = ({
     return { valid: true };
   };
 
-  const getEventLabel = (eventType: string): string => {
-    try {
-      const parsed = JSON.parse(eventType);
-
-      // SUBTYPE_LABEL mapping
-      const SUBTYPE_LABEL: Record<string, string> = {
-        'MEN_SINGLES': 'Эрэгтэй ганцаарчилсан',
-        'WOMEN_SINGLES': 'Эмэгтэй ганцаарчилсан',
-        'MEN_DOUBLES': 'Дан эрэгтэй хос',
-        'WOMEN_DOUBLES': 'Дан эмэгтэй хос',
-        'MIXED_DOUBLES': 'Холимог хос',
-        'MEN_TEAM': 'Эрэгтэй баг',
-        'WOMEN_TEAM': 'Эмэгтэй баг',
-        'MIXED_TEAM': 'Холимог баг',
-      };
-
-      // Handle new detailed structure with subType
-      if (parsed.subType && SUBTYPE_LABEL[parsed.subType]) {
-        let label = SUBTYPE_LABEL[parsed.subType];
-
-        // Add age range if available
-        if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
-          label += ` (${parsed.minAge}–${parsed.maxAge} нас)`;
-        } else if (parsed.minAge !== undefined) {
-          label += ` (${parsed.minAge}+ нас)`;
-        } else if (parsed.maxAge !== undefined) {
-          label += ` (${parsed.maxAge} нас хүртэл)`;
-        }
-
-        return label;
-      }
-
-      // Handle division label
-      if (parsed.division) {
-        return parsed.division;
-      }
-
-      // Generate label from type and gender
-      if (parsed.type && parsed.gender) {
-        let typeLabel = '';
-
-        if (parsed.type === 'individual') {
-          typeLabel = parsed.gender === 'male' ? 'Эрэгтэй ганцаарчилсан' : 'Эмэгтэй ганцаарчилсан';
-        } else if (parsed.type === 'pair') {
-          typeLabel = parsed.gender === 'male' ? 'Дан эрэгтэй хос' : 'Дан эмэгтэй хос';
-        } else if (parsed.type === 'team') {
-          typeLabel = parsed.gender === 'male' ? 'Эрэгтэй баг' : 'Эмэгтэй баг';
-        }
-
-        // Add age range
-        if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
-          typeLabel += ` (${parsed.minAge}–${parsed.maxAge} нас)`;
-        } else if (parsed.minAge !== undefined) {
-          typeLabel += ` (${parsed.minAge}+ нас)`;
-        } else if (parsed.maxAge !== undefined) {
-          typeLabel += ` (${parsed.maxAge} нас хүртэл)`;
-        }
-
-        return typeLabel;
-      }
-
-      // Fallback to old format
-      return eventType;
-    } catch {
-      return eventType;
-    }
-  };
-
   const getEventDetails = (eventType: string): string | null => {
     try {
       const parsed = JSON.parse(eventType);
@@ -554,63 +544,6 @@ const PaymentStep = ({
     return selectedEvent.length * baseFeePerEvent;
   }, [selectedEvent]);
 
-  const getEventLabel = (eventType: string): string => {
-    try {
-      const parsed = JSON.parse(eventType);
-      const SUBTYPE_LABEL: Record<string, string> = {
-        'MEN_SINGLES': 'Эрэгтэй ганцаарчилсан',
-        'WOMEN_SINGLES': 'Эмэгтэй ганцаарчилсан',
-        'MEN_DOUBLES': 'Дан эрэгтэй хос',
-        'WOMEN_DOUBLES': 'Дан эмэгтэй хос',
-        'MIXED_DOUBLES': 'Холимог хос',
-        'MEN_TEAM': 'Эрэгтэй баг',
-        'WOMEN_TEAM': 'Эмэгтэй баг',
-        'MIXED_TEAM': 'Холимог баг',
-      };
-
-      if (parsed.subType && SUBTYPE_LABEL[parsed.subType]) {
-        let label = SUBTYPE_LABEL[parsed.subType];
-        if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
-          label += ` (${parsed.minAge}–${parsed.maxAge} нас)`;
-        } else if (parsed.minAge !== undefined) {
-          label += ` (${parsed.minAge}+ нас)`;
-        } else if (parsed.maxAge !== undefined) {
-          label += ` (${parsed.maxAge} нас хүртэл)`;
-        }
-        return label;
-      }
-
-      if (parsed.division) {
-        return parsed.division;
-      }
-
-      if (parsed.type && parsed.gender) {
-        let typeLabel = '';
-        if (parsed.type === 'individual') {
-          typeLabel = parsed.gender === 'male' ? 'Эрэгтэй ганцаарчилсан' : 'Эмэгтэй ганцаарчилсан';
-        } else if (parsed.type === 'pair') {
-          typeLabel = parsed.gender === 'male' ? 'Дан эрэгтэй хос' : 'Дан эмэгтэй хос';
-        } else if (parsed.type === 'team') {
-          typeLabel = parsed.gender === 'male' ? 'Эрэгтэй баг' : 'Эмэгтэй баг';
-        }
-
-        if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
-          typeLabel += ` (${parsed.minAge}–${parsed.maxAge} нас)`;
-        } else if (parsed.minAge !== undefined) {
-          typeLabel += ` (${parsed.minAge}+ нас)`;
-        } else if (parsed.maxAge !== undefined) {
-          typeLabel += ` (${parsed.maxAge} нас хүртэл)`;
-        }
-
-        return typeLabel;
-      }
-
-      return eventType;
-    } catch {
-      return eventType;
-    }
-  };
-
   return (
     <Card className="max-w-2xl mx-auto">
       <CardHeader>
@@ -716,74 +649,6 @@ const ConfirmationStep = ({
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   
-  const getEventLabel = (eventType: string): string => {
-    try {
-      const parsed = JSON.parse(eventType);
-
-      // SUBTYPE_LABEL mapping
-      const SUBTYPE_LABEL: Record<string, string> = {
-        'MEN_SINGLES': 'Эрэгтэй ганцаарчилсан',
-        'WOMEN_SINGLES': 'Эмэгтэй ганцаарчилсан',
-        'MEN_DOUBLES': 'Дан эрэгтэй хос',
-        'WOMEN_DOUBLES': 'Дан эмэгтэй хос',
-        'MIXED_DOUBLES': 'Холимог хос',
-        'MEN_TEAM': 'Эрэгтэй баг',
-        'WOMEN_TEAM': 'Эмэгтэй баг',
-        'MIXED_TEAM': 'Холимог баг',
-      };
-
-      // Handle new detailed structure with subType
-      if (parsed.subType && SUBTYPE_LABEL[parsed.subType]) {
-        let label = SUBTYPE_LABEL[parsed.subType];
-
-        // Add age range if available
-        if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
-          label += ` (${parsed.minAge}–${parsed.maxAge} нас)`;
-        } else if (parsed.minAge !== undefined) {
-          label += ` (${parsed.minAge}+ нас)`;
-        } else if (parsed.maxAge !== undefined) {
-          label += ` (${parsed.maxAge} нас хүртэл)`;
-        }
-
-        return label;
-      }
-
-      // Handle division label
-      if (parsed.division) {
-        return parsed.division;
-      }
-
-      // Generate label from type and gender
-      if (parsed.type && parsed.gender) {
-        let typeLabel = '';
-
-        if (parsed.type === 'individual') {
-          typeLabel = parsed.gender === 'male' ? 'Эрэгтэй ганцаарчилсан' : 'Эмэгтэй ганцаарчилсан';
-        } else if (parsed.type === 'pair') {
-          typeLabel = parsed.gender === 'male' ? 'Дан эрэгтэй хос' : 'Дан эмэгтэй хос';
-        } else if (parsed.type === 'team') {
-          typeLabel = parsed.gender === 'male' ? 'Эрэгтэй баг' : 'Эмэгтэй баг';
-        }
-
-        // Add age range
-        if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
-          typeLabel += ` (${parsed.minAge}–${parsed.maxAge} нас)`;
-        } else if (parsed.minAge !== undefined) {
-          typeLabel += ` (${parsed.minAge}+ нас)`;
-        } else if (parsed.maxAge !== undefined) {
-          typeLabel += ` (${parsed.maxAge} нас хүртэл)`;
-        }
-
-        return typeLabel;
-      }
-
-      // Fallback to old format
-      return eventType;
-    } catch {
-      return eventType;
-    }
-  };
-
   const getEventDetails = (eventType: string): string | null => {
     try {
       const parsed = JSON.parse(eventType);
@@ -1126,7 +991,7 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
           <div className="flex flex-wrap gap-2 justify-center">
             {userRegistrations.map((category: string) => (
               <Badge key={category} className="bg-green-600 text-white">
-                {category}
+                {getEventLabel(category)}
               </Badge>
             ))}
           </div>
