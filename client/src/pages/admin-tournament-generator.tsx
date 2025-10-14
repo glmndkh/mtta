@@ -899,20 +899,20 @@ export default function AdminTournamentGenerator() {
                       <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-900/20">
                         <h4 className="font-medium mb-3">Хосын тэмцээний тохиргоо</h4>
                         <div className="space-y-3">
-                          <Select 
-                            value={currentConfig.subType} 
-                            onValueChange={(value) => setCurrentConfig(prev => ({ ...prev, subType: value }))}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Хосийн төрөл сонгох" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="MEN_DOUBLES">Дан эр</SelectItem>
-                              <SelectItem value="WOMEN_DOUBLES">Дан эм</SelectItem>
-                              <SelectItem value="MIXED_DOUBLES">Холимог хос</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <div className="grid grid-cols-3 gap-2">
+                          <div className="grid grid-cols-4 gap-2">
+                            <Select 
+                              value={currentConfig.subType} 
+                              onValueChange={(value) => setCurrentConfig(prev => ({ ...prev, subType: value }))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Хосийн төрөл" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="MEN_DOUBLES">Дан эр</SelectItem>
+                                <SelectItem value="WOMEN_DOUBLES">Дан эм</SelectItem>
+                                <SelectItem value="MIXED_DOUBLES">Холимог хос</SelectItem>
+                              </SelectContent>
+                            </Select>
                             <Input
                               type="number"
                               value={currentConfig.minAge}
@@ -930,7 +930,7 @@ export default function AdminTournamentGenerator() {
                               onValueChange={(value) => setCurrentConfig(prev => ({ ...prev, gender: value }))}
                             >
                               <SelectTrigger>
-                                <SelectValue />
+                                <SelectValue placeholder="Хүйс" />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="male">Эрэгтэй</SelectItem>
@@ -987,20 +987,20 @@ export default function AdminTournamentGenerator() {
                       <div className="p-4 border rounded-lg bg-purple-50 dark:bg-purple-900/20">
                         <h4 className="font-medium mb-3">Багийн тэмцээний тохиргоо</h4>
                         <div className="space-y-3">
-                          <Select 
-                            value={currentConfig.subType} 
-                            onValueChange={(value) => setCurrentConfig(prev => ({ ...prev, subType: value }))}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Багийн төрөл сонгох" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="MEN_TEAM">Эрэгтэйчүүдийн баг</SelectItem>
-                              <SelectItem value="WOMEN_TEAM">Эмэгтэйчүүдийн баг</SelectItem>
-                              <SelectItem value="MIXED_TEAM">Холимог баг</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <div className="grid grid-cols-3 gap-2">
+                          <div className="grid grid-cols-4 gap-2">
+                            <Select 
+                              value={currentConfig.subType} 
+                              onValueChange={(value) => setCurrentConfig(prev => ({ ...prev, subType: value }))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Багийн төрөл" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="MEN_TEAM">Эрэгтэйчүүдийн баг</SelectItem>
+                                <SelectItem value="WOMEN_TEAM">Эмэгтэйчүүдийн баг</SelectItem>
+                                <SelectItem value="MIXED_TEAM">Холимог баг</SelectItem>
+                              </SelectContent>
+                            </Select>
                             <Input
                               type="number"
                               value={currentConfig.minAge}
@@ -1018,7 +1018,7 @@ export default function AdminTournamentGenerator() {
                               onValueChange={(value) => setCurrentConfig(prev => ({ ...prev, gender: value }))}
                             >
                               <SelectTrigger>
-                                <SelectValue />
+                                <SelectValue placeholder="Хүйс" />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="male">Эрэгтэй</SelectItem>
