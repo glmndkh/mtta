@@ -58,10 +58,36 @@ export default function AdminTournamentGenerator() {
   const editingId = params.get('id');
   const isEditing = !!editingId;
 
-  const [minAge, setMinAge] = useState("");
-  const [maxAge, setMaxAge] = useState("");
-  const [gender, setGender] = useState("male");
-  const [participationFormat, setParticipationFormat] = useState("individual");
+  // Event type selection state
+  const [selectedEventTypes, setSelectedEventTypes] = useState<{
+    singles: boolean;
+    doubles: boolean;
+    team: boolean;
+  }>({
+    singles: false,
+    doubles: false,
+    team: false,
+  });
+
+  // Event configuration state
+  const [eventConfigs, setEventConfigs] = useState<{
+    singles: { minAge: string; maxAge: string; gender: string }[];
+    doubles: { minAge: string; maxAge: string; gender: string; subType: string }[];
+    team: { minAge: string; maxAge: string; gender: string; subType: string }[];
+  }>({
+    singles: [],
+    doubles: [],
+    team: [],
+  });
+
+  // Current config being edited
+  const [currentConfig, setCurrentConfig] = useState({
+    minAge: "",
+    maxAge: "",
+    gender: "male",
+    subType: "",
+  });
+
   const [participationCategories, setParticipationCategories] = useState<
     Array<{ 
       type: string; 
@@ -129,8 +155,45 @@ export default function AdminTournamentGenerator() {
   });
 
   useEffect(() => {
-    form.setValue("participationTypes", participationCategories.map(c => JSON.stringify(c)));
-  }, [participationCategories, form]);
+    // Build participationCategories from eventConfigs
+    const categories: any[] = [];
+    
+    // Add singles categories
+    eventConfigs.singles.forEach(config => {
+      categories.push({
+        type: "individual",
+        minAge: config.minAge ? parseInt(config.minAge) : null,
+        maxAge: config.maxAge ? parseInt(config.maxAge) : null,
+        gender: config.gender,
+      });
+    });
+    
+    // Add doubles categories
+    eventConfigs.doubles.forEach(config => {
+      categories.push({
+        type: "pair",
+        subType: config.subType,
+        minAge: config.minAge ? parseInt(config.minAge) : null,
+        maxAge: config.maxAge ? parseInt(config.maxAge) : null,
+        gender: config.gender,
+        teamSize: 2,
+      });
+    });
+    
+    // Add team categories
+    eventConfigs.team.forEach(config => {
+      categories.push({
+        type: "team",
+        subType: config.subType,
+        minAge: config.minAge ? parseInt(config.minAge) : null,
+        maxAge: config.maxAge ? parseInt(config.maxAge) : null,
+        gender: config.gender,
+      });
+    });
+    
+    setParticipationCategories(categories);
+    form.setValue("participationTypes", categories.map(c => JSON.stringify(c)));
+  }, [eventConfigs, form]);
 
   // Load existing tournament when editing
   useEffect(() => {
@@ -315,43 +378,7 @@ export default function AdminTournamentGenerator() {
     tournamentMutation.mutate(data);
   };
 
-  // Participation type management
-
-  const addParticipationCategory = () => {
-    if (participationFormat === "individual" && !minAge && !maxAge) {
-      toast({
-        title: "Алдаа", 
-        description: "Хамгийн багадаа нэг нас оруулна уу",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const category = {
-      type: participationFormat,
-      minAge: minAge ? parseInt(minAge) : null,
-      maxAge: maxAge ? parseInt(maxAge) : null,
-      gender,
-      ...(participationFormat === "team" && { teamSize: 2 }),
-      ...(participationFormat === "pair" && { teamSize: 2 }),
-    };
-
-    // Create JSON string format for the category
-    const categoryString = JSON.stringify(category);
-
-    setParticipationCategories([...participationCategories, category]);
-
-    // Update form participationTypes with JSON string
-    const currentTypes = form.getValues("participationTypes") || [];
-    form.setValue("participationTypes", [...currentTypes, categoryString]);
-
-    setMinAge("");
-    setMaxAge("");
-  };
-
-  const removeParticipationCategory = (index: number) => {
-    setParticipationCategories(participationCategories.filter((_, i) => i !== index));
-  };
+  // Participation type management is now handled through eventConfigs state
 
   // File upload handlers
   const handleBackgroundImageUpload = async () => {
@@ -753,99 +780,285 @@ export default function AdminTournamentGenerator() {
                 {/* Participation Types */}
                 <div>
                   <Label className="text-sm font-medium mb-4 block">Оролцооны төрөл *</Label>
-                  <div className="space-y-4">
-                    {/* Format Selection */}
-                    <div>
-                      <Label className="text-sm font-medium mb-2 block">Оролцооны хэлбэр</Label>
-                      <Select value={participationFormat} onValueChange={setParticipationFormat}>
-                        <SelectTrigger className="w-[200px]">
-                          <SelectValue placeholder="Хэлбэр сонгоно уу" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="individual">Хувь хүн</SelectItem>
-                          <SelectItem value="team">Баг</SelectItem>
-                          <SelectItem value="pair">Хос</SelectItem>
-                        </SelectContent>
-                      </Select>
+                  <div className="space-y-6">
+                    {/* Event Type Selection */}
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium">Тэмцээний төрлүүд сонгох</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                          <Checkbox
+                            id="singles"
+                            checked={selectedEventTypes.singles}
+                            onCheckedChange={(checked) =>
+                              setSelectedEventTypes(prev => ({ ...prev, singles: !!checked }))
+                            }
+                          />
+                          <label htmlFor="singles" className="text-sm font-medium cursor-pointer">
+                            Дангаар (Singles)
+                          </label>
+                        </div>
+                        <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                          <Checkbox
+                            id="doubles"
+                            checked={selectedEventTypes.doubles}
+                            onCheckedChange={(checked) =>
+                              setSelectedEventTypes(prev => ({ ...prev, doubles: !!checked }))
+                            }
+                          />
+                          <label htmlFor="doubles" className="text-sm font-medium cursor-pointer">
+                            Хос (Doubles)
+                          </label>
+                        </div>
+                        <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                          <Checkbox
+                            id="team"
+                            checked={selectedEventTypes.team}
+                            onCheckedChange={(checked) =>
+                              setSelectedEventTypes(prev => ({ ...prev, team: !!checked }))
+                            }
+                          />
+                          <label htmlFor="team" className="text-sm font-medium cursor-pointer">
+                            Баг (Team)
+                          </label>
+                        </div>
+                      </div>
                     </div>
-                    
-                    {/* Category Input */}
-                    <div className="flex gap-2 flex-wrap">
-                      <Input
-                        type="number"
-                        value={minAge}
-                        onChange={(e) => setMinAge(e.target.value)}
-                        placeholder="Доод нас"
-                        className="w-24"
-                      />
-                      <Input
-                        type="number"
-                        value={maxAge}
-                        onChange={(e) => setMaxAge(e.target.value)}
-                        placeholder="Дээд нас"
-                        className="w-24"
-                      />
-                      <Select value={gender} onValueChange={setGender}>
-                        <SelectTrigger className="w-[140px]">
-                          <SelectValue placeholder="Хүйс" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="male">Эрэгтэй</SelectItem>
-                          <SelectItem value="female">Эмэгтэй</SelectItem>
-                          <SelectItem value="mixed">Холимог</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button type="button" onClick={addParticipationCategory} size="sm">
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    {participationCategories.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {participationCategories.map((cat, idx) => {
-                          let label = "";
-                          let formatLabel = "";
-                          
-                          // Format type
-                          if (cat.type === "team") formatLabel = "Баг";
-                          else if (cat.type === "pair") formatLabel = "Хос";
-                          else formatLabel = "Хувь хүн";
-                          
-                          if (cat.minAge !== null && cat.maxAge !== null)
-                            label = `${cat.minAge}-${cat.maxAge}`;
-                          else if (cat.minAge !== null) label = `${cat.minAge}+`;
-                          else if (cat.maxAge !== null) label = `${cat.maxAge}-аас доош`;
-                          else if (cat.type === "individual") label = "Нас хязгааргүй";
 
-                          // Gender
-                          const genderLabel = cat.gender === 'male' ? 'эрэгтэй' :
-                                             cat.gender === 'female' ? 'эмэгтэй' : 'холимог';
-
-                          const displayText = label
-                            ? `${formatLabel} - ${label} ${genderLabel}`
-                            : `${formatLabel} - ${genderLabel}`;
-                            
-                          return (
-                            <div key={idx} className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-                              {displayText}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const newCategories = participationCategories.filter((_, i) => i !== idx);
-                                  setParticipationCategories(newCategories);
-
-                                  // Update form participationTypes by removing the corresponding JSON string
-                                  const categoryString = JSON.stringify(cat);
-                                  const currentTypes = form.getValues("participationTypes") || [];
-                                  const updatedTypes = currentTypes.filter(type => type !== categoryString);
-                                  form.setValue("participationTypes", updatedTypes);
-                                }}
-                                className="ml-2 text-blue-600 hover:text-blue-800"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
+                    {/* Singles Configuration */}
+                    {selectedEventTypes.singles && (
+                      <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                        <h4 className="font-medium mb-3">Дангаар тэмцээний тохиргоо</h4>
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-3 gap-2">
+                            <Input
+                              type="number"
+                              value={currentConfig.minAge}
+                              onChange={(e) => setCurrentConfig(prev => ({ ...prev, minAge: e.target.value }))}
+                              placeholder="Доод нас"
+                            />
+                            <Input
+                              type="number"
+                              value={currentConfig.maxAge}
+                              onChange={(e) => setCurrentConfig(prev => ({ ...prev, maxAge: e.target.value }))}
+                              placeholder="Дээд нас"
+                            />
+                            <Select 
+                              value={currentConfig.gender} 
+                              onValueChange={(value) => setCurrentConfig(prev => ({ ...prev, gender: value }))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="male">Эрэгтэй</SelectItem>
+                                <SelectItem value="female">Эмэгтэй</SelectItem>
+                                <SelectItem value="mixed">Холимог</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => {
+                              const newConfig = { ...currentConfig };
+                              setEventConfigs(prev => ({
+                                ...prev,
+                                singles: [...prev.singles, newConfig]
+                              }));
+                              setCurrentConfig({ minAge: "", maxAge: "", gender: "male", subType: "" });
+                            }}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Ангилал нэмэх
+                          </Button>
+                          {eventConfigs.singles.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {eventConfigs.singles.map((config, idx) => (
+                                <div key={idx} className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                                  {config.minAge && config.maxAge ? `${config.minAge}-${config.maxAge}` : config.minAge ? `${config.minAge}+` : `U${config.maxAge}`} {config.gender === 'male' ? 'эрэгтэй' : config.gender === 'female' ? 'эмэгтэй' : 'холимог'}
+                                  <button
+                                    type="button"
+                                    onClick={() => setEventConfigs(prev => ({
+                                      ...prev,
+                                      singles: prev.singles.filter((_, i) => i !== idx)
+                                    }))}
+                                    className="ml-2"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              ))}
                             </div>
-                          );
-                        })}
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Doubles Configuration */}
+                    {selectedEventTypes.doubles && (
+                      <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-900/20">
+                        <h4 className="font-medium mb-3">Хосын тэмцээний тохиргоо</h4>
+                        <div className="space-y-3">
+                          <Select 
+                            value={currentConfig.subType} 
+                            onValueChange={(value) => setCurrentConfig(prev => ({ ...prev, subType: value }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Хосийн төрөл сонгох" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="MEN_DOUBLES">Дан эр</SelectItem>
+                              <SelectItem value="WOMEN_DOUBLES">Дан эм</SelectItem>
+                              <SelectItem value="MIXED_DOUBLES">Холимог хос</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <div className="grid grid-cols-3 gap-2">
+                            <Input
+                              type="number"
+                              value={currentConfig.minAge}
+                              onChange={(e) => setCurrentConfig(prev => ({ ...prev, minAge: e.target.value }))}
+                              placeholder="Доод нас"
+                            />
+                            <Input
+                              type="number"
+                              value={currentConfig.maxAge}
+                              onChange={(e) => setCurrentConfig(prev => ({ ...prev, maxAge: e.target.value }))}
+                              placeholder="Дээд нас"
+                            />
+                            <Select 
+                              value={currentConfig.gender} 
+                              onValueChange={(value) => setCurrentConfig(prev => ({ ...prev, gender: value }))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="male">Эрэгтэй</SelectItem>
+                                <SelectItem value="female">Эмэгтэй</SelectItem>
+                                <SelectItem value="mixed">Холимог</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={!currentConfig.subType}
+                            onClick={() => {
+                              const newConfig = { ...currentConfig };
+                              setEventConfigs(prev => ({
+                                ...prev,
+                                doubles: [...prev.doubles, newConfig]
+                              }));
+                              setCurrentConfig({ minAge: "", maxAge: "", gender: "male", subType: "" });
+                            }}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Ангилал нэмэх
+                          </Button>
+                          {eventConfigs.doubles.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {eventConfigs.doubles.map((config, idx) => (
+                                <div key={idx} className="flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+                                  {config.subType === 'MEN_DOUBLES' ? 'Дан эр' : config.subType === 'WOMEN_DOUBLES' ? 'Дан эм' : 'Холимог'} {config.minAge && config.maxAge ? `${config.minAge}-${config.maxAge}` : config.minAge ? `${config.minAge}+` : config.maxAge ? `U${config.maxAge}` : ''}
+                                  <button
+                                    type="button"
+                                    onClick={() => setEventConfigs(prev => ({
+                                      ...prev,
+                                      doubles: prev.doubles.filter((_, i) => i !== idx)
+                                    }))}
+                                    className="ml-2"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Team Configuration */}
+                    {selectedEventTypes.team && (
+                      <div className="p-4 border rounded-lg bg-purple-50 dark:bg-purple-900/20">
+                        <h4 className="font-medium mb-3">Багийн тэмцээний тохиргоо</h4>
+                        <div className="space-y-3">
+                          <Select 
+                            value={currentConfig.subType} 
+                            onValueChange={(value) => setCurrentConfig(prev => ({ ...prev, subType: value }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Багийн төрөл сонгох" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="MEN_TEAM">Эрэгтэйчүүдийн баг</SelectItem>
+                              <SelectItem value="WOMEN_TEAM">Эмэгтэйчүүдийн баг</SelectItem>
+                              <SelectItem value="MIXED_TEAM">Холимог баг</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <div className="grid grid-cols-3 gap-2">
+                            <Input
+                              type="number"
+                              value={currentConfig.minAge}
+                              onChange={(e) => setCurrentConfig(prev => ({ ...prev, minAge: e.target.value }))}
+                              placeholder="Доод нас"
+                            />
+                            <Input
+                              type="number"
+                              value={currentConfig.maxAge}
+                              onChange={(e) => setCurrentConfig(prev => ({ ...prev, maxAge: e.target.value }))}
+                              placeholder="Дээд нас"
+                            />
+                            <Select 
+                              value={currentConfig.gender} 
+                              onValueChange={(value) => setCurrentConfig(prev => ({ ...prev, gender: value }))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="male">Эрэгтэй</SelectItem>
+                                <SelectItem value="female">Эмэгтэй</SelectItem>
+                                <SelectItem value="mixed">Холимог</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={!currentConfig.subType}
+                            onClick={() => {
+                              const newConfig = { ...currentConfig };
+                              setEventConfigs(prev => ({
+                                ...prev,
+                                team: [...prev.team, newConfig]
+                              }));
+                              setCurrentConfig({ minAge: "", maxAge: "", gender: "male", subType: "" });
+                            }}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Ангилал нэмэх
+                          </Button>
+                          {eventConfigs.team.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {eventConfigs.team.map((config, idx) => (
+                                <div key={idx} className="flex items-center bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">
+                                  {config.subType === 'MEN_TEAM' ? 'Эрэгтэй баг' : config.subType === 'WOMEN_TEAM' ? 'Эмэгтэй баг' : 'Холимог баг'} {config.minAge && config.maxAge ? `${config.minAge}-${config.maxAge}` : config.minAge ? `${config.minAge}+` : config.maxAge ? `U${config.maxAge}` : ''}
+                                  <button
+                                    type="button"
+                                    onClick={() => setEventConfigs(prev => ({
+                                      ...prev,
+                                      team: prev.team.filter((_, i) => i !== idx)
+                                    }))}
+                                    className="ml-2"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
