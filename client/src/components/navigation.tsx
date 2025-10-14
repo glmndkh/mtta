@@ -23,10 +23,10 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import mttaLogo from "@/assets/mtta-logo-green.png";
-
 const isActive = (current: string, href: string) =>
   href === "/" ? current === "/" : current.startsWith(href);
+
+const mttaLogo = "/mtta-logo.png";
 
 type PlayerSearchResult = {
   id: string;
