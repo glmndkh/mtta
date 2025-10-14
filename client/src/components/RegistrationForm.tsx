@@ -885,18 +885,36 @@ const ConfirmationStep = ({
             <div className="flex flex-col gap-2">
               <span className="font-medium">Бүртгэгдсэн төрлүүд:</span>
               <div className="space-y-2">
-                {selectedEvent.map((event, index) => (
-                  <div key={index} className="bg-green-100 border border-green-300 rounded-lg p-3">
-                    <div className="font-medium text-green-800 mb-1">
-                      {getEventLabel(event)}
-                    </div>
-                    {getEventDetails(event) && (
-                      <div className="text-sm text-green-600">
-                        {getEventDetails(event)}
+                {selectedEvent.map((event, index) => {
+                  const eventType = getEventType(event);
+                  const isTeamOrDoubles = eventType === 'team' || eventType === 'doubles';
+                  
+                  return (
+                    <div key={index} className="bg-green-100 border border-green-300 rounded-lg p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="font-medium text-green-800 mb-1">
+                            {getEventLabel(event)}
+                          </div>
+                          {getEventDetails(event) && (
+                            <div className="text-sm text-green-600">
+                              {getEventDetails(event)}
+                            </div>
+                          )}
+                        </div>
+                        {isTeamOrDoubles && (
+                          <Button
+                            onClick={() => handleFormTeam(event)}
+                            size="sm"
+                            className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
+                          >
+                            {eventType === 'team' ? 'Баг бүрдүүлэх' : 'Хос бүрдүүлэх'}
+                          </Button>
+                        )}
                       </div>
-                    )}
-                  </div>
-                ))}
+                    </div>
+                  );
+                })}
               </div>
             </div>
             <div className="flex justify-between">
