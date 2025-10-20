@@ -80,15 +80,15 @@ function ChampionCard({ champion }: { champion: ChampionCard }) {
       className="relative rounded-lg overflow-hidden bg-gray-800/50 border border-green-500/20 p-4 hover:border-green-500/40 transition-all"
     >
       <div className="flex items-center gap-3">
-        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center flex-shrink-0">
+        <div className="w-32 h-32 rounded-lg bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center flex-shrink-0">
           {champion.image ? (
             <img 
               src={champion.image} 
               alt={champion.name}
-              className="w-full h-full object-cover rounded-full"
+              className="w-full h-full object-cover rounded-lg"
             />
           ) : (
-            <Trophy className="w-8 h-8 text-white" />
+            <Trophy className="w-16 h-16 text-white" />
           )}
         </div>
         <div className="flex-1">
@@ -146,16 +146,12 @@ export function MTTATimelineSection() {
 
                 {/* Center - Year badge */}
                 <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden md:block">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg shadow-green-500/50">
-                    <span className="text-2xl font-bold text-white">{event.year}</span>
-                  </div>
+                  <span className="text-6xl font-bold text-green-400">{event.year}</span>
                 </div>
 
                 {/* Mobile year badge */}
                 <div className="md:hidden mb-4">
-                  <div className="inline-flex items-center justify-center px-6 py-2 rounded-full bg-gradient-to-br from-green-400 to-green-600 shadow-lg shadow-green-500/50">
-                    <span className="text-2xl font-bold text-white">{event.year}</span>
-                  </div>
+                  <span className="text-5xl font-bold text-green-400">{event.year}</span>
                 </div>
 
                 {/* Right side - Champions */}
