@@ -1,12 +1,14 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { History, Target, Users, Award, CalendarIcon, Trophy, Globe, Mountain, Eye, HandHeart, ChevronDown, Star, Medal, Crown } from "lucide-react";
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Link } from "wouter";
 
 // Helper function to construct image URLs, potentially handling different base paths or fallbacks
 const getImageUrl = (path: string): string => {
@@ -212,48 +214,19 @@ const AboutPage = () => {
             </div>
           </section>
 
-          {/* Timeline Section */}
+          {/* History Link Section */}
           <section className="mb-20">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Он цагийн хэлхээс</h2>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Түүхэн замнал</h2>
               <div className="w-20 h-1 bg-green-400 mx-auto mb-8"></div>
-              <p className="text-gray-700 dark:text-gray-300 max-w-2xl mx-auto">
+              <p className="text-gray-700 dark:text-gray-300 max-w-2xl mx-auto mb-8">
                 Монголын ширээний теннисний холбооны түүхэн замнал - 1965 онд анх байгуулагдсанаас өнөөг хүртэл спортын хөгжилд оруулсан хувь нэмэр.
               </p>
-            </div>
-            
-            {/* Timeline with horizontal scroll */}
-            <div className="relative">
-              <div className="flex overflow-x-auto pb-4 space-x-8">
-                {[
-                  { year: '1965', title: 'Холбоо байгуулагдсан', description: 'Монголын ширээний теннисний холбоо анх байгуулагдав', category: 'foundation' },
-                  { year: '1970', title: 'Эхний тэмцээн', description: 'Улсын хэмжээний анхны ширээний теннисний тэмцээн зохион байгуулав', category: 'achievement' },
-                  { year: '1990', title: 'ITTF-д элссэн', description: 'Олон улсын ширээний теннисний холбооны гишүүн болсон', category: 'international' },
-                  { year: '1993', title: 'Дэлхийн аварга', description: 'Анхны олон улсын тэмцээнд оролцов', category: 'international' },
-                  { year: '1994', title: 'Азийн наадам', description: 'Азийн наадамд анх удаа оролцлоо', category: 'achievement' },
-                  { year: '1996', title: 'Сургалтын төв', description: 'Үндэсний сургалтын төвийг байгуулсан', category: 'development' },
-                  { year: '1997', title: 'Залуучуудын хөтөлбөр', description: 'Залуучуудын хөгжлийн хөтөлбөр эхэлсэн', category: 'development' },
-                  { year: '1998', title: 'Эмэгтэйчүүдийн спорт', description: 'Эмэгтэйчүүдийн ширээний теннисийг хөгжүүлэх хөтөлбөр', category: 'development' },
-                  { year: '2000', title: 'Олон улсын харилцаа', description: 'Өмнөд Солонгос, Хятадтай хамтын ажиллагаа эхэлсэн', category: 'international' }
-                ].map((event, index) => (
-                  <div key={event.year} className="flex-shrink-0 w-80">
-                    <div className="relative">
-                      <div className="flex items-center mb-4">
-                        <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm mr-4">
-                          {event.year}
-                        </div>
-                        <div className="flex-1 h-0.5 bg-gray-600"></div>
-                      </div>
-                      <Card className="card-dark">
-                        <CardContent className="p-6">
-                          <h3 className="text-gray-900 dark:text-white font-semibold mb-2">{event.title}</h3>
-                          <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">{event.description}</p>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <Link href="/history">
+                <Button className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg">
+                  Бидний түүхийг үзэх
+                </Button>
+              </Link>
             </div>
           </section>
 

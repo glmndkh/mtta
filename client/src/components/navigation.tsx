@@ -238,7 +238,6 @@ export default function Navigation() {
       dropdown: [
         { href: "/about/branches", label: "Салбар холбоо" },
         { href: "/about/intro", label: "Танилцуулга" },
-        { href: "/about/history", label: "Түүхэн замнал" },
         { href: "/history", label: "Бидний түүх" },
         { href: "/national-team", label: "Үндэсний шигшээ" },
         {
