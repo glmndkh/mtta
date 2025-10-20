@@ -1182,21 +1182,6 @@ export default function Profile() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* Gender Selection */}
-                    <div>
-                      <Label className="text-base font-medium">Хүйс</Label>
-                      <Select value={formData.gender || ''} onValueChange={(gender) => setFormData(prev => ({ ...prev, gender }))} disabled={!isEditMode}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Хүйс сонгоно уу" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="male">Эрэгтэй</SelectItem>
-                          <SelectItem value="female">Эмэгтэй</SelectItem>
-                          <SelectItem value="other">Бусад</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
                     {/* Handedness Selection */}
                     <div>
                       <Label className="text-base font-medium">Гарын сонголт</Label>
