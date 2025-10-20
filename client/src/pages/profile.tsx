@@ -321,7 +321,7 @@ export default function Profile() {
             memberNumber: ''
           }
         };
-        
+
         setFormData(profileData);
         setOriginalFormData(profileData); // Store for cancel functionality
         setSelectedProvince(data.province || ''); // Set initial selected province
@@ -412,15 +412,15 @@ export default function Profile() {
         title: "Амжилттай!",
         description: "Профайл амжилттай шинэчлэгдлээ",
       });
-      
+
       // Invalidate and refetch queries to force update
       queryClient.invalidateQueries({ queryKey: ['/api/user/profile'] });
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-      
+
       setPendingProfileUpdate(null);
       setIsConfirmDialogOpen(false);
       setIsEditMode(false);
-      
+
       // Reload the page to ensure all data is fresh
       window.location.reload();
     },
@@ -558,10 +558,10 @@ export default function Profile() {
                 title: "Амжилттай",
                 description: "Профайл зураг амжилттай хадгалагдлаа"
               });
-              
+
               // Force refetch to get latest data
               await queryClient.refetchQueries({ queryKey: ['/api/user/profile'] });
-              
+
               // Reload page to ensure image is displayed correctly
               window.location.reload();
             },
@@ -1173,56 +1173,12 @@ export default function Profile() {
                   </CardContent>
                 </Card>
 
-                {/* Location Information */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <MapPin className="w-5 h-5" />
-                      Байршил
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="province" className="text-white">Аймаг/Хот</Label>
-                        <Select value={selectedProvince} onValueChange={handleProvinceChange} disabled={!isEditMode}>
-                          <SelectTrigger className="input-dark">
-                            <SelectValue placeholder="Аймаг/Хот сонгоно уу" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {MONGOLIA_PROVINCES.map(province => (
-                              <SelectItem key={province} value={province}>{province}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="city" className="text-white">Сум/Дүүрэг</Label>
-                        <Select
-                          value={formData.city}
-                          onValueChange={(city) => setFormData(prev => ({ ...prev, city }))}
-                          disabled={!isEditMode || (!selectedProvince && !formData.province)}
-                        >
-                          <SelectTrigger className="input-dark">
-                            <SelectValue placeholder="Сум/Дүүрэг сонгоно уу" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableCities.map((city: string) => (
-                              <SelectItem key={city} value={city}>{city}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
                 {/* Equipment and Playing Style */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Target className="w-5 h-5" />
-                      Тоглоомын тохиргоо
+                      Тоглодог хэв маяг
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
@@ -1601,7 +1557,7 @@ export default function Profile() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Мэдээллээ шинэчлэх үү?</AlertDialogTitle>
+            <AlertDialogTitle>Мэдээлэлээ шинэчлэх үү?</AlertDialogTitle>
             <AlertDialogDescription>
               Та профайлын мэдээлэлдээ хийсэн өөрчлөлтүүдээ баталгаажуулах гэж байна. Дараах мэдээлэл хадгалагдана:
             </AlertDialogDescription>
