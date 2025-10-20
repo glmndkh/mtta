@@ -1654,7 +1654,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
           <>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="firstName">Нэр</Label>
+                <Label htmlFor="firstName">Нэр *</Label>
                 <Input
                   id="firstName"
                   value={formData.firstName || ''}
@@ -1662,7 +1662,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                 />
               </div>
               <div>
-                <Label htmlFor="lastName">Овог</Label>
+                <Label htmlFor="lastName">Овог *</Label>
                 <Input
                   id="lastName"
                   value={formData.lastName || ''}
@@ -1671,7 +1671,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               </div>
             </div>
             <div>
-              <Label htmlFor="email">И-мэйл</Label>
+              <Label htmlFor="email">И-мэйл *</Label>
               <Input
                 id="email"
                 type="email"
@@ -1973,7 +1973,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         return (
           <>
             <div>
-              <Label htmlFor="clubId">Клуб</Label>
+              <Label htmlFor="clubId">Клуб *</Label>
               <Select value={formData.clubId || ''} onValueChange={(v) => setFormData({ ...formData, clubId: v })}>
                 <SelectTrigger id="clubId">
                   <SelectValue placeholder="Клуб сонгох" />
@@ -1986,7 +1986,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               </Select>
             </div>
             <div>
-              <Label>Хэрэглэгч эсвэл нэр</Label>
+              <Label>Хэрэглэгч эсвэл нэр *</Label>
               <UserAutocomplete
                 users={Array.isArray(allUsers) ? allUsers : []}
                 value={formData.userId}
@@ -2004,7 +2004,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         return (
           <>
             <div>
-              <Label htmlFor="name">Нэр</Label>
+              <Label htmlFor="name">Нэр *</Label>
               <Input id="name" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
             </div>
             <div>
@@ -2127,7 +2127,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         return (
           <>
             <div>
-              <Label htmlFor="name">Нэр</Label>
+              <Label htmlFor="name">Нэр *</Label>
               <Input
                 id="name"
                 value={formData.name || ''}
@@ -2135,7 +2135,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               />
             </div>
             <div>
-              <Label htmlFor="position">Албан тушаал</Label>
+              <Label htmlFor="position">Албан тушаал *</Label>
               <Input
                 id="position"
                 value={formData.position || ''}
@@ -2218,7 +2218,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
           <>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="firstName">Нэр</Label>
+                <Label htmlFor="firstName">Нэр *</Label>
                 <Input
                   id="firstName"
                   value={formData.firstName || ''}
@@ -2226,7 +2226,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                 />
               </div>
               <div>
-                <Label htmlFor="lastName">Овог</Label>
+                <Label htmlFor="lastName">Овог *</Label>
                 <Input
                   id="lastName"
                   value={formData.lastName || ''}
@@ -2320,7 +2320,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
             <div>
               <Label htmlFor="firstName" className="flex items-center gap-2">
                 <UserIcon className="w-4 h-4" />
-                Нэр
+                Нэр *
               </Label>
               <Input
                 id="firstName"
@@ -2332,7 +2332,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
             <div>
               <Label htmlFor="lastName" className="flex items-center gap-2">
                 <UserIcon className="w-4 h-4" />
-                Овог
+                Овог *
               </Label>
               <Input
                 id="lastName"
@@ -2436,7 +2436,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               </div>
             </div>
             <div>
-              <Label htmlFor="judgeType">Төрөл</Label>
+              <Label htmlFor="judgeType">Төрөл *</Label>
               <Select value={formData.judgeType || ''} onValueChange={(v) => setFormData({ ...formData, judgeType: v })}>
                 <SelectTrigger id="judgeType">
                   <SelectValue placeholder="Сонгох" />
@@ -2454,7 +2454,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         return (
           <>
             <div>
-              <Label htmlFor="name">Лигийн нэр</Label>
+              <Label htmlFor="name">Лигийн нэр *</Label>
               <Input
                 id="name"
                 value={formData.name || ''}
@@ -2479,7 +2479,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="startDate">Эхлэх огноо</Label>
+                <Label htmlFor="startDate">Эхлэх огноо *</Label>
                 <Input
                   id="startDate"
                   type="date"
@@ -2488,7 +2488,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                 />
               </div>
               <div>
-                <Label htmlFor="endDate">Дуусах огноо</Label>
+                <Label htmlFor="endDate">Дуусах огноо *</Label>
                 <Input
                   id="endDate"
                   type="date"
@@ -2504,7 +2504,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         return (
           <>
             <div>
-              <Label htmlFor="title">Гарчиг</Label>
+              <Label htmlFor="title">Гарчиг *</Label>
               <Input
                 id="title"
                 value={formData.title || ''}
@@ -2512,7 +2512,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               />
             </div>
             <div>
-              <Label htmlFor="content">Агуулга</Label>
+              <Label htmlFor="content">Агуулга *</Label>
               <RichTextEditor
                 content={formData.content || ''}
                 onChange={(value) => setFormData({ ...formData, content: value })}
@@ -2643,7 +2643,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         return (
           <>
             <div>
-              <Label htmlFor="name">Багийн нэр</Label>
+              <Label htmlFor="name">Багийн нэр *</Label>
               <Input
                 id="name"
                 value={formData.name || ''}
@@ -2827,7 +2827,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
             <div>
               <Label className="flex items-center gap-2">
                 <Upload className="w-4 h-4" />
-                Слайдерын зураг
+                Слайдерын зураг *
               </Label>
               <div className="space-y-2">
                 <ObjectUploader
@@ -2997,7 +2997,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         return (
           <>
             <div>
-              <Label htmlFor="name">Ивээн тэтгэгчийн нэр</Label>
+              <Label htmlFor="name">Ивээн тэтгэгчийн нэр *</Label>
               <Input
                 id="name"
                 value={formData.name || ''}
@@ -3007,7 +3007,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
             <div>
               <Label className="flex items-center gap-2">
                 <Upload className="w-4 h-4" />
-                Ивээн тэтгэгчийн лого
+                Ивээн тэтгэгчийн лого *
               </Label>
               <div className="space-y-2">
                 <ObjectUploader
@@ -3110,7 +3110,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         return (
           <>
             <div>
-              <Label htmlFor="name">Тэмцээнний нэр</Label>
+              <Label htmlFor="name">Тэмцээнний нэр *</Label>
               <Input
                 id="name"
                 value={formData.name || ''}
@@ -3127,7 +3127,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="startDate">Эхлэх огноо</Label>
+                <Label htmlFor="startDate">Эхлэх огноо *</Label>
                 <Input
                   id="startDate"
                   type="date"
@@ -3136,7 +3136,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                 />
               </div>
               <div>
-                <Label htmlFor="endDate">Дуусах огноо</Label>
+                <Label htmlFor="endDate">Дуусах огноо *</Label>
                 <Input
                   id="endDate"
                   type="date"
@@ -3147,7 +3147,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="location">Байршил</Label>
+                <Label htmlFor="location">Байршил *</Label>
                 <Input
                   id="location"
                   value={formData.location || ''}
@@ -3202,7 +3202,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         return (
           <>
             <div>
-              <Label htmlFor="name">Нэр</Label>
+              <Label htmlFor="name">Нэр *</Label>
               <Input
                 id="name"
                 value={formData.name || ''}
@@ -3210,7 +3210,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               />
             </div>
             <div>
-              <Label htmlFor="year">Он</Label>
+              <Label htmlFor="year">Он *</Label>
               <Input
                 id="year"
                 type="text"
