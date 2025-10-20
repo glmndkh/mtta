@@ -76,11 +76,11 @@ export const ChampionsSpotlightDark: React.FC<ChampionsSpotlightDarkProps> = ({
             <img
               src={currentPlayer.imageUrl}
               alt={`${currentPlayer.firstName} ${currentPlayer.lastName}`}
-              className="w-40 h-48 sm:w-52 sm:h-60 md:w-64 md:h-80 lg:w-80 lg:h-96 xl:w-96 xl:h-[28rem] object-cover rounded-xl md:rounded-2xl shadow-2xl"
+              className="w-56 h-72 sm:w-72 sm:h-96 md:w-80 md:h-[28rem] lg:w-96 lg:h-[32rem] xl:w-[28rem] xl:h-[36rem] object-cover rounded-xl md:rounded-2xl shadow-2xl"
               style={{ filter: 'drop-shadow(0 10px 30px rgba(0,0,0,0.7))' }}
             />
           ) : (
-            <div className="w-40 h-48 sm:w-52 sm:h-60 md:w-64 md:h-80 lg:w-80 lg:h-96 xl:w-96 xl:h-[28rem] bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl md:rounded-2xl flex items-center justify-center shadow-2xl">
+            <div className="w-56 h-72 sm:w-72 sm:h-96 md:w-80 md:h-[28rem] lg:w-96 lg:h-[32rem] xl:w-[28rem] xl:h-[36rem] bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl md:rounded-2xl flex items-center justify-center shadow-2xl">
               <div className="text-black dark:text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold opacity-60">
                 {currentPlayer?.firstName?.[0]}{currentPlayer?.lastName?.[0]}
               </div>
@@ -150,7 +150,7 @@ export const ChampionsSpotlightDark: React.FC<ChampionsSpotlightDarkProps> = ({
       {players.length === 0 && (
         <div className="absolute inset-0 flex flex-col items-center justify-center px-4">
           <div className="text-center text-black dark:text-white">
-            <div className="w-32 h-40 sm:w-40 sm:h-48 md:w-48 md:h-56 bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl md:rounded-2xl flex items-center justify-center mb-8 mx-auto shadow-2xl">
+            <div className="w-56 h-72 sm:w-72 sm:h-96 md:w-80 md:h-[28rem] bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl md:rounded-2xl flex items-center justify-center mb-8 mx-auto shadow-2xl">
               <div className="text-black dark:text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold opacity-40">
                 МТ
               </div>
