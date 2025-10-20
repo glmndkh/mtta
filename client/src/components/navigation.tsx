@@ -236,10 +236,10 @@ export default function Navigation() {
       label: t('nav.about'),
       icon: User,
       dropdown: [
-        { href: "/about/branches", label: "Салбар холбоо" },
         { href: "/about/intro", label: "Танилцуулга" },
         { href: "/history", label: "Бидний түүх" },
         { href: "/national-team", label: "Үндэсний шигшээ" },
+        { href: "/about/branches", label: "Салбар холбоод" },
         {
           label: "Зөвлөлүүд",
           sublinks: [
