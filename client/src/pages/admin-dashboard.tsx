@@ -1698,7 +1698,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         return (
           <>
             <div>
-              <Label htmlFor="name">Клубын нэр</Label>
+              <Label htmlFor="name">Клубын нэр *</Label>
               <Input
                 id="name"
                 value={formData.name || ''}
