@@ -52,7 +52,7 @@ const clubSchema = z.object({
   colorTheme: z.string().optional(),
   trainingInfo: z.string().optional(),
   ownerId: z.string().optional(),
-  ownerName: z.string().optional(),
+  ownerName: z.string().min(1, "Клубын эзэн заавал оруулна уу"),
   extraData: z.array(z.object({ key: z.string(), value: z.string() })).optional(),
   instagramLink: z.string().url("Буруу Instagram холбоос").optional(),
   facebookLink: z.string().url("Буруу Facebook холбоос").optional(),
@@ -1706,12 +1706,12 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               />
             </div>
             <div>
-              <Label htmlFor="ownerName">Клубын эзэн</Label>
+              <Label htmlFor="ownerName">Клубын эзэн *</Label>
               <Input
                 id="ownerName"
                 value={formData.ownerName || ''}
                 onChange={(e) => setFormData({...formData, ownerName: e.target.value})}
-                placeholder="Эзний нэр оруулна уу"
+                placeholder="Клубын эзний нэр"
               />
             </div>
             <div>
@@ -1853,11 +1853,33 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
             </div>
 
             <div>
-              <Label htmlFor="website">Холбоос</Label>
+              <Label htmlFor="website">Map холбоос</Label>
               <Input
                 id="website"
+                type="url"
                 value={formData.website || ''}
-                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                onChange={(e) => setFormData({...formData, website: e.target.value})}
+                placeholder="https://maps.google.com/..."
+              />
+            </div>
+            <div>
+              <Label htmlFor="instagram">Instagram Холбоос</Label>
+              <Input
+                id="instagram"
+                type="url"
+                value={formData.instagramLink || ''}
+                onChange={(e) => setFormData({...formData, instagramLink: e.target.value})}
+                placeholder="https://instagram.com/your_club"
+              />
+            </div>
+            <div>
+              <Label htmlFor="facebook">Facebook Холбоос</Label>
+              <Input
+                id="facebook"
+                type="url"
+                value={formData.facebookLink || ''}
+                onChange={(e) => setFormData({...formData, facebookLink: e.target.value})}
+                placeholder="https://facebook.com/your_club"
               />
             </div>
             <div>
@@ -1867,26 +1889,6 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                 value={formData.trainingInfo || ''}
                 onChange={(e) => setFormData({ ...formData, trainingInfo: e.target.value })}
               />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="instagramLink">Instagram Холбоос</Label>
-                <Input
-                  id="instagramLink"
-                  value={formData.instagramLink || ''}
-                  onChange={(e) => setFormData({ ...formData, instagramLink: e.target.value })}
-                  placeholder="https://instagram.com/your_club"
-                />
-              </div>
-              <div>
-                <Label htmlFor="facebookLink">Facebook Холбоос</Label>
-                <Input
-                  id="facebookLink"
-                  value={formData.facebookLink || ''}
-                  onChange={(e) => setFormData({ ...formData, facebookLink: e.target.value })}
-                  placeholder="https://facebook.com/your_club"
-                />
-              </div>
             </div>
             <div>
               <Label>7 Хоногийн Хуваарь</Label>
@@ -3345,7 +3347,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
       case 'sliders':
         return formData.imageUrl; // Title заавал биш, зөвхөн зураг л заавал
       case 'clubs':
-        return formData.name; // Only name is required for clubs
+        return formData.name && formData.ownerName; // Only name and ownerName are required for clubs
       case 'branches':
         return formData.name; // Remove imageUrl requirement
       case 'federation-members':
