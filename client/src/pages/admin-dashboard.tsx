@@ -3735,10 +3735,6 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
             <FileText className="w-4 h-4" />
             Зэрэг хүсэлт
           </TabsTrigger>
-          <TabsTrigger value="psda" className="admin-tab-trigger flex items-center gap-2 data-[state=active]:bg-green-600 font-semibold text-base">
-            <FileText className="w-4 h-4" />
-            Псда
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="users">
@@ -4141,20 +4137,6 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                   ))}
                 </div>
               )}
-            </TabsContent>
-
-            <TabsContent value="psda" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Псда</CardTitle>
-                  <CardDescription>Псда section-ийн агуулга</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <p className="text-gray-600">Псда хэсэг энд байрлана</p>
-                  </div>
-                </CardContent>
-              </Card>
             </TabsContent>
 
             <TabsContent value="other" className="space-y-6">
