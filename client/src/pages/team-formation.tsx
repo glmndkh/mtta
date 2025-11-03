@@ -108,28 +108,73 @@ export default function TeamFormation() {
     enabled: !!tournamentId && !!eventType,
   });
 
-  // Available players - server already filters by event, user, and search
+  // Available players - exclude current user and already selected members, validate gender
   const availablePlayers = useMemo(() => {
-    // Only exclude already selected members (server handles the rest)
-    return allUsers.filter((player: any) => 
-      !selectedMembers.find(m => m.id === player.id)
-    );
-  }, [allUsers, selectedMembers]);
+    if (!allUsers || !user) return [];
+    
+    // Parse event to get gender requirements
+    let requiredGender: 'male' | 'female' | 'mixed' | null = null;
+    try {
+      const parsed = JSON.parse(eventType);
+      if (parsed.subType?.includes('MEN')) requiredGender = 'male';
+      else if (parsed.subType?.includes('WOMEN')) requiredGender = 'female';
+      else if (parsed.subType?.includes('MIXED')) requiredGender = 'mixed';
+      else if (parsed.gender) requiredGender = parsed.gender;
+    } catch {
+      // Ignore parse errors
+    }
+
+    return allUsers.filter((player: any) => {
+      // Exclude current user
+      if (player.id === user.id) return false;
+      
+      // Exclude already selected members
+      if (selectedMembers.find(m => m.id === player.id)) return false;
+      
+      // Validate gender for non-mixed events
+      if (requiredGender && requiredGender !== 'mixed') {
+        if (player.gender !== requiredGender) return false;
+      }
+      
+      return true;
+    });
+  }, [allUsers, selectedMembers, user, eventType]);
 
   const handleAddMember = (player: any) => {
-    if (selectedMembers.length >= maxMembers) {
+    // Validate member count
+    if (selectedMembers.length >= maxMembers - 1) { // -1 because current user is already counted
       toast({
         title: "Хязгаар хэтэрсэн",
-        description: `Багийн гишүүдийн дээд хязгаар ${maxMembers}`,
+        description: `Багийн гишүүдийн дээд хязгаар ${maxMembers} (та оролцсон)`,
         variant: "destructive",
       });
       return;
     }
+    
+    // Validate gender eligibility for non-mixed events
+    const eventGender = getGenderFromEvent(eventType);
+    if (eventGender && eventGender !== 'mixed' && player.gender !== eventGender) {
+      toast({
+        title: "Хүйсний шаардлага хангахгүй",
+        description: `Энэ төрөлд зөвхөн ${eventGender === 'male' ? 'эрэгтэй' : 'эмэгтэй'} тоглогч оролцох боломжтой`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setSelectedMembers([...selectedMembers, player]);
+    toast({
+      title: "Амжилттай",
+      description: `${player.firstName} ${player.lastName} нэмэгдлээ`,
+    });
   };
 
-  const handleRemoveMember = (playerId: number) => {
+  const handleRemoveMember = (playerId: string) => {
     setSelectedMembers(prev => prev.filter(m => m.id !== playerId));
+    toast({
+      title: "Гишүүн хасагдлаа",
+      description: "Гишүүн амжилттай хасагдлаа",
+    });
   };
 
   const createTeamMutation = useMutation({
@@ -170,26 +215,40 @@ export default function TeamFormation() {
   });
 
   const handleSubmit = () => {
-    if (!teamName.trim()) {
+    // Validate team name for team events
+    if (isTeam && !teamName.trim()) {
       toast({
         title: "Алдаа",
-        description: `${isTeam ? 'Багийн' : 'Хосын'} нэр оруулна уу`,
+        description: "Багийн нэр оруулна уу",
         variant: "destructive",
       });
       return;
     }
 
-    if (selectedMembers.length < minMembers || selectedMembers.length > maxMembers) {
+    // Total members including current user
+    const totalMembers = selectedMembers.length + 1;
+    
+    // Validate member count
+    if (totalMembers < minMembers) {
       toast({
         title: "Алдаа",
-        description: `Гишүүдийн тоо ${minMembers}-${maxMembers} байх ёстой`,
+        description: `Гишүүдийн тоо хангалтгүй байна. Хамгийн багадаа ${minMembers} гишүүн шаардлагатай (таныг оруулаад)`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (totalMembers > maxMembers) {
+      toast({
+        title: "Алдаа",
+        description: `Гишүүдийн тоо хэтэрсэн байна. Хамгийн ихдээ ${maxMembers} гишүүн байх ёстой (таныг оруулаад)`,
         variant: "destructive",
       });
       return;
     }
 
     createTeamMutation.mutate({
-      name: teamName,
+      name: teamName.trim() || `${isTeam ? 'Баг' : 'Хос'} - ${Date.now()}`,
       members: selectedMembers.map(m => m.id),
     });
   };
@@ -395,23 +454,27 @@ export default function TeamFormation() {
                 {isTeam ? 'Багийн бүрэлдэхүүн' : 'Хос бүрдэл'}
               </h4>
               <div className="space-y-2">
-                <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded">
+                <div className="flex items-center gap-2 p-3 bg-white dark:bg-gray-800 rounded border-2 border-green-500">
                   <CheckCircle className="w-4 h-4 text-green-600" />
                   <span className="font-medium">{user?.firstName} {user?.lastName}</span>
-                  <Badge variant="outline" className="ml-auto">Та</Badge>
+                  <Badge variant="outline" className="ml-2 text-xs">
+                    {user?.gender === 'male' ? '👨 Эрэгтэй' : '👩 Эмэгтэй'}
+                  </Badge>
+                  <Badge className="ml-auto bg-green-600 text-white">Та (Удирдагч)</Badge>
                 </div>
                 {selectedMembers.map(member => (
-                  <div key={member.id} className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded">
+                  <div key={member.id} className="flex items-center gap-2 p-3 bg-white dark:bg-gray-800 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <CheckCircle className="w-4 h-4 text-green-600" />
-                    <span>{member.fullName || member.name}</span>
-                    <Badge variant="outline" className="ml-auto text-xs">
-                      {member.gender === 'male' ? 'Эрэгтэй' : 'Эмэгтэй'}
+                    <span className="flex-1">{member.firstName} {member.lastName}</span>
+                    <Badge variant="outline" className="text-xs">
+                      {member.gender === 'male' ? '👨 Эрэгтэй' : '👩 Эмэгтэй'}
                     </Badge>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleRemoveMember(member.id)}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50 ml-auto"
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      title="Гишүүн хасах"
                     >
                       <X className="w-4 h-4" />
                     </Button>
@@ -421,8 +484,8 @@ export default function TeamFormation() {
               <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-700">
                 <p className="text-sm text-green-700 dark:text-green-300 font-medium">
                   {isTeam
-                    ? `${selectedMembers.length + 1}/${maxMembers} гишүүн (мин. ${minMembers})`
-                    : `${selectedMembers.length}/${maxMembers - 1} хамтрагч (мин. ${minMembers - 1})`
+                    ? `Нийт: ${selectedMembers.length + 1}/${maxMembers} гишүүн (шаардлагатай: ${minMembers}-${maxMembers})`
+                    : `Нийт: ${selectedMembers.length + 1}/${maxMembers} хүн (таныг оруулаад)`
                   }
                 </p>
               </div>
@@ -467,8 +530,11 @@ export default function TeamFormation() {
                   <p className="font-medium">Энэ төрөлд бүртгүүлсэн тамирчид олдсонгүй</p>
                   <p className="text-sm mt-2">Та зөвхөн энэ төрөлд бүртгүүлсэн тамирчдаас сонгох боломжтой</p>
                   {allUsers.length > 0 && (
-                    <p className="text-xs mt-2 text-blue-600">
-                      Санамж: {allUsers.length} тамирчид энэ тэмцээнд бүртгүүлсэн боловч таны сонгосон төрөлд биш
+                    <p className="text-xs mt-2 text-blue-600 dark:text-blue-400">
+                      Санамж: {allUsers.length} тамирчид энэ тэмцээнд бүртгүүлсэн боловч:
+                      <br />• Таны сонгосон төрөлд биш эсвэл
+                      <br />• Хүйсний шаардлага хангахгүй эсвэл
+                      <br />• Аль хэдийн сонгогдсон байна
                     </p>
                   )}
                 </div>
@@ -477,26 +543,31 @@ export default function TeamFormation() {
                   {availablePlayers.map(participant => (
                     <div
                       key={participant.id}
-                      className={`flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-all ${
-                        selectedMembers.some(m => m.id === participant.id)
-                          ? 'bg-blue-50 border-blue-500 dark:bg-blue-900/20 shadow-md'
-                          : 'hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300'
-                      }`}
+                      className="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-all hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-blue-300 hover:shadow-sm"
                       onClick={() => handleAddMember(participant)}
                     >
-                      <Checkbox
-                        checked={selectedMembers.some(m => m.id === participant.id)}
-                        onCheckedChange={() => handleAddMember(participant)}
-                      />
                       <div className="flex-1">
                         <p className="font-medium">
                           {participant.firstName} {participant.lastName}
                         </p>
-                        <p className="text-xs text-gray-500">
-                          {participant.gender === 'male' ? '👨 Эрэгтэй' : '👩 Эмэгтэй'}
-                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-xs text-gray-500">
+                            {participant.gender === 'male' ? '👨 Эрэгтэй' : '👩 Эмэгтэй'}
+                          </p>
+                          {participant.clubAffiliation && (
+                            <Badge variant="outline" className="text-xs">
+                              {participant.clubAffiliation}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      <UserPlus className="w-4 h-4 text-gray-400" />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                      >
+                        <UserPlus className="w-4 h-4" />
+                      </Button>
                     </div>
                   ))}
                 </div>
