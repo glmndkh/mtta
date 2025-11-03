@@ -35,6 +35,10 @@ export default function TeamFormation() {
   const [selectedMembers, setSelectedMembers] = useState<any[]>([]);
   const [teamName, setTeamName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [createdEntry, setCreatedEntry] = useState<any>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Parse the event type to determine category requirements
   const parsedEvent = useMemo(() => {
@@ -254,23 +258,7 @@ export default function TeamFormation() {
   // const minMembers = eventCategory === 'doubles' ? 1 : 3; // Doubles: 1 partner, Team: min 3 members
   // const maxMembers = eventCategory === 'doubles' ? 1 : 4; // Doubles: 1 partner, Team: max 4 members
 
-  // Filter participants for the same event
-  const eventParticipants = participants.filter(p => 
-    p.participationType === eventType && p.id !== user?.id
-  );
-
-  // Further filter by gender constraints
-  const validParticipants = eventParticipants.filter(p => {
-    if (eventGender === 'mixed') return true; // Mixed allows all genders
-    if (eventGender === 'male' && p.gender === 'male') return true;
-    if (eventGender === 'female' && p.gender === 'female') return true;
-    return false;
-  });
-
-  const filteredParticipants = validParticipants.filter(p => {
-    const fullName = `${p.firstName} ${p.lastName}`.toLowerCase();
-    return fullName.includes(searchQuery.toLowerCase());
-  });
+  
 
   // Validation
   const validateSelection = (): { valid: boolean; error?: string } => {
@@ -298,18 +286,6 @@ export default function TeamFormation() {
     const uniqueMembers = new Set([user?.id, ...selectedMembers.map(m => m.id)]);
     if (uniqueMembers.size !== selectedMembers.length + 1) {
       return { valid: false, error: 'Давхардсан гишүүд байна' };
-    }
-
-    // Gender validation for non-mixed events
-    if (eventGender !== 'mixed') {
-      const allMembers = [user, ...selectedMembers.map(id => participants.find(p => p.id === id))];
-      const invalidGender = allMembers.some(m => m && m.gender !== eventGender);
-      if (invalidGender) {
-        return { 
-          valid: false, 
-          error: `Бүх гишүүд ${eventGender === 'male' ? 'эрэгтэй' : 'эмэгтэй'} байх ёстой`
-        };
-      }
     }
 
     return { valid: true };
