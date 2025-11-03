@@ -1,0 +1,55 @@
+Registered үед ConfirmationStep-ийг автоматаар харуул
+
+Ажиллах зорилго:
+Хэрэглэгч аль хэдийн бүртгэлтэй (isRegistered === true) орж ирэхэд “Бүртгэгдсэн” жижиг карт рүү эрт return хийхгүй. Үүний оронд currentStep-ийг confirmation болгож, selectedEvent-ийг userRegistrations-аар тэжээж, ConfirmationStep-ийг бүрэн харуулна. Ингэснээр “Баг үүсгэх / Хос үүсгэх” ногоон товчнууд амжилтын доор төвд тод гарна.
+
+1) isRegistered үед state-ээ Confirmation руу шилжүүлэх useEffect нэм
+
+RegistrationForm дотор, isRegistered, userRegistrations утгууд бий болсон хэсгийн дараа энэ hook-ийг нэм:
+
+useEffect(() => {
+  if (isRegistered && Array.isArray(userRegistrations) && userRegistrations.length > 0) {
+    // Бүртгэлтэй хэрэглэгчийн төрөлүүдийг сонголтод тэжээнэ
+    setSelectedEvent(userRegistrations);
+
+    // Алхамыг Баталгаажуулалт руу оруулна
+    setCurrentStep('confirmation');
+
+    // Алхамуудыг дууссан мэт тэмдэглэж Progress-г ногооноор харагдуулна
+    setCompletedSteps(new Set(['auth', 'profile', 'event-selection', 'payment']));
+  }
+}, [isRegistered, userRegistrations]);
+
+2) “Эрт return” хийж байсан if (isRegistered) { return ... } блокийг устга
+
+RegistrationForm-ийн render хэсгээс дараах бүх блокоо бүр мөсөн авч хая (эсвэл түр хугацаанд comment-ло):
+
+if (isRegistered) {
+  return (
+    <Card className="max-w-2xl mx-auto">
+      <CardHeader> ... </CardHeader>
+      <CardContent> ... </CardContent>
+    </Card>
+  );
+}
+
+
+Ингэснээр бүртгэлтэй хэрэглэгч орж ирэхэд ConfirmationStep л render-логдоно. Тэнд бид аль хэдийн нэмсэн team/pair товчнууд чинь байгаа.
+
+3) Ямар нэг нэмэлт өөрчлөлт шаардлагатай эсэх
+
+ConfirmationStep одоо байгаа selectedEvent-ийг ашигладаг тул өөрчлөх шаардлагагүй. useEffect-ээр бид selectedEvent-ийг userRegistrations-аар шинэчлэх учраас шууд ажиллана.
+
+StepIndicator-т өнгөрсөн алхмууд ногооноор харагдахын тулд setCompletedSteps-ийн мөрийг заавал орхи.
+
+userRegistrations массив нь events-ын string JSON-ууд байгааг аль хэдийн ашиглаж байгаа (getEventLabel зэрэг) тул нийцтэй.
+
+4) Товч шалгах жагсаалт
+
+ useEffect нэмсэн (isRegistered → confirmation + setSelectedEvent)
+
+ if (isRegistered) return ... эрт return устгасан
+
+ Билд хийж шалгахад “Бүртгэл амжилттай!” блокын доор ногоон “Баг үүсгэх / Хос үүсгэх” товчнууд төвд, томоор, hover ногоон бараан болж гарч ирж байна
+
+Дууслаа.
