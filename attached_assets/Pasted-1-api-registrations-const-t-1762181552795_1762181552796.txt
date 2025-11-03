@@ -1,0 +1,107 @@
+1) /api/registrations дээр тааруулалтын логикийг “каноник түлхүүр”-ээр нэг мөр болго
+Асуудал
+const typeMatch = regData.type === eventData.type;
+const subTypeMatch = !eventData.subType || regData.subType === eventData.subType;
+const genderMatch = !eventData.gender || regData.gender === eventData.gender;
+const minAgeMatch = !eventData.minAge || regData.minAge === eventData.minAge;
+const maxAgeMatch = !eventData.maxAge || regData.maxAge === eventData.maxAge;
+
+
+subType талбар хоёр талд өөр нэршил/байхгүй байж болно (genderReq, type-ээс үүссэн гэх мэт)
+
+minAge/maxAge-г тэнцүү гэж шаардаж байгаа нь ихэнхдээ зөрөөд бүгдийг хасна
+
+Зарим бүртгэлд participationType нь JSON string ч байж болно, талбарын дараалал зөрвөл шууд string-ээр тэнцүүлэх боломжгүй
+
+Засвар (зарчим)
+
+type + gender-оос каноник subType үүсгээд тэрээр тааруул
+
+Насны нөхцөлийг энд бүү хэрэглэ (нас бол team/pair үүсгэх үед шалгах нь зөв)
+
+Ижил биш формат ирсэн ч MEN_DOUBLES, WOMEN_DOUBLES, MIXED_DOUBLES, MEN_TEAM, … хэлбэрийн нэг түлхүүр дээр буулга
+
+Хийх өөрчлөлт (түлхүүр санаа)
+function canonKey(evt:any){
+  // 1) аль болох parse хийнэ
+  const e = typeof evt === 'string' ? JSON.parse(evt) : evt || {};
+  // 2) төрлийг том үсгээр
+  const kind =
+    (e.subType && /DOUBLES|TEAM|SINGLES/.test(e.subType)) ? 
+      (e.subType.includes('DOUBLES') ? 'DOUBLES' :
+       e.subType.includes('TEAM') ? 'TEAM' : 'SINGLES')
+    : (e.type || '').toUpperCase(); // 'DOUBLES' | 'TEAM' | 'SINGLES'
+
+  // 3) gender-г MEN/WOMEN/MIXED болгож нормчлох
+  const g =
+    e.subType?.includes('MEN') ? 'MEN' :
+    e.subType?.includes('WOMEN') ? 'WOMEN' :
+    e.subType?.includes('MIXED') ? 'MIXED' :
+    (e.genderReq==='MALE'||e.gender==='male') ? 'MEN' :
+    (e.genderReq==='FEMALE'||e.gender==='female') ? 'WOMEN' :
+    (e.genderReq==='MIXED') ? 'MIXED' : '';
+
+  // 4) эцсийн түлхүүр
+  return g ? `${g}_${kind}` : kind; // ж: 'MEN_DOUBLES'
+}
+
+
+/api/registrations-ын filter-ээ:
+
+const eventKey = canonKey(eventData);
+
+const matchingParticipants = allParticipants.filter(p => {
+  try {
+    const regKey = canonKey(p.participationType);
+    return regKey === eventKey; // зөвхөн каноник түлхүүрээр тааруулна
+  } catch { return false; }
+});
+
+
+Насны, rating-ийн зөрүүг энд бус /create-team дээр валидчлахаар үлдээнэ.
+
+2) /api/tournaments/:id/create-team дээр “бүх гишүүд энэ төрөлд бүртгэлтэй” шалгалтыг бас каноник түлхүүрээр хий
+Одоогийн асуудал
+const registeredForEvent = participants.filter(
+  p => p.participationType === eventType && members.includes(p.playerId)
+);
+
+
+JSON string-ийн дараалал/илүүдэл талбар зөрвөл тэнцэхгүй ⇒ 400 “Бүх гишүүд …” алдаа
+
+Засвар (зарчим)
+const eventKey = canonKey(eventType);
+const registeredForEvent = participants.filter(p =>
+  canonKey(p.participationType) === eventKey && members.includes(p.playerId)
+);
+
+3) Хэрэглэгчийн жагсаалтаас өөрийгөө зөв хасаж байгааг баталгаажуул
+
+currentUserId ба p.playerId нэг төрөл (хоёулаа string эсвэл number) эсэхийг шалга
+
+Хэрвээ төрөл зөрвөл Number(...)/String(...) хийж хэвийн болго
+
+const currentUserId = String(req.session?.userId ?? '');
+...
+filteredParticipants = filteredParticipants.filter(p => String(p.playerId) !== currentUserId);
+
+4) Хайлтын нэрний талбаруудын зөрүүгээс “0” болгохыг зогсоо
+
+Сервер аль хэдийн fullName, firstName, lastName гурвыг явуулж байгаа. Client талд хайлтыг:
+
+(fullName || `${firstName} ${lastName}`).toLowerCase().includes(q)
+
+
+хэлбэрээр хийж байгаа эсэхээ нягтал (танайд зөв хэрэгжсэн байна, сервер талд ч мөн үүнийг баримталсан).
+
+5) Баталгаажуулах чеклист (яаралтай)
+
+Network → /api/registrations?tournamentId=…&event=… 200 байна, JSON дотор хүссэн тоглогчид байгаа эсэх
+
+Console → 1–2 оролцогчийн participationType-ийг хэвлээд canonKey(participationType) болон canonKey(event) 2-ыг харьцуул
+
+Self-exclude → таны userId ба API-ийн playerId нэг төрөл эсэх
+
+UI → searchQuery хоосон үед availablePlayers.length > 0 болж байгааг шалга
+
+Create-team → ижил каноник түлхүүр ашиглаж эхэлснээс хойш 400 “бүх гишүүд…” дахиж гарахгүй байх ёстой
