@@ -33,22 +33,60 @@ const getEventLabel = (eventType: string): string => {
       'MIXED_TEAM': 'Холимог баг',
     };
 
+    // Handle event with subType (preferred format)
     if (parsed.subType && SUBTYPE_LABEL[parsed.subType]) {
       let label = SUBTYPE_LABEL[parsed.subType];
       if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
-        label += ` (${parsed.minAge}–${parsed.maxAge} нас)`;
+        label += ` ${parsed.minAge}–${parsed.maxAge} нас`;
       } else if (parsed.minAge !== undefined) {
-        label += ` (${parsed.minAge}+ нас)`;
+        label += ` ${parsed.minAge}+ нас`;
       } else if (parsed.maxAge !== undefined) {
-        label += ` (${parsed.maxAge} нас хүртэл)`;
+        label += ` ${parsed.maxAge} нас хүртэл`;
       }
       return label;
     }
 
+    // Handle divisions array format
+    if (parsed.divisions && Array.isArray(parsed.divisions) && parsed.divisions.length > 0) {
+      const div = parsed.divisions[0];
+      let typeLabel = '';
+      
+      // Determine type label
+      if (parsed.type === 'DOUBLES') {
+        typeLabel = 'Хос';
+      } else if (parsed.type === 'TEAM') {
+        typeLabel = 'Баг';
+      } else if (parsed.type === 'SINGLES') {
+        typeLabel = 'Ганцаарчилсан';
+      }
+
+      // Add gender
+      if (parsed.genderReq === 'MALE') {
+        typeLabel = 'Эрэгтэй ' + typeLabel.toLowerCase();
+      } else if (parsed.genderReq === 'FEMALE') {
+        typeLabel = 'Эмэгтэй ' + typeLabel.toLowerCase();
+      } else if (parsed.genderReq === 'MIXED') {
+        typeLabel = 'Холимог ' + typeLabel.toLowerCase();
+      }
+
+      // Add age range
+      if (div.minAge !== undefined && div.minAge !== null && div.maxAge !== undefined && div.maxAge !== null) {
+        typeLabel += ` ${div.minAge}–${div.maxAge} нас`;
+      } else if (div.minAge !== undefined && div.minAge !== null) {
+        typeLabel += ` ${div.minAge}+ нас`;
+      } else if (div.maxAge !== undefined && div.maxAge !== null) {
+        typeLabel += ` ${div.maxAge} нас хүртэл`;
+      }
+
+      return typeLabel;
+    }
+
+    // Handle division field
     if (parsed.division) {
       return parsed.division;
     }
 
+    // Legacy format with type and gender
     if (parsed.type && parsed.gender) {
       let typeLabel = '';
       if (parsed.type === 'individual') {
@@ -60,11 +98,11 @@ const getEventLabel = (eventType: string): string => {
       }
 
       if (parsed.minAge !== undefined && parsed.maxAge !== undefined) {
-        typeLabel += ` (${parsed.minAge}–${parsed.maxAge} нас)`;
+        typeLabel += ` ${parsed.minAge}–${parsed.maxAge} нас`;
       } else if (parsed.minAge !== undefined) {
-        typeLabel += ` (${parsed.minAge}+ нас)`;
+        typeLabel += ` ${parsed.minAge}+ нас`;
       } else if (parsed.maxAge !== undefined) {
-        typeLabel += ` (${parsed.maxAge} нас хүртэл)`;
+        typeLabel += ` ${parsed.maxAge} нас хүртэл`;
       }
 
       return typeLabel;
