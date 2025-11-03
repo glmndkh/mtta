@@ -65,58 +65,33 @@ export default function TeamFormation() {
     enabled: !!tournamentId,
   });
 
-  // Fetch all registered users for this tournament
+  // Fetch all registered users for this tournament and event
   const { data: allUsers = [] } = useQuery({
-    queryKey: ["/api/registrations", tournamentId],
+    queryKey: ["/api/registrations", tournamentId, eventType, searchQuery],
     queryFn: async () => {
-      const res = await fetch(`/api/registrations?tournamentId=${tournamentId}`);
+      const params = new URLSearchParams({
+        tournamentId,
+        event: eventType,
+      });
+      if (searchQuery) {
+        params.append('q', searchQuery);
+      }
+      const res = await fetch(`/api/registrations?${params}`, {
+        credentials: 'include'
+      });
       if (!res.ok) throw new Error("Failed to fetch registrations");
       return res.json();
     },
-    enabled: !!tournamentId,
+    enabled: !!tournamentId && !!eventType,
   });
 
-  // Filter available players: only those registered for this specific category and exclude current user
+  // Available players - server already filters by event, user, and search
   const availablePlayers = useMemo(() => {
-    return allUsers.filter((player: any) => {
-      // Exclude current user
-      if (player.id === user?.id) return false;
-
-      // Check if player is registered for this specific category
-      const registrations = player.registrations || [];
-      const registeredEvents = registrations.map((r: any) => {
-        try {
-          const parsed = JSON.parse(r.category);
-          return parsed.subType || parsed.type;
-        } catch {
-          return "";
-        }
-      });
-
-      // Match based on category type
-      let isRegisteredForCategory = false;
-      if (categoryType === "MEN_DOUBLES") {
-        isRegisteredForCategory = registeredEvents.some((e: string) => e.includes("MEN_DOUBLES"));
-      } else if (categoryType === "WOMEN_DOUBLES") {
-        isRegisteredForCategory = registeredEvents.some((e: string) => e.includes("WOMEN_DOUBLES"));
-      } else if (categoryType === "MIXED_DOUBLES") {
-        isRegisteredForCategory = registeredEvents.some((e: string) => e.includes("MIXED_DOUBLES"));
-      } else if (categoryType.includes("TEAM")) {
-        isRegisteredForCategory = registeredEvents.some((e: string) => e.includes("TEAM") && e.includes(categoryType.split("_")[0]));
-      }
-
-      if (!isRegisteredForCategory) return false;
-
-      // Filter by search query
-      const matchesSearch = player.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           player.name?.toLowerCase().includes(searchQuery.toLowerCase());
-
-      // Exclude already selected members
-      const notSelected = !selectedMembers.find(m => m.id === player.id);
-
-      return matchesSearch && notSelected;
-    });
-  }, [allUsers, user?.id, categoryType, searchQuery, selectedMembers]);
+    // Only exclude already selected members (server handles the rest)
+    return allUsers.filter((player: any) => 
+      !selectedMembers.find(m => m.id === player.id)
+    );
+  }, [allUsers, selectedMembers]);
 
   const handleAddMember = (player: any) => {
     if (selectedMembers.length >= maxMembers) {
@@ -438,7 +413,12 @@ export default function TeamFormation() {
               <Input
                 id="search"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Debounce search
+                  const timeoutId = setTimeout(() => setSearchQuery(value), 300);
+                  return () => clearTimeout(timeoutId);
+                }}
                 placeholder="Нэрээр хайх..."
               />
             </div>

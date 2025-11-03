@@ -44,14 +44,11 @@ import {
   leagues,
 } from "../shared/schema";
 
+import { db } from "./db";
+import { teams, teamMembers, pairs, pairMembers } from "../shared/schema";
+
 // Mocking database operations for demonstration purposes if needed.
 // In a real application, these would interact with your actual database.
-const db = {
-  select: () => ({ from: () => ({ where: () => Promise.resolve([]) }) }),
-  insert: () => ({ values: () => ({ returning: () => Promise.resolve([]) }) }),
-  update: () => ({ set: () => ({ where: () => Promise.resolve({ count: 0 }) }) }),
-  delete: () => ({ where: () => Promise.resolve({ count: 0 }) }),
-};
 const eq = (a: any, b: any) => a === b;
 const and = (...args: any[]) => args.filter(Boolean).join(' AND ');
 
@@ -1668,7 +1665,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/registrations", requireAuth, async (req: any, res) => {
     try {
       const userId = req.session?.userId;
-      
+
       if (!userId) {
         return res.status(401).json({ message: "Нэвтрэх шаардлагатай" });
       }
@@ -1690,14 +1687,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!user) {
           return res.status(404).json({ message: "Хэрэглэгч олдсонгүй" });
         }
-        
+
         const newPlayer = await storage.createPlayer({
           userId,
           dateOfBirth: user.dateOfBirth,
           rank: null,
           clubId: null,
         });
-        
+
         if (!newPlayer) {
           return res.status(500).json({ message: "Тоглогчийн профайл үүсгэж чадсангүй" });
         }
@@ -1767,6 +1764,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (e) {
       console.error("Error fetching user registrations:", e);
       res.status(500).json({ message: "Бүртгэлийн мэдээлэл авахад алдаа гарлаа" });
+    }
+  });
+
+  // Get all registrations for a tournament with event filtering
+  app.get("/api/registrations", async (req, res) => {
+    try {
+      const { tournamentId, event, q } = req.query;
+
+      if (!tournamentId) {
+        return res.status(400).json({ message: "Tournament ID is required" });
+      }
+
+      // Fetch all registrations for this tournament
+      const allRegistrations = await db.query.registrations.findMany({
+        where: eq(registrations.tournamentId, parseInt(tournamentId as string)),
+        with: {
+          user: true,
+        },
+      });
+
+      let filteredUsers = allRegistrations.map(reg => ({
+        ...reg.user,
+        registrations: [{ category: reg.category }]
+      }));
+
+      // Filter by event type if provided
+      if (event) {
+        try {
+          const eventData = JSON.parse(event as string);
+          const targetKind = eventData.subType?.includes('TEAM') ? 'TEAM' : 
+                           eventData.subType?.includes('DOUBLES') ? 'DOUBLES' : 
+                           eventData.type?.toUpperCase() || '';
+          const targetGender = eventData.subType?.includes('MEN') ? 'MEN' :
+                             eventData.subType?.includes('WOMEN') ? 'WOMEN' :
+                             eventData.subType?.includes('MIXED') ? 'MIXED' :
+                             eventData.gender?.toUpperCase() || '';
+
+          filteredUsers = filteredUsers.filter(user => {
+            return allRegistrations.some(reg => {
+              if (reg.userId !== user.id) return false;
+              try {
+                const regData = JSON.parse(reg.category);
+                const regKind = regData.subType?.includes('TEAM') ? 'TEAM' :
+                              regData.subType?.includes('DOUBLES') ? 'DOUBLES' :
+                              regData.type?.toUpperCase() || '';
+                const regGender = regData.subType?.includes('MEN') ? 'MEN' :
+                                regData.subType?.includes('WOMEN') ? 'WOMEN' :
+                                regData.subType?.includes('MIXED') ? 'MIXED' :
+                                regData.gender?.toUpperCase() || '';
+
+                return regKind === targetKind && regGender === targetGender;
+              } catch {
+                return false;
+              }
+            });
+          });
+        } catch (error) {
+          console.error("Error parsing event filter:", error);
+        }
+      }
+
+      // Exclude current user
+      if (req.user?.id) {
+        filteredUsers = filteredUsers.filter(user => user.id !== req.user.id);
+      }
+
+      // Exclude users already in teams/pairs for this event
+      if (event) {
+        const [existingTeams, existingPairs] = await Promise.all([
+          db.query.teams.findMany({
+            where: and(
+              eq(teams.tournamentId, parseInt(tournamentId as string)),
+              eq(teams.category, event as string)
+            ),
+            with: { members: true }
+          }),
+          db.query.pairs.findMany({
+            where: and(
+              eq(pairs.tournamentId, parseInt(tournamentId as string)),
+              eq(pairs.category, event as string)
+            ),
+            with: { members: true }
+          })
+        ]);
+
+        const assignedUserIds = new Set([
+          ...existingTeams.flatMap(t => t.members.map(m => m.userId)),
+          ...existingPairs.flatMap(p => p.members.map(m => m.userId))
+        ]);
+
+        filteredUsers = filteredUsers.filter(user => !assignedUserIds.has(user.id));
+      }
+
+      // Search filter
+      if (q) {
+        const searchTerm = (q as string).toLowerCase();
+        filteredUsers = filteredUsers.filter(user => 
+          user.firstName?.toLowerCase().includes(searchTerm) ||
+          user.lastName?.toLowerCase().includes(searchTerm) ||
+          `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      res.json(filteredUsers);
+    } catch (error) {
+      console.error("Error fetching registrations:", error);
+      res.status(500).json({ message: "Failed to fetch registrations" });
     }
   });
 
@@ -1918,7 +2022,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       try {
         const parsed = JSON.parse(eventType);
-        
+
         // Determine category
         if (parsed.type === 'DOUBLES' || parsed.subType?.includes('DOUBLES') || parsed.type === 'pair') {
           eventCategory = 'doubles';
@@ -2039,11 +2143,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if team/pair already exists for this event (prevent duplicates)
       const existingTeams = await storage.getLeagueTeams(tournamentId);
       const memberSet = new Set(members.sort());
-      
+
       for (const existingTeam of existingTeams) {
         const existingMembers = existingTeam.players?.map((p: any) => p.playerId).sort() || [];
         const existingSet = new Set(existingMembers);
-        
+
         if (memberSet.size === existingSet.size && 
             [...memberSet].every(m => existingSet.has(m))) {
           return res.status(400).json({ 
@@ -2063,7 +2167,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const memberId of members) {
         const user = await storage.getUser(memberId);
         const memberName = user ? `${user.firstName} ${user.lastName}` : 'Unknown Player';
-        
+
         await storage.addPlayerToLeagueTeam(team.id, memberId, memberName);
       }
 
@@ -2173,7 +2277,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   );
 
   // Matches
-  app.post("/api/matches", requireAuth, async (req: any, res) => {
+  app.post("/api/matches", requireAuth, async (req, res) => {
     try {
       const matchData = insertMatchSchema.parse(req.body);
       const match = await storage.createMatch(matchData);
