@@ -834,49 +834,40 @@ const ConfirmationStep = ({
 
         {/* Team/Doubles Formation Section */}
         {hasTeamOrDoubles && (
-          <div className="bg-blue-600 text-white p-6 rounded-lg border-2 border-blue-700">
-            <div className="flex items-start gap-3 mb-4">
-              <span className="text-3xl">👥</span>
-              <div className="flex-1">
-                <h4 className="font-bold text-xl mb-2">
-                  Дараагийн алхам: Багаа / Хосоо бүрдүүлэх
-                </h4>
-                <p className="text-sm text-blue-100 mb-4">
-                  Та багийн болон/эсвэл хосын тэмцээнд бүртгүүлсэн байна. 
-                  Тэмцээнд оролцохын тулд багийн гишүүд эсвэл хамтрагчаа сонгоно уу.
-                </p>
-              </div>
-            </div>
-
+          <div className="mt-5">
             <div className="space-y-3">
               {teamOrDoublesEvents.map((event, index) => {
                 const type = getEventType(event);
                 const label = getEventLabel(event);
-                const actionText = type === 'team' ? 'Баг бүрдүүлэх' : 'Хос бүрдүүлэх';
-                const description = type === 'team' 
-                  ? '3-4 гишүүнтэй баг үүсгэнэ үү' 
-                  : 'Хамтрагчаа сонгож хос бүрдүүлнэ үү';
+                const actionText = type === 'team' ? 'Баг үүсгэх' : 'Хос үүсгэх';
                 
                 return (
-                  <div key={index} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                      <div className="flex-1">
-                        <p className="font-semibold text-gray-900 dark:text-gray-100 text-lg">{label}</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          {description}
-                        </p>
-                      </div>
-                      <Button 
-                        onClick={() => handleFormTeam(event)}
-                        size="lg"
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg"
-                      >
-                        {actionText}
-                      </Button>
-                    </div>
+                  <div key={index} className="flex justify-center">
+                    <Button 
+                      onClick={() => handleFormTeam(event)}
+                      className="bg-[#00c36a] hover:bg-[#00a85a] hover:shadow-lg text-white font-semibold px-8 py-6 text-base rounded-lg transition-all duration-200"
+                      size="lg"
+                    >
+                      {actionText}
+                    </Button>
                   </div>
                 );
               })}
+            </div>
+            
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mt-4 border border-blue-200 dark:border-blue-800">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">👥</span>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                    Дараагийн алхам
+                  </h4>
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    Та багийн болон/эсвэл хосын тэмцээнд бүртгүүлсэн байна. 
+                    Тэмцээнд оролцохын тулд багийн гишүүд эсвэл хамтрагчаа сонгоно уу.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         )}
