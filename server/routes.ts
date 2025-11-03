@@ -1780,44 +1780,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Event төрөл шаардлагатай" });
       }
 
-      console.log(`[Registrations] Fetching for tournament ${tournamentId}, event: ${event}`);
+      // Parse and normalize event type
+      let targetKind = '';
+      let targetGender = '';
+      
+      try {
+        const eventData = JSON.parse(event as string);
+        
+        // Normalize KIND
+        if (eventData.subType?.includes('TEAM') || eventData.type === 'TEAM') {
+          targetKind = 'TEAM';
+        } else if (eventData.subType?.includes('DOUBLES') || eventData.type === 'DOUBLES') {
+          targetKind = 'DOUBLES';
+        } else if (eventData.type === 'SINGLES') {
+          targetKind = 'SINGLES';
+        }
+        
+        // Normalize GENDER
+        if (eventData.subType?.includes('MEN') || eventData.genderReq === 'MALE') {
+          targetGender = 'MEN';
+        } else if (eventData.subType?.includes('WOMEN') || eventData.genderReq === 'FEMALE') {
+          targetGender = 'WOMEN';
+        } else if (eventData.subType?.includes('MIXED') || eventData.genderReq === 'MIXED') {
+          targetGender = 'MIXED';
+        }
+      } catch (error) {
+        console.error("Error parsing event:", error);
+        return res.status(400).json({ message: "Буруу event формат" });
+      }
 
       // Fetch all participants for this tournament
       const allParticipants = await storage.getTournamentParticipants(tournamentId);
-      console.log(`[Registrations] Total participants in tournament: ${allParticipants.length}`);
-
-      // Filter by exact event match (participationType should match the event string)
+      
+      // Filter by matching event type
       const matchingParticipants = allParticipants.filter(p => {
-        // Direct string comparison first
-        if (p.participationType === event) {
-          return true;
-        }
-        
-        // If that doesn't work, try JSON parsing and comparison
         try {
-          const regData = typeof p.participationType === 'string' 
-            ? JSON.parse(p.participationType) 
-            : p.participationType;
-          const eventData = typeof event === 'string' 
-            ? JSON.parse(event as string) 
-            : event;
+          const regData = JSON.parse(p.participationType);
           
-          // Compare the parsed objects
-          return JSON.stringify(regData) === JSON.stringify(eventData);
+          // Normalize registration KIND
+          let regKind = '';
+          if (regData.subType?.includes('TEAM') || regData.type === 'TEAM') {
+            regKind = 'TEAM';
+          } else if (regData.subType?.includes('DOUBLES') || regData.type === 'DOUBLES') {
+            regKind = 'DOUBLES';
+          } else if (regData.type === 'SINGLES') {
+            regKind = 'SINGLES';
+          }
+          
+          // Normalize registration GENDER
+          let regGender = '';
+          if (regData.subType?.includes('MEN') || regData.genderReq === 'MALE') {
+            regGender = 'MEN';
+          } else if (regData.subType?.includes('WOMEN') || regData.genderReq === 'FEMALE') {
+            regGender = 'WOMEN';
+          } else if (regData.subType?.includes('MIXED') || regData.genderReq === 'MIXED') {
+            regGender = 'MIXED';
+          }
+          
+          return regKind === targetKind && regGender === targetGender;
         } catch {
           return false;
         }
       });
 
-      console.log(`[Registrations] Matching participants for event: ${matchingParticipants.length}`);
-
-      // Exclude current user from list (they see themselves in the "Your Team" section)
+      // Exclude current user from list
       const currentUserId = req.session?.userId;
-      let filteredParticipants = currentUserId 
-        ? matchingParticipants.filter(p => p.playerId !== currentUserId)
-        : matchingParticipants;
+      let filteredParticipants = matchingParticipants.filter(p => p.playerId !== currentUserId);
 
-      console.log(`[Registrations] After excluding current user: ${filteredParticipants.length}`);
+      // Exclude users already in teams/pairs for this event
+      const teamMembers = await db.query.teamMembers.findMany({
+        where: sql`team_id IN (SELECT id FROM teams WHERE tournament_id = ${tournamentId} AND category = ${event})`,
+      });
+      
+      const pairMembers = await db.query.pairMembers.findMany({
+        where: sql`pair_id IN (SELECT id FROM pairs WHERE tournament_id = ${tournamentId} AND category = ${event})`,
+      });
+
+      const assignedUserIds = new Set([
+        ...teamMembers.map(m => m.playerId),
+        ...pairMembers.map(m => m.playerId)
+      ]);
+
+      filteredParticipants = filteredParticipants.filter(p => !assignedUserIds.has(p.playerId));
 
       // Get user details for filtered participants
       const users = await Promise.all(
@@ -1829,8 +1873,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             lastName: user.lastName,
             fullName: `${user.firstName} ${user.lastName}`,
             gender: user.gender,
-            club: user.clubAffiliation,
-            rating: null, // Can add rating later if needed
             registrations: [{ category: p.participationType }]
           } : null;
         })
@@ -1848,7 +1890,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       }
 
-      console.log(`[Registrations] Final filtered users: ${filteredUsers.length}`);
       res.json(filteredUsers);
     } catch (error) {
       console.error("Error fetching registrations:", error);
