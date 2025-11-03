@@ -1768,109 +1768,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all registrations for a tournament with event filtering
-  app.get("/api/registrations", async (req, res) => {
+  app.get("/api/registrations", async (req: any, res) => {
     try {
       const { tournamentId, event, q } = req.query;
 
       if (!tournamentId) {
-        return res.status(400).json({ message: "Tournament ID is required" });
+        return res.status(400).json({ message: "Tournament ID шаардлагатай" });
       }
 
-      // Fetch all registrations for this tournament
-      const allRegistrations = await db.query.registrations.findMany({
-        where: eq(registrations.tournamentId, parseInt(tournamentId as string)),
-        with: {
-          user: true,
-        },
+      if (!event) {
+        return res.status(400).json({ message: "Event төрөл шаардлагатай" });
+      }
+
+      // Parse and normalize event type
+      let targetKind = '';
+      let targetGender = '';
+      
+      try {
+        const eventData = JSON.parse(event as string);
+        
+        // Normalize KIND
+        if (eventData.subType?.includes('TEAM') || eventData.type === 'TEAM') {
+          targetKind = 'TEAM';
+        } else if (eventData.subType?.includes('DOUBLES') || eventData.type === 'DOUBLES') {
+          targetKind = 'DOUBLES';
+        } else if (eventData.type === 'SINGLES') {
+          targetKind = 'SINGLES';
+        }
+        
+        // Normalize GENDER
+        if (eventData.subType?.includes('MEN') || eventData.genderReq === 'MALE') {
+          targetGender = 'MEN';
+        } else if (eventData.subType?.includes('WOMEN') || eventData.genderReq === 'FEMALE') {
+          targetGender = 'WOMEN';
+        } else if (eventData.subType?.includes('MIXED') || eventData.genderReq === 'MIXED') {
+          targetGender = 'MIXED';
+        }
+      } catch (error) {
+        console.error("Error parsing event:", error);
+        return res.status(400).json({ message: "Буруу event формат" });
+      }
+
+      // Fetch all participants for this tournament
+      const allParticipants = await storage.getTournamentParticipants(tournamentId);
+      
+      // Filter by matching event type
+      const matchingParticipants = allParticipants.filter(p => {
+        try {
+          const regData = JSON.parse(p.participationType);
+          
+          // Normalize registration KIND
+          let regKind = '';
+          if (regData.subType?.includes('TEAM') || regData.type === 'TEAM') {
+            regKind = 'TEAM';
+          } else if (regData.subType?.includes('DOUBLES') || regData.type === 'DOUBLES') {
+            regKind = 'DOUBLES';
+          } else if (regData.type === 'SINGLES') {
+            regKind = 'SINGLES';
+          }
+          
+          // Normalize registration GENDER
+          let regGender = '';
+          if (regData.subType?.includes('MEN') || regData.genderReq === 'MALE') {
+            regGender = 'MEN';
+          } else if (regData.subType?.includes('WOMEN') || regData.genderReq === 'FEMALE') {
+            regGender = 'WOMEN';
+          } else if (regData.subType?.includes('MIXED') || regData.genderReq === 'MIXED') {
+            regGender = 'MIXED';
+          }
+          
+          return regKind === targetKind && regGender === targetGender;
+        } catch {
+          return false;
+        }
       });
 
-      let filteredUsers = allRegistrations.map(reg => ({
-        ...reg.user,
-        registrations: [{ category: reg.category }]
-      }));
-
-      // Filter by event type if provided
-      if (event) {
-        try {
-          const eventData = JSON.parse(event as string);
-          const targetKind = eventData.subType?.includes('TEAM') ? 'TEAM' : 
-                           eventData.subType?.includes('DOUBLES') ? 'DOUBLES' : 
-                           eventData.type?.toUpperCase() || '';
-          const targetGender = eventData.subType?.includes('MEN') ? 'MEN' :
-                             eventData.subType?.includes('WOMEN') ? 'WOMEN' :
-                             eventData.subType?.includes('MIXED') ? 'MIXED' :
-                             eventData.gender?.toUpperCase() || '';
-
-          filteredUsers = filteredUsers.filter(user => {
-            return allRegistrations.some(reg => {
-              if (reg.userId !== user.id) return false;
-              try {
-                const regData = JSON.parse(reg.category);
-                const regKind = regData.subType?.includes('TEAM') ? 'TEAM' :
-                              regData.subType?.includes('DOUBLES') ? 'DOUBLES' :
-                              regData.type?.toUpperCase() || '';
-                const regGender = regData.subType?.includes('MEN') ? 'MEN' :
-                                regData.subType?.includes('WOMEN') ? 'WOMEN' :
-                                regData.subType?.includes('MIXED') ? 'MIXED' :
-                                regData.gender?.toUpperCase() || '';
-
-                return regKind === targetKind && regGender === targetGender;
-              } catch {
-                return false;
-              }
-            });
-          });
-        } catch (error) {
-          console.error("Error parsing event filter:", error);
-        }
-      }
-
-      // Exclude current user
-      if (req.user?.id) {
-        filteredUsers = filteredUsers.filter(user => user.id !== req.user.id);
-      }
+      // Exclude current user from list
+      const currentUserId = req.session?.userId;
+      let filteredParticipants = matchingParticipants.filter(p => p.playerId !== currentUserId);
 
       // Exclude users already in teams/pairs for this event
-      if (event) {
-        const [existingTeams, existingPairs] = await Promise.all([
-          db.query.teams.findMany({
-            where: and(
-              eq(teams.tournamentId, parseInt(tournamentId as string)),
-              eq(teams.category, event as string)
-            ),
-            with: { members: true }
-          }),
-          db.query.pairs.findMany({
-            where: and(
-              eq(pairs.tournamentId, parseInt(tournamentId as string)),
-              eq(pairs.category, event as string)
-            ),
-            with: { members: true }
-          })
-        ]);
+      const teamMembers = await db.query.teamMembers.findMany({
+        where: sql`team_id IN (SELECT id FROM teams WHERE tournament_id = ${tournamentId} AND category = ${event})`,
+      });
+      
+      const pairMembers = await db.query.pairMembers.findMany({
+        where: sql`pair_id IN (SELECT id FROM pairs WHERE tournament_id = ${tournamentId} AND category = ${event})`,
+      });
 
-        const assignedUserIds = new Set([
-          ...existingTeams.flatMap(t => t.members.map(m => m.userId)),
-          ...existingPairs.flatMap(p => p.members.map(m => m.userId))
-        ]);
+      const assignedUserIds = new Set([
+        ...teamMembers.map(m => m.playerId),
+        ...pairMembers.map(m => m.playerId)
+      ]);
 
-        filteredUsers = filteredUsers.filter(user => !assignedUserIds.has(user.id));
-      }
+      filteredParticipants = filteredParticipants.filter(p => !assignedUserIds.has(p.playerId));
 
-      // Search filter
+      // Get user details for filtered participants
+      const users = await Promise.all(
+        filteredParticipants.map(async (p) => {
+          const user = await storage.getUser(p.playerId);
+          return user ? {
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            fullName: `${user.firstName} ${user.lastName}`,
+            gender: user.gender,
+            registrations: [{ category: p.participationType }]
+          } : null;
+        })
+      );
+
+      let filteredUsers = users.filter(u => u !== null);
+
+      // Apply search filter
       if (q) {
         const searchTerm = (q as string).toLowerCase();
         filteredUsers = filteredUsers.filter(user => 
           user.firstName?.toLowerCase().includes(searchTerm) ||
           user.lastName?.toLowerCase().includes(searchTerm) ||
-          `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm)
+          user.fullName?.toLowerCase().includes(searchTerm)
         );
       }
 
       res.json(filteredUsers);
     } catch (error) {
       console.error("Error fetching registrations:", error);
-      res.status(500).json({ message: "Failed to fetch registrations" });
+      res.status(500).json({ message: "Бүртгэл авахад алдаа гарлаа" });
     }
   });
 
