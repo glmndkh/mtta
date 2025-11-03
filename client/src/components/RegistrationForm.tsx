@@ -1009,26 +1009,19 @@ export default function RegistrationForm({ tournament, preselectedCategory, onSu
 
   const isRegistered = userRegistrations.length > 0;
 
-  if (isRegistered) {
-    return (
-      <Card className="max-w-2xl mx-auto">
-        <CardHeader>
-          <CardTitle className="text-center text-green-600">Бүртгэгдсэн</CardTitle>
-        </CardHeader>
-        <CardContent className="text-center">
-          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <p className="text-gray-600 mb-4">Та энэ тэмцээнд бүртгэгдсэн байна</p>
-          <div className="flex flex-wrap gap-2 justify-center">
-            {userRegistrations.map((category: string) => (
-              <Badge key={category} className="bg-green-600 text-white">
-                {getEventLabel(category)}
-              </Badge>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Redirect registered users to confirmation step with their registered events
+  useEffect(() => {
+    if (isRegistered && Array.isArray(userRegistrations) && userRegistrations.length > 0) {
+      // Set selected events to user's registered events
+      setSelectedEvent(userRegistrations);
+
+      // Move to confirmation step
+      setCurrentStep('confirmation');
+
+      // Mark all previous steps as completed for green progress indicator
+      setCompletedSteps(new Set(['auth', 'profile', 'event-selection', 'payment']));
+    }
+  }, [isRegistered, userRegistrations]);
 
   return (
     <div className="max-w-4xl mx-auto">
