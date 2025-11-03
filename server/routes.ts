@@ -1786,25 +1786,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allParticipants = await storage.getTournamentParticipants(tournamentId);
       console.log(`[Registrations] Total participants in tournament: ${allParticipants.length}`);
 
-      // Filter by exact event match (participationType should match the event string)
+      // Parse the event to get canonical structure
+      let eventData: any;
+      try {
+        eventData = typeof event === 'string' ? JSON.parse(event as string) : event;
+      } catch {
+        console.error(`[Registrations] Failed to parse event: ${event}`);
+        return res.status(400).json({ message: "Буруу event формат" });
+      }
+
+      // Filter by event match - compare the core event properties
       const matchingParticipants = allParticipants.filter(p => {
-        // Direct string comparison first
-        if (p.participationType === event) {
-          return true;
-        }
-        
-        // If that doesn't work, try JSON parsing and comparison
         try {
+          // Parse participation type
           const regData = typeof p.participationType === 'string' 
             ? JSON.parse(p.participationType) 
             : p.participationType;
-          const eventData = typeof event === 'string' 
-            ? JSON.parse(event as string) 
-            : event;
           
-          // Compare the parsed objects
-          return JSON.stringify(regData) === JSON.stringify(eventData);
-        } catch {
+          // Compare key properties (type, subType, gender, age requirements)
+          const typeMatch = regData.type === eventData.type;
+          const subTypeMatch = !eventData.subType || regData.subType === eventData.subType;
+          const genderMatch = !eventData.gender || regData.gender === eventData.gender;
+          
+          // For age requirements, we need flexible matching
+          const minAgeMatch = !eventData.minAge || regData.minAge === eventData.minAge;
+          const maxAgeMatch = !eventData.maxAge || regData.maxAge === eventData.maxAge;
+          
+          const matches = typeMatch && subTypeMatch && genderMatch && minAgeMatch && maxAgeMatch;
+          
+          if (matches) {
+            console.log(`[Registrations] Matched participant ${p.playerId} with event`);
+          }
+          
+          return matches;
+        } catch (err) {
+          console.error(`[Registrations] Error matching participant ${p.playerId}:`, err);
           return false;
         }
       });
@@ -1829,8 +1845,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             lastName: user.lastName,
             fullName: `${user.firstName} ${user.lastName}`,
             gender: user.gender,
+            dateOfBirth: user.dateOfBirth,
             club: user.clubAffiliation,
-            rating: null, // Can add rating later if needed
+            rating: null,
+            participationType: p.participationType,
             registrations: [{ category: p.participationType }]
           } : null;
         })
