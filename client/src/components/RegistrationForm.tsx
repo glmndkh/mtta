@@ -51,22 +51,23 @@ const getEventLabel = (eventType: string): string => {
       const div = parsed.divisions[0];
       let typeLabel = '';
       
-      // Determine type label
-      if (parsed.type === 'DOUBLES') {
-        typeLabel = 'Хос';
-      } else if (parsed.type === 'TEAM') {
-        typeLabel = 'Баг';
-      } else if (parsed.type === 'SINGLES') {
-        typeLabel = 'Ганцаарчилсан';
+      // Add gender first
+      let genderLabel = '';
+      if (parsed.genderReq === 'MALE') {
+        genderLabel = 'Эрэгтэй';
+      } else if (parsed.genderReq === 'FEMALE') {
+        genderLabel = 'Эмэгтэй';
+      } else if (parsed.genderReq === 'MIXED') {
+        genderLabel = 'Холимог';
       }
 
-      // Add gender
-      if (parsed.genderReq === 'MALE') {
-        typeLabel = 'Эрэгтэй ' + typeLabel.toLowerCase();
-      } else if (parsed.genderReq === 'FEMALE') {
-        typeLabel = 'Эмэгтэй ' + typeLabel.toLowerCase();
-      } else if (parsed.genderReq === 'MIXED') {
-        typeLabel = 'Холимог ' + typeLabel.toLowerCase();
+      // Determine type label
+      if (parsed.type === 'DOUBLES') {
+        typeLabel = genderLabel ? `${genderLabel} хос` : 'Хос';
+      } else if (parsed.type === 'TEAM') {
+        typeLabel = genderLabel ? `${genderLabel} баг` : 'Баг';
+      } else if (parsed.type === 'SINGLES') {
+        typeLabel = genderLabel ? `${genderLabel} ганцаарчилсан` : 'Ганцаарчилсан';
       }
 
       // Add age range
