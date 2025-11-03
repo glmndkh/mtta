@@ -1,0 +1,130 @@
+/tournament/:id/form-team болон /tournament/:id/form-pair хуудас дээр:
+
+Зөвхөн тухайн төрөлд бүртгүүлсэн тоглогчдыг л сонгох
+
+Хэрэглэгч өөрийгөө list-д харуулахгүй
+
+Сонгосон тоглогчдыг устгах, солих боломжтой
+
+Багийн гишүүдийн тоо зөв хязгаарт байх (team → 3–4, pair → яг 2)
+
+API руу илгээхэд бүх гишүүд тухайн төрөлд бүртгэгдсэн байх шаардлага биелдэг байх
+
+🧩 Backend logic update (API шалгалт зөв болгох)
+
+Target endpoints:
+
+POST /api/teams
+
+POST /api/pairs
+
+Шаардлагууд:
+
+Server талд team/pair үүсгэх үед:
+
+Тухайн tournamentId, category (eventType)-г шалгах.
+
+Гишүүн бүрийн /api/registrations дотор category орсон эсэхийг баталгаажуулах.
+
+Хэрвээ өөр төрөлд бүртгэгдсэн байвал 400 буцаах (энэ хэвээр үлдэнэ).
+
+Гэхдээ client талд аль хэдийн зөв list шүүж гаргадаг байх ёстой — ингэснээр 400 гарахгүй.
+
+💻 Frontend logic update
+1. List шүүлтүүр зөв ажиллуулах
+
+Тоглогчдыг татах үед (/api/registrations?tournamentId=...) дараах байдлаар client дээр шүүнэ:
+
+const filteredPlayers = allPlayers.filter(p => {
+  const registrations = p.registrations || [];
+  const registeredEvents = registrations.map(r => JSON.parse(r.category).subType || JSON.parse(r.category).type);
+
+  // Тухайн үүсгэх гэж буй төрлийн дагуу шүүх
+  if (categoryType === 'MEN_DOUBLES') return registeredEvents.some(e => e.includes('MEN_DOUBLES'));
+  if (categoryType === 'WOMEN_DOUBLES') return registeredEvents.some(e => e.includes('WOMEN_DOUBLES'));
+  if (categoryType === 'MIXED_DOUBLES') return registeredEvents.some(e => e.includes('MIXED_DOUBLES'));
+  if (categoryType.includes('TEAM')) return registeredEvents.some(e => e.includes('TEAM'));
+  return false;
+});
+
+
+✅ Ингэснээр “Дан эрэгтэй хос” сонгосон үед зөвхөн тэр төрөлд бүртгүүлсэн эрэгтэй тоглогчид л list-д гарна.
+
+2. Өөрийн нэрийг list-д харуулахгүй
+const availablePlayers = filteredPlayers.filter(p => p.id !== currentUser.id);
+
+3. Багийн гишүүдийн тооны хязгаар
+
+UI дээр:
+
+const minMembers = categoryType.includes('TEAM') ? 3 : 2;
+const maxMembers = categoryType.includes('TEAM') ? 4 : 2;
+
+
+Add товч дарахад:
+
+if (selectedMembers.length >= maxMembers) {
+  toast.error(`Багийн гишүүдийн дээд хязгаар ${maxMembers}`);
+  return;
+}
+
+
+API-д илгээхээс өмнө баталгаажуулах:
+
+if (selectedMembers.length < minMembers || selectedMembers.length > maxMembers) {
+  toast.error(`Багийн гишүүд ${minMembers}-${maxMembers} хүн байх ёстой`);
+  return;
+}
+
+4. Сонгосон тоглогчдыг устгах, солих UI нэмэх
+
+Selected Members хэсэгт:
+
+<div className="flex flex-wrap gap-3 mt-4">
+  {selectedMembers.map(member => (
+    <div key={member.id} className="flex items-center gap-2 bg-green-100 rounded-lg px-3 py-2">
+      <span>{member.name}</span>
+      <button
+        onClick={() => setSelectedMembers(prev => prev.filter(m => m.id !== member.id))}
+        className="text-red-500 hover:text-red-700 text-sm"
+      >
+        ✕
+      </button>
+    </div>
+  ))}
+</div>
+
+
+✅ Энэ товчоор багийн гишүүнийг солих буюу устгах боломжтой болно.
+
+5. Team / Pair үүсгэх баталгаажуулалт
+
+Илгээх функц:
+
+const handleSubmit = async () => {
+  const payload = {
+    tournamentId,
+    category,
+    memberIds: selectedMembers.map(m => m.id),
+  };
+
+  if (selectedMembers.length < minMembers || selectedMembers.length > maxMembers) {
+    toast.error(`Гишүүдийн тоо ${minMembers}-${maxMembers} байх ёстой`);
+    return;
+  }
+
+  const res = await fetch(`/api/${isTeam ? 'teams' : 'pairs'}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    toast.error(err.message || 'Бүртгэл баталгаажсангүй');
+  } else {
+    toast.success(`${isTeam ? 'Баг' : 'Хос'} амжилттай бүрдлээ!`);
+    router.push(`/tournament/${tournamentId}/confirmation`);
+  }
+};
