@@ -35,20 +35,6 @@ export default function TeamFormation() {
   const [selectedMembers, setSelectedMembers] = useState<any[]>([]);
   const [teamName, setTeamName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [createdEntry, setCreatedEntry] = useState<any>(null);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  // Debounce search query
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
 
   // Parse the event type to determine category requirements
   const parsedEvent = useMemo(() => {
@@ -75,106 +61,73 @@ export default function TeamFormation() {
     enabled: !!tournamentId,
   });
 
-  // Fetch all registered users for this tournament and event
-  const { data: allUsers = [], isLoading: isLoadingUsers, error: usersError } = useQuery({
-    queryKey: ["/api/registrations", tournamentId, eventType, debouncedSearch],
+  // Fetch all registered users for this tournament
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ["/api/registrations", tournamentId],
     queryFn: async () => {
-      if (!eventType) {
-        console.error("Event type is missing");
-        throw new Error("Event төрөл байхгүй байна");
-      }
-      
-      console.log("Fetching registrations for:", { tournamentId, eventType });
-      
-      const params = new URLSearchParams({
-        tournamentId,
-        event: eventType,
-      });
-      if (debouncedSearch.trim()) {
-        params.append('q', debouncedSearch);
-      }
-      const res = await fetch(`/api/registrations?${params}`, {
-        credentials: 'include'
-      });
-      if (!res.ok) {
-        const error = await res.json();
-        console.error("Failed to fetch registrations:", error);
-        throw new Error(error.message || "Бүртгэл авахад алдаа гарлаа");
-      }
-      const data = await res.json();
-      console.log("Fetched registrations:", data.length, "users");
-      return data;
+      const res = await fetch(`/api/registrations?tournamentId=${tournamentId}`);
+      if (!res.ok) throw new Error("Failed to fetch registrations");
+      return res.json();
     },
-    enabled: !!tournamentId && !!eventType,
+    enabled: !!tournamentId,
   });
 
-  // Available players - exclude current user and already selected members, validate gender
+  // Filter available players: only those registered for this specific category and exclude current user
   const availablePlayers = useMemo(() => {
-    if (!allUsers || !user) return [];
-    
-    // Parse event to get gender requirements
-    let requiredGender: 'male' | 'female' | 'mixed' | null = null;
-    try {
-      const parsed = JSON.parse(eventType);
-      if (parsed.subType?.includes('MEN')) requiredGender = 'male';
-      else if (parsed.subType?.includes('WOMEN')) requiredGender = 'female';
-      else if (parsed.subType?.includes('MIXED')) requiredGender = 'mixed';
-      else if (parsed.gender) requiredGender = parsed.gender;
-    } catch {
-      // Ignore parse errors
-    }
-
     return allUsers.filter((player: any) => {
       // Exclude current user
-      if (player.id === user.id) return false;
-      
-      // Exclude already selected members
-      if (selectedMembers.find(m => m.id === player.id)) return false;
-      
-      // Validate gender for non-mixed events
-      if (requiredGender && requiredGender !== 'mixed') {
-        if (player.gender !== requiredGender) return false;
+      if (player.id === user?.id) return false;
+
+      // Check if player is registered for this specific category
+      const registrations = player.registrations || [];
+      const registeredEvents = registrations.map((r: any) => {
+        try {
+          const parsed = JSON.parse(r.category);
+          return parsed.subType || parsed.type;
+        } catch {
+          return "";
+        }
+      });
+
+      // Match based on category type
+      let isRegisteredForCategory = false;
+      if (categoryType === "MEN_DOUBLES") {
+        isRegisteredForCategory = registeredEvents.some((e: string) => e.includes("MEN_DOUBLES"));
+      } else if (categoryType === "WOMEN_DOUBLES") {
+        isRegisteredForCategory = registeredEvents.some((e: string) => e.includes("WOMEN_DOUBLES"));
+      } else if (categoryType === "MIXED_DOUBLES") {
+        isRegisteredForCategory = registeredEvents.some((e: string) => e.includes("MIXED_DOUBLES"));
+      } else if (categoryType.includes("TEAM")) {
+        isRegisteredForCategory = registeredEvents.some((e: string) => e.includes("TEAM") && e.includes(categoryType.split("_")[0]));
       }
-      
-      return true;
+
+      if (!isRegisteredForCategory) return false;
+
+      // Filter by search query
+      const matchesSearch = player.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           player.name?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      // Exclude already selected members
+      const notSelected = !selectedMembers.find(m => m.id === player.id);
+
+      return matchesSearch && notSelected;
     });
-  }, [allUsers, selectedMembers, user, eventType]);
+  }, [allUsers, user?.id, categoryType, searchQuery, selectedMembers]);
 
   const handleAddMember = (player: any) => {
-    // Validate member count
-    if (selectedMembers.length >= maxMembers - 1) { // -1 because current user is already counted
+    if (selectedMembers.length >= maxMembers) {
       toast({
         title: "Хязгаар хэтэрсэн",
-        description: `Багийн гишүүдийн дээд хязгаар ${maxMembers} (та оролцсон)`,
+        description: `Багийн гишүүдийн дээд хязгаар ${maxMembers}`,
         variant: "destructive",
       });
       return;
     }
-    
-    // Validate gender eligibility for non-mixed events
-    const eventGender = getGenderFromEvent(eventType);
-    if (eventGender && eventGender !== 'mixed' && player.gender !== eventGender) {
-      toast({
-        title: "Хүйсний шаардлага хангахгүй",
-        description: `Энэ төрөлд зөвхөн ${eventGender === 'male' ? 'эрэгтэй' : 'эмэгтэй'} тоглогч оролцох боломжтой`,
-        variant: "destructive",
-      });
-      return;
-    }
-    
     setSelectedMembers([...selectedMembers, player]);
-    toast({
-      title: "Амжилттай",
-      description: `${player.firstName} ${player.lastName} нэмэгдлээ`,
-    });
   };
 
-  const handleRemoveMember = (playerId: string) => {
+  const handleRemoveMember = (playerId: number) => {
     setSelectedMembers(prev => prev.filter(m => m.id !== playerId));
-    toast({
-      title: "Гишүүн хасагдлаа",
-      description: "Гишүүн амжилттай хасагдлаа",
-    });
   };
 
   const createTeamMutation = useMutation({
@@ -215,43 +168,38 @@ export default function TeamFormation() {
   });
 
   const handleSubmit = () => {
-    // Validate team name for team events
-    if (isTeam && !teamName.trim()) {
+    if (!teamName.trim()) {
       toast({
         title: "Алдаа",
-        description: "Багийн нэр оруулна уу",
+        description: `${isTeam ? 'Багийн' : 'Хосын'} нэр оруулна уу`,
         variant: "destructive",
       });
       return;
     }
 
-    // Total members including current user
-    const totalMembers = selectedMembers.length + 1;
-    
-    // Validate member count
-    if (totalMembers < minMembers) {
+    if (selectedMembers.length < minMembers || selectedMembers.length > maxMembers) {
       toast({
         title: "Алдаа",
-        description: `Гишүүдийн тоо хангалтгүй байна. Хамгийн багадаа ${minMembers} гишүүн шаардлагатай (таныг оруулаад)`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (totalMembers > maxMembers) {
-      toast({
-        title: "Алдаа",
-        description: `Гишүүдийн тоо хэтэрсэн байна. Хамгийн ихдээ ${maxMembers} гишүүн байх ёстой (таныг оруулаад)`,
+        description: `Гишүүдийн тоо ${minMembers}-${maxMembers} байх ёстой`,
         variant: "destructive",
       });
       return;
     }
 
     createTeamMutation.mutate({
-      name: teamName.trim() || `${isTeam ? 'Баг' : 'Хос'} - ${Date.now()}`,
+      name: teamName,
       members: selectedMembers.map(m => m.id),
     });
   };
+
+  // Determine if event is team or doubles from event type
+  useEffect(() => {
+    if (eventType) {
+      const category = getEventTypeCategory(eventType);
+      if (category === 'team') setActiveTab('team');
+      else if (category === 'doubles') setActiveTab('doubles');
+    }
+  }, [eventType]);
 
   const getEventLabel = (type: string): string => {
     try {
@@ -306,7 +254,23 @@ export default function TeamFormation() {
   // const minMembers = eventCategory === 'doubles' ? 1 : 3; // Doubles: 1 partner, Team: min 3 members
   // const maxMembers = eventCategory === 'doubles' ? 1 : 4; // Doubles: 1 partner, Team: max 4 members
 
+  // Filter participants for the same event
+  const eventParticipants = participants.filter(p => 
+    p.participationType === eventType && p.id !== user?.id
+  );
 
+  // Further filter by gender constraints
+  const validParticipants = eventParticipants.filter(p => {
+    if (eventGender === 'mixed') return true; // Mixed allows all genders
+    if (eventGender === 'male' && p.gender === 'male') return true;
+    if (eventGender === 'female' && p.gender === 'female') return true;
+    return false;
+  });
+
+  const filteredParticipants = validParticipants.filter(p => {
+    const fullName = `${p.firstName} ${p.lastName}`.toLowerCase();
+    return fullName.includes(searchQuery.toLowerCase());
+  });
 
   // Validation
   const validateSelection = (): { valid: boolean; error?: string } => {
@@ -315,17 +279,17 @@ export default function TeamFormation() {
     }
 
     if (selectedMembers.length < minMembers) {
-      return {
-        valid: false,
-        error: eventCategory === 'doubles'
-          ? 'Хамтрагчаа сонгоно уу'
+      return { 
+        valid: false, 
+        error: eventCategory === 'doubles' 
+          ? 'Хамтрагчаа сонгоно уу' 
           : `Багт хамгийн багадаа ${minMembers} гишүүн байх ёстой`
       };
     }
 
     if (selectedMembers.length > maxMembers) {
-      return {
-        valid: false,
+      return { 
+        valid: false, 
         error: `Хамгийн ихдээ ${maxMembers} ${eventCategory === 'doubles' ? 'хамтрагч' : 'гишүүн'} сонгох боломжтой`
       };
     }
@@ -334,6 +298,18 @@ export default function TeamFormation() {
     const uniqueMembers = new Set([user?.id, ...selectedMembers.map(m => m.id)]);
     if (uniqueMembers.size !== selectedMembers.length + 1) {
       return { valid: false, error: 'Давхардсан гишүүд байна' };
+    }
+
+    // Gender validation for non-mixed events
+    if (eventGender !== 'mixed') {
+      const allMembers = [user, ...selectedMembers.map(id => participants.find(p => p.id === id))];
+      const invalidGender = allMembers.some(m => m && m.gender !== eventGender);
+      if (invalidGender) {
+        return { 
+          valid: false, 
+          error: `Бүх гишүүд ${eventGender === 'male' ? 'эрэгтэй' : 'эмэгтэй'} байх ёстой`
+        };
+      }
     }
 
     return { valid: true };
@@ -417,7 +393,7 @@ export default function TeamFormation() {
                     {isTeam ? 'Баг бүрдүүлэх' : 'Хос бүрдүүлэх'}
                   </h4>
                   <p className="text-sm text-blue-700 dark:text-blue-300">
-                    {isTeam
+                    {isTeam 
                       ? `Багийн гишүүдээ сонгоно уу. Баг нь ${minMembers}-${maxMembers} гишүүнтэй байх ёстой.`
                       : `Хамтрагчаа сонгож хос бүрдүүлнэ үү. Хос нь ${minMembers} тамирчнаас бүрдэнэ.`
                     }
@@ -454,27 +430,23 @@ export default function TeamFormation() {
                 {isTeam ? 'Багийн бүрэлдэхүүн' : 'Хос бүрдэл'}
               </h4>
               <div className="space-y-2">
-                <div className="flex items-center gap-2 p-3 bg-white dark:bg-gray-800 rounded border-2 border-green-500">
+                <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded">
                   <CheckCircle className="w-4 h-4 text-green-600" />
                   <span className="font-medium">{user?.firstName} {user?.lastName}</span>
-                  <Badge variant="outline" className="ml-2 text-xs">
-                    {user?.gender === 'male' ? '👨 Эрэгтэй' : '👩 Эмэгтэй'}
-                  </Badge>
-                  <Badge className="ml-auto bg-green-600 text-white">Та (Удирдагч)</Badge>
+                  <Badge variant="outline" className="ml-auto">Та</Badge>
                 </div>
                 {selectedMembers.map(member => (
-                  <div key={member.id} className="flex items-center gap-2 p-3 bg-white dark:bg-gray-800 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <div key={member.id} className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded">
                     <CheckCircle className="w-4 h-4 text-green-600" />
-                    <span className="flex-1">{member.firstName} {member.lastName}</span>
-                    <Badge variant="outline" className="text-xs">
-                      {member.gender === 'male' ? '👨 Эрэгтэй' : '👩 Эмэгтэй'}
+                    <span>{member.fullName || member.name}</span>
+                    <Badge variant="outline" className="ml-auto text-xs">
+                      {member.gender === 'male' ? 'Эрэгтэй' : 'Эмэгтэй'}
                     </Badge>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleRemoveMember(member.id)}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                      title="Гишүүн хасах"
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50 ml-auto"
                     >
                       <X className="w-4 h-4" />
                     </Button>
@@ -483,9 +455,9 @@ export default function TeamFormation() {
               </div>
               <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-700">
                 <p className="text-sm text-green-700 dark:text-green-300 font-medium">
-                  {isTeam
-                    ? `Нийт: ${selectedMembers.length + 1}/${maxMembers} гишүүн (шаардлагатай: ${minMembers}-${maxMembers})`
-                    : `Нийт: ${selectedMembers.length + 1}/${maxMembers} хүн (таныг оруулаад)`
+                  {isTeam 
+                    ? `${selectedMembers.length + 1}/${maxMembers} гишүүн (мин. ${minMembers})`
+                    : `${selectedMembers.length}/${maxMembers - 1} хамтрагч (мин. ${minMembers - 1})`
                   }
                 </p>
               </div>
@@ -499,10 +471,7 @@ export default function TeamFormation() {
               <Input
                 id="search"
                 value={searchQuery}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setSearchQuery(value);
-                }}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Нэрээр хайх..."
               />
             </div>
@@ -513,61 +482,37 @@ export default function TeamFormation() {
                 {isTeam ? 'Багт оруулах гишүүд' : 'Хамтрагч'} ({availablePlayers.length})
               </h4>
 
-              {isLoadingUsers ? (
-                <div className="text-center py-12 text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <Users className="w-16 h-16 mx-auto mb-3 opacity-30 animate-pulse" />
-                  <p className="font-medium">Тамирчдын жагсаалт уншиж байна...</p>
-                </div>
-              ) : usersError ? (
-                <div className="text-center py-12 text-red-500 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                  <Users className="w-16 h-16 mx-auto mb-3 opacity-30" />
-                  <p className="font-medium">Алдаа гарлаа</p>
-                  <p className="text-sm mt-2">{usersError.message}</p>
-                </div>
-              ) : availablePlayers.length === 0 ? (
+              {availablePlayers.length === 0 ? (
                 <div className="text-center py-12 text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <Users className="w-16 h-16 mx-auto mb-3 opacity-30" />
                   <p className="font-medium">Энэ төрөлд бүртгүүлсэн тамирчид олдсонгүй</p>
-                  <p className="text-sm mt-2">Та зөвхөн энэ төрөлд бүртгүүлсэн тамирчдаас сонгох боломжтой</p>
-                  {allUsers.length > 0 && (
-                    <p className="text-xs mt-2 text-blue-600 dark:text-blue-400">
-                      Санамж: {allUsers.length} тамирчид энэ тэмцээнд бүртгүүлсэн боловч:
-                      <br />• Таны сонгосон төрөлд биш эсвэл
-                      <br />• Хүйсний шаардлага хангахгүй эсвэл
-                      <br />• Аль хэдийн сонгогдсон байна
-                    </p>
-                  )}
+                  <p className="text-sm mt-2">Та зөвхөн бүртгүүлсэн тамирчдаас сонгох боломжтой</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto border rounded-lg p-3">
                   {availablePlayers.map(participant => (
                     <div
                       key={participant.id}
-                      className="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-all hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-blue-300 hover:shadow-sm"
+                      className={`flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-all ${
+                        selectedMembers.some(m => m.id === participant.id)
+                          ? 'bg-blue-50 border-blue-500 dark:bg-blue-900/20 shadow-md'
+                          : 'hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300'
+                      }`}
                       onClick={() => handleAddMember(participant)}
                     >
+                      <Checkbox
+                        checked={selectedMembers.some(m => m.id === participant.id)}
+                        onCheckedChange={() => handleAddMember(participant)}
+                      />
                       <div className="flex-1">
                         <p className="font-medium">
                           {participant.firstName} {participant.lastName}
                         </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <p className="text-xs text-gray-500">
-                            {participant.gender === 'male' ? '👨 Эрэгтэй' : '👩 Эмэгтэй'}
-                          </p>
-                          {participant.clubAffiliation && (
-                            <Badge variant="outline" className="text-xs">
-                              {participant.clubAffiliation}
-                            </Badge>
-                          )}
-                        </div>
+                        <p className="text-xs text-gray-500">
+                          {participant.gender === 'male' ? '👨 Эрэгтэй' : '👩 Эмэгтэй'}
+                        </p>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                      >
-                        <UserPlus className="w-4 h-4" />
-                      </Button>
+                      <UserPlus className="w-4 h-4 text-gray-400" />
                     </div>
                   ))}
                 </div>

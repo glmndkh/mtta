@@ -44,43 +44,17 @@ import {
   leagues,
 } from "../shared/schema";
 
-import { db } from "./db";
-import { teams, teamMembers, pairs, pairMembers } from "../shared/schema";
-
 // Mocking database operations for demonstration purposes if needed.
 // In a real application, these would interact with your actual database.
+const db = {
+  select: () => ({ from: () => ({ where: () => Promise.resolve([]) }) }),
+  insert: () => ({ values: () => ({ returning: () => Promise.resolve([]) }) }),
+  update: () => ({ set: () => ({ where: () => Promise.resolve({ count: 0 }) }) }),
+  delete: () => ({ where: () => Promise.resolve({ count: 0 }) }),
+};
 const eq = (a: any, b: any) => a === b;
 const and = (...args: any[]) => args.filter(Boolean).join(' AND ');
 
-
-// Canonical key generator for event matching
-function canonicalEventKey(evt: any): string {
-  try {
-    // 1) Parse if string
-    const e = typeof evt === 'string' ? JSON.parse(evt) : evt || {};
-    
-    // 2) Determine KIND (SINGLES, DOUBLES, TEAM)
-    const kind = 
-      (e.subType && /DOUBLES|TEAM|SINGLES/.test(e.subType)) ? 
-        (e.subType.includes('DOUBLES') ? 'DOUBLES' :
-         e.subType.includes('TEAM') ? 'TEAM' : 'SINGLES')
-      : (e.type || '').toUpperCase();
-    
-    // 3) Normalize GENDER (MEN, WOMEN, MIXED)
-    const g = 
-      e.subType?.includes('MEN') ? 'MEN' :
-      e.subType?.includes('WOMEN') ? 'WOMEN' :
-      e.subType?.includes('MIXED') ? 'MIXED' :
-      (e.genderReq === 'MALE' || e.gender === 'male') ? 'MEN' :
-      (e.genderReq === 'FEMALE' || e.gender === 'female') ? 'WOMEN' :
-      (e.genderReq === 'MIXED') ? 'MIXED' : '';
-    
-    // 4) Final canonical key
-    return g ? `${g}_${kind}` : kind; // e.g., 'MEN_DOUBLES', 'WOMEN_TEAM', 'SINGLES'
-  } catch {
-    return '';
-  }
-}
 
 function calculateAge(dateOfBirth: Date | null | undefined) {
   if (!dateOfBirth) return 0;
@@ -1694,7 +1668,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/registrations", requireAuth, async (req: any, res) => {
     try {
       const userId = req.session?.userId;
-
+      
       if (!userId) {
         return res.status(401).json({ message: "Нэвтрэх шаардлагатай" });
       }
@@ -1716,14 +1690,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!user) {
           return res.status(404).json({ message: "Хэрэглэгч олдсонгүй" });
         }
-
+        
         const newPlayer = await storage.createPlayer({
           userId,
           dateOfBirth: user.dateOfBirth,
           rank: null,
           clubId: null,
         });
-
+        
         if (!newPlayer) {
           return res.status(500).json({ message: "Тоглогчийн профайл үүсгэж чадсангүй" });
         }
@@ -1793,96 +1767,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (e) {
       console.error("Error fetching user registrations:", e);
       res.status(500).json({ message: "Бүртгэлийн мэдээлэл авахад алдаа гарлаа" });
-    }
-  });
-
-  // Get all registrations for a tournament with event filtering
-  app.get("/api/registrations", async (req: any, res) => {
-    try {
-      const { tournamentId, event, q } = req.query;
-
-      if (!tournamentId) {
-        return res.status(400).json({ message: "Tournament ID шаардлагатай" });
-      }
-
-      if (!event) {
-        return res.status(400).json({ message: "Event төрөл шаардлагатай" });
-      }
-
-      console.log(`[Registrations] Fetching for tournament ${tournamentId}, event: ${event}`);
-
-      // Fetch all participants for this tournament
-      const allParticipants = await storage.getTournamentParticipants(tournamentId);
-      console.log(`[Registrations] Total participants in tournament: ${allParticipants.length}`);
-
-      // Get canonical key for the requested event
-      const eventKey = canonicalEventKey(event);
-      console.log(`[Registrations] Event canonical key: ${eventKey}`);
-
-      // Filter by canonical key matching
-      const matchingParticipants = allParticipants.filter(p => {
-        try {
-          const regKey = canonicalEventKey(p.participationType);
-          const matches = regKey === eventKey;
-          
-          if (matches) {
-            console.log(`[Registrations] Matched participant ${p.playerId}: ${regKey} === ${eventKey}`);
-          }
-          
-          return matches;
-        } catch (err) {
-          console.error(`[Registrations] Error matching participant ${p.playerId}:`, err);
-          return false;
-        }
-      });
-
-      console.log(`[Registrations] Matching participants for event: ${matchingParticipants.length}`);
-
-      // Exclude current user from list (normalize to string for comparison)
-      const currentUserId = String(req.session?.userId ?? '');
-      let filteredParticipants = currentUserId 
-        ? matchingParticipants.filter(p => String(p.playerId) !== currentUserId)
-        : matchingParticipants;
-
-      console.log(`[Registrations] After excluding current user: ${filteredParticipants.length}`);
-
-      // Get user details for filtered participants
-      const users = await Promise.all(
-        filteredParticipants.map(async (p) => {
-          const user = await storage.getUser(p.playerId);
-          return user ? {
-            id: user.id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            fullName: `${user.firstName} ${user.lastName}`,
-            gender: user.gender,
-            dateOfBirth: user.dateOfBirth,
-            club: user.clubAffiliation,
-            rating: null,
-            participationType: p.participationType,
-            registrations: [{ category: p.participationType }]
-          } : null;
-        })
-      );
-
-      let filteredUsers = users.filter(u => u !== null);
-
-      // Apply search filter
-      if (q) {
-        const searchTerm = (q as string).toLowerCase();
-        filteredUsers = filteredUsers.filter(user => {
-          const fullName = user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim();
-          return fullName.toLowerCase().includes(searchTerm) ||
-                 (user.firstName && user.firstName.toLowerCase().includes(searchTerm)) ||
-                 (user.lastName && user.lastName.toLowerCase().includes(searchTerm));
-        });
-      }
-
-      console.log(`[Registrations] Final filtered users: ${filteredUsers.length}`);
-      res.json(filteredUsers);
-    } catch (error) {
-      console.error("Error fetching registrations:", error);
-      res.status(500).json({ message: "Бүртгэл авахад алдаа гарлаа" });
     }
   });
 
@@ -2034,7 +1918,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       try {
         const parsed = JSON.parse(eventType);
-
+        
         // Determine category
         if (parsed.type === 'DOUBLES' || parsed.subType?.includes('DOUBLES') || parsed.type === 'pair') {
           eventCategory = 'doubles';
@@ -2094,16 +1978,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Давхардсан гишүүд байна" });
       }
 
-      // Verify all members are registered for this event using canonical key
+      // Verify all members are registered for this event
       const participants = await storage.getTournamentParticipants(tournamentId);
-      const eventKey = canonicalEventKey(eventType);
-      
-      const registeredForEvent = participants.filter(p => {
-        const regKey = canonicalEventKey(p.participationType);
-        return regKey === eventKey && members.includes(p.playerId);
-      });
-
-      console.log(`[Create Team] Event key: ${eventKey}, Required members: ${members.length}, Registered: ${registeredForEvent.length}`);
+      const registeredForEvent = participants.filter(
+        p => p.participationType === eventType && members.includes(p.playerId)
+      );
 
       if (registeredForEvent.length !== members.length) {
         return res.status(400).json({ 
@@ -2160,11 +2039,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if team/pair already exists for this event (prevent duplicates)
       const existingTeams = await storage.getLeagueTeams(tournamentId);
       const memberSet = new Set(members.sort());
-
+      
       for (const existingTeam of existingTeams) {
         const existingMembers = existingTeam.players?.map((p: any) => p.playerId).sort() || [];
         const existingSet = new Set(existingMembers);
-
+        
         if (memberSet.size === existingSet.size && 
             [...memberSet].every(m => existingSet.has(m))) {
           return res.status(400).json({ 
@@ -2184,7 +2063,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const memberId of members) {
         const user = await storage.getUser(memberId);
         const memberName = user ? `${user.firstName} ${user.lastName}` : 'Unknown Player';
-
+        
         await storage.addPlayerToLeagueTeam(team.id, memberId, memberName);
       }
 
@@ -2294,7 +2173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   );
 
   // Matches
-  app.post("/api/matches", requireAuth, async (req, res) => {
+  app.post("/api/matches", requireAuth, async (req: any, res) => {
     try {
       const matchData = insertMatchSchema.parse(req.body);
       const match = await storage.createMatch(matchData);
