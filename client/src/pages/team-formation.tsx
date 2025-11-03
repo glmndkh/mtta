@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRoute, useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Navigation from '@/components/navigation';
@@ -13,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { ArrowLeft, Users, UserPlus, CheckCircle, AlertCircle, Trophy } from 'lucide-react';
+import { ArrowLeft, Users, UserPlus, CheckCircle, AlertCircle, Trophy, X } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 
 interface Participant {
@@ -26,32 +25,172 @@ interface Participant {
 }
 
 export default function TeamFormation() {
-  const [match, params] = useRoute('/tournament/:id/form-team');
-  const [, setLocation] = useLocation();
-  const { toast } = useToast();
   const { user } = useAuth();
-  const queryClient = useQueryClient();
+  const [, params] = useRoute("/tournament/:id/form-team");
+  const [, setLocation] = useLocation();
+  const tournamentId = params?.id || "";
+  const searchParams = new URLSearchParams(window.location.search);
+  const eventType = searchParams.get("event") || "";
 
-  const [activeTab, setActiveTab] = useState<'team' | 'doubles'>('team');
-  const [teamName, setTeamName] = useState('');
-  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [createdEntry, setCreatedEntry] = useState<any>(null);
+  const [selectedMembers, setSelectedMembers] = useState<any[]>([]);
+  const [teamName, setTeamName] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Get event type from URL params
-  const urlParams = new URLSearchParams(window.location.search);
-  const eventType = urlParams.get('event') || '';
+  // Parse the event type to determine category requirements
+  const parsedEvent = useMemo(() => {
+    try {
+      return JSON.parse(eventType);
+    } catch {
+      return {};
+    }
+  }, [eventType]);
 
+  const categoryType = parsedEvent.subType || parsedEvent.type || "";
+  const isTeam = categoryType.includes("TEAM");
+  const minMembers = isTeam ? 3 : 2;
+  const maxMembers = isTeam ? 4 : 2;
+
+  // Fetch tournament details
   const { data: tournament } = useQuery({
-    queryKey: ['/api/tournaments', params?.id],
-    enabled: !!params?.id,
+    queryKey: ["/api/tournaments", tournamentId],
+    queryFn: async () => {
+      const res = await fetch(`/api/tournaments/${tournamentId}`);
+      if (!res.ok) throw new Error("Failed to fetch tournament");
+      return res.json();
+    },
+    enabled: !!tournamentId,
   });
 
-  const { data: participants = [] } = useQuery<Participant[]>({
-    queryKey: ['/api/tournaments', params?.id, 'participants'],
-    enabled: !!params?.id,
+  // Fetch all registered users for this tournament
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ["/api/registrations", tournamentId],
+    queryFn: async () => {
+      const res = await fetch(`/api/registrations?tournamentId=${tournamentId}`);
+      if (!res.ok) throw new Error("Failed to fetch registrations");
+      return res.json();
+    },
+    enabled: !!tournamentId,
   });
+
+  // Filter available players: only those registered for this specific category and exclude current user
+  const availablePlayers = useMemo(() => {
+    return allUsers.filter((player: any) => {
+      // Exclude current user
+      if (player.id === user?.id) return false;
+
+      // Check if player is registered for this specific category
+      const registrations = player.registrations || [];
+      const registeredEvents = registrations.map((r: any) => {
+        try {
+          const parsed = JSON.parse(r.category);
+          return parsed.subType || parsed.type;
+        } catch {
+          return "";
+        }
+      });
+
+      // Match based on category type
+      let isRegisteredForCategory = false;
+      if (categoryType === "MEN_DOUBLES") {
+        isRegisteredForCategory = registeredEvents.some((e: string) => e.includes("MEN_DOUBLES"));
+      } else if (categoryType === "WOMEN_DOUBLES") {
+        isRegisteredForCategory = registeredEvents.some((e: string) => e.includes("WOMEN_DOUBLES"));
+      } else if (categoryType === "MIXED_DOUBLES") {
+        isRegisteredForCategory = registeredEvents.some((e: string) => e.includes("MIXED_DOUBLES"));
+      } else if (categoryType.includes("TEAM")) {
+        isRegisteredForCategory = registeredEvents.some((e: string) => e.includes("TEAM") && e.includes(categoryType.split("_")[0]));
+      }
+
+      if (!isRegisteredForCategory) return false;
+
+      // Filter by search query
+      const matchesSearch = player.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           player.name?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      // Exclude already selected members
+      const notSelected = !selectedMembers.find(m => m.id === player.id);
+
+      return matchesSearch && notSelected;
+    });
+  }, [allUsers, user?.id, categoryType, searchQuery, selectedMembers]);
+
+  const handleAddMember = (player: any) => {
+    if (selectedMembers.length >= maxMembers) {
+      toast({
+        title: "Хязгаар хэтэрсэн",
+        description: `Багийн гишүүдийн дээд хязгаар ${maxMembers}`,
+        variant: "destructive",
+      });
+      return;
+    }
+    setSelectedMembers([...selectedMembers, player]);
+  };
+
+  const handleRemoveMember = (playerId: number) => {
+    setSelectedMembers(prev => prev.filter(m => m.id !== playerId));
+  };
+
+  const createTeamMutation = useMutation({
+    mutationFn: async (data: { name: string; members: number[] }) => {
+      const response = await fetch(isTeam ? "/api/teams" : "/api/pairs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          tournamentId,
+          category: eventType,
+          name: data.name,
+          memberIds: data.members,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || `Failed to create ${isTeam ? 'team' : 'pair'}`);
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Амжилттай!",
+        description: `${isTeam ? 'Баг' : 'Хос'} амжилттай үүслээ`,
+      });
+      setLocation(`/tournament/${tournamentId}/full`);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Алдаа",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmit = () => {
+    if (!teamName.trim()) {
+      toast({
+        title: "Алдаа",
+        description: `${isTeam ? 'Багийн' : 'Хосын'} нэр оруулна уу`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedMembers.length < minMembers || selectedMembers.length > maxMembers) {
+      toast({
+        title: "Алдаа",
+        description: `Гишүүдийн тоо ${minMembers}-${maxMembers} байх ёстой`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createTeamMutation.mutate({
+      name: teamName,
+      members: selectedMembers.map(m => m.id),
+    });
+  };
 
   // Determine if event is team or doubles from event type
   useEffect(() => {
@@ -112,8 +251,8 @@ export default function TeamFormation() {
 
   const eventCategory = getEventTypeCategory(eventType);
   const eventGender = getGenderFromEvent(eventType);
-  const minMembers = eventCategory === 'doubles' ? 1 : 3; // Doubles: 1 partner, Team: min 3 members
-  const maxMembers = eventCategory === 'doubles' ? 1 : 4; // Doubles: 1 partner, Team: max 4 members
+  // const minMembers = eventCategory === 'doubles' ? 1 : 3; // Doubles: 1 partner, Team: min 3 members
+  // const maxMembers = eventCategory === 'doubles' ? 1 : 4; // Doubles: 1 partner, Team: max 4 members
 
   // Filter participants for the same event
   const eventParticipants = participants.filter(p => 
@@ -156,7 +295,7 @@ export default function TeamFormation() {
     }
 
     // Check for duplicates
-    const uniqueMembers = new Set([user?.id, ...selectedMembers]);
+    const uniqueMembers = new Set([user?.id, ...selectedMembers.map(m => m.id)]);
     if (uniqueMembers.size !== selectedMembers.length + 1) {
       return { valid: false, error: 'Давхардсан гишүүд байна' };
     }
@@ -176,19 +315,19 @@ export default function TeamFormation() {
     return { valid: true };
   };
 
-  const createTeamMutation = useMutation({
+  const createEntryMutation = useMutation({
     mutationFn: async () => {
       const validation = validateSelection();
       if (!validation.valid) {
         throw new Error(validation.error);
       }
 
-      const response = await apiRequest(`/api/tournaments/${params?.id}/create-team`, {
+      const response = await apiRequest(`/api/tournaments/${params?.id}/create-${eventCategory}`, {
         method: 'POST',
         body: JSON.stringify({
           eventType,
           teamName: teamName.trim() || undefined,
-          members: [user?.id, ...selectedMembers],
+          members: [user?.id, ...selectedMembers.map(m => m.id)],
         }),
       });
 
@@ -202,27 +341,12 @@ export default function TeamFormation() {
     onError: (error: any) => {
       toast({
         title: 'Алдаа',
-        description: error.message || 'Баг үүсгэхэд алдаа гарлаа',
+        description: error.message || 'Баг/хос үүсгэхэд алдаа гарлаа',
         variant: 'destructive',
       });
     },
   });
 
-  const handleToggleMember = (memberId: string) => {
-    if (selectedMembers.includes(memberId)) {
-      setSelectedMembers(selectedMembers.filter(id => id !== memberId));
-    } else {
-      if (selectedMembers.length < maxMembers) {
-        setSelectedMembers([...selectedMembers, memberId]);
-      } else {
-        toast({
-          title: 'Анхааруулга',
-          description: `Хамгийн ихдээ ${maxMembers} ${eventCategory === 'doubles' ? 'хамтрагч' : 'гишүүн'} сонгох боломжтой`,
-          variant: 'destructive',
-        });
-      }
-    }
-  };
 
   const handleCreateAnother = () => {
     setShowSuccessDialog(false);
@@ -237,7 +361,7 @@ export default function TeamFormation() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation />
-      
+
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         <Button
           onClick={() => setLocation(`/tournament/${params?.id}/full`)}
@@ -252,7 +376,7 @@ export default function TeamFormation() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="w-6 h-6 text-blue-600" />
-              Баг / Хос бүрдүүлэх
+              {isTeam ? 'Баг бүрдүүлэх' : 'Хос бүрдүүлэх'}
             </CardTitle>
             <CardDescription>
               {tournament?.name} - {getEventLabel(eventType)}
@@ -266,12 +390,12 @@ export default function TeamFormation() {
                 <Trophy className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
-                    {eventCategory === 'doubles' ? 'Хос бүрдүүлэх' : 'Баг бүрдүүлэх'}
+                    {isTeam ? 'Баг бүрдүүлэх' : 'Хос бүрдүүлэх'}
                   </h4>
                   <p className="text-sm text-blue-700 dark:text-blue-300">
-                    {eventCategory === 'doubles' 
-                      ? `Хамтрагчаа сонгож хос бүрдүүлнэ үү. Хос нь 2 тамирчнаас бүрдэнэ.`
-                      : `Багийн гишүүдээ сонгоно уу. Баг нь ${minMembers + 1}-${maxMembers + 1} гишүүнтэй байх ёстой.`
+                    {isTeam 
+                      ? `Багийн гишүүдээ сонгоно уу. Баг нь ${minMembers}-${maxMembers} гишүүнтэй байх ёстой.`
+                      : `Хамтрагчаа сонгож хос бүрдүүлнэ үү. Хос нь ${minMembers} тамирчнаас бүрдэнэ.`
                     }
                   </p>
                   {eventGender && eventGender !== 'mixed' && (
@@ -284,7 +408,7 @@ export default function TeamFormation() {
             </div>
 
             {/* Team Name (only for team events) */}
-            {eventCategory === 'team' && (
+            {isTeam && (
               <div className="space-y-2">
                 <Label htmlFor="teamName" className="text-base font-semibold">
                   Багийн нэр <span className="text-red-500">*</span>
@@ -303,7 +427,7 @@ export default function TeamFormation() {
             <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
               <h4 className="font-semibold text-green-900 dark:text-green-100 mb-3 flex items-center gap-2">
                 <CheckCircle className="w-5 h-5" />
-                {eventCategory === 'doubles' ? 'Хос бүрдэл' : 'Багийн бүрэлдэхүүн'}
+                {isTeam ? 'Багийн бүрэлдэхүүн' : 'Хос бүрдэл'}
               </h4>
               <div className="space-y-2">
                 <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded">
@@ -311,24 +435,29 @@ export default function TeamFormation() {
                   <span className="font-medium">{user?.firstName} {user?.lastName}</span>
                   <Badge variant="outline" className="ml-auto">Та</Badge>
                 </div>
-                {selectedMembers.map(memberId => {
-                  const member = participants.find(p => p.id === memberId);
-                  return member ? (
-                    <div key={memberId} className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      <span>{member.firstName} {member.lastName}</span>
-                      <Badge variant="outline" className="ml-auto text-xs">
-                        {member.gender === 'male' ? 'Эрэгтэй' : 'Эмэгтэй'}
-                      </Badge>
-                    </div>
-                  ) : null;
-                })}
+                {selectedMembers.map(member => (
+                  <div key={member.id} className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    <span>{member.fullName || member.name}</span>
+                    <Badge variant="outline" className="ml-auto text-xs">
+                      {member.gender === 'male' ? 'Эрэгтэй' : 'Эмэгтэй'}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveMember(member.id)}
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50 ml-auto"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
               </div>
               <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-700">
                 <p className="text-sm text-green-700 dark:text-green-300 font-medium">
-                  {eventCategory === 'doubles' 
-                    ? `${selectedMembers.length}/1 хамтрагч сонгогдсон`
-                    : `${selectedMembers.length + 1}/${maxMembers + 1} гишүүн (мин. ${minMembers + 1})`
+                  {isTeam 
+                    ? `${selectedMembers.length + 1}/${maxMembers} гишүүн (мин. ${minMembers})`
+                    : `${selectedMembers.length}/${maxMembers - 1} хамтрагч (мин. ${minMembers - 1})`
                   }
                 </p>
               </div>
@@ -337,7 +466,7 @@ export default function TeamFormation() {
             {/* Search */}
             <div className="space-y-2">
               <Label htmlFor="search" className="text-base font-semibold">
-                {eventCategory === 'doubles' ? 'Хамтрагч хайх' : 'Багийн гишүүд хайх'}
+                {isTeam ? 'Багийн гишүүд хайх' : 'Хамтрагч хайх'}
               </Label>
               <Input
                 id="search"
@@ -350,10 +479,10 @@ export default function TeamFormation() {
             {/* Available Participants */}
             <div className="space-y-3">
               <h4 className="font-semibold text-lg">
-                Бүртгүүлсэн тамирчид ({filteredParticipants.length})
+                {isTeam ? 'Багт оруулах гишүүд' : 'Хамтрагч'} ({availablePlayers.length})
               </h4>
-              
-              {filteredParticipants.length === 0 ? (
+
+              {availablePlayers.length === 0 ? (
                 <div className="text-center py-12 text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <Users className="w-16 h-16 mx-auto mb-3 opacity-30" />
                   <p className="font-medium">Энэ төрөлд бүртгүүлсэн тамирчид олдсонгүй</p>
@@ -361,19 +490,19 @@ export default function TeamFormation() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto border rounded-lg p-3">
-                  {filteredParticipants.map(participant => (
+                  {availablePlayers.map(participant => (
                     <div
                       key={participant.id}
                       className={`flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-all ${
-                        selectedMembers.includes(participant.id)
+                        selectedMembers.some(m => m.id === participant.id)
                           ? 'bg-blue-50 border-blue-500 dark:bg-blue-900/20 shadow-md'
                           : 'hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300'
                       }`}
-                      onClick={() => handleToggleMember(participant.id)}
+                      onClick={() => handleAddMember(participant)}
                     >
                       <Checkbox
-                        checked={selectedMembers.includes(participant.id)}
-                        onCheckedChange={() => handleToggleMember(participant.id)}
+                        checked={selectedMembers.some(m => m.id === participant.id)}
+                        onCheckedChange={() => handleAddMember(participant)}
                       />
                       <div className="flex-1">
                         <p className="font-medium">
@@ -407,16 +536,14 @@ export default function TeamFormation() {
                 Цуцлах
               </Button>
               <Button
-                onClick={() => createTeamMutation.mutate()}
+                onClick={handleSubmit}
                 disabled={createTeamMutation.isPending || !validation.valid}
                 size="lg"
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 {createTeamMutation.isPending
                   ? 'Үүсгэж байна...'
-                  : eventCategory === 'doubles'
-                    ? '✓ Хос бүрдүүлэх'
-                    : '✓ Баг үүсгэх'
+                  : `✓ ${isTeam ? 'Баг үүсгэх' : 'Хос бүрдүүлэх'}`
                 }
               </Button>
             </div>
@@ -433,14 +560,14 @@ export default function TeamFormation() {
               Амжилттай үүслээ!
             </DialogTitle>
             <DialogDescription>
-              {eventCategory === 'doubles' ? 'Таны хос амжилттай бүрдлээ' : 'Таны баг амжилттай үүслээ'}
+              {isTeam ? 'Таны баг амжилттай үүслээ' : 'Таны хос амжилттай бүрдлээ'}
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
               <h4 className="font-semibold mb-2">
-                {eventCategory === 'team' ? `Баг: ${createdEntry?.team?.name}` : 'Хос бүрдэл'}
+                {isTeam ? `Баг: ${createdEntry?.team?.name}` : 'Хос бүрдэл'}
               </h4>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Төрөл: {getEventLabel(eventType)}
