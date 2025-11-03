@@ -53,35 +53,6 @@ const eq = (a: any, b: any) => a === b;
 const and = (...args: any[]) => args.filter(Boolean).join(' AND ');
 
 
-// Canonical key generator for event matching
-function canonicalEventKey(evt: any): string {
-  try {
-    // 1) Parse if string
-    const e = typeof evt === 'string' ? JSON.parse(evt) : evt || {};
-    
-    // 2) Determine KIND (SINGLES, DOUBLES, TEAM)
-    const kind = 
-      (e.subType && /DOUBLES|TEAM|SINGLES/.test(e.subType)) ? 
-        (e.subType.includes('DOUBLES') ? 'DOUBLES' :
-         e.subType.includes('TEAM') ? 'TEAM' : 'SINGLES')
-      : (e.type || '').toUpperCase();
-    
-    // 3) Normalize GENDER (MEN, WOMEN, MIXED)
-    const g = 
-      e.subType?.includes('MEN') ? 'MEN' :
-      e.subType?.includes('WOMEN') ? 'WOMEN' :
-      e.subType?.includes('MIXED') ? 'MIXED' :
-      (e.genderReq === 'MALE' || e.gender === 'male') ? 'MEN' :
-      (e.genderReq === 'FEMALE' || e.gender === 'female') ? 'WOMEN' :
-      (e.genderReq === 'MIXED') ? 'MIXED' : '';
-    
-    // 4) Final canonical key
-    return g ? `${g}_${kind}` : kind; // e.g., 'MEN_DOUBLES', 'WOMEN_TEAM', 'SINGLES'
-  } catch {
-    return '';
-  }
-}
-
 function calculateAge(dateOfBirth: Date | null | undefined) {
   if (!dateOfBirth) return 0;
   const today = new Date();
@@ -1815,18 +1786,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allParticipants = await storage.getTournamentParticipants(tournamentId);
       console.log(`[Registrations] Total participants in tournament: ${allParticipants.length}`);
 
-      // Get canonical key for the requested event
-      const eventKey = canonicalEventKey(event);
-      console.log(`[Registrations] Event canonical key: ${eventKey}`);
+      // Parse the event to get canonical structure
+      let eventData: any;
+      try {
+        eventData = typeof event === 'string' ? JSON.parse(event as string) : event;
+      } catch {
+        console.error(`[Registrations] Failed to parse event: ${event}`);
+        return res.status(400).json({ message: "Буруу event формат" });
+      }
 
-      // Filter by canonical key matching
+      // Filter by event match - compare the core event properties
       const matchingParticipants = allParticipants.filter(p => {
         try {
-          const regKey = canonicalEventKey(p.participationType);
-          const matches = regKey === eventKey;
+          // Parse participation type
+          const regData = typeof p.participationType === 'string' 
+            ? JSON.parse(p.participationType) 
+            : p.participationType;
+          
+          // Compare key properties (type, subType, gender, age requirements)
+          const typeMatch = regData.type === eventData.type;
+          const subTypeMatch = !eventData.subType || regData.subType === eventData.subType;
+          const genderMatch = !eventData.gender || regData.gender === eventData.gender;
+          
+          // For age requirements, we need flexible matching
+          const minAgeMatch = !eventData.minAge || regData.minAge === eventData.minAge;
+          const maxAgeMatch = !eventData.maxAge || regData.maxAge === eventData.maxAge;
+          
+          const matches = typeMatch && subTypeMatch && genderMatch && minAgeMatch && maxAgeMatch;
           
           if (matches) {
-            console.log(`[Registrations] Matched participant ${p.playerId}: ${regKey} === ${eventKey}`);
+            console.log(`[Registrations] Matched participant ${p.playerId} with event`);
           }
           
           return matches;
@@ -1838,10 +1827,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`[Registrations] Matching participants for event: ${matchingParticipants.length}`);
 
-      // Exclude current user from list (normalize to string for comparison)
-      const currentUserId = String(req.session?.userId ?? '');
+      // Exclude current user from list (they see themselves in the "Your Team" section)
+      const currentUserId = req.session?.userId;
       let filteredParticipants = currentUserId 
-        ? matchingParticipants.filter(p => String(p.playerId) !== currentUserId)
+        ? matchingParticipants.filter(p => p.playerId !== currentUserId)
         : matchingParticipants;
 
       console.log(`[Registrations] After excluding current user: ${filteredParticipants.length}`);
@@ -1870,12 +1859,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Apply search filter
       if (q) {
         const searchTerm = (q as string).toLowerCase();
-        filteredUsers = filteredUsers.filter(user => {
-          const fullName = user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim();
-          return fullName.toLowerCase().includes(searchTerm) ||
-                 (user.firstName && user.firstName.toLowerCase().includes(searchTerm)) ||
-                 (user.lastName && user.lastName.toLowerCase().includes(searchTerm));
-        });
+        filteredUsers = filteredUsers.filter(user => 
+          user.firstName?.toLowerCase().includes(searchTerm) ||
+          user.lastName?.toLowerCase().includes(searchTerm) ||
+          user.fullName?.toLowerCase().includes(searchTerm)
+        );
       }
 
       console.log(`[Registrations] Final filtered users: ${filteredUsers.length}`);
@@ -2094,16 +2082,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Давхардсан гишүүд байна" });
       }
 
-      // Verify all members are registered for this event using canonical key
+      // Verify all members are registered for this event
       const participants = await storage.getTournamentParticipants(tournamentId);
-      const eventKey = canonicalEventKey(eventType);
-      
-      const registeredForEvent = participants.filter(p => {
-        const regKey = canonicalEventKey(p.participationType);
-        return regKey === eventKey && members.includes(p.playerId);
-      });
-
-      console.log(`[Create Team] Event key: ${eventKey}, Required members: ${members.length}, Registered: ${registeredForEvent.length}`);
+      const registeredForEvent = participants.filter(
+        p => p.participationType === eventType && members.includes(p.playerId)
+      );
 
       if (registeredForEvent.length !== members.length) {
         return res.status(400).json({ 
