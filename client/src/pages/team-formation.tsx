@@ -35,10 +35,20 @@ export default function TeamFormation() {
   const [selectedMembers, setSelectedMembers] = useState<any[]>([]);
   const [teamName, setTeamName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [createdEntry, setCreatedEntry] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Parse the event type to determine category requirements
   const parsedEvent = useMemo(() => {
@@ -66,20 +76,27 @@ export default function TeamFormation() {
   });
 
   // Fetch all registered users for this tournament and event
-  const { data: allUsers = [] } = useQuery({
-    queryKey: ["/api/registrations", tournamentId, eventType, searchQuery],
+  const { data: allUsers = [], isLoading: isLoadingUsers } = useQuery({
+    queryKey: ["/api/registrations", tournamentId, eventType, debouncedSearch],
     queryFn: async () => {
+      if (!eventType) {
+        throw new Error("Event төрөл байхгүй байна");
+      }
+      
       const params = new URLSearchParams({
         tournamentId,
         event: eventType,
       });
-      if (searchQuery) {
-        params.append('q', searchQuery);
+      if (debouncedSearch.trim()) {
+        params.append('q', debouncedSearch);
       }
       const res = await fetch(`/api/registrations?${params}`, {
         credentials: 'include'
       });
-      if (!res.ok) throw new Error("Failed to fetch registrations");
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Бүртгэл авахад алдаа гарлаа");
+      }
       return res.json();
     },
     enabled: !!tournamentId && !!eventType,
@@ -415,9 +432,7 @@ export default function TeamFormation() {
                 value={searchQuery}
                 onChange={(e) => {
                   const value = e.target.value;
-                  // Debounce search
-                  const timeoutId = setTimeout(() => setSearchQuery(value), 300);
-                  return () => clearTimeout(timeoutId);
+                  setSearchQuery(value);
                 }}
                 placeholder="Нэрээр хайх..."
               />
@@ -429,11 +444,16 @@ export default function TeamFormation() {
                 {isTeam ? 'Багт оруулах гишүүд' : 'Хамтрагч'} ({availablePlayers.length})
               </h4>
 
-              {availablePlayers.length === 0 ? (
+              {isLoadingUsers ? (
+                <div className="text-center py-12 text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <Users className="w-16 h-16 mx-auto mb-3 opacity-30 animate-pulse" />
+                  <p className="font-medium">Тамирчдын жагсаалт уншиж байна...</p>
+                </div>
+              ) : availablePlayers.length === 0 ? (
                 <div className="text-center py-12 text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <Users className="w-16 h-16 mx-auto mb-3 opacity-30" />
                   <p className="font-medium">Энэ төрөлд бүртгүүлсэн тамирчид олдсонгүй</p>
-                  <p className="text-sm mt-2">Та зөвхөн бүртгүүлсэн тамирчдаас сонгох боломжтой</p>
+                  <p className="text-sm mt-2">Та зөвхөн энэ төрөлд бүртгүүлсэн тамирчдаас сонгох боломжтой</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto border rounded-lg p-3">
