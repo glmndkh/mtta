@@ -196,15 +196,6 @@ export default function TeamFormation() {
     });
   };
 
-  // Determine if event is team or doubles from event type
-  useEffect(() => {
-    if (eventType) {
-      const category = getEventTypeCategory(eventType);
-      if (category === 'team') setActiveTab('team');
-      else if (category === 'doubles') setActiveTab('doubles');
-    }
-  }, [eventType]);
-
   const getEventLabel = (type: string): string => {
     try {
       const parsed = JSON.parse(type);
@@ -258,7 +249,7 @@ export default function TeamFormation() {
   // const minMembers = eventCategory === 'doubles' ? 1 : 3; // Doubles: 1 partner, Team: min 3 members
   // const maxMembers = eventCategory === 'doubles' ? 1 : 4; // Doubles: 1 partner, Team: max 4 members
 
-  
+
 
   // Validation
   const validateSelection = (): { valid: boolean; error?: string } => {
@@ -267,17 +258,17 @@ export default function TeamFormation() {
     }
 
     if (selectedMembers.length < minMembers) {
-      return { 
-        valid: false, 
-        error: eventCategory === 'doubles' 
-          ? 'Хамтрагчаа сонгоно уу' 
+      return {
+        valid: false,
+        error: eventCategory === 'doubles'
+          ? 'Хамтрагчаа сонгоно уу'
           : `Багт хамгийн багадаа ${minMembers} гишүүн байх ёстой`
       };
     }
 
     if (selectedMembers.length > maxMembers) {
-      return { 
-        valid: false, 
+      return {
+        valid: false,
         error: `Хамгийн ихдээ ${maxMembers} ${eventCategory === 'doubles' ? 'хамтрагч' : 'гишүүн'} сонгох боломжтой`
       };
     }
@@ -369,7 +360,7 @@ export default function TeamFormation() {
                     {isTeam ? 'Баг бүрдүүлэх' : 'Хос бүрдүүлэх'}
                   </h4>
                   <p className="text-sm text-blue-700 dark:text-blue-300">
-                    {isTeam 
+                    {isTeam
                       ? `Багийн гишүүдээ сонгоно уу. Баг нь ${minMembers}-${maxMembers} гишүүнтэй байх ёстой.`
                       : `Хамтрагчаа сонгож хос бүрдүүлнэ үү. Хос нь ${minMembers} тамирчнаас бүрдэнэ.`
                     }
@@ -431,7 +422,7 @@ export default function TeamFormation() {
               </div>
               <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-700">
                 <p className="text-sm text-green-700 dark:text-green-300 font-medium">
-                  {isTeam 
+                  {isTeam
                     ? `${selectedMembers.length + 1}/${maxMembers} гишүүн (мин. ${minMembers})`
                     : `${selectedMembers.length}/${maxMembers - 1} хамтрагч (мин. ${minMembers - 1})`
                   }
