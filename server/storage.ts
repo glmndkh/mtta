@@ -20,6 +20,7 @@ import {
   clubCoaches,
   pastChampions,
   nationalTeamPlayers,
+  nationalTeamCoaches,
   tournamentTeams,
   tournamentTeamPlayers,
   leagueMatches,
@@ -59,6 +60,8 @@ import {
   type InsertFederationMember,
   type NationalTeamPlayer,
   type InsertNationalTeamPlayer,
+  type NationalTeamCoach,
+  type InsertNationalTeamCoach,
   type Judge,
   type InsertJudge,
   type ClubCoach,
@@ -290,6 +293,12 @@ export interface IStorage {
   createNationalTeamPlayer(player: InsertNationalTeamPlayer): Promise<NationalTeamPlayer>;
   updateNationalTeamPlayer(id: string, player: Partial<InsertNationalTeamPlayer>): Promise<NationalTeamPlayer | undefined>;
   deleteNationalTeamPlayer(id: string): Promise<boolean>;
+
+  // National team coach operations
+  getNationalTeamCoaches(): Promise<NationalTeamCoach[]>;
+  createNationalTeamCoach(coach: InsertNationalTeamCoach): Promise<NationalTeamCoach>;
+  updateNationalTeamCoach(id: string, coach: Partial<InsertNationalTeamCoach>): Promise<NationalTeamCoach | undefined>;
+  deleteNationalTeamCoach(id: string): Promise<boolean>;
 
   // Judge operations
   getAllJudges(type?: string): Promise<Judge[]>;
@@ -1746,6 +1755,49 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(nationalTeamPlayers)
       .where(eq(nationalTeamPlayers.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  // National team coach operations
+  async getNationalTeamCoaches(): Promise<NationalTeamCoach[]> {
+    return await db
+      .select()
+      .from(nationalTeamCoaches)
+      .orderBy(nationalTeamCoaches.createdAt);
+  }
+
+  async createNationalTeamCoach(
+    coachData: InsertNationalTeamCoach,
+  ): Promise<NationalTeamCoach> {
+    const { randomUUID } = await import('crypto');
+    const now = new Date();
+    const [coach] = await db
+      .insert(nationalTeamCoaches)
+      .values({
+        ...coachData,
+        id: randomUUID(),
+        createdAt: now,
+      })
+      .returning();
+    return coach;
+  }
+
+  async updateNationalTeamCoach(
+    id: string,
+    coachData: Partial<InsertNationalTeamCoach>,
+  ): Promise<NationalTeamCoach | undefined> {
+    const [coach] = await db
+      .update(nationalTeamCoaches)
+      .set(coachData)
+      .where(eq(nationalTeamCoaches.id, id))
+      .returning();
+    return coach;
+  }
+
+  async deleteNationalTeamCoach(id: string): Promise<boolean> {
+    const result = await db
+      .delete(nationalTeamCoaches)
+      .where(eq(nationalTeamCoaches.id, id));
     return (result.rowCount || 0) > 0;
   }
 

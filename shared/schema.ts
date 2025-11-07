@@ -408,6 +408,16 @@ export const nationalTeamPlayers = pgTable("national_team_players", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// National team coaches table
+export const nationalTeamCoaches = pgTable("national_team_coaches", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  firstName: varchar("first_name").notNull(),
+  lastName: varchar("last_name").notNull(),
+  age: integer("age"),
+  imageUrl: varchar("image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Judge type enum
 export const judgeTypeEnum = pgEnum("judge_type", ["domestic", "international"]);
 
@@ -479,18 +489,18 @@ export const rankChangeRequests = pgTable("rank_change_requests", {
 // Team members table (original definition)
 export const teamMembers = pgTable("team_members", {
   id: serial("id").primaryKey(),
-  teamId: integer("team_id").notNull().references(() => teams.id, { onDelete: "cascade" }),
-  playerId: integer("player_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  teamId: varchar("team_id").notNull().references(() => teams.id, { onDelete: "cascade" }),
+  playerId: varchar("player_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Team invitations table
 export const teamInvitations = pgTable("team_invitations", {
   id: serial("id").primaryKey(),
-  tournamentId: integer("tournament_id").notNull().references(() => tournaments.id, { onDelete: "cascade" }),
+  tournamentId: varchar("tournament_id").notNull().references(() => tournaments.id, { onDelete: "cascade" }),
   eventType: text("event_type").notNull(),
-  senderId: integer("sender_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  receiverId: integer("receiver_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  senderId: varchar("sender_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  receiverId: varchar("receiver_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   teamName: text("team_name"),
   status: text("status").notNull().default("pending"), // pending, accepted, rejected, completed
   createdAt: timestamp("created_at").defaultNow(),
@@ -652,6 +662,11 @@ export const insertNationalTeamPlayerSchema = createInsertSchema(nationalTeamPla
   createdAt: true,
 });
 
+export const insertNationalTeamCoachSchema = createInsertSchema(nationalTeamCoaches).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertJudgeSchema = createInsertSchema(judges).omit({
   id: true,
   createdAt: true,
@@ -737,6 +752,8 @@ export type InsertFederationMember = z.infer<typeof insertFederationMemberSchema
 export type FederationMember = typeof federationMembers.$inferSelect;
 export type InsertNationalTeamPlayer = z.infer<typeof insertNationalTeamPlayerSchema>;
 export type NationalTeamPlayer = typeof nationalTeamPlayers.$inferSelect;
+export type InsertNationalTeamCoach = z.infer<typeof insertNationalTeamCoachSchema>;
+export type NationalTeamCoach = typeof nationalTeamCoaches.$inferSelect;
 export type InsertJudge = z.infer<typeof insertJudgeSchema>;
 export type Judge = typeof judges.$inferSelect;
 export type InsertClubCoach = z.infer<typeof insertClubCoachSchema>;

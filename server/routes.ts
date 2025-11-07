@@ -18,6 +18,7 @@ import {
   insertBranchSchema,
   insertFederationMemberSchema,
   insertNationalTeamPlayerSchema,
+  insertNationalTeamCoachSchema,
   insertJudgeSchema,
   insertClubCoachSchema,
   insertChampionSchema,
@@ -1921,7 +1922,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Create invitation records for each member
         const invitations = await Promise.all(
-          members.map(async (memberId: number) => {
+          members.map(async (memberId: string) => {
             return db.insert(teamInvitations).values({
               tournamentId,
               eventType,
@@ -2047,45 +2048,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .where(eq(teamInvitations.id, invitationId));
 
           if (allAccepted) {
-            // Create team/pair
+            // Create team/pair using tournament teams
             const memberIds = [
               invitation.senderId,
               ...allInvitations.map(inv => inv.receiverId)
             ];
 
             const isTeam = invitation.eventType.includes('TEAM');
+            const teamName = invitation.teamName || (isTeam ? 'Team' : 'Pair');
 
-            if (isTeam) {
-              const [team] = await db.insert(teams).values({
-                tournamentId: invitation.tournamentId,
-                name: invitation.teamName || 'Team',
-                category: invitation.eventType,
-              }).returning();
+            // Create tournament team
+            const team = await storage.createLeagueTeam({
+              tournamentId: invitation.tournamentId,
+              name: teamName,
+              entityType: 'tournament',
+            });
 
-              await Promise.all(
-                memberIds.map(memberId =>
-                  db.insert(teamMembers).values({
-                    teamId: team.id,
-                    playerId: memberId,
-                  })
-                )
-              );
-            } else {
-              // For doubles/pairs, we can also use the teams table with 2 members
-              const [team] = await db.insert(teams).values({
-                tournamentId: invitation.tournamentId,
-                name: invitation.teamName || 'Pair',
-                category: invitation.eventType,
-              }).returning();
-
-              await Promise.all(
-                memberIds.map(memberId =>
-                  db.insert(teamMembers).values({
-                    teamId: team.id,
-                    playerId: memberId,
-                  })
-                )
-              );
+            // Add all members to the team
+            for (const memberId of memberIds) {
+              const user = await storage.getUser(memberId);
+              const memberName = user ? `${user.firstName} ${user.lastName}` : 'Unknown Player';
+              await storage.addPlayerToLeagueTeam(team.id, memberId, memberName);
             }
 
             // Mark all invitations as completed
@@ -2270,7 +2253,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const existingSet = new Set(existingMembers);
 
           if (memberSet.size === existingSet.size &&
-            [...memberSet].every(m => existingSet.has(m))) {
+            Array.from(memberSet).every(m => existingSet.has(m))) {
             return res.status(400).json({
               message: "Энэ гишүүдтэй баг/хос аль хэдийн үүссэн байна"
             });
