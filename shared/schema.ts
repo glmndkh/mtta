@@ -410,6 +410,9 @@ export const nationalTeamPlayers = pgTable("national_team_players", {
 // Judge type enum
 export const judgeTypeEnum = pgEnum("judge_type", ["domestic", "international"]);
 
+// Judge role enum
+export const judgeRoleEnum = pgEnum("judge_role", ["chairperson", "member"]);
+
 // Judges table
 export const judges = pgTable("judges", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -418,6 +421,8 @@ export const judges = pgTable("judges", {
   lastName: varchar("last_name").notNull(),
   imageUrl: varchar("image_url"),
   judgeType: judgeTypeEnum("judge_type").notNull(),
+  role: judgeRoleEnum("role"),
+  description: text("description"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
