@@ -64,6 +64,7 @@ export default function RefereesCouncil() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
               {sortedJudges.map((judge) => {
                 let judgeImage = judge.imageUrl;
+                let judgeName = `${judge.lastName.charAt(0)}. ${judge.firstName}`;
                 
                 // Apply specific images based on judge
                 if (judge.role === "chairperson") {
@@ -72,6 +73,7 @@ export default function RefereesCouncil() {
                   judgeImage = damdinbayarImage;
                 } else if (judge.firstName === "Цогзолмаа" && judge.lastName.charAt(0) === "Р") {
                   judgeImage = tsogzolmaaImage;
+                  judgeName = "Т. Баттүшиг";
                 }
                 
                 return (
@@ -79,7 +81,7 @@ export default function RefereesCouncil() {
                     key={judge.id}
                     image={judgeImage}
                     role={judge.role || "member"}
-                    name={`${judge.lastName.charAt(0)}. ${judge.firstName}`}
+                    name={judgeName}
                     status={judge.judgeType}
                     description={judge.description}
                   />
