@@ -4,6 +4,7 @@ import { JudgeCard } from "@/components/JudgeCard";
 import { useQuery } from "@tanstack/react-query";
 import buyanbatImage from "@/assets/councilimages/buyanbat.jpg";
 import damdinbayarImage from "@/assets/councilimages/Damdinbayar.jpeg";
+import tsogzolmaaImage from "@/assets/councilimages/Tsogzolmaa.jpg";
 
 interface Judge {
   id: string;
@@ -69,6 +70,8 @@ export default function RefereesCouncil() {
                   judgeImage = buyanbatImage;
                 } else if (judge.firstName === "Дамдинбаяр" && judge.lastName.charAt(0) === "Х") {
                   judgeImage = damdinbayarImage;
+                } else if (judge.firstName === "Цогзолмаа" && judge.lastName.charAt(0) === "Р") {
+                  judgeImage = tsogzolmaaImage;
                 }
                 
                 return (
