@@ -107,7 +107,7 @@ export default function TeamFormation() {
       
       // Double-check: Exclude current user (server should already do this)
       // Use userId for comparison, not playerId
-      filtered = filtered.filter((p: any) => String(p.userId) !== String(user?.id));
+      filtered = filtered.filter((p: any) => String(p.userId) !== String((user as any)?.id));
       
       return filtered;
     },
@@ -119,7 +119,7 @@ export default function TeamFormation() {
     // Double-check exclusion: current user and already selected members
     // Use userId for comparison, not playerId
     return allUsers.filter((player: any) => {
-      const isCurrentUser = String(player.userId) === String(user?.id);
+      const isCurrentUser = String(player.userId) === String((user as any)?.id);
       const isAlreadySelected = selectedMembers.find(m => String(m.id) === String(player.id));
       return !isCurrentUser && !isAlreadySelected;
     });
@@ -293,7 +293,7 @@ export default function TeamFormation() {
     }
 
     // Check for duplicates
-    const uniqueMembers = new Set([user?.id, ...selectedMembers.map(m => m.id)]);
+    const uniqueMembers = new Set([(user as any)?.id, ...selectedMembers.map(m => m.id)]);
     if (uniqueMembers.size !== selectedMembers.length + 1) {
       return { valid: false, error: 'Давхардсан гишүүд байна' };
     }
@@ -313,7 +313,7 @@ export default function TeamFormation() {
         body: JSON.stringify({
           eventType,
           teamName: teamName.trim() || undefined,
-          members: [user?.id, ...selectedMembers.map(m => m.id)],
+          members: [(user as any)?.id, ...selectedMembers.map(m => m.id)],
         }),
       });
 
@@ -418,7 +418,7 @@ export default function TeamFormation() {
               <div className="space-y-2">
                 <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded">
                   <CheckCircle className="w-4 h-4 text-green-600" />
-                  <span className="font-medium">{user?.firstName} {user?.lastName}</span>
+                  <span className="font-medium">{(user as any)?.firstName} {(user as any)?.lastName}</span>
                   <Badge variant="outline" className="ml-auto">Та</Badge>
                 </div>
                 {selectedMembers.map(member => (
@@ -484,7 +484,7 @@ export default function TeamFormation() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto border rounded-lg p-3">
-                  {availablePlayers.map(participant => (
+                  {availablePlayers.map((participant: any) => (
                     <div
                       key={participant.playerId}
                       className={`flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-all ${
