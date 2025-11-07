@@ -2,6 +2,7 @@ import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import { JudgeCard } from "@/components/JudgeCard";
 import { useQuery } from "@tanstack/react-query";
+import buyanbatImage from "@/assets/councilimages/buyanbat.jpg";
 
 interface Judge {
   id: string;
@@ -62,7 +63,7 @@ export default function RefereesCouncil() {
               {sortedJudges.map((judge) => (
                 <JudgeCard
                   key={judge.id}
-                  image={judge.imageUrl}
+                  image={judge.role === "chairperson" ? buyanbatImage : judge.imageUrl}
                   role={judge.role || "member"}
                   name={`${judge.lastName.charAt(0)}. ${judge.firstName}`}
                   status={judge.judgeType}
