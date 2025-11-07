@@ -75,31 +75,41 @@ export default function TeamFormation() {
     enabled: !!tournamentId,
   });
 
-  // Fetch all registered users for this tournament and event
+  // Fetch all registered participants for this tournament and event
   const { data: allUsers = [], isLoading: isLoadingUsers } = useQuery({
-    queryKey: ["/api/registrations", tournamentId, eventType, debouncedSearch],
+    queryKey: ["/api/tournaments", tournamentId, "participants", eventType, debouncedSearch],
     queryFn: async () => {
       if (!eventType) {
         throw new Error("Event төрөл байхгүй байна");
       }
       
-      const params = new URLSearchParams({
-        tournamentId,
-        event: eventType,
-      });
-      if (debouncedSearch.trim()) {
-        params.append('q', debouncedSearch);
-      }
-      const res = await fetch(`/api/registrations?${params}`, {
+      const res = await fetch(`/api/tournaments/${tournamentId}/participants`, {
         credentials: 'include'
       });
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.message || "Бүртгэл авахад алдаа гарлаа");
       }
-      return res.json();
+      const participants = await res.json();
+      
+      // Filter by event type
+      let filtered = participants.filter((p: any) => p.participationType === eventType);
+      
+      // Filter by search query
+      if (debouncedSearch.trim()) {
+        const search = debouncedSearch.toLowerCase();
+        filtered = filtered.filter((p: any) => {
+          const fullName = `${p.firstName} ${p.lastName}`.toLowerCase();
+          return fullName.includes(search);
+        });
+      }
+      
+      // Exclude current user
+      filtered = filtered.filter((p: any) => p.playerId !== user?.id);
+      
+      return filtered;
     },
-    enabled: !!tournamentId && !!eventType,
+    enabled: !!tournamentId && !!eventType && !!user,
   });
 
   // Available players - server already filters by event, user, and search
@@ -111,38 +121,39 @@ export default function TeamFormation() {
   }, [allUsers, selectedMembers]);
 
   const handleAddMember = (player: any) => {
-    if (selectedMembers.length >= maxMembers) {
+    if (selectedMembers.length >= maxMembers - 1) {
       toast({
         title: "Хязгаар хэтэрсэн",
-        description: `Багийн гишүүдийн дээд хязгаар ${maxMembers}`,
+        description: `${isTeam ? 'Багийн гишүүдийн' : 'Хамтрагчийн'} дээд хязгаар ${maxMembers - 1}`,
         variant: "destructive",
       });
       return;
     }
-    setSelectedMembers([...selectedMembers, player]);
+    if (!selectedMembers.some(m => m.playerId === player.playerId)) {
+      setSelectedMembers([...selectedMembers, player]);
+    }
   };
 
   const handleRemoveMember = (playerId: number) => {
-    setSelectedMembers(prev => prev.filter(m => m.id !== playerId));
+    setSelectedMembers(prev => prev.filter(m => m.playerId !== playerId));
   };
 
-  const createTeamMutation = useMutation({
+  const sendInvitationMutation = useMutation({
     mutationFn: async (data: { name: string; members: number[] }) => {
-      const response = await fetch(isTeam ? "/api/teams" : "/api/pairs", {
+      const response = await fetch(`/api/tournaments/${tournamentId}/send-invitation`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          tournamentId,
-          category: eventType,
-          name: data.name,
-          memberIds: data.members,
+          eventType,
+          teamName: data.name,
+          members: data.members,
         }),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || `Failed to create ${isTeam ? 'team' : 'pair'}`);
+        throw new Error(error.message || "Хүсэлт илгээхэд алдаа гарлаа");
       }
 
       return response.json();
@@ -150,7 +161,7 @@ export default function TeamFormation() {
     onSuccess: () => {
       toast({
         title: "Амжилттай!",
-        description: `${isTeam ? 'Баг' : 'Хос'} амжилттай үүслээ`,
+        description: `${isTeam ? 'Багийн' : 'Хосын'} хүсэлт илгээгдлээ`,
       });
       setLocation(`/tournament/${tournamentId}/full`);
     },
@@ -164,27 +175,27 @@ export default function TeamFormation() {
   });
 
   const handleSubmit = () => {
-    if (!teamName.trim()) {
+    if (isTeam && !teamName.trim()) {
       toast({
         title: "Алдаа",
-        description: `${isTeam ? 'Багийн' : 'Хосын'} нэр оруулна уу`,
+        description: "Багийн нэр оруулна уу",
         variant: "destructive",
       });
       return;
     }
 
-    if (selectedMembers.length < minMembers || selectedMembers.length > maxMembers) {
+    if (selectedMembers.length < minMembers - 1 || selectedMembers.length > maxMembers - 1) {
       toast({
         title: "Алдаа",
-        description: `Гишүүдийн тоо ${minMembers}-${maxMembers} байх ёстой`,
+        description: `${isTeam ? 'Гишүүд' : 'Хамтрагч'} ${minMembers - 1}-${maxMembers - 1} байх ёстой`,
         variant: "destructive",
       });
       return;
     }
 
-    createTeamMutation.mutate({
+    sendInvitationMutation.mutate({
       name: teamName,
-      members: selectedMembers.map(m => m.id),
+      members: selectedMembers.map(m => m.playerId),
     });
   };
 
@@ -395,16 +406,16 @@ export default function TeamFormation() {
                   <Badge variant="outline" className="ml-auto">Та</Badge>
                 </div>
                 {selectedMembers.map(member => (
-                  <div key={member.id} className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded">
+                  <div key={member.playerId} className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded">
                     <CheckCircle className="w-4 h-4 text-green-600" />
-                    <span>{member.fullName || member.name}</span>
+                    <span>{member.firstName} {member.lastName}</span>
                     <Badge variant="outline" className="ml-auto text-xs">
                       {member.gender === 'male' ? 'Эрэгтэй' : 'Эмэгтэй'}
                     </Badge>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleRemoveMember(member.id)}
+                      onClick={() => handleRemoveMember(member.playerId)}
                       className="text-red-500 hover:text-red-700 hover:bg-red-50 ml-auto"
                     >
                       <X className="w-4 h-4" />
@@ -459,16 +470,16 @@ export default function TeamFormation() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto border rounded-lg p-3">
                   {availablePlayers.map(participant => (
                     <div
-                      key={participant.id}
+                      key={participant.playerId}
                       className={`flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-all ${
-                        selectedMembers.some(m => m.id === participant.id)
+                        selectedMembers.some(m => m.playerId === participant.playerId)
                           ? 'bg-blue-50 border-blue-500 dark:bg-blue-900/20 shadow-md'
                           : 'hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300'
                       }`}
                       onClick={() => handleAddMember(participant)}
                     >
                       <Checkbox
-                        checked={selectedMembers.some(m => m.id === participant.id)}
+                        checked={selectedMembers.some(m => m.playerId === participant.playerId)}
                         onCheckedChange={() => handleAddMember(participant)}
                       />
                       <div className="flex-1">
@@ -504,13 +515,13 @@ export default function TeamFormation() {
               </Button>
               <Button
                 onClick={handleSubmit}
-                disabled={createTeamMutation.isPending || !validation.valid}
+                disabled={sendInvitationMutation.isPending || !validation.valid}
                 size="lg"
                 className="bg-blue-600 hover:bg-blue-700"
               >
-                {createTeamMutation.isPending
-                  ? 'Үүсгэж байна...'
-                  : `✓ ${isTeam ? 'Баг үүсгэх' : 'Хос бүрдүүлэх'}`
+                {sendInvitationMutation.isPending
+                  ? 'Илгээж байна...'
+                  : `📤 ${isTeam ? 'Багийн хүсэлт илгээх' : 'Хосын хүсэлт илгээх'}`
                 }
               </Button>
             </div>

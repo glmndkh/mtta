@@ -10,6 +10,7 @@ import {
   boolean,
   decimal,
   pgEnum,
+  serial, // Import serial
 } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -473,6 +474,26 @@ export const rankChangeRequests = pgTable("rank_change_requests", {
   reviewedAt: timestamp("reviewed_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Team members table (original definition)
+export const teamMembers = pgTable("team_members", {
+  id: serial("id").primaryKey(),
+  teamId: integer("team_id").notNull().references(() => teams.id, { onDelete: "cascade" }),
+  playerId: integer("player_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Team invitations table
+export const teamInvitations = pgTable("team_invitations", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id").notNull().references(() => tournaments.id, { onDelete: "cascade" }),
+  eventType: text("event_type").notNull(),
+  senderId: integer("sender_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  receiverId: integer("receiver_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  teamName: text("team_name"),
+  status: text("status").notNull().default("pending"), // pending, accepted, rejected, completed
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Relations

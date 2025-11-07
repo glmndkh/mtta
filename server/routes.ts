@@ -42,6 +42,10 @@ import {
   memberships,
   branches,
   leagues,
+  teamInvitations, // Import new table
+  teams, // Import new table
+  pairs, // Import new table
+  teamMembers, // Import new table
 } from "../shared/schema";
 
 // Mocking database operations for demonstration purposes if needed.
@@ -1902,192 +1906,396 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create team/pair from registered participants
-  app.post("/api/tournaments/:id/create-team", requireAuth, async (req: any, res) => {
-    try {
-      const { id: tournamentId } = req.params;
-      const { eventType, teamName, members } = req.body;
-
-      if (!tournamentId || !eventType || !members || !Array.isArray(members)) {
-        return res.status(400).json({ message: "Tournament ID, event type, and members are required" });
-      }
-
-      const userId = req.session.userId;
-
-      // Verify user is in the members list
-      if (!members.includes(userId)) {
-        return res.status(403).json({ message: "You must be a member of the team" });
-      }
-
-      // Parse event type and extract category and gender requirements
-      let eventCategory: 'doubles' | 'team' | null = null;
-      let requiredGender: 'male' | 'female' | 'mixed' | null = null;
-      let minAge: number | undefined;
-      let maxAge: number | undefined;
-
+  // Send team/pair invitation
+  app.post(
+    "/api/tournaments/:id/send-invitation",
+    requireAuth,
+    async (req: any, res) => {
       try {
-        const parsed = JSON.parse(eventType);
+        const tournamentId = req.params.id;
+        const senderId = req.user.id; // Assuming req.user is populated by auth middleware
+        const { eventType, members, teamName } = req.body;
 
-        // Determine category
-        if (parsed.type === 'DOUBLES' || parsed.subType?.includes('DOUBLES') || parsed.type === 'pair') {
-          eventCategory = 'doubles';
-        } else if (parsed.type === 'TEAM' || parsed.subType?.includes('TEAM') || parsed.type === 'team') {
-          eventCategory = 'team';
+        if (!members || members.length === 0) {
+          return res.status(400).json({ message: "Гишүүд хоосон байна" });
         }
 
-        // Determine gender requirements
-        if (parsed.subType?.includes('MEN')) {
-          requiredGender = 'male';
-        } else if (parsed.subType?.includes('WOMEN')) {
-          requiredGender = 'female';
-        } else if (parsed.subType?.includes('MIXED')) {
-          requiredGender = 'mixed';
-        } else if (parsed.gender) {
-          requiredGender = parsed.gender;
-        }
+        // Create invitation records for each member
+        const invitations = await Promise.all(
+          members.map(async (memberId: number) => {
+            return db.insert(teamInvitations).values({
+              tournamentId,
+              eventType,
+              senderId,
+              receiverId: memberId,
+              teamName: teamName || null,
+              status: 'pending'
+            }).returning();
+          })
+        );
 
-        // Extract age constraints
-        minAge = parsed.minAge;
-        maxAge = parsed.maxAge;
-
-      } catch {
-        return res.status(400).json({ message: "Invalid event type format" });
-      }
-
-      if (!eventCategory) {
-        return res.status(400).json({ message: "Could not determine event category" });
-      }
-
-      // Validate team name for team events
-      if (eventCategory === 'team' && !teamName?.trim()) {
-        return res.status(400).json({ message: "Багийн нэр заавал оруулна уу" });
-      }
-
-      // Validate member count
-      const minMembers = eventCategory === 'doubles' ? 2 : 4;
-      const maxMembers = eventCategory === 'doubles' ? 2 : 5;
-
-      if (members.length < minMembers) {
-        return res.status(400).json({ 
-          message: eventCategory === 'doubles' 
-            ? "Хос нь яг 2 тамирчнаас бүрдэх ёстой" 
-            : `Баг нь хамгийн багадаа ${minMembers} гишүүнтэй байх ёстой`
+        res.json({
+          message: "Хүсэлт амжилттай илгээгдлээ",
+          invitations: invitations.flat()
         });
+      } catch (e) {
+        console.error("Error sending invitation:", e);
+        res.status(400).json({ message: "Хүсэлт илгээхэд алдаа гарлаа" });
       }
+    }
+  );
 
-      if (members.length > maxMembers) {
-        return res.status(400).json({ 
-          message: `Хамгийн ихдээ ${maxMembers} гишүүн сонгох боломжтой`
-        });
+  // Get my invitations
+  app.get(
+    "/api/invitations/me",
+    requireAuth,
+    async (req: any, res) => {
+      try {
+        const userId = req.user.id; // Assuming req.user is populated by auth middleware
+
+        const invitations = await db
+          .select({
+            id: teamInvitations.id,
+            tournamentId: teamInvitations.tournamentId,
+            eventType: teamInvitations.eventType,
+            teamName: teamInvitations.teamName,
+            status: teamInvitations.status,
+            createdAt: teamInvitations.createdAt,
+            sender: {
+              id: users.id,
+              firstName: users.firstName,
+              lastName: users.lastName,
+            },
+            tournament: {
+              id: tournaments.id,
+              name: tournaments.name,
+            }
+          })
+          .from(teamInvitations)
+          .leftJoin(users, eq(teamInvitations.senderId, users.id))
+          .leftJoin(tournaments, eq(teamInvitations.tournamentId, tournaments.id))
+          .where(eq(teamInvitations.receiverId, userId));
+
+        res.json(invitations);
+      } catch (e) {
+        console.error("Error fetching invitations:", e);
+        res.status(500).json({ message: "Хүсэлт авахад алдаа гарлаа" });
       }
+    }
+  );
 
-      // Check for duplicate members
-      const uniqueMembers = new Set(members);
-      if (uniqueMembers.size !== members.length) {
-        return res.status(400).json({ message: "Давхардсан гишүүд байна" });
-      }
+  // Accept/reject invitation
+  app.post(
+    "/api/invitations/:id/respond",
+    requireAuth,
+    async (req: any, res) => {
+      try {
+        const invitationId = req.params.id;
+        const userId = req.user.id; // Assuming req.user is populated by auth middleware
+        const { action } = req.body; // 'accept' or 'reject'
 
-      // Verify all members are registered for this event
-      const participants = await storage.getTournamentParticipants(tournamentId);
-      const registeredForEvent = participants.filter(
-        p => p.participationType === eventType && members.includes(p.playerId)
-      );
+        // Get invitation
+        const [invitation] = await db
+          .select()
+          .from(teamInvitations)
+          .where(
+            and(
+              eq(teamInvitations.id, invitationId),
+              eq(teamInvitations.receiverId, userId)
+            )
+          );
 
-      if (registeredForEvent.length !== members.length) {
-        return res.status(400).json({ 
-          message: "Бүх гишүүд энэ төрөлд бүртгүүлсэн байх ёстой" 
-        });
-      }
-
-      // Validate gender requirements for non-mixed events
-      if (requiredGender && requiredGender !== 'mixed') {
-        for (const memberId of members) {
-          const user = await storage.getUser(memberId);
-          if (user && user.gender !== requiredGender) {
-            return res.status(400).json({ 
-              message: `Бүх гишүүд ${requiredGender === 'male' ? 'эрэгтэй' : 'эмэгтэй'} байх ёстой`
-            });
-          }
+        if (!invitation) {
+          return res.status(404).json({ message: "Хүсэлт олдсонгүй" });
         }
-      }
 
-      // Validate age requirements if specified
-      if (minAge !== undefined || maxAge !== undefined) {
-        const tournament = await storage.getTournament(tournamentId);
-        if (!tournament) {
-          return res.status(404).json({ message: "Тэмцээн олдсонгүй" });
+        if (invitation.status !== 'pending') {
+          return res.status(400).json({ message: "Хүсэлт аль хэдийн шийдэгдсэн байна" });
         }
 
-        const tournamentStartDate = new Date(tournament.startDate);
+        if (action === 'reject') {
+          await db
+            .update(teamInvitations)
+            .set({ status: 'rejected' })
+            .where(eq(teamInvitations.id, invitationId));
 
-        for (const memberId of members) {
-          const user = await storage.getUser(memberId);
-          if (!user || !user.dateOfBirth) continue;
-
-          const birthDate = new Date(user.dateOfBirth);
-          let age = tournamentStartDate.getFullYear() - birthDate.getFullYear();
-          const monthDiff = tournamentStartDate.getMonth() - birthDate.getMonth();
-          if (monthDiff < 0 || (monthDiff === 0 && tournamentStartDate.getDate() < birthDate.getDate())) {
-            age--;
-          }
-
-          if (minAge !== undefined && age < minAge) {
-            return res.status(400).json({ 
-              message: `Бүх гишүүд хамгийн багадаа ${minAge} настай байх ёстой`
-            });
-          }
-
-          if (maxAge !== undefined && age > maxAge) {
-            return res.status(400).json({ 
-              message: `Бүх гишүүд хамгийн ихдээ ${maxAge} настай байх ёстой`
-            });
-          }
+          return res.json({ message: "Хүсэлтийг татгалзлаа" });
         }
-      }
 
-      // Check if team/pair already exists for this event (prevent duplicates)
-      const existingTeams = await storage.getLeagueTeams(tournamentId);
-      const memberSet = new Set(members.sort());
+        if (action === 'accept') {
+          // Get all invitations for this team/pair
+          const allInvitations = await db
+            .select()
+            .from(teamInvitations)
+            .where(
+              and(
+                eq(teamInvitations.tournamentId, invitation.tournamentId),
+                eq(teamInvitations.eventType, invitation.eventType),
+                eq(teamInvitations.senderId, invitation.senderId),
+                eq(teamInvitations.status, 'pending')
+              )
+            );
 
-      for (const existingTeam of existingTeams) {
-        const existingMembers = existingTeam.players?.map((p: any) => p.playerId).sort() || [];
-        const existingSet = new Set(existingMembers);
+          // Check if all members accepted
+          const allAccepted = allInvitations.every(inv =>
+            inv.id === invitationId || inv.status === 'accepted'
+          );
 
-        if (memberSet.size === existingSet.size && 
-            [...memberSet].every(m => existingSet.has(m))) {
-          return res.status(400).json({ 
-            message: "Энэ гишүүдтэй баг/хос аль хэдийн үүссэн байна"
+          // Update this invitation
+          await db
+            .update(teamInvitations)
+            .set({ status: 'accepted' })
+            .where(eq(teamInvitations.id, invitationId));
+
+          if (allAccepted) {
+            // Create team/pair
+            const memberIds = [
+              invitation.senderId,
+              ...allInvitations.map(inv => inv.receiverId)
+            ];
+
+            const isTeam = invitation.eventType.includes('TEAM');
+
+            if (isTeam) {
+              const [team] = await db.insert(teams).values({
+                tournamentId: invitation.tournamentId,
+                name: invitation.teamName || 'Team',
+                category: invitation.eventType,
+              }).returning();
+
+              await Promise.all(
+                memberIds.map(memberId =>
+                  db.insert(teamMembers).values({
+                    teamId: team.id,
+                    playerId: memberId,
+                  })
+                )
+              );
+            } else {
+              await db.insert(pairs).values({
+                tournamentId: invitation.tournamentId,
+                player1Id: memberIds[0],
+                player2Id: memberIds[1],
+                category: invitation.eventType,
+              });
+            }
+
+            // Mark all invitations as completed
+            await db
+              .update(teamInvitations)
+              .set({ status: 'completed' })
+              .where(
+                and(
+                  eq(teamInvitations.tournamentId, invitation.tournamentId),
+                  eq(teamInvitations.eventType, invitation.eventType),
+                  eq(teamInvitations.senderId, invitation.senderId)
+                )
+              );
+          }
+
+          return res.json({
+            message: allAccepted ? "Баг/хос амжилттай үүслээ" : "Хүсэлтийг зөвшөөрлөө",
+            teamCreated: allAccepted
           });
         }
+
+        res.status(400).json({ message: "Буруу үйлдэл" });
+      } catch (e) {
+        console.error("Error responding to invitation:", e);
+        res.status(400).json({ message: "Хүсэлтийг шийдвэрлэхэд алдаа гарлаа" });
       }
-
-      // Create the team
-      const team = await storage.createLeagueTeam({
-        tournamentId,
-        name: teamName?.trim() || `${eventCategory === 'doubles' ? 'Хос' : 'Баг'} - ${Date.now()}`,
-        entityType: 'tournament',
-      });
-
-      // Add members to the team
-      for (const memberId of members) {
-        const user = await storage.getUser(memberId);
-        const memberName = user ? `${user.firstName} ${user.lastName}` : 'Unknown Player';
-
-        await storage.addPlayerToLeagueTeam(team.id, memberId, memberName);
-      }
-
-      res.json({ 
-        message: "Team created successfully", 
-        team,
-        eventType: eventCategory 
-      });
-    } catch (error) {
-      console.error("Error creating team:", error);
-      res.status(500).json({ 
-        message: error instanceof Error ? error.message : "Failed to create team" 
-      });
     }
-  });
+  );
+
+  // Create team or pair
+  app.post(
+    "/api/tournaments/:id/create-team",
+    requireAuth,
+    async (req: any, res) => {
+      try {
+        const { id: tournamentId } = req.params;
+        const { eventType, teamName, members } = req.body;
+
+        if (!tournamentId || !eventType || !members || !Array.isArray(members)) {
+          return res.status(400).json({ message: "Tournament ID, event type, and members are required" });
+        }
+
+        const userId = req.session.userId;
+
+        // Verify user is in the members list
+        if (!members.includes(userId)) {
+          return res.status(403).json({ message: "You must be a member of the team" });
+        }
+
+        // Parse event type and extract category and gender requirements
+        let eventCategory: 'doubles' | 'team' | null = null;
+        let requiredGender: 'male' | 'female' | 'mixed' | null = null;
+        let minAge: number | undefined;
+        let maxAge: number | undefined;
+
+        try {
+          const parsed = JSON.parse(eventType);
+
+          // Determine category
+          if (parsed.type === 'DOUBLES' || parsed.subType?.includes('DOUBLES') || parsed.type === 'pair') {
+            eventCategory = 'doubles';
+          } else if (parsed.type === 'TEAM' || parsed.subType?.includes('TEAM') || parsed.type === 'team') {
+            eventCategory = 'team';
+          }
+
+          // Determine gender requirements
+          if (parsed.subType?.includes('MEN')) {
+            requiredGender = 'male';
+          } else if (parsed.subType?.includes('WOMEN')) {
+            requiredGender = 'female';
+          } else if (parsed.subType?.includes('MIXED')) {
+            requiredGender = 'mixed';
+          } else if (parsed.gender) {
+            requiredGender = parsed.gender;
+          }
+
+          // Extract age constraints
+          minAge = parsed.minAge;
+          maxAge = parsed.maxAge;
+
+        } catch {
+          return res.status(400).json({ message: "Invalid event type format" });
+        }
+
+        if (!eventCategory) {
+          return res.status(400).json({ message: "Could not determine event category" });
+        }
+
+        // Validate team name for team events
+        if (eventCategory === 'team' && !teamName?.trim()) {
+          return res.status(400).json({ message: "Багийн нэр заавал оруулна уу" });
+        }
+
+        // Validate member count
+        const minMembers = eventCategory === 'doubles' ? 2 : 4;
+        const maxMembers = eventCategory === 'doubles' ? 2 : 5;
+
+        if (members.length < minMembers) {
+          return res.status(400).json({
+            message: eventCategory === 'doubles'
+              ? "Хос нь яг 2 тамирчнаас бүрдэх ёстой"
+              : `Баг нь хамгийн багадаа ${minMembers} гишүүнтэй байх ёстой`
+          });
+        }
+
+        if (members.length > maxMembers) {
+          return res.status(400).json({
+            message: `Хамгийн ихдээ ${maxMembers} гишүүн сонгох боломжтой`
+          });
+        }
+
+        // Check for duplicate members
+        const uniqueMembers = new Set(members);
+        if (uniqueMembers.size !== members.length) {
+          return res.status(400).json({ message: "Давхардсан гишүүд байна" });
+        }
+
+        // Verify all members are registered for this event
+        const participants = await storage.getTournamentParticipants(tournamentId);
+        const registeredForEvent = participants.filter(
+          p => p.participationType === eventType && members.includes(p.playerId)
+        );
+
+        if (registeredForEvent.length !== members.length) {
+          return res.status(400).json({
+            message: "Бүх гишүүд энэ төрөлд бүртгүүлсэн байх ёстой"
+          });
+        }
+
+        // Validate gender requirements for non-mixed events
+        if (requiredGender && requiredGender !== 'mixed') {
+          for (const memberId of members) {
+            const user = await storage.getUser(memberId);
+            if (user && user.gender !== requiredGender) {
+              return res.status(400).json({
+                message: `Бүх гишүүд ${requiredGender === 'male' ? 'эрэгтэй' : 'эмэгтэй'} байх ёстой`
+              });
+            }
+          }
+        }
+
+        // Validate age requirements if specified
+        if (minAge !== undefined || maxAge !== undefined) {
+          const tournament = await storage.getTournament(tournamentId);
+          if (!tournament) {
+            return res.status(404).json({ message: "Тэмцээн олдсонгүй" });
+          }
+
+          const tournamentStartDate = new Date(tournament.startDate);
+
+          for (const memberId of members) {
+            const user = await storage.getUser(memberId);
+            if (!user || !user.dateOfBirth) continue;
+
+            const birthDate = new Date(user.dateOfBirth);
+            let age = tournamentStartDate.getFullYear() - birthDate.getFullYear();
+            const monthDiff = tournamentStartDate.getMonth() - birthDate.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && tournamentStartDate.getDate() < birthDate.getDate())) {
+              age--;
+            }
+
+            if (minAge !== undefined && age < minAge) {
+              return res.status(400).json({
+                message: `Бүх гишүүд хамгийн багадаа ${minAge} настай байх ёстой`
+              });
+            }
+
+            if (maxAge !== undefined && age > maxAge) {
+              return res.status(400).json({
+                message: `Бүх гишүүд хамгийн ихдээ ${maxAge} настай байх ёстой`
+              });
+            }
+          }
+        }
+
+        // Check if team/pair already exists for this event (prevent duplicates)
+        const existingTeams = await storage.getLeagueTeams(tournamentId);
+        const memberSet = new Set(members.sort());
+
+        for (const existingTeam of existingTeams) {
+          const existingMembers = existingTeam.players?.map((p: any) => p.playerId).sort() || [];
+          const existingSet = new Set(existingMembers);
+
+          if (memberSet.size === existingSet.size &&
+            [...memberSet].every(m => existingSet.has(m))) {
+            return res.status(400).json({
+              message: "Энэ гишүүдтэй баг/хос аль хэдийн үүссэн байна"
+            });
+          }
+        }
+
+        // Create the team
+        const team = await storage.createLeagueTeam({
+          tournamentId,
+          name: teamName?.trim() || `${eventCategory === 'doubles' ? 'Хос' : 'Баг'} - ${Date.now()}`,
+          entityType: 'tournament',
+        });
+
+        // Add members to the team
+        for (const memberId of members) {
+          const user = await storage.getUser(memberId);
+          const memberName = user ? `${user.firstName} ${user.lastName}` : 'Unknown Player';
+
+          await storage.addPlayerToLeagueTeam(team.id, memberId, memberName);
+        }
+
+        res.json({
+          message: "Team created successfully",
+          team,
+          eventType: eventCategory
+        });
+      } catch (error) {
+        console.error("Error creating team:", error);
+        res.status(500).json({
+          message: error instanceof Error ? error.message : "Failed to create team"
+        });
+      }
+    });
 
   app.post(
     "/api/admin/tournaments/:tournamentId/participants",
