@@ -1658,11 +1658,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Champion operations
-  async getAllChampions(): Promise<Champion[]>;
-  async createChampion(championData: InsertChampion): Promise<Champion>;
-  async updateChampion(id: string, championData: Partial<InsertChampion>): Promise<Champion | undefined>;
-  async deleteChampion(id: string): Promise<boolean>;
-
   async getAllChampions(): Promise<Champion[]> {
     return await db
       .select()
