@@ -1879,7 +1879,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
-  app.get("/api/tournaments/:tournamentId/participants", async (req, res) => {
+  app.get("/api/tournaments/:tournamentId/participants", async (req: any, res) => {
     try {
       const { category } = req.query;
       const { tournamentId } = req.params;
@@ -1892,12 +1892,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let participants = await storage.getTournamentParticipants(tournamentId);
 
+      // Exclude current user from results
+      const currentUserId = req.session?.userId;
+      if (currentUserId) {
+        participants = participants.filter(p => p.playerId !== currentUserId);
+      }
+
       // Filter by category if specified
       if (category && category !== 'all') {
         participants = participants.filter(p => p.participationType === category);
       }
 
-      console.log(`Returning ${participants.length} participants`);
+      console.log(`Returning ${participants.length} participants (current user excluded)`);
       res.json(participants);
     } catch (e) {
       console.error("Error fetching tournament participants:", e);
