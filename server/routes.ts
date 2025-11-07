@@ -1919,7 +1919,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req: any, res) => {
       try {
         const tournamentId = req.params.id;
-        const senderId = req.user.id; // Assuming req.user is populated by auth middleware
+        const senderId = req.session.userId;
         const { eventType, members, teamName } = req.body;
 
         if (!members || members.length === 0) {
@@ -1957,7 +1957,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     requireAuth,
     async (req: any, res) => {
       try {
-        const userId = req.user.id; // Assuming req.user is populated by auth middleware
+        const userId = req.session.userId;
 
         const invitations = await db
           .select({
@@ -1997,7 +1997,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req: any, res) => {
       try {
         const invitationId = req.params.id;
-        const userId = req.user.id; // Assuming req.user is populated by auth middleware
+        const userId = req.session.userId;
         const { action } = req.body; // 'accept' or 'reject'
 
         // Get invitation
