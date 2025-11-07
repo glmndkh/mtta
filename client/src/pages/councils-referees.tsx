@@ -47,25 +47,6 @@ export default function RefereesCouncil() {
         </div>
 
         <div className="max-w-7xl mx-auto px-6 py-20">
-          {/* Special section for Б. Буянбат */}
-          <div className="mb-16">
-            <div className="max-w-sm mx-auto">
-              <div className="bg-emerald-900/40 backdrop-blur-sm rounded-2xl overflow-hidden shadow-xl border border-emerald-500/20">
-                <div className="aspect-[3/4] overflow-hidden">
-                  <img 
-                    src="/src/assets/councilimages/buyanbat.jpg" 
-                    alt="Б. Буянбат"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-6 text-center">
-                  <h3 className="text-xl font-bold text-emerald-50 mb-2">Б. Буянбат</h3>
-                  <p className="text-emerald-300 text-sm">Шүүгч</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {isLoading ? (
             <div className="text-center text-emerald-200">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-400 mx-auto"></div>
