@@ -163,7 +163,7 @@ export default function TeamFormation() {
         title: "Амжилттай!",
         description: `${isTeam ? 'Багийн' : 'Хосын'} хүсэлт илгээгдлээ`,
       });
-      setLocation(`/tournament/${tournamentId}/full`);
+      setLocation(`/events/${tournamentId}`);
     },
     onError: (error: Error) => {
       toast({
@@ -341,7 +341,7 @@ export default function TeamFormation() {
 
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         <Button
-          onClick={() => setLocation(`/tournament/${params?.id}/full`)}
+          onClick={() => setLocation(`/events/${params?.id}`)}
           variant="outline"
           className="mb-6"
         >
@@ -515,7 +515,7 @@ export default function TeamFormation() {
             {/* Submit Button */}
             <div className="flex justify-between items-center pt-4 border-t">
               <Button
-                onClick={() => setLocation(`/tournament/${params?.id}/full`)}
+                onClick={() => setLocation(`/events/${params?.id}`)}
                 variant="outline"
               >
                 Цуцлах
@@ -568,7 +568,7 @@ export default function TeamFormation() {
                 Өөр баг/хос үүсгэх
               </Button>
               <Button
-                onClick={() => setLocation(`/tournament/${params?.id}/full`)}
+                onClick={() => setLocation(`/events/${params?.id}`)}
                 className="flex-1 bg-blue-600 hover:bg-blue-700"
               >
                 Тэмцээн рүү буцах
