@@ -211,7 +211,7 @@ export default function TeamFormation() {
 
     sendInvitationMutation.mutate({
       name: teamName,
-      members: selectedMembers.map(m => m.playerId),
+      members: selectedMembers.map(m => m.userId),
     });
   };
 
@@ -313,7 +313,7 @@ export default function TeamFormation() {
         body: JSON.stringify({
           eventType,
           teamName: teamName.trim() || undefined,
-          members: [(user as any)?.id, ...selectedMembers.map(m => m.id)],
+          members: [(user as any)?.id, ...selectedMembers.map(m => m.userId)],
         }),
       });
 
