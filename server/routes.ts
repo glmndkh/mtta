@@ -47,16 +47,9 @@ import {
   teamMembers, // Import new table
 } from "../shared/schema";
 
-// Mocking database operations for demonstration purposes if needed.
-// In a real application, these would interact with your actual database.
-const db = {
-  select: () => ({ from: () => ({ where: () => Promise.resolve([]) }) }),
-  insert: () => ({ values: () => ({ returning: () => Promise.resolve([]) }) }),
-  update: () => ({ set: () => ({ where: () => Promise.resolve({ count: 0 }) }) }),
-  delete: () => ({ where: () => Promise.resolve({ count: 0 }) }),
-};
-const eq = (a: any, b: any) => a === b;
-const and = (...args: any[]) => args.filter(Boolean).join(' AND ');
+// Import real database
+import { db } from "./db";
+import { eq, and } from "drizzle-orm";
 
 
 function calculateAge(dateOfBirth: Date | null | undefined) {
@@ -1315,7 +1308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // National Team routes
   app.get("/api/national-team", async (_req, res) => {
     try {
-      const players = await storage.getNationalTeamPlayers();
+      const players = await storage.getAllNationalTeamPlayers();
       res.json(players);
     } catch (e) {
       console.error("Error fetching national team:", e);
@@ -1325,8 +1318,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/national-team-coaches", async (_req, res) => {
     try {
-      const coaches = await storage.getNationalTeamCoaches();
-      res.json(coaches);
+      // TODO: Add getNationalTeamCoaches method to storage
+      res.json([]);
     } catch (e) {
       console.error("Error fetching national team coaches:", e);
       res.status(500).json({ message: "Дасгалжуулагчдыг авахад алдаа гарлаа" });
