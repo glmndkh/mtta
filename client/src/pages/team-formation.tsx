@@ -470,9 +470,9 @@ export default function TeamFormation() {
               </div>
             )}
 
-            {/* Current Members */}
             {!existingTeam && (
             <>
+            {/* Current Members */}
             <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
               <h4 className="font-semibold text-green-900 dark:text-green-100 mb-3 flex items-center gap-2">
                 <CheckCircle className="w-5 h-5" />
