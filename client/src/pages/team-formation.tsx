@@ -38,6 +38,7 @@ export default function TeamFormation() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [createdEntry, setCreatedEntry] = useState<any>(null);
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -61,8 +62,8 @@ export default function TeamFormation() {
 
   const categoryType = parsedEvent.subType || parsedEvent.type || "";
   const isTeam = categoryType.includes("TEAM");
-  const minMembers = isTeam ? 3 : 2;
-  const maxMembers = isTeam ? 4 : 2;
+  const minMembers = isTeam ? 3 : 1;
+  const maxMembers = isTeam ? 4 : 1;
 
   // Fetch tournament details
   const { data: tournament } = useQuery({
@@ -125,21 +126,23 @@ export default function TeamFormation() {
   }, [allUsers, selectedMembers, user]);
 
   const handleAddMember = (player: any) => {
-    if (selectedMembers.length >= maxMembers - 1) {
+    if (selectedMembers.length >= maxMembers) {
       toast({
         title: "Хязгаар хэтэрсэн",
-        description: `${isTeam ? 'Багийн гишүүдийн' : 'Хамтрагчийн'} дээд хязгаар ${maxMembers - 1}`,
+        description: `${isTeam ? 'Багийн гишүүдийн' : 'Хамтрагчийн'} дээд хязгаар ${maxMembers}`,
         variant: "destructive",
       });
       return;
     }
     if (!selectedMembers.some(m => m.playerId === player.playerId)) {
       setSelectedMembers([...selectedMembers, player]);
+      setAttemptedSubmit(false);
     }
   };
 
   const handleRemoveMember = (playerId: number) => {
     setSelectedMembers(prev => prev.filter(m => m.playerId !== playerId));
+    setAttemptedSubmit(false);
   };
 
   const sendInvitationMutation = useMutation({
@@ -179,6 +182,8 @@ export default function TeamFormation() {
   });
 
   const handleSubmit = () => {
+    setAttemptedSubmit(true);
+    
     if (isTeam && !teamName.trim()) {
       toast({
         title: "Алдаа",
@@ -509,7 +514,7 @@ export default function TeamFormation() {
             </div>
 
             {/* Validation Error */}
-            {!validation.valid && selectedMembers.length > 0 && (
+            {attemptedSubmit && !validation.valid && (
               <div className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                 <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-red-700 dark:text-red-300">{validation.error}</p>
