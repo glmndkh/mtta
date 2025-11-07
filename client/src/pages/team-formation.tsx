@@ -76,6 +76,25 @@ export default function TeamFormation() {
     enabled: !!tournamentId,
   });
 
+  // Check if user already has a team for this event type
+  const { data: existingTeam } = useQuery({
+    queryKey: ['/api/invitations/me', tournamentId, eventType],
+    queryFn: async () => {
+      const res = await fetch(`/api/invitations/me`, { credentials: 'include' });
+      if (!res.ok) return null;
+      const allInvitations = await res.json();
+      // Find completed invitation for this tournament and event type
+      const completedInvitation = allInvitations.find(
+        (inv: any) => 
+          inv.tournamentId === tournamentId && 
+          inv.eventType === eventType && 
+          inv.status === 'completed'
+      );
+      return completedInvitation || null;
+    },
+    enabled: !!user && !!tournamentId && !!eventType,
+  });
+
   // Fetch all registered participants for this tournament and event
   const { data: allUsers = [], isLoading: isLoadingUsers } = useQuery({
     queryKey: ["/api/tournaments", tournamentId, "participants", eventType, debouncedSearch],
@@ -370,31 +389,73 @@ export default function TeamFormation() {
           </CardHeader>
 
           <CardContent className="space-y-6">
-            {/* Info Banner */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-              <div className="flex gap-3">
-                <Trophy className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
-                    {isTeam ? 'Баг бүрдүүлэх' : 'Хос бүрдүүлэх'}
-                  </h4>
-                  <p className="text-sm text-blue-700 dark:text-blue-300">
-                    {isTeam
-                      ? `Багийн гишүүдээ сонгоно уу. Та нарын бүрэлдэхүүнд 3-4 гишүүн байх ёстой (танаас гадна 2-3 гишүүн нэмнэ).`
-                      : `Хамтрагчаа сонгож хос бүрдүүлнэ үү. Та нарын бүрэлдэхүүнд нийт 2 тамирчин байх ёстой (танаас гадна 1 хамтрагч сонгоно).`
-                    }
-                  </p>
-                  {eventGender && eventGender !== 'mixed' && (
-                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                      ℹ️ Бүх гишүүд {eventGender === 'male' ? 'эрэгтэй' : 'эмэгтэй'} байх ёстой
+            {/* Existing Team Warning */}
+            {existingTeam && (
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                <div className="flex gap-3">
+                  <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-yellow-900 dark:text-yellow-100 mb-2">
+                      Та энэ ангилалд аль хэдийн {isTeam ? 'багтай' : 'хостой'} байна
+                    </h4>
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-3">
+                      Нэг хүн тэмцээний нэг ангилалд зөвхөн нэг {isTeam ? 'багт' : 'хост'} орох боломжтой.
                     </p>
-                  )}
+                    {existingTeam.teamMembers && existingTeam.teamMembers.length > 0 && (
+                      <div className="mt-3 p-3 bg-white dark:bg-gray-800 rounded border border-yellow-200 dark:border-yellow-700">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+                          {isTeam ? 'Багийн' : 'Хосын'} бүрэлдэхүүн:
+                        </p>
+                        <ul className="space-y-1">
+                          {existingTeam.teamMembers.map((member: any, idx: number) => (
+                            <li key={idx} className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                              <CheckCircle className="w-4 h-4 text-green-600" />
+                              {member.playerName}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    <Button
+                      onClick={() => setLocation(`/events/${tournamentId}`)}
+                      variant="outline"
+                      className="mt-4"
+                    >
+                      Тэмцээн рүү буцах
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Team Name (only for team events) */}
-            {isTeam && (
+            {!existingTeam && (
+              <>
+                {/* Info Banner */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex gap-3">
+                    <Trophy className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                        {isTeam ? 'Баг бүрдүүлэх' : 'Хос бүрдүүлэх'}
+                      </h4>
+                      <p className="text-sm text-blue-700 dark:text-blue-300">
+                        {isTeam
+                          ? `Багийн гишүүдээ сонгоно уу. Та нарын бүрэлдэхүүнд 3-4 гишүүн байх ёстой (танаас гадна 2-3 гишүүн нэмнэ).`
+                          : `Хамтрагчаа сонгож хос бүрдүүлнэ үү. Та нарын бүрэлдэхүүнд нийт 2 тамирчин байх ёстой (танаас гадна 1 хамтрагч сонгоно).`
+                        }
+                      </p>
+                      {eventGender && eventGender !== 'mixed' && (
+                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                          ℹ️ Бүх гишүүд {eventGender === 'male' ? 'эрэгтэй' : 'эмэгтэй'} байх ёстой
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {!existingTeam && isTeam && (
               <div className="space-y-2">
                 <Label htmlFor="teamName" className="text-base font-semibold">
                   Багийн нэр <span className="text-red-500">*</span>
@@ -410,6 +471,8 @@ export default function TeamFormation() {
             )}
 
             {/* Current Members */}
+            {!existingTeam && (
+            <>
             <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
               <h4 className="font-semibold text-green-900 dark:text-green-100 mb-3 flex items-center gap-2">
                 <CheckCircle className="w-5 h-5" />
@@ -541,6 +604,8 @@ export default function TeamFormation() {
                 }
               </Button>
             </div>
+            </>
+            )}
           </CardContent>
         </Card>
       </div>

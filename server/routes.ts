@@ -46,6 +46,7 @@ import {
   teamInvitations, // Import new table
   teams, // Import new table
   teamMembers, // Import new table
+  tournamentTeamPlayers, // Import tournament team players
 } from "../shared/schema";
 
 // Import real database
@@ -1959,6 +1960,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             tournamentId: teamInvitations.tournamentId,
             eventType: teamInvitations.eventType,
             teamName: teamInvitations.teamName,
+            teamId: teamInvitations.teamId,
             status: teamInvitations.status,
             createdAt: teamInvitations.createdAt,
             sender: {
@@ -1976,7 +1978,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .leftJoin(tournaments, eq(teamInvitations.tournamentId, tournaments.id))
           .where(eq(teamInvitations.receiverId, userId));
 
-        res.json(invitations);
+        // Fetch team members for completed invitations
+        const invitationsWithMembers = await Promise.all(
+          invitations.map(async (inv) => {
+            if (inv.teamId) {
+              const members = await db
+                .select({
+                  playerId: tournamentTeamPlayers.playerId,
+                  playerName: tournamentTeamPlayers.playerName,
+                })
+                .from(tournamentTeamPlayers)
+                .where(eq(tournamentTeamPlayers.tournamentTeamId, inv.teamId));
+              
+              return { ...inv, teamMembers: members };
+            }
+            return inv;
+          })
+        );
+
+        res.json(invitationsWithMembers);
       } catch (e) {
         console.error("Error fetching invitations:", e);
         res.status(500).json({ message: "Хүсэлт авахад алдаа гарлаа" });
@@ -2071,10 +2091,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               await storage.addPlayerToLeagueTeam(team.id, memberId, memberName);
             }
 
-            // Mark all invitations as completed
+            // Mark all invitations as completed and store team ID
             await db
               .update(teamInvitations)
-              .set({ status: 'completed' })
+              .set({ status: 'completed', teamId: team.id })
               .where(
                 and(
                   eq(teamInvitations.tournamentId, invitation.tournamentId),

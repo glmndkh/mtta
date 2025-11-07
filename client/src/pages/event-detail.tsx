@@ -626,9 +626,26 @@ export default function EventDetail() {
                                         </p>
                                       )}
                                       {invitation.status === 'completed' && (
-                                        <p className="text-xs text-green-600 dark:text-green-400 mt-2">
-                                          Баг/хос амжилттай үүслээ. Оролцогчдын жагсаалтаас үзнэ үү.
-                                        </p>
+                                        <>
+                                          <p className="text-xs text-green-600 dark:text-green-400 mt-2">
+                                            Баг/хос амжилттай үүслээ. Оролцогчдын жагсаалтаас үзнэ үү.
+                                          </p>
+                                          {invitation.teamMembers && invitation.teamMembers.length > 0 && (
+                                            <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-800">
+                                              <p className="text-xs font-medium text-green-900 dark:text-green-100 mb-2">
+                                                Багийн гишүүд:
+                                              </p>
+                                              <ul className="space-y-1">
+                                                {invitation.teamMembers.map((member: any, idx: number) => (
+                                                  <li key={idx} className="text-xs text-green-800 dark:text-green-200 flex items-center gap-1">
+                                                    <Users className="w-3 h-3" />
+                                                    {member.playerName}
+                                                  </li>
+                                                ))}
+                                              </ul>
+                                            </div>
+                                          )}
+                                        </>
                                       )}
                                     </div>
                                   </div>

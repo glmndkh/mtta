@@ -502,6 +502,7 @@ export const teamInvitations = pgTable("team_invitations", {
   senderId: varchar("sender_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   receiverId: varchar("receiver_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   teamName: text("team_name"),
+  teamId: varchar("team_id").references(() => tournamentTeams.id, { onDelete: "set null" }),
   status: text("status").notNull().default("pending"), // pending, accepted, rejected, completed
   createdAt: timestamp("created_at").defaultNow(),
 });
