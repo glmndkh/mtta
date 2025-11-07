@@ -349,9 +349,6 @@ export interface IStorage {
   getRankChangeRequestsByUserId(userId: string): Promise<any[]>;
   updateRankChangeRequestStatus(id: string, status: string, adminId: string, adminNotes?: string): Promise<RankChangeRequest | null>;
   deleteRankChangeRequest(id: string): Promise<boolean>;
-
-  // Global search
-  searchSiteContent(query: string, limit?: number): Promise<GlobalSearchResults>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -477,7 +474,7 @@ export class DatabaseStorage implements IStorage {
         .limit(1);
 
       console.log(`[${requestId}] getUserProfile SUCCESS - userId: ${userId}`);
-      
+
       return {
         id: user.id,
         email: user.email,

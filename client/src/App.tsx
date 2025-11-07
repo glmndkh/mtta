@@ -44,8 +44,14 @@ import AdminPlayerDetailsPage from "@/pages/admin-player-details"; // Import the
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import EventDetail from "@/pages/event-detail";
 import FloatingActionButton from "@/components/FloatingActionButton";
-import { lazy } from 'react';
 import TeamFormation from "@/pages/team-formation";
+import AboutBranches from "@/pages/about-branches";
+import AboutIntro from "@/pages/about-intro";
+import CouncilsCoaches from "@/pages/councils-coaches";
+import CouncilsAthletes from "@/pages/councils-athletes";
+import CouncilsVeterans from "@/pages/councils-veterans";
+import CouncilsReferees from "@/pages/councils-referees";
+import CouncilsWomen from "@/pages/councils-women";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -77,13 +83,13 @@ function Router() {
       <Route path="/news" component={News} />
       <Route path="/about" component={AboutPage} />
       <Route path="/events/:id" component={EventDetail} />
-      <Route path="/about/branches" component={lazy(() => import("@/pages/about-branches"))} />
-      <Route path="/about/intro" component={lazy(() => import("@/pages/about-intro"))} />
-      <Route path="/councils/coaches" component={lazy(() => import("@/pages/councils-coaches"))} />
-      <Route path="/councils/athletes" component={lazy(() => import("@/pages/councils-athletes"))} />
-      <Route path="/councils/veterans" component={lazy(() => import("@/pages/councils-veterans"))} />
-      <Route path="/councils/referees" component={lazy(() => import("@/pages/councils-referees"))} />
-      <Route path="/councils/women" component={lazy(() => import("@/pages/councils-women"))} />
+      <Route path="/about/branches" component={AboutBranches} />
+      <Route path="/about/intro" component={AboutIntro} />
+      <Route path="/councils/coaches" component={CouncilsCoaches} />
+      <Route path="/councils/athletes" component={CouncilsAthletes} />
+      <Route path="/councils/veterans" component={CouncilsVeterans} />
+      <Route path="/councils/referees" component={CouncilsReferees} />
+      <Route path="/councils/women" component={CouncilsWomen} />
 
       <Route path="/" component={Home} />
       {!isLoading && isAuthenticated && (

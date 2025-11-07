@@ -1068,6 +1068,269 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
 
     return (
       <div className="space-y-6">
+        <Tabs defaultValue="players" className="w-full">
+          <TabsList>
+            <TabsTrigger value="players">Тамирчид</TabsTrigger>
+            <TabsTrigger value="coaches">Дасгалжуулагчид</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="players" className="space-y-6">
+            {/* Existing players content */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Шинэ тамирчид нэмэх</CardTitle>
+                <CardDescription>
+                  Бүртгэлтэй хэрэглэгчдээс үндэсний шигшээнд нэмэх боломжтой
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {allUsersLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  </div>
+                ) : availableUsers && availableUsers.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-64 overflow-y-auto">
+                    {availableUsers.map((user: any) => (
+                      <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg bg-card">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <UserIcon className="w-4 h-4 text-blue-600" />
+                          </div>
+                          <div>
+                            <div className="font-medium text-sm">
+                              {formatName(user.firstName || '', user.lastName || '')}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {user.email || 'И-мэйл байхгүй'}
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const playerData = {
+                              firstName: user.firstName || '',
+                              lastName: user.lastName || '',
+                              age: user.dateOfBirth ? new Date().getFullYear() - new Date(user.dateOfBirth).getFullYear() : undefined,
+                              imageUrl: user.imageUrl || user.avatarUrl || '',
+                              userId: user.id
+                            };
+                            createMutation.mutate({
+                              endpoint: '/api/admin/national-team',
+                              data: playerData,
+                            });
+                          }}
+                          disabled={createMutation.isPending}
+                        >
+                          <Plus className="w-3 h-3 mr-1" />
+                          {createMutation.isPending ? 'Нэмж байна...' : 'Нэмэх'}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <UserIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-4">
+                      Одоогоор нэмэх боломжтой хэрэглэгч байхгүй байна
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Бүх бүртгэлтэй хэрэглэгч аль хэдийн үндэсний шигшээнд орсон эсвэл шинэ хэрэглэгч бүртгүүлээгүй байна
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Үндэсний шигшээний тамирчид</CardTitle>
+                    <CardDescription>
+                      Одоо үндэсний шигшээнд байгаа тамирчид
+                    </CardDescription>
+                  </div>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Тамирчны нэрээр хайх..."
+                      value={nationalTeamFilter}
+                      onChange={(e) => setNationalTeamFilter(e.target.value)}
+                      className="pl-10 w-64"
+                    />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {nationalTeamLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  </div>
+                ) : filteredPlayers.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Зураг</TableHead>
+                        <TableHead>Нэр</TableHead>
+                        <TableHead>Нас</TableHead>
+                        <TableHead className="text-right">Үйлдэл</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredPlayers.map((player: any) => (
+                        <TableRow key={player.id}>
+                          <TableCell>
+                            {player.imageUrl ? (
+                              <img
+                                src={player.imageUrl}
+                                alt={formatName(player.firstName, player.lastName)}
+                                className="w-10 h-10 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                <UserIcon className="w-5 h-5 text-green-600" />
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {formatName(player.firstName || '', player.lastName || '')}
+                          </TableCell>
+                          <TableCell>{player.age || '-'}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openEditDialog(player)}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleDelete(player.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-8">
+                    <UserIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600">Үндэсний шигшээнд тамирчид байхгүй байна</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="coaches" className="space-y-6">
+            {/* Coaches management section */}
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Үндэсний шигшээний дасгалжуулагчид</CardTitle>
+                    <CardDescription>
+                      Дасгалжуулагчдыг удирдах
+                    </CardDescription>
+                  </div>
+                  <Button onClick={() => {
+                    setEditingItem(null);
+                    setDialogOpen(true);
+                  }}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Шинэ дасгалжуулагч
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {coachesLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  </div>
+                ) : coaches && coaches.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Зураг</TableHead>
+                        <TableHead>Нэр</TableHead>
+                        <TableHead>Албан тушаал</TableHead>
+                        <TableHead className="text-right">Үйлдэл</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {coaches.map((coach: any) => (
+                        <TableRow key={coach.id}>
+                          <TableCell>
+                            {coach.imageUrl ? (
+                              <img
+                                src={coach.imageUrl}
+                                alt={formatName(coach.firstName, coach.lastName)}
+                                className="w-10 h-10 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <UserIcon className="w-5 h-5 text-blue-600" />
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {formatName(coach.firstName || '', coach.lastName || '')}
+                          </TableCell>
+                          <TableCell>{coach.role || '-'}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingItem(coach);
+                                  setDialogOpen(true);
+                                }}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => {
+                                  deleteMutation.mutate({
+                                    endpoint: `/api/admin/national-team-coaches/${coach.id}`,
+                                  });
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-8">
+                    <UserIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600">Дасгалжуулагч байхгүй байна</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    );
+  };
+
+  const renderNationalTeamTab2 = () => {
+    return (
+      <div className="space-y-6">
         {/* Header Section */}
         <div className="flex flex-wrap justify-between items-center gap-4">
           <div>
