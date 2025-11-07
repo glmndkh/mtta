@@ -44,7 +44,6 @@ import {
   leagues,
   teamInvitations, // Import new table
   teams, // Import new table
-  pairs, // Import new table
   teamMembers, // Import new table
 } from "../shared/schema";
 
@@ -2072,12 +2071,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 )
               );
             } else {
-              await db.insert(pairs).values({
+              // For doubles/pairs, we can also use the teams table with 2 members
+              const [team] = await db.insert(teams).values({
                 tournamentId: invitation.tournamentId,
-                player1Id: memberIds[0],
-                player2Id: memberIds[1],
+                name: invitation.teamName || 'Pair',
                 category: invitation.eventType,
-              });
+              }).returning();
+
+              await Promise.all(
+                memberIds.map(memberId =>
+                  db.insert(teamMembers).values({
+                    teamId: team.id,
+                    playerId: memberId,
+                  })
+                )
+              );
             }
 
             // Mark all invitations as completed
