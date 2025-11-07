@@ -1,0 +1,56 @@
+We have a plain website (likely React/Next.js frontend + Node/Express backend API). Fix two bugs in the “Create Doubles Team” flow:
+
+BUG 1 — The current user appears in the partner list
+Requirements:
+1) Enforce on the API layer:
+   - Determine current user ID from session/JWT (e.g., req.user.id or req.session.userId).
+   - In the partners query, exclude the current user:
+     • SQL:  SELECT ... FROM users WHERE id != $currentUserId AND <existing filters>;
+     • Prisma:  where: { id: { not: currentUserId }, ...existingWhere }
+     • Mongoose:  { _id: { $ne: currentUserId }, ... }
+   - Also exclude any already-selected member(s) to avoid duplicates.
+   - Keep existing filters (gender/category/age) unchanged; just add exclusions.
+
+2) Add a frontend safeguard filter after fetch to hide the current user in case the API missed it.
+
+3) Provide unified diffs for all modified files and point to where the exclusion was added.
+
+BUG 2 — After selecting a partner, the error “Хамтрагчаа сонгоно уу” stays and “Хосын хүсэлт илгээх” button remains disabled
+Requirements:
+1) State model
+   - Single source of truth for selection:
+     state.members = [currentUserId, selectedPartnerId?]
+     or state.selectedPartnerId
+   - On clicking a partner card, update state and re-render.
+
+2) Derived validation
+   - Doubles requires exactly 2 total members (current user + 1 partner).
+   - Implement: const canSend = Boolean(state.selectedPartnerId) && passesRules;
+     where passesRules includes gender/category/age checks if applicable.
+   - Bind button disabled to !canSend:
+     <button disabled={!canSend} aria-disabled={!canSend}>...</button>
+   - Hide the “Хамтрагчаа сонгоно уу” helper/error once canSend === true.
+   - Only show the error when submit is attempted while !canSend.
+
+3) Submit handler
+   - On submit, prevent default, validate canSend, then POST to API with:
+     { members: [currentUserId, state.selectedPartnerId], eventType, teamName? }
+   - Show server error if any; otherwise reset UI and navigate per spec.
+
+4) Edge cases
+   - If the selected partner is removed/unselected, immediately:
+     • set selectedPartnerId = null
+     • disable the button again and show the helper text.
+   - Guard against race conditions: disable while submitting (isSubmitting flag).
+
+5) Tests to run
+   - Current user should never appear in partner list or search.
+   - Selecting exactly one partner enables the “Хосын хүсэлт илгээх” button.
+   - Submitting without a partner keeps the button disabled and shows the error.
+   - API receives exactly two unique IDs (no duplicates).
+   - Reloading the page preserves the fix.
+
+6) Show me the code diffs
+   - API query file (SQL/Prisma/Mongoose) showing exclusion by current user.
+   - Frontend component (React/Next.js) showing state, validation, and button binding updates.
+   - Keep unrelated routes/files unchanged.
