@@ -155,8 +155,8 @@ export default function EventDetail() {
       });
       if (!res.ok) return [];
       const allInvitations = await res.json();
-      // Filter for this tournament only
-      return allInvitations.filter((inv: any) => inv.tournamentId === tournament.id && inv.status === 'pending');
+      // Filter for this tournament only - show all statuses
+      return allInvitations.filter((inv: any) => inv.tournamentId === tournament.id);
     },
     enabled: !!user && !!tournament?.id,
   });
@@ -405,9 +405,9 @@ export default function EventDetail() {
                 <TabsTrigger value="register">Бүртгүүлэх</TabsTrigger>
                 <TabsTrigger value="invitations" className="relative">
                   Хүсэлтүүд
-                  {invitations.length > 0 && (
+                  {invitations.filter((inv: any) => inv.status === 'pending').length > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      {invitations.length}
+                      {invitations.filter((inv: any) => inv.status === 'pending').length}
                     </span>
                   )}
                 </TabsTrigger>
@@ -592,6 +592,21 @@ export default function EventDetail() {
                                       <h3 className="font-semibold">
                                         {invitation.teamName || formatParticipationType(invitation.eventType)}
                                       </h3>
+                                      {invitation.status === 'accepted' && (
+                                        <Badge variant="secondary" className="ml-2">
+                                          Зөвшөөрсөн
+                                        </Badge>
+                                      )}
+                                      {invitation.status === 'completed' && (
+                                        <Badge variant="default" className="ml-2 bg-green-600">
+                                          Баг үүссэн
+                                        </Badge>
+                                      )}
+                                      {invitation.status === 'rejected' && (
+                                        <Badge variant="destructive" className="ml-2">
+                                          Татгалзсан
+                                        </Badge>
+                                      )}
                                     </div>
                                     <div className="text-sm text-muted-foreground space-y-1">
                                       <p>
@@ -605,37 +620,63 @@ export default function EventDetail() {
                                       <p className="text-xs text-gray-400">
                                         {format(new Date(invitation.createdAt), 'yyyy.MM.dd HH:mm')}
                                       </p>
+                                      {invitation.status === 'accepted' && (
+                                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                                          Бусад гишүүд зөвшөөрөхийг хүлээж байна...
+                                        </p>
+                                      )}
+                                      {invitation.status === 'completed' && (
+                                        <p className="text-xs text-green-600 dark:text-green-400 mt-2">
+                                          Баг/хос амжилттай үүслээ. Оролцогчдын жагсаалтаас үзнэ үү.
+                                        </p>
+                                      )}
                                     </div>
                                   </div>
                                   <div className="flex gap-2">
-                                    <Button
-                                      size="sm"
-                                      variant="default"
-                                      className="flex items-center gap-1"
-                                      onClick={() => respondToInvitationMutation.mutate({ 
-                                        invitationId: invitation.id, 
-                                        action: 'accept' 
-                                      })}
-                                      disabled={respondToInvitationMutation.isPending}
-                                      data-testid={`button-accept-${invitation.id}`}
-                                    >
-                                      <Check className="w-4 h-4" />
-                                      Зөвшөөрөх
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="flex items-center gap-1"
-                                      onClick={() => respondToInvitationMutation.mutate({ 
-                                        invitationId: invitation.id, 
-                                        action: 'reject' 
-                                      })}
-                                      disabled={respondToInvitationMutation.isPending}
-                                      data-testid={`button-reject-${invitation.id}`}
-                                    >
-                                      <XIcon className="w-4 h-4" />
-                                      Татгалзах
-                                    </Button>
+                                    {invitation.status === 'pending' && (
+                                      <>
+                                        <Button
+                                          size="sm"
+                                          variant="default"
+                                          className="flex items-center gap-1"
+                                          onClick={() => respondToInvitationMutation.mutate({ 
+                                            invitationId: invitation.id, 
+                                            action: 'accept' 
+                                          })}
+                                          disabled={respondToInvitationMutation.isPending}
+                                          data-testid={`button-accept-${invitation.id}`}
+                                        >
+                                          <Check className="w-4 h-4" />
+                                          Зөвшөөрөх
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="flex items-center gap-1"
+                                          onClick={() => respondToInvitationMutation.mutate({ 
+                                            invitationId: invitation.id, 
+                                            action: 'reject' 
+                                          })}
+                                          disabled={respondToInvitationMutation.isPending}
+                                          data-testid={`button-reject-${invitation.id}`}
+                                        >
+                                          <XIcon className="w-4 h-4" />
+                                          Татгалзах
+                                        </Button>
+                                      </>
+                                    )}
+                                    {invitation.status === 'completed' && (
+                                      <Button
+                                        size="sm"
+                                        variant="default"
+                                        className="flex items-center gap-1 bg-green-600 hover:bg-green-700"
+                                        onClick={() => setActiveTab('participants')}
+                                        data-testid={`button-view-team-${invitation.id}`}
+                                      >
+                                        <Users className="w-4 h-4" />
+                                        Баг үзэх
+                                      </Button>
+                                    )}
                                   </div>
                                 </div>
                               </CardContent>
