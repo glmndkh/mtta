@@ -1892,10 +1892,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let participants = await storage.getTournamentParticipants(tournamentId);
 
-      // Exclude current user from results
+      // Exclude current user from results (compare userId, not playerId)
       const currentUserId = req.session?.userId;
       if (currentUserId) {
-        participants = participants.filter(p => p.playerId !== currentUserId);
+        participants = participants.filter(p => String(p.userId) !== String(currentUserId));
+        console.log(`Excluded current user ${currentUserId} from participants list`);
       }
 
       // Filter by category if specified

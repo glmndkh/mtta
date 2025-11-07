@@ -1317,6 +1317,7 @@ export class DatabaseStorage implements IStorage {
       .select({
         id: tournamentParticipants.id,
         playerId: tournamentParticipants.playerId,
+        userId: players.userId,
         participationType: tournamentParticipants.participationType,
         registeredAt: tournamentParticipants.registeredAt,
         firstName: users.firstName,
@@ -1338,6 +1339,7 @@ export class DatabaseStorage implements IStorage {
     return participants.map(p => ({
       id: p.playerId!, // Use playerId as the main ID for autocomplete
       playerId: p.playerId,
+      userId: p.userId,
       participationType: p.participationType,
       registeredAt: p.registeredAt,
       firstName: p.firstName,

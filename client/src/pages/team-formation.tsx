@@ -105,7 +105,8 @@ export default function TeamFormation() {
       }
       
       // Double-check: Exclude current user (server should already do this)
-      filtered = filtered.filter((p: any) => String(p.playerId) !== String(user?.id));
+      // Use userId for comparison, not playerId
+      filtered = filtered.filter((p: any) => String(p.userId) !== String(user?.id));
       
       return filtered;
     },
@@ -115,8 +116,9 @@ export default function TeamFormation() {
   // Available players - server already filters by event, user, and search
   const availablePlayers = useMemo(() => {
     // Double-check exclusion: current user and already selected members
+    // Use userId for comparison, not playerId
     return allUsers.filter((player: any) => {
-      const isCurrentUser = String(player.playerId) === String(user?.id);
+      const isCurrentUser = String(player.userId) === String(user?.id);
       const isAlreadySelected = selectedMembers.find(m => String(m.id) === String(player.id));
       return !isCurrentUser && !isAlreadySelected;
     });
