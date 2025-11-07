@@ -3,6 +3,7 @@ import PageWithLoading from "@/components/PageWithLoading";
 import { JudgeCard } from "@/components/JudgeCard";
 import { useQuery } from "@tanstack/react-query";
 import buyanbatImage from "@/assets/councilimages/buyanbat.jpg";
+import damdinbayarImage from "@/assets/councilimages/Damdinbayar.jpeg";
 
 interface Judge {
   id: string;
@@ -60,16 +61,27 @@ export default function RefereesCouncil() {
             </div>
           ) : sortedJudges.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
-              {sortedJudges.map((judge) => (
-                <JudgeCard
-                  key={judge.id}
-                  image={judge.role === "chairperson" ? buyanbatImage : judge.imageUrl}
-                  role={judge.role || "member"}
-                  name={`${judge.lastName.charAt(0)}. ${judge.firstName}`}
-                  status={judge.judgeType}
-                  description={judge.description}
-                />
-              ))}
+              {sortedJudges.map((judge) => {
+                let judgeImage = judge.imageUrl;
+                
+                // Apply specific images based on judge
+                if (judge.role === "chairperson") {
+                  judgeImage = buyanbatImage;
+                } else if (judge.firstName === "Дамдинбаяр" && judge.lastName.charAt(0) === "Х") {
+                  judgeImage = damdinbayarImage;
+                }
+                
+                return (
+                  <JudgeCard
+                    key={judge.id}
+                    image={judgeImage}
+                    role={judge.role || "member"}
+                    name={`${judge.lastName.charAt(0)}. ${judge.firstName}`}
+                    status={judge.judgeType}
+                    description={judge.description}
+                  />
+                );
+              })}
             </div>
           ) : (
             <div className="text-center text-emerald-200 py-12">
