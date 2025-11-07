@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useLocation, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { mn } from "date-fns/locale";
 import Navigation from "@/components/navigation";
@@ -9,7 +10,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Calendar, Users, Clock, Trophy, DollarSign, ArrowLeft } from "lucide-react";
+import { MapPin, Calendar, Users, Clock, Trophy, DollarSign, ArrowLeft, Mail, Check, X as XIcon } from "lucide-react";
 import PageWithLoading from "@/components/PageWithLoading";
 import RegistrationForm from "@/components/RegistrationForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -130,6 +131,7 @@ export default function EventDetail() {
   const { user, isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const { toast } = useToast();
 
   // Fetch tournament data
   const { data: tournament, isLoading } = useQuery<Tournament>({
@@ -141,6 +143,63 @@ export default function EventDetail() {
   const { data: results } = useQuery<TournamentResults>({
     queryKey: ['/api/tournaments', id, 'results'],
     enabled: !!id,
+  });
+
+  // Fetch invitations for this tournament
+  const { data: invitations = [], refetch: refetchInvitations } = useQuery({
+    queryKey: ['/api/invitations/me', tournament?.id],
+    queryFn: async () => {
+      if (!tournament?.id || !user) return [];
+      const res = await fetch(`/api/invitations/me`, {
+        credentials: 'include'
+      });
+      if (!res.ok) return [];
+      const allInvitations = await res.json();
+      // Filter for this tournament only
+      return allInvitations.filter((inv: any) => inv.tournamentId === tournament.id && inv.status === 'pending');
+    },
+    enabled: !!user && !!tournament?.id,
+  });
+
+  // Respond to invitation (accept/reject)
+  const respondToInvitationMutation = useMutation({
+    mutationFn: async ({ invitationId, action }: { invitationId: string; action: 'accept' | 'reject' }) => {
+      const res = await fetch(`/api/invitations/${invitationId}/respond`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ action }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Хүсэлт боловсруулахад алдаа гарлаа');
+      }
+      return res.json();
+    },
+    onSuccess: (data, variables) => {
+      if (variables.action === 'accept') {
+        toast({
+          title: "Амжилттай!",
+          description: data.teamCreated ? "Баг/хос амжилттай үүслээ" : "Хүсэлтийг зөвшөөрлөө",
+        });
+      } else {
+        toast({
+          title: "Амжилттай!",
+          description: "Хүсэлтийг татгалзлаа",
+        });
+      }
+      refetchInvitations();
+      queryClient.invalidateQueries({ queryKey: [`/api/tournaments/${tournament?.id}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/registrations/me', tournament?.id] });
+      queryClient.invalidateQueries({ queryKey: [`/api/tournaments/${tournament?.id}/participants`] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Алдаа",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   // Check user registration status for any category
@@ -340,10 +399,18 @@ export default function EventDetail() {
           {/* Tabs Navigation */}
           <div className="sticky top-16 z-10 bg-white/80 backdrop-blur border-b mt-8">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="overview">Ерөнхий</TabsTrigger>
                 <TabsTrigger value="participants">Оролцогчид</TabsTrigger>
                 <TabsTrigger value="register">Бүртгүүлэх</TabsTrigger>
+                <TabsTrigger value="invitations" className="relative">
+                  Хүсэлтүүд
+                  {invitations.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {invitations.length}
+                    </span>
+                  )}
+                </TabsTrigger>
                 <TabsTrigger value="results">Үр дүн</TabsTrigger>
               </TabsList>
 
@@ -497,6 +564,87 @@ export default function EventDetail() {
                       queryClient.invalidateQueries({ queryKey: ["/api/registrations/me", tournament?.id] });
                     }}
                   />
+                </TabsContent>
+
+                <TabsContent value="invitations" className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Mail className="w-5 h-5" />
+                        Багийн/Хосын хүсэлтүүд
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {invitations.length === 0 ? (
+                        <div className="text-center py-12">
+                          <Mail className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                          <p className="text-gray-500">Одоогоор хүсэлт байхгүй байна</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {invitations.map((invitation: any) => (
+                            <Card key={invitation.id} className="border-2">
+                              <CardContent className="p-4">
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <Users className="w-4 h-4 text-primary" />
+                                      <h3 className="font-semibold">
+                                        {invitation.teamName || formatParticipationType(invitation.eventType)}
+                                      </h3>
+                                    </div>
+                                    <div className="text-sm text-muted-foreground space-y-1">
+                                      <p>
+                                        <span className="font-medium">Илгээсэн:</span>{' '}
+                                        {invitation.sender?.firstName} {invitation.sender?.lastName}
+                                      </p>
+                                      <p>
+                                        <span className="font-medium">Төрөл:</span>{' '}
+                                        {formatParticipationType(invitation.eventType)}
+                                      </p>
+                                      <p className="text-xs text-gray-400">
+                                        {format(new Date(invitation.createdAt), 'yyyy.MM.dd HH:mm')}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="default"
+                                      className="flex items-center gap-1"
+                                      onClick={() => respondToInvitationMutation.mutate({ 
+                                        invitationId: invitation.id, 
+                                        action: 'accept' 
+                                      })}
+                                      disabled={respondToInvitationMutation.isPending}
+                                      data-testid={`button-accept-${invitation.id}`}
+                                    >
+                                      <Check className="w-4 h-4" />
+                                      Зөвшөөрөх
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="flex items-center gap-1"
+                                      onClick={() => respondToInvitationMutation.mutate({ 
+                                        invitationId: invitation.id, 
+                                        action: 'reject' 
+                                      })}
+                                      disabled={respondToInvitationMutation.isPending}
+                                      data-testid={`button-reject-${invitation.id}`}
+                                    >
+                                      <XIcon className="w-4 h-4" />
+                                      Татгалзах
+                                    </Button>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </TabsContent>
 
                 <TabsContent value="results" className="space-y-8">
