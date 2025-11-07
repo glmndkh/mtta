@@ -1,7 +1,7 @@
+
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import { JudgeCard } from "@/components/JudgeCard";
-import { useQuery } from "@tanstack/react-query";
 import buyanbatImage from "@/assets/councilimages/buyanbat.jpg";
 import damdinbayarImage from "@/assets/councilimages/Damdinbayar.jpeg";
 import tsogzolmaaImage from "@/assets/councilimages/Tsogzolmaa.jpg";
@@ -10,24 +10,54 @@ interface Judge {
   id: string;
   firstName: string;
   lastName: string;
-  imageUrl?: string | null;
+  imageUrl: string;
   judgeType: "domestic" | "international";
-  role?: "chairperson" | "member" | null;
-  description?: string | null;
+  role: "chairperson" | "member";
+  description: string;
+  displayName?: string;
 }
 
 const teamImage = "https://images.unsplash.com/photo-1758518729685-f88df7890776?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjB0ZWFtJTIwbWVldGluZ3xlbnwxfHx8fDE3NjIzMzk4OTB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
 
-export default function RefereesCouncil() {
-  const { data: judges, isLoading, isError } = useQuery<Judge[]>({
-    queryKey: ["/api/judges"],
-  });
+// Static мэдээлэл
+const staticJudges: Judge[] = [
+  {
+    id: "1",
+    firstName: "Буянбат",
+    lastName: "Б",
+    imageUrl: buyanbatImage,
+    judgeType: "international",
+    role: "chairperson",
+    description: "Олон улсын шүүгч, Монгол Улсын Ширээний Теннисний Холбооны Шүүгчдийн Зөвлөлийн Дарга"
+  },
+  {
+    id: "2",
+    firstName: "Дамдинбаяр",
+    lastName: "Х",
+    imageUrl: damdinbayarImage,
+    judgeType: "domestic",
+    role: "member",
+    description: "Дотоодын шүүгч, Шүүгчдийн Зөвлөлийн Гишүүн"
+  },
+  {
+    id: "3",
+    firstName: "Цогзолмаа",
+    lastName: "Р",
+    imageUrl: tsogzolmaaImage,
+    judgeType: "domestic",
+    role: "member",
+    description: "Дотоодын шүүгч, Шүүгчдийн Зөвлөлийн Гишүүн",
+    displayName: "Т. Баттүшиг"
+  }
+];
 
-  const sortedJudges = judges?.sort((a, b) => {
+export default function RefereesCouncil() {
+  // Даргыг эхэнд байрлуулах
+  const sortedJudges = [...staticJudges].sort((a, b) => {
     if (a.role === "chairperson") return -1;
     if (b.role === "chairperson") return 1;
     return 0;
-  }) || [];
+  });
 
   return (
     <PageWithLoading>
@@ -50,49 +80,22 @@ export default function RefereesCouncil() {
         </div>
 
         <div className="max-w-7xl mx-auto px-6 py-20">
-          {isLoading ? (
-            <div className="text-center text-emerald-200">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-400 mx-auto"></div>
-              <p className="mt-4">Уншиж байна...</p>
-            </div>
-          ) : isError ? (
-            <div className="text-center text-emerald-200 py-12">
-              <p className="text-xl">Шүүгчдийн мэдээлэл ачаалахад алдаа гарлаа.</p>
-              <p className="text-sm mt-2">Дахин оролдоно уу.</p>
-            </div>
-          ) : sortedJudges.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
-              {sortedJudges.map((judge) => {
-                let judgeImage = judge.imageUrl;
-                let judgeName = `${judge.lastName.charAt(0)}. ${judge.firstName}`;
-                
-                // Apply specific images based on judge
-                if (judge.role === "chairperson") {
-                  judgeImage = buyanbatImage;
-                } else if (judge.firstName === "Дамдинбаяр" && judge.lastName.charAt(0) === "Х") {
-                  judgeImage = damdinbayarImage;
-                } else if (judge.firstName === "Цогзолмаа" && judge.lastName.charAt(0) === "Р") {
-                  judgeImage = tsogzolmaaImage;
-                  judgeName = "Т. Баттүшиг";
-                }
-                
-                return (
-                  <JudgeCard
-                    key={judge.id}
-                    image={judgeImage}
-                    role={judge.role || "member"}
-                    name={judgeName}
-                    status={judge.judgeType}
-                    description={judge.description}
-                  />
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center text-emerald-200 py-12">
-              <p className="text-xl">Шүүгчдийн мэдээлэл одоогоор байхгүй байна.</p>
-            </div>
-          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
+            {sortedJudges.map((judge) => {
+              const judgeName = judge.displayName || `${judge.lastName.charAt(0)}. ${judge.firstName}`;
+              
+              return (
+                <JudgeCard
+                  key={judge.id}
+                  image={judge.imageUrl}
+                  role={judge.role}
+                  name={judgeName}
+                  status={judge.judgeType}
+                  description={judge.description}
+                />
+              );
+            })}
+          </div>
         </div>
       </div>
     </PageWithLoading>
