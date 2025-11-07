@@ -297,18 +297,6 @@ export interface IStorage {
   deleteJudge(id: string): Promise<boolean>;
   getJudgeByUserId(userId: string): Promise<Judge | undefined>;
 
-  // Membership operations
-  getMembership(playerId: string): Promise<Membership | undefined>;
-  createMembership(membership: InsertMembership): Promise<Membership>;
-  updateMembershipPayment(id: string): Promise<void>;
-
-  // League operations
-  getLeague(id: string): Promise<League | undefined>;
-  createLeague(leagueData: any): Promise<League>;
-  updateLeague(id: string, leagueData: any): Promise<League | undefined>;
-  deleteLeague(id: string): Promise<boolean>;
-  getTeamsByLeague(leagueId: string): Promise<Team[]>;
-
   // Player tournament and match operations
   getPlayerTournamentMatches(playerId: string): Promise<any[]>;
   getPlayerMatchesWithDetails(playerId: string): Promise<any[]>;
@@ -325,13 +313,6 @@ export interface IStorage {
   updateLeagueTeam(teamId: string, teamData: any): Promise<any>;
   deleteLeagueTeam(teamId: string): Promise<boolean>;
   addTeamToLeague(leagueId: string, teamData: any): Promise<any>;
-
-  // Tournament team operations
-  createTournamentTeam(teamData: any): Promise<any>;
-  addPlayerToTournamentTeam(teamId: string, playerId: string, playerName: string): Promise<any>;
-  getTournamentTeams(tournamentId: string): Promise<any[]>;
-  getTournamentTeamById(teamId: string): Promise<any>;
-  deleteTournamentTeam(teamId: string): Promise<boolean>;
 
   // Tournament Results Operations
   getTournamentResults(tournamentId: string): Promise<TournamentResults | null>;
