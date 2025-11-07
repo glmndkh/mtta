@@ -114,11 +114,11 @@ export default function TeamFormation() {
 
   // Available players - server already filters by event, user, and search
   const availablePlayers = useMemo(() => {
-    // Only exclude already selected members (server handles the rest)
+    // Exclude current user and already selected members
     return allUsers.filter((player: any) => 
-      !selectedMembers.find(m => m.id === player.id)
+      player.playerId !== user?.id && !selectedMembers.find(m => m.id === player.id)
     );
-  }, [allUsers, selectedMembers]);
+  }, [allUsers, selectedMembers, user]);
 
   const handleAddMember = (player: any) => {
     if (selectedMembers.length >= maxMembers - 1) {
