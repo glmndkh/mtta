@@ -184,10 +184,17 @@ export default function TeamFormation() {
       return;
     }
 
-    if (selectedMembers.length < minMembers - 1 || selectedMembers.length > maxMembers - 1) {
+    // For doubles: need exactly 1 partner (total 2 with current user)
+    // For team: need 2-3 members (total 3-4 with current user)
+    const requiredMin = isTeam ? 2 : 1;
+    const requiredMax = isTeam ? 3 : 1;
+
+    if (selectedMembers.length < requiredMin || selectedMembers.length > requiredMax) {
       toast({
         title: "Алдаа",
-        description: `${isTeam ? 'Гишүүд' : 'Хамтрагч'} ${minMembers - 1}-${maxMembers - 1} байх ёстой`,
+        description: isTeam 
+          ? `Багт ${requiredMin}-${requiredMax} гишүүн нэмэх ёстой`
+          : `Яг 1 хамтрагч сонгох ёстой`,
         variant: "destructive",
       });
       return;
@@ -364,8 +371,8 @@ export default function TeamFormation() {
                   </h4>
                   <p className="text-sm text-blue-700 dark:text-blue-300">
                     {isTeam
-                      ? `Багийн гишүүдээ сонгоно уу. Баг нь ${minMembers}-${maxMembers} гишүүнтэй байх ёстой.`
-                      : `Хамтрагчаа сонгож хос бүрдүүлнэ үү. Хос нь ${minMembers} тамирчнаас бүрдэнэ.`
+                      ? `Багийн гишүүдээ сонгоно уу. Та нарын бүрэлдэхүүнд 3-4 гишүүн байх ёстой (танаас гадна 2-3 гишүүн нэмнэ).`
+                      : `Хамтрагчаа сонгож хос бүрдүүлнэ үү. Та нарын бүрэлдэхүүнд нийт 2 тамирчин байх ёстой (танаас гадна 1 хамтрагч сонгоно).`
                     }
                   </p>
                   {eventGender && eventGender !== 'mixed' && (
@@ -426,8 +433,8 @@ export default function TeamFormation() {
               <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-700">
                 <p className="text-sm text-green-700 dark:text-green-300 font-medium">
                   {isTeam
-                    ? `${selectedMembers.length + 1}/${maxMembers} гишүүн (мин. ${minMembers})`
-                    : `${selectedMembers.length}/${maxMembers - 1} хамтрагч (мин. ${minMembers - 1})`
+                    ? `${selectedMembers.length + 1}/4 гишүүн (3-4 байх ёстой)`
+                    : `${selectedMembers.length + 1}/2 тамирчин (танаас гадна 1 хамтрагч)`
                   }
                 </p>
               </div>
