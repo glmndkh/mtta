@@ -252,6 +252,12 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
     enabled: selectedTab === 'rank-requests',
   });
 
+  // Fetch membership configurations for the 'membership-config' tab
+  const { data: membershipConfigs = [], isLoading: membershipConfigsLoading } = useQuery({
+    queryKey: ['/api/membership-configs'],
+    enabled: selectedTab === 'membership-config',
+  });
+
   // Generic mutations
   const createMutation = useMutation({
     mutationFn: async ({ endpoint, data }: { endpoint: string; data: any }) => {
@@ -767,7 +773,10 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               onChange={(e) => setUserFilter(e.target.value)}
             />
           </div>
-
+          <Button onClick={() => setSelectedTab("membership-config")} variant="outline">
+            <Settings className="w-4 h-4 mr-2" />
+            Гишүүнчлэлийн тохиргоо
+          </Button>
         </div>
 
         {usersLoading ? (
@@ -781,6 +790,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               <TableHead>Утас</TableHead>
               <TableHead>Хүйс</TableHead>
               <TableHead>Роль</TableHead>
+              <TableHead>Гишүүнчлэл</TableHead>
               <TableHead>Үйлдэл</TableHead>
             </TableRow>
           </TableHeader>
@@ -795,6 +805,17 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                   <Badge variant={user.role === 'admin' ? 'destructive' : 'secondary'}>
                     {user.role}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  {user.membershipActive ? (
+                    <Badge variant="default" className="bg-green-600">
+                      Төлсөн
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary">
+                      Төлөөгүй
+                    </Badge>
+                  )}
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-2">
@@ -1909,6 +1930,209 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
       )}
     </div>
   );
+
+  const renderMembershipConfigTab = () => {
+    const [editingConfig, setEditingConfig] = useState<any>(null);
+    const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false);
+    const [configFormData, setConfigFormData] = useState({
+      type: 'adult',
+      annualFee: '',
+      description: '',
+      ageLimit: '',
+    });
+
+    const createConfigMutation = useMutation({
+      mutationFn: (data: any) => apiRequest('/api/membership-configs', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+      onSuccess: () => {
+        toast({ title: "Амжилттай", description: "Гишүүнчлэлийн тохиргоо үүсгэгдлээ" });
+        queryClient.invalidateQueries({ queryKey: ['/api/membership-configs'] });
+        setIsConfigDialogOpen(false);
+        setConfigFormData({ type: 'adult', annualFee: '', description: '', ageLimit: '' });
+      },
+      onError: () => {
+        toast({ title: "Алдаа", description: "Тохиргоо үүсгэхэд алдаа гарлаа", variant: "destructive" });
+      },
+    });
+
+    const updateConfigMutation = useMutation({
+      mutationFn: ({ id, data }: { id: string; data: any }) => apiRequest(`/api/membership-configs/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+      onSuccess: () => {
+        toast({ title: "Амжилттай", description: "Тохиргоо шинэчлэгдлээ" });
+        queryClient.invalidateQueries({ queryKey: ['/api/membership-configs'] });
+        setIsConfigDialogOpen(false);
+        setEditingConfig(null);
+      },
+      onError: () => {
+        toast({ title: "Алдаа", description: "Тохиргоо шинэчлэхэд алдаа гарлаа", variant: "destructive" });
+      },
+    });
+
+    const deleteConfigMutation = useMutation({
+      mutationFn: (id: string) => apiRequest(`/api/membership-configs/${id}`, { method: 'DELETE' }),
+      onSuccess: () => {
+        toast({ title: "Амжилттай", description: "Тохиргоо устгагдлаа" });
+        queryClient.invalidateQueries({ queryKey: ['/api/membership-configs'] });
+      },
+      onError: () => {
+        toast({ title: "Алдаа", description: "Тохиргоо устгахад алдаа гарлаа", variant: "destructive" });
+      },
+    });
+
+    const handleOpenCreateDialog = () => {
+      setEditingConfig(null);
+      setConfigFormData({ type: 'adult', annualFee: '', description: '', ageLimit: '' });
+      setIsConfigDialogOpen(true);
+    };
+
+    const handleOpenEditDialog = (config: any) => {
+      setEditingConfig(config);
+      setConfigFormData({
+        type: config.type,
+        annualFee: config.annualFee.toString(),
+        description: config.description || '',
+        ageLimit: config.ageLimit?.toString() || '',
+      });
+      setIsConfigDialogOpen(true);
+    };
+
+    const handleSubmit = () => {
+      if (editingConfig) {
+        updateConfigMutation.mutate({ id: editingConfig.id, data: configFormData });
+      } else {
+        createConfigMutation.mutate(configFormData);
+      }
+    };
+
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold">Гишүүнчлэлийн хураамжийн тохиргоо</h2>
+            <p className="text-sm text-muted-foreground mt-1">Насанд хүрэгчид болон хүүхдийн жилийн хураамжийг тохируулах</p>
+          </div>
+          <Button onClick={handleOpenCreateDialog}>
+            <Plus className="w-4 h-4 mr-2" />
+            Тохиргоо нэмэх
+          </Button>
+        </div>
+
+        {membershipConfigsLoading ? (
+          <div>Ачааллаж байна...</div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            {membershipConfigs.map((config: any) => (
+              <Card key={config.id}>
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle>{config.type === 'adult' ? 'Насанд хүрэгчид' : 'Хүүхэд'}</CardTitle>
+                      <CardDescription>{config.description || 'Тайлбар байхгүй'}</CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => handleOpenEditDialog(config)}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => deleteConfigMutation.mutate(config.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Жилийн хураамж:</span>
+                      <span className="font-semibold">{config.annualFee.toLocaleString()} ₮</span>
+                    </div>
+                    {config.ageLimit && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Насны хязгаар:</span>
+                        <span className="font-semibold">{config.ageLimit} хүртэл</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Статус:</span>
+                      <Badge variant={config.isActive ? 'default' : 'secondary'}>
+                        {config.isActive ? 'Идэвхтэй' : 'Идэвхгүй'}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        <Dialog open={isConfigDialogOpen} onOpenChange={setIsConfigDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{editingConfig ? 'Тохиргоо засах' : 'Шинэ тохиргоо нэмэх'}</DialogTitle>
+              <DialogDescription>Гишүүнчлэлийн хураамжийн мэдээллийг оруулна уу</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="type">Төрөл</Label>
+                <Select
+                  value={configFormData.type}
+                  onValueChange={(value) => setConfigFormData({ ...configFormData, type: value })}
+                  disabled={!!editingConfig}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="adult">Насанд хүрэгчид</SelectItem>
+                    <SelectItem value="child">Хүүхэд</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="annualFee">Жилийн хураамж (₮)</Label>
+                <Input
+                  id="annualFee"
+                  type="number"
+                  value={configFormData.annualFee}
+                  onChange={(e) => setConfigFormData({ ...configFormData, annualFee: e.target.value })}
+                  placeholder="20000"
+                />
+              </div>
+              <div>
+                <Label htmlFor="description">Тайлбар</Label>
+                <Textarea
+                  id="description"
+                  value={configFormData.description}
+                  onChange={(e) => setConfigFormData({ ...configFormData, description: e.target.value })}
+                  placeholder="Энэхүү гишүүнчлэлийн талаар тайлбар..."
+                />
+              </div>
+              {configFormData.type === 'child' && (
+                <div>
+                  <Label htmlFor="ageLimit">Насны хязгаар</Label>
+                  <Input
+                    id="ageLimit"
+                    type="number"
+                    value={configFormData.ageLimit}
+                    onChange={(e) => setConfigFormData({ ...configFormData, ageLimit: e.target.value })}
+                    placeholder="18"
+                  />
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsConfigDialogOpen(false)}>Болих</Button>
+              <Button onClick={handleSubmit}>{editingConfig ? 'Хадгалах' : 'Үүсгэх'}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  };
 
   const renderFormFields = () => {
     switch (selectedTab) {
@@ -4400,6 +4624,18 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                   ))}
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="membership-config">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Гишүүнчлэлийн хураамжийн тохиргоо</CardTitle>
+                  <CardDescription>Жилийн гишүүнчлэлийн хураамжийг удирдах</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {renderMembershipConfigTab()}
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="other" className="space-y-6">
