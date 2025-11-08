@@ -799,6 +799,12 @@ const ConfirmationStep = ({
                   const eventType = getEventType(event);
                   const isTeamOrDoubles = eventType === 'team' || eventType === 'doubles';
                   
+                  // Check if team is already formed for this event
+                  const eventInvitations = sentInvitations.filter((inv: any) => 
+                    inv.eventType === event && (inv.status === 'completed' || inv.status === 'accepted')
+                  );
+                  const hasCompletedTeam = eventInvitations.length > 0;
+                  
                   return (
                     <div key={index} className="bg-green-100 border border-green-300 rounded-lg p-3">
                       <div className="flex items-start justify-between gap-3">
@@ -811,8 +817,16 @@ const ConfirmationStep = ({
                               {getEventDetails(event)}
                             </div>
                           )}
+                          {hasCompletedTeam && (
+                            <div className="mt-2 flex items-center gap-1 text-sm text-green-700">
+                              <CheckCircle className="w-3 h-3" />
+                              <span className="font-medium">
+                                {eventType === 'team' ? 'Баг бүрэлдсэн' : 'Хос бүрэлдсэн'}
+                              </span>
+                            </div>
+                          )}
                         </div>
-                        {isTeamOrDoubles && (
+                        {isTeamOrDoubles && !hasCompletedTeam && (
                           <Button
                             onClick={() => handleFormTeam(event)}
                             size="sm"
@@ -890,6 +904,35 @@ const ConfirmationStep = ({
                 const type = getEventType(event);
                 const label = getEventLabel(event);
                 const actionText = type === 'team' ? 'Баг үүсгэх' : 'Хос үүсгэх';
+                
+                // Check if there are completed/accepted invitations for this event
+                const eventInvitations = sentInvitations.filter((inv: any) => 
+                  inv.eventType === event && (inv.status === 'completed' || inv.status === 'accepted')
+                );
+                const hasCompletedTeam = eventInvitations.length > 0;
+                
+                if (hasCompletedTeam) {
+                  // Show team composition instead of button
+                  return (
+                    <div key={index} className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                      <h4 className="font-semibold text-green-900 dark:text-green-100 mb-2 flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4" />
+                        {type === 'team' ? 'Багийн бүрэлдэхүүн' : 'Хосын бүрэлдэхүүн'}
+                      </h4>
+                      <div className="text-sm text-green-700 dark:text-green-300 mb-2">
+                        {label}
+                      </div>
+                      <div className="space-y-1">
+                        {eventInvitations.map((inv: any) => (
+                          <div key={inv.id} className="flex items-center gap-2 text-sm">
+                            <User className="w-3 h-3" />
+                            <span>{formatName(inv.receiver?.firstName, inv.receiver?.lastName)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
                 
                 return (
                   <div key={index} className="flex justify-center">
