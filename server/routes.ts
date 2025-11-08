@@ -2160,6 +2160,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
+  // Get sent invitations for a tournament
+  app.get(
+    "/api/tournaments/:tournamentId/invitations/sent",
+    requireAuth,
+    async (req: any, res) => {
+      try {
+        const userId = req.session.userId;
+        const { tournamentId } = req.params;
+
+        const sentInvitations = await db
+          .select({
+            id: teamInvitations.id,
+            tournamentId: teamInvitations.tournamentId,
+            eventType: teamInvitations.eventType,
+            teamName: teamInvitations.teamName,
+            status: teamInvitations.status,
+            createdAt: teamInvitations.createdAt,
+            receiver: {
+              id: users.id,
+              firstName: users.firstName,
+              lastName: users.lastName,
+            }
+          })
+          .from(teamInvitations)
+          .leftJoin(users, eq(teamInvitations.receiverId, users.id))
+          .where(
+            and(
+              eq(teamInvitations.senderId, userId),
+              eq(teamInvitations.tournamentId, tournamentId)
+            )
+          );
+
+        res.json(sentInvitations);
+      } catch (e) {
+        console.error("Error fetching sent invitations:", e);
+        res.status(500).json({ message: "Хүсэлт авахад алдаа гарлаа" });
+      }
+    }
+  );
+
   // Accept/reject invitation
   app.post(
     "/api/invitations/:id/respond",

@@ -758,6 +758,12 @@ const ConfirmationStep = ({
     setLocation(`/tournament/${tournament.id}/form-team?event=${encodeURIComponent(event)}`);
   };
 
+  // Fetch sent invitations for this tournament
+  const { data: sentInvitations = [] } = useQuery<any[]>({
+    queryKey: [`/api/tournaments/${tournament.id}/invitations/sent`],
+    enabled: !!tournament.id,
+  });
+
   return (
     <Card className="max-w-2xl mx-auto">
       <CardHeader>
@@ -831,6 +837,50 @@ const ConfirmationStep = ({
             </div>
           </div>
         </div>
+
+        {/* Sent Invitations Section */}
+        {sentInvitations && sentInvitations.length > 0 && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+            <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-3">
+              Илгээсэн хүсэлтүүд
+            </h4>
+            <div className="space-y-2">
+              {sentInvitations.map((invitation: any) => (
+                <div key={invitation.id} className="bg-white dark:bg-gray-800 p-3 rounded border border-blue-100 dark:border-gray-700">
+                  <div className="flex justify-between items-center">
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        Хүсэлт илгээсэн: {formatName(invitation.receiver?.firstName, invitation.receiver?.lastName)}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {getEventLabel(invitation.eventType)}
+                      </div>
+                    </div>
+                    <Badge
+                      variant={
+                        invitation.status === 'accepted' ? 'default' :
+                        invitation.status === 'rejected' ? 'destructive' :
+                        invitation.status === 'completed' ? 'default' :
+                        'secondary'
+                      }
+                      className={
+                        invitation.status === 'accepted' ? 'bg-green-600 text-white' :
+                        invitation.status === 'completed' ? 'bg-blue-600 text-white' :
+                        invitation.status === 'rejected' ? 'bg-red-600 text-white' :
+                        'bg-yellow-600 text-white'
+                      }
+                    >
+                      {invitation.status === 'accepted' ? 'Зөвшөөрсөн' :
+                       invitation.status === 'rejected' ? 'Цуцалсан' :
+                       invitation.status === 'completed' ? 'Бүртгэгдсэн' :
+                       'Хүлээгдэж байна'}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Team/Doubles Formation Section */}
         {hasTeamOrDoubles && (
