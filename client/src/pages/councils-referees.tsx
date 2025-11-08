@@ -83,7 +83,7 @@ export default function RefereesCouncil() {
             <div className="text-center space-y-4 px-6">
               <h1 className="text-5xl font-bold text-emerald-50" data-testid="heading-council">Шүүгчдийн Зөвлөл</h1>
               <p className="text-emerald-200 text-lg max-w-2xl mx-auto">
-                Монгол Улсын шүүхийн тогтолцоог төлөөлөн ажилладаг мэргэжлийн шүүгчдийн баг
+                Монгол Ширээний Теннисний Холбооны шүүгчдийн баг
               </p>
             </div>
           </div>
