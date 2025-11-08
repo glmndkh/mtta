@@ -14,17 +14,50 @@ interface NationalTeamPlayer {
   imageUrl?: string | null;
 }
 
-// Статик өгөгдөл
+// Статик өгөгдөл - Үндэсний шигшээний тоглогчид
 const staticPlayers: NationalTeamPlayer[] = [
-  // Энд үндэсний шигшээний тоглогчдын мэдээллийг нэмнэ
-  // Жишээ:
-  // {
-  //   id: "1",
-  //   firstName: "Батболд",
-  //   lastName: "Доржийн",
-  //   age: 25,
-  //   imageUrl: null
-  // },
+  {
+    id: "nt-player-1",
+    firstName: "Батболд",
+    lastName: "Доржийн",
+    age: 25,
+    imageUrl: null
+  },
+  {
+    id: "nt-player-2",
+    firstName: "Энхбаяр",
+    lastName: "Цэрэнбат",
+    age: 28,
+    imageUrl: null
+  },
+  {
+    id: "nt-player-3",
+    firstName: "Мөнхбат",
+    lastName: "Ганбат",
+    age: 24,
+    imageUrl: null
+  },
+  {
+    id: "nt-player-4",
+    firstName: "Түвшинбаяр",
+    lastName: "Бямбажав",
+    age: 27,
+    imageUrl: null
+  },
+  {
+    id: "nt-player-5",
+    firstName: "Алтанцэцэг",
+    lastName: "Пүрэвдорж",
+    age: 23,
+    imageUrl: null
+  },
+  {
+    id: "nt-player-6",
+    firstName: "Оюунчимэг",
+    lastName: "Гэрэлт",
+    age: 26,
+    imageUrl: null
+  }
 ];
 
 export default function NationalTeamPage() {
