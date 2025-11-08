@@ -5,6 +5,9 @@ import { JudgeCard } from "@/components/JudgeCard";
 import buyanbatImage from "@/assets/councilimages/buyanbat.jpg";
 import damdinbayarImage from "@/assets/councilimages/Damdinbayar.jpeg";
 import tsogzolmaaImage from "@/assets/councilimages/Tsogzolmaa.jpg";
+import tumenImage from "@/assets/councilimages/Tumen.jpg";
+import teamImage from "@/assets/councilimages/Shuugchid.jpg"
+
 
 interface Judge {
   id: string;
@@ -17,7 +20,6 @@ interface Judge {
   displayName?: string;
 }
 
-const teamImage = "https://images.unsplash.com/photo-1758518729685-f88df7890776?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjB0ZWFtJTIwbWVldGluZ3xlbnwxfHx8fDE3NjIzMzk4OTB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
 
 // Static мэдээлэл
 const staticJudges: Judge[] = [
@@ -35,21 +37,29 @@ const staticJudges: Judge[] = [
     firstName: "Дамдинбаяр",
     lastName: "Х",
     imageUrl: damdinbayarImage,
-    judgeType: "domestic",
+    judgeType: "international",
     role: "member",
-    description: "Дотоодын шүүгч, Шүүгчдийн Зөвлөлийн Гишүүн"
+    description: "Олон улсын шүүгч, Шүүгчдийн Зөвлөлийн Гишүүн"
   },
   {
     id: "3",
     firstName: "Цогзолмаа",
     lastName: "Р",
     imageUrl: tsogzolmaaImage,
-    judgeType: "domestic",
+    judgeType: "international",
     role: "member",
-    description: "Дотоодын шүүгч, Шүүгчдийн Зөвлөлийн Гишүүн",
-    displayName: "Т. Баттүшиг"
-  }
-];
+    description: "Олон улсын шүүгч, Шүүгчдийн Зөвлөлийн Гишүүн",
+    displayName: "Р. Цогзолмаа"
+  },
+  {
+    id: "4",
+    firstName: "Түмэн-Өлзий",
+    lastName: "Д",
+    imageUrl: tumenImage,
+    judgeType: "international",
+    role: "member",
+    description: "Олон улсын шүүгч, Шүүгчдийн Зөвлөлийн Гишүүн"
+  }];
 
 export default function RefereesCouncil() {
   // Даргыг эхэнд байрлуулах
