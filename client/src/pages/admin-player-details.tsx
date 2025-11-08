@@ -50,31 +50,32 @@ export default function AdminPlayerDetailsPage() {
     retry: false,
   });
 
-  // Fetch player matches
+  // Fetch player matches (use playerData.id instead of params.id for correct player ID)
   const { data: matches = [] } = useQuery({
-    queryKey: ["/api/players", params?.id, "matches"],
-    enabled: !!params?.id,
+    queryKey: ["/api/players", playerData?.id, "matches"],
+    enabled: !!playerData?.id,
     retry: false,
   });
 
-  // Fetch tournament matches
+  // Fetch tournament matches (use playerData.id instead of params.id for correct player ID)
   const { data: tournamentMatches = [], isLoading: isLoadingTournamentMatches } = useQuery({
-    queryKey: ["/api/players", params?.id, "tournament-matches"],
-    enabled: !!params?.id,
+    queryKey: ["/api/players", playerData?.id, "tournament-matches"],
+    enabled: !!playerData?.id,
     retry: false,
   });
 
   // Debug logging
   useEffect(() => {
+    console.log('Player Data ID:', playerData?.id, 'URL Param ID:', params?.id);
     if (tournamentMatches && tournamentMatches.length > 0) {
       console.log('Tournament Matches Data:', tournamentMatches);
     }
-  }, [tournamentMatches]);
+  }, [tournamentMatches, playerData, params]);
 
-  // Fetch achievements
+  // Fetch achievements (use playerData.id instead of params.id for correct player ID)
   const { data: achievements = [] } = useQuery({
-    queryKey: ["/api/players", params?.id, "achievements"],
-    enabled: !!params?.id,
+    queryKey: ["/api/players", playerData?.id, "achievements"],
+    enabled: !!playerData?.id,
     retry: false,
   });
 
