@@ -2165,7 +2165,8 @@ export class DatabaseStorage implements IStorage {
           }
 
           if (Array.isArray(knockoutData)) {
-            const totalRounds = Math.max(...knockoutData.map((m: any) => m.round || 0));
+            console.log(`[Storage] Processing ${knockoutData.length} knockout matches`);
+            const totalRounds = Math.max(...knockoutData.map((m: any) => parseInt(m.round) || 0));
             for (const match of knockoutData) {
               let isPlayerInMatch = false;
               let isPlayer1 = false;
@@ -2177,21 +2178,37 @@ export class DatabaseStorage implements IStorage {
                 isPlayer1 = match.player1?.id === playerId || match.player1?.id === userId;
               }
 
-              if (isPlayerInMatch && match.score) {
-                const opponent = isPlayer1 ? match.player2 : match.player1;
-                // Check winner by both player ID and user ID
-                const playerRecord = await db.select().from(players).where(eq(players.id, playerId)).limit(1);
-                const isWinner = match.winner?.id === playerId ||
-                  (playerRecord.length > 0 && match.winner?.id === playerRecord[0].userId);
+              // Check if match is finished (has scores)
+              if (isPlayerInMatch && match.isFinished && (match.player1Score || match.player2Score)) {
+                try {
+                  const opponent = isPlayer1 ? match.player2 : match.player1;
+                  // Check winner by both player ID and user ID
+                  const isWinner = match.winner?.id === playerId ||
+                    (userId && match.winner?.id === userId);
 
-                tournamentMatches.push({
-                  tournament: result.tournament,
-                  stage: `Шилжилтийн шат - ${getRoundTitle(match.round || 0, totalRounds)}`,
-                  opponent: opponent,
-                  result: match.score,
-                  isWinner: isWinner,
-                  date: result.tournament.startDate,
-                });
+                  // Build result string from player scores
+                  const scoreResult = isPlayer1 
+                    ? `${match.player1Score}-${match.player2Score}`
+                    : `${match.player2Score}-${match.player1Score}`;
+
+                  const tournamentInfo = result.tournament;
+                  if (!tournamentInfo) {
+                    console.error('[Storage] Tournament info is undefined for match:', match.id);
+                    continue;
+                  }
+
+                  tournamentMatches.push({
+                    tournament: tournamentInfo,
+                    stage: `Шилжилтийн шат - ${match.roundName || getRoundTitle(parseInt(match.round) || 0, totalRounds)}`,
+                    opponent: opponent,
+                    result: scoreResult,
+                    isWinner: isWinner,
+                    date: tournamentInfo.startDate,
+                  });
+                  console.log(`[Storage] Added knockout match: ${match.roundName} vs ${opponent?.name}, result: ${scoreResult}`);
+                } catch (innerError) {
+                  console.error('[Storage] Error adding knockout match:', innerError, 'Match:', match.id);
+                }
               }
             }
           }
