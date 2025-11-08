@@ -27,6 +27,7 @@ import {
   leaguePlayerMatches,
   passwordResetTokens,
   rankChangeRequests,
+  membershipConfig,
   type User,
   type UpsertUser,
   type Player,
@@ -77,6 +78,8 @@ import {
   type TournamentParticipant,
   type InsertRankChangeRequest,
   type RankChangeRequest,
+  type MembershipConfig,
+  type InsertMembershipConfig,
 } from "../shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, or, gt, ilike } from "drizzle-orm";
@@ -339,6 +342,15 @@ export interface IStorage {
   getRankChangeRequestsByUserId(userId: string): Promise<any[]>;
   updateRankChangeRequestStatus(id: string, status: string, adminId: string, adminNotes?: string): Promise<RankChangeRequest | null>;
   deleteRankChangeRequest(id: string): Promise<boolean>;
+
+  // Membership Configuration Methods
+  getAllMembershipConfigs(): Promise<MembershipConfig[]>;
+  getMembershipConfig(id: string): Promise<MembershipConfig | undefined>;
+  getMembershipConfigByType(type: 'adult' | 'child'): Promise<MembershipConfig | undefined>;
+  createMembershipConfig(config: InsertMembershipConfig): Promise<MembershipConfig>;
+  updateMembershipConfig(id: string, config: Partial<InsertMembershipConfig>): Promise<MembershipConfig | undefined>;
+  deleteMembershipConfig(id: string): Promise<boolean>;
+  updateUserMembershipStatus(userId: string, data: { membershipActive: boolean; membershipStartDate?: Date; membershipEndDate?: Date; membershipAmount?: number }): Promise<User | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2749,6 +2761,63 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return created;
     }
+  }
+
+  // Membership Configuration Operations
+  async getAllMembershipConfigs(): Promise<MembershipConfig[]> {
+    return await db.select().from(membershipConfig).orderBy(membershipConfig.type);
+  }
+
+  async getMembershipConfig(id: string): Promise<MembershipConfig | undefined> {
+    const [config] = await db.select().from(membershipConfig).where(eq(membershipConfig.id, id));
+    return config;
+  }
+
+  async getMembershipConfigByType(type: 'adult' | 'child'): Promise<MembershipConfig | undefined> {
+    const [config] = await db.select().from(membershipConfig).where(
+      and(
+        eq(membershipConfig.type, type),
+        eq(membershipConfig.isActive, true)
+      )
+    ).limit(1);
+    return config;
+  }
+
+  async createMembershipConfig(config: InsertMembershipConfig): Promise<MembershipConfig> {
+    const [created] = await db.insert(membershipConfig).values(config).returning();
+    return created;
+  }
+
+  async updateMembershipConfig(id: string, configData: Partial<InsertMembershipConfig>): Promise<MembershipConfig | undefined> {
+    const [updated] = await db
+      .update(membershipConfig)
+      .set({
+        ...configData,
+        updatedAt: new Date(),
+      })
+      .where(eq(membershipConfig.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteMembershipConfig(id: string): Promise<boolean> {
+    const result = await db.delete(membershipConfig).where(eq(membershipConfig.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async updateUserMembershipStatus(userId: string, data: { membershipActive: boolean; membershipStartDate?: Date; membershipEndDate?: Date; membershipAmount?: number }): Promise<User | undefined> {
+    const [updated] = await db
+      .update(users)
+      .set({
+        membershipActive: data.membershipActive,
+        membershipStartDate: data.membershipStartDate,
+        membershipEndDate: data.membershipEndDate,
+        membershipAmount: data.membershipAmount,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return updated;
   }
 }
 
