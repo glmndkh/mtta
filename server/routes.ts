@@ -985,9 +985,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/players/:id/tournament-matches", async (req, res) => {
     try {
+      console.log(`[API] Fetching tournament matches for player: ${req.params.id}`);
       const tournamentMatches = await storage.getPlayerTournamentMatches(
         req.params.id,
       );
+      console.log(`[API] Found ${tournamentMatches.length} tournament matches for player ${req.params.id}`);
+      if (tournamentMatches.length > 0) {
+        console.log(`[API] Sample match:`, JSON.stringify(tournamentMatches[0], null, 2));
+      }
       res.json(tournamentMatches);
     } catch (e) {
       console.error("Error fetching player tournament matches:", e);

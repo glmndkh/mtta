@@ -2064,11 +2064,13 @@ export class DatabaseStorage implements IStorage {
 
   // Player tournament match history
   async getPlayerTournamentMatches(playerId: string): Promise<any[]> {
+    console.log(`[Storage] Getting tournament matches for playerId: ${playerId}`);
     const tournamentMatches: any[] = [];
 
     // Get player's user ID for matching
     const playerRecord = await db.select().from(players).where(eq(players.id, playerId)).limit(1);
     const userId = playerRecord.length > 0 ? playerRecord[0].userId : null;
+    console.log(`[Storage] Player record found: ${playerRecord.length > 0}, userId: ${userId}`);
 
     // Get all published tournament results where this player participated
     const results = await db
@@ -2079,6 +2081,8 @@ export class DatabaseStorage implements IStorage {
       .from(tournamentResults)
       .innerJoin(tournaments, eq(tournamentResults.tournamentId, tournaments.id))
       .where(eq(tournamentResults.isPublished, true));
+    
+    console.log(`[Storage] Found ${results.length} published tournament results to check`);
 
     for (const result of results) {
       const { groupStageResults, knockoutResults, finalRankings } = result.tournamentResults;
