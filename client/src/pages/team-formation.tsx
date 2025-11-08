@@ -77,7 +77,7 @@ export default function TeamFormation() {
   });
 
   // Check if user already has a team for this event type
-  const { data: existingTeam } = useQuery({
+  const { data: existingTeam, refetch: refetchExistingTeam } = useQuery({
     queryKey: ['/api/invitations/me', tournamentId, eventType],
     queryFn: async () => {
       const res = await fetch(`/api/invitations/me`, { credentials: 'include' });
@@ -94,6 +94,22 @@ export default function TeamFormation() {
     },
     enabled: !!user && !!tournamentId && !!eventType,
   });
+
+  // Refetch when component mounts or page gains focus
+  useEffect(() => {
+    refetchExistingTeam();
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refetchExistingTeam();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refetchExistingTeam]);
 
   // Fetch all registered participants for this tournament and event
   const { data: allUsers = [], isLoading: isLoadingUsers } = useQuery({
@@ -187,8 +203,10 @@ export default function TeamFormation() {
     onSuccess: () => {
       toast({
         title: "Амжилттай!",
-        description: `${isTeam ? 'Багийн' : 'Хосын'} хүсэлт илгээгдлээ`,
+        description: `${isTeam ? 'Багийн' : 'Хосын'} хүсэлт илгээгдлээ. Бүх гишүүд зөвшөөрсний дараа баталгаажна.`,
       });
+      // Refetch to check for team status
+      refetchExistingTeam();
       setLocation(`/events/${tournamentId}`);
     },
     onError: (error: Error) => {
@@ -389,37 +407,53 @@ export default function TeamFormation() {
           </CardHeader>
 
           <CardContent className="space-y-6">
-            {/* Existing Team Warning */}
+            {/* Existing Team Confirmation Display */}
             {existingTeam && (
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
+              <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg border-2 border-green-500 dark:border-green-700">
                 <div className="flex gap-3">
-                  <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <h4 className="font-semibold text-yellow-900 dark:text-yellow-100 mb-2">
-                      Та энэ ангилалд аль хэдийн {isTeam ? 'багтай' : 'хостой'} байна
+                    <h4 className="text-lg font-bold text-green-900 dark:text-green-100 mb-2">
+                      {isTeam ? 'Багийн' : 'Хосын'} бүрэлдэхүүн баталгаажлаа! ✓
                     </h4>
-                    <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-3">
-                      Нэг хүн тэмцээний нэг ангилалд зөвхөн нэг {isTeam ? 'багт' : 'хост'} орох боломжтой.
+                    {existingTeam.teamName && isTeam && (
+                      <p className="text-base font-semibold text-green-800 dark:text-green-200 mb-3">
+                        Багийн нэр: {existingTeam.teamName}
+                      </p>
+                    )}
+                    <p className="text-sm text-green-700 dark:text-green-300 mb-4">
+                      Бүх гишүүд хүсэлтийг зөвшөөрсөн тул {isTeam ? 'баг' : 'хос'} амжилттай үүслээ.
                     </p>
                     {existingTeam.teamMembers && existingTeam.teamMembers.length > 0 && (
-                      <div className="mt-3 p-3 bg-white dark:bg-gray-800 rounded border border-yellow-200 dark:border-yellow-700">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-                          {isTeam ? 'Багийн' : 'Хосын'} бүрэлдэхүүн:
+                      <div className="mt-3 p-4 bg-white dark:bg-gray-800 rounded-lg border-2 border-green-300 dark:border-green-600">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                          {isTeam ? '🏆 Багийн гишүүд:' : '🤝 Хосын бүрэлдэхүүн:'}
                         </p>
-                        <ul className="space-y-1">
+                        <ul className="space-y-2">
                           {existingTeam.teamMembers.map((member: any, idx: number) => (
-                            <li key={idx} className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                              <CheckCircle className="w-4 h-4 text-green-600" />
-                              {member.playerName}
+                            <li key={idx} className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/30 rounded">
+                              <CheckCircle className="w-5 h-5 text-green-600" />
+                              <span className="font-medium text-gray-900 dark:text-gray-100">
+                                {member.playerName}
+                              </span>
+                              {member.playerId === (user as any)?.id && (
+                                <Badge variant="outline" className="ml-auto text-xs bg-blue-100 text-blue-700">
+                                  Та
+                                </Badge>
+                              )}
                             </li>
                           ))}
                         </ul>
                       </div>
                     )}
+                    <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-700">
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        ℹ️ Та энэ ангилалд бүртгүүлсэн байна. Тэмцээний товч хэсэгт очиж бүх мэдээллийг харна уу.
+                      </p>
+                    </div>
                     <Button
                       onClick={() => setLocation(`/events/${tournamentId}`)}
-                      variant="outline"
-                      className="mt-4"
+                      className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white"
                     >
                       Тэмцээн рүү буцах
                     </Button>

@@ -2021,6 +2021,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: "Гишүүд хоосон байна" });
         }
 
+        // Check if sender already has a completed team for this event
+        const existingInvitations = await db
+          .select()
+          .from(teamInvitations)
+          .where(
+            and(
+              eq(teamInvitations.tournamentId, tournamentId),
+              eq(teamInvitations.eventType, eventType),
+              eq(teamInvitations.status, 'completed')
+            )
+          );
+
+        const userHasTeam = existingInvitations.some(
+          inv => inv.senderId === senderId || inv.receiverId === senderId
+        );
+
+        if (userHasTeam) {
+          return res.status(400).json({ 
+            message: "Та энэ ангилалд аль хэдийн баг/хостой байна" 
+          });
+        }
+
+        // Check if any of the invited members already have a team
+        for (const memberId of members) {
+          const memberHasTeam = existingInvitations.some(
+            inv => inv.senderId === memberId || inv.receiverId === memberId
+          );
+          
+          if (memberHasTeam) {
+            const user = await storage.getUser(memberId);
+            const memberName = user ? `${user.firstName} ${user.lastName}` : 'Тоглогч';
+            return res.status(400).json({ 
+              message: `${memberName} аль хэдийн өөр баг/хост байна` 
+            });
+          }
+        }
+
+        // Check for pending invitations from this sender for this event
+        const pendingInvitations = await db
+          .select()
+          .from(teamInvitations)
+          .where(
+            and(
+              eq(teamInvitations.tournamentId, tournamentId),
+              eq(teamInvitations.eventType, eventType),
+              eq(teamInvitations.senderId, senderId),
+              eq(teamInvitations.status, 'pending')
+            )
+          );
+
+        if (pendingInvitations.length > 0) {
+          return res.status(400).json({ 
+            message: "Та аль хэдийн хүсэлт илгээсэн байна. Бүх гишүүд зөвшөөрөх хүртэл хүлээнэ үү." 
+          });
+        }
+
         // Create invitation records for each member
         const invitations = await Promise.all(
           members.map(async (memberId: string) => {
