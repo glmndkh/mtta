@@ -850,3 +850,24 @@ export const insertLeaguePlayerMatchSchema = createInsertSchema(leaguePlayerMatc
 });
 export type InsertLeaguePlayerMatch = z.infer<typeof insertLeaguePlayerMatchSchema>;
 export type LeaguePlayerMatch = typeof leaguePlayerMatches.$inferSelect;
+
+// Membership configuration table
+export const membershipConfig = pgTable("membership_config", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  type: membershipTypeEnum("type").notNull(), // "adult" or "child"
+  annualFee: integer("annual_fee").notNull(), // Annual membership fee in tugrik
+  description: text("description"), // Optional description of the membership tier
+  ageLimit: integer("age_limit"), // Age threshold for child membership (e.g., 18)
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Membership configuration schemas
+export const insertMembershipConfigSchema = createInsertSchema(membershipConfig).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertMembershipConfig = z.infer<typeof insertMembershipConfigSchema>;
+export type MembershipConfig = typeof membershipConfig.$inferSelect;
