@@ -90,6 +90,14 @@ export default function AdminDashboard() {
   const [showDialog, setShowDialog] = useState(false); // State to control dialog visibility
   const [editingId, setEditingId] = useState<string | null>(null); // State to track the item being edited
   const [isDialogOpen, setIsDialogOpen] = useState(false); // State to control dialog visibility
+  const [isMembershipDialogOpen, setIsMembershipDialogOpen] = useState(false);
+  const [selectedUserForMembership, setSelectedUserForMembership] = useState<any>(null);
+  const [membershipFormData, setMembershipFormData] = useState({
+    membershipActive: false,
+    membershipStartDate: '',
+    membershipEndDate: '',
+    membershipAmount: '',
+  });
 
   const form = useForm<z.infer<typeof judgeSchema>>({
     resolver: zodResolver(judgeSchema),
@@ -348,6 +356,26 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         description: `Хүсэлт ${data.status === 'approved' ? 'батлагдлаа' : 'цуцлагдлаа'}`
       });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/rank-change-requests'] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Алдаа гарлаа", description: error.message, variant: "destructive" });
+    }
+  });
+
+  const updateMembershipMutation = useMutation({
+    mutationFn: async ({ userId, data }: { userId: string; data: any }) => {
+      const response = await apiRequest(`/api/admin/users/${userId}/membership`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) throw new Error('Гишүүнчлэлийн төлөв шинэчлэхэд алдаа гарлаа');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Амжилттай", description: "Гишүүнчлэлийн төлөв шинэчлэгдлээ" });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      setIsMembershipDialogOpen(false);
+      setSelectedUserForMembership(null);
     },
     onError: (error: any) => {
       toast({ title: "Алдаа гарлаа", description: error.message, variant: "destructive" });
@@ -822,6 +850,18 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                     <Button size="sm" variant="outline" onClick={() => setLocation(`/admin/player/${user.id}`)}>
                       <UserIcon className="w-4 h-4 mr-1" />
                       Details
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => {
+                      setSelectedUserForMembership(user);
+                      setMembershipFormData({
+                        membershipActive: user.membershipActive || false,
+                        membershipStartDate: user.membershipStartDate ? new Date(user.membershipStartDate).toISOString().split('T')[0] : '',
+                        membershipEndDate: user.membershipEndDate ? new Date(user.membershipEndDate).toISOString().split('T')[0] : '',
+                        membershipAmount: user.membershipAmount?.toString() || '',
+                      });
+                      setIsMembershipDialogOpen(true);
+                    }}>
+                      <Settings className="w-4 h-4" />
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => openEditDialog(user)}>
                       <Pencil className="w-4 h-4" />
@@ -4799,6 +4839,74 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               <DialogFooter>
                 <Button variant="outline" onClick={() => setImageModalOpen(false)}>
                   Хаах
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Membership Management Dialog */}
+          <Dialog open={isMembershipDialogOpen} onOpenChange={setIsMembershipDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Гишүүнчлэлийн төлөв удирдах</DialogTitle>
+                <DialogDescription>
+                  {selectedUserForMembership && `${formatName(selectedUserForMembership.firstName, selectedUserForMembership.lastName)}-ийн гишүүнчлэлийн мэдээллийг шинэчлэх`}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="membershipActive"
+                    checked={membershipFormData.membershipActive}
+                    onCheckedChange={(checked) => setMembershipFormData({ ...membershipFormData, membershipActive: checked })}
+                  />
+                  <Label htmlFor="membershipActive">Гишүүнчлэл төлсөн</Label>
+                </div>
+                <div>
+                  <Label htmlFor="membershipStartDate">Эхлэх огноо</Label>
+                  <Input
+                    id="membershipStartDate"
+                    type="date"
+                    value={membershipFormData.membershipStartDate}
+                    onChange={(e) => setMembershipFormData({ ...membershipFormData, membershipStartDate: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="membershipEndDate">Дуусах огноо</Label>
+                  <Input
+                    id="membershipEndDate"
+                    type="date"
+                    value={membershipFormData.membershipEndDate}
+                    onChange={(e) => setMembershipFormData({ ...membershipFormData, membershipEndDate: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="membershipAmount">Төлсөн дүн (₮)</Label>
+                  <Input
+                    id="membershipAmount"
+                    type="number"
+                    value={membershipFormData.membershipAmount}
+                    onChange={(e) => setMembershipFormData({ ...membershipFormData, membershipAmount: e.target.value })}
+                    placeholder="20000"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsMembershipDialogOpen(false)}>Болих</Button>
+                <Button onClick={() => {
+                  if (selectedUserForMembership) {
+                    updateMembershipMutation.mutate({
+                      userId: selectedUserForMembership.id,
+                      data: {
+                        membershipActive: membershipFormData.membershipActive,
+                        membershipStartDate: membershipFormData.membershipStartDate ? new Date(membershipFormData.membershipStartDate) : undefined,
+                        membershipEndDate: membershipFormData.membershipEndDate ? new Date(membershipFormData.membershipEndDate) : undefined,
+                        membershipAmount: membershipFormData.membershipAmount ? parseInt(membershipFormData.membershipAmount) : undefined,
+                      }
+                    });
+                  }
+                }} disabled={updateMembershipMutation.isPending}>
+                  {updateMembershipMutation.isPending ? 'Хадгалж байна...' : 'Хадгалах'}
                 </Button>
               </DialogFooter>
             </DialogContent>
