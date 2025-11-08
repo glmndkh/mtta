@@ -607,6 +607,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // -------------
+  // Membership Configuration
+  // -------------
+  app.get("/api/membership-configs", requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const configs = await storage.getAllMembershipConfigs();
+      res.json(configs);
+    } catch (e) {
+      console.error("Error fetching membership configs:", e);
+      res.status(500).json({ message: "Гишүүнчлэлийн тохиргоо авахад алдаа гарлаа" });
+    }
+  });
+
+  app.post("/api/membership-configs", requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const { type, annualFee, description, ageLimit } = req.body;
+
+      if (!type || !annualFee) {
+        return res.status(400).json({ message: "Төрөл болон жилийн хураамж шаардлагатай" });
+      }
+
+      const config = await storage.createMembershipConfig({
+        type,
+        annualFee: parseInt(annualFee),
+        description,
+        ageLimit: ageLimit ? parseInt(ageLimit) : null,
+      });
+
+      res.json({ message: "Гишүүнчлэлийн тохиргоо амжилттай үүсгэгдлээ", config });
+    } catch (e) {
+      console.error("Error creating membership config:", e);
+      res.status(500).json({ message: "Тохиргоо үүсгэхэд алдаа гарлаа" });
+    }
+  });
+
+  app.put("/api/membership-configs/:id", requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const { annualFee, description, ageLimit, isActive } = req.body;
+
+      const config = await storage.updateMembershipConfig(req.params.id, {
+        annualFee: annualFee ? parseInt(annualFee) : undefined,
+        description,
+        ageLimit: ageLimit ? parseInt(ageLimit) : null,
+        isActive,
+      });
+
+      if (!config) {
+        return res.status(404).json({ message: "Тохиргоо олдсонгүй" });
+      }
+
+      res.json({ message: "Тохиргоо амжилттай шинэчлэгдлээ", config });
+    } catch (e) {
+      console.error("Error updating membership config:", e);
+      res.status(500).json({ message: "Тохиргоо шинэчлэхэд алдаа гарлаа" });
+    }
+  });
+
+  app.delete("/api/membership-configs/:id", requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const success = await storage.deleteMembershipConfig(req.params.id);
+
+      if (!success) {
+        return res.status(404).json({ message: "Тохиргоо олдсонгүй" });
+      }
+
+      res.json({ message: "Тохиргоо амжилттай устгагдлаа" });
+    } catch (e) {
+      console.error("Error deleting membership config:", e);
+      res.status(500).json({ message: "Тохиргоо устгахад алдаа гарлаа" });
+    }
+  });
+
+  // Update user membership status (admin only)
+  app.put("/api/admin/users/:userId/membership", requireAuth, isAdminRole, async (req, res) => {
+    try {
+      const { membershipActive, membershipStartDate, membershipEndDate, membershipAmount } = req.body;
+
+      const user = await storage.updateUserMembershipStatus(req.params.userId, {
+        membershipActive,
+        membershipStartDate: membershipStartDate ? new Date(membershipStartDate) : undefined,
+        membershipEndDate: membershipEndDate ? new Date(membershipEndDate) : undefined,
+        membershipAmount: membershipAmount ? parseInt(membershipAmount) : undefined,
+      });
+
+      if (!user) {
+        return res.status(404).json({ message: "Хэрэглэгч олдсонгүй" });
+      }
+
+      res.json({ message: "Гишүүнчлэлийн төлөв амжилттай шинэчлэгдлээ", user });
+    } catch (e) {
+      console.error("Error updating user membership status:", e);
+      res.status(500).json({ message: "Гишүүнчлэлийн төлөв шинэчлэхэд алдаа гарлаа" });
+    }
+  });
+
+  // -------------
   // Profile
   // -------------
   // Get user profile
