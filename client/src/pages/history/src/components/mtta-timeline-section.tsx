@@ -23,14 +23,19 @@ const timelineEvents: TimelineEvent[] = [
     description: "Монголын шилдэг тамирчид дэлхийн аваргатай өрсөлдөж, шинэ амжилт тогтоолоо. Залуу үеийнхний дэвшил гайхалтай байлаа.",
     champions: [
       {
-        name: "Б. Энхтуул",
+        name: "Д. Алимаа",
         title: "Эмэгтэйчүүдийн ганцаарчилсан аварга",
+        image: "/picture/past-champions/D.Alimaa.jpeg"
+      },
+      {
+        name: "Б. Энхтуул",
+        title: "Ахмадын аварга",
         image: "/uploads/champion-1.jpg"
       },
       {
         name: "Д. Батбаяр",
-        title: "Эрэгтэйчүүдийн ганцаарчилсан аварга",
-        image: "/picture/past-champions/D.Alimaa.jpeg"
+        title: "Ахмадын аварга",
+        image: "/uploads/champion-2.jpg"
       }
     ]
   },
@@ -41,12 +46,12 @@ const timelineEvents: TimelineEvent[] = [
     champions: [
       {
         name: "С. Оюунцэцэг",
-        title: "Эмэгтэйчүүдийн ганцаарчилсан аварга",
+        title: "Улсын аварга",
         image: "/uploads/champion-3.jpg"
       },
       {
         name: "Г. Болд",
-        title: "Эрэгтэйчүүдийн ганцаарчилсан аварга",
+        title: "Улсын аварга",
         image: "/uploads/champion-4.jpg"
       }
     ]
@@ -58,12 +63,12 @@ const timelineEvents: TimelineEvent[] = [
     champions: [
       {
         name: "Н. Мөнхбаяр",
-        title: "Эмэгтэйчүүдийн ганцаарчилсан аварга",
+        title: "Өсвөрийн аварга",
         image: "/uploads/champion-5.jpg"
       },
       {
         name: "Ч. Ганбат",
-        title: "Эрэгтэйчүүдийн ганцаарчилсан аварга",
+        title: "Өсвөрийн аварга",
         image: "/uploads/champion-6.jpg"
       }
     ]
