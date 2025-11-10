@@ -1,0 +1,85 @@
+✅ Team/Pairs Approval Logic Fix Prompt (Replit Agent/Codex-д өгөх)
+
+Fix the approval logic for pairs and teams. Implement the following rules clearly:
+
+1. Pair formation logic
+
+When creating a pair, the creator sends requests to 2 people (including themselves).
+
+A pair must only be marked as “Бүртгэгдсэн / Confirmed” when both athletes have approved.
+
+If one athlete rejects, the pair status becomes “Татгалзсан / Rejected”.
+– Do not allow replacing that rejected athlete with a new person inside the same pair request.
+– The user must create a new pair request instead.
+
+If one athlete has approved and the other has not, status = “Хүлээгдэж байна / Pending”.
+
+UI must show:
+
+Each athlete’s status: “Зөвшөөрсөн”, “Хүлээгдэж байна”, “Татгалзсан”.
+
+Pair formation button must not show "Бүртгэгдсэн" until both approvals are complete.
+
+2. Team formation logic (bag)
+
+A team can be 3 people (or the required number in current setup).
+
+When the creator sends team join requests:
+
+A team is only confirmed when all invited members approve.
+
+If 1 or more members have not approved yet:
+
+“Баг бүрдүүлэх” button must be disabled.
+
+Instead show “Гишүүдийн зөвшөөрөл хүлээж байна” (Waiting for members).
+
+If at least one member rejects:
+
+Status becomes “Татгалзсан / Rejected”.
+
+Team cannot be marked as completed.
+
+UI should dynamically update approval statuses for each member.
+
+3. UI improvements
+
+Replace the “Баг бүрдүүлэх” enabled button with:
+
+Disabled button
+
+Grey color
+
+Text: “Гишүүдийн зөвшөөрөл хүлээж байна”
+
+Pair section:
+
+If someone rejects, show red status.
+
+Do NOT show “Хос бүрдсэн” unless both approved.
+
+4. Technical instructions
+
+Implement these changes by updating the backend logic:
+
+Add fields such as:
+
+approvals: {
+  userId: string;
+  status: "pending" | "approved" | "rejected";
+}[]
+
+
+Pair/team is confirmed only if:
+
+approvals.every(a => a.status === "approved")
+
+
+Pair/team is rejected if:
+
+approvals.some(a => a.status === "rejected")
+
+
+Otherwise status = pending.
+
+Ensure frontend buttons read these statuses directly and render state accordingly.
