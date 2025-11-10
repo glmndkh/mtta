@@ -2075,7 +2075,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         const memberRegistration = await storage.getTournamentRegistration(tournamentId, memberPlayer.id);
-        if (!memberRegistration || memberRegistration.participationType !== eventType) {
+        
+        console.log("Checking registration for member:", memberUser.firstName, memberUser.lastName);
+        console.log("Event type requested:", eventType);
+        console.log("Member registration:", memberRegistration);
+        console.log("Member participation type:", memberRegistration?.participationType);
+        
+        if (!memberRegistration) {
+          return res.status(400).json({
+            message: `${memberUser.firstName} ${memberUser.lastName} энэ тэмцээнд бүртгүүлээгүй байна`
+          });
+        }
+        
+        // Compare the participation types - they should be identical JSON strings
+        if (memberRegistration.participationType !== eventType) {
+          console.log("Participation type mismatch!");
+          console.log("Expected:", eventType);
+          console.log("Got:", memberRegistration.participationType);
           return res.status(400).json({
             message: `${memberUser.firstName} ${memberUser.lastName} энэ төрөлд бүртгүүлээгүй байна`
           });
