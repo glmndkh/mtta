@@ -43,7 +43,7 @@ const staticChampions: Champion[] = [
   },
   {
     id: "champion-4",
-    name: "Г. Болдбаатар",
+    name: "Г. Болд",
     year: "2023",
     gender: "male",
     championType: "улсын",

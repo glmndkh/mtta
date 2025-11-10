@@ -30,7 +30,7 @@ const timelineEvents: TimelineEvent[] = [
       {
         name: "Д. Батбаяр",
         title: "Эрэгтэйчүүдийн ганцаарчилсан аварга",
-        image: "/uploads/champion-2.jpg"
+        image: "/picture/past-champions/D.Alimaa.jpeg"
       }
     ]
   },
@@ -45,7 +45,7 @@ const timelineEvents: TimelineEvent[] = [
         image: "/uploads/champion-3.jpg"
       },
       {
-        name: "Г. Болдбаатар",
+        name: "Г. Болд",
         title: "Эрэгтэйчүүдийн ганцаарчилсан аварга",
         image: "/uploads/champion-4.jpg"
       }
