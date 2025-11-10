@@ -494,17 +494,37 @@ export const teamMembers = pgTable("team_members", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Team invitations table
+// Provisional teams table for tracking team formation before confirmation
+export const provisionalTeams = pgTable("provisional_teams", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  tournamentId: varchar("tournament_id").notNull().references(() => tournaments.id, { onDelete: "cascade" }),
+  eventType: text("event_type").notNull(),
+  creatorId: varchar("creator_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  teamName: text("team_name"),
+  status: text("status").notNull().default("pending"), // pending, confirmed, cancelled, expired
+  requiredMembers: integer("required_members").notNull(), // Number of members needed
+  acceptedMembers: integer("accepted_members").default(0), // Number who accepted
+  confirmedTeamId: varchar("confirmed_team_id").references(() => tournamentTeams.id, { onDelete: "set null" }),
+  expiresAt: timestamp("expires_at").notNull(), // 24-hour expiration
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Team invitations table - enhanced with provisional team tracking
 export const teamInvitations = pgTable("team_invitations", {
   id: serial("id").primaryKey(),
+  provisionalTeamId: varchar("provisional_team_id").references(() => provisionalTeams.id, { onDelete: "cascade" }),
   tournamentId: varchar("tournament_id").notNull().references(() => tournaments.id, { onDelete: "cascade" }),
   eventType: text("event_type").notNull(),
   senderId: varchar("sender_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   receiverId: varchar("receiver_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   teamName: text("team_name"),
   teamId: varchar("team_id").references(() => tournamentTeams.id, { onDelete: "set null" }),
-  status: text("status").notNull().default("pending"), // pending, accepted, rejected, completed
+  status: text("status").notNull().default("pending"), // pending, accepted, declined, completed, expired
+  expiresAt: timestamp("expires_at").notNull(), // 24-hour expiration
+  acceptedAt: timestamp("accepted_at"),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Relations
@@ -722,6 +742,23 @@ export const insertRankChangeRequestSchema = createInsertSchema(rankChangeReques
   reviewedAt: true,
 });
 export const selectRankChangeRequestSchema = createSelectSchema(rankChangeRequests);
+
+// Provisional teams schemas
+export const insertProvisionalTeamSchema = createInsertSchema(provisionalTeams).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export const selectProvisionalTeamSchema = createSelectSchema(provisionalTeams);
+
+// Team invitations schemas
+export const insertTeamInvitationSchema = createInsertSchema(teamInvitations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  acceptedAt: true,
+});
+export const selectTeamInvitationSchema = createSelectSchema(teamInvitations);
 
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
