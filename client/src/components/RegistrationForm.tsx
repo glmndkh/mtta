@@ -803,6 +803,10 @@ const ConfirmationStep = ({
                   const eventInvitations = sentInvitations.filter((inv: any) => inv.eventType === event);
                   const allCompleted = eventInvitations.length > 0 &&
                     eventInvitations.every((inv: any) => inv.status === 'completed');
+                  
+                  // Check if there are pending invitations for this event
+                  const hasPendingInvitation = eventInvitations.length > 0 &&
+                    eventInvitations.some((inv: any) => inv.status === 'pending');
 
                   return (
                     <div key={index} className="bg-green-100 border border-green-300 rounded-lg p-3">
@@ -824,14 +828,23 @@ const ConfirmationStep = ({
                               </span>
                             </div>
                           )}
+                          {hasPendingInvitation && (
+                            <div className="mt-2 flex items-center gap-1 text-sm text-blue-700">
+                              <span className="font-medium">
+                                ⏳ Урилга илгээсэн
+                              </span>
+                            </div>
+                          )}
                         </div>
                         {isTeamOrDoubles && !allCompleted && (
                           <Button
                             onClick={() => handleFormTeam(event)}
+                            disabled={hasPendingInvitation}
                             size="sm"
-                            className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
+                            className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                            data-testid={`button-form-${eventType}-${event}`}
                           >
-                            {eventType === 'team' ? 'Баг бүрдүүлэх' : 'Хос бүрдүүлэх'}
+                            {hasPendingInvitation ? '⏳ Хүлээгдэж байна' : (eventType === 'team' ? 'Баг бүрдүүлэх' : 'Хос бүрдүүлэх')}
                           </Button>
                         )}
                       </div>
