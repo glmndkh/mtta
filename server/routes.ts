@@ -47,6 +47,7 @@ import {
   teams, // Import new table
   teamMembers, // Import new table
   tournamentTeamPlayers, // Import tournament team players
+  provisionalTeams, // Import provisional teams table
 } from "../shared/schema";
 
 // Import real database
@@ -2044,66 +2045,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
 
-        // Check if sender already has a completed team for this event
-        const existingInvitations = await db
+        // Check if sender already has a confirmed team for this event
+        const existingConfirmedTeams = await db
           .select()
-          .from(teamInvitations)
+          .from(provisionalTeams)
           .where(
             and(
-              eq(teamInvitations.tournamentId, tournamentId),
-              eq(teamInvitations.eventType, eventType),
-              eq(teamInvitations.status, 'completed')
+              eq(provisionalTeams.tournamentId, tournamentId),
+              eq(provisionalTeams.eventType, eventType),
+              eq(provisionalTeams.creatorId, senderId),
+              eq(provisionalTeams.status, 'confirmed')
             )
           );
 
-        const userHasTeam = existingInvitations.some(
-          inv => inv.senderId === senderId || inv.receiverId === senderId
-        );
-
-        if (userHasTeam) {
+        if (existingConfirmedTeams.length > 0) {
           return res.status(400).json({ 
             message: "Та энэ ангилалд аль хэдийн баг/хостой байна" 
           });
         }
 
-        // Check if any of the invited members already have a team
-        for (const memberId of members) {
-          const memberHasTeam = existingInvitations.some(
-            inv => inv.senderId === memberId || inv.receiverId === memberId
-          );
-          
-          if (memberHasTeam) {
-            const user = await storage.getUser(memberId);
-            const memberName = user ? `${user.firstName} ${user.lastName}` : 'Тоглогч';
-            return res.status(400).json({ 
-              message: `${memberName} аль хэдийн өөр баг/хост байна` 
-            });
-          }
-        }
-
-        // Check for pending invitations from this sender for this event
-        const pendingInvitations = await db
+        // Check for existing pending provisional teams
+        const pendingTeams = await db
           .select()
-          .from(teamInvitations)
+          .from(provisionalTeams)
           .where(
             and(
-              eq(teamInvitations.tournamentId, tournamentId),
-              eq(teamInvitations.eventType, eventType),
-              eq(teamInvitations.senderId, senderId),
-              eq(teamInvitations.status, 'pending')
+              eq(provisionalTeams.tournamentId, tournamentId),
+              eq(provisionalTeams.eventType, eventType),
+              eq(provisionalTeams.creatorId, senderId),
+              eq(provisionalTeams.status, 'pending')
             )
           );
 
-        if (pendingInvitations.length > 0) {
+        if (pendingTeams.length > 0) {
           return res.status(400).json({ 
-            message: "Та аль хэдийн хүсэлт илгээсэн байна. Бүх гишүүд зөвшөөрөх хүртэл хүлээнэ үү." 
+            message: "Та аль хэдийн хүсэлт илгээсэн байна. Бүх гишүүд зөвшөөрөх хүртэл хүлээнэ үү эсвэл цуцална уу." 
           });
         }
 
-        // Create invitation records for each member
+        // Create provisional team
+        const [provisionalTeam] = await db.insert(provisionalTeams).values({
+          tournamentId,
+          eventType,
+          creatorId: senderId,
+          teamName: teamName || null,
+          requiredMembers: members.length,
+          acceptedMembers: 0,
+          status: 'pending',
+        }).returning();
+
+        // Create invitation records for each member linked to provisional team
         const invitations = await Promise.all(
           members.map(async (memberId: string) => {
             return db.insert(teamInvitations).values({
+              provisionalTeamId: provisionalTeam.id,
               tournamentId,
               eventType,
               senderId,
@@ -2116,6 +2111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         res.json({
           message: "Хүсэлт амжилттай илгээгдлээ",
+          provisionalTeamId: provisionalTeam.id,
           invitations: invitations.flat()
         });
       } catch (e) {
@@ -2272,64 +2268,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Update this invitation to accepted
           await db
             .update(teamInvitations)
-            .set({ status: 'accepted' })
+            .set({ status: 'accepted', acceptedAt: new Date() })
             .where(eq(teamInvitations.id, invitationId));
 
-          // Get all invitations for this team/pair
-          const allInvitations = await db
-            .select()
-            .from(teamInvitations)
-            .where(
-              and(
-                eq(teamInvitations.tournamentId, invitation.tournamentId),
-                eq(teamInvitations.eventType, invitation.eventType),
-                eq(teamInvitations.senderId, invitation.senderId)
-              )
-            );
+          // Get the provisional team for this invitation
+          const provisionalTeamId = invitation.provisionalTeamId;
+          
+          if (provisionalTeamId) {
+            // Update provisional team accepted count
+            const [provisionalTeam] = await db
+              .select()
+              .from(provisionalTeams)
+              .where(eq(provisionalTeams.id, provisionalTeamId));
 
-          // Check if all members accepted (including the one we just updated)
-          const allAccepted = allInvitations.every(inv => inv.status === 'accepted');
+            if (provisionalTeam) {
+              const newAcceptedCount = provisionalTeam.acceptedMembers + 1;
+              
+              await db
+                .update(provisionalTeams)
+                .set({ 
+                  acceptedMembers: newAcceptedCount,
+                  updatedAt: new Date()
+                })
+                .where(eq(provisionalTeams.id, provisionalTeamId));
 
-          if (allAccepted) {
-            // Create team/pair using tournament teams
-            const memberIds = [
-              invitation.senderId,
-              ...allInvitations.map(inv => inv.receiverId)
-            ];
+              // Check if all members have accepted
+              if (newAcceptedCount === provisionalTeam.requiredMembers) {
+                // ATOMIC CONFIRMATION: Create official team
+                const isTeam = invitation.eventType.includes('TEAM');
+                const teamName = invitation.teamName || (isTeam ? 'Баг' : 'Хос');
 
-            const isTeam = invitation.eventType.includes('TEAM');
-            const teamName = invitation.teamName || (isTeam ? 'Team' : 'Pair');
+                // Create tournament team
+                const team = await storage.createLeagueTeam({
+                  tournamentId: invitation.tournamentId,
+                  name: teamName,
+                  entityType: 'tournament',
+                });
 
-            // Create tournament team
-            const team = await storage.createLeagueTeam({
-              tournamentId: invitation.tournamentId,
-              name: teamName,
-              entityType: 'tournament',
-            });
+                // Get all invitations for this provisional team
+                const allInvitations = await db
+                  .select()
+                  .from(teamInvitations)
+                  .where(eq(teamInvitations.provisionalTeamId, provisionalTeamId));
 
-            // Add all members to the team
-            for (const memberId of memberIds) {
-              const user = await storage.getUser(memberId);
-              const memberName = user ? `${user.firstName} ${user.lastName}` : 'Unknown Player';
-              await storage.addPlayerToLeagueTeam(team.id, memberId, memberName);
+                // Add creator and all invited members to the team
+                const memberIds = [
+                  invitation.senderId,
+                  ...allInvitations.map(inv => inv.receiverId)
+                ];
+
+                for (const memberId of memberIds) {
+                  const user = await storage.getUser(memberId);
+                  const memberName = user ? `${user.firstName} ${user.lastName}` : 'Unknown Player';
+                  await storage.addPlayerToLeagueTeam(team.id, memberId, memberName);
+                }
+
+                // Update provisional team to confirmed status
+                await db
+                  .update(provisionalTeams)
+                  .set({ 
+                    status: 'confirmed',
+                    confirmedTeamId: team.id,
+                    updatedAt: new Date()
+                  })
+                  .where(eq(provisionalTeams.id, provisionalTeamId));
+
+                // Mark all invitations as completed
+                await db
+                  .update(teamInvitations)
+                  .set({ status: 'completed', teamId: team.id, updatedAt: new Date() })
+                  .where(eq(teamInvitations.provisionalTeamId, provisionalTeamId));
+
+                return res.json({
+                  message: "✅ Амжилттай! Баг бүртгэгдлээ.",
+                  teamCreated: true,
+                  teamId: team.id
+                });
+              }
+
+              return res.json({
+                message: "Хүсэлтийг зөвшөөрлөө",
+                teamCreated: false,
+                acceptedCount: newAcceptedCount,
+                requiredCount: provisionalTeam.requiredMembers
+              });
             }
-
-            // Mark all invitations as completed and store team ID
-            await db
-              .update(teamInvitations)
-              .set({ status: 'completed', teamId: team.id })
-              .where(
-                and(
-                  eq(teamInvitations.tournamentId, invitation.tournamentId),
-                  eq(teamInvitations.eventType, invitation.eventType),
-                  eq(teamInvitations.senderId, invitation.senderId)
-                )
-              );
           }
 
+          // Fallback for old invitations without provisional team
           return res.json({
-            message: allAccepted ? "Баг/хос амжилттай үүслээ" : "Хүсэлтийг зөвшөөрлөө",
-            teamCreated: allAccepted
+            message: "Хүсэлтийг зөвшөөрлөө",
+            teamCreated: false
           });
         }
 
@@ -2337,6 +2366,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (e) {
         console.error("Error responding to invitation:", e);
         res.status(400).json({ message: "Хүсэлтийг шийдвэрлэхэд алдаа гарлаа" });
+      }
+    }
+  );
+
+  // Get provisional team status
+  app.get(
+    "/api/provisional-teams/:id/status",
+    requireAuth,
+    async (req: any, res) => {
+      try {
+        const { id: provisionalTeamId } = req.params;
+
+        const [provisionalTeam] = await db
+          .select()
+          .from(provisionalTeams)
+          .where(eq(provisionalTeams.id, provisionalTeamId));
+
+        if (!provisionalTeam) {
+          return res.status(404).json({ message: "Урьдчилсан баг олдсонгүй" });
+        }
+
+        // Get all invitations for this provisional team with member details
+        const invitations = await db
+          .select({
+            id: teamInvitations.id,
+            receiverId: teamInvitations.receiverId,
+            status: teamInvitations.status,
+            acceptedAt: teamInvitations.acceptedAt,
+            receiver: {
+              id: users.id,
+              firstName: users.firstName,
+              lastName: users.lastName,
+            }
+          })
+          .from(teamInvitations)
+          .leftJoin(users, eq(teamInvitations.receiverId, users.id))
+          .where(eq(teamInvitations.provisionalTeamId, provisionalTeamId));
+
+        res.json({
+          provisionalTeam,
+          invitations,
+          acceptedCount: provisionalTeam.acceptedMembers,
+          requiredCount: provisionalTeam.requiredMembers,
+          isComplete: provisionalTeam.acceptedMembers === provisionalTeam.requiredMembers
+        });
+      } catch (e) {
+        console.error("Error fetching provisional team status:", e);
+        res.status(500).json({ message: "Багийн статус авахад алдаа гарлаа" });
+      }
+    }
+  );
+
+  // Cancel provisional team
+  app.post(
+    "/api/provisional-teams/:id/cancel",
+    requireAuth,
+    async (req: any, res) => {
+      try {
+        const { id: provisionalTeamId } = req.params;
+        const userId = req.session.userId;
+
+        const [provisionalTeam] = await db
+          .select()
+          .from(provisionalTeams)
+          .where(eq(provisionalTeams.id, provisionalTeamId));
+
+        if (!provisionalTeam) {
+          return res.status(404).json({ message: "Урьдчилсан баг олдсонгүй" });
+        }
+
+        // Only creator can cancel
+        if (provisionalTeam.creatorId !== userId) {
+          return res.status(403).json({ message: "Зөвхөн багийг үүсгэсэн хүн цуцлах боломжтой" });
+        }
+
+        // Can only cancel pending teams
+        if (provisionalTeam.status !== 'pending') {
+          return res.status(400).json({ message: "Зөвхөн хүлээгдэж буй багийг цуцлах боломжтой" });
+        }
+
+        // Update provisional team status to cancelled
+        await db
+          .update(provisionalTeams)
+          .set({ status: 'cancelled', updatedAt: new Date() })
+          .where(eq(provisionalTeams.id, provisionalTeamId));
+
+        // Cancel all related invitations
+        await db
+          .update(teamInvitations)
+          .set({ status: 'expired', updatedAt: new Date() })
+          .where(eq(teamInvitations.provisionalTeamId, provisionalTeamId));
+
+        res.json({ message: "Урилга амжилттай цуцлагдлаа" });
+      } catch (e) {
+        console.error("Error cancelling provisional team:", e);
+        res.status(500).json({ message: "Урилга цуцлахад алдаа гарлаа" });
       }
     }
   );
