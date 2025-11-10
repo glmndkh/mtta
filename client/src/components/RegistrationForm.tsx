@@ -50,7 +50,7 @@ const getEventLabel = (eventType: string): string => {
     if (parsed.divisions && Array.isArray(parsed.divisions) && parsed.divisions.length > 0) {
       const div = parsed.divisions[0];
       let typeLabel = '';
-      
+
       // Add gender first
       let genderLabel = '';
       if (parsed.genderReq === 'MALE') {
@@ -499,7 +499,7 @@ const EventSelectionStep = ({
                   )}
                   onClick={() => {
                     if (isDisabled) return;
-                    
+
                     if (isSelected) {
                       // Remove from selection
                       setSelectedEvent(selectedEvent.filter(e => e !== eventType));
@@ -514,7 +514,7 @@ const EventSelectionStep = ({
                     disabled={isDisabled}
                     onCheckedChange={(checked) => {
                       if (isDisabled) return;
-                      
+
                       if (checked) {
                         setSelectedEvent([...selectedEvent, eventType]);
                       } else {
@@ -576,7 +576,7 @@ const PaymentStep = ({
   onBack: () => void;
 }) => {
   const [paymentMethod, setPaymentMethod] = useState('');
-  
+
   // Calculate total fee based on number of selected events
   const totalFee = useMemo(() => {
     const baseFeePerEvent = 50000; // 50,000₮ per event
@@ -687,7 +687,7 @@ const ConfirmationStep = ({
 }) => {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
-  
+
   const getEventDetails = (eventType: string): string | null => {
     try {
       const parsed = JSON.parse(eventType);
@@ -720,7 +720,7 @@ const ConfirmationStep = ({
   const getEventType = (eventType: string): 'singles' | 'doubles' | 'team' | null => {
     try {
       const parsed = JSON.parse(eventType);
-      
+
       if (parsed.type === 'DOUBLES' || parsed.subType?.includes('DOUBLES')) {
         return 'doubles';
       }
@@ -730,12 +730,12 @@ const ConfirmationStep = ({
       if (parsed.type === 'SINGLES' || parsed.subType?.includes('SINGLES')) {
         return 'singles';
       }
-      
+
       // Legacy format
       if (parsed.type === 'pair') return 'doubles';
       if (parsed.type === 'team') return 'team';
       if (parsed.type === 'individual') return 'singles';
-      
+
       return null;
     } catch {
       return null;
@@ -798,12 +798,12 @@ const ConfirmationStep = ({
                 {selectedEvent.map((event, index) => {
                   const eventType = getEventType(event);
                   const isTeamOrDoubles = eventType === 'team' || eventType === 'doubles';
-                  
+
                   // Check if all invitations for this event are completed
                   const eventInvitations = sentInvitations.filter((inv: any) => inv.eventType === event);
                   const allCompleted = eventInvitations.length > 0 && 
                     eventInvitations.every((inv: any) => inv.status === 'completed');
-                  
+
                   return (
                     <div key={index} className="bg-green-100 border border-green-300 rounded-lg p-3">
                       <div className="flex items-start justify-between gap-3">
@@ -949,12 +949,12 @@ const ConfirmationStep = ({
                 const type = getEventType(event);
                 const label = getEventLabel(event);
                 const actionText = type === 'team' ? 'Баг үүсгэх' : 'Хос үүсгэх';
-                
+
                 // Check if all invitations for this event are completed
                 const eventInvitations = sentInvitations.filter((inv: any) => inv.eventType === event);
                 const allCompleted = eventInvitations.length > 0 && 
                   eventInvitations.every((inv: any) => inv.status === 'completed');
-                
+
                 if (allCompleted) {
                   // Show team composition only when fully completed
                   return (
@@ -977,7 +977,7 @@ const ConfirmationStep = ({
                     </div>
                   );
                 }
-                
+
                 return (
                   <div key={index} className="flex justify-center">
                     <Button 
@@ -991,7 +991,7 @@ const ConfirmationStep = ({
                 );
               })}
             </div>
-            
+
             <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mt-4 border border-blue-200 dark:border-blue-800">
               <div className="flex items-start gap-3">
                 <span className="text-2xl">👥</span>
