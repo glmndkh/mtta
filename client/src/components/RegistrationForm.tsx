@@ -978,14 +978,20 @@ const ConfirmationStep = ({
                   );
                 }
 
+                // Check if there's a pending invitation for this event
+                const eventInvitations = sentInvitations.filter((inv: any) => inv.eventType === event);
+                const hasPendingInvitation = eventInvitations.length > 0 && 
+                  eventInvitations.some((inv: any) => inv.status === 'pending');
+
                 return (
                   <div key={index} className="flex justify-center">
                     <Button 
                       onClick={() => handleFormTeam(event)}
-                      className="bg-[#00c36a] hover:bg-[#00a85a] hover:shadow-lg text-white font-semibold px-8 py-6 text-base rounded-lg transition-all duration-200"
+                      disabled={hasPendingInvitation}
+                      className="bg-[#00c36a] hover:bg-[#00a85a] hover:shadow-lg text-white font-semibold px-8 py-6 text-base rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                       size="lg"
                     >
-                      {actionText}
+                      {hasPendingInvitation ? '⏳ Хүлээгдэж байна...' : actionText}
                     </Button>
                   </div>
                 );
