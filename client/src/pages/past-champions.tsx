@@ -19,6 +19,14 @@ interface Champion {
 const staticChampions: Champion[] = [
   {
     id: "champion-1",
+    name: "Д. Алимаа",
+    year: "2024",
+    gender: "female",
+    championType: "эмэгтэйчүүдийн ганцаарчилсан аварга",
+    imageUrl: "/picture/past-champions/D.Alimaa.jpeg"
+  },
+  {
+    id: "champion-2",
     name: "Б. Энхтуул",
     year: "2024",
     gender: "female",
@@ -122,7 +130,7 @@ export default function PastChampions() {
                   <div className="w-full px-6 pb-4">
                     <div className="aspect-[3/4] w-full overflow-hidden rounded-lg shadow-lg">
                       <img
-                        src={champion.imageUrl ? getImageUrl(champion.imageUrl) : "https://via.placeholder.com/200x270.png?text=No+Photo"}
+                        src={champion.imageUrl || "https://via.placeholder.com/200x270.png?text=No+Photo"}
                         alt={champion.name}
                         className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
                         onError={(e) => {
