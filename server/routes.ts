@@ -48,7 +48,6 @@ import {
   teamMembers, // Import new table
   tournamentTeamPlayers, // Import tournament team players
   provisionalTeams, // Import provisional teams table
-  pairInvitations, // Import pair invitations table
 } from "../shared/schema";
 
 // Import real database
