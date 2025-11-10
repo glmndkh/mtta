@@ -246,9 +246,21 @@ export default function TeamFormation() {
       return;
     }
 
+    // Use userId for invitations (not playerId)
+    const memberUserIds = selectedMembers.map(m => m.userId).filter(id => id);
+    
+    if (memberUserIds.length !== selectedMembers.length) {
+      toast({
+        title: "Алдаа",
+        description: "Сонгогдсон гишүүдийн мэдээлэл дутуу байна",
+        variant: "destructive",
+      });
+      return;
+    }
+
     sendInvitationMutation.mutate({
       name: teamName,
-      members: selectedMembers.map(m => m.userId),
+      members: memberUserIds,
     });
   };
 

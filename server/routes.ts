@@ -2021,6 +2021,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: "Гишүүд хоосон байна" });
         }
 
+        // Validate all members exist and are registered for this tournament/event
+        for (const memberId of members) {
+          const memberUser = await storage.getUser(memberId);
+          if (!memberUser) {
+            return res.status(400).json({ message: "Сонгогдсон гишүүд олдсонгүй" });
+          }
+
+          // Check if member is registered for this tournament and event type
+          const memberPlayer = await storage.getPlayerByUserId(memberId);
+          if (!memberPlayer) {
+            return res.status(400).json({ 
+              message: `${memberUser.firstName} ${memberUser.lastName} тоглогчийн профайлгүй байна` 
+            });
+          }
+
+          const memberRegistration = await storage.getTournamentRegistration(tournamentId, memberPlayer.id);
+          if (!memberRegistration || memberRegistration.participationType !== eventType) {
+            return res.status(400).json({ 
+              message: `${memberUser.firstName} ${memberUser.lastName} энэ төрөлд бүртгүүлээгүй байна` 
+            });
+          }
+        }
+
         // Check if sender already has a completed team for this event
         const existingInvitations = await db
           .select()
@@ -2206,7 +2229,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     requireAuth,
     async (req: any, res) => {
       try {
-        const invitationId = req.params.id;
+        const invitationId = parseInt(req.params.id);
         const userId = req.session.userId;
         const { action } = req.body; // 'accept' or 'reject'
 
@@ -2230,15 +2253,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         if (action === 'reject') {
+          // Reject all invitations for this team
           await db
             .update(teamInvitations)
             .set({ status: 'rejected' })
-            .where(eq(teamInvitations.id, invitationId));
+            .where(
+              and(
+                eq(teamInvitations.tournamentId, invitation.tournamentId),
+                eq(teamInvitations.eventType, invitation.eventType),
+                eq(teamInvitations.senderId, invitation.senderId)
+              )
+            );
 
           return res.json({ message: "Хүсэлтийг татгалзлаа" });
         }
 
         if (action === 'accept') {
+          // Update this invitation to accepted
+          await db
+            .update(teamInvitations)
+            .set({ status: 'accepted' })
+            .where(eq(teamInvitations.id, invitationId));
+
           // Get all invitations for this team/pair
           const allInvitations = await db
             .select()
@@ -2247,21 +2283,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               and(
                 eq(teamInvitations.tournamentId, invitation.tournamentId),
                 eq(teamInvitations.eventType, invitation.eventType),
-                eq(teamInvitations.senderId, invitation.senderId),
-                eq(teamInvitations.status, 'pending')
+                eq(teamInvitations.senderId, invitation.senderId)
               )
             );
 
-          // Check if all members accepted
-          const allAccepted = allInvitations.every(inv =>
-            inv.id === invitationId || inv.status === 'accepted'
-          );
-
-          // Update this invitation
-          await db
-            .update(teamInvitations)
-            .set({ status: 'accepted' })
-            .where(eq(teamInvitations.id, invitationId));
+          // Check if all members accepted (including the one we just updated)
+          const allAccepted = allInvitations.every(inv => inv.status === 'accepted');
 
           if (allAccepted) {
             // Create team/pair using tournament teams
