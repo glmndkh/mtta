@@ -61,11 +61,11 @@ const imageMap: Record<string, string> = {
 };
 
 /** 2) 1957–2019 оны түүвэр өгөг (1958–2016 онууд бөглөгдсөн) */
-type Row = { year: number; male?: string; female?: string };
+type Row = { year: number; male?: string; female?: string; description?: string };
 const championsRaw: Row[] = [
-  { year: 1957 }, // мэдээлэл байхгүй – дараа нь нэмнэ
-  { year: 1958, male: "Г.Нооной", female: "Б.Наран" },
-  { year: 1959, male: "Д.Баньдхүү", female: "Б.Наран" },
+  { year: 1957, description: "Монголын ширээний теннисний холбоо албан ёсоор үүсгэн байгуулагдсан он." }, 
+  { year: 1958, male: "Г.Нооной", female: "Б.Наран", description: "Анхдугаар улсын аварга шалгаруулах тэмцээн зохион байгуулагдаж, Монголын ширээний теннисний түүхэнд шинэ хуудас нээгдлээ." },
+  { year: 1959, male: "Д.Баньдхүү", female: "Б.Наран", description: "Д.Баньдхүү эрэгтэйчүүдийн ангилалд анхны авга цолоо хүртлээ." },
   { year: 1960, male: "Д.Баньдхүү", female: "Г.Нансалмаа" },
   { year: 1961, male: "Б.Амарсанаа", female: "Д.Алимаа" },
   { year: 1962, male: "Б.Амарсанаа", female: "Б.Наран" },
@@ -137,7 +137,7 @@ function buildTimelineEvents(rows: Row[]): TimelineEvent[] {
     events.push({
       year: String(r.year),
       title: "Улсын аварга шалгаруулах тэмцээн",
-      description:
+      description: r.description || 
         "Тухайн жилд улсын аварга болсон тамирчид. (Түүхэн бичвэрийг дараа нь дэлгэрүүлж болно.)",
       champions
     });
