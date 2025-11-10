@@ -52,12 +52,12 @@ const imageMap: Record<string, string> = {
   "З.Төрболд": imgBase + "Z.Torbold.jpeg",
   "Б.Билэгт": imgBase + "B.Bilegt.jpeg",
   "М.Дэлгэрмаа": imgBase + "M.Delgermaa.jpeg",
-  "Б.Батхишиг": imgBase + "B.Batkhishig.jpeg",
   "Б.Энхжин": imgBase + "Enkhjin.jpeg",
   "Б.Эрдэнэсувд": imgBase + "Erdenesuvd.jpeg",
   "Г.Оюунчимэг": imgBase + "G.Oyunchimeg.jpeg",
+  "Б.Батхишиг": imgBase + "B.Batkhishig.jpeg",
   "Ч.Алтанцэцэг": imgBase + "Ch.Altantsetseg.jpeg",
-  "Л.Батхишиг": imgBase + "L.Batkhishig.jpeg",
+  "Л. Батхишиг": imgBase + "L.Batkhishig.jpeg",
 };
 
 /** 2) 1957–2019 оны түүвэр өгөг (1958–2016 онууд бөглөгдсөн) */
@@ -83,7 +83,7 @@ const championsRaw: Row[] = [
   { year: 1983, male: "О.Цэдэнбалжир", female: "Г.Мөнхцэцэг" },
   { year: 1985, male: "Т.Болд", female: "Г.Мөнхцэцэг" },
   { year: 1986, male: "Т.Болд", female: "Г.Мөнхцэцэг" },
-  { year: 1988, male: "Л.Батхишиг", female: "Б.Отгонжаргал" },
+  { year: 1988, male: "Л. Батхишиг", female: "Б.Отгонжаргал" },
   { year: 1989, male: "Т.Болд", female: "Г.Мөнхцэцэг" },
   { year: 1990, male: "Т.Болд", female: "Ч.Алтанцэцэг" },
   { year: 1991, male: "С.Галбадрах", female: "Г.Мөнхцэцэг" },
