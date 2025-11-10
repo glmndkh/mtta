@@ -91,6 +91,7 @@ const AdminTournamentResults: React.FC = () => {
   const [selectedTournament, setSelectedTournament] = useState<string>('');
   const [resultsImages, setResultsImages] = useState<{url: string, description: string}[]>([]);
   const [tournaments, setTournaments] = useState<any[]>([]);
+  const [selectedEventType, setSelectedEventType] = useState<'SINGLES' | 'DOUBLES' | 'TEAM'>('SINGLES');
 
   // Fetch tournament data
   const { data: tournament, isLoading: tournamentLoading } = useQuery<Tournament>({
@@ -138,6 +139,43 @@ const AdminTournamentResults: React.FC = () => {
 
     fetchTournaments();
   }, []);
+
+  // Get available event types from tournament
+  const getAvailableEventTypes = () => {
+    if (!tournament?.events) return [];
+    
+    const eventTypes = new Set<'SINGLES' | 'DOUBLES' | 'TEAM'>();
+    
+    tournament.events.forEach((event: any) => {
+      try {
+        const eventData = typeof event === 'string' ? JSON.parse(event) : event;
+        if (eventData.type) {
+          eventTypes.add(eventData.type as 'SINGLES' | 'DOUBLES' | 'TEAM');
+        }
+      } catch (e) {
+        console.error('Error parsing event:', e);
+      }
+    });
+    
+    return Array.from(eventTypes);
+  };
+
+  // Get participants filtered by event type
+  const getParticipantsByEventType = (eventType: 'SINGLES' | 'DOUBLES' | 'TEAM') => {
+    if (!participants) return [];
+    
+    return participants.filter((participant: any) => {
+      try {
+        const participationType = typeof participant.participationType === 'string' 
+          ? JSON.parse(participant.participationType) 
+          : participant.participationType;
+        
+        return participationType.type === eventType;
+      } catch (e) {
+        return false;
+      }
+    });
+  };
 
   // Save results mutation
   const saveResultsMutation = useMutation({
@@ -898,12 +936,108 @@ const AdminTournamentResults: React.FC = () => {
           </div>
         </div>
 
+        {/* Event Type Selection Tabs */}
+        <div className="mb-8">
+          <Card className="bg-gray-800 border-gray-700">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Trophy className="w-6 h-6 text-yellow-500" />
+                Тэмцээний төрөл сонгох
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Tabs value={selectedEventType} onValueChange={(value) => setSelectedEventType(value as 'SINGLES' | 'DOUBLES' | 'TEAM')}>
+                <TabsList className="bg-gray-700 border border-gray-600 w-full grid grid-cols-3">
+                  {getAvailableEventTypes().includes('SINGLES') && (
+                    <TabsTrigger 
+                      value="SINGLES" 
+                      className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-300"
+                    >
+                      <User className="w-4 h-4 mr-2" />
+                      Ганцаарчилсан
+                    </TabsTrigger>
+                  )}
+                  {getAvailableEventTypes().includes('DOUBLES') && (
+                    <TabsTrigger 
+                      value="DOUBLES" 
+                      className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300"
+                    >
+                      <Users className="w-4 h-4 mr-2" />
+                      Хос
+                    </TabsTrigger>
+                  )}
+                  {getAvailableEventTypes().includes('TEAM') && (
+                    <TabsTrigger 
+                      value="TEAM" 
+                      className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-300"
+                    >
+                      <Users className="w-4 h-4 mr-2" />
+                      Баг
+                    </TabsTrigger>
+                  )}
+                </TabsList>
+
+                <TabsContent value="SINGLES" className="mt-4">
+                  <div className="bg-blue-900/20 p-4 rounded-lg border border-blue-500/30">
+                    <h3 className="text-lg font-semibold text-blue-300 mb-2">Ганцаарчилсан төрлийн оролцогчид</h3>
+                    <p className="text-sm text-gray-400 mb-3">
+                      Нийт: {getParticipantsByEventType('SINGLES').length} оролцогч
+                    </p>
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {getParticipantsByEventType('SINGLES').map((participant: any, idx: number) => (
+                        <div key={idx} className="bg-gray-700 p-2 rounded flex justify-between items-center">
+                          <span className="text-white">{participant.firstName} {participant.lastName}</span>
+                          <Badge variant="outline" className="text-blue-400 border-blue-400">Singles</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="DOUBLES" className="mt-4">
+                  <div className="bg-green-900/20 p-4 rounded-lg border border-green-500/30">
+                    <h3 className="text-lg font-semibold text-green-300 mb-2">Хос төрлийн оролцогчид</h3>
+                    <p className="text-sm text-gray-400 mb-3">
+                      Нийт: {getParticipantsByEventType('DOUBLES').length} оролцогч
+                    </p>
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {getParticipantsByEventType('DOUBLES').map((participant: any, idx: number) => (
+                        <div key={idx} className="bg-gray-700 p-2 rounded flex justify-between items-center">
+                          <span className="text-white">{participant.firstName} {participant.lastName}</span>
+                          <Badge variant="outline" className="text-green-400 border-green-400">Doubles</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="TEAM" className="mt-4">
+                  <div className="bg-purple-900/20 p-4 rounded-lg border border-purple-500/30">
+                    <h3 className="text-lg font-semibold text-purple-300 mb-2">Багийн төрлийн оролцогчид</h3>
+                    <p className="text-sm text-gray-400 mb-3">
+                      Нийт: {getParticipantsByEventType('TEAM').length} оролцогч
+                    </p>
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {getParticipantsByEventType('TEAM').map((participant: any, idx: number) => (
+                        <div key={idx} className="bg-gray-700 p-2 rounded flex justify-between items-center">
+                          <span className="text-white">{participant.firstName} {participant.lastName}</span>
+                          <Badge variant="outline" className="text-purple-400 border-purple-400">Team</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Group Stage Results */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold flex items-center gap-2 text-white">
               <Users className="w-6 h-6 text-green-500" />
-              Хэсэгийн шатны тоглолт
+              Хэсэгийн шатны тоглолт ({selectedEventType === 'SINGLES' ? 'Ганцаарчилсан' : selectedEventType === 'DOUBLES' ? 'Хос' : 'Баг'})
             </h2>
             <div className="flex items-center gap-2">
               {groupStageResults.length > 0 && (
