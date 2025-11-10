@@ -261,6 +261,12 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
     enabled: selectedTab === 'membership-config',
   });
 
+  // Champions data query
+  const { data: champions, isLoading: championsLoadingState } = useQuery({
+    queryKey: ['/api/admin/champions'],
+    enabled: selectedTab === 'champions',
+  });
+
   // Generic mutations
   const createMutation = useMutation({
     mutationFn: async ({ endpoint, data }: { endpoint: string; data: any }) => {
@@ -283,6 +289,9 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         queryClient.invalidateQueries({ queryKey: ['/api/admin/national-team'] });
         queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       }
+      if (selectedTab === 'champions') {
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/champions'] });
+      }
       setIsCreateDialogOpen(false);
       setFormData({});
     },
@@ -295,7 +304,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
     mutationFn: async ({ endpoint, data }: { endpoint: string; data: any }) => {
       return apiRequest(endpoint, {
         method: 'PUT',
-        body: JSON.stringify(data)
+        body: JSON.JSON.stringify(data)
       });
     },
     onSuccess: () => {
@@ -311,6 +320,9 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
       if (selectedTab === 'national-team') {
         queryClient.invalidateQueries({ queryKey: ['/api/admin/national-team'] });
         queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      }
+      if (selectedTab === 'champions') {
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/champions'] });
       }
       setEditingItem(null);
       setFormData({});
@@ -330,6 +342,9 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
       toast({ title: "Амжилттай устгагдлаа" });
       queryClient.invalidateQueries({ queryKey: [`/api/admin/${selectedTab}`] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
+      if (selectedTab === 'champions') {
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/champions'] });
+      }
     },
     onError: (error: any) => {
       toast({ title: "Алдаа гарлаа", description: error.message, variant: "destructive" });
@@ -1896,7 +1911,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         </Button>
       </div>
 
-      {championsLoading ? (
+      {championsLoadingState ? (
         <div>Ачааллаж байна...</div>
       ) : (
         <Table>
@@ -2285,9 +2300,6 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                         const aclResponse = await apiRequest("/api/objects/acl", {
                           method: "PUT",
                           body: JSON.stringify({ imageURL: uploadURL }),
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
                         });
                         const aclData = (await aclResponse.json()) as { objectPath: string };
                         setFormData({
@@ -3354,7 +3366,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               <div className="space-y-2">
                 <ObjectUploader
                   maxNumberOfFiles={1}
-                  maxFileSize={5 * 1024 * 1024} // 5MB
+                  maxFileSize={5 * 1024 * 1024}
                   onGetUploadParameters={async () => {
                     try {
                       console.log("Getting upload parameters...");
