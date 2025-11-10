@@ -505,7 +505,7 @@ export const provisionalTeams = pgTable("provisional_teams", {
   requiredMembers: integer("required_members").notNull(), // Number of members needed
   acceptedMembers: integer("accepted_members").default(0), // Number who accepted
   confirmedTeamId: varchar("confirmed_team_id").references(() => tournamentTeams.id, { onDelete: "set null" }),
-  expiresAt: timestamp("expires_at").notNull(), // 24-hour expiration
+  expiresAt: timestamp("expires_at").notNull().default(sql`NOW() + INTERVAL '24 hours'`), // 24-hour expiration
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -521,7 +521,7 @@ export const teamInvitations = pgTable("team_invitations", {
   teamName: text("team_name"),
   teamId: varchar("team_id").references(() => tournamentTeams.id, { onDelete: "set null" }),
   status: text("status").notNull().default("pending"), // pending, accepted, declined, completed, expired
-  expiresAt: timestamp("expires_at").notNull(), // 24-hour expiration
+  expiresAt: timestamp("expires_at").notNull().default(sql`NOW() + INTERVAL '24 hours'`), // 24-hour expiration
   acceptedAt: timestamp("accepted_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -908,3 +908,11 @@ export const insertMembershipConfigSchema = createInsertSchema(membershipConfig)
 });
 export type InsertMembershipConfig = z.infer<typeof insertMembershipConfigSchema>;
 export type MembershipConfig = typeof membershipConfig.$inferSelect;
+
+// Provisional team types
+export type InsertProvisionalTeam = z.infer<typeof insertProvisionalTeamSchema>;
+export type ProvisionalTeam = typeof provisionalTeams.$inferSelect;
+
+// Team invitation types
+export type InsertTeamInvitation = z.infer<typeof insertTeamInvitationSchema>;
+export type TeamInvitation = typeof teamInvitations.$inferSelect;
