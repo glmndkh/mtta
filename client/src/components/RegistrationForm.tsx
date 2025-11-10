@@ -174,7 +174,7 @@ const StepIndicator = ({ currentStep, completedSteps }: {
         const isAccessible = isCompleted || isActive || (index === 0);
 
         return (
-          <div key={step.key} className="flex items-center flex-1 last:flex-initial">
+          <div key={`step-${step.key}-${index}`} className="flex items-center flex-1 last:flex-initial">
             <div className={cn(
               "flex flex-col items-center space-y-2",
               isActive ? "text-green-600" : isCompleted ? "text-green-500" : "text-gray-400"
@@ -801,7 +801,7 @@ const ConfirmationStep = ({
 
                   // Check if all invitations for this event are completed
                   const eventInvitations = sentInvitations.filter((inv: any) => inv.eventType === event);
-                  const allCompleted = eventInvitations.length > 0 && 
+                  const allCompleted = eventInvitations.length > 0 &&
                     eventInvitations.every((inv: any) => inv.status === 'completed');
 
                   return (
@@ -874,7 +874,7 @@ const ConfirmationStep = ({
                 const hasRejected = rejectedCount > 0;
 
                 return (
-                  <div 
+                  <div
                     key={eventType}
                     className={`p-4 rounded-lg border ${
                       allCompleted ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' :
@@ -952,7 +952,7 @@ const ConfirmationStep = ({
 
                 // Check if all invitations for this event are completed
                 const eventInvitations = sentInvitations.filter((inv: any) => inv.eventType === event);
-                const allCompleted = eventInvitations.length > 0 && 
+                const allCompleted = eventInvitations.length > 0 &&
                   eventInvitations.every((inv: any) => inv.status === 'completed');
 
                 if (allCompleted) {
@@ -980,12 +980,12 @@ const ConfirmationStep = ({
 
                 // Check if there's a pending invitation for this event
                 const eventInvitations = sentInvitations.filter((inv: any) => inv.eventType === event);
-                const hasPendingInvitation = eventInvitations.length > 0 && 
+                const hasPendingInvitation = eventInvitations.length > 0 &&
                   eventInvitations.some((inv: any) => inv.status === 'pending');
 
                 return (
                   <div key={index} className="flex justify-center">
-                    <Button 
+                    <Button
                       onClick={() => handleFormTeam(event)}
                       disabled={hasPendingInvitation}
                       className="bg-[#00c36a] hover:bg-[#00a85a] hover:shadow-lg text-white font-semibold px-8 py-6 text-base rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1006,7 +1006,7 @@ const ConfirmationStep = ({
                     Дараагийн алхам
                   </h4>
                   <p className="text-sm text-blue-700 dark:text-blue-300">
-                    Та багийн болон/эсвэл хосын тэмцээнд бүртгүүлсэн байна. 
+                    Та багийн болон/эсвэл хосын тэмцээнд бүртгүүлсэн байна.
                     Тэмцээнд оролцохын тулд багийн гишүүд эсвэл хамтрагчаа сонгоно уу.
                   </p>
                 </div>
@@ -1034,7 +1034,7 @@ const ConfirmationStep = ({
           <Button onClick={onBack} variant="outline">
             Буцах
           </Button>
-          <Button 
+          <Button
             onClick={() => setLocation(`/tournament/${tournament.id}/full`)}
             variant="default"
           >
