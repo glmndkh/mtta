@@ -57,7 +57,7 @@ const imageMap: Record<string, string> = {
   "Б.Эрдэнэсувд": imgBase + "Erdenesuvd.jpeg",
   "Г.Оюунчимэг": imgBase + "G.Oyunchimeg.jpeg",
   "Ч.Алтанцэцэг": imgBase + "Ch.Altantsetseg.jpeg",
-  "Л.Батхишиг": imgBase + "батхишиг.jpeg",
+  "Л.Батхишиг": imgBase + "L.Batkhishig.jpeg",
 };
 
 /** 2) 1957–2019 оны түүвэр өгөг (1958–2016 онууд бөглөгдсөн) */
