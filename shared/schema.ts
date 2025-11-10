@@ -501,6 +501,7 @@ export const provisionalTeams = pgTable("provisional_teams", {
   eventType: text("event_type").notNull(),
   creatorId: varchar("creator_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   teamName: text("team_name"),
+  membersList: jsonb("members_list").$type<string[]>(), // All intended member IDs for sequential invitations
   status: text("status").notNull().default("pending"), // pending, confirmed, cancelled, expired
   requiredMembers: integer("required_members").notNull(), // Number of members needed
   acceptedMembers: integer("accepted_members").default(0), // Number who accepted
