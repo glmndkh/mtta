@@ -1,7 +1,8 @@
+
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { cn, getImageUrl } from "@/lib/utils";
 
@@ -12,13 +13,62 @@ interface Champion {
   gender?: string;
   championType?: string;
   imageUrl?: string;
-  createdAt?: string;
 }
 
+// Static өгөгдөл - Үе үеийн аваргууд
+const staticChampions: Champion[] = [
+  {
+    id: "champion-1",
+    name: "Б. Энхтуул",
+    year: "2024",
+    gender: "female",
+    championType: "ахмадын",
+    imageUrl: null
+  },
+  {
+    id: "champion-2",
+    name: "Д. Батбаяр",
+    year: "2024",
+    gender: "male",
+    championType: "ахмадын",
+    imageUrl: null
+  },
+  {
+    id: "champion-3",
+    name: "С. Оюунцэцэг",
+    year: "2023",
+    gender: "female",
+    championType: "улсын",
+    imageUrl: null
+  },
+  {
+    id: "champion-4",
+    name: "Г. Болдбаатар",
+    year: "2023",
+    gender: "male",
+    championType: "улсын",
+    imageUrl: null
+  },
+  {
+    id: "champion-5",
+    name: "Н. Мөнхбаяр",
+    year: "2022",
+    gender: "female",
+    championType: "өсвөрийн",
+    imageUrl: null
+  },
+  {
+    id: "champion-6",
+    name: "Ч. Ганбат",
+    year: "2022",
+    gender: "male",
+    championType: "өсвөрийн",
+    imageUrl: null
+  }
+];
+
 export default function PastChampions() {
-  const [champions, setChampions] = useState<Champion[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [champions] = useState<Champion[]>(staticChampions);
   const { theme } = useTheme();
 
   const isDark = theme === "dark";
@@ -26,69 +76,12 @@ export default function PastChampions() {
     ? "bg-gradient-to-b from-gray-900 via-gray-800 to-black"
     : "bg-gradient-to-b from-slate-100 via-white to-slate-200";
   const headingTextClass = isDark ? "text-white" : "text-slate-900";
-  const loadingTextClass = isDark ? "text-white" : "text-slate-900";
   const emptyStateTextClass = isDark ? "text-gray-300" : "text-slate-600";
   const cardBorderClass = isDark ? "border-slate-500/60" : "border-slate-200";
 
-  useEffect(() => {
-    fetchChampions();
-  }, []);
-
-  const fetchChampions = async () => {
-    try {
-      const response = await fetch('/api/champions');
-      if (!response.ok) {
-        throw new Error('Champions олж авахад алдаа гарлаа');
-      }
-      const data = await response.json();
-      setChampions(data);
-    } catch (error) {
-      console.error('Error fetching champions:', error);
-      setError('Champions-уудыг ачааллахад алдаа гарлаа');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <PageWithLoading>
-        <Navigation />
-        <div className={cn("min-h-screen py-10 transition-colors duration-500", backgroundClass)}>
-          <div className="container mx-auto flex flex-col items-center">
-            <div className={cn("text-center", loadingTextClass)}>
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400 mx-auto mb-4"></div>
-              <p>Аваргуудыг ачааллаж байна...</p>
-            </div>
-          </div>
-        </div>
-      </PageWithLoading>
-    );
-  }
-
-  if (error) {
-    return (
-      <PageWithLoading>
-        <Navigation />
-        <div className={cn("min-h-screen py-10 transition-colors duration-500", backgroundClass)}>
-          <div className="container mx-auto flex flex-col items-center">
-            <div
-              className={cn(
-                "text-center",
-                isDark ? "text-red-400" : "text-red-500"
-              )}
-            >
-              <p>{error}</p>
-            </div>
-          </div>
-        </div>
-      </PageWithLoading>
-    );
-  }
-
   return (
-      <PageWithLoading>
-        <Navigation />
+    <PageWithLoading>
+      <Navigation />
       <div
         className={cn(
           "min-h-screen py-10 transition-colors duration-500",
@@ -140,18 +133,23 @@ export default function PastChampions() {
                     </div>
                   </div>
 
-                  {/* Champion Name */}
-                  <div className="w-full px-6 pb-6 text-center">
-                    <h3 className="text-lg font-semibold text-slate-900 leading-tight">
+                  {/* Champion Details */}
+                  <div className="w-full px-6 pb-6 text-center space-y-2">
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white leading-tight">
                       {champion.name}
                     </h3>
+                    {champion.championType && (
+                      <p className="text-sm text-slate-600 dark:text-slate-400 capitalize">
+                        {champion.championType}
+                      </p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
 
-          {champions.length === 0 && !loading && !error && (
+          {champions.length === 0 && (
             <div className="text-center mt-12">
               <p className={cn("text-xl", emptyStateTextClass)}>
                 Одоогоор аваргууд бүртгэгдээгүй байна

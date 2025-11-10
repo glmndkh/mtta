@@ -249,11 +249,6 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
     enabled: selectedTab === 'sponsors'
   });
 
-  const { data: champions, isLoading: championsLoading } = useQuery({
-    queryKey: ['/api/admin/champions'],
-    enabled: selectedTab === 'champions'
-  });
-
   // Fetch rank change requests for the 'rank-requests' tab
   const { data: rankChangeRequests = [] } = useQuery<RankChangeRequest[]>({
     queryKey: ['/api/admin/rank-change-requests'],
@@ -619,6 +614,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         lastName: item.lastName || "",
         age: item.age || 0,
         imageUrl: item.imageUrl || "",
+        userId: item.userId || "",
       });
     } else if (selectedTab === "sliders") {
       setFormData({
@@ -2589,14 +2585,13 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                   onComplete={async (result) => {
                     try {
                       if (result.successful && result.successful.length > 0) {
-                        const file = result.successful[0];
                         const response = await apiRequest("/api/objects/finalize", {
                           method: "PUT",
                           headers: {
                             "Content-Type": "application/json",
                           },
                           body: JSON.stringify({
-                            fileURL: file.uploadURL,
+                            fileURL: result.successful[0].uploadURL,
                             isPublic: true,
                           }),
                         });
@@ -4221,10 +4216,6 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
           <TabsTrigger value="national-team" className="admin-tab-trigger flex items-center gap-2 data-[state=active]:bg-green-600 font-semibold text-base">
             <Flag className="w-4 h-4" />
             Үндэсний шигшээ
-          </TabsTrigger>
-          <TabsTrigger value="champions" className="admin-tab-trigger flex items-center gap-2 data-[state=active]:bg-green-600 font-semibold text-base">
-            <Crown className="w-4 h-4" />
-            Аваргууд
           </TabsTrigger>
           <TabsTrigger value="clubs" className="admin-tab-trigger flex items-center gap-2 data-[state=active]:bg-green-600 font-semibold text-base">
             <Building className="w-4 h-4" />
