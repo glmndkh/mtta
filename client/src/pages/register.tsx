@@ -130,178 +130,185 @@ export default function Register() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-mtta-green/20 to-white">
-      {/* Benefits Section */}
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            🏓 Гишүүнчлэлийн Давуу Талууд
-          </h2>
-          <p className="text-gray-600">
-            Бүртгүүлснээр олон төрлийн давуу эрх, үйлчилгээнд хамрагдана
-          </p>
-        </div>
+      {/* Benefits Section - Collapsible */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <details className="group mb-8">
+          <summary className="cursor-pointer list-none">
+            <div className="text-center p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-2">
+                🏓 Гишүүнчлэлийн Давуу Талууд
+                <span className="text-sm text-mtta-green group-open:rotate-180 transition-transform">▼</span>
+              </h2>
+              <p className="text-gray-600 text-sm">
+                Бүртгүүлснээр олон төрлийн давуу эрх, үйлчилгээнд хамрагдана
+                <span className="text-mtta-green font-medium ml-2">
+                  (Дэлгэрэнгүй үзэх)
+                </span>
+              </p>
+            </div>
+          </summary>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
           {/* Benefit 1 */}
-          <div className="group relative bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-mtta-green/30 overflow-hidden">
+          <div className="group relative bg-white rounded-lg p-4 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-mtta-green/30 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-mtta-green/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="relative z-10">
-              <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-mtta-green/20 transition-all duration-300">
-                <span className="text-3xl group-hover:animate-pulse">🎟️</span>
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-mtta-green/20 transition-all duration-300">
+                <span className="text-2xl group-hover:animate-pulse">🎟️</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-mtta-green transition-colors">
+              <h3 className="text-base font-semibold text-gray-900 mb-1.5 group-hover:text-mtta-green transition-colors">
                 Тэмцээнд бүртгүүлэх эрх
               </h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-xs text-gray-600 leading-relaxed">
                 Албан ёсны тэмцээнд онлайнаар бүртгүүлэх боломжтой. Хязгаартай оролцогчтой тэмцээнд урьдчилсан бүртгэлд хамрагдах давуу эрхтэй.
               </p>
             </div>
           </div>
 
           {/* Benefit 2 */}
-          <div className="group relative bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-mtta-green/30 overflow-hidden">
+          <div className="group relative bg-white rounded-lg p-4 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-mtta-green/30 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-mtta-green/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="relative z-10">
-              <div className="w-14 h-14 bg-yellow-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-yellow-200 transition-all duration-300">
-                <span className="text-3xl group-hover:animate-pulse">🏆</span>
+              <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-yellow-200 transition-all duration-300">
+                <span className="text-2xl group-hover:animate-pulse">🏆</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-mtta-green transition-colors">
+              <h3 className="text-base font-semibold text-gray-900 mb-1.5 group-hover:text-mtta-green transition-colors">
                 Үндэсний чансаа ба профайл
               </h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-xs text-gray-600 leading-relaxed">
                 Баталгаажсан тоглогчийн профайл үүснэ. Тоглолт бүрийн дараа таны оноо автоматаар шинэчлэгдэнэ.
               </p>
             </div>
           </div>
 
           {/* Benefit 3 */}
-          <div className="group relative bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-mtta-green/30 overflow-hidden">
+          <div className="group relative bg-white rounded-lg p-4 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-mtta-green/30 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-mtta-green/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="relative z-10">
-              <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-blue-200 transition-all duration-300">
-                <span className="text-3xl group-hover:animate-pulse">📊</span>
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-blue-200 transition-all duration-300">
+                <span className="text-2xl group-hover:animate-pulse">📊</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-mtta-green transition-colors">
+              <h3 className="text-base font-semibold text-gray-900 mb-1.5 group-hover:text-mtta-green transition-colors">
                 Хувийн статистик
               </h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-xs text-gray-600 leading-relaxed">
                 Өөрийн тоглолтын түүх, ялалт/хожигдлын харьцаа, ахиц дэвшлээ хянах боломжтой.
               </p>
             </div>
           </div>
 
           {/* Benefit 4 */}
-          <div className="group relative bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-mtta-green/30 overflow-hidden">
+          <div className="group relative bg-white rounded-lg p-4 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-mtta-green/30 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-mtta-green/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="relative z-10">
-              <div className="w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-purple-200 transition-all duration-300">
-                <span className="text-3xl group-hover:animate-pulse">📅</span>
+              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-purple-200 transition-all duration-300">
+                <span className="text-2xl group-hover:animate-pulse">📅</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-mtta-green transition-colors">
+              <h3 className="text-base font-semibold text-gray-900 mb-1.5 group-hover:text-mtta-green transition-colors">
                 Арга хэмжээний мэдэгдэл
               </h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-xs text-gray-600 leading-relaxed">
                 Ирэх тэмцээн, лиг, сургалтын талаар хамгийн түрүүнд мэдэгдэл авна.
               </p>
             </div>
           </div>
 
           {/* Benefit 5 */}
-          <div className="group relative bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-mtta-green/30 overflow-hidden">
+          <div className="group relative bg-white rounded-lg p-4 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-mtta-green/30 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-mtta-green/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="relative z-10">
-              <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-red-200 transition-all duration-300">
-                <span className="text-3xl group-hover:animate-pulse">🎥</span>
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-red-200 transition-all duration-300">
+                <span className="text-2xl group-hover:animate-pulse">🎥</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-mtta-green transition-colors">
+              <h3 className="text-base font-semibold text-gray-900 mb-1.5 group-hover:text-mtta-green transition-colors">
                 Медиа галерей хандалт
               </h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-xs text-gray-600 leading-relaxed">
                 Албан ёсны тэмцээний зураг, бичлэг үзэх, татах боломжтой.
               </p>
             </div>
           </div>
 
           {/* Benefit 6 */}
-          <div className="group relative bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-mtta-green/30 overflow-hidden">
+          <div className="group relative bg-white rounded-lg p-4 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-mtta-green/30 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-mtta-green/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="relative z-10">
-              <div className="w-14 h-14 bg-orange-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-orange-200 transition-all duration-300">
-                <span className="text-3xl group-hover:animate-pulse">🎫</span>
+              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-orange-200 transition-all duration-300">
+                <span className="text-2xl group-hover:animate-pulse">🎫</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-mtta-green transition-colors">
+              <h3 className="text-base font-semibold text-gray-900 mb-1.5 group-hover:text-mtta-green transition-colors">
                 Хөнгөлөлт ба санал
               </h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-xs text-gray-600 leading-relaxed">
                 Түнш байгууллагын хөнгөлөлт эдлэх, тусгай арга хэмжээний тасалбар авах эрх.
               </p>
             </div>
           </div>
 
           {/* Benefit 7 */}
-          <div className="group relative bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-mtta-green/30 overflow-hidden">
+          <div className="group relative bg-white rounded-lg p-4 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-mtta-green/30 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-mtta-green/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="relative z-10">
-              <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-green-200 transition-all duration-300">
-                <span className="text-3xl group-hover:animate-pulse">🏓</span>
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-green-200 transition-all duration-300">
+                <span className="text-2xl group-hover:animate-pulse">🏓</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-mtta-green transition-colors">
+              <h3 className="text-base font-semibold text-gray-900 mb-1.5 group-hover:text-mtta-green transition-colors">
                 Клуб ба лигийн оролцоо
               </h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-xs text-gray-600 leading-relaxed">
                 Албан ёсны клубт нэгдэх, өөрийн клуб үүсгэх, улсын лигт оролцох боломжтой.
               </p>
             </div>
           </div>
 
           {/* Benefit 8 */}
-          <div className="group relative bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-mtta-green/30 overflow-hidden">
+          <div className="group relative bg-white rounded-lg p-4 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-mtta-green/30 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-mtta-green/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="relative z-10">
-              <div className="w-14 h-14 bg-indigo-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-indigo-200 transition-all duration-300">
-                <span className="text-3xl group-hover:animate-pulse">🎓</span>
+              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-indigo-200 transition-all duration-300">
+                <span className="text-2xl group-hover:animate-pulse">🎓</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-mtta-green transition-colors">
+              <h3 className="text-base font-semibold text-gray-900 mb-1.5 group-hover:text-mtta-green transition-colors">
                 Сургалт ба дасгалжуулагч
               </h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-xs text-gray-600 leading-relaxed">
                 Баталгаажсан дасгалжуулагчдын жагсаалт, сургалтын хөтөлбөрт хамрагдах боломж.
               </p>
             </div>
           </div>
 
           {/* Benefit 9 */}
-          <div className="group relative bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-mtta-green/30 overflow-hidden">
+          <div className="group relative bg-white rounded-lg p-4 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-mtta-green/30 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-mtta-green/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="relative z-10">
-              <div className="w-14 h-14 bg-pink-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-pink-200 transition-all duration-300">
-                <span className="text-3xl group-hover:animate-pulse">👥</span>
+              <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-pink-200 transition-all duration-300">
+                <span className="text-2xl group-hover:animate-pulse">👥</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-mtta-green transition-colors">
+              <h3 className="text-base font-semibold text-gray-900 mb-1.5 group-hover:text-mtta-green transition-colors">
                 Нийгэмлэг ба холбоо
               </h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-xs text-gray-600 leading-relaxed">
                 Бусад гишүүд, дасгалжуулагчтай холбогдох, хэлэлцүүлэгт оролцох боломжтой.
               </p>
             </div>
           </div>
 
           {/* Benefit 10 */}
-          <div className="group relative bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-mtta-green/30 overflow-hidden">
+          <div className="group relative bg-white rounded-lg p-4 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-mtta-green/30 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-mtta-green/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="relative z-10">
-              <div className="w-14 h-14 bg-teal-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-teal-200 transition-all duration-300">
-                <span className="text-3xl group-hover:animate-pulse">💳</span>
+              <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-teal-200 transition-all duration-300">
+                <span className="text-2xl group-hover:animate-pulse">💳</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-mtta-green transition-colors">
+              <h3 className="text-base font-semibold text-gray-900 mb-1.5 group-hover:text-mtta-green transition-colors">
                 Цахим үнэмлэх
               </h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-xs text-gray-600 leading-relaxed">
                 Гишүүн бүр цахим үнэмлэх авна. Тэмцээн, арга хэмжээнд оролцоход ашиглагдана.
               </p>
             </div>
           </div>
-        </div>
+        </details>
       </div>
 
       {/* Registration Form */}
