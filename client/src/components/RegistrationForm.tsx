@@ -174,7 +174,7 @@ const StepIndicator = ({ currentStep, completedSteps }: {
         const isAccessible = isCompleted || isActive || (index === 0);
 
         return (
-          <React.Fragment key={step.key}>
+          <div key={step.key} className="flex items-center flex-1 last:flex-initial">
             <div className={cn(
               "flex flex-col items-center space-y-2",
               isActive ? "text-green-600" : isCompleted ? "text-green-500" : "text-gray-400"
@@ -196,7 +196,7 @@ const StepIndicator = ({ currentStep, completedSteps }: {
                 completedSteps.has(steps[index + 1].key) ? "bg-green-500" : "bg-gray-300"
               )} />
             )}
-          </React.Fragment>
+          </div>
         );
       })}
     </div>
