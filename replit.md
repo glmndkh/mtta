@@ -96,6 +96,19 @@ A comprehensive web application for the Mongolian Table Tennis Association that 
 - **Navigation integration** added profile management links to user interface
 - **Full system testing verified** for registration, profile updates, duplicate prevention, and authentication
 
+### Advanced Provisional Team Invitation System (November 2025)
+- **Provisional team tracking table** added to database for managing team formation before official confirmation
+- **Atomic team confirmation** only creates official tournament team when all invited members accept
+- **Real-time invitation progress tracking** showing accepted/required count (e.g., "⏳ Хүлээгдэж байна 2/3")
+- **24-hour invitation expiration** with automatic default timestamp for pending invitations
+- **Team status API endpoints** for checking provisional team progress and member acceptance states
+- **Invitation cancellation system** allowing creators to cancel pending invitations and re-invite
+- **Member locking mechanism** preventing users from joining multiple teams in same tournament event
+- **Enhanced invitation UI** with grouped display by event type and individual member status badges
+- **Status-based button behavior** - Create Team/Pair button disabled when invitations pending
+- **Database schema updates** including provisionalTeams table and enhanced teamInvitations with provisional team linking
+- **Backward compatibility** maintained for existing invitation system while adding new provisional team features
+
 ### Authentication Features
 - **Registration**: Requires email/phone, name, password (min 6 chars), and role
 - **Login**: Requires email/phone and password

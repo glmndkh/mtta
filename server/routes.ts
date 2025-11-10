@@ -2282,7 +2282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               .where(eq(provisionalTeams.id, provisionalTeamId));
 
             if (provisionalTeam) {
-              const newAcceptedCount = provisionalTeam.acceptedMembers + 1;
+              const newAcceptedCount = (provisionalTeam.acceptedMembers || 0) + 1;
               
               await db
                 .update(provisionalTeams)
