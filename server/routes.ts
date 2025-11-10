@@ -2087,11 +2087,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
         
-        // Compare the participation types - they should be identical JSON strings
-        if (memberRegistration.participationType !== eventType) {
+        // Parse and compare the participation types as objects
+        let requestedEvent, registeredEvent;
+        try {
+          requestedEvent = typeof eventType === 'string' ? JSON.parse(eventType) : eventType;
+          registeredEvent = typeof memberRegistration.participationType === 'string' 
+            ? JSON.parse(memberRegistration.participationType) 
+            : memberRegistration.participationType;
+        } catch (e) {
+          console.error("Failed to parse event types:", e);
+          return res.status(400).json({
+            message: "Төрлийн мэдээлэл буруу байна"
+          });
+        }
+
+        // Compare key properties of the events
+        const isSameEvent = 
+          requestedEvent.type === registeredEvent.type &&
+          requestedEvent.subType === registeredEvent.subType;
+
+        if (!isSameEvent) {
           console.log("Participation type mismatch!");
-          console.log("Expected:", eventType);
-          console.log("Got:", memberRegistration.participationType);
+          console.log("Expected:", requestedEvent);
+          console.log("Got:", registeredEvent);
           return res.status(400).json({
             message: `${memberUser.firstName} ${memberUser.lastName} энэ төрөлд бүртгүүлээгүй байна`
           });
