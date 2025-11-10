@@ -801,8 +801,42 @@ const ConfirmationStep = ({
                   
                   // Check if all invitations for this event are completed
                   const eventInvitations = sentInvitations.filter((inv: any) => inv.eventType === event);
-                  const allCompleted = eventInvitations.length > 0 && 
-                    eventInvitations.every((inv: any) => inv.status === 'completed');
+                  // Reject хийсэн хүн байна уу?
+                  const rejected = eventInvitations.some((inv: any) => inv.status === "rejected");
+
+                  // Accepted хүмүүс
+                  const acceptedCount = eventInvitations.filter(
+                    (inv: any) => inv.status === "accepted" || inv.status === "completed"
+                  ).length;
+
+                  // Хэрвээ баг бол — 3 хүн гэж авъя (хэрвээ танайд өөр бол maxPlayers-г тавиарай)
+                  const requiredSize =  parsedEvent.subType?.includes("TEAM") ? 3 : 2;  
+
+                  // 1. Хэн нэг нь татгалзсан үед
+                  if (rejected) {
+                    return (
+                      <div className="p-3 mt-2 bg-red-50 border border-red-300 rounded-lg">
+                        ❌ {requiredSize === 2 ? "Хос бүрдээгүй" : "Баг бүрдээгүй"} — нэг хүн татгалзсан
+                      </div>
+                    );
+                  }
+
+                  // 2. Дутуу зөвшөөрсөн үед
+                  if (acceptedCount < requiredSize) {
+                    return (
+                      <div className="p-3 mt-2 bg-blue-50 border border-blue-300 rounded-lg">
+                        ⏳ Гишүүдийн зөвшөөрөл хүлээгдэж байна ({acceptedCount}/{requiredSize})
+                      </div>
+                    );
+                  }
+
+                  // 3. Бүрэн зөвшөөрсөн үед
+                  return (
+                    <div className="p-3 mt-2 bg-green-50 border border-green-300 rounded-lg">
+                      ✅ {requiredSize === 2 ? "Хос бүрдлээ" : "Баг бүрдлээ"}
+                    </div>
+                  );
+
                   
                   return (
                     <div key={index} className="bg-green-100 border border-green-300 rounded-lg p-3">
