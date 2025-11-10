@@ -979,7 +979,6 @@ const ConfirmationStep = ({
                 }
 
                 // Check if there's a pending invitation for this event
-                const eventInvitations = sentInvitations.filter((inv: any) => inv.eventType === event);
                 const hasPendingInvitation = eventInvitations.length > 0 &&
                   eventInvitations.some((inv: any) => inv.status === 'pending');
 
