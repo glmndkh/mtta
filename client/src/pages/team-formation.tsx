@@ -98,7 +98,7 @@ export default function TeamFormation() {
   // Refetch when component mounts or page gains focus
   useEffect(() => {
     refetchExistingTeam();
-    
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         refetchExistingTeam();
@@ -118,7 +118,7 @@ export default function TeamFormation() {
       if (!eventType) {
         throw new Error("Event төрөл байхгүй байна");
       }
-      
+
       const res = await fetch(`/api/tournaments/${tournamentId}/participants`, {
         credentials: 'include'
       });
@@ -127,10 +127,10 @@ export default function TeamFormation() {
         throw new Error(error.message || "Бүртгэл авахад алдаа гарлаа");
       }
       const participants = await res.json();
-      
+
       // Filter by event type
       let filtered = participants.filter((p: any) => p.participationType === eventType);
-      
+
       // Filter by search query
       if (debouncedSearch.trim()) {
         const search = debouncedSearch.toLowerCase();
@@ -139,11 +139,11 @@ export default function TeamFormation() {
           return fullName.includes(search);
         });
       }
-      
+
       // Double-check: Exclude current user (server should already do this)
       // Use userId for comparison, not playerId
       filtered = filtered.filter((p: any) => String(p.userId) !== String((user as any)?.id));
-      
+
       return filtered;
     },
     enabled: !!tournamentId && !!eventType && !!user,
@@ -220,7 +220,7 @@ export default function TeamFormation() {
 
   const handleSubmit = () => {
     setAttemptedSubmit(true);
-    
+
     if (isTeam && !teamName.trim()) {
       toast({
         title: "Алдаа",
@@ -248,7 +248,7 @@ export default function TeamFormation() {
 
     // Use userId for invitations (not playerId)
     const memberUserIds = selectedMembers.map(m => m.userId).filter(id => id);
-    
+
     if (memberUserIds.length !== selectedMembers.length) {
       toast({
         title: "Алдаа",

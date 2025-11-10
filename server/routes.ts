@@ -48,6 +48,7 @@ import {
   teamMembers, // Import new table
   tournamentTeamPlayers, // Import tournament team players
   provisionalTeams, // Import provisional teams table
+  pairInvitations, // Import pair invitations table
 } from "../shared/schema";
 
 // Import real database
@@ -2032,15 +2033,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Check if member is registered for this tournament and event type
           const memberPlayer = await storage.getPlayerByUserId(memberId);
           if (!memberPlayer) {
-            return res.status(400).json({ 
-              message: `${memberUser.firstName} ${memberUser.lastName} тоглогчийн профайлгүй байна` 
+            return res.status(400).json({
+              message: `${memberUser.firstName} ${memberUser.lastName} тоглогчийн профайлгүй байна`
             });
           }
 
           const memberRegistration = await storage.getTournamentRegistration(tournamentId, memberPlayer.id);
           if (!memberRegistration || memberRegistration.participationType !== eventType) {
-            return res.status(400).json({ 
-              message: `${memberUser.firstName} ${memberUser.lastName} энэ төрөлд бүртгүүлээгүй байна` 
+            return res.status(400).json({
+              message: `${memberUser.firstName} ${memberUser.lastName} энэ төрөлд бүртгүүлээгүй байна`
             });
           }
         }
@@ -2059,8 +2060,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           );
 
         if (existingConfirmedTeams.length > 0) {
-          return res.status(400).json({ 
-            message: "Та энэ ангилалд аль хэдийн баг/хостой байна" 
+          return res.status(400).json({
+            message: "Та энэ ангилалд аль хэдийн баг/хостой байна"
           });
         }
 
@@ -2078,8 +2079,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           );
 
         if (pendingTeams.length > 0) {
-          return res.status(400).json({ 
-            message: "Та аль хэдийн хүсэлт илгээсэн байна. Бүх гишүүд зөвшөөрөх хүртэл хүлээнэ үү эсвэл цуцална уу." 
+          return res.status(400).json({
+            message: "Та аль хэдийн хүсэлт илгээсэн байна. Бүх гишүүд зөвшөөрөх хүртэл хүлээнэ үү эсвэл цуцална уу."
           });
         }
 
@@ -2164,7 +2165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 })
                 .from(tournamentTeamPlayers)
                 .where(eq(tournamentTeamPlayers.tournamentTeamId, inv.teamId));
-              
+
               return { ...inv, teamMembers: members };
             }
             return inv;
@@ -2273,7 +2274,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           // Get the provisional team for this invitation
           const provisionalTeamId = invitation.provisionalTeamId;
-          
+
           if (provisionalTeamId) {
             // Update provisional team accepted count
             const [provisionalTeam] = await db
@@ -2283,10 +2284,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             if (provisionalTeam) {
               const newAcceptedCount = (provisionalTeam.acceptedMembers || 0) + 1;
-              
+
               await db
                 .update(provisionalTeams)
-                .set({ 
+                .set({
                   acceptedMembers: newAcceptedCount,
                   updatedAt: new Date()
                 })
@@ -2326,7 +2327,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 // Update provisional team to confirmed status
                 await db
                   .update(provisionalTeams)
-                  .set({ 
+                  .set({
                     status: 'confirmed',
                     confirmedTeamId: team.id,
                     updatedAt: new Date()
