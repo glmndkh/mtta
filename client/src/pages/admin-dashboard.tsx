@@ -3170,11 +3170,12 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
             <div className="space-y-4">
               <div className="h-full">
                 <Label htmlFor="content">Агуулга *</Label>
-                <div className="mt-2 h-[calc(100%-2rem)]">
+                <div className="mt-2 min-h-[600px]">
                   <RichTextEditor
                     content={formData.content || ''}
                     onChange={(value) => setFormData({ ...formData, content: value })}
                     placeholder="Мэдээний агуулга..."
+                    className="min-h-[580px]"
                   />
                 </div>
               </div>
