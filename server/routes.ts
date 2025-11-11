@@ -2647,10 +2647,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const isTeam = invitation.eventType.includes('TEAM');
             const teamName = invitation.teamName || (isTeam ? 'Баг' : 'Хос');
 
-            // Create tournament team
+            // Validate eventType is present for tournament teams
+            if (!provisionalTeam.eventType) {
+              return res.status(400).json({ message: "Төрөл олдсонгүй. Та дахин оролдоно уу." });
+            }
+
+            // Create tournament team with eventType from provisionalTeam
             const team = await storage.createLeagueTeam({
               tournamentId: invitation.tournamentId,
               name: teamName,
+              eventType: provisionalTeam.eventType as 'SINGLES' | 'DOUBLES' | 'TEAM',
               entityType: 'tournament',
             });
 
@@ -2863,6 +2869,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: "Could not determine event category" });
         }
 
+        // Map eventCategory to eventType enum
+        const teamEventType: 'DOUBLES' | 'TEAM' = eventCategory === 'doubles' ? 'DOUBLES' : 'TEAM';
+
         // Validate team name for team events
         if (eventCategory === 'team' && !teamName?.trim()) {
           return res.status(400).json({ message: "Багийн нэр заавал оруулна уу" });
@@ -2966,10 +2975,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
 
-        // Create the team
+        // Create the team with eventType (already validated and mapped above)
         const team = await storage.createLeagueTeam({
           tournamentId,
           name: teamName?.trim() || `${eventCategory === 'doubles' ? 'Хос' : 'Баг'} - ${Date.now()}`,
+          eventType: teamEventType,
           entityType: 'tournament',
         });
 
@@ -4869,14 +4879,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id: tournamentId } = req.params;
       const teamData = req.body;
 
+      // Validate eventType for tournament teams
+      if (!teamData.eventType) {
+        return res.status(400).json({ message: "Төрөл заавал оруулна уу (SINGLES, DOUBLES, TEAM)" });
+      }
+
+      const validEventTypes = ['SINGLES', 'DOUBLES', 'TEAM'];
+      if (!validEventTypes.includes(teamData.eventType)) {
+        return res.status(400).json({ message: "Буруу төрөл: SINGLES, DOUBLES, эсвэл TEAM байх ёстой" });
+      }
+
       // Create tournament team using the existing storage method
       const team = await storage.createLeagueTeam({
         tournamentId: tournamentId,
         name: teamData.name,
+        eventType: teamData.eventType as 'SINGLES' | 'DOUBLES' | 'TEAM',
         logoUrl: teamData.logoUrl,
         sponsorLogo: teamData.sponsorLogo,
         ownerName: teamData.ownerName,
         coachName: teamData.coachName,
+        entityType: 'tournament',
       });
 
       res.json(team);
@@ -4889,7 +4911,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tournaments/:id/teams", async (req, res) => {
     try {
       const { id: tournamentId } = req.params;
-      const teams = await storage.getLeagueTeams(tournamentId);
+      const { eventType } = req.query;
+      
+      let teams = await storage.getLeagueTeams(tournamentId);
+      
+      // Filter by eventType if provided
+      if (eventType && typeof eventType === 'string') {
+        teams = teams.filter(team => team.eventType === eventType);
+      }
+      
       res.json(teams);
     } catch (e) {
       console.error("Error fetching tournament teams:", e);

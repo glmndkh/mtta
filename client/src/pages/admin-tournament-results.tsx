@@ -111,6 +111,12 @@ const AdminTournamentResults: React.FC = () => {
     enabled: !!params?.tournamentId
   });
 
+  // Fetch tournament teams/pairs for count display
+  const { data: tournamentTeams = [] } = useQuery<any[]>({
+    queryKey: ['/api/tournaments', params?.tournamentId, 'teams'],
+    enabled: !!params?.tournamentId
+  });
+
   // Fetch all users for autocomplete
   const { data: users = [] } = useQuery<UserType[]>({
     queryKey: ['/api/admin/users'],
@@ -156,6 +162,30 @@ const AdminTournamentResults: React.FC = () => {
       // participationType is stored as a simple string like "SINGLES", "DOUBLES", "TEAM"
       return participant.participationType === eventType;
     });
+  };
+
+  // Get teams/pairs filtered by event type
+  const getTeamsByEventType = (eventType: 'SINGLES' | 'DOUBLES' | 'TEAM') => {
+    if (!tournamentTeams) return [];
+    
+    return tournamentTeams.filter((team: any) => team.eventType === eventType);
+  };
+
+  // Get participant/team count display for event type
+  const getCountDisplay = (eventType: 'SINGLES' | 'DOUBLES' | 'TEAM') => {
+    if (eventType === 'SINGLES') {
+      const count = getParticipantsByEventType(eventType).length;
+      return `Нийт: ${count} оролцогч`;
+    } else if (eventType === 'DOUBLES') {
+      const pairCount = getTeamsByEventType(eventType).length;
+      const participantCount = getParticipantsByEventType(eventType).length;
+      return `Нийт: ${pairCount} хос (${participantCount} тоглогч)`;
+    } else if (eventType === 'TEAM') {
+      const teamCount = getTeamsByEventType(eventType).length;
+      const participantCount = getParticipantsByEventType(eventType).length;
+      return `Нийт: ${teamCount} баг (${participantCount} гишүүн)`;
+    }
+    return '';
   };
 
   // Save results mutation
@@ -962,7 +992,7 @@ const AdminTournamentResults: React.FC = () => {
                   <div className="bg-blue-900/20 p-4 rounded-lg border border-blue-500/30">
                     <h3 className="text-lg font-semibold text-blue-300 mb-2">Ганцаарчилсан төрлийн оролцогчид</h3>
                     <p className="text-sm text-gray-400 mb-3">
-                      Нийт: {getParticipantsByEventType('SINGLES').length} оролцогч
+                      {getCountDisplay('SINGLES')}
                     </p>
                     <div className="space-y-2 max-h-60 overflow-y-auto">
                       {getParticipantsByEventType('SINGLES').map((participant: any, idx: number) => (
@@ -979,7 +1009,7 @@ const AdminTournamentResults: React.FC = () => {
                   <div className="bg-green-900/20 p-4 rounded-lg border border-green-500/30">
                     <h3 className="text-lg font-semibold text-green-300 mb-2">Хос төрлийн оролцогчид</h3>
                     <p className="text-sm text-gray-400 mb-3">
-                      Нийт: {getParticipantsByEventType('DOUBLES').length} оролцогч
+                      {getCountDisplay('DOUBLES')}
                     </p>
                     <div className="space-y-2 max-h-60 overflow-y-auto">
                       {getParticipantsByEventType('DOUBLES').map((participant: any, idx: number) => (
@@ -996,7 +1026,7 @@ const AdminTournamentResults: React.FC = () => {
                   <div className="bg-purple-900/20 p-4 rounded-lg border border-purple-500/30">
                     <h3 className="text-lg font-semibold text-purple-300 mb-2">Багийн төрлийн оролцогчид</h3>
                     <p className="text-sm text-gray-400 mb-3">
-                      Нийт: {getParticipantsByEventType('TEAM').length} оролцогч
+                      {getCountDisplay('TEAM')}
                     </p>
                     <div className="space-y-2 max-h-60 overflow-y-auto">
                       {getParticipantsByEventType('TEAM').map((participant: any, idx: number) => (
