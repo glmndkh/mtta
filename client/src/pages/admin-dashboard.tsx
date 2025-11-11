@@ -4590,7 +4590,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
 
           {/* Create Dialog */}
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <DialogContent className={`${selectedTab === 'news' ? 'max-w-[95vw] max-h-[95vh]' : 'max-w-2xl max-h-[90vh]'} overflow-hidden flex flex-col`}>
               <DialogHeader className="flex-shrink-0">
                 <DialogTitle>Шинэ зүйл нэмэх</DialogTitle>
                 <DialogDescription>
@@ -4618,7 +4618,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
             setFormData({}); // Reset form data on close
           }}>
             <DialogContent
-              className={`${selectedTab === 'tournaments' ? 'max-w-[90vw] max-h-[95vh]' : 'max-w-4xl max-h-[90vh]'} overflow-y-auto`}
+              className={`${(selectedTab === 'tournaments' || selectedTab === 'news') ? 'max-w-[95vw] max-h-[95vh]' : 'max-w-4xl max-h-[90vh]'} overflow-y-auto`}
             >
               <DialogHeader>
                 <DialogTitle>
