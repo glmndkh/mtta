@@ -2290,42 +2290,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
 
-        const memberRegistration = await storage.getTournamentRegistration(tournamentId, memberPlayer.id);
-        
-        console.log("Checking registration for member:", memberUser.firstName, memberUser.lastName);
-        console.log("Event type requested:", eventType);
-        console.log("Member registration:", memberRegistration);
-        console.log("Member participation type:", memberRegistration?.participationType);
+        // Use getTournamentRegistrationByCategory to get the registration for this specific event type
+        const memberRegistration = await storage.getTournamentRegistrationByCategory(
+          tournamentId, 
+          memberPlayer.id,
+          eventType
+        );
         
         if (!memberRegistration) {
-          return res.status(400).json({
-            message: `${memberUser.firstName} ${memberUser.lastName} энэ тэмцээнд бүртгүүлээгүй байна`
-          });
-        }
-        
-        // Parse and compare the participation types as objects
-        let requestedEvent, registeredEvent;
-        try {
-          requestedEvent = typeof eventType === 'string' ? JSON.parse(eventType) : eventType;
-          registeredEvent = typeof memberRegistration.participationType === 'string' 
-            ? JSON.parse(memberRegistration.participationType) 
-            : memberRegistration.participationType;
-        } catch (e) {
-          console.error("Failed to parse event types:", e);
-          return res.status(400).json({
-            message: "Төрлийн мэдээлэл буруу байна"
-          });
-        }
-
-        // Compare key properties of the events
-        const isSameEvent = 
-          requestedEvent.type === registeredEvent.type &&
-          requestedEvent.subType === registeredEvent.subType;
-
-        if (!isSameEvent) {
-          console.log("Participation type mismatch!");
-          console.log("Expected:", requestedEvent);
-          console.log("Got:", registeredEvent);
           return res.status(400).json({
             message: `${memberUser.firstName} ${memberUser.lastName} энэ төрөлд бүртгүүлээгүй байна`
           });
