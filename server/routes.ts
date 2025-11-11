@@ -2276,31 +2276,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
 
-        // Validate only the FIRST member for sequential invitation
-        const firstMemberId = members[0];
-        const memberUser = await storage.getUser(firstMemberId);
-        if (!memberUser) {
-          return res.status(400).json({ message: "Сонгогдсон тоглогч олдсонгүй" });
-        }
+        // Validate ALL members before creating provisional team
+        for (const memberId of members) {
+          const memberUser = await storage.getUser(memberId);
+          if (!memberUser) {
+            return res.status(400).json({ message: "Сонгогдсон тоглогчдийн нэг нь олдсонгүй" });
+          }
 
-        const memberPlayer = await storage.getPlayerByUserId(firstMemberId);
-        if (!memberPlayer) {
-          return res.status(400).json({
-            message: `${memberUser.firstName} ${memberUser.lastName} тоглогчийн профайлгүй байна`
-          });
-        }
+          const memberPlayer = await storage.getPlayerByUserId(memberId);
+          if (!memberPlayer) {
+            return res.status(400).json({
+              message: `${memberUser.firstName} ${memberUser.lastName} тоглогчийн профайлгүй байна`
+            });
+          }
 
-        // Use getTournamentRegistrationByCategory to get the registration for this specific event type
-        const memberRegistration = await storage.getTournamentRegistrationByCategory(
-          tournamentId, 
-          memberPlayer.id,
-          eventType
-        );
-        
-        if (!memberRegistration) {
-          return res.status(400).json({
-            message: `${memberUser.firstName} ${memberUser.lastName} энэ төрөлд бүртгүүлээгүй байна`
-          });
+          // Use getTournamentRegistrationByCategory to get the registration for this specific event type
+          const memberRegistration = await storage.getTournamentRegistrationByCategory(
+            tournamentId, 
+            memberPlayer.id,
+            eventType
+          );
+          
+          if (!memberRegistration) {
+            return res.status(400).json({
+              message: `${memberUser.firstName} ${memberUser.lastName} энэ төрөлд бүртгүүлээгүй байна`
+            });
+          }
         }
 
         // Create provisional team with full members list
@@ -2315,22 +2316,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: 'pending',
         }).returning();
 
-        // Create invitation ONLY for the first member
-        const [invitation] = await db.insert(teamInvitations).values({
-          provisionalTeamId: provisionalTeam.id,
-          tournamentId,
-          eventType,
-          senderId,
-          receiverId: firstMemberId,
-          teamName: teamName || null,
-          status: 'pending'
-        }).returning();
+        // Create invitations for ALL members in parallel
+        const invitations = await Promise.all(
+          members.map(async (memberId) => {
+            const [invitation] = await db.insert(teamInvitations).values({
+              provisionalTeamId: provisionalTeam.id,
+              tournamentId,
+              eventType,
+              senderId,
+              receiverId: memberId,
+              teamName: teamName || null,
+              status: 'pending'
+            }).returning();
+            return invitation;
+          })
+        );
 
         res.json({
           message: "Хүсэлт амжилттай илгээгдлээ",
           provisionalTeamId: provisionalTeam.id,
-          invitation,
-          note: "Эхний тоглогчид хүсэлт илгээгдлээ. Тэр зөвшөөрсний дараа дараагийн тоглогчид автоматаар илгээгдэнэ."
+          invitations,
+          note: "Бүх гишүүдэд зэрэг хүсэлт илгээгдлээ. Бүгд зөвшөөрсний дараа баг баталгаажна."
         });
       } catch (e) {
         console.error("Error sending invitation:", e);
@@ -2638,40 +2644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               teamId: team.id
             });
           } else {
-            // NOT ALL ACCEPTED YET - Send invitation to next member
-            const membersList = provisionalTeam.membersList as string[] || [];
-            
-            // Find next member who hasn't been invited yet
-            const nextMemberId = membersList.find(memberId => 
-              !acceptedMemberIds.includes(memberId) &&
-              memberId !== invitation.senderId // Exclude creator
-            );
-
-            if (nextMemberId) {
-              // Validate next member
-              const nextUser = await storage.getUser(nextMemberId);
-              if (nextUser) {
-                // Send invitation to next member
-                await db.insert(teamInvitations).values({
-                  provisionalTeamId: provisionalTeam.id,
-                  tournamentId: invitation.tournamentId,
-                  eventType: invitation.eventType,
-                  senderId: invitation.senderId,
-                  receiverId: nextMemberId,
-                  teamName: invitation.teamName,
-                  status: 'pending'
-                }).returning();
-
-                return res.json({
-                  message: "Хүсэлтийг зөвшөөрлөө. Дараагийн тоглогчид хүсэлт илгээгдлээ.",
-                  teamCreated: false,
-                  acceptedCount: newAcceptedCount,
-                  requiredCount: provisionalTeam.requiredMembers,
-                  nextMember: `${nextUser.firstName} ${nextUser.lastName}`
-                });
-              }
-            }
-
+            // NOT ALL ACCEPTED YET - Parallel invitations already sent, just wait
             return res.json({
               message: "Хүсэлтийг зөвшөөрлөө. Бусад гишүүдийн хариу хүлээж байна.",
               teamCreated: false,
