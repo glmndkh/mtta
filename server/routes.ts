@@ -3744,7 +3744,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Allow empty title if not provided, use a default value
       const sliderData = {
         ...req.body,
-        title: req.body.title || "Зургийн слайд"
+        title: req.body.title
       };
       const validatedData = insertHomepageSliderSchema.parse(sliderData);
       const slider = await storage.createHomepageSlider(validatedData);
