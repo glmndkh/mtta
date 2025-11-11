@@ -674,7 +674,7 @@ interface Participant {
                 {user?.role === 'admin' && (
                   <ObjectUploader
                     maxNumberOfFiles={10}
-                    maxFileSize={5 * 1024 * 1024}
+                    maxFileSize={50 * 1024 * 1024}
                     onGetUploadParameters={async () => {
                       try {
                         const response = await apiRequest('/api/objects/upload', {

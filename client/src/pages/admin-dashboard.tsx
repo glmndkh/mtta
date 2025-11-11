@@ -2269,7 +2269,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
               <div className="space-y-2">
                 <ObjectUploader
                   maxNumberOfFiles={1}
-                  maxFileSize={5 * 1024 * 1024}
+                  maxFileSize={52428800} // Increased to 50MB
                   onGetUploadParameters={async () => {
                     try {
                       const response = await apiRequest("/api/objects/upload", {
@@ -2572,55 +2572,48 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                   maxNumberOfFiles={1}
                   maxFileSize={5 * 1024 * 1024}
                   onGetUploadParameters={async () => {
-                    try {
-                      const response = await apiRequest("/api/objects/upload", {
-                        method: "POST",
-                      });
-                      const data = (await response.json()) as { uploadURL: string };
-                      if (!data || !data.uploadURL) {
-                        throw new Error("No upload URL received");
+                    const response = await fetch('/api/objects/upload', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json'
                       }
-                      return {
-                        method: "PUT" as const,
-                        url: data.uploadURL,
-                      };
-                    } catch (error) {
-                      console.error("Error getting upload parameters:", error);
-                      toast({
-                        title: "Алдаа",
-                        description: "Файл хуулах URL авахад алдаа гарлаа",
-                        variant: "destructive",
-                      });
-                      throw error;
-                    }
+                    });
+                    const data = await response.json();
+                    return {
+                      method: 'PUT' as const,
+                      url: data.uploadURL
+                    };
                   }}
                   onComplete={async (result) => {
-                    try {
-                      if (result.successful && result.successful.length > 0) {
-                        const response = await apiRequest("/api/objects/finalize", {
-                          method: "PUT",
+                    if (result.successful && result.successful.length > 0) {
+                      const uploadedFileUrl = result.successful[0].uploadURL;
+
+                      try {
+                        const response = await fetch('/api/objects/finalize', {
+                          method: 'PUT',
                           headers: {
-                            "Content-Type": "application/json",
+                            'Content-Type': 'application/json'
                           },
                           body: JSON.stringify({
-                            fileURL: result.successful[0].uploadURL,
-                            isPublic: true,
-                          }),
+                            fileURL: uploadedFileUrl,
+                            isPublic: true
+                          })
                         });
-                        const { objectPath } = await response.json();
-                        setFormData({ ...formData, imageUrl: objectPath });
+                        const data = await response.json();
+
+                        setFormData({ ...formData, imageUrl: data.objectPath });
                         toast({
                           title: "Амжилттай",
                           description: "Лого амжилттай хуулагдлаа",
                         });
+                      } catch (error) {
+                        console.error('Error finalizing upload:', error);
+                        toast({
+                          title: "Алдаа",
+                          description: "Файл боловсруулахад алдаа гарлаа",
+                          variant: "destructive",
+                        });
                       }
-                    } catch (error) {
-                      console.error("Error finalizing upload:", error);
-                      toast({
-                        title: "Алдаа",
-                        description: "Файл боловсруулахад алдаа гарлаа",
-                        variant: "destructive",
-                      });
                     }
                   }}
                   buttonClassName="w-full"
