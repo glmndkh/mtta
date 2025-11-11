@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Trophy } from "lucide-react";
+import { Trophy, ArrowDown, ArrowUp, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 interface ChampionCard {
   name: string;
@@ -148,9 +150,9 @@ function buildTimelineEvents(rows: Row[]): TimelineEvent[] {
   return events.sort((a, b) => Number(b.year) - Number(a.year));
 }
 
-const timelineEvents = buildTimelineEvents(championsRaw);
+const allTimelineEvents = buildTimelineEvents(championsRaw);
 
-/** 4) Компонентууд – хуучин хэвээр */
+/** 4) Компонентууд */
 function ChampionCardView({ champion }: { champion: ChampionCard }) {
   return (
     <motion.div
@@ -182,13 +184,82 @@ function ChampionCardView({ champion }: { champion: ChampionCard }) {
 }
 
 export function MTTATimelineSection() {
+  const [searchYear, setSearchYear] = useState("");
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+
+  const timelineEvents = useMemo(() => {
+    let filtered = allTimelineEvents;
+    
+    // Filter by year if search query exists
+    if (searchYear.trim()) {
+      filtered = filtered.filter(event => event.year.includes(searchYear.trim()));
+    }
+    
+    // Sort based on selected order
+    const sorted = [...filtered].sort((a, b) => {
+      const yearA = Number(a.year);
+      const yearB = Number(b.year);
+      return sortOrder === "newest" ? yearB - yearA : yearA - yearB;
+    });
+    
+    return sorted;
+  }, [searchYear, sortOrder]);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 py-20 px-4">
-      <div className="max-w-7xl mx-auto text-center mb-16">
+      <div className="max-w-7xl mx-auto text-center mb-8">
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Бидний түүх</h1>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">Монголын ширээний теннисний холбооны түүхэн замнал</p>
         </motion.div>
+      </div>
+
+      {/* Search and Sort Controls */}
+      <div className="max-w-7xl mx-auto mb-12">
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-center">
+          {/* Year Search */}
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              type="text"
+              placeholder="Он хайх..."
+              value={searchYear}
+              onChange={(e) => setSearchYear(e.target.value)}
+              className="pl-10 bg-gray-800/50 border-green-500/20 text-white placeholder:text-gray-500"
+            />
+          </div>
+
+          {/* Sort Direction Toggle */}
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setSortOrder("newest")}
+              variant={sortOrder === "newest" ? "default" : "outline"}
+              className={sortOrder === "newest" 
+                ? "bg-green-600 hover:bg-green-700 text-white" 
+                : "bg-gray-800/50 border-green-500/20 text-gray-300 hover:bg-gray-700"}
+            >
+              <ArrowDown className="w-4 h-4 mr-2" />
+              Шинээс хуучин руу
+            </Button>
+            <Button
+              onClick={() => setSortOrder("oldest")}
+              variant={sortOrder === "oldest" ? "default" : "outline"}
+              className={sortOrder === "oldest" 
+                ? "bg-green-600 hover:bg-green-700 text-white" 
+                : "bg-gray-800/50 border-green-500/20 text-gray-300 hover:bg-gray-700"}
+            >
+              <ArrowUp className="w-4 h-4 mr-2" />
+              Хуучнаас шинэ рүү
+            </Button>
+          </div>
+        </div>
+
+        {/* Results Count */}
+        {searchYear.trim() && (
+          <p className="text-center text-gray-400 mt-4">
+            {timelineEvents.length} үр дүн олдлоо
+          </p>
+        )}
       </div>
 
       <div className="max-w-7xl mx-auto relative">
