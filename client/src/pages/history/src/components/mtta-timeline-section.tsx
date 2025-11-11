@@ -60,22 +60,101 @@ const imageMap: Record<string, string> = {
   "Б.Батхишиг": imgBase + "B.Batkhishig.jpeg",
   "Ч.Алтанцэцэг": imgBase + "Ch.Altantsetseg.jpeg",
   "Л. Батхишиг": imgBase + "L.Batkhishig.jpeg",
+  "Ө.Балжинням": imgBase + "B.Bolor-Erdene.jpeg",
 };
 
-/** 2) 1957–2019 оны түүвэр өгөг (1958–2016 онууд бөглөгдсөн) */
+/** 2) 1956–2016 оны өгөг (тайлбарууд 1956–1970 онуудад нэмсэн) */
 type Row = { year: number; male?: string; female?: string; description?: string };
 const championsRaw: Row[] = [
-  { year: 1956 , description:"•	Нийслэлд анх удаа ширээний теннисний (одон бөмбөгийн) тэмцээн зохион байгуулагдсан.\n•	Энэ жилээс эхлэн сургуулиуд, байгууллагууд дунд тогтмол тэмцээн явагдаж эхэлжээ.\n•	Монголд ширээний теннис сонирхогчдын тоо нэмэгдэж, спортын анхны үндэс тавигдав."
-},
-  { year: 1957, description: "•	Монголд анхны улсын аварга шалгаруулах тэмцээн болсон.\n •	Хөдөлмөрийн нийгэмлэг болон сургуулиудын дэргэд секц байгуулагдаж, сонирхогчдын тоо улам өссөн.\n •	Одон бөмбөгийн спорт албан байгууллагуудын дунд өргөн дэлгэрч эхэлжээ." }, 
-  { year: 1958, male: "Г.Нооной", female: "Б.Наран", description: "•	Улаанбаатар хотод улсын аварга шалгаруулах анхны тэмцээн болсон. \n•Хөдөлмөр” нийгэмлэгийн залуус анх удаа өрсөлдөж нэг хорооноос эмэгтэй 1, эрэгтэй 2 тамирчин оролцсон. \n•Тэмцээний дүрэм, тоглолтын зохион байгуулалт сайжирч, спортын стандарт тогтоогдов." },
-  { year: 1959, male: "Д.Баньдхүү", female: "Б.Наран", description: "Д.Баньдхүү эрэгтэйчүүдийн ангилалд анхны авга цолоо хүртлээ." },
-  { year: 1960, male: "Д.Баньдхүү", female: "Г.Нансалмаа" },
-  { year: 1961, male: "Б.Амарсанаа", female: "Д.Алимаа" },
-  { year: 1962, male: "Б.Амарсанаа", female: "Б.Наран" },
-  { year: 1964, male: "Ц.Томбуу", female: "Б.Наран" },
-  { year: 1966, male: "Б.Амарсанаа", female: "Б.Отгонжаргал" },
-  { year: 1969, male: "Ц.Томбуу", female: "Б.Отгонжаргал" },
+  {
+    year: 1956,
+    description:
+      "• Нийслэлд анх удаа ширээний теннисний (одон бөмбөгийн) тэмцээн зохион байгуулагдсан.\n" +
+      "• Энэ жилээс эхлэн сургуулиуд, байгууллагууд дунд тогтмол тэмцээн явагдаж эхэлжээ.\n" +
+      "• Монголд ширээний теннис сонирхогчдын тоо нэмэгдэж, спортын анхны үндэс тавигдав."
+  },
+  {
+    year: 1957,
+    description:
+      "• Монголд анхны улсын аваргын төлөө тэмцээн болсон.\n" +
+      "• “Хөдөлмөр” нийгэмлэг болон сургуулиудын дэргэд секцүүд байгуулагдаж, сонирхогчдын тоо улам өсөв.\n" +
+      "• Одон бөмбөгийн спорт албан байгууллагуудын дунд өргөн дэлгэрч эхэлжээ."
+  },
+  {
+    year: 1958,
+    male: "Г.Нооной",
+    female: "Б.Наран",
+    description:
+      "• Улаанбаатар хотод улсын аварга шалгаруулах анхны тэмцээн болсон.\n" +
+      "• “Хөдөлмөр” нийгэмлэгийн залуус анх удаа өрсөлдөж, эмэгтэй 1, эрэгтэй 2 тамирчин оролцсон.\n" +
+      "• Тэмцээний дүрэм, зохион байгуулалт сайжирч, спортын стандарт тогтоогдов."
+  },
+  {
+    year: 1959,
+    male: "Д.Баньдхүү",
+    female: "Б.Наран",
+    description:
+      "• Сургуулиудын дэргэд бэлтгэл сургалт тогтмол явагдаж эхэлсэн.\n" +
+      "• Монголын залуучуудын анхдугаар их наадамд ширээний теннис төрөл орсон.\n" +
+      "• Энэ үеэс секц, дугуйлангууд нэмэгдэж, оролцогчдын тоо өсөв."
+  },
+  {
+    year: 1960,
+    male: "Д.Баньдхүү",
+    female: "Г.Нансалмаа",
+    description:
+      "• Ширээний теннисний үндсэн холбоо албан ёсоор тогтож, зохион байгуулалт сайжив.\n" +
+      "• Монголын тамирчид БНСУ-ын төлөөлөгчидтэй нөхөрсөг тоглолт хийв.\n" +
+      "• Бэлтгэлийн тогтолцоо бүрэлдэн, албан ёсны тэмцээний системд шилжив."
+  },
+  {
+    year: 1961,
+    male: "Б.Амарсанаа",
+    female: "Д.Алимаа",
+    description:
+      "• Монголын тамирчид анх удаа БНХАУ-д очиж туршлага судлав.\n" +
+      "• Улсын аварга 5 төрлөөр зохион байгуулагдаж, цар хүрээ нь тэлэв.\n" +
+      "• Техник, тактикийн бэлтгэлийн чанар ахисан он байв."
+  },
+  {
+    year: 1962,
+    male: "Б.Амарсанаа",
+    female: "Б.Наран",
+    description:
+      "• Монголын баг Дэлхийн оюутны IV наадамд оролцов.\n" +
+      "• Хотын аваргад 27 эрэгтэй, 26 эмэгтэй тамирчин өрсөлджээ.\n" +
+      "• Улсын хэмжээнд зохион байгуулалт, оролцоо тогтмол өсөв."
+  },
+  {
+    year: 1963,
+    description:
+      "• Улсын шигшээ баг байгуулагдав.\n" +
+      "• Б.Наран спортын мастер цол хүртсэн (анхны мастер).\n" +
+      "• БНМАУ–БНХАУ найрамдлын тэмцээнд Монголын тамирчид анх оролцов; С.Бямбажав, Ц.Төмбүү нар хосоор IV байрт.\n"
+  },
+  { year: 1964, male: "Ц.Томбуу", female: "Б.Наран", description: "• Сургууль, үйлдвэр, байгууллагуудын тэмцээн тогтмолжив.\n• Ширээний теннис нийтийн спортын түвшинд дэлгэрэв." },
+  {
+    year: 1965,
+    description:
+      "• Пионерийн сургуулиуд, үйлдвэрийн хоршоодын дэргэд секцүүд олноор байгуулагдав.\n" +
+      "• Залуу тамирчдын тоо эрс өссөн үе эхэллээ."
+  },
+  { year: 1966, male: "Б.Амарсанаа", female: "Б.Отгонжаргал", description: "• Өсвөр үеийн уралдаан, сургалт идэвхжив; шинэ авьяастнууд тодорч эхлэв." },
+  {
+    year: 1967,
+    description:
+      "• Улсын аваргад оролцогчдын тоо огцом өсөв (түүхэн дээд амжилтуудын нэг)."
+  },
+  { year: 1968, description: "• Оролцогчдын хүрээ, клубүүдийн тоо улам нэмэгдэв; бэлтгэлийн бааз суурь сайжрав." },
+  { year: 1969, male: "Ц.Томбуу", female: "Б.Отгонжаргал", description: "• Улсын аваргад 84 эрэгтэй, 36 эмэгтэй тамирчин оролцлоо." },
+  {
+    year: 1970,
+    description:
+      "• Шинэ үеийн тамирчид тодорч, Д.Жамъянсүрэн, Д.Цэмбэл, Х.Жамъянсүрэн, Б.Долгормаа, Ш.Цагаар зэрэг олон тамирчин амжилт гаргав.\n" +
+      "• Спорт бүрэн тогтолцоотой (тогтмол тэмцээн, сургалт, холбоо, шигшээ) хэмжээнд төлөвшив."
+  },
+
+  // 1971–2016 (анх байсан аваргууд)
   { year: 1971, male: "Ц.Томбуу", female: "Г.Мөнхцэцэг" },
   { year: 1973, male: "М.Нэргүй", female: "Б.Отгонжаргал" },
   { year: 1975, male: "М.Нэргүй", female: "Г.Нансалмаа" },
@@ -116,6 +195,14 @@ const championsRaw: Row[] = [
   { year: 2014, male: "Б.Билэгт", female: "Б.Батхишиг" },
   { year: 2015, male: "Э.Лхагвасүрэн", female: "М.Дэлгэрмаа" },
   { year: 2016, male: "Б.Билэгт", female: "Б.Батхишиг" },
+  { year: 2017, male: "Э.Лхагвасүрэн", female: "Б.Батхишиг" },
+  { year: 2018, male: "Я.Бэгз", female: "Б.Болор-Эрдэнэ" },
+  { year: 2019, male: "Э.Лхагвасүрэн", female: "Ө.Балжинням" },
+  { year: 2020, male: "Э.Лхагвасүрэн", female: "Б.Батхишиг" },
+  { year: 2021, male: "Э.Лхагвасүрэн", female: "Б.Батхишиг" },
+  { year: 2022, male: "Э.Лхагвасүрэн", female: "Б.Батхишиг" },
+  { year: 2023, male: "Э.Лхагвасүрэн", female: "Б.Батхишиг" }
+  
 ];
 
 /** 3) Raw → TimelineEvent хөрвүүлэгч */
@@ -137,16 +224,16 @@ function buildTimelineEvents(rows: Row[]): TimelineEvent[] {
         image: imageMap[r.female]
       });
     }
-    if (champions.length === 0) return; // мэдээлэлгүй жилийг алгасна
+    if (!r.description && champions.length === 0) return;
     events.push({
       year: String(r.year),
-      title: "Улсын аварга шалгаруулах тэмцээн",
-      description: r.description || 
+      title: "Онцлох үйл явдал",
+      description:
+        r.description ||
         "Тухайн жилд улсын аварга болсон тамирчид. (Түүхэн бичвэрийг дараа нь дэлгэрүүлж болно.)",
       champions
     });
   });
-  // Шинэ нь дээгүүр харагдахаар бууруулж эрэмбэлэв
   return events.sort((a, b) => Number(b.year) - Number(a.year));
 }
 
@@ -189,28 +276,36 @@ export function MTTATimelineSection() {
 
   const timelineEvents = useMemo(() => {
     let filtered = allTimelineEvents;
-    
-    // Filter by year if search query exists
+
     if (searchYear.trim()) {
-      filtered = filtered.filter(event => event.year.includes(searchYear.trim()));
+      filtered = filtered.filter((event) =>
+        event.year.includes(searchYear.trim())
+      );
     }
-    
-    // Sort based on selected order
+
     const sorted = [...filtered].sort((a, b) => {
       const yearA = Number(a.year);
       const yearB = Number(b.year);
       return sortOrder === "newest" ? yearB - yearA : yearA - yearB;
     });
-    
+
     return sorted;
   }, [searchYear, sortOrder]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 py-20 px-4">
       <div className="max-w-7xl mx-auto text-center mb-8">
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Бидний түүх</h1>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">Монголын ширээний теннисний холбооны түүхэн замнал</p>
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            Бидний түүх
+          </h1>
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+            Монголын ширээний теннисний холбооны түүхэн замнал
+          </p>
         </motion.div>
       </div>
 
@@ -234,9 +329,11 @@ export function MTTATimelineSection() {
             <Button
               onClick={() => setSortOrder("newest")}
               variant={sortOrder === "newest" ? "default" : "outline"}
-              className={sortOrder === "newest" 
-                ? "bg-green-600 hover:bg-green-700 text-white" 
-                : "bg-gray-800/50 border-green-500/20 text-gray-300 hover:bg-gray-700"}
+              className={
+                sortOrder === "newest"
+                  ? "bg-green-600 hover:bg-green-700 text-white"
+                  : "bg-gray-800/50 border-green-500/20 text-gray-300 hover:bg-gray-700"
+              }
             >
               <ArrowDown className="w-4 h-4 mr-2" />
               Шинээс хуучин руу
@@ -244,9 +341,11 @@ export function MTTATimelineSection() {
             <Button
               onClick={() => setSortOrder("oldest")}
               variant={sortOrder === "oldest" ? "default" : "outline"}
-              className={sortOrder === "oldest" 
-                ? "bg-green-600 hover:bg-green-700 text-white" 
-                : "bg-gray-800/50 border-green-500/20 text-gray-300 hover:bg-gray-700"}
+              className={
+                sortOrder === "oldest"
+                  ? "bg-green-600 hover:bg-green-700 text-white"
+                  : "bg-gray-800/50 border-green-500/20 text-gray-300 hover:bg-gray-700"
+              }
             >
               <ArrowUp className="w-4 h-4 mr-2" />
               Хуучнаас шинэ рүү
@@ -263,7 +362,7 @@ export function MTTATimelineSection() {
       </div>
 
       <div className="max-w-7xl mx-auto relative">
-        <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-green-400 via-green-500 to-green-600 transform -translate-x-1/2 hidden md:block" />
+        <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-green-300 via-green-300 to-green-300 transform -translate-x-1/2 hidden md:block" />
 
         <div className="space-y-16">
           {timelineEvents.map((event, index) => (
@@ -276,22 +375,41 @@ export function MTTATimelineSection() {
               className="relative"
             >
               <div className="grid md:grid-cols-2 gap-8 items-center">
-                <div className={`${index % 2 === 0 ? "md:text-right md:pr-12" : "md:order-2 md:pl-12"}`}>
+                <div
+                  className={`${
+                    index % 2 === 0
+                      ? "md:text-right md:pr-12"
+                      : "md:order-2 md:pl-12"
+                  }`}
+                >
                   <div className="bg-gray-800/50 backdrop-blur-sm border border-green-500/20 rounded-lg p-6 hover:border-green-500/40 transition-all">
-                    <h3 className="text-2xl font-bold text-white mb-2">{event.title}</h3>
-                    <p className="text-gray-300 leading-relaxed">{event.description}</p>
+                    <h3 className="text-2xl font-bold text-white mb-2">
+                      {event.title}
+                    </h3>
+                    {/* ЭНД newline харагдуулна */}
+                    <p className="text-gray-300 leading-relaxed whitespace-pre-line">
+                      {event.description}
+                    </p>
                   </div>
                 </div>
 
                 <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden md:block">
-                  <span className="text-6xl font-bold text-green-400">{event.year}</span>
+                  <span className="text-6xl font-bold text-green-400">
+                    {event.year}
+                  </span>
                 </div>
 
                 <div className="md:hidden mb-4">
-                  <span className="text-5xl font-bold text-green-400">{event.year}</span>
+                  <span className="text-5xl font-bold text-green-400">
+                    {event.year}
+                  </span>
                 </div>
 
-                <div className={`${index % 2 === 0 ? "md:pl-12" : "md:order-1 md:pr-12"}`}>
+                <div
+                  className={`${
+                    index % 2 === 0 ? "md:pl-12" : "md:order-1 md:pr-12"
+                  }`}
+                >
                   <div className="space-y-3">
                     {event.champions.map((c, idx) => (
                       <ChampionCardView key={idx} champion={c} />
@@ -318,3 +436,4 @@ export function MTTATimelineSection() {
     </div>
   );
 }
+export default MTTATimelineSection;
