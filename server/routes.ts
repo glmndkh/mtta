@@ -1447,6 +1447,180 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // --------------
   app.post("/api/tournaments", requireAuth, async (req: any, res) => {
     try {
+
+
+  // Helper: calculate age at tournament start date
+  function calculateAge(dateOfBirth: Date | null | undefined, atDate: Date): number {
+    if (!dateOfBirth) return 25;
+    const birth = new Date(dateOfBirth);
+    let age = atDate.getFullYear() - birth.getFullYear();
+    const monthDiff = atDate.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && atDate.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  }
+
+  // Helper: check if age matches category requirements
+  function ageMatchesCategory(category: string, age: number): boolean {
+    const s = category.toLowerCase();
+    if (s.includes("u13") || s.includes("13")) return age <= 13;
+    if (s.includes("u15") || s.includes("15")) return age <= 15;
+    if (s.includes("u17") || s.includes("17")) return age <= 17;
+    if (s.includes("u19") || s.includes("19")) return age <= 19;
+    if (s.includes("senior") || s.includes("open") || s.includes("adult")) return true;
+    
+    // Parse JSON format for age limits
+    try {
+      const parsed = JSON.parse(category);
+      if (parsed.minAge !== undefined && age < parsed.minAge) return false;
+      if (parsed.maxAge !== undefined && age > parsed.maxAge) return false;
+    } catch {}
+    
+    return true;
+  }
+
+  // Helper: check if gender matches event requirements
+  function genderMatchesEvent(eventType: string, myGender: string, otherGender: string): boolean {
+    const e = eventType.toLowerCase();
+    
+    // Try parsing as JSON first
+    try {
+      const parsed = JSON.parse(eventType);
+      if (parsed.subType) {
+        if (parsed.subType === 'MEN_DOUBLES' || parsed.subType === 'MEN_TEAM') {
+          return otherGender === 'male';
+        }
+        if (parsed.subType === 'WOMEN_DOUBLES' || parsed.subType === 'WOMEN_TEAM') {
+          return otherGender === 'female';
+        }
+        if (parsed.subType === 'MIXED_DOUBLES' || parsed.subType === 'MIXED_TEAM') {
+          return otherGender !== myGender;
+        }
+      }
+      if (parsed.genderReq) {
+        if (parsed.genderReq === 'MALE') return otherGender === 'male';
+        if (parsed.genderReq === 'FEMALE') return otherGender === 'female';
+      }
+    } catch {}
+    
+    // Legacy string matching
+    if (e.includes("men_doubles") || e.includes("men_team")) {
+      return otherGender === "male";
+    }
+    if (e.includes("women_doubles") || e.includes("women_team")) {
+      return otherGender === "female";
+    }
+    if (e.includes("mixed")) {
+      return otherGender && otherGender !== myGender;
+    }
+    
+    return true;
+  }
+
+  // Get eligible partners for team/doubles formation
+  app.get("/api/tournaments/:id/eligible-partners", requireAuth, async (req: any, res) => {
+    try {
+      const tournamentId = req.params.id;
+      const userId = req.session.userId;
+      const { eventType } = req.query as { eventType: string };
+
+      if (!eventType) {
+        return res.status(400).json({ message: "Event type required" });
+      }
+
+      // Get my profile
+      const me = await storage.getUser(userId);
+      const myPlayer = await storage.getPlayerByUserId(userId);
+      if (!myPlayer) {
+        return res.json([]);
+      }
+
+      // Get tournament for date calculation
+      const tournament = await storage.getTournament(tournamentId);
+      if (!tournament) {
+        return res.status(404).json({ message: "Тэмцээн олдсонгүй" });
+      }
+
+      // Verify I'm registered for this event type
+      const myRegs = await storage.getPlayerTournamentRegistrations(myPlayer.id);
+      const normalizedEventType = normalizeEventType(eventType);
+      const iAmRegistered = myRegs.some(r => 
+        r.tournamentId === tournamentId && 
+        normalizeEventType(r.participationType) === normalizedEventType
+      );
+
+      if (!iAmRegistered) {
+        return res.status(400).json({ 
+          message: "Та эхлээд энэ төрөлд бүртгүүлнэ үү" 
+        });
+      }
+
+      // Get all participants registered for this event type
+      const participants = await db
+        .select({
+          playerId: tournamentParticipants.playerId,
+          userId: players.userId,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          gender: users.gender,
+          dateOfBirth: users.dateOfBirth,
+          participationType: tournamentParticipants.participationType,
+        })
+        .from(tournamentParticipants)
+        .leftJoin(players, eq(tournamentParticipants.playerId, players.id))
+        .leftJoin(users, eq(players.userId, users.id))
+        .where(
+          and(
+            eq(tournamentParticipants.tournamentId, tournamentId),
+            eq(tournamentParticipants.status, "registered")
+          )
+        );
+
+      // Filter participants by normalized event type match
+      const sameEventParticipants = participants.filter(p => 
+        normalizeEventType(p.participationType || "") === normalizedEventType
+      );
+
+      // Get already confirmed team members
+      const confirmedMembers = await db
+        .select({ 
+          userId: tournamentTeamPlayers.playerId,
+        })
+        .from(tournamentTeamPlayers)
+        .leftJoin(tournamentTeams, eq(tournamentTeamPlayers.tournamentTeamId, tournamentTeams.id))
+        .where(eq(tournamentTeams.tournamentId, tournamentId));
+
+      const locked = new Set(confirmedMembers.map(x => x.userId));
+
+      // My info for filtering
+      const myGender = (me.gender || "").toLowerCase();
+      const tournamentStartDate = new Date(tournament.startDate);
+      const myAge = me.dateOfBirth ? calculateAge(me.dateOfBirth, tournamentStartDate) : undefined;
+
+      // Filter eligible partners
+      const eligible = sameEventParticipants
+        .filter(p => p.userId !== userId) // Not myself
+        .filter(p => !locked.has(p.userId)) // Not in confirmed team
+        .filter(p => genderMatchesEvent(eventType, myGender, (p.gender || "").toLowerCase()))
+        .filter(p => {
+          if (!p.dateOfBirth || myAge === undefined) return true;
+          const otherAge = calculateAge(p.dateOfBirth, tournamentStartDate);
+          return ageMatchesCategory(eventType, otherAge);
+        })
+        .map(p => ({
+          userId: p.userId,
+          name: `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim(),
+          gender: p.gender,
+        }));
+
+      res.json(eligible);
+    } catch (e) {
+      console.error("eligible-partners error:", e);
+      res.status(500).json({ message: "Хамтрагчдын жагсаалт авахад алдаа гарлаа" });
+    }
+  });
+
       const user = await storage.getUser(req.session.userId);
       if (!user || user.role !== "admin")
         return res
@@ -1772,6 +1946,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
+  // Helper: normalize event type names
+  function normalizeEventType(raw: string): string {
+    const s = (raw || "").toLowerCase().trim();
+    const map: Record<string, string> = {
+      "singles": "singles",
+      "men_singles": "men_singles",
+      "women_singles": "women_singles",
+      "doubles": "doubles",
+      "men_doubles": "men_doubles",
+      "women_doubles": "women_doubles",
+      "mixed_doubles": "mixed_doubles",
+      "team": "team",
+      "men_team": "men_team",
+      "women_team": "women_team",
+      "mixed_team": "mixed_team",
+    };
+    return map[s] ?? s;
+  }
+
   // Registration endpoints
   app.post("/api/registrations", requireAuth, async (req: any, res) => {
     try {
@@ -1790,57 +1983,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Тэмцээний ID болон ангилал шаардлагатай" });
       }
 
-      // Get the player for this user
-      const player = await storage.getPlayerByUserId(userId);
+      // Get or create player for this user
+      let player = await storage.getPlayerByUserId(userId);
       if (!player) {
-        // Create player if doesn't exist
         const user = await storage.getUser(userId);
         if (!user) {
           return res.status(404).json({ message: "Хэрэглэгч олдсонгүй" });
         }
 
-        const newPlayer = await storage.createPlayer({
+        player = await storage.createPlayer({
           userId,
-          dateOfBirth: user.dateOfBirth,
+          dateOfBirth: user.dateOfBirth ?? null,
           rank: null,
           clubId: null,
         });
 
-        if (!newPlayer) {
+        if (!player) {
           return res.status(500).json({ message: "Тоглогчийн профайл үүсгэж чадсангүй" });
         }
       }
 
-      const playerId = player?.id || (await storage.getPlayerByUserId(userId))?.id;
-      if (!playerId) {
-        return res.status(500).json({ message: "Тоглогчийн мэдээлэл олдсонгүй" });
-      }
-
-      // Check if already registered for any of these categories
-      const existing = await storage.getPlayerTournamentRegistrations(playerId);
-
-      // Filter out categories already registered for this tournament
-      const existingForTournament = existing.filter(e => e.tournamentId === tournamentId);
-      const existingTypes = existingForTournament.map(e => e.participationType);
-      const newCategories = categoriesToRegister.filter(
-        (cat: string) => !existingTypes.includes(cat)
+      // Check existing registrations
+      const myRegs = await storage.getPlayerTournamentRegistrations(player.id);
+      const existing = new Set(
+        myRegs
+          .filter(r => r.tournamentId === tournamentId)
+          .map(r => normalizeEventType(r.participationType))
       );
 
-      if (newCategories.length === 0) {
+      // Register only new categories
+      const registrations = [];
+      for (const cat of categoriesToRegister) {
+        const normalized = normalizeEventType(cat);
+        if (existing.has(normalized)) continue;
+        
+        const registration = await storage.registerForTournament({
+          tournamentId,
+          playerId: player.id,
+          participationType: cat, // Store original format
+        });
+        registrations.push(registration);
+      }
+
+      if (registrations.length === 0) {
         return res.status(400).json({
           message: "Та сонгосон бүх ангилалд аль хэдийн бүртгэгдсэн байна"
         });
-      }
-
-      // Register participant for each new category
-      const registrations = [];
-      for (const cat of newCategories) {
-        const registration = await storage.registerForTournament({
-          tournamentId,
-          playerId,
-          participationType: cat,
-        });
-        registrations.push(registration);
       }
 
       res.json(registrations);
@@ -2366,27 +2554,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
               entityType: 'tournament',
             });
 
-            // Get all accepted invitations
-            const allInvitations = await db
-              .select()
-              .from(teamInvitations)
-              .where(
-                and(
-                  eq(teamInvitations.provisionalTeamId, provisionalTeamId),
-                  eq(teamInvitations.status, 'accepted')
-                )
-              );
+            // Use membersList from provisionalTeam + creator for all members
+            const uniqueMembers = Array.from(
+              new Set([
+                provisionalTeam.creatorId,
+                ...(provisionalTeam.membersList as string[] || [])
+              ])
+            );
 
-            // Add creator and all accepted members to the team
-            const memberIds = [
-              invitation.senderId,
-              ...allInvitations.map(inv => inv.receiverId)
-            ];
-
-            for (const memberId of memberIds) {
-              const user = await storage.getUser(memberId);
-              const memberName = user ? `${user.firstName} ${user.lastName}` : 'Unknown Player';
-              await storage.addPlayerToLeagueTeam(team.id, memberId, memberName);
+            for (const memberUserId of uniqueMembers) {
+              const user = await storage.getUser(memberUserId);
+              const memberName = user ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() : 'Unknown Player';
+              await storage.addPlayerToLeagueTeam(team.id, memberUserId, memberName);
             }
 
             // Update provisional team to confirmed status
