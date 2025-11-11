@@ -108,6 +108,9 @@ A comprehensive web application for the Mongolian Table Tennis Association that 
 - **Status-based button behavior** - Create Team/Pair button disabled when invitations pending
 - **Database schema updates** including provisionalTeams table and enhanced teamInvitations with provisional team linking
 - **Backward compatibility** maintained for existing invitation system while adding new provisional team features
+- **Parallel invitation system** - All team members receive invitations simultaneously (changed from sequential)
+- **Complete member visibility** - Sent invitations display ALL team members with individual status indicators
+- **Comprehensive member validation** - All team members validated before provisional team creation
 
 ### Authentication Features
 - **Registration**: Requires email/phone, name, password (min 6 chars), and role
