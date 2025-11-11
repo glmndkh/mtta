@@ -801,32 +801,44 @@ const ConfirmationStep = ({
 
                   // Check provisional teams for this event
                   const eventTeams = sentInvitations.filter((team: any) => team.eventType === event);
-                  const hasConfirmedTeam = eventTeams.some((team: any) => team.status === 'confirmed');
+                  const confirmedTeam = eventTeams.find((team: any) => team.status === 'confirmed');
+                  const hasConfirmedTeam = !!confirmedTeam;
                   const hasPendingTeam = eventTeams.some((team: any) => team.status === 'pending');
                   const allCompleted = hasConfirmedTeam;
 
                   return (
-                    <div key={index} className="bg-green-100 border border-green-300 rounded-lg p-3">
+                    <div key={index} className="bg-green-100 dark:bg-green-900/20 border border-green-300 dark:border-green-700 rounded-lg p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1">
-                          <div className="font-medium text-green-800 mb-1">
+                          <div className="font-medium text-green-800 dark:text-green-200 mb-1">
                             {getEventLabel(event)}
                           </div>
                           {getEventDetails(event) && (
-                            <div className="text-sm text-green-600">
+                            <div className="text-sm text-green-600 dark:text-green-400">
                               {getEventDetails(event)}
                             </div>
                           )}
-                          {allCompleted && (
-                            <div className="mt-2 flex items-center gap-1 text-sm text-green-700">
-                              <CheckCircle className="w-3 h-3" />
-                              <span className="font-medium">
-                                {eventType === 'team' ? '✅ Баг бүрэлдсэн' : '✅ Хос бүрэлдсэн'}
-                              </span>
+                          {allCompleted && confirmedTeam && (
+                            <div className="mt-2 space-y-2">
+                              <div className="flex items-center gap-1 text-sm text-green-700 dark:text-green-300">
+                                <CheckCircle className="w-3 h-3" />
+                                <span className="font-medium">
+                                  {eventType === 'team' ? '✅ Баг бүрэлдсэн' : '✅ Хос бүрэлдсэн'}
+                                </span>
+                              </div>
+                              {/* Show team members */}
+                              <div className="pl-4 space-y-1">
+                                {confirmedTeam.members && confirmedTeam.members.map((member: any) => (
+                                  <div key={member.userId} className="flex items-center gap-2 text-sm text-green-700 dark:text-green-300">
+                                    <User className="w-3 h-3" />
+                                    <span>{formatName(member.firstName, member.lastName)}</span>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           )}
-                          {hasPendingTeam && (
-                            <div className="mt-2 flex items-center gap-1 text-sm text-blue-700">
+                          {hasPendingTeam && !allCompleted && (
+                            <div className="mt-2 flex items-center gap-1 text-sm text-blue-700 dark:text-blue-300">
                               <span className="font-medium">
                                 ⏳ Урилга илгээсэн
                               </span>
