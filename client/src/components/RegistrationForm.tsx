@@ -799,14 +799,11 @@ const ConfirmationStep = ({
                   const eventType = getEventType(event);
                   const isTeamOrDoubles = eventType === 'team' || eventType === 'doubles';
 
-                  // Check if all invitations for this event are completed
-                  const eventInvitations = sentInvitations.filter((inv: any) => inv.eventType === event);
-                  const allCompleted = eventInvitations.length > 0 &&
-                    eventInvitations.every((inv: any) => inv.status === 'completed');
-                  
-                  // Check if there are pending invitations for this event
-                  const hasPendingInvitation = eventInvitations.length > 0 &&
-                    eventInvitations.some((inv: any) => inv.status === 'pending');
+                  // Check provisional teams for this event
+                  const eventTeams = sentInvitations.filter((team: any) => team.eventType === event);
+                  const hasConfirmedTeam = eventTeams.some((team: any) => team.status === 'confirmed');
+                  const hasPendingTeam = eventTeams.some((team: any) => team.status === 'pending');
+                  const allCompleted = hasConfirmedTeam;
 
                   return (
                     <div key={index} className="bg-green-100 border border-green-300 rounded-lg p-3">
@@ -828,7 +825,7 @@ const ConfirmationStep = ({
                               </span>
                             </div>
                           )}
-                          {hasPendingInvitation && (
+                          {hasPendingTeam && (
                             <div className="mt-2 flex items-center gap-1 text-sm text-blue-700">
                               <span className="font-medium">
                                 ⏳ Урилга илгээсэн
@@ -839,12 +836,12 @@ const ConfirmationStep = ({
                         {isTeamOrDoubles && !allCompleted && (
                           <Button
                             onClick={() => handleFormTeam(event)}
-                            disabled={hasPendingInvitation}
+                            disabled={hasPendingTeam}
                             size="sm"
                             className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                             data-testid={`button-form-${eventType}-${event}`}
                           >
-                            {hasPendingInvitation ? '⏳ Хүлээгдэж байна' : (eventType === 'team' ? 'Баг бүрдүүлэх' : 'Хос бүрдүүлэх')}
+                            {hasPendingTeam ? '⏳ Хүлээгдэж байна' : (eventType === 'team' ? 'Баг бүрдүүлэх' : 'Хос бүрдүүлэх')}
                           </Button>
                         )}
                       </div>
@@ -864,93 +861,129 @@ const ConfirmationStep = ({
           </div>
         </div>
 
-        {/* Sent Invitations Section - Grouped by Event */}
+        {/* Sent Invitations Section - Show provisional teams with member details */}
         {sentInvitations && sentInvitations.length > 0 && (
-          <div className="space-y-3">
-            {(() => {
-              // Group invitations by event type
-              const groupedInvitations = sentInvitations.reduce((acc: any, inv: any) => {
-                if (!acc[inv.eventType]) {
-                  acc[inv.eventType] = [];
-                }
-                acc[inv.eventType].push(inv);
-                return acc;
-              }, {});
+          <div className="space-y-4">
+            <h4 className="font-semibold text-gray-900 dark:text-gray-100">
+              Илгээсэн урилга
+            </h4>
+            {sentInvitations
+              .filter((team: any) => team.status !== 'cancelled' && team.status !== 'confirmed')
+              .map((team: any) => {
+              const acceptedCount = team.members.filter((m: any) => m.status === 'accepted').length;
+              const rejectedCount = team.members.filter((m: any) => m.status === 'rejected').length;
+              const pendingCount = team.members.filter((m: any) => m.status === 'pending').length;
+              const hasRejected = rejectedCount > 0;
+              const isCompleted = team.status === 'confirmed';
+              const isCancelled = team.status === 'cancelled';
 
-              return Object.entries(groupedInvitations).map(([eventType, invitations]: [string, any]) => {
-                const totalInvites = invitations.length;
-                const acceptedCount = invitations.filter((inv: any) => inv.status === 'accepted').length;
-                const completedCount = invitations.filter((inv: any) => inv.status === 'completed').length;
-                const rejectedCount = invitations.filter((inv: any) => inv.status === 'rejected').length;
-                const allAccepted = totalInvites > 0 && acceptedCount === totalInvites;
-                const allCompleted = totalInvites > 0 && completedCount === totalInvites;
-                const hasRejected = rejectedCount > 0;
-
-                return (
-                  <div
-                    key={eventType}
-                    className={`p-4 rounded-lg border ${
-                      allCompleted ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' :
-                      hasRejected ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' :
-                      'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <h4 className={`font-semibold ${
-                          allCompleted ? 'text-green-900 dark:text-green-100' :
-                          hasRejected ? 'text-red-900 dark:text-red-100' :
-                          'text-blue-900 dark:text-blue-100'
-                        }`}>
-                          {getEventLabel(eventType)}
-                        </h4>
-                      </div>
-                      <Badge
-                        className={
-                          allCompleted ? 'bg-green-600 text-white' :
-                          allAccepted ? 'bg-blue-600 text-white' :
-                          hasRejected ? 'bg-red-600 text-white' :
-                          'bg-yellow-600 text-white'
-                        }
-                      >
-                        {allCompleted ? '✅ Амжилттай бүрдлээ' :
-                         allAccepted ? `✓ Зөвшөөрөгдсөн (${acceptedCount}/${totalInvites})` :
-                         hasRejected ? '✕ Цуцлагдсан' :
-                         `⏳ Хүлээгдэж байна (${acceptedCount}/${totalInvites})`}
-                      </Badge>
+              return (
+                <div
+                  key={team.provisionalTeamId}
+                  className={`p-4 rounded-lg border ${
+                    isCompleted ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' :
+                    isCancelled || hasRejected ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' :
+                    'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h4 className={`font-semibold ${
+                        isCompleted ? 'text-green-900 dark:text-green-100' :
+                        isCancelled || hasRejected ? 'text-red-900 dark:text-red-100' :
+                        'text-blue-900 dark:text-blue-100'
+                      }`}>
+                        {getEventLabel(team.eventType)}
+                      </h4>
+                      {team.teamName && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {team.teamName}
+                        </p>
+                      )}
                     </div>
-                    <div className="space-y-2">
-                      {invitations.map((invitation: any) => (
-                        <div key={invitation.id} className="bg-white dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700">
-                          <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-2 flex-1">
-                              <User className="w-3 h-3 text-gray-500" />
-                              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                {formatName(invitation.receiver?.firstName, invitation.receiver?.lastName)}
-                              </span>
-                            </div>
-                            <Badge
-                              variant="outline"
-                              className={
-                                invitation.status === 'accepted' ? 'border-green-600 text-green-700 dark:text-green-400' :
-                                invitation.status === 'completed' ? 'border-blue-600 text-blue-700 dark:text-blue-400' :
-                                invitation.status === 'rejected' ? 'border-red-600 text-red-700 dark:text-red-400' :
-                                'border-yellow-600 text-yellow-700 dark:text-yellow-400'
-                              }
-                            >
-                              {invitation.status === 'accepted' ? 'Зөвшөөрсөн' :
-                               invitation.status === 'rejected' ? 'Татгалзсан' :
-                               invitation.status === 'completed' ? 'Бүртгэгдсэн' :
-                               'Хүлээгдэж байна'}
-                            </Badge>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <Badge
+                      className={
+                        isCompleted ? 'bg-green-600 text-white' :
+                        isCancelled || hasRejected ? 'bg-red-600 text-white' :
+                        'bg-blue-600 text-white'
+                      }
+                    >
+                      {isCompleted ? '✅ Баталгаажсан' :
+                       isCancelled || hasRejected ? '✕ Цуцлагдсан' :
+                       `⏳ Хүлээгдэж байна ${acceptedCount}/${team.requiredMembers}`}
+                    </Badge>
                   </div>
-                );
-              });
-            })()}
+
+                  {/* Member list with individual status */}
+                  <div className="space-y-2">
+                    {team.members.map((member: any) => (
+                      <div 
+                        key={member.invitationId} 
+                        className="bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-700"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-2 flex-1">
+                            <User className="w-4 h-4 text-gray-500" />
+                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {formatName(member.firstName, member.lastName)}
+                            </span>
+                          </div>
+                          <Badge
+                            variant="outline"
+                            className={
+                              member.status === 'accepted' ? 'border-green-600 text-green-700 dark:text-green-400' :
+                              member.status === 'rejected' ? 'border-red-600 text-red-700 dark:text-red-400' :
+                              member.status === 'expired' ? 'border-gray-600 text-gray-700 dark:text-gray-400' :
+                              'border-yellow-600 text-yellow-700 dark:text-yellow-400'
+                            }
+                          >
+                            {member.status === 'accepted' ? '✓ Зөвшөөрсөн' :
+                             member.status === 'rejected' ? '✕ Татгалзсан' :
+                             member.status === 'expired' ? '⊘ Хүчингүй' :
+                             '⏳ Хүлээгдэж байна'}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Cancel button for pending teams */}
+                  {team.status === 'pending' && (
+                    <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full text-red-600 border-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        onClick={async () => {
+                          try {
+                            const res = await fetch(`/api/provisional-teams/${team.provisionalTeamId}/cancel`, {
+                              method: 'POST',
+                              credentials: 'include',
+                            });
+                            if (res.ok) {
+                              queryClient.invalidateQueries({ queryKey: [`/api/tournaments/${tournament.id}/invitations/sent`] });
+                              toast({
+                                title: "Амжилттай",
+                                description: "Урилга цуцлагдлаа",
+                              });
+                            }
+                          } catch (error) {
+                            toast({
+                              title: "Алдаа",
+                              description: "Урилга цуцлахад алдаа гарлаа",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                        data-testid={`button-cancel-invitation-${team.provisionalTeamId}`}
+                      >
+                        Урилга цуцлах
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 
@@ -963,13 +996,13 @@ const ConfirmationStep = ({
                 const label = getEventLabel(event);
                 const actionText = type === 'team' ? 'Баг үүсгэх' : 'Хос үүсгэх';
 
-                // Check if all invitations for this event are completed
-                const eventInvitations = sentInvitations.filter((inv: any) => inv.eventType === event);
-                const allCompleted = eventInvitations.length > 0 &&
-                  eventInvitations.every((inv: any) => inv.status === 'completed');
+                // Check provisional teams for this event
+                const eventTeams = sentInvitations.filter((team: any) => team.eventType === event);
+                const confirmedTeam = eventTeams.find((team: any) => team.status === 'confirmed');
+                const hasPendingTeam = eventTeams.some((team: any) => team.status === 'pending');
 
-                if (allCompleted) {
-                  // Show team composition only when fully completed
+                if (confirmedTeam) {
+                  // Show team composition only when fully confirmed
                   return (
                     <div key={index} className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
                       <h4 className="font-semibold text-green-900 dark:text-green-100 mb-2 flex items-center gap-2">
@@ -979,11 +1012,16 @@ const ConfirmationStep = ({
                       <div className="text-sm text-green-700 dark:text-green-300 mb-2">
                         {label}
                       </div>
+                      {confirmedTeam.teamName && (
+                        <div className="text-sm font-medium text-green-800 dark:text-green-200 mb-2">
+                          {confirmedTeam.teamName}
+                        </div>
+                      )}
                       <div className="space-y-1">
-                        {eventInvitations.map((inv: any) => (
-                          <div key={inv.id} className="flex items-center gap-2 text-sm">
+                        {confirmedTeam.members.map((member: any) => (
+                          <div key={member.userId} className="flex items-center gap-2 text-sm">
                             <User className="w-3 h-3" />
-                            <span>{formatName(inv.receiver?.firstName, inv.receiver?.lastName)}</span>
+                            <span>{formatName(member.firstName, member.lastName)}</span>
                           </div>
                         ))}
                       </div>
@@ -991,19 +1029,15 @@ const ConfirmationStep = ({
                   );
                 }
 
-                // Check if there's a pending invitation for this event
-                const hasPendingInvitation = eventInvitations.length > 0 &&
-                  eventInvitations.some((inv: any) => inv.status === 'pending');
-
                 return (
                   <div key={index} className="flex justify-center">
                     <Button
                       onClick={() => handleFormTeam(event)}
-                      disabled={hasPendingInvitation}
+                      disabled={hasPendingTeam}
                       className="bg-[#00c36a] hover:bg-[#00a85a] hover:shadow-lg text-white font-semibold px-8 py-6 text-base rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                       size="lg"
                     >
-                      {hasPendingInvitation ? '⏳ Хүлээгдэж байна...' : actionText}
+                      {hasPendingTeam ? '⏳ Хүлээгдэж байна...' : actionText}
                     </Button>
                   </div>
                 );

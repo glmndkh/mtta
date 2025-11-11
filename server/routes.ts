@@ -2397,7 +2397,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
-  // Get sent invitations for a tournament
+  // Get sent invitations for a tournament - with provisional team details
   app.get(
     "/api/tournaments/:tournamentId/invitations/sent",
     requireAuth,
@@ -2406,30 +2406,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const userId = req.session.userId;
         const { tournamentId } = req.params;
 
-        const sentInvitations = await db
-          .select({
-            id: teamInvitations.id,
-            tournamentId: teamInvitations.tournamentId,
-            eventType: teamInvitations.eventType,
-            teamName: teamInvitations.teamName,
-            status: teamInvitations.status,
-            createdAt: teamInvitations.createdAt,
-            receiver: {
-              id: users.id,
-              firstName: users.firstName,
-              lastName: users.lastName,
-            }
-          })
-          .from(teamInvitations)
-          .leftJoin(users, eq(teamInvitations.receiverId, users.id))
+        // Get all provisional teams created by this user for this tournament
+        const userProvisionalTeams = await db
+          .select()
+          .from(provisionalTeams)
           .where(
             and(
-              eq(teamInvitations.senderId, userId),
-              eq(teamInvitations.tournamentId, tournamentId)
+              eq(provisionalTeams.tournamentId, tournamentId),
+              eq(provisionalTeams.creatorId, userId)
             )
           );
 
-        res.json(sentInvitations);
+        // For each provisional team, get all invitations and member details
+        const teamsWithDetails = await Promise.all(
+          userProvisionalTeams.map(async (team) => {
+            // Get all invitations for this provisional team
+            const invitations = await db
+              .select({
+                id: teamInvitations.id,
+                receiverId: teamInvitations.receiverId,
+                status: teamInvitations.status,
+                createdAt: teamInvitations.createdAt,
+              })
+              .from(teamInvitations)
+              .where(eq(teamInvitations.provisionalTeamId, team.id));
+
+            // Get member details for each invitation
+            const members = await Promise.all(
+              invitations.map(async (inv) => {
+                const [user] = await db
+                  .select({
+                    id: users.id,
+                    firstName: users.firstName,
+                    lastName: users.lastName,
+                  })
+                  .from(users)
+                  .where(eq(users.id, inv.receiverId));
+
+                return {
+                  userId: inv.receiverId,
+                  firstName: user?.firstName || 'Unknown',
+                  lastName: user?.lastName || 'User',
+                  status: inv.status,
+                  invitationId: inv.id,
+                };
+              })
+            );
+
+            return {
+              provisionalTeamId: team.id,
+              eventType: team.eventType,
+              teamName: team.teamName,
+              status: team.status,
+              createdAt: team.createdAt,
+              requiredMembers: team.requiredMembers,
+              acceptedMembers: team.acceptedMembers,
+              members,
+            };
+          })
+        );
+
+        res.json(teamsWithDetails);
       } catch (e) {
         console.error("Error fetching sent invitations:", e);
         res.status(500).json({ message: "Хүсэлт авахад алдаа гарлаа" });
