@@ -1,0 +1,280 @@
+“Энэ төрөлд бүртгүүлээгүй байна” гэдэг шалгалт танай ID-ийн зөрчил (users.id vs players.id) ба төрөл нэршлийн (жишээ нь "doubles" vs "doubles_men") зөрүүгээс буруу уншигдаж байна.
+
+Хамтрагчийн жагсаалтыг буруу эх үүсвэрээс татаж байгаа тул тухайн төрөлд бүртгэлтэй, нас/хүйс таарах хүмүүсийг шүүж өгөхгүй байна.
+
+Доорх өөрчлөлтүүдийг нэгмөсөн хийнэ.
+
+1) Бүртгэл API багахан засвар
+
+/api/registrations дотор newCategories гэж байхгүй хувьсагч давталтад орж байна. categoriesToRegister-ийг хэрэглэ:
+
+// БҮРТГҮҮЛЭХ - Register for tournament
+app.post("/api/registrations", requireAuth, async (req: any, res) => {
+  try {
+    const userId = req.session?.userId;
+    const { tournamentId, categories, category } = req.body;
+    const categoriesToRegister: string[] = categories || (category ? [category] : []);
+
+    if (!tournamentId || categoriesToRegister.length === 0) {
+      return res.status(400).json({ message: "Тэмцээний ID болон ангилал шаардлагатай" });
+    }
+
+    let player = await storage.getPlayerByUserId(userId);
+    if (!player) {
+      const user = await storage.getUser(userId);
+      player = await storage.createPlayer({
+        userId,
+        dateOfBirth: user.dateOfBirth ?? null,
+        rank: null,
+        clubId: null,
+      });
+    }
+
+    // Давхардал шалгах
+    const myRegs = await storage.getPlayerTournamentRegistrations(player.id);
+    const existing = new Set(
+      myRegs.filter(r => r.tournamentId === tournamentId).map(r => r.participationType)
+    );
+
+    const registrations = [];
+    for (const cat of categoriesToRegister) {
+      if (existing.has(cat)) continue;
+      const registration = await storage.registerForTournament({
+        tournamentId,
+        playerId: player.id,            // players.id
+        participationType: normalizeEventType(cat), // доорх функц
+      });
+      registrations.push(registration);
+    }
+
+    res.json(registrations);
+  } catch (error: any) {
+    console.error("Registration error:", error);
+    res.status(500).json({ message: "Бүртгэлд алдаа гарлаа" });
+  }
+});
+
+// Төрөл нэршлийг жигдрүүлэх (singles/doubles/team -> дэд төрөл)
+function normalizeEventType(raw: string): string {
+  const s = (raw || "").toLowerCase().trim();
+  const map: Record<string,string> = {
+    "singles": "singles",
+    "men_singles": "men_singles",
+    "women_singles": "women_singles",
+    "doubles": "doubles",             // ерөнхий
+    "men_doubles": "men_doubles",
+    "women_doubles": "women_doubles",
+    "mixed_doubles": "mixed_doubles",
+    "team": "team",
+  };
+  return map[s] ?? s;
+}
+
+2) Хамтрагчийн “шийдэл API”: зөвхөн тухайн төрөлд бүртгэлтэй + нас/хүйс таарах
+
+Шинэ эндпойнт нэмж, тийм төрөлд бүртгэлтэй, нас/хүйс таарах, өөрөө биш, аль хэдийн баталгаажсан хос/багт орсонгүй хүмүүсийг буцаана.
+
+// helper: нас тооцох
+function calcAge(dob: Date, at: Date): number {
+  let a = at.getFullYear() - dob.getFullYear();
+  const m = at.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && at.getDate() < dob.getDate())) a--;
+  return a;
+}
+
+// Насны ангиллын шалгуур (жишээ – та өөрийн ангиллын нэршлээ энд тохируул)
+function ageMatches(category: string, age: number): boolean {
+  const s = category.toLowerCase();
+  if (s.includes("u13")) return age <= 13;
+  if (s.includes("u15")) return age <= 15;
+  if (s.includes("u17")) return age <= 17;
+  if (s.includes("u19")) return age <= 19;
+  if (s.includes("senior") || s.includes("open")) return true; // нээлттэй
+  return true; // хэрэв тодорхойгүй бол нээлттэй гэж үзье
+}
+
+// Хүйсийн таарамж
+function genderMatches(eventType: string, myGender: string, otherGender: string): boolean {
+  const e = eventType.toLowerCase();
+  if (e.includes("men_doubles")) return otherGender === "male";
+  if (e.includes("women_doubles")) return otherGender === "female";
+  if (e.includes("mixed_doubles")) return otherGender && otherGender !== myGender;
+  // ерөнхий doubles, team -> хүйсээр шүүxгүй
+  return true;
+}
+
+// Хос/Багийн түншүүдийн хайлт
+app.get("/api/tournaments/:id/eligible-partners", requireAuth, async (req: any, res) => {
+  try {
+    const tournamentId = req.params.id;
+    const userId = req.session.userId;
+    const { eventType } = req.query as { eventType: string };
+
+    // Миний профайл
+    const me = await storage.getUser(userId);        // users.*
+    const myPlayer = await storage.getPlayerByUserId(userId); // players.*
+    if (!myPlayer) return res.json([]);
+
+    // Миний тухайн төрөлд бүртгэл байгааг баталгаажуулах (false бол UI-д анхааруулга)
+    const myRegs = await storage.getPlayerTournamentRegistrations(myPlayer.id);
+    const requireType = normalizeEventType(String(eventType || ""));
+    const iAmRegistered = myRegs.some(r => r.tournamentId === tournamentId && r.participationType === requireType);
+    // Бүртгэлгүй бол ч бас бусдыг харах боломжтой байж болно, гэхдээ ихэнх тохиолдолд бүртгүүлсэн байхыг шаардана.
+    // Хэрэв заавал шаардах бол дараах мөрийг нээ:
+    // if (!iAmRegistered) return res.status(400).json({ message: "Та энэ төрөлд эхлээд бүртгүүлнэ үү." });
+
+    // Тэмцээнд ижил төрөлд БҮРТГҮҮЛСЭН хүмүүс (players.id ашиглана)
+    const rows = await db
+      .select({
+        participantId: tournamentParticipants.id,
+        playerId: tournamentParticipants.playerId,            // players.id
+        uId: users.id,                                        // users.id
+        firstName: users.firstName,
+        lastName: users.lastName,
+        gender: users.gender,                                 // users.gender гэж үзэв (байхгүй бол players.gender)
+        dateOfBirth: users.dateOfBirth,
+      })
+      .from(tournamentParticipants)
+      .leftJoin(players, eq(tournamentParticipants.playerId, players.id))
+      .leftJoin(users, eq(players.userId, users.id))
+      .where(
+        and(
+          eq(tournamentParticipants.tournamentId, tournamentId),
+          eq(tournamentParticipants.participationType, requireType),
+          eq(tournamentParticipants.status, "registered")
+        )
+      );
+
+    // Энэ тэмцээнд аль хэдийн баталгаажсан баг/хосод орсон хүмүүсийг хасна
+    const confirmedMembers = await db
+      .select({ userId: tournamentTeamPlayers.playerId, teamId: tournamentTeamPlayers.tournamentTeamId })
+      .from(tournamentTeamPlayers)
+      .leftJoin(tournamentTeams, eq(tournamentTeamPlayers.tournamentTeamId, tournamentTeams.id))
+      .where(eq(tournamentTeams.tournamentId, tournamentId));
+
+    const locked = new Set(confirmedMembers.map(x => x.userId)); // users.id
+
+    // Миний нас/хүйс
+    const myGender = (me.gender || "").toLowerCase();
+    const myAge = me.dateOfBirth ? calcAge(new Date(me.dateOfBirth), new Date()) : undefined;
+
+    // Нас/хүйс тааруулах фильтр
+    const eligible = rows
+      .filter(r => r.uId !== userId)                   // өөрийгөө хасах (users.id)
+      .filter(r => !locked.has(r.uId))                 // баталгаажсан бүрэлдэхүүнд орчихоогүй
+      .filter(r => genderMatches(requireType, myGender, (r.gender || "").toLowerCase()))
+      .filter(r => {
+        if (!r.dateOfBirth || myAge === undefined) return true; // нас модел байхгүй бол нээлттэй
+        const otherAge = calcAge(new Date(r.dateOfBirth), new Date());
+        return ageMatches(requireType, otherAge);
+      })
+      .map(r => ({
+        userId: r.uId,
+        name: `${r.firstName ?? ""} ${r.lastName ?? ""}`.trim(),
+      }));
+
+    res.json(eligible);
+  } catch (e) {
+    console.error("eligible-partners error:", e);
+    res.status(500).json({ message: "Хамтрагчдын жагсаалт авахад алдаа гарлаа" });
+  }
+});
+
+
+Гол санаа: eligibility шүүлт нь tournament_participants дээрх ямар төрөлд бүртгэлтэйг яг таг шалгана, users.gender / users.dateOfBirth ашиглан хүйс/нас-аа тааруулна, tournament_team_players-оос аль хэдийн баталгаажсан баг/хосод орсон хүнийг хасна, мөн өөрийгөө хасна. Иймд “тэр төрөлд бүртгүүлээгүй байна” гэдэг буруу алдаа гарахгүй.
+
+3) Урилга илгээх логикийн ID-ийн нэг мөр байдал
+
+Танай урилга receiverId-д users.id хадгалж байгаа (зөв). Харин багт гишүүн нэмэхдээ ч tournament_team_players.playerId нь users.id-г зааж байгаа (зөв). Тиймээс энд players.id биш users.id хэрэглэж буйгаа тогтвортой баримтлаарай.
+
+Мөн respond эндпойнт дээр баталгаажихад “бүх гишүүн зөвшөөрөхөд” баг/хос үүсгэх хэсгийг жаахан засаад, provisionalTeam.membersList-д users.id байдаг гэж үзээд, тэр жагсаалтаар л нэмнэ:
+
+// УРИЛГА ХАРИУЛАХ - Accept/reject invitation
+app.post("/api/invitations/:id/respond", requireAuth, async (req: any, res) => {
+  try {
+    const invitationId = parseInt(req.params.id);
+    const userId = req.session.userId;
+    const { action } = req.body; // 'accept' or 'reject'
+
+    const [invitation] = await db
+      .select()
+      .from(teamInvitations)
+      .where(and(eq(teamInvitations.id, invitationId), eq(teamInvitations.receiverId, userId)));
+
+    if (!invitation) return res.status(404).json({ message: "Урилга олдсонгүй" });
+
+    if (action === 'accept') {
+      await db.update(teamInvitations)
+        .set({ status: 'accepted', acceptedAt: new Date() })
+        .where(eq(teamInvitations.id, invitationId));
+
+      const [provisionalTeam] = await db
+        .select()
+        .from(provisionalTeams)
+        .where(eq(provisionalTeams.id, invitation.provisionalTeamId));
+
+      const newAcceptedCount = (provisionalTeam.acceptedMembers ?? 0) + 1;
+
+      // acceptedMembers тоолуурыг шинэчил
+      await db.update(provisionalTeams)
+        .set({ acceptedMembers: newAcceptedCount })
+        .where(eq(provisionalTeams.id, provisionalTeam.id));
+
+      if (newAcceptedCount >= provisionalTeam.requiredMembers) {
+        // Баг/хосыг үүсгэнэ
+        const team = await storage.createLeagueTeam({
+          tournamentId: invitation.tournamentId,
+          name: invitation.teamName || 'Баг',
+          entityType: 'tournament',
+        });
+
+        // БҮХ ГИШҮҮН (users.id) + үүсгэгч
+        const uniqueMembers = Array.from(new Set([...provisionalTeam.membersList, provisionalTeam.creatorId]));
+        for (const memberUserId of uniqueMembers) {
+          const u = await storage.getUser(memberUserId);
+          await storage.addPlayerToLeagueTeam(team.id, memberUserId, `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim());
+        }
+
+        // Урилга/багийн төлөв шинэчилж дуусгах
+        await db.update(provisionalTeams).set({ status: "confirmed", confirmedTeamId: team.id })
+          .where(eq(provisionalTeams.id, provisionalTeam.id));
+        await db.update(teamInvitations).set({ status: "completed" })
+          .where(eq(teamInvitations.provisionalTeamId, provisionalTeam.id));
+
+        return res.json({ message: "✅ Амжилттай! Баг/хос бүртгэгдлээ.", teamCreated: true, teamId: team.id });
+      }
+    } else if (action === 'reject') {
+      await db.update(teamInvitations)
+        .set({ status: 'declined' })
+        .where(eq(teamInvitations.id, invitationId));
+    }
+
+    res.json({ message: "Хүсэлт шийдэгдлээ" });
+  } catch (e) {
+    console.error("Error responding to invitation:", e);
+    res.status(400).json({ message: "Хүсэлтийг шийдвэрлэхэд алдаа гарлаа" });
+  }
+});
+
+4) Frontend талын жижиг тохируулга
+
+Хамтрагч сонгох модал нээх үед:
+
+// түншүүд татах
+const res = await fetch(`/api/tournaments/${tournamentId}/eligible-partners?eventType=${selectedEvent}`);
+const partners = await res.json();
+
+// алдаа мессэж “Энэ төрөлд бүртгүүлээгүй байна” гэдгийг серверээр шалгуулж буцаадаг байхаар өөрчил
+if (!myRegistrations.includes(selectedEvent)) {
+  // зөвхөн анхааруулга харуул; сонголтыг боломжоор нь хориглож болно
+}
+
+5) Хураангуй
+
+Төрөл нэршлийг жигдрүүлэв → буруу “бүртгүүлээгүй” мессэж арилна.
+
+Хамтрагчийн eligibility API → тухайн төрөлд бүртгэлтэй + нас/хүйс таарах хүмүүс л харагдана.
+
+ID-ийн нэг мөр байдал (users.id-аар урилга ба багийн гишүүнчлэлээ****) → хос/баг үүсгэх үед зөрчилгүй.
+
+Бүртгэл API-ийн бага зэрэг variable bug болон давхардлын шүүлт.
