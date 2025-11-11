@@ -1518,6 +1518,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return true;
   }
 
+  // Helper: compare event types with deep JSON comparison
+  function eventTypesMatch(eventType1: string, eventType2: string): boolean {
+    try {
+      const parsed1 = JSON.parse(eventType1);
+      const parsed2 = JSON.parse(eventType2);
+      
+      // Compare key properties
+      return parsed1.type === parsed2.type && 
+             parsed1.subType === parsed2.subType;
+    } catch {
+      // Fallback to string comparison if not JSON
+      return normalizeEventType(eventType1) === normalizeEventType(eventType2);
+    }
+  }
+
   // Get eligible partners for team/doubles formation
   app.get("/api/tournaments/:id/eligible-partners", requireAuth, async (req: any, res) => {
     try {
@@ -1528,6 +1543,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!eventType) {
         return res.status(400).json({ message: "Event type required" });
       }
+
+      console.log('[eligible-partners] Request:', { tournamentId, userId, eventType });
 
       // Get my profile
       const me = await storage.getUser(userId);
@@ -1544,11 +1561,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Verify I'm registered for this event type
       const myRegs = await storage.getPlayerTournamentRegistrations(myPlayer.id);
-      const normalizedEventType = normalizeEventType(eventType);
       const iAmRegistered = myRegs.some(r => 
         r.tournamentId === tournamentId && 
-        normalizeEventType(r.participationType) === normalizedEventType
+        eventTypesMatch(r.participationType, eventType)
       );
+
+      console.log('[eligible-partners] My registrations check:', {
+        myRegs: myRegs.map(r => ({ 
+          tournamentId: r.tournamentId, 
+          participationType: r.participationType 
+        })),
+        iAmRegistered
+      });
 
       if (!iAmRegistered) {
         return res.status(400).json({ 
@@ -1577,10 +1601,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           )
         );
 
-      // Filter participants by normalized event type match
+      console.log('[eligible-partners] All participants:', participants.length);
+
+      // Filter participants by event type match
       const sameEventParticipants = participants.filter(p => 
-        normalizeEventType(p.participationType || "") === normalizedEventType
+        eventTypesMatch(p.participationType || "", eventType)
       );
+
+      console.log('[eligible-partners] Same event participants:', sameEventParticipants.length);
 
       // Get already confirmed team members
       const confirmedMembers = await db
