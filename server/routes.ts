@@ -52,7 +52,7 @@ import {
 
 // Import real database
 import { db } from "./db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray, sql } from "drizzle-orm";
 
 
 function calculateAge(dateOfBirth: Date | null | undefined) {
@@ -2413,7 +2413,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { tournamentId } = req.params;
 
         // Get all provisional teams created by this user for this tournament
-        const userProvisionalTeams = await db
+        const createdProvisionalTeams = await db
           .select()
           .from(provisionalTeams)
           .where(
@@ -2422,6 +2422,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
               eq(provisionalTeams.creatorId, userId)
             )
           );
+
+        // Also get provisional teams where user is a member (received invitation and it's confirmed)
+        const memberInvitations = await db
+          .select({
+            provisionalTeamId: teamInvitations.provisionalTeamId,
+          })
+          .from(teamInvitations)
+          .where(
+            and(
+              eq(teamInvitations.tournamentId, tournamentId),
+              eq(teamInvitations.receiverId, userId),
+              eq(teamInvitations.status, 'completed')
+            )
+          );
+
+        // Get unique provisional team IDs where user is a member
+        const memberTeamIds = [...new Set(memberInvitations.map(inv => inv.provisionalTeamId).filter(Boolean))];
+        
+        // Fetch those provisional teams
+        const memberProvisionalTeams = memberTeamIds.length > 0
+          ? await db
+              .select()
+              .from(provisionalTeams)
+              .where(
+                and(
+                  eq(provisionalTeams.tournamentId, tournamentId),
+                  inArray(provisionalTeams.id, memberTeamIds)
+                )
+              )
+          : [];
+
+        // Combine both lists and remove duplicates
+        const allTeamIds = new Set([
+          ...createdProvisionalTeams.map(t => t.id),
+          ...memberProvisionalTeams.map(t => t.id)
+        ]);
+        
+        const userProvisionalTeams = [
+          ...createdProvisionalTeams,
+          ...memberProvisionalTeams.filter(t => !createdProvisionalTeams.find(ct => ct.id === t.id))
+        ];
 
         // For each provisional team, get all invitations and member details
         const teamsWithDetails = await Promise.all(
@@ -2442,8 +2483,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               invitations.map(inv => [inv.receiverId, inv])
             );
 
-            // Get ALL members from membersList (this includes creator + all invited members)
-            const allMemberIds = team.membersList as string[] || [];
+            // Get ALL members from membersList + creator
+            const membersList = team.membersList as string[] || [];
+            const allMemberIds = Array.from(new Set([team.creatorId, ...membersList]));
             
             // Get member details for ALL members in the team
             const members = await Promise.all(
@@ -2460,12 +2502,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 // Check if this member has an invitation
                 const invitation = invitationMap.get(memberId);
                 
+                // If this is the creator, mark as accepted (no invitation needed)
+                const isCreator = memberId === team.creatorId;
+                
                 return {
                   userId: memberId,
                   firstName: user?.firstName || 'Unknown',
                   lastName: user?.lastName || 'User',
-                  status: invitation ? invitation.status : 'not_invited_yet',
+                  status: isCreator ? 'accepted' : (invitation ? invitation.status : 'not_invited_yet'),
                   invitationId: invitation?.id || null,
+                  isCreator,
                 };
               })
             );
