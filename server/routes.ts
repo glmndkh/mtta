@@ -2431,9 +2431,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
               .from(teamInvitations)
               .where(eq(teamInvitations.provisionalTeamId, team.id));
 
-            // Get member details for each invitation
+            // Create a map of userId -> invitation for quick lookup
+            const invitationMap = new Map(
+              invitations.map(inv => [inv.receiverId, inv])
+            );
+
+            // Get ALL members from membersList (this includes creator + all invited members)
+            const allMemberIds = team.membersList as string[] || [];
+            
+            // Get member details for ALL members in the team
             const members = await Promise.all(
-              invitations.map(async (inv) => {
+              allMemberIds.map(async (memberId) => {
                 const [user] = await db
                   .select({
                     id: users.id,
@@ -2441,14 +2449,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     lastName: users.lastName,
                   })
                   .from(users)
-                  .where(eq(users.id, inv.receiverId));
+                  .where(eq(users.id, memberId));
 
+                // Check if this member has an invitation
+                const invitation = invitationMap.get(memberId);
+                
                 return {
-                  userId: inv.receiverId,
+                  userId: memberId,
                   firstName: user?.firstName || 'Unknown',
                   lastName: user?.lastName || 'User',
-                  status: inv.status,
-                  invitationId: inv.id,
+                  status: invitation ? invitation.status : 'not_invited_yet',
+                  invitationId: invitation?.id || null,
                 };
               })
             );

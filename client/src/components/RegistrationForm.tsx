@@ -934,12 +934,14 @@ const ConfirmationStep = ({
                               member.status === 'accepted' ? 'border-green-600 text-green-700 dark:text-green-400' :
                               member.status === 'rejected' ? 'border-red-600 text-red-700 dark:text-red-400' :
                               member.status === 'expired' ? 'border-gray-600 text-gray-700 dark:text-gray-400' :
+                              member.status === 'not_invited_yet' ? 'border-gray-400 text-gray-600 dark:text-gray-500' :
                               'border-yellow-600 text-yellow-700 dark:text-yellow-400'
                             }
                           >
                             {member.status === 'accepted' ? '✓ Зөвшөөрсөн' :
                              member.status === 'rejected' ? '✕ Татгалзсан' :
                              member.status === 'expired' ? '⊘ Хүчингүй' :
+                             member.status === 'not_invited_yet' ? '○ Урилга илгээгдээгүй' :
                              '⏳ Хүлээгдэж байна'}
                           </Badge>
                         </div>
