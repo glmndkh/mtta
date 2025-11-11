@@ -142,22 +142,10 @@ const AdminTournamentResults: React.FC = () => {
 
   // Get available event types from tournament
   const getAvailableEventTypes = () => {
-    if (!tournament?.events) return [];
+    if (!tournament?.participationTypes) return [];
     
-    const eventTypes = new Set<'SINGLES' | 'DOUBLES' | 'TEAM'>();
-    
-    tournament.events.forEach((event: any) => {
-      try {
-        const eventData = typeof event === 'string' ? JSON.parse(event) : event;
-        if (eventData.type) {
-          eventTypes.add(eventData.type as 'SINGLES' | 'DOUBLES' | 'TEAM');
-        }
-      } catch (e) {
-        console.error('Error parsing event:', e);
-      }
-    });
-    
-    return Array.from(eventTypes);
+    // participationTypes is stored as an array of strings like ["SINGLES", "DOUBLES", "TEAM"]
+    return tournament.participationTypes.map(type => type.toUpperCase()) as ('SINGLES' | 'DOUBLES' | 'TEAM')[];
   };
 
   // Get participants filtered by event type
@@ -165,15 +153,8 @@ const AdminTournamentResults: React.FC = () => {
     if (!participants) return [];
     
     return participants.filter((participant: any) => {
-      try {
-        const participationType = typeof participant.participationType === 'string' 
-          ? JSON.parse(participant.participationType) 
-          : participant.participationType;
-        
-        return participationType.type === eventType;
-      } catch (e) {
-        return false;
-      }
+      // participationType is stored as a simple string like "SINGLES", "DOUBLES", "TEAM"
+      return participant.participationType === eventType;
     });
   };
 

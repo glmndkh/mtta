@@ -39,6 +39,9 @@ export const tournamentStatusEnum = pgEnum("tournament_status", ["registration",
 // Match status enum
 export const matchStatusEnum = pgEnum("match_status", ["scheduled", "ongoing", "completed"]);
 
+// Tournament event type enum
+export const tournamentEventTypeEnum = pgEnum("tournament_event_type", ["SINGLES", "DOUBLES", "TEAM"]);
+
 // Gender enum
 export const genderEnum = pgEnum("gender", ["male", "female", "other"]);
 
@@ -286,6 +289,7 @@ export const tournamentTeams = pgTable("tournament_teams", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   tournamentId: varchar("tournament_id").notNull(), // Removed foreign key constraint for flexibility
   name: varchar("name").notNull(),
+  eventType: tournamentEventTypeEnum("event_type"), // Event type for the team (SINGLES, DOUBLES, TEAM)
   logoUrl: varchar("logo_url"),
   sponsorLogo: varchar("sponsor_logo"),
   ownerName: varchar("owner_name"),
