@@ -633,16 +633,9 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
       });
     } else if (selectedTab === "sliders") {
       setFormData({
-        title: item.title || "",
-        subtitle: item.subtitle || "",
-        description: item.description || "",
         imageUrl: item.imageUrl || "",
-        linkType: item.linkType || 'custom',
-        linkUrl: item.linkUrl || "",
-        buttonText: item.buttonText || "",
         isActive: item.isActive || false,
         sortOrder: item.sortOrder || 0,
-        selectedNewsId: item.selectedNewsId || "",
       });
     } else if (selectedTab === "news") {
       setFormData({
@@ -1801,24 +1794,37 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Гарчиг</TableHead>
-              <TableHead>Дэд гарчиг</TableHead>
-              <TableHead>Идэвхтэй</TableHead>
               <TableHead>Эрэмбэ</TableHead>
+              <TableHead>Зураг</TableHead>
+              <TableHead>Идэвхтэй</TableHead>
               <TableHead>Үйлдэл</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sliders && Array.isArray(sliders) ? sliders.map((slider: any) => (
               <TableRow key={slider.id}>
-                <TableCell>{slider.title}</TableCell>
-                <TableCell>{slider.subtitle}</TableCell>
+                <TableCell>
+                  <Badge variant="outline" className="text-lg font-semibold">
+                    #{slider.sortOrder}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  {slider.imageUrl && (
+                    <img
+                      src={slider.imageUrl.startsWith("/") ? slider.imageUrl : `/objects/${slider.imageUrl}`}
+                      alt={`Слайд ${slider.sortOrder}`}
+                      className="w-32 h-20 object-cover rounded"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  )}
+                </TableCell>
                 <TableCell>
                   <Badge variant={slider.isActive ? 'default' : 'secondary'}>
                     {slider.isActive ? 'Идэвхтэй' : 'Идэвхгүй'}
                   </Badge>
                 </TableCell>
-                <TableCell>{slider.sortOrder}</TableCell>
                 <TableCell>
                   <div className="flex gap-2">
                     <Button size="sm" variant="outline" onClick={() => openEditDialog(slider)}>
@@ -3328,14 +3334,18 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         return (
           <>
             <div>
-              <Label htmlFor="sortOrder">Эрэмбэ *</Label>
+              <Label htmlFor="sortOrder">Эрэмбэ (дарааллын дугаар) *</Label>
               <Input
                 id="sortOrder"
                 type="number"
                 min="0"
                 value={formData.sortOrder ?? 0}
                 onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })}
+                placeholder="Жишээ: 1, 2, 3..."
               />
+              <p className="text-sm text-muted-foreground mt-1">
+                Багаас ихрүү эрэмбээр харагдана (1 = эхний слайд)
+              </p>
             </div>
             <div>
               <Label>Зураг *</Label>
