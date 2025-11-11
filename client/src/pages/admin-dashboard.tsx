@@ -3035,141 +3035,151 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
 
       case 'news':
         return (
-          <>
-            <div>
-              <Label htmlFor="title">Гарчиг *</Label>
-              <Input
-                id="title"
-                value={formData.title || ''}
-                onChange={(e) => setFormData({...formData, title: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="content">Агуулга *</Label>
-              <RichTextEditor
-                content={formData.content || ''}
-                onChange={(value) => setFormData({ ...formData, content: value })}
-                placeholder="Мэдээний агуулга..."
-              />
-            </div>
-            <div>
-              <Label htmlFor="excerpt">Хураангуй</Label>
-              <Textarea
-                id="excerpt"
-                value={formData.excerpt || ''}
-                onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label className="flex items-center gap-2">
-                <Upload className="w-4 h-4" />
-                Зураг оруулах
-              </Label>
-              <div className="space-y-2">
-                <ObjectUploader
-                  maxNumberOfFiles={1}
-                  maxFileSize={5242880} // 5MB
-                  onGetUploadParameters={async () => {
-                    const response = await fetch('/api/objects/upload', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json'
-                      }
-                    });
-                    const data = await response.json();
-                    return {
-                      method: 'PUT' as const,
-                      url: data.uploadURL
-                    };
-                  }}
-                  onComplete={async (result) => {
-                    if (result.successful && result.successful.length > 0) {
-                      const uploadedFileUrl = result.successful[0].uploadURL;
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Зүүн тал - Үндсэн мэдээлэл */}
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="title">Гарчиг *</Label>
+                <Input
+                  id="title"
+                  value={formData.title || ''}
+                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="excerpt">Хураангуй</Label>
+                <Textarea
+                  id="excerpt"
+                  value={formData.excerpt || ''}
+                  onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
+                  rows={4}
+                />
+              </div>
+              <div>
+                <Label className="flex items-center gap-2">
+                  <Upload className="w-4 h-4" />
+                  Зураг оруулах
+                </Label>
+                <div className="space-y-2">
+                  <ObjectUploader
+                    maxNumberOfFiles={1}
+                    maxFileSize={5242880} // 5MB
+                    onGetUploadParameters={async () => {
+                      const response = await fetch('/api/objects/upload', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json'
+                        }
+                      });
+                      const data = await response.json();
+                      return {
+                        method: 'PUT' as const,
+                        url: data.uploadURL
+                      };
+                    }}
+                    onComplete={async (result) => {
+                      if (result.successful && result.successful.length > 0) {
+                        const uploadedFileUrl = result.successful[0].uploadURL;
 
-                      try {
-                        const response = await fetch('/api/objects/finalize', {
-                          method: 'PUT',
-                          headers: {
-                            'Content-Type': 'application/json'
-                          },
-                          body: JSON.stringify({
-                            fileURL: uploadedFileUrl,
-                            isPublic: true
-                          })
-                        });
-                        const data = await response.json();
+                        try {
+                          const response = await fetch('/api/objects/finalize', {
+                            method: 'PUT',
+                            headers: {
+                              'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                              fileURL: uploadedFileUrl,
+                              isPublic: true
+                            })
+                          });
+                          const data = await response.json();
 
-                        setFormData({...formData, imageUrl: data.objectPath});
-                        toast({
-                          title: "Амжилттай",
-                          description: "Зураг амжилттай хуулагдлаа"
-                        });
-                      } catch (error) {
-                        console.error('Error setting image ACL:', error);
-                        setFormData({...formData, imageUrl: uploadedFileUrl});
-                        toast({
-                          title: "Анхааруулга",
-                          description: "Зураг хуулагдсан боловч зураг харагдахгүй байж магад"
-                        });
+                          setFormData({...formData, imageUrl: data.objectPath});
+                          toast({
+                            title: "Амжилттай",
+                            description: "Зураг амжилттай хуулагдлаа"
+                          });
+                        } catch (error) {
+                          console.error('Error setting image ACL:', error);
+                          setFormData({...formData, imageUrl: uploadedFileUrl});
+                          toast({
+                            title: "Анхааруулга",
+                            description: "Зураг хуулагдсан боловч зураг харагдахгүй байж магад"
+                          });
+                        }
                       }
-                    }
-                  }}
-                  buttonClassName="w-full"
-                >
-                  <div className="flex items-center gap-2">
-                    <Upload className="w-4 h-4" />
-                    <span>Зураг файл сонгох</span>
-                  </div>
-                </ObjectUploader>
-                <div className="text-sm text-muted-foreground text-center">эсвэл</div>
-                <div>
-                  <Label htmlFor="newsImageUrl">Зурагны URL оруулах</Label>
-                  <Input
-                    id="newsImageUrl"
-                    type="url"
-                    placeholder="https://example.com/image.jpg"
-                    value={formData.imageUrl || ''}
-                    onChange={(e) => setFormData({...formData, imageUrl: e.target.value})}
-                  />
-                </div>
-                {formData.imageUrl && (
-                  <div className="mt-2">
-                    <img
-                      src={formData.imageUrl.startsWith('/') ? `/public-objects${formData.imageUrl}` : formData.imageUrl}
-                      alt="Мэдээний зураг"
-                      className="w-full max-w-sm h-40 object-cover rounded border"
-                      onError={(e) => {
-                        e.currentTarget.src = '/api/placeholder/400/300';
-                      }}
+                    }}
+                    buttonClassName="w-full"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Upload className="w-4 h-4" />
+                      <span>Зураг файл сонгох</span>
+                    </div>
+                  </ObjectUploader>
+                  <div className="text-sm text-muted-foreground text-center">эсвэл</div>
+                  <div>
+                    <Label htmlFor="newsImageUrl">Зурагны URL оруулах</Label>
+                    <Input
+                      id="newsImageUrl"
+                      type="url"
+                      placeholder="https://example.com/image.jpg"
+                      value={formData.imageUrl || ''}
+                      onChange={(e) => setFormData({...formData, imageUrl: e.target.value})}
                     />
-                    <div className="text-sm text-green-600 mt-1">✓ Зураг ачаалагдлаа</div>
                   </div>
-                )}
+                  {formData.imageUrl && (
+                    <div className="mt-2">
+                      <img
+                        src={formData.imageUrl.startsWith('/') ? `/public-objects${formData.imageUrl}` : formData.imageUrl}
+                        alt="Мэдээний зураг"
+                        className="w-full max-w-sm h-40 object-cover rounded border"
+                        onError={(e) => {
+                          e.currentTarget.src = '/api/placeholder/400/300';
+                        }}
+                      />
+                      <div className="text-sm text-green-600 mt-1">✓ Зураг ачаалагдлаа</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="category">Категори</Label>
+                <Select value={formData.category || ''} onValueChange={(value) => setFormData({...formData, category: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Категори сонгох" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="tournament">Тэмцээн</SelectItem>
+                    <SelectItem value="news">Мэдээ</SelectItem>
+                    <SelectItem value="training">Бэлтгэл</SelectItem>
+                    <SelectItem value="urgent">Яаралтай</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="published"
+                  checked={formData.published || false}
+                  onCheckedChange={(checked) => setFormData({...formData, published: checked})}
+                />
+                <Label htmlFor="published">Нийтлэх</Label>
               </div>
             </div>
-            <div>
-              <Label htmlFor="category">Категори</Label>
-              <Select value={formData.category || ''} onValueChange={(value) => setFormData({...formData, category: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Категори сонгох" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tournament">Тэмцээн</SelectItem>
-                  <SelectItem value="news">Мэдээ</SelectItem>
-                  <SelectItem value="training">Бэлтгэл</SelectItem>
-                  <SelectItem value="urgent">Яаралтай</SelectItem>
-                </SelectContent>
-              </Select>
+
+            {/* Баруун тал - Агуулга */}
+            <div className="space-y-4">
+              <div className="h-full">
+                <Label htmlFor="content">Агуулга *</Label>
+                <div className="mt-2 h-[calc(100%-2rem)]">
+                  <RichTextEditor
+                    content={formData.content || ''}
+                    onChange={(value) => setFormData({ ...formData, content: value })}
+                    placeholder="Мэдээний агуулга..."
+                  />
+                </div>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="published"
-                checked={formData.published || false}
-                onCheckedChange={(checked) => setFormData({...formData, published: checked})}
-              />
-              <Label htmlFor="published">Нийтлэх</Label>
-            </div>
-          </>
+          </div>
         );
 
       case 'teams':
