@@ -837,211 +837,132 @@ const AdminTournamentResults: React.FC = () => {
   return (
     <PageWithLoading>
       <Navigation />
-      <div className="min-h-screen bg-gray-900 text-white">
-        <div className="container mx-auto px-4 py-8">
-          {/* Header */}
-          <div className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                onClick={() => setLocation('/admin/tournaments')}
-                variant="outline"
-                size="sm"
-                className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Буцах
-              </Button>
-              <div>
-                <h1 className="text-3xl font-bold text-white">Тэмцээний үр дүн удирдах</h1>
-                <p className="text-lg text-gray-300 mt-1">{tournament.name}</p>
-                <div className="flex items-center gap-4 mt-2 text-sm text-gray-400">
-                  <span className="flex items-center gap-1">
-                    <Users className="w-4 h-4" />
-                    {participants?.length || 0} оролцогч
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Trophy className="w-4 h-4" />
-                    {tournament.format}
-                  </span>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
+        <div className="container mx-auto px-4 py-6">
+          {/* Compact Header */}
+          <div className="bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-700/50 p-4 mb-6 shadow-2xl">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={() => setLocation('/admin/tournaments')}
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-400 hover:text-white hover:bg-gray-700/50"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-1" />
+                  Буцах
+                </Button>
+                <div className="border-l border-gray-700 pl-3">
+                  <h1 className="text-xl font-bold text-white">{tournament.name}</h1>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
+                    <span className="flex items-center gap-1">
+                      <Users className="w-3 h-3" />
+                      {participants?.length || 0}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Trophy className="w-3 h-3" />
+                      {tournament.format}
+                    </span>
+                    <Badge
+                      variant={isPublished ? "default" : "secondary"}
+                      className={`text-xs ${
+                        isPublished
+                          ? "bg-green-600/20 text-green-400 border-green-500/30"
+                          : "bg-yellow-600/20 text-yellow-400 border-yellow-500/30"
+                      }`}
+                    >
+                      {isPublished ? "Нийтлэгдсэн" : "Ноорог"}
+                    </Badge>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Badge
-                variant={isPublished ? "default" : "secondary"}
-                className={`px-3 py-1 text-sm ${
-                  isPublished
-                    ? "bg-green-100 text-green-800 border-green-200"
-                    : "bg-yellow-100 text-yellow-800 border-yellow-200"
-                }`}
-              >
-                {isPublished ? "Нийтлэгдсэн" : "Ноорог"}
-              </Badge>
               <Button
                 onClick={handleSave}
                 disabled={saveResultsMutation.isPending}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 shadow-lg"
               >
                 <Save className="w-4 h-4 mr-2" />
                 {saveResultsMutation.isPending ? "Хадгалж байна..." : "Хадгалах"}
               </Button>
             </div>
           </div>
-        </div>
 
-        {/* Podium Cards */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-white">
-              <Trophy className="w-6 h-6 text-yellow-500" />
-              Шилдэг тоглогчид
-            </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* 1st Place */}
-            <Card className="bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 text-white border-yellow-300">
-              <CardContent className="p-6 text-center">
-                <div className="text-4xl mb-2">🥇</div>
-                <div className="text-lg font-bold">1-р байр</div>
-                {podiumWinners.first ? (
-                  <>
-                    <div className="text-xl font-semibold mt-2">{podiumWinners.first.name}</div>
-                    <div className="text-sm opacity-90">{podiumWinners.first.club}</div>
-                  </>
-                ) : (
-                  <div className="text-lg text-yellow-100 mt-2">Тодорхойгүй</div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* 2nd Place */}
-            <Card className="bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500 text-white border-gray-300">
-              <CardContent className="p-6 text-center">
-                <div className="text-4xl mb-2">🥈</div>
-                <div className="text-lg font-bold">2-р байр</div>
-                {podiumWinners.second ? (
-                  <>
-                    <div className="text-xl font-semibold mt-2">{podiumWinners.second.name}</div>
-                    <div className="text-sm opacity-90">{podiumWinners.second.club}</div>
-                  </>
-                ) : (
-                  <div className="text-lg text-gray-100 mt-2">Тодорхойгүй</div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* 3rd Place */}
-            <Card className="bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 text-white border-orange-300">
-              <CardContent className="p-6 text-center">
-                <div className="text-4xl mb-2">🥉</div>
-                <div className="text-lg font-bold">3-р байр</div>
-                {podiumWinners.third ? (
-                  <>
-                    <div className="text-xl font-semibold mt-2">{podiumWinners.third.name}</div>
-                    <div className="text-sm opacity-90">{podiumWinners.third.club}</div>
-                  </>
-                ) : (
-                  <div className="text-lg text-orange-100 mt-2">Тодорхойгүй</div>
-                )}
-              </CardContent>
-            </Card>
+        {/* Compact Podium */}
+        <div className="mb-6">
+          <div className="flex items-center justify-center gap-4 flex-wrap">
+            {podiumWinners.first && (
+              <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 border border-yellow-500/30 rounded-lg p-4 text-center backdrop-blur-sm">
+                <div className="text-3xl mb-1">🥇</div>
+                <div className="text-sm font-semibold text-yellow-400">{podiumWinners.first.name}</div>
+              </div>
+            )}
+            {podiumWinners.second && (
+              <div className="bg-gradient-to-br from-gray-400/20 to-gray-500/20 border border-gray-400/30 rounded-lg p-4 text-center backdrop-blur-sm">
+                <div className="text-3xl mb-1">🥈</div>
+                <div className="text-sm font-semibold text-gray-300">{podiumWinners.second.name}</div>
+              </div>
+            )}
+            {podiumWinners.third && (
+              <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/20 border border-orange-500/30 rounded-lg p-4 text-center backdrop-blur-sm">
+                <div className="text-3xl mb-1">🥉</div>
+                <div className="text-sm font-semibold text-orange-400">{podiumWinners.third.name}</div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Event Type Selection Tabs */}
-        <div className="mb-8">
-          <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Trophy className="w-6 h-6 text-yellow-500" />
-                Тэмцээний төрөл сонгох
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+        {/* Compact Event Type Tabs */}
+        <div className="mb-6">
+          <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl border border-gray-700/50 p-4">
+            <div className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2">
+              <Trophy className="w-4 h-4" />
+              Тэмцээний төрөл
+            </div>
               <Tabs value={selectedEventType} onValueChange={(value) => setSelectedEventType(value as 'SINGLES' | 'DOUBLES' | 'TEAM')}>
-                <TabsList className="bg-gray-700 border border-gray-600 w-full grid grid-cols-3">
+                <TabsList className="bg-gray-700/50 backdrop-blur-sm border border-gray-600/50 w-full grid grid-cols-3 gap-2 p-1">
                   {getAvailableEventTypes().includes('SINGLES') && (
                     <TabsTrigger 
                       value="SINGLES" 
-                      className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-300"
+                      className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-400 text-sm"
                     >
-                      <User className="w-4 h-4 mr-2" />
-                      Ганцаарчилсан
+                      <User className="w-3 h-3 mr-1" />
+                      Ганцаар
                     </TabsTrigger>
                   )}
                   {getAvailableEventTypes().includes('DOUBLES') && (
                     <TabsTrigger 
                       value="DOUBLES" 
-                      className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300"
+                      className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-400 text-sm"
                     >
-                      <Users className="w-4 h-4 mr-2" />
+                      <Users className="w-3 h-3 mr-1" />
                       Хос
                     </TabsTrigger>
                   )}
                   {getAvailableEventTypes().includes('TEAM') && (
                     <TabsTrigger 
                       value="TEAM" 
-                      className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-300"
+                      className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-400 text-sm"
                     >
-                      <Users className="w-4 h-4 mr-2" />
+                      <Users className="w-3 h-3 mr-1" />
                       Баг
                     </TabsTrigger>
                   )}
                 </TabsList>
 
-                <TabsContent value="SINGLES" className="mt-4">
-                  <div className="bg-blue-900/20 p-4 rounded-lg border border-blue-500/30">
-                    <h3 className="text-lg font-semibold text-blue-300 mb-2">Ганцаарчилсан төрлийн оролцогчид</h3>
-                    <p className="text-sm text-gray-400 mb-3">
-                      {getCountDisplay('SINGLES')}
-                    </p>
-                    <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {getParticipantsByEventType('SINGLES').map((participant: any, idx: number) => (
-                        <div key={idx} className="bg-gray-700 p-2 rounded flex justify-between items-center">
-                          <span className="text-white">{participant.firstName} {participant.lastName}</span>
-                          <Badge variant="outline" className="text-blue-400 border-blue-400">Singles</Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                <TabsContent value="SINGLES" className="mt-3">
+                  <div className="text-xs text-gray-400 mb-2">{getCountDisplay('SINGLES')}</div>
                 </TabsContent>
 
-                <TabsContent value="DOUBLES" className="mt-4">
-                  <div className="bg-green-900/20 p-4 rounded-lg border border-green-500/30">
-                    <h3 className="text-lg font-semibold text-green-300 mb-2">Хос төрлийн оролцогчид</h3>
-                    <p className="text-sm text-gray-400 mb-3">
-                      {getCountDisplay('DOUBLES')}
-                    </p>
-                    <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {getParticipantsByEventType('DOUBLES').map((participant: any, idx: number) => (
-                        <div key={idx} className="bg-gray-700 p-2 rounded flex justify-between items-center">
-                          <span className="text-white">{participant.firstName} {participant.lastName}</span>
-                          <Badge variant="outline" className="text-green-400 border-green-400">Doubles</Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                <TabsContent value="DOUBLES" className="mt-3">
+                  <div className="text-xs text-gray-400 mb-2">{getCountDisplay('DOUBLES')}</div>
                 </TabsContent>
 
-                <TabsContent value="TEAM" className="mt-4">
-                  <div className="bg-purple-900/20 p-4 rounded-lg border border-purple-500/30">
-                    <h3 className="text-lg font-semibold text-purple-300 mb-2">Багийн төрлийн оролцогчид</h3>
-                    <p className="text-sm text-gray-400 mb-3">
-                      {getCountDisplay('TEAM')}
-                    </p>
-                    <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {getParticipantsByEventType('TEAM').map((participant: any, idx: number) => (
-                        <div key={idx} className="bg-gray-700 p-2 rounded flex justify-between items-center">
-                          <span className="text-white">{participant.firstName} {participant.lastName}</span>
-                          <Badge variant="outline" className="text-purple-400 border-purple-400">Team</Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                <TabsContent value="TEAM" className="mt-3">
+                  <div className="text-xs text-gray-400 mb-2">{getCountDisplay('TEAM')}</div>
                 </TabsContent>
               </Tabs>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </div>
 
         {/* Group Stage Results */}
         <div className="mb-8">

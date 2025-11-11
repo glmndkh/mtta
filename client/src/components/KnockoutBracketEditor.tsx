@@ -762,7 +762,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                   </div>
 
                   {/* Player 1 Row */}
-                  <div className="player-row" key={`${match.id}-p1`}>
+                  <div className="player-row">
                     <div 
                       className="player-name player-clickable"
                       onClick={() => handlePlayerSelect(match.id, 'player1')}
@@ -782,7 +782,7 @@ export const KnockoutBracketEditor: React.FC<BracketEditorProps> = ({
                   </div>
                   <div className="vs-divider">VS</div>
                   {/* Player 2 Row */}
-                  <div className="player-row" key={`${match.id}-p2`}>
+                  <div className="player-row">
                     <div 
                       className="player-name player-clickable"
                       onClick={() => handlePlayerSelect(match.id, 'player2')}
