@@ -3179,7 +3179,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="ownerName">Эзний нэр</Label>
+                <Label htmlFor="ownerName">Эзэн</Label>
                 <Input
                   id="ownerName"
                   value={formData.ownerName || ''}
@@ -3187,7 +3187,7 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                 />
               </div>
               <div>
-                <Label htmlFor="coachName">Дасгалжуулагчийн нэр</Label>
+                <Label htmlFor="coachName">Дасгалжуулагч</Label>
                 <Input
                   id="coachName"
                   value={formData.coachName || ''}
@@ -3328,46 +3328,27 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
         return (
           <>
             <div>
-              <Label htmlFor="title">Гарчиг (заавал биш)</Label>
+              <Label htmlFor="sortOrder">Эрэмбэ *</Label>
               <Input
-                id="title"
-                value={formData.title || ''}
-                onChange={(e) => setFormData({...formData, title: e.target.value})}
+                id="sortOrder"
+                type="number"
+                min="0"
+                value={formData.sortOrder ?? 0}
+                onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })}
               />
             </div>
             <div>
-              <Label htmlFor="subtitle">Дэд гарчиг</Label>
-              <Input
-                id="subtitle"
-                value={formData.subtitle || ''}
-                onChange={(e) => setFormData({...formData, subtitle: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="description">Тайлбар</Label>
-              <Textarea
-                id="description"
-                value={formData.description || ''}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label className="flex items-center gap-2">
-                <Upload className="w-4 h-4" />
-                Слайдерын зураг *
-              </Label>
+              <Label>Зураг *</Label>
               <div className="space-y-2">
                 <ObjectUploader
                   maxNumberOfFiles={1}
-                  maxFileSize={5 * 1024 * 1024}
+                  maxFileSize={52428800}
                   onGetUploadParameters={async () => {
                     try {
-                      console.log("Getting upload parameters...");
                       const response = await apiRequest("/api/objects/upload", {
                         method: "POST",
                       });
-                      const data = await response.json() as { uploadURL: string };
-                      console.log("Upload response:", data);
+                      const data = (await response.json()) as { uploadURL: string };
                       if (!data || !data.uploadURL) {
                         throw new Error("No upload URL received");
                       }
@@ -3380,141 +3361,59 @@ const { data: judges, isLoading: judgesLoading, refetch: judgesRefetch } = useQu
                       toast({
                         title: "Алдаа",
                         description: "Файл хуулах URL авахад алдаа гарлаа",
-                        variant: "destructive"
+                        variant: "destructive",
                       });
                       throw error;
                     }
                   }}
                   onComplete={async (result) => {
-                    if (result.successful && result.successful.length > 0) {
-                      const uploadURL = result.successful[0].uploadURL;
-
-                      // Set ACL policy for the uploaded image
-                      try {
-                        const aclResponse = await apiRequest("/api/objects/acl", {
+                    try {
+                      if (result.successful && result.successful.length > 0) {
+                        const response = await apiRequest("/api/objects/finalize", {
                           method: "PUT",
-                          body: JSON.stringify({ imageURL: uploadURL }),
                           headers: {
-                            'Content-Type': 'application/json',
+                            "Content-Type": "application/json",
                           },
+                          body: JSON.stringify({
+                            fileURL: result.successful[0].uploadURL,
+                            isPublic: true,
+                          }),
                         });
-                        const aclData = await aclResponse.json() as { objectPath: string };
-
-                        // Update form with the normalized object path
-                        setFormData({
-                          ...formData,
-                          imageUrl: aclData.objectPath
-                        });
-
-                        toast({ title: "Зураг амжилттай хуулагдлаа" });
-                      } catch (error) {
-                        console.error("Error setting ACL:", error);
+                        const { objectPath } = await response.json();
+                        setFormData({ ...formData, imageUrl: objectPath });
                         toast({
-                          title: "Алдаа",
-                          description: "Зураг хуулагдсан боловч зөвшөөрөл тохируулахад алдаа гарлаа",
-                          variant: "destructive",
+                          title: "Амжилттай",
+                          description: "Зураг амжилттай хуулагдлаа",
                         });
                       }
+                    } catch (error) {
+                      console.error("Error finalizing upload:", error);
+                      toast({
+                        title: "Алдаа",
+                        description: "Файл боловсруулахад алдаа гарлаа",
+                        variant: "destructive",
+                      });
                     }
                   }}
+                  buttonClassName="w-full"
                 >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Зураг сонгох
+                  <div className="flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    <span>Зураг сонгох</span>
+                  </div>
                 </ObjectUploader>
                 {formData.imageUrl && (
-                  <div className="text-sm text-green-600">
-                    ✓ Зураг хуулагдлаа: {formData.imageUrl}
+                  <div className="mt-2">
+                    <img
+                      src={formData.imageUrl.startsWith("/") ? formData.imageUrl : `/objects/${formData.imageUrl}`}
+                      alt="Slider preview"
+                      className="max-w-full h-auto rounded"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
                   </div>
                 )}
-              </div>
-            </div>
-            <div>
-              <Label className="flex items-center gap-2">
-                <LinkIcon className="w-4 h-4" />
-                Холбоос төрөл
-              </Label>
-              <Select
-                value={formData.linkType || 'custom'}
-                onValueChange={(value) => setFormData({...formData, linkType: value, linkUrl: ''})}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Холбоосын төрлийг сонгоно уу" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="news">Мэдээ нийтлэлээс сонгох</SelectItem>
-                  <SelectItem value="custom">Гараар холбоос оруулах</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {formData.linkType === 'news' ? (
-              <div>
-                <Label htmlFor="selectedNews">Мэдээ нийтлэл сонгох</Label>
-                <Select
-                  value={formData.selectedNewsId || ''}
-                  onValueChange={(value) => {
-                    const selectedArticle = Array.isArray(news) ? news.find((article: any) => article.id === value) : null;
-                    setFormData({
-                      ...formData,
-                      selectedNewsId: value,
-                      linkUrl: `/news/${value}`,
-                      buttonText: formData.buttonText || 'Дэлгэрэнгүй үзэх'
-                    });
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Мэдээ нийтлэл сонгоно уу" />
-                  </SelectTrigger>
-                  <SelectContent>{news && Array.isArray(news) ? news.filter((article: any) => article.published).map((article: any) => (
-                      <SelectItem key={article.id} value={article.id}>
-                        {article.title}
-                      </SelectItem>
-                    )) : (
-                      <SelectItem value="" disabled>Нийтлэгдсэн мэдээ байхгүй</SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-                {formData.selectedNewsId && (
-                  <div className="text-sm text-text-secondary mt-1">
-                    Холбоос: /news/{formData.selectedNewsId}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div>
-                <Label htmlFor="linkUrl">Холбоосын URL</Label>
-                <Input
-                  id="linkUrl"
-                  value={formData.linkUrl || ''}
-                  onChange={(e) => setFormData({...formData, linkUrl: e.target.value})}
-                  placeholder="https://example.com /page-name"
-                />
-              </div>
-            )}
-            <div>
-              <Label htmlFor="buttonText">Товчны текст</Label>
-              <Input
-                id="buttonText"
-                value={formData.buttonText || ''}
-                onChange={(e) => setFormData({...formData, buttonText: e.target.value})}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="isActive"
-                  checked={formData.isActive || false}
-                  onCheckedChange={(checked) => setFormData({...formData, isActive: checked})}
-                />
-                <Label htmlFor="isActive">Идэвхтэй</Label>
-              </div>
-              <div>
-                <Label htmlFor="sortOrder">Эрэмбэ</Label>
-                <Input
-                  id="sortOrder"
-                  type="number"
-                  value={formData.sortOrder || 0}
-                  onChange={(e) => setFormData({...formData, sortOrder: parseInt(e.target.value)})}
-                />
               </div>
             </div>
           </>
