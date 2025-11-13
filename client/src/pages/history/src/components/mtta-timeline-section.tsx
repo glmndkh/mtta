@@ -60,7 +60,8 @@ const imageMap: Record<string, string> = {
   "Б.Батхишиг": imgBase + "B.Batkhishig.jpeg",
   "Ч.Алтанцэцэг": imgBase + "Ch.Altantsetseg.jpeg",
   "Л. Батхишиг": imgBase + "L.Batkhishig.jpeg",
-  "Ө.Балжинням": imgBase + "B.Bolor-Erdene.jpeg",
+  "Ө.Балжинням": imgBase + "U.Baljinnyam.jpeg",
+  "Б.Болор-Эрдэнэ": imgBase + "B.Bolor-Erdene.jpeg"
 };
 
 /** 2) 1956–2016 оны өгөг (тайлбарууд 1956–1970 онуудад нэмсэн) */
