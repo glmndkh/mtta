@@ -73,7 +73,7 @@ export default function JudgesPage() {
         <CouncilHero title="Шүүгчдийн Зөвлөл" subtitle={HERO_SUBTITLE} backgroundImage={HERO_IMAGE} />
         <section className="relative -mt-16 pb-20">
           <div className="mx-auto max-w-7xl px-6">
-            <div className="rounded-3xl border border-emerald-500/20 bg-emerald-950/60 p-6 shadow-2xl backdrop-blur">
+            <div className="rounded-3xl border border-emerald-500/15 bg-emerald-950/40 p-6 shadow-2xl backdrop-blur">
               <Tabs value={tab} onValueChange={setTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 gap-3 rounded-full bg-emerald-950/40 p-2">
                   <TabsTrigger

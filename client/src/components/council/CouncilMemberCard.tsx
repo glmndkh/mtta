@@ -25,7 +25,7 @@ function MemberImage({ imageUrl, name }: { imageUrl?: string | null; name: strin
 
   if (!imageUrl || didError) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-emerald-800 via-emerald-900 to-emerald-950 text-3xl font-semibold text-emerald-100">
+      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-emerald-900 via-emerald-950 to-gray-950 text-3xl font-semibold text-emerald-100">
         {initials || "?"}
       </div>
     );
@@ -79,7 +79,7 @@ export function CouncilMemberCard({
           >
             <div className="group relative h-full overflow-hidden bg-black">
               <MemberImage imageUrl={imageUrl ?? undefined} name={name} />
-              <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/95 via-emerald-700/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/80 via-emerald-700/20 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6">
                 <div className="relative inline-block">
                   <p className="text-sm font-semibold uppercase tracking-wide text-emerald-100">
@@ -97,7 +97,7 @@ export function CouncilMemberCard({
           </div>
 
           <div
-            className="absolute inset-0 flex h-full w-full items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-800 via-emerald-900 to-green-950 p-6"
+            className="absolute inset-0 flex h-full w-full items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-900 via-emerald-950 to-gray-950 p-6"
             style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
           >
             <div className="space-y-4 text-center">

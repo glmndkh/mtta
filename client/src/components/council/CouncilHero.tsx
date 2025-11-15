@@ -20,7 +20,7 @@ export function CouncilHero({
         aria-hidden="true"
       />
       <div
-        className={`absolute inset-0 bg-gradient-to-b from-emerald-950/85 via-emerald-900/75 to-emerald-950/90 ${
+        className={`absolute inset-0 bg-gradient-to-b from-emerald-950/60 via-emerald-900/50 to-emerald-950/65 ${
           overlayClassName ?? ""
         }`}
         aria-hidden="true"
