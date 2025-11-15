@@ -46,7 +46,7 @@ export function JudgeCard({ image, role, name, status, description }: JudgeCardP
                 alt={name}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-emerald-900/90 via-emerald-600/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-emerald-00/0 via-emerald-00/0 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6">
                 <div className="relative inline-block">
                   <p className="text-white text-sm tracking-wide uppercase">

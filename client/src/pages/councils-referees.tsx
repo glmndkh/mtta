@@ -1,4 +1,3 @@
-
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import { JudgeCard } from "@/components/JudgeCard";
@@ -6,8 +5,7 @@ import buyanbatImage from "@/assets/councilimages/buyanbat.jpg";
 import damdinbayarImage from "@/assets/councilimages/Damdinbayar.jpeg";
 import tsogzolmaaImage from "@/assets/councilimages/Tsogzolmaa.jpg";
 import tumenImage from "@/assets/councilimages/Tumen.jpg";
-import teamImage from "@/assets/councilimages/Shuugchid.jpg"
-
+import teamImage from "@/assets/councilimages/Shuugchid.jpg";
 
 interface Judge {
   id: string;
@@ -20,8 +18,6 @@ interface Judge {
   displayName?: string;
 }
 
-
-// Static мэдээлэл
 const staticJudges: Judge[] = [
   {
     id: "1",
@@ -30,7 +26,8 @@ const staticJudges: Judge[] = [
     imageUrl: buyanbatImage,
     judgeType: "international",
     role: "chairperson",
-    description: "Олон улсын шүүгч, Монгол Улсын Ширээний Теннисний Холбооны Шүүгчдийн Зөвлөлийн Дарга"
+    description:
+      "Олон улсын шүүгч, Монгол Улсын Ширээний Теннисний Холбооны Шүүгчдийн Зөвлөлийн Дарга",
   },
   {
     id: "2",
@@ -39,7 +36,7 @@ const staticJudges: Judge[] = [
     imageUrl: damdinbayarImage,
     judgeType: "international",
     role: "member",
-    description: "Олон улсын шүүгч, Шүүгчдийн Зөвлөлийн Гишүүн"
+    description: "Олон улсын шүүгч, Шүүгчдийн Зөвлөлийн Гишүүн",
   },
   {
     id: "3",
@@ -49,7 +46,7 @@ const staticJudges: Judge[] = [
     judgeType: "international",
     role: "member",
     description: "Олон улсын шүүгч, Шүүгчдийн Зөвлөлийн Гишүүн",
-    displayName: "Р. Цогзолмаа"
+    displayName: "Р. Цогзолмаа",
   },
   {
     id: "4",
@@ -58,11 +55,11 @@ const staticJudges: Judge[] = [
     imageUrl: tumenImage,
     judgeType: "international",
     role: "member",
-    description: "Олон улсын шүүгч, Шүүгчдийн Зөвлөлийн Гишүүн"
-  }];
+    description: "Олон улсын шүүгч, Шүүгчдийн Зөвлөлийн Гишүүн",
+  },
+];
 
 export default function RefereesCouncil() {
-  // Даргыг эхэнд байрлуулах
   const sortedJudges = [...staticJudges].sort((a, b) => {
     if (a.role === "chairperson") return -1;
     if (b.role === "chairperson") return 1;
@@ -72,28 +69,49 @@ export default function RefereesCouncil() {
   return (
     <PageWithLoading>
       <Navigation />
-      <div className="min-h-screen bg-gradient-to-br from-emerald-950 via-emerald-900 to-green-950 dark:from-emerald-950 dark:via-emerald-900 dark:to-green-950">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-550 via-emerald-500 to-green-550 dark:from-emerald-550 dark:via-emerald-500 dark:to-green-550">
+
+        {/* ========================= */}
+        {/*        HERO SECTION       */}
+        {/* ========================= */}
+
         <div className="relative h-[60vh] min-h-[400px] overflow-hidden">
-          <div 
+
+          {/* Background Image */}
+          <div
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: `url(${teamImage})` }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-emerald-950/80 via-emerald-900/70 to-emerald-950/90" />
-          <div className="relative h-full flex items-center justify-center">
+
+          {/* Dark overlay to make text readable */}
+          <div className="absolute inset-0 bg-black/50 md:bg-black/60"></div>
+
+          {/* Text layer */}
+          <div className="relative z-10 h-full flex items-center justify-center">
             <div className="text-center space-y-4 px-6">
-              <h1 className="text-5xl font-bold text-emerald-50" data-testid="heading-council">Шүүгчдийн Зөвлөл</h1>
-              <p className="text-emerald-200 text-lg max-w-2xl mx-auto">
+              <h1
+                className="text-4xl md:text-5xl font-bold text-white drop-shadow-[0_4px_10px_rgba(0,0,0,0.85)]"
+                data-testid="heading-council"
+              >
+                Шүүгчдийн Зөвлөл
+              </h1>
+              <p className="text-white/95 text-lg max-w-2xl mx-auto drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]">
                 Монгол Ширээний Теннисний Холбооны шүүгчдийн баг
               </p>
             </div>
           </div>
         </div>
 
+        {/* ========================= */}
+        {/*     JUDGE CARDS SECTION   */}
+        {/* ========================= */}
+
         <div className="max-w-7xl mx-auto px-6 py-20">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
             {sortedJudges.map((judge) => {
-              const judgeName = judge.displayName || `${judge.lastName.charAt(0)}. ${judge.firstName}`;
-              
+              const judgeName =
+                judge.displayName || `${judge.lastName.charAt(0)}. ${judge.firstName}`;
+
               return (
                 <JudgeCard
                   key={judge.id}
