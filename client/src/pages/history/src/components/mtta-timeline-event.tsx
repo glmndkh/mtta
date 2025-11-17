@@ -120,13 +120,11 @@ export function MTTATimelineEvent({
                   border: "1px solid rgba(0, 193, 106, 0.2)",
                 }}
               >
-                <div className="aspect-[4/3]">
-                  <img
-                    src={image}
-                    alt={`${title} ${idx + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+                <img
+                  src={image}
+                  alt={`${title} ${idx + 1}`}
+                  className="w-full h-auto object-contain"
+                />
               </motion.div>
             ))}
           </div>
