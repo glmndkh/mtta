@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Trophy, ArrowDown, ArrowUp, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface ChampionCard {
   name: string;
@@ -250,23 +251,24 @@ function ChampionCardView({ champion }: { champion: ChampionCard }) {
       whileInView={{ opacity: 1, scale: 1 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      className="relative rounded-lg overflow-hidden bg-gray-800/50 border border-green-500/20 p-4 hover:border-green-500/40 transition-all"
+      className="relative rounded-lg overflow-hidden bg-card border border-border p-4 hover:border-primary/40 transition-all"
     >
       <div className="flex items-center gap-3">
-        <div className="w-32 h-32 rounded-lg bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center flex-shrink-0">
+        <div className="w-32 h-32 rounded-lg bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center flex-shrink-0 overflow-hidden">
           {champion.image ? (
             <img
               src={champion.image}
               alt={champion.name}
               className="w-full h-full object-cover rounded-lg"
+              style={{ objectFit: 'cover', width: '100%', height: '100%' }}
             />
           ) : (
             <Trophy className="w-16 h-16 text-white" />
           )}
         </div>
         <div className="flex-1">
-          <h4 className="text-white font-semibold">{champion.name}</h4>
-          <p className="text-green-400 text-sm">{champion.title}</p>
+          <h4 className="text-card-foreground font-semibold">{champion.name}</h4>
+          <p className="text-primary text-sm">{champion.title}</p>
         </div>
       </div>
     </motion.div>
@@ -274,6 +276,7 @@ function ChampionCardView({ champion }: { champion: ChampionCard }) {
 }
 
 export function MTTATimelineSection() {
+  const { theme } = useTheme();
   const [searchYear, setSearchYear] = useState("");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
@@ -296,17 +299,17 @@ export function MTTATimelineSection() {
   }, [searchYear, sortOrder]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 py-20 px-4">
+    <div className="min-h-screen bg-background py-20 px-4">
       <div className="max-w-7xl mx-auto text-center mb-8">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
             Бидний түүх
           </h1>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Монголын ширээний теннисний холбооны түүхэн замнал
           </p>
         </motion.div>
@@ -317,13 +320,13 @@ export function MTTATimelineSection() {
         <div className="flex flex-col md:flex-row gap-4 items-center justify-center">
           {/* Year Search */}
           <div className="relative w-full md:w-64">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               type="text"
               placeholder="Он хайх..."
               value={searchYear}
               onChange={(e) => setSearchYear(e.target.value)}
-              className="pl-10 bg-gray-800/50 border-green-500/20 text-white placeholder:text-gray-500"
+              className="pl-10 bg-card border-border text-foreground"
             />
           </div>
 
@@ -334,8 +337,8 @@ export function MTTATimelineSection() {
               variant={sortOrder === "newest" ? "default" : "outline"}
               className={
                 sortOrder === "newest"
-                  ? "bg-green-600 hover:bg-green-700 text-white"
-                  : "bg-gray-800/50 border-green-500/20 text-gray-300 hover:bg-gray-700"
+                  ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                  : "bg-card border-border text-foreground hover:bg-accent"
               }
             >
               <ArrowDown className="w-4 h-4 mr-2" />
@@ -346,8 +349,8 @@ export function MTTATimelineSection() {
               variant={sortOrder === "oldest" ? "default" : "outline"}
               className={
                 sortOrder === "oldest"
-                  ? "bg-green-600 hover:bg-green-700 text-white"
-                  : "bg-gray-800/50 border-green-500/20 text-gray-300 hover:bg-gray-700"
+                  ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                  : "bg-card border-border text-foreground hover:bg-accent"
               }
             >
               <ArrowUp className="w-4 h-4 mr-2" />
@@ -358,14 +361,14 @@ export function MTTATimelineSection() {
 
         {/* Results Count */}
         {searchYear.trim() && (
-          <p className="text-center text-gray-400 mt-4">
+          <p className="text-center text-muted-foreground mt-4">
             {timelineEvents.length} үр дүн олдлоо
           </p>
         )}
       </div>
 
       <div className="max-w-7xl mx-auto relative">
-        <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-green-300 via-green-300 to-green-300 transform -translate-x-1/2 hidden md:block" />
+        <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-primary to-primary transform -translate-x-1/2 hidden md:block" />
 
         <div className="space-y-16">
           {timelineEvents.map((event, index) => (
@@ -385,25 +388,25 @@ export function MTTATimelineSection() {
                       : "md:order-2 md:pl-12"
                   }`}
                 >
-                  <div className="bg-gray-800/50 backdrop-blur-sm border border-green-500/20 rounded-lg p-6 hover:border-green-500/40 transition-all">
-                    <h3 className="text-2xl font-bold text-white mb-2">
+                  <div className="bg-card backdrop-blur-sm border border-border rounded-lg p-6 hover:border-primary/40 transition-all">
+                    <h3 className="text-2xl font-bold text-card-foreground mb-2">
                       {event.title}
                     </h3>
                     {/* ЭНД newline харагдуулна */}
-                    <p className="text-gray-300 leading-relaxed whitespace-pre-line">
+                    <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
                       {event.description}
                     </p>
                   </div>
                 </div>
 
                 <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden md:block">
-                  <span className="text-6xl font-bold text-green-400">
+                  <span className="text-6xl font-bold text-primary">
                     {event.year}
                   </span>
                 </div>
 
                 <div className="md:hidden mb-4">
-                  <span className="text-5xl font-bold text-green-400">
+                  <span className="text-5xl font-bold text-primary">
                     {event.year}
                   </span>
                 </div>
@@ -431,8 +434,8 @@ export function MTTATimelineSection() {
           transition={{ duration: 0.5 }}
           className="flex justify-center mt-16"
         >
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg shadow-green-500/50">
-            <div className="w-8 h-8 rounded-full bg-white" />
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
+            <div className="w-8 h-8 rounded-full bg-background" />
           </div>
         </motion.div>
       </div>
