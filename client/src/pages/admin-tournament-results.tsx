@@ -834,31 +834,27 @@ const AdminTournamentResults: React.FC = () => {
 
   const podiumWinners = getPodiumWinners();
 
-  // Add state for division and stage selection
-  const [selectedStage, setSelectedStage] = useState<'GROUP' | 'KNOCKOUT' | 'FINAL'>('GROUP');
-  const [selectedDivision, setSelectedDivision] = useState<string | undefined>();
-
   return (
     <PageWithLoading>
       <Navigation />
-      <div className="min-h-screen bg-slate-50 py-6">
-        <div className="container mx-auto px-4 space-y-6">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
+        <div className="container mx-auto px-4 py-6">
           {/* Compact Header */}
-          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-md">
+          <div className="bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-700/50 p-4 mb-6 shadow-2xl">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-3">
                 <Button
                   onClick={() => setLocation('/admin/tournaments')}
                   variant="ghost"
                   size="sm"
-                  className="text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                  className="text-gray-400 hover:text-white hover:bg-gray-700/50"
                 >
                   <ArrowLeft className="w-4 h-4 mr-1" />
                   Буцах
                 </Button>
-                <div className="border-l border-slate-300 pl-3">
-                  <h1 className="text-xl font-bold text-slate-900">{tournament.name}</h1>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-slate-600">
+                <div className="border-l border-gray-700 pl-3">
+                  <h1 className="text-xl font-bold text-white">{tournament.name}</h1>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
                     <span className="flex items-center gap-1">
                       <Users className="w-3 h-3" />
                       {participants?.length || 0}
@@ -871,8 +867,8 @@ const AdminTournamentResults: React.FC = () => {
                       variant={isPublished ? "default" : "secondary"}
                       className={`text-xs ${
                         isPublished
-                          ? "bg-green-100 text-green-700 border-green-300"
-                          : "bg-yellow-100 text-yellow-700 border-yellow-300"
+                          ? "bg-green-600/20 text-green-400 border-green-500/30"
+                          : "bg-yellow-600/20 text-yellow-400 border-yellow-500/30"
                       }`}
                     >
                       {isPublished ? "Нийтлэгдсэн" : "Ноорог"}
@@ -883,7 +879,7 @@ const AdminTournamentResults: React.FC = () => {
               <Button
                 onClick={handleSave}
                 disabled={saveResultsMutation.isPending}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 shadow-md"
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 shadow-lg"
               >
                 <Save className="w-4 h-4 mr-2" />
                 {saveResultsMutation.isPending ? "Хадгалж байна..." : "Хадгалах"}
@@ -892,24 +888,24 @@ const AdminTournamentResults: React.FC = () => {
           </div>
 
         {/* Compact Podium */}
-        <div>
+        <div className="mb-6">
           <div className="flex items-center justify-center gap-4 flex-wrap">
             {podiumWinners.first && (
-              <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-lg p-4 text-center shadow-md">
+              <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 border border-yellow-500/30 rounded-lg p-4 text-center backdrop-blur-sm">
                 <div className="text-3xl mb-1">🥇</div>
-                <div className="text-sm font-semibold text-yellow-700">{podiumWinners.first.name}</div>
+                <div className="text-sm font-semibold text-yellow-400">{podiumWinners.first.name}</div>
               </div>
             )}
             {podiumWinners.second && (
-              <div className="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-lg p-4 text-center shadow-md">
+              <div className="bg-gradient-to-br from-gray-400/20 to-gray-500/20 border border-gray-400/30 rounded-lg p-4 text-center backdrop-blur-sm">
                 <div className="text-3xl mb-1">🥈</div>
-                <div className="text-sm font-semibold text-slate-700">{podiumWinners.second.name}</div>
+                <div className="text-sm font-semibold text-gray-300">{podiumWinners.second.name}</div>
               </div>
             )}
             {podiumWinners.third && (
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-4 text-center shadow-md">
+              <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/20 border border-orange-500/30 rounded-lg p-4 text-center backdrop-blur-sm">
                 <div className="text-3xl mb-1">🥉</div>
-                <div className="text-sm font-semibold text-orange-700">{podiumWinners.third.name}</div>
+                <div className="text-sm font-semibold text-orange-400">{podiumWinners.third.name}</div>
               </div>
             )}
           </div>
@@ -924,62 +920,55 @@ const AdminTournamentResults: React.FC = () => {
         
 
         {/* Modern Results Input Section */}
-        <div>
-          {/* Gradient Header */}
+        <div className="mb-8">
           <div className="w-full rounded-3xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-8 py-6 shadow-lg mb-6">
             <div className="flex items-center gap-3 text-2xl font-semibold">
               <span className="text-3xl">🏆</span>
-              <span>Тэмцээний үр дүн</span>
+              <span>Тэмцээний үр дүн оруулах</span>
               <span className="text-3xl">🏆</span>
             </div>
-            <p className="text-sm text-white/80 mt-2">Админ хэсэг - Үр дүн оруулах горим</p>
-            <div className="mt-3 inline-flex items-center gap-3 rounded-full bg-white/15 px-4 py-2 text-xs backdrop-blur">
+            <p className="text-sm text-white/80 mt-2">Админ хэсэг - Групп шат удирдлага</p>
+            <div className="mt-3 inline-flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-2 text-xs backdrop-blur">
               <span className="font-semibold">{tournament.name}</span>
               <span className="h-4 w-px bg-white/40" />
-              <span>
-                {selectedEventType === 'SINGLES'
-                  ? 'Ганцаарчилсан тэмцээн'
-                  : selectedEventType === 'DOUBLES'
-                  ? 'Хосын тэмцээн'
-                  : 'Багийн тэмцээн'}
-              </span>
+              <span>{selectedEventType === 'SINGLES' ? 'Ганцаарчилсан' : selectedEventType === 'DOUBLES' ? 'Хос' : 'Баг'} тэмцээн</span>
               <span className="h-4 w-px bg-white/40" />
-              <span>Нийт бүртгэлтэй тоглогч: {getParticipantsByEventType(selectedEventType).length}</span>
+              <span>Нийт бүртгэлтэй: {getParticipantsByEventType(selectedEventType).length}</span>
             </div>
           </div>
 
-          {/* Category Selection Card - White Background */}
-          <section className="w-full rounded-3xl bg-white shadow-md border border-slate-200 px-8 py-6 space-y-6 mb-6">
+          {/* Category Selection Card */}
+          <section className="w-full rounded-3xl bg-gray-800/80 backdrop-blur-sm shadow-md border border-gray-700/50 px-8 py-6 space-y-6 mb-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-indigo-50 flex items-center justify-center text-xl">🏅</div>
+              <div className="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center text-xl">🏅</div>
               <div className="flex flex-col">
-                <span className="text-base font-semibold text-slate-900">Тэмцээний ангилал</span>
-                <span className="text-xs text-slate-500">Тэмцээний төрөл, горимоо сонгоно уу</span>
+                <span className="text-base font-semibold text-white">Тэмцээний ангилал</span>
+                <span className="text-xs text-gray-400">Тэмцээний төрөл, горимоо сонгоно уу</span>
               </div>
             </div>
 
             {/* Event Type Tabs */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-3">
               {getAvailableEventTypes().includes('SINGLES') && (
                 <button
                   onClick={() => setSelectedEventType('SINGLES')}
-                  className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                  className={`flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium shadow-sm transition ${
                     selectedEventType === 'SINGLES'
-                      ? 'bg-blue-600 text-white shadow'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-700/50 text-gray-300 border border-gray-600 hover:bg-gray-700'
                   }`}
                 >
-                  <span className="text-lg">🧍‍♂️</span>
-                  <span>Ганцаарчилсан тэмцээн</span>
+                  <span className="text-lg">👤</span>
+                  <span>Ганцаарчилсан</span>
                 </button>
               )}
               {getAvailableEventTypes().includes('DOUBLES') && (
                 <button
                   onClick={() => setSelectedEventType('DOUBLES')}
-                  className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                  className={`flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium shadow-sm transition ${
                     selectedEventType === 'DOUBLES'
-                      ? 'bg-blue-600 text-white shadow'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-700/50 text-gray-300 border border-gray-600 hover:bg-gray-700'
                   }`}
                 >
                   <span className="text-lg">👥</span>
@@ -989,10 +978,10 @@ const AdminTournamentResults: React.FC = () => {
               {getAvailableEventTypes().includes('TEAM') && (
                 <button
                   onClick={() => setSelectedEventType('TEAM')}
-                  className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                  className={`flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium shadow-sm transition ${
                     selectedEventType === 'TEAM'
-                      ? 'bg-blue-600 text-white shadow'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-700/50 text-gray-300 border border-gray-600 hover:bg-gray-700'
                   }`}
                 >
                   <span className="text-lg">🧑‍🤝‍🧑</span>
@@ -1001,79 +990,107 @@ const AdminTournamentResults: React.FC = () => {
               )}
             </div>
 
-            <hr className="border-slate-200" />
+            <div className="h-px bg-gray-700" />
 
-            {/* Division Select + Stage Buttons */}
+            {/* Stage Selection Tabs */}
             <div className="space-y-4">
-              {/* Division Selector */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                  Дивиз сонгох
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                  Шатыг сонгох
                 </label>
-                <Select value={selectedDivision} onValueChange={setSelectedDivision}>
-                  <SelectTrigger className="w-64 bg-white border border-slate-300 text-slate-900 rounded-2xl h-10 px-4">
-                    <SelectValue placeholder="13–15 нас, эрэгтэй" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="U15_MALE">13–15 нас, эрэгтэй</SelectItem>
-                    <SelectItem value="U18_MALE">16–18 нас, эрэгтэй</SelectItem>
-                    <SelectItem value="OPEN_MALE">19+ нас, эрэгтэй</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Stage Buttons */}
-              <div className="flex gap-4 text-sm font-medium">
-                <button
-                  onClick={() => setSelectedStage('GROUP')}
-                  className={`flex-1 rounded-2xl h-11 transition ${
-                    selectedStage === 'GROUP'
-                      ? 'bg-blue-600 text-white shadow'
-                      : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  Групп шат
-                </button>
-                <button
-                  onClick={() => setSelectedStage('KNOCKOUT')}
-                  className={`flex-1 rounded-2xl h-11 transition ${
-                    selectedStage === 'KNOCKOUT'
-                      ? 'bg-blue-600 text-white shadow'
-                      : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  Шууд хасагдах шат
-                </button>
-                <button
-                  onClick={() => setSelectedStage('FINAL')}
-                  className={`flex-1 rounded-2xl h-11 transition ${
-                    selectedStage === 'FINAL'
-                      ? 'bg-blue-600 text-white shadow'
-                      : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  Эцсийн байр, медаль
-                </button>
+                <div className="flex gap-3 text-sm font-medium">
+                  <button className="flex-1 rounded-2xl bg-blue-600 text-white py-2.5 shadow-sm border border-blue-700">
+                    Групп шат
+                  </button>
+                  <button className="flex-1 rounded-2xl bg-gray-700/50 text-gray-300 py-2.5 border border-gray-600 hover:bg-gray-700 transition">
+                    Шууд хасагдах шат
+                  </button>
+                  <button className="flex-1 rounded-2xl bg-gray-700/50 text-gray-300 py-2.5 border border-gray-600 hover:bg-gray-700 transition">
+                    Эцсийн байр, медаль
+                  </button>
+                </div>
               </div>
             </div>
           </section>
 
-          {/* Enhanced Group Stage Info - White Background */}
-          <section className="w-full rounded-3xl bg-white shadow-md border border-slate-200 px-8 py-6">
+          {/* Enhanced Group Stage Info */}
+          <section className="w-full rounded-3xl bg-gray-800/80 backdrop-blur-sm shadow-md border border-gray-700/50 px-8 py-6">
             <div className="mb-6">
-              <h2 className="text-base font-semibold text-slate-900 mb-4">Групп шат ({tournament.name})</h2>
+              <h2 className="text-base font-semibold text-white mb-4">Групп шат ({tournament.name})</h2>
+              
+              {/* Selection Controls */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {/* Division Selection */}
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                    Насны ангилал сонгох
+                  </label>
+                  <Select value={selectedEventType} onValueChange={(value: any) => setSelectedEventType(value)}>
+                    <SelectTrigger className="bg-gray-700/50 border-gray-600 text-white">
+                      <SelectValue placeholder="Насны ангилал сонгоно уу" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getAvailableEventTypes().map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type === 'SINGLES' ? '13-15 нас, эрэгтэй' : 
+                           type === 'DOUBLES' ? '16-18 нас, эрэгтэй' : 
+                           '19+ нас, эрэгтэй'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Event Type Selection */}
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                    Төрөл сонгох
+                  </label>
+                  <Select value={selectedEventType} onValueChange={(value: any) => setSelectedEventType(value)}>
+                    <SelectTrigger className="bg-gray-700/50 border-gray-600 text-white">
+                      <SelectValue placeholder="Төрөл сонгоно уу" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getAvailableEventTypes().includes('SINGLES') && (
+                        <SelectItem value="SINGLES">
+                          <div className="flex items-center gap-2">
+                            <span>👤</span>
+                            <span>Ганцаарчилсан тэмцээн</span>
+                          </div>
+                        </SelectItem>
+                      )}
+                      {getAvailableEventTypes().includes('DOUBLES') && (
+                        <SelectItem value="DOUBLES">
+                          <div className="flex items-center gap-2">
+                            <span>👥</span>
+                            <span>Хосын тэмцээн</span>
+                          </div>
+                        </SelectItem>
+                      )}
+                      {getAvailableEventTypes().includes('TEAM') && (
+                        <SelectItem value="TEAM">
+                          <div className="flex items-center gap-2">
+                            <span>🧑‍🤝‍🧑</span>
+                            <span>Багийн тэмцээн</span>
+                          </div>
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
               {/* Stats */}
-              <div className="flex items-center justify-between gap-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                <p className="text-xs text-slate-600">
+              <div className="flex items-center justify-between gap-4 p-3 bg-gray-900/50 rounded-lg border border-gray-700/30">
+                <p className="text-xs text-gray-400">
                   Дээрх групп удирдлага хэсгээс тоглогчдоо хуваарилна уу
                 </p>
-                <div className="text-xs text-slate-600 flex gap-4">
+                <div className="text-xs text-gray-400 flex gap-4">
                   <span>
-                    Нийт групп: <span className="font-semibold text-slate-900">{groupStageResults.length}</span>
+                    Нийт групп: <span className="font-semibold text-white">{groupStageResults.length}</span>
                   </span>
                   <span>
-                    Хуваарилсан тоглогч: <span className="font-semibold text-slate-900">
+                    Хуваарилсан тоглогч: <span className="font-semibold text-white">
                       {groupStageResults.reduce((sum, g) => sum + g.players.length, 0)}
                     </span>
                   </span>
@@ -1081,7 +1098,7 @@ const AdminTournamentResults: React.FC = () => {
               </div>
             </div>
             
-            <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-700">
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl px-4 py-3 text-sm text-blue-300">
               <strong>Зөвлөмж:</strong> Дээрх "Хэсэгийн шатны тоглолт" хэсэгт очиж группүүдээ үүсгэж, 
               тоглогчдоо бүртгэлтэй жагсаалтаас сонгон хуваарилна уу. Тэмцээний үр дүн шууд уг хэсэгт оруулна.
             </div>
@@ -1089,11 +1106,11 @@ const AdminTournamentResults: React.FC = () => {
             {/* Participant List and Group Creation */}
             <div className="mt-6 space-y-4">
               {/* Registered Participants */}
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+              <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-700/30">
+                <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
                   <Users className="w-4 h-4" />
                   Бүртгүүлсэн тамирчид ({selectedEventType})
-                  <Badge variant="outline" className="ml-2 bg-white">
+                  <Badge variant="outline" className="ml-2">
                     {getParticipantsByEventType(selectedEventType).length} тоглогч
                   </Badge>
                 </h3>
@@ -1103,15 +1120,15 @@ const AdminTournamentResults: React.FC = () => {
                     {getParticipantsByEventType(selectedEventType).map((participant: any, index: number) => (
                       <div 
                         key={participant.id || index}
-                        className="bg-white rounded-lg px-3 py-2 text-xs text-slate-700 border border-slate-200 hover:bg-slate-50 transition-colors"
+                        className="bg-gray-800/50 rounded-lg px-3 py-2 text-xs text-gray-300 border border-gray-700/30 hover:bg-gray-700/50 transition-colors"
                       >
-                        <div className="font-medium text-slate-900">
+                        <div className="font-medium text-white">
                           {participant.user?.firstName && participant.user?.lastName
                             ? `${participant.user.firstName} ${participant.user.lastName}`
                             : participant.user?.email || `Тоглогч ${index + 1}`}
                         </div>
                         {participant.user?.clubAffiliation && (
-                          <div className="text-slate-500 text-xs mt-0.5">
+                          <div className="text-gray-500 text-xs mt-0.5">
                             {participant.user.clubAffiliation}
                           </div>
                         )}
@@ -1119,7 +1136,7 @@ const AdminTournamentResults: React.FC = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-slate-500">
+                  <div className="text-center py-8 text-gray-500">
                     <Users className="w-12 h-12 mx-auto mb-2 opacity-30" />
                     <p className="text-sm">Энэ төрлөөр бүртгүүлсэн тамирчин байхгүй байна</p>
                   </div>
@@ -1128,9 +1145,9 @@ const AdminTournamentResults: React.FC = () => {
 
               {/* Quick Group Creation */}
               {getParticipantsByEventType(selectedEventType).length >= 4 && (
-                <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-200">
-                  <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                    <Trophy className="w-4 h-4 text-blue-600" />
+                <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-xl p-4 border border-blue-700/30">
+                  <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                    <Trophy className="w-4 h-4 text-blue-400" />
                     Групп үүсгэх
                   </h3>
                   
@@ -1148,20 +1165,20 @@ const AdminTournamentResults: React.FC = () => {
                       onClick={addNewGroup}
                       variant="outline"
                       size="sm"
-                      className="border-slate-300 text-slate-700 hover:bg-slate-100"
+                      className="border-gray-600 text-gray-300 hover:bg-gray-700"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Хоосон групп нэмэх
                     </Button>
                     
-                    <div className="text-xs text-slate-600 ml-auto">
+                    <div className="text-xs text-gray-400 ml-auto">
                       {groupStageResults.length > 0 && (
                         <span>{groupStageResults.length} групп үүсгэгдсэн</span>
                       )}
                     </div>
                   </div>
 
-                  <div className="mt-3 text-xs text-blue-600">
+                  <div className="mt-3 text-xs text-blue-300/70">
                     💡 Автомат үүсгэх товч нь тамирчдыг санамсаргүйгээр 4 хүний группүүдэд хуваарилна
                   </div>
                 </div>
@@ -1171,10 +1188,10 @@ const AdminTournamentResults: React.FC = () => {
         </div>
 
         {/* Settings Panel */}
-            <div>
-              <Card className="bg-white border-slate-200 shadow-md">
+            <div className="mb-6">
+              <Card className="bg-gray-800 border-gray-700">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-slate-900">
+                  <CardTitle className="flex items-center gap-2 text-white">
                     <Target className="w-5 h-5" />
                     Шилжилтийн тохиргоо
                   </CardTitle>
@@ -1183,15 +1200,15 @@ const AdminTournamentResults: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="flex items-center gap-2">
                         <input type="checkbox" id="top1" className="rounded" defaultChecked />
-                        <label htmlFor="top1" className="text-sm text-slate-700">Топ 1 шилжих</label>
+                        <label htmlFor="top1" className="text-sm text-gray-300">Топ 1 шилжих</label>
                       </div>
                       <div className="flex items-center gap-2">
                         <input type="checkbox" id="top2" className="rounded" defaultChecked />
-                        <label htmlFor="top2" className="text-sm text-slate-700">Топ 2 шилжих</label>
+                        <label htmlFor="top2" className="text-sm text-gray-300">Топ 2 шилжих</label>
                       </div>
                       <div className="flex items-center gap-2">
                         <input type="checkbox" id="luckyDraw" className="rounded" />
-                        <label htmlFor="luckyDraw" className="text-sm text-slate-700">Lucky draw сонголт</label>
+                        <label htmlFor="luckyDraw" className="text-sm text-gray-300">Lucky draw сонголт</label>
                       </div>
               </div>
               <div className="mt-4 flex items-center gap-3">
@@ -1209,9 +1226,9 @@ const AdminTournamentResults: React.FC = () => {
                         onChange={(e) => setIsPublished(e.target.checked)}
                         className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                       />
-                      <span className="text-sm font-medium text-slate-700">Нийтэд харуулах</span>
+                      <span className="text-sm font-medium text-gray-300">Нийтэд харуулах</span>
                       {isPublished && <Eye className="w-4 h-4 text-green-600" />}
-                      {!isPublished && <EyeOff className="w-4 h-4 text-slate-400" />}
+                      {!isPublished && <EyeOff className="w-4 h-4 text-gray-400" />}
                 </label>
               </div>
             </CardContent>
