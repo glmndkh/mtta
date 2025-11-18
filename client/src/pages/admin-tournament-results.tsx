@@ -184,13 +184,23 @@ const AdminTournamentResults: React.FC = () => {
     }
     
     const mappedTypes = tournament.participationTypes.map((type) => {
-      const upperType = type.toUpperCase();
-      console.log('Mapping type:', type, '-> upperType:', upperType);
-      
-      // Map common variations
-      if (upperType.includes('SINGLE') || upperType === 'INDIVIDUAL') return 'SINGLES';
-      if (upperType.includes('DOUBLE') || upperType.includes('PAIR')) return 'DOUBLES';
-      if (upperType.includes('TEAM')) return 'TEAM';
+      // Try to parse JSON if it's a string
+      try {
+        const parsed = JSON.parse(type);
+        const typeStr = parsed.type?.toLowerCase() || '';
+        console.log('Parsed type:', typeStr);
+        
+        // Map based on type field
+        if (typeStr === 'individual') return 'SINGLES';
+        if (typeStr === 'pair') return 'DOUBLES';
+        if (typeStr === 'team') return 'TEAM';
+      } catch (e) {
+        // If not JSON, treat as plain string
+        const upperType = type.toUpperCase();
+        if (upperType.includes('SINGLE') || upperType === 'INDIVIDUAL') return 'SINGLES';
+        if (upperType.includes('DOUBLE') || upperType.includes('PAIR')) return 'DOUBLES';
+        if (upperType.includes('TEAM')) return 'TEAM';
+      }
       return null;
     }).filter(Boolean) as ("SINGLES" | "DOUBLES" | "TEAM")[];
     
