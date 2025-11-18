@@ -998,8 +998,182 @@ const AdminTournamentResults: React.FC = () => {
       for (let i = 0; i < updated.length; i++) {
         const match = updated[i];
         
-        // Skip if already finished, bronze match, or has both players
+        // Skip if already finished or bronze match
         if (match.isFinished || match.id === "bronze_medal_match") continue;
+        
+        // Handle BYE vs BYE: treat as empty match (no advancement)
+        if (match.player1?.id === "BYE" && match.player2?.id === "BYE") {
+          continue;
+        }
+        
+        // Handle BYE vs real player: auto-advance the real player
+        if (match.player1?.id === "BYE" && match.player2 && match.player2.id !== "BYE") {
+          updated[i] = {
+            ...match,
+            winner: match.player2,
+            loser: undefined,
+            player1Score: undefined,
+            player2Score: undefined,
+            isFinished: true,
+            score: "BYE",
+          };
+          hasChanges = true;
+          
+          // Clear next match and all its downstream matches
+          if (match.nextMatchId) {
+            const nextIdx = updated.findIndex((m) => m.id === match.nextMatchId);
+            if (nextIdx !== -1) {
+              const nextMatch = updated[nextIdx];
+              // Clear the next match itself
+              updated[nextIdx] = {
+                ...nextMatch,
+                player1: undefined,
+                player2: undefined,
+                player1Score: undefined,
+                player2Score: undefined,
+                winner: undefined,
+                loser: undefined,
+                score: undefined,
+                isFinished: false,
+              };
+              // Clear all downstream matches recursively
+              updated = clearDownstreamMatches(match.nextMatchId, updated);
+            }
+          }
+          
+          // Advance player2 to next round
+          if (match.nextMatchId) {
+            const nextIdx = updated.findIndex((m) => m.id === match.nextMatchId);
+            if (nextIdx !== -1) {
+              if (match.nextMatchSlot === "player1") {
+                updated[nextIdx] = { ...updated[nextIdx], player1: match.player2 };
+              } else if (match.nextMatchSlot === "player2") {
+                updated[nextIdx] = { ...updated[nextIdx], player2: match.player2 };
+              }
+            }
+          }
+          
+          // Clear bronze match slot if this is a semifinal
+          if (match.roundName === "Хагас финал") {
+            const bronzeIdx = updated.findIndex((m) => m.id === "bronze_medal_match" && m.eventType === match.eventType);
+            if (bronzeIdx !== -1) {
+              const semifinals = updated.filter((m) => m.roundName === "Хагас финал" && m.eventType === match.eventType);
+              const semifinalIndex = semifinals.findIndex((m) => m.id === match.id);
+              
+              const bronzeMatch = updated[bronzeIdx];
+              if (semifinalIndex === 0) {
+                updated[bronzeIdx] = {
+                  ...bronzeMatch,
+                  player1: undefined,
+                  player1Score: undefined,
+                  player2Score: undefined,
+                  winner: undefined,
+                  loser: undefined,
+                  score: undefined,
+                  isFinished: false,
+                };
+              } else if (semifinalIndex === 1) {
+                updated[bronzeIdx] = {
+                  ...bronzeMatch,
+                  player2: undefined,
+                  player1Score: undefined,
+                  player2Score: undefined,
+                  winner: undefined,
+                  loser: undefined,
+                  score: undefined,
+                  isFinished: false,
+                };
+              }
+            }
+          }
+          
+          continue;
+        }
+        
+        if (match.player2?.id === "BYE" && match.player1 && match.player1.id !== "BYE") {
+          updated[i] = {
+            ...match,
+            winner: match.player1,
+            loser: undefined,
+            player1Score: undefined,
+            player2Score: undefined,
+            isFinished: true,
+            score: "BYE",
+          };
+          hasChanges = true;
+          
+          // Clear next match and all its downstream matches
+          if (match.nextMatchId) {
+            const nextIdx = updated.findIndex((m) => m.id === match.nextMatchId);
+            if (nextIdx !== -1) {
+              const nextMatch = updated[nextIdx];
+              // Clear the next match itself
+              updated[nextIdx] = {
+                ...nextMatch,
+                player1: undefined,
+                player2: undefined,
+                player1Score: undefined,
+                player2Score: undefined,
+                winner: undefined,
+                loser: undefined,
+                score: undefined,
+                isFinished: false,
+              };
+              // Clear all downstream matches recursively
+              updated = clearDownstreamMatches(match.nextMatchId, updated);
+            }
+          }
+          
+          // Advance player1 to next round
+          if (match.nextMatchId) {
+            const nextIdx = updated.findIndex((m) => m.id === match.nextMatchId);
+            if (nextIdx !== -1) {
+              if (match.nextMatchSlot === "player1") {
+                updated[nextIdx] = { ...updated[nextIdx], player1: match.player1 };
+              } else if (match.nextMatchSlot === "player2") {
+                updated[nextIdx] = { ...updated[nextIdx], player2: match.player1 };
+              }
+            }
+          }
+          
+          // Clear bronze match slot if this is a semifinal
+          if (match.roundName === "Хагас финал") {
+            const bronzeIdx = updated.findIndex((m) => m.id === "bronze_medal_match" && m.eventType === match.eventType);
+            if (bronzeIdx !== -1) {
+              const semifinals = updated.filter((m) => m.roundName === "Хагас финал" && m.eventType === match.eventType);
+              const semifinalIndex = semifinals.findIndex((m) => m.id === match.id);
+              
+              const bronzeMatch = updated[bronzeIdx];
+              if (semifinalIndex === 0) {
+                updated[bronzeIdx] = {
+                  ...bronzeMatch,
+                  player1: undefined,
+                  player1Score: undefined,
+                  player2Score: undefined,
+                  winner: undefined,
+                  loser: undefined,
+                  score: undefined,
+                  isFinished: false,
+                };
+              } else if (semifinalIndex === 1) {
+                updated[bronzeIdx] = {
+                  ...bronzeMatch,
+                  player2: undefined,
+                  player1Score: undefined,
+                  player2Score: undefined,
+                  winner: undefined,
+                  loser: undefined,
+                  score: undefined,
+                  isFinished: false,
+                };
+              }
+            }
+          }
+          
+          continue;
+        }
+        
+        // Skip if has both non-BYE players
         if (match.player1 && match.player2) continue;
         
         const feeders = feedersMap.get(match.id);
@@ -1847,10 +2021,23 @@ const AdminTournamentResults: React.FC = () => {
                                   <Select
                                     value={match.player1?.id || ""}
                                     onValueChange={(value) => {
-                                      const player = qualifiedPlayers.find((p) => p.id === value);
-                                      if (player) {
-                                        setKnockoutResults((prev) =>
-                                          prev.map((m) =>
+                                      let updatedMatches: KnockoutMatch[];
+                                      if (value === "BYE") {
+                                        updatedMatches = knockoutResults.map((m) =>
+                                          m.id === match.id
+                                            ? {
+                                                ...m,
+                                                player1: {
+                                                  id: "BYE",
+                                                  name: "BYE",
+                                                },
+                                              }
+                                            : m
+                                        );
+                                      } else {
+                                        const player = qualifiedPlayers.find((p) => p.id === value);
+                                        if (player) {
+                                          updatedMatches = knockoutResults.map((m) =>
                                             m.id === match.id
                                               ? {
                                                   ...m,
@@ -1860,9 +2047,12 @@ const AdminTournamentResults: React.FC = () => {
                                                   },
                                                 }
                                               : m
-                                          )
-                                        );
+                                          );
+                                        } else {
+                                          return;
+                                        }
                                       }
+                                      setKnockoutResults(propagateByes(updatedMatches));
                                     }}
                                   >
                                     <SelectTrigger className="h-8 bg-gray-800 border-gray-700 text-white text-xs">
@@ -1871,6 +2061,7 @@ const AdminTournamentResults: React.FC = () => {
                                       </SelectValue>
                                     </SelectTrigger>
                                     <SelectContent className="bg-gray-900 text-white border-gray-700">
+                                      <SelectItem value="BYE">BYE</SelectItem>
                                       {qualifiedPlayers.map((player) => (
                                         <SelectItem key={player.id} value={player.id}>
                                           {player.name}
@@ -1903,10 +2094,23 @@ const AdminTournamentResults: React.FC = () => {
                                   <Select
                                     value={match.player2?.id || ""}
                                     onValueChange={(value) => {
-                                      const player = qualifiedPlayers.find((p) => p.id === value);
-                                      if (player) {
-                                        setKnockoutResults((prev) =>
-                                          prev.map((m) =>
+                                      let updatedMatches: KnockoutMatch[];
+                                      if (value === "BYE") {
+                                        updatedMatches = knockoutResults.map((m) =>
+                                          m.id === match.id
+                                            ? {
+                                                ...m,
+                                                player2: {
+                                                  id: "BYE",
+                                                  name: "BYE",
+                                                },
+                                              }
+                                            : m
+                                        );
+                                      } else {
+                                        const player = qualifiedPlayers.find((p) => p.id === value);
+                                        if (player) {
+                                          updatedMatches = knockoutResults.map((m) =>
                                             m.id === match.id
                                               ? {
                                                   ...m,
@@ -1916,9 +2120,12 @@ const AdminTournamentResults: React.FC = () => {
                                                   },
                                                 }
                                               : m
-                                          )
-                                        );
+                                          );
+                                        } else {
+                                          return;
+                                        }
                                       }
+                                      setKnockoutResults(propagateByes(updatedMatches));
                                     }}
                                   >
                                     <SelectTrigger className="h-8 bg-gray-800 border-gray-700 text-white text-xs">
@@ -1927,6 +2134,7 @@ const AdminTournamentResults: React.FC = () => {
                                       </SelectValue>
                                     </SelectTrigger>
                                     <SelectContent className="bg-gray-900 text-white border-gray-700">
+                                      <SelectItem value="BYE">BYE</SelectItem>
                                       {qualifiedPlayers.map((player) => (
                                         <SelectItem key={player.id} value={player.id}>
                                           {player.name}
