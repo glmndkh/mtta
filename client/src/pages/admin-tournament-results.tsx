@@ -176,12 +176,18 @@ const AdminTournamentResults: React.FC = () => {
 
   // participationTypes -> event types
   const getAvailableEventTypes = () => {
-    if (!tournament?.participationTypes) return [];
-    return tournament.participationTypes.map((type) => type.toUpperCase()) as (
-      | "SINGLES"
-      | "DOUBLES"
-      | "TEAM"
-    )[];
+    if (!tournament?.participationTypes || tournament.participationTypes.length === 0) {
+      // Fallback: if no participation types, return all types
+      return ["SINGLES", "DOUBLES", "TEAM"] as ("SINGLES" | "DOUBLES" | "TEAM")[];
+    }
+    return tournament.participationTypes.map((type) => {
+      const upperType = type.toUpperCase();
+      // Map common variations
+      if (upperType.includes('SINGLE') || upperType === 'INDIVIDUAL') return 'SINGLES';
+      if (upperType.includes('DOUBLE') || upperType.includes('PAIR')) return 'DOUBLES';
+      if (upperType.includes('TEAM')) return 'TEAM';
+      return upperType;
+    }) as ("SINGLES" | "DOUBLES" | "TEAM")[];
   };
 
   const getParticipantsByEventType = (
@@ -842,55 +848,63 @@ const AdminTournamentResults: React.FC = () => {
             </div>
 
             {/* event type tabs */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {getAvailableEventTypes().includes("SINGLES") && (
-                <button
-                  type="button"
-                  onClick={() => setSelectedEventType("SINGLES")}
-                  className={`flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium shadow-sm transition
-                    ${
-                      selectedEventType === "SINGLES"
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700"
-                    }`}
-                >
-                  <span className="text-lg">👤</span>
-                  <span>Ганцаарчилсан тэмцээн</span>
-                </button>
-              )}
+            {getAvailableEventTypes().length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {getAvailableEventTypes().includes("SINGLES") && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedEventType("SINGLES")}
+                    className={`flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium shadow-sm transition
+                      ${
+                        selectedEventType === "SINGLES"
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700"
+                      }`}
+                  >
+                    <span className="text-lg">👤</span>
+                    <span>Ганцаарчилсан тэмцээн</span>
+                  </button>
+                )}
 
-              {getAvailableEventTypes().includes("DOUBLES") && (
-                <button
-                  type="button"
-                  onClick={() => setSelectedEventType("DOUBLES")}
-                  className={`flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium shadow-sm transition
-                    ${
-                      selectedEventType === "DOUBLES"
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700"
-                    }`}
-                >
-                  <span className="text-lg">👥</span>
-                  <span>Хосын тэмцээн</span>
-                </button>
-              )}
+                {getAvailableEventTypes().includes("DOUBLES") && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedEventType("DOUBLES")}
+                    className={`flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium shadow-sm transition
+                      ${
+                        selectedEventType === "DOUBLES"
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700"
+                      }`}
+                  >
+                    <span className="text-lg">👥</span>
+                    <span>Хосын тэмцээн</span>
+                  </button>
+                )}
 
-              {getAvailableEventTypes().includes("TEAM") && (
-                <button
-                  type="button"
-                  onClick={() => setSelectedEventType("TEAM")}
-                  className={`flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium shadow-sm transition
-                    ${
-                      selectedEventType === "TEAM"
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700"
-                    }`}
-                >
-                  <span className="text-lg">🧑‍🤝‍🧑</span>
-                  <span>Багийн тэмцээн</span>
-                </button>
-              )}
-            </div>
+                {getAvailableEventTypes().includes("TEAM") && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedEventType("TEAM")}
+                    className={`flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium shadow-sm transition
+                      ${
+                        selectedEventType === "TEAM"
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700"
+                      }`}
+                  >
+                    <span className="text-lg">🧑‍🤝‍🧑</span>
+                    <span>Багийн тэмцээн</span>
+                  </button>
+                )}
+              </div>
+            )}
+            
+            {getAvailableEventTypes().length === 0 && (
+              <div className="text-center py-4 text-gray-400 text-sm">
+                Тэмцээнд оролцооны төрөл тохируулаагүй байна
+              </div>
+            )}
 
             {/* division + info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
