@@ -40,6 +40,7 @@ import type {
 interface GroupStageGroup {
   id: string;
   name: string;
+  eventType: "SINGLES" | "DOUBLES" | "TEAM"; // Add event type to group
   players: Array<{
     id: string;
     name: string;
@@ -59,6 +60,7 @@ interface KnockoutMatch {
   id: string;
   round: string;
   roundName: string;
+  eventType?: "SINGLES" | "DOUBLES" | "TEAM"; // Add event type
   player1?: {
     id: string;
     name: string;
@@ -77,6 +79,12 @@ interface KnockoutMatch {
     playerId?: string;
     userId?: string;
   };
+  loser?: {
+    id: string;
+    name: string;
+    playerId?: string;
+    userId?: string;
+  };
   score?: string;
   player1Score?: string;
   player2Score?: string;
@@ -87,6 +95,7 @@ interface KnockoutMatch {
 
 interface FinalRanking {
   position: number;
+  eventType?: "SINGLES" | "DOUBLES" | "TEAM"; // Add event type
   player: {
     id: string;
     name: string;
@@ -356,7 +365,9 @@ const AdminTournamentResults: React.FC = () => {
     const qualified: QualifiedPlayer[] = [];
 
     if (Array.isArray(groupStageResults)) {
-      groupStageResults.forEach((group) => {
+      groupStageResults
+        .filter((group) => group.eventType === selectedEventType)
+        .forEach((group) => {
         if (group.players.length >= 2) {
           const sortedPlayers = group.players
             .map((player) => {
@@ -393,7 +404,7 @@ const AdminTournamentResults: React.FC = () => {
     }
 
     setQualifiedPlayers(qualified);
-  }, [groupStageResults]);
+  }, [groupStageResults, selectedEventType]);
 
   // Podium (одоогоор зөвхөн текстэд ашиглаж болох)
   const getPodiumWinners = () => {
@@ -403,7 +414,7 @@ const AdminTournamentResults: React.FC = () => {
       third: null as { id: string; name: string; club?: string } | null,
     };
 
-    const finalMatch = knockoutResults.find((m) => m.roundName === "Финал");
+    const finalMatch = knockoutResults.find((m) => m.roundName === "Финал" && m.eventType === selectedEventType);
     if (finalMatch?.winner) {
       podium.first = {
         id: finalMatch.winner.id,
@@ -425,7 +436,7 @@ const AdminTournamentResults: React.FC = () => {
     }
 
     const thirdPlaceMatch = knockoutResults.find(
-      (m) => m.id === "third_place_playoff",
+      (m) => m.id === "third_place_playoff" && m.eventType === selectedEventType,
     );
     if (thirdPlaceMatch?.winner) {
       podium.third = {
@@ -518,7 +529,7 @@ const AdminTournamentResults: React.FC = () => {
     value: string,
   ) => {
     setKnockoutResults((prev) => {
-      const allMatches = prev.map((match) => {
+      let allMatches = prev.map((match) => {
         if (match.id !== matchId) return match;
 
         const updatedMatch: KnockoutMatch = { ...match, [field]: value };
@@ -526,39 +537,86 @@ const AdminTournamentResults: React.FC = () => {
         const p1Score = parseInt(updatedMatch.player1Score || "0") || 0;
         const p2Score = parseInt(updatedMatch.player2Score || "0") || 0;
 
-        if (p1Score > 0 || p2Score > 0) {
+        // Determine if this is a reset (scores blank/zero)
+        const isReset = p1Score <= 0 && p2Score <= 0;
+        
+        // Clear results if scores are blank/zero
+        if (isReset) {
+          updatedMatch.winner = undefined;
+          updatedMatch.loser = undefined;
+          updatedMatch.score = undefined;
+          updatedMatch.isFinished = false;
+        }
+        // Set winner/loser if scores are valid
+        else if (p1Score > 0 || p2Score > 0) {
           if (p1Score > p2Score && updatedMatch.player1) {
             updatedMatch.winner = updatedMatch.player1;
+            updatedMatch.loser = updatedMatch.player2;
           } else if (p2Score > p1Score && updatedMatch.player2) {
             updatedMatch.winner = updatedMatch.player2;
+            updatedMatch.loser = updatedMatch.player1;
           }
           updatedMatch.score = `${p1Score}-${p2Score}`;
+          updatedMatch.isFinished = !!updatedMatch.winner;
         }
 
         return updatedMatch;
       });
 
-      // Auto-advance winner to next round
+      // Always clear downstream matches when scores change (whether reset or flipped)
+      allMatches = clearDownstreamMatches(matchId, allMatches);
+
+      // Auto-advance winner to next round OR clear slot if match was reset
       const currentMatch = allMatches.find((m) => m.id === matchId);
-      if (currentMatch?.winner && currentMatch.nextMatchId) {
-        const nextMatch = allMatches.find((m) => m.id === currentMatch.nextMatchId);
-        if (nextMatch) {
-          const nextMatchIndex = allMatches.indexOf(nextMatch);
+      if (currentMatch?.nextMatchId) {
+        const nextMatchIdx = allMatches.findIndex((m) => m.id === currentMatch.nextMatchId);
+        if (nextMatchIdx !== -1) {
+          const nextMatch = allMatches[nextMatchIdx];
           if (currentMatch.nextMatchSlot === "player1") {
-            allMatches[nextMatchIndex] = {
+            allMatches[nextMatchIdx] = {
               ...nextMatch,
-              player1: currentMatch.winner,
+              player1: currentMatch.winner || undefined,
             };
           } else if (currentMatch.nextMatchSlot === "player2") {
-            allMatches[nextMatchIndex] = {
+            allMatches[nextMatchIdx] = {
               ...nextMatch,
-              player2: currentMatch.winner,
+              player2: currentMatch.winner || undefined,
             };
           }
         }
       }
 
-      return allMatches;
+      // Handle semifinal losers → bronze match
+      if (currentMatch?.roundName === "Хагас финал") {
+        const bronzeIdx = allMatches.findIndex((m) => m.id === "bronze_medal_match" && m.eventType === selectedEventType);
+        if (bronzeIdx !== -1) {
+          const bronzeMatch = allMatches[bronzeIdx];
+          
+          // Determine which bronze slot this semifinal feeds
+          // Semifinal 1 (first in list) → player1, Semifinal 2 → player2
+          const semifinals = allMatches.filter((m) => m.roundName === "Хагас финал" && m.eventType === selectedEventType);
+          const semifinalIndex = semifinals.findIndex((m) => m.id === currentMatch.id);
+          
+          if (semifinalIndex === 0) {
+            // First semifinal → bronze player1 slot
+            allMatches[bronzeIdx] = {
+              ...bronzeMatch,
+              player1: currentMatch.loser || undefined,
+              // Clear player1 if no loser (scores reset)
+            };
+          } else if (semifinalIndex === 1) {
+            // Second semifinal → bronze player2 slot
+            allMatches[bronzeIdx] = {
+              ...bronzeMatch,
+              player2: currentMatch.loser || undefined,
+              // Clear player2 if no loser (scores reset)
+            };
+          }
+        }
+      }
+
+      // Propagate BYEs after score update (handles cascading BYEs)
+      return propagateByes(allMatches);
     });
   };
 
@@ -642,6 +700,7 @@ const AdminTournamentResults: React.FC = () => {
         groups.push({
           id: `group_${groupLetter.toLowerCase()}`,
           name: `${groupLetter} хэсэг`,
+          eventType: selectedEventType, // Add event type to group
           players: groupParticipants.map((p) => ({
             id: p.id,
             name: participantName(p),
@@ -667,10 +726,12 @@ const AdminTournamentResults: React.FC = () => {
   };
 
   const addNewGroup = () => {
-    const newGroupLetter = String.fromCharCode(65 + groupStageResults.length);
+    const filteredGroups = groupStageResults.filter(g => g.eventType === selectedEventType);
+    const newGroupLetter = String.fromCharCode(65 + filteredGroups.length);
     const newGroup: GroupStageGroup = {
-      id: `group_${newGroupLetter.toLowerCase()}`,
+      id: `group_${selectedEventType}_${newGroupLetter.toLowerCase()}`,
       name: `${newGroupLetter} хэсэг`,
+      eventType: selectedEventType, // Add event type to group
       players: [],
       resultMatrix: [],
       playerStats: [],
@@ -799,6 +860,201 @@ const AdminTournamentResults: React.FC = () => {
     });
   };
 
+  // Helper: Build feeder map (which match feeds each slot)
+  const buildSlotFeedersMap = (matches: KnockoutMatch[]) => {
+    const feeders = new Map<string, { player1Feeder: string | null; player2Feeder: string | null }>();
+    
+    for (const match of matches) {
+      feeders.set(match.id, { player1Feeder: null, player2Feeder: null });
+    }
+    
+    for (const match of matches) {
+      if (match.nextMatchId) {
+        const current = feeders.get(match.nextMatchId);
+        if (current) {
+          if (match.nextMatchSlot === "player1") {
+            feeders.set(match.nextMatchId, { ...current, player1Feeder: match.id });
+          } else if (match.nextMatchSlot === "player2") {
+            feeders.set(match.nextMatchId, { ...current, player2Feeder: match.id });
+          }
+        }
+      }
+    }
+    
+    return feeders;
+  };
+
+  // Helper: Check if a match slot will never be filled
+  const isSlotBarren = (
+    feederId: string | null,
+    matches: KnockoutMatch[]
+  ): boolean => {
+    if (!feederId) return true; // No feeder means initial BYE
+    
+    const feeder = matches.find((m) => m.id === feederId);
+    if (!feeder) return true;
+    
+    // If feeder has no players at all, slot is barren
+    if (!feeder.player1 && !feeder.player2) return true;
+    
+    // If feeder is finished but has no winner, slot is barren
+    if (feeder.isFinished && !feeder.winner) return true;
+    
+    return false;
+  };
+
+  // Helper: Clear downstream matches when a match is reset
+  const clearDownstreamMatches = (
+    matchId: string,
+    matches: KnockoutMatch[]
+  ): KnockoutMatch[] => {
+    const match = matches.find((m) => m.id === matchId);
+    if (!match) return matches;
+    
+    let updated = [...matches];
+    
+    // Clear next round match
+    if (match.nextMatchId) {
+      const nextIdx = updated.findIndex((m) => m.id === match.nextMatchId);
+      if (nextIdx !== -1) {
+        const nextMatch = updated[nextIdx];
+        
+        // Clear the slot this match feeds into AND always clear ALL results
+        if (match.nextMatchSlot === "player1") {
+          updated[nextIdx] = {
+            ...nextMatch,
+            player1: undefined,
+            player1Score: undefined,
+            player2Score: undefined, // Clear both score fields
+            winner: undefined,
+            loser: undefined,
+            score: undefined,
+            isFinished: false,
+          };
+        } else if (match.nextMatchSlot === "player2") {
+          updated[nextIdx] = {
+            ...nextMatch,
+            player2: undefined,
+            player1Score: undefined, // Clear both score fields
+            player2Score: undefined,
+            winner: undefined,
+            loser: undefined,
+            score: undefined,
+            isFinished: false,
+          };
+        }
+        
+        // Recursively clear downstream
+        updated = clearDownstreamMatches(match.nextMatchId, updated);
+      }
+    }
+    
+    // Clear bronze match if this is a semifinal
+    if (match.roundName === "Хагас финал") {
+      const bronzeIdx = updated.findIndex((m) => m.id === "bronze_medal_match" && m.eventType === match.eventType);
+      if (bronzeIdx !== -1) {
+        const semifinals = updated.filter((m) => m.roundName === "Хагас финал" && m.eventType === match.eventType);
+        const semifinalIndex = semifinals.findIndex((m) => m.id === matchId);
+        
+        const bronzeMatch = updated[bronzeIdx];
+        if (semifinalIndex === 0) {
+          updated[bronzeIdx] = {
+            ...bronzeMatch,
+            player1: undefined,
+            player1Score: undefined,
+            player2Score: undefined, // Clear both score fields
+            winner: undefined,
+            loser: undefined,
+            score: undefined,
+            isFinished: false,
+          };
+        } else if (semifinalIndex === 1) {
+          updated[bronzeIdx] = {
+            ...bronzeMatch,
+            player2: undefined,
+            player1Score: undefined, // Clear both score fields
+            player2Score: undefined,
+            winner: undefined,
+            loser: undefined,
+            score: undefined,
+            isFinished: false,
+          };
+        }
+      }
+    }
+    
+    return updated;
+  };
+
+  // Helper: Propagate BYEs through bracket
+  const propagateByes = (matches: KnockoutMatch[]): KnockoutMatch[] => {
+    const feedersMap = buildSlotFeedersMap(matches);
+    let updated = [...matches];
+    let hasChanges = true;
+    
+    while (hasChanges) {
+      hasChanges = false;
+      
+      for (let i = 0; i < updated.length; i++) {
+        const match = updated[i];
+        
+        // Skip if already finished, bronze match, or has both players
+        if (match.isFinished || match.id === "bronze_medal_match") continue;
+        if (match.player1 && match.player2) continue;
+        
+        const feeders = feedersMap.get(match.id);
+        if (!feeders) continue;
+        
+        // Check if player1 exists and player2 slot is barren
+        if (match.player1 && !match.player2 && isSlotBarren(feeders.player2Feeder, updated)) {
+          updated[i] = {
+            ...match,
+            winner: match.player1,
+            isFinished: true,
+            score: "BYE",
+          };
+          hasChanges = true;
+          
+          // Advance to next round
+          if (match.nextMatchId) {
+            const nextIdx = updated.findIndex((m) => m.id === match.nextMatchId);
+            if (nextIdx !== -1) {
+              if (match.nextMatchSlot === "player1") {
+                updated[nextIdx] = { ...updated[nextIdx], player1: match.player1 };
+              } else if (match.nextMatchSlot === "player2") {
+                updated[nextIdx] = { ...updated[nextIdx], player2: match.player1 };
+              }
+            }
+          }
+        }
+        // Check if player2 exists and player1 slot is barren
+        else if (match.player2 && !match.player1 && isSlotBarren(feeders.player1Feeder, updated)) {
+          updated[i] = {
+            ...match,
+            winner: match.player2,
+            isFinished: true,
+            score: "BYE",
+          };
+          hasChanges = true;
+          
+          // Advance to next round
+          if (match.nextMatchId) {
+            const nextIdx = updated.findIndex((m) => m.id === match.nextMatchId);
+            if (nextIdx !== -1) {
+              if (match.nextMatchSlot === "player1") {
+                updated[nextIdx] = { ...updated[nextIdx], player1: match.player2 };
+              } else if (match.nextMatchSlot === "player2") {
+                updated[nextIdx] = { ...updated[nextIdx], player2: match.player2 };
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    return updated;
+  };
+
   const generateKnockoutBracket = () => {
     if (qualifiedPlayers.length < 4) {
       toast({
@@ -856,6 +1112,7 @@ const AdminTournamentResults: React.FC = () => {
             id: matchId,
             round: round.toString(),
             roundName,
+            eventType: selectedEventType, // Add event type
             player1:
               player1Index < qualifiedPlayers.length
                 ? {
@@ -879,6 +1136,7 @@ const AdminTournamentResults: React.FC = () => {
             id: matchId,
             round: round.toString(),
             roundName,
+            eventType: selectedEventType, // Add event type
             isFinished: false,
             nextMatchId,
             nextMatchSlot,
@@ -892,11 +1150,15 @@ const AdminTournamentResults: React.FC = () => {
         id: "bronze_medal_match",
         round: (totalRounds + 1).toString(),
         roundName: "Хүрэл медалийн тоглолт",
+        eventType: selectedEventType, // Add event type
         isFinished: false,
       });
     }
 
-    setKnockoutResults(matches);
+    // Propagate BYEs through all rounds using the deterministic helper
+    const propagatedMatches = propagateByes(matches);
+
+    setKnockoutResults(propagatedMatches);
     toast({
       title: "Шигшээ тоглолт үүсгэгдлээ",
       description: `${qualifiedPlayers.length} тоглогчийн шигшээ тоглолт үүсгэгдлээ`,
@@ -1020,7 +1282,7 @@ const AdminTournamentResults: React.FC = () => {
                 </span>
                 <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-medium backdrop-blur">
                   {selectedEventType === "SINGLES"
-                    ? "Ганцаарчилсан тэмцээн"
+                    ? "Ганцаарчилсан"
                     : selectedEventType === "DOUBLES"
                       ? "Хосын тэмцээн"
                       : "Багийн тэмцээн"}
@@ -1064,7 +1326,7 @@ const AdminTournamentResults: React.FC = () => {
                       }`}
                   >
                     <span className="text-lg">👤</span>
-                    <span>Ганцаарчилсан тэмцээн</span>
+                    <span>Ганцаарчилсан</span>
                   </button>
                 )}
 
@@ -1200,7 +1462,7 @@ const AdminTournamentResults: React.FC = () => {
                   <span>
                     Нийт групп:{" "}
                     <span className="font-semibold text-white">
-                      {groupStageResults.length}
+                      {groupStageResults.filter((g) => g.eventType === selectedEventType).length}
                     </span>
                   </span>
                   <span>
@@ -1342,8 +1604,8 @@ const AdminTournamentResults: React.FC = () => {
                     </Button>
 
                     <div className="text-xs text-gray-400 ml-auto">
-                      {groupStageResults.length > 0 && (
-                        <span>{groupStageResults.length} групп үүсгэгдсэн</span>
+                      {groupStageResults.filter((g) => g.eventType === selectedEventType).length > 0 && (
+                        <span>{groupStageResults.filter((g) => g.eventType === selectedEventType).length} групп үүсгэгдсэн</span>
                       )}
                     </div>
                   </div>
@@ -1352,12 +1614,14 @@ const AdminTournamentResults: React.FC = () => {
             </div>
 
             {/* Display created groups */}
-            {groupStageResults.length > 0 && (
+            {groupStageResults.filter((g) => g.eventType === selectedEventType).length > 0 && (
               <div className="mt-6 space-y-6">
                 <h3 className="text-sm font-semibold text-white mb-3">
                   Групп шатны тоглолт
                 </h3>
-                {groupStageResults.map((group, groupIndex) => (
+                {groupStageResults
+                  .filter((group) => group.eventType === selectedEventType)
+                  .map((group, groupIndex) => (
                   <div
                     key={group.id}
                     className="bg-gray-950/70 rounded-xl p-6 border border-gray-800"
@@ -1549,7 +1813,7 @@ const AdminTournamentResults: React.FC = () => {
                   <span>
                     Нийт тоглолт:{" "}
                     <span className="font-semibold text-white">
-                      {knockoutResults.length}
+                      {knockoutResults.filter((m) => m.eventType === selectedEventType).length}
                     </span>
                   </span>
                 </div>
@@ -1557,14 +1821,14 @@ const AdminTournamentResults: React.FC = () => {
             </div>
 
             {/* Knockout bracket visualization */}
-            {knockoutResults.length > 0 ? (
+            {knockoutResults.filter((m) => m.eventType === selectedEventType).length > 0 ? (
               <div className="overflow-x-auto">
                 <div className="min-w-max flex gap-8 p-6">
                   {/* Group matches by round */}
-                  {Array.from(new Set(knockoutResults.map((m) => m.round)))
+                  {Array.from(new Set(knockoutResults.filter((m) => m.eventType === selectedEventType).map((m) => m.round)))
                     .sort()
                     .map((round) => {
-                      const roundMatches = knockoutResults.filter((m) => m.round === round);
+                      const roundMatches = knockoutResults.filter((m) => m.round === round && m.eventType === selectedEventType);
                       const roundName = roundMatches[0]?.roundName || `Раунд ${round}`;
 
                       return (
@@ -1785,9 +2049,11 @@ const AdminTournamentResults: React.FC = () => {
             <div className="bg-gray-950/50 rounded-xl p-6 border border-gray-800">
               <h3 className="text-sm font-semibold text-white mb-4">Бүх байрууд</h3>
               
-              {finalRankings.length > 0 ? (
+              {finalRankings.filter((r) => r.eventType === selectedEventType).length > 0 ? (
                 <div className="space-y-2">
-                  {finalRankings.map((ranking) => (
+                  {finalRankings
+                    .filter((r) => r.eventType === selectedEventType)
+                    .map((ranking) => (
                     <div
                       key={ranking.position}
                       className={`flex items-center justify-between p-3 rounded-lg ${
@@ -1839,15 +2105,16 @@ const AdminTournamentResults: React.FC = () => {
                 <div className="text-center py-8">
                   <Button
                     onClick={() => {
-                      // Auto-generate from knockout results
-                      const finalMatch = knockoutResults.find((m) => m.roundName === "Финал");
-                      const bronzeMatch = knockoutResults.find((m) => m.roundName === "Хүрэл медалийн тоглолт");
+                      // Auto-generate from knockout results filtered by eventType
+                      const finalMatch = knockoutResults.find((m) => m.roundName === "Финал" && m.eventType === selectedEventType);
+                      const bronzeMatch = knockoutResults.find((m) => m.roundName === "Хүрэл медалийн тоглолт" && m.eventType === selectedEventType);
                       
                       const newRankings: FinalRanking[] = [];
                       
                       if (finalMatch?.winner) {
                         newRankings.push({
                           position: 1,
+                          eventType: selectedEventType, // Add event type
                           player: finalMatch.winner,
                           note: "Алтан медаль",
                         });
@@ -1859,6 +2126,7 @@ const AdminTournamentResults: React.FC = () => {
                         if (runnerUp) {
                           newRankings.push({
                             position: 2,
+                            eventType: selectedEventType, // Add event type
                             player: runnerUp,
                             note: "Мөнгөн медаль",
                           });
@@ -1868,6 +2136,7 @@ const AdminTournamentResults: React.FC = () => {
                       if (bronzeMatch?.winner) {
                         newRankings.push({
                           position: 3,
+                          eventType: selectedEventType, // Add event type
                           player: bronzeMatch.winner,
                           note: "Хүрэл медаль",
                         });
@@ -1879,7 +2148,7 @@ const AdminTournamentResults: React.FC = () => {
                         description: "Шигшээ тоглолтын үр дүнгээс автоматаар үүсгэгдлээ",
                       });
                     }}
-                    disabled={!knockoutResults.find((m) => m.roundName === "Финал")?.winner}
+                    disabled={!knockoutResults.find((m) => m.roundName === "Финал" && m.eventType === selectedEventType)?.winner}
                     className="bg-blue-600 hover:bg-blue-700"
                   >
                     <Trophy className="w-4 h-4 mr-2" />
@@ -1893,7 +2162,7 @@ const AdminTournamentResults: React.FC = () => {
             </div>
 
             {/* Manual ranking editor */}
-            {finalRankings.length > 0 && (
+            {finalRankings.filter((r) => r.eventType === selectedEventType).length > 0 && (
               <div className="mt-6 bg-gray-950/50 rounded-xl p-6 border border-gray-800">
                 <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
                   <Plus className="w-4 h-4" />
@@ -1904,11 +2173,13 @@ const AdminTournamentResults: React.FC = () => {
                     value=""
                     onValueChange={(value) => {
                       const player = qualifiedPlayers.find((p) => p.id === value);
-                      if (player && !finalRankings.find((r) => r.player.id === value)) {
+                      if (player && !finalRankings.find((r) => r.player.id === value && r.eventType === selectedEventType)) {
+                        const currentEventRankings = finalRankings.filter((r) => r.eventType === selectedEventType);
                         setFinalRankings([
                           ...finalRankings,
                           {
-                            position: finalRankings.length + 1,
+                            position: currentEventRankings.length + 1,
+                            eventType: selectedEventType, // Add event type
                             player: {
                               id: player.id,
                               name: player.name,
@@ -1923,7 +2194,7 @@ const AdminTournamentResults: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent className="bg-gray-900 text-white border-gray-700">
                       {qualifiedPlayers
-                        .filter((p) => !finalRankings.find((r) => r.player.id === p.id))
+                        .filter((p) => !finalRankings.find((r) => r.player.id === p.id && r.eventType === selectedEventType))
                         .map((player) => (
                           <SelectItem key={player.id} value={player.id}>
                             {player.name}
@@ -1934,7 +2205,7 @@ const AdminTournamentResults: React.FC = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setFinalRankings([])}
+                    onClick={() => setFinalRankings(finalRankings.filter((r) => r.eventType !== selectedEventType))}
                     className="border-gray-700 text-gray-300 hover:bg-gray-800"
                   >
                     <X className="w-4 h-4 mr-1" />
