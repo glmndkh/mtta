@@ -1015,22 +1015,86 @@ const AdminTournamentResults: React.FC = () => {
 
           {/* Enhanced Group Stage Info */}
           <section className="w-full rounded-3xl bg-gray-800/80 backdrop-blur-sm shadow-md border border-gray-700/50 px-8 py-6">
-            <div className="flex items-center justify-between gap-4 mb-4">
-              <div>
-                <h2 className="text-base font-semibold text-white">Групп шат ({tournament.name})</h2>
-                <p className="text-xs text-gray-400 mt-1">
+            <div className="mb-6">
+              <h2 className="text-base font-semibold text-white mb-4">Групп шат ({tournament.name})</h2>
+              
+              {/* Selection Controls */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {/* Division Selection */}
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                    Насны ангилал сонгох
+                  </label>
+                  <Select value={selectedEventType} onValueChange={(value: any) => setSelectedEventType(value)}>
+                    <SelectTrigger className="bg-gray-700/50 border-gray-600 text-white">
+                      <SelectValue placeholder="Насны ангилал сонгоно уу" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getAvailableEventTypes().map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type === 'SINGLES' ? '13-15 нас, эрэгтэй' : 
+                           type === 'DOUBLES' ? '16-18 нас, эрэгтэй' : 
+                           '19+ нас, эрэгтэй'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Event Type Selection */}
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                    Төрөл сонгох
+                  </label>
+                  <Select value={selectedEventType} onValueChange={(value: any) => setSelectedEventType(value)}>
+                    <SelectTrigger className="bg-gray-700/50 border-gray-600 text-white">
+                      <SelectValue placeholder="Төрөл сонгоно уу" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getAvailableEventTypes().includes('SINGLES') && (
+                        <SelectItem value="SINGLES">
+                          <div className="flex items-center gap-2">
+                            <span>👤</span>
+                            <span>Ганцаарчилсан тэмцээн</span>
+                          </div>
+                        </SelectItem>
+                      )}
+                      {getAvailableEventTypes().includes('DOUBLES') && (
+                        <SelectItem value="DOUBLES">
+                          <div className="flex items-center gap-2">
+                            <span>👥</span>
+                            <span>Хосын тэмцээн</span>
+                          </div>
+                        </SelectItem>
+                      )}
+                      {getAvailableEventTypes().includes('TEAM') && (
+                        <SelectItem value="TEAM">
+                          <div className="flex items-center gap-2">
+                            <span>🧑‍🤝‍🧑</span>
+                            <span>Багийн тэмцээн</span>
+                          </div>
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Stats */}
+              <div className="flex items-center justify-between gap-4 p-3 bg-gray-900/50 rounded-lg border border-gray-700/30">
+                <p className="text-xs text-gray-400">
                   Дээрх групп удирдлага хэсгээс тоглогчдоо хуваарилна уу
                 </p>
-              </div>
-              <div className="text-xs text-gray-400 space-x-4">
-                <span>
-                  Нийт групп: <span className="font-semibold text-white">{groupStageResults.length}</span>
-                </span>
-                <span>
-                  Хуваарилсан тоглогч: <span className="font-semibold text-white">
-                    {groupStageResults.reduce((sum, g) => sum + g.players.length, 0)}
+                <div className="text-xs text-gray-400 flex gap-4">
+                  <span>
+                    Нийт групп: <span className="font-semibold text-white">{groupStageResults.length}</span>
                   </span>
-                </span>
+                  <span>
+                    Хуваарилсан тоглогч: <span className="font-semibold text-white">
+                      {groupStageResults.reduce((sum, g) => sum + g.players.length, 0)}
+                    </span>
+                  </span>
+                </div>
               </div>
             </div>
             
