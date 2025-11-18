@@ -1180,7 +1180,8 @@ const AdminTournamentResults: React.FC = () => {
                 )}
               </div>
 
-              {getParticipantsByEventType(selectedEventType).length >= 4 && (
+              {((selectedEventType === "SINGLES" && getParticipantsByEventType(selectedEventType).length >= 4) ||
+                (selectedEventType !== "SINGLES" && getTeamsByEventType(selectedEventType).length >= 4)) && (
                 <div className="bg-gradient-to-r from-blue-900/40 to-purple-900/40 rounded-xl p-4 border border-blue-800/60">
                   <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
                     <Trophy className="w-4 h-4 text-blue-400" />
@@ -1189,23 +1190,28 @@ const AdminTournamentResults: React.FC = () => {
 
                   <div className="flex flex-wrap items-center gap-3">
                     <Button
+                      type="button"
                       onClick={createGroupStage}
                       className="bg-blue-600 hover:bg-blue-700 text-white"
                       size="sm"
+                      data-testid="button-create-groups-auto"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Автомат групп үүсгэх (
-                      {
-                        getParticipantsByEventType(selectedEventType).length
+                      {selectedEventType === "SINGLES" 
+                        ? getParticipantsByEventType(selectedEventType).length
+                        : getTeamsByEventType(selectedEventType).length
                       }{" "}
-                      тоглогч)
+                      {selectedEventType === "SINGLES" ? "тоглогч" : selectedEventType === "DOUBLES" ? "хос" : "баг"})
                     </Button>
 
                     <Button
+                      type="button"
                       onClick={addNewGroup}
                       variant="outline"
                       size="sm"
                       className="border-gray-700 text-gray-200 hover:bg-gray-800"
+                      data-testid="button-add-empty-group"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Хоосон групп нэмэх
