@@ -1131,11 +1131,14 @@ export class DatabaseStorage implements IStorage {
       participationTypes: Array.isArray(tournamentData.participationTypes)
         ? tournamentData.participationTypes
         : ["individual"],
+      // Handle JSONB fields properly
+      ageCategories: tournamentData.ageCategories || undefined,
+      divisions: tournamentData.divisions || undefined,
     };
 
     console.log("Processed insert data:", insertData);
 
-    const [tournament] = await db.insert(tournaments).values(insertData).returning();
+    const [tournament] = await db.insert(tournaments).values(insertData as any).returning();
 
     console.log("Tournament created successfully:", tournament);
     return tournament;
@@ -1177,7 +1180,7 @@ export class DatabaseStorage implements IStorage {
       .set({
         ...tournamentData,
         updatedAt: new Date(),
-      })
+      } as any)
       .where(eq(tournaments.id, id))
       .returning();
     return tournament;

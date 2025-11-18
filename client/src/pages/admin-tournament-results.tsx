@@ -197,7 +197,7 @@ const AdminTournamentResults: React.FC = () => {
     console.log('Mapped types:', mappedTypes);
     
     // Remove duplicates
-    const result = [...new Set(mappedTypes)];
+    const result = Array.from(new Set(mappedTypes));
     console.log('Final result:', result);
     return result;
   };
