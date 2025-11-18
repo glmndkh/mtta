@@ -23,6 +23,7 @@ import {
   EyeOff,
   Trash2,
   X,
+  Medal,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -80,6 +81,8 @@ interface KnockoutMatch {
   player1Score?: string;
   player2Score?: string;
   isFinished: boolean;
+  nextMatchId?: string;
+  nextMatchSlot?: "player1" | "player2";
 }
 
 interface FinalRanking {
@@ -514,8 +517,8 @@ const AdminTournamentResults: React.FC = () => {
     field: "player1Score" | "player2Score",
     value: string,
   ) => {
-    setKnockoutResults((prev) =>
-      prev.map((match) => {
+    setKnockoutResults((prev) => {
+      const allMatches = prev.map((match) => {
         if (match.id !== matchId) return match;
 
         const updatedMatch: KnockoutMatch = { ...match, [field]: value };
@@ -533,8 +536,30 @@ const AdminTournamentResults: React.FC = () => {
         }
 
         return updatedMatch;
-      }),
-    );
+      });
+
+      // Auto-advance winner to next round
+      const currentMatch = allMatches.find((m) => m.id === matchId);
+      if (currentMatch?.winner && currentMatch.nextMatchId) {
+        const nextMatch = allMatches.find((m) => m.id === currentMatch.nextMatchId);
+        if (nextMatch) {
+          const nextMatchIndex = allMatches.indexOf(nextMatch);
+          if (currentMatch.nextMatchSlot === "player1") {
+            allMatches[nextMatchIndex] = {
+              ...nextMatch,
+              player1: currentMatch.winner,
+            };
+          } else if (currentMatch.nextMatchSlot === "player2") {
+            allMatches[nextMatchIndex] = {
+              ...nextMatch,
+              player2: currentMatch.winner,
+            };
+          }
+        }
+      }
+
+      return allMatches;
+    });
   };
 
   const handleWinnerToggle = (matchId: string, winnerId: string) => {
@@ -816,6 +841,12 @@ const AdminTournamentResults: React.FC = () => {
 
       for (let i = 0; i < matchesInRound; i++) {
         const matchId = `round${round}_${i + 1}`;
+        
+        // Calculate next match info (for winner advancement)
+        const nextRound = round + 1;
+        const nextMatchIndex = Math.floor(i / 2);
+        const nextMatchId = nextRound <= totalRounds ? `round${nextRound}_${nextMatchIndex + 1}` : undefined;
+        const nextMatchSlot = i % 2 === 0 ? "player1" : "player2";
 
         if (round === 1) {
           const player1Index = i * 2;
@@ -840,6 +871,8 @@ const AdminTournamentResults: React.FC = () => {
                   }
                 : undefined,
             isFinished: false,
+            nextMatchId,
+            nextMatchSlot,
           });
         } else {
           matches.push({
@@ -847,6 +880,8 @@ const AdminTournamentResults: React.FC = () => {
             round: round.toString(),
             roundName,
             isFinished: false,
+            nextMatchId,
+            nextMatchSlot,
           });
         }
       }
@@ -1685,16 +1720,229 @@ const AdminTournamentResults: React.FC = () => {
           {currentStage === "final" && (
           <section className="w-full rounded-3xl bg-gray-900/80 backdrop-blur-sm shadow-md border border-gray-800 px-8 py-6 mb-8">
             <div className="mb-6">
-              <h2 className="text-base font-semibold text-white mb-4">
+              <h2 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+                <Medal className="w-5 h-5 text-yellow-400" />
                 Эцсийн байр, медаль ({tournament?.name || ""})
               </h2>
+
+              <div className="flex items-center justify-between gap-4 p-3 bg-gray-950/70 rounded-lg border border-gray-800 mb-4">
+                <p className="text-xs text-gray-400">
+                  Тэмцээний эцсийн үр дүн болон медалийг тодорхойлох
+                </p>
+              </div>
             </div>
-            <div className="text-center py-12 text-gray-500">
-              <Trophy className="w-16 h-16 mx-auto mb-4 opacity-30" />
-              <p className="text-sm">
-                Энэ хэсэг удахгүй нэмэгдэх болно
-              </p>
+
+            {/* Podium Display */}
+            {finalRankings.length > 0 && (
+              <div className="mb-8">
+                <div className="flex items-end justify-center gap-6 mb-8">
+                  {/* 2nd Place */}
+                  {finalRankings[1] && (
+                    <div className="flex flex-col items-center">
+                      <div className="w-32 h-40 bg-gradient-to-b from-gray-600 to-gray-700 rounded-t-xl flex flex-col items-center justify-center border-2 border-gray-500 shadow-lg">
+                        <Medal className="w-8 h-8 text-gray-300 mb-2" />
+                        <span className="text-2xl font-bold text-gray-200">2</span>
+                      </div>
+                      <div className="mt-3 text-center">
+                        <p className="text-sm font-semibold text-white">{finalRankings[1].player.name}</p>
+                        <p className="text-xs text-gray-400">Мөнгөн медаль</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 1st Place */}
+                  {finalRankings[0] && (
+                    <div className="flex flex-col items-center">
+                      <div className="w-32 h-52 bg-gradient-to-b from-yellow-500 to-yellow-600 rounded-t-xl flex flex-col items-center justify-center border-2 border-yellow-400 shadow-2xl">
+                        <Trophy className="w-10 h-10 text-yellow-200 mb-2" />
+                        <span className="text-3xl font-bold text-yellow-100">1</span>
+                      </div>
+                      <div className="mt-3 text-center">
+                        <p className="text-base font-bold text-yellow-400">{finalRankings[0].player.name}</p>
+                        <p className="text-xs text-yellow-500">Алтан медаль</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 3rd Place */}
+                  {finalRankings[2] && (
+                    <div className="flex flex-col items-center">
+                      <div className="w-32 h-36 bg-gradient-to-b from-orange-700 to-orange-800 rounded-t-xl flex flex-col items-center justify-center border-2 border-orange-600 shadow-lg">
+                        <Medal className="w-8 h-8 text-orange-300 mb-2" />
+                        <span className="text-2xl font-bold text-orange-200">3</span>
+                      </div>
+                      <div className="mt-3 text-center">
+                        <p className="text-sm font-semibold text-white">{finalRankings[2].player.name}</p>
+                        <p className="text-xs text-gray-400">Хүрэл медаль</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Full Rankings Table */}
+            <div className="bg-gray-950/50 rounded-xl p-6 border border-gray-800">
+              <h3 className="text-sm font-semibold text-white mb-4">Бүх байрууд</h3>
+              
+              {finalRankings.length > 0 ? (
+                <div className="space-y-2">
+                  {finalRankings.map((ranking) => (
+                    <div
+                      key={ranking.position}
+                      className={`flex items-center justify-between p-3 rounded-lg ${
+                        ranking.position === 1
+                          ? "bg-yellow-500/10 border border-yellow-500/30"
+                          : ranking.position === 2
+                          ? "bg-gray-500/10 border border-gray-500/30"
+                          : ranking.position === 3
+                          ? "bg-orange-500/10 border border-orange-500/30"
+                          : "bg-gray-800/50 border border-gray-700"
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div
+                          className={`flex items-center justify-center w-10 h-10 rounded-full font-bold ${
+                            ranking.position === 1
+                              ? "bg-yellow-500 text-yellow-900"
+                              : ranking.position === 2
+                              ? "bg-gray-400 text-gray-900"
+                              : ranking.position === 3
+                              ? "bg-orange-600 text-orange-100"
+                              : "bg-gray-700 text-gray-200"
+                          }`}
+                        >
+                          {ranking.position}
+                        </div>
+                        <div>
+                          <p className="text-white font-medium">{ranking.player.name}</p>
+                          {ranking.note && (
+                            <p className="text-xs text-gray-400">{ranking.note}</p>
+                          )}
+                        </div>
+                      </div>
+                      {ranking.position <= 3 && (
+                        <Medal
+                          className={`w-6 h-6 ${
+                            ranking.position === 1
+                              ? "text-yellow-400"
+                              : ranking.position === 2
+                              ? "text-gray-400"
+                              : "text-orange-500"
+                          }`}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Button
+                    onClick={() => {
+                      // Auto-generate from knockout results
+                      const finalMatch = knockoutResults.find((m) => m.roundName === "Финал");
+                      const bronzeMatch = knockoutResults.find((m) => m.roundName === "Хүрэл медалийн тоглолт");
+                      
+                      const newRankings: FinalRanking[] = [];
+                      
+                      if (finalMatch?.winner) {
+                        newRankings.push({
+                          position: 1,
+                          player: finalMatch.winner,
+                          note: "Алтан медаль",
+                        });
+                        
+                        const runnerUp = finalMatch.winner.id === finalMatch.player1?.id 
+                          ? finalMatch.player2 
+                          : finalMatch.player1;
+                        
+                        if (runnerUp) {
+                          newRankings.push({
+                            position: 2,
+                            player: runnerUp,
+                            note: "Мөнгөн медаль",
+                          });
+                        }
+                      }
+                      
+                      if (bronzeMatch?.winner) {
+                        newRankings.push({
+                          position: 3,
+                          player: bronzeMatch.winner,
+                          note: "Хүрэл медаль",
+                        });
+                      }
+                      
+                      setFinalRankings(newRankings);
+                      toast({
+                        title: "Эцсийн байр үүсгэгдлээ",
+                        description: "Шигшээ тоглолтын үр дүнгээс автоматаар үүсгэгдлээ",
+                      });
+                    }}
+                    disabled={!knockoutResults.find((m) => m.roundName === "Финал")?.winner}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Trophy className="w-4 h-4 mr-2" />
+                    Эцсийн байр автоматаар үүсгэх
+                  </Button>
+                  <p className="text-xs text-gray-400 mt-2">
+                    Шигшээ тоглолтын үр дүнгээс автоматаар эцсийн байрыг тодорхойлно
+                  </p>
+                </div>
+              )}
             </div>
+
+            {/* Manual ranking editor */}
+            {finalRankings.length > 0 && (
+              <div className="mt-6 bg-gray-950/50 rounded-xl p-6 border border-gray-800">
+                <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Гараар нэмэх
+                </h3>
+                <div className="flex gap-3">
+                  <Select
+                    value=""
+                    onValueChange={(value) => {
+                      const player = qualifiedPlayers.find((p) => p.id === value);
+                      if (player && !finalRankings.find((r) => r.player.id === value)) {
+                        setFinalRankings([
+                          ...finalRankings,
+                          {
+                            position: finalRankings.length + 1,
+                            player: {
+                              id: player.id,
+                              name: player.name,
+                            },
+                          },
+                        ]);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                      <SelectValue placeholder="Тоглогч сонгох" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-900 text-white border-gray-700">
+                      {qualifiedPlayers
+                        .filter((p) => !finalRankings.find((r) => r.player.id === p.id))
+                        .map((player) => (
+                          <SelectItem key={player.id} value={player.id}>
+                            {player.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFinalRankings([])}
+                    className="border-gray-700 text-gray-300 hover:bg-gray-800"
+                  >
+                    <X className="w-4 h-4 mr-1" />
+                    Бүгдийг цэвэрлэх
+                  </Button>
+                </div>
+              </div>
+            )}
           </section>
           )}
 
