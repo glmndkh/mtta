@@ -1236,9 +1236,104 @@ const AdminTournamentResults: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* Display created groups */}
+            {groupStageResults.length > 0 && (
+              <div className="mt-6 space-y-4">
+                <h3 className="text-sm font-semibold text-white mb-3">
+                  Групп шатны тоглолт
+                </h3>
+                {groupStageResults.map((group, groupIndex) => (
+                  <div
+                    key={group.id}
+                    className="bg-gray-950/70 rounded-xl p-4 border border-gray-800"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-semibold text-white">
+                        {group.name}
+                      </h4>
+                      <Badge variant="outline" className="border-gray-700">
+                        {group.players.length} тоглогч
+                      </Badge>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {group.players.map((player, idx) => (
+                        <div
+                          key={player.id}
+                          className="bg-gray-900 rounded-lg px-3 py-2 text-xs text-gray-300 border border-gray-800"
+                        >
+                          <div className="font-medium text-white">
+                            {player.name}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
 
-          
+          {/* SETTINGS PANEL */}
+          <div className="mb-6">
+            <Card className="bg-gray-900 border-gray-800">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Target className="w-5 h-5" />
+                  Шилжилтийн тохиргоо
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="top1"
+                      className="rounded border-gray-700 bg-gray-800"
+                      defaultChecked
+                    />
+                    <label htmlFor="top1" className="text-sm text-gray-300">
+                      Топ 1 шилжих
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="top2"
+                      className="rounded border-gray-700 bg-gray-800"
+                      defaultChecked
+                    />
+                    <label htmlFor="top2" className="text-sm text-gray-300">
+                      Топ 2 шилжих
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="luckyDraw"
+                      className="rounded border-gray-700 bg-gray-800"
+                    />
+                    <label
+                      htmlFor="luckyDraw"
+                      className="text-sm text-gray-300"
+                    >
+                      Lucky draw сонголт
+                    </label>
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center gap-3">
+                  <Button
+                    onClick={generateKnockoutBracket}
+                    disabled={qualifiedPlayers.length < 4}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    Хэсэглэлүүдээс шилжилт хийх
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </PageWithLoading>
