@@ -617,7 +617,7 @@ export default function AboutIntro() {
               {/* 👇 Энд grid-ийн баганыг нэмсэн */}
               <div
                 className="
-                  max-w-7xl mx-auto
+                  max-w-7xl mx-auto px-6
                   grid
                   grid-cols-2
                   sm:grid-cols-3
@@ -628,11 +628,7 @@ export default function AboutIntro() {
                   place-items-center
                 "
               >
-                {leaders.map((leader) => (
-                  <div
-                    key={leader.id}
-                    className="w-[210px] sm:w-[230px] lg:w-[240px]"
-                  >
+                {leaders.map((leader) => (          
                     <JudgeCard
                       image={leader.image}
                       name={leader.name}
@@ -642,7 +638,6 @@ export default function AboutIntro() {
                       roleTextOverride={leader.roleText}
                       statusTextOverride={leader.statusText}
                     />
-                  </div>
                 ))}
               </div>
             </section>
