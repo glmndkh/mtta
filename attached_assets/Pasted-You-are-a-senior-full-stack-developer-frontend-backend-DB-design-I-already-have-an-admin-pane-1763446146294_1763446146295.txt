@@ -1,0 +1,146 @@
+You are a senior full-stack developer (frontend + backend + DB design).
+I already have an admin panel screen called "Тэмцээний үр дүн" (competition results). The current UI has:
+
+A header with the competition name and some chips (test4, Ганцаарчилсан тэмцээн, Нийт бүртгэлтэй тоглогч: 0).
+
+A section called "Тэмцээний ангилал" with two buttons:
+
+"Хос" (pair)
+
+"Баг" (team)
+
+Below that: "ДИВИЗ СОНГОХ" (select division) – dropdown.
+
+Below that: "ШАТЫГ СОНГОХ" (select stage) with options:
+
+"Групп шат" (group stage)
+
+"Шууд хасагдах шат" (knockout stage)
+
+"Эцсийн байр, медаль" (final places & medals).
+
+I need you to extend the design and logic with the following requirements:
+
+Add individual category
+
+In the section "Тэмцээний ангилал", add a third option:
+
+"Ганцаарчилсан" (individual)
+
+All logic in the page must work for 3 types:
+
+Individual
+
+Pair
+
+Team
+
+Auto-fill division (competition type + age category)
+
+When the admin opens this “Тэмцээний үр дүн” page, we already know which competition they are viewing (e.g., from route param competitionId).
+
+For that competition we also know:
+
+competition type (sport / discipline)
+
+age category (e.g., U12, U18, Adult)
+
+In the UI, the “ДИВИЗ СОНГОХ” dropdown should be auto-filled based on this information.
+
+The admin should not have to re-select competition type or age manually — it should come from the competition setup.
+
+You may still allow changing division if needed, but by default it must show the correct type + age division for this competition.
+
+Group stage match creation
+
+When the admin selects “Групп шат”:
+
+Show UI to:
+
+create groups (A, B, C, …)
+
+assign participants/teams into groups
+
+create matches between participants in each group
+
+input scores and automatically calculate:
+
+wins, draws, losses
+
+points
+
+ranking inside the group
+
+Only show in the lists those participants who:
+
+are registered in the current competition, and
+
+belong to the currently selected type (Individual / Pair / Team) and division (age category).
+
+Knockout stage with automatic bracket
+
+When the admin selects “Шууд хасагдах шат”:
+
+Generate a knockout bracket (1/16, 1/8, 1/4, semi-final, final) based on participants.
+
+Admin can:
+
+choose which participants qualify (e.g., from group stage results or manual selection)
+
+see a visual bracket
+
+enter scores for each match
+
+automatically advance winners to the next round in the bracket.
+
+In all dropdowns, only participants from this competition and this category (type + division) should be selectable.
+
+Final places & medals
+
+For “Эцсийн байр, медаль”:
+
+Provide a simple UI to assign:
+
+1st, 2nd, 3rd places
+
+gold/silver/bronze medals
+
+Use the participants from the same filtered list (competition + type + division).
+
+What I want from you
+
+Propose or write:
+
+The database changes / schema needed (tables for competitions, divisions, participants, groups, matches, brackets, results).
+
+The backend API design (REST or GraphQL) for:
+
+loading competition + division + participants
+
+creating group stage matches and saving results
+
+generating & updating knockout brackets
+
+saving final standings.
+
+The frontend implementation example in React with TypeScript (or another modern framework), including:
+
+state structure
+
+components for:
+
+category selector (Individual / Pair / Team)
+
+division auto-select
+
+group stage management
+
+knockout bracket view & edit
+
+final medals
+
+how data flows from API to UI and back.
+
+Please show code snippets and clear explanations for each part so I can implement it in my project.
+
+Use clean architecture, handle loading/error states, and assume the UI style is a dark theme similar to the screenshot I described.

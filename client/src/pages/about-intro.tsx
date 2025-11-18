@@ -21,7 +21,7 @@ const leaders = [
   {
     id: "1",
     name: "Ц. Гантулга",
-    image: "client/src/assets/councilimages/buyanbat.jpg",
+    image: "/objects/uploads/president-gantulga.jpg",
     role: "chairperson" as const,
     status: "domestic" as const,
     roleText: "Ерөнхийлөгч",
