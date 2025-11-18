@@ -193,7 +193,7 @@ export const tournaments = pgTable("tournaments", {
   maxParticipants: integer("max_participants"),
   entryFee: decimal("entry_fee", { precision: 10, scale: 2 }),
   status: tournamentStatusEnum("status").default("registration"),
-  participationTypes: text("participation_types").array(), // ["singles", "doubles", "mixed_doubles", "team"]
+  participationTypes: text("participation_types").array(), // ["SINGLES", "DOUBLES", "TEAM"]
   rules: text("rules"),
   prizes: text("prizes"),
   contactInfo: text("contact_info"),
@@ -207,6 +207,21 @@ export const tournaments = pgTable("tournaments", {
   regulationDocumentUrl: varchar("regulation_document_url"), // Tournament regulation document
   minRating: varchar("min_rating"), // Minimum rating/rank requirement (e.g., "Beginner", "Intermediate")
   maxRating: varchar("max_rating"), // Maximum rating/rank requirement
+  // Division and age category support
+  competitionDiscipline: varchar("competition_discipline"), // "Table Tennis", "Badminton", etc.
+  ageCategories: jsonb("age_categories").$type<Array<{
+    code: string;
+    displayName: string;
+    minAge?: number;
+    maxAge?: number;
+  }>>(), // e.g., [{code:"U12", displayName:"12 хүртэл", minAge:10, maxAge:12}]
+  divisions: jsonb("divisions").$type<Array<{
+    id: string;
+    eventType: "SINGLES" | "DOUBLES" | "TEAM";
+    ageCategory: string;
+    gender?: "male" | "female" | "mixed";
+    displayName: string;
+  }>>(), // Pre-configured divisions per event type + age
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -216,7 +231,8 @@ export const tournamentParticipants = pgTable("tournament_participants", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   tournamentId: varchar("tournament_id").references(() => tournaments.id).notNull(),
   playerId: varchar("player_id").references(() => players.id).notNull(),
-  participationType: varchar("participation_type").notNull(), // "singles", "doubles", etc.
+  participationType: varchar("participation_type").notNull(), // "SINGLES", "DOUBLES", "TEAM"
+  divisionId: varchar("division_id"), // Optional division ID from tournament.divisions
   registeredAt: timestamp("registered_at").defaultNow(),
   status: varchar("status").notNull().default("registered"), // registered, cancelled, confirmed
 });
@@ -250,6 +266,8 @@ export const matchSets = pgTable("match_sets", {
 export const tournamentResults = pgTable("tournament_results", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   tournamentId: varchar("tournament_id").references(() => tournaments.id).notNull().unique(),
+  // Results are now keyed by {eventType, divisionId} for filtering
+  // Structure: { "SINGLES_U12": { groupStage: [...], knockout: [...], final: [...] }, ... }
   groupStageResults: jsonb("group_stage_results"), // JSON structure for group stage data
   knockoutResults: jsonb("knockout_results"), // JSON structure for bracket/knockout data
   finalRankings: jsonb("final_rankings"), // Final tournament rankings/placements
