@@ -1191,7 +1191,12 @@ const AdminTournamentResults: React.FC = () => {
                   <div className="flex flex-wrap items-center gap-3">
                     <Button
                       type="button"
-                      onClick={createGroupStage}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log("=== BUTTON CLICKED ===");
+                        createGroupStage();
+                      }}
                       className="bg-blue-600 hover:bg-blue-700 text-white"
                       size="sm"
                       data-testid="button-create-groups-auto"
