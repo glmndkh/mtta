@@ -1,0 +1,175 @@
+// дээрээ: const [selectedEventType, setSelectedEventType] = useState<'SINGLES' | 'DOUBLES' | 'TEAM'>('SINGLES')
+const [selectedStage, setSelectedStage] = useState<'GROUP' | 'KNOCKOUT' | 'FINAL'>('GROUP');
+const [selectedDivision, setSelectedDivision] = useState<string | undefined>();
+tsx
+Copy code
+{/* Background бүхэл хуудсан дээр */}
+<div className="min-h-screen bg-slate-50 py-6">
+  <div className="mx-auto max-w-6xl space-y-6">
+
+    {/* Gradient header */}
+    <div className="w-full rounded-3xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-8 py-6 shadow-lg">
+      <div className="flex items-center gap-3 text-2xl font-semibold">
+        <span className="text-3xl">🏆</span>
+        <span>Тэмцээний үр дүн</span>
+        <span className="text-3xl">🏆</span>
+      </div>
+      <p className="text-sm text-white/80 mt-2">Админ хэсэг - Үншиж горим</p>
+
+      <div className="mt-3 inline-flex items-center gap-3 rounded-full bg-white/15 px-4 py-2 text-xs backdrop-blur">
+        <span className="font-semibold">{tournament.name}</span>
+        <span className="h-4 w-px bg-white/40" />
+        <span>
+          {selectedEventType === 'SINGLES'
+            ? 'Ганцаарчилсан тэмцээн'
+            : selectedEventType === 'DOUBLES'
+            ? 'Хосын тэмцээн'
+            : 'Багийн тэмцээн'}
+        </span>
+        <span className="h-4 w-px bg-white/40" />
+        <span>Нийт бүртгэлтэй тоглогч: {getParticipantsByEventType(selectedEventType).length}</span>
+      </div>
+    </div>
+
+    {/* Цагаан карт – Тэмцээний ангилал */}
+    <section className="w-full rounded-3xl bg-white shadow-md border border-slate-200 px-8 py-6 space-y-6">
+      {/* Title */}
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-full bg-indigo-50 flex items-center justify-center text-xl">
+          🏅
+        </div>
+        <div className="flex flex-col">
+          <span className="text-base font-semibold text-slate-900">
+            Тэмцээний ангилал
+          </span>
+          <span className="text-xs text-slate-500">
+            Тэмцээний төрөл, горимоо сонгоно уу
+          </span>
+        </div>
+      </div>
+
+      {/* Event Type Tabs */}
+      <div className="grid grid-cols-3 gap-4">
+        {/* SINGLES */}
+        {getAvailableEventTypes().includes('SINGLES') && (
+          <button
+            onClick={() => setSelectedEventType('SINGLES')}
+            className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition
+            ${
+              selectedEventType === 'SINGLES'
+                ? 'bg-blue-600 text-white shadow'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
+          >
+            <span className="text-lg">🧍‍♂️</span>
+            <span>Ганцаарчилсан тэмцээн</span>
+          </button>
+        )}
+
+        {/* DOUBLES */}
+        {getAvailableEventTypes().includes('DOUBLES') && (
+          <button
+            onClick={() => setSelectedEventType('DOUBLES')}
+            className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition
+            ${
+              selectedEventType === 'DOUBLES'
+                ? 'bg-blue-600 text-white shadow'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
+          >
+            <span className="text-lg">👥</span>
+            <span>Хосын тэмцээн</span>
+          </button>
+        )}
+
+        {/* TEAM */}
+        {getAvailableEventTypes().includes('TEAM') && (
+          <button
+            onClick={() => setSelectedEventType('TEAM')}
+            className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition
+            ${
+              selectedEventType === 'TEAM'
+                ? 'bg-blue-600 text-white shadow'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
+          >
+            <span className="text-lg">🧑‍🤝‍🧑</span>
+            <span>Багийн тэмцээн</span>
+          </button>
+        )}
+      </div>
+
+      <hr className="border-slate-200" />
+
+      {/* Division select + Stage buttons */}
+      <div className="space-y-4">
+        {/* ДИВИЗ СОНГОХ */}
+        <div className="space-y-2">
+          <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            ДИВИЗ СОНГОХ
+          </label>
+          <Select value={selectedDivision} onValueChange={setSelectedDivision}>
+            <SelectTrigger className="w-64 bg-white border border-slate-300 text-slate-900 rounded-2xl h-10 px-4">
+              <SelectValue placeholder="13–15 нас, эрэгтэй" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="U15_MALE">13–15 нас, эрэгтэй</SelectItem>
+              <SelectItem value="U18_MALE">16–18 нас, эрэгтэй</SelectItem>
+              <SelectItem value="OPEN_MALE">19+ нас, эрэгтэй</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Stage buttons */}
+        <div className="flex gap-4 text-sm font-medium mt-2">
+          <button
+            onClick={() => setSelectedStage('GROUP')}
+            className={`flex-1 rounded-2xl h-11 transition
+            ${
+              selectedStage === 'GROUP'
+                ? 'bg-blue-600 text-white shadow'
+                : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            Групп шат
+          </button>
+          <button
+            onClick={() => setSelectedStage('KNOCKOUT')}
+            className={`flex-1 rounded-2xl h-11 transition
+            ${
+              selectedStage === 'KNOCKOUT'
+                ? 'bg-blue-600 text-white shadow'
+                : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            Шууд хасагдах шат
+          </button>
+          <button
+            onClick={() => setSelectedStage('FINAL')}
+            className={`flex-1 rounded-2xl h-11 transition
+            ${
+              selectedStage === 'FINAL'
+                ? 'bg-blue-600 text-white shadow'
+                : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            Эцсийн байр, медаль
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+⚙️ Яг зураг шиг харагдуулж байгаа гол зүйлүүд:
+
+bg-slate-50 – бүхэл хуудсыг цайвар фон болгож өгч байгаа.
+
+Карт бүр bg-white + shadow-md + rounded-3xl + border-slate-200 – цэвэр цагаан card.
+
+Event type tabs дээр:
+
+идэвхтэй үед bg-blue-600 text-white shadow
+
+бусад нь bg-slate-100 text-slate-700 hover:bg-slate-200
+
+Stage button-ууд нэг мөрөнд, ижил өндөр (h-11), идэвхтэй нь хөх, бусад нь цагаан border-той.
