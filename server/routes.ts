@@ -4933,8 +4933,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let teams = await storage.getLeagueTeams(tournamentId);
       
       // Filter by eventType if provided
+      // Note: Some legacy teams may have empty eventType, we still return them
       if (eventType && typeof eventType === 'string') {
-        teams = teams.filter(team => team.eventType === eventType);
+        teams = teams.filter(team => team.eventType === eventType || !team.eventType);
       }
       
       res.json(teams);

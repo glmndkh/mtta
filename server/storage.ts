@@ -2598,7 +2598,27 @@ export class DatabaseStorage implements IStorage {
   async getLeagueTeams(leagueId: string): Promise<any[]> {
     try {
       const teams = await db.select().from(tournamentTeams).where(eq(tournamentTeams.tournamentId, leagueId));
-      return teams;
+      
+      // Fetch players for each team
+      const teamsWithPlayers = await Promise.all(
+        teams.map(async (team) => {
+          const players = await db
+            .select({
+              id: tournamentTeamPlayers.id,
+              playerId: tournamentTeamPlayers.playerId,
+              playerName: tournamentTeamPlayers.playerName,
+            })
+            .from(tournamentTeamPlayers)
+            .where(eq(tournamentTeamPlayers.tournamentTeamId, team.id));
+          
+          return {
+            ...team,
+            players
+          };
+        })
+      );
+      
+      return teamsWithPlayers;
     } catch (error) {
       console.error('Error getting league teams:', error);
       return [];
