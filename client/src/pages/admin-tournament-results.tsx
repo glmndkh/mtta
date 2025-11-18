@@ -1431,146 +1431,126 @@ const AdminTournamentResults: React.FC = () => {
           />
         </div>
 
-        {/* Upload Results Section */}
+        {/* Modern Results Input Section */}
         <div className="mb-8">
-            <Card className="bg-gray-800 border-gray-700">
-                <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
-                    <Upload className="w-5 h-5" />
-                    Тэмцээний үр дүн оруулах
-                </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                <div>
-                    <Label htmlFor="tournamentSelect">Тэмцээн сонгох</Label>
-                    <select
-                    id="tournamentSelect"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={selectedTournament}
-                    onChange={(e) => setSelectedTournament(e.target.value)}
-                    >
-                    <option value="">Тэмцээн сонгоно уу</option>
-                    {tournaments.map((tournament: any) => (
-                        <option key={tournament.id} value={tournament.id}>
-                        {tournament.name}
-                        </option>
-                    ))}
-                    </select>
+          <div className="w-full rounded-3xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-8 py-6 shadow-lg mb-6">
+            <div className="flex items-center gap-3 text-2xl font-semibold">
+              <span className="text-3xl">🏆</span>
+              <span>Тэмцээний үр дүн оруулах</span>
+              <span className="text-3xl">🏆</span>
+            </div>
+            <p className="text-sm text-white/80 mt-2">Админ хэсэг - Групп шат удирдлага</p>
+            <div className="mt-3 inline-flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-2 text-xs backdrop-blur">
+              <span className="font-semibold">{tournament.name}</span>
+              <span className="h-4 w-px bg-white/40" />
+              <span>{selectedEventType === 'SINGLES' ? 'Ганцаарчилсан' : selectedEventType === 'DOUBLES' ? 'Хос' : 'Баг'} тэмцээн</span>
+              <span className="h-4 w-px bg-white/40" />
+              <span>Нийт бүртгэлтэй: {getParticipantsByEventType(selectedEventType).length}</span>
+            </div>
+          </div>
+
+          {/* Category Selection Card */}
+          <section className="w-full rounded-3xl bg-gray-800/80 backdrop-blur-sm shadow-md border border-gray-700/50 px-8 py-6 space-y-6 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center text-xl">🏅</div>
+              <div className="flex flex-col">
+                <span className="text-base font-semibold text-white">Тэмцээний ангилал</span>
+                <span className="text-xs text-gray-400">Тэмцээний төрөл, горимоо сонгоно уу</span>
+              </div>
+            </div>
+
+            {/* Event Type Tabs */}
+            <div className="grid grid-cols-3 gap-3">
+              {getAvailableEventTypes().includes('SINGLES') && (
+                <button
+                  onClick={() => setSelectedEventType('SINGLES')}
+                  className={`flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium shadow-sm transition ${
+                    selectedEventType === 'SINGLES'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-700/50 text-gray-300 border border-gray-600 hover:bg-gray-700'
+                  }`}
+                >
+                  <span className="text-lg">👤</span>
+                  <span>Ганцаарчилсан</span>
+                </button>
+              )}
+              {getAvailableEventTypes().includes('DOUBLES') && (
+                <button
+                  onClick={() => setSelectedEventType('DOUBLES')}
+                  className={`flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium shadow-sm transition ${
+                    selectedEventType === 'DOUBLES'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-700/50 text-gray-300 border border-gray-600 hover:bg-gray-700'
+                  }`}
+                >
+                  <span className="text-lg">👥</span>
+                  <span>Хосын тэмцээн</span>
+                </button>
+              )}
+              {getAvailableEventTypes().includes('TEAM') && (
+                <button
+                  onClick={() => setSelectedEventType('TEAM')}
+                  className={`flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium shadow-sm transition ${
+                    selectedEventType === 'TEAM'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-700/50 text-gray-300 border border-gray-600 hover:bg-gray-700'
+                  }`}
+                >
+                  <span className="text-lg">🧑‍🤝‍🧑</span>
+                  <span>Багийн тэмцээн</span>
+                </button>
+              )}
+            </div>
+
+            <div className="h-px bg-gray-700" />
+
+            {/* Stage Selection Tabs */}
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                  Шатыг сонгох
+                </label>
+                <div className="flex gap-3 text-sm font-medium">
+                  <button className="flex-1 rounded-2xl bg-blue-600 text-white py-2.5 shadow-sm border border-blue-700">
+                    Групп шат
+                  </button>
+                  <button className="flex-1 rounded-2xl bg-gray-700/50 text-gray-300 py-2.5 border border-gray-600 hover:bg-gray-700 transition">
+                    Шууд хасагдах шат
+                  </button>
+                  <button className="flex-1 rounded-2xl bg-gray-700/50 text-gray-300 py-2.5 border border-gray-600 hover:bg-gray-700 transition">
+                    Эцсийн байр, медаль
+                  </button>
                 </div>
+              </div>
+            </div>
+          </section>
 
-                {selectedTournament && (
-                    <div className="space-y-4">
-                    <div>
-                        <Label>Үр дүнгийн зураг хуулах</Label>
-                        <p className="text-sm text-muted-foreground mb-2">
-                        Тэмцээний үр дүнгийн зураг хуулж, тайлбар нэмнэ үү
-                        </p>
-                        <ObjectUploader
-                        maxNumberOfFiles={5}
-                        maxFileSize={5 * 1024 * 1024}
-                        onGetUploadParameters={async () => {
-                            const response = await fetch('/api/objects/upload', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            }
-                            });
-                            const data = await response.json();
-                            return {
-                            method: 'PUT' as const,
-                            url: data.uploadURL
-                            };
-                        }}
-                        onComplete={async (result) => {
-                            if (result.successful && result.successful.length > 0) {
-                            const newImages = [];
-                            for (const file of result.successful) {
-                                try {
-                                const response = await fetch('/api/objects/finalize', {
-                                    method: 'PUT',
-                                    headers: {
-                                    'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                    fileURL: file.uploadURL,
-                                    isPublic: true
-                                    })
-                                });
-                                const data = await response.json();
-                                newImages.push({
-                                    url: data.objectPath,
-                                    description: ''
-                                });
-                                } catch (error) {
-                                console.error('Error finalizing upload:', error);
-                                }
-                            }
-                            setResultsImages(prev => [...prev, ...newImages]);
-                            toast({
-                                title: "Амжилттай",
-                                description: `${newImages.length} зураг хуулагдлаа`
-                            });
-                            }
-                        }}
-                        buttonClassName="w-full"
-                        >
-                        <Upload className="w-4 h-4 mr-2" />
-                        Үр дүнгийн зураг сонгох
-                        </ObjectUploader>
-                    </div>
-
-                    {resultsImages.length > 0 && (
-                        <div>
-                        <Label>Хуулсан зургууд ба тайлбар</Label>
-                        <div className="space-y-4">
-                            {resultsImages.map((item, index) => (
-                            <div key={index} className="border rounded-lg p-4 space-y-3">
-                                <div className="relative">
-                                <img
-                                    src={item.url.startsWith('/') ? item.url : `/objects/${item.url}`}
-                                    alt={`Үр дүн ${index + 1}`}
-                                    className="w-full h-48 object-cover rounded border"
-                                />
-                                <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    className="absolute top-2 right-2"
-                                    onClick={() => setResultsImages(prev => prev.filter((_, i) => i !== index))}
-                                >
-                                    <X className="w-4 h-4" />
-                                </Button>
-                                </div>
-                                <div>
-                                <Label htmlFor={`description-${index}`}>Зургийн тайлбар</Label>
-                                <Textarea
-                                    id={`description-${index}`}
-                                    placeholder="Энэ зургийн тухай тайлбар бичнэ үү..."
-                                    value={item.description}
-                                    onChange={(e) => {
-                                    const newImages = [...resultsImages];
-                                    newImages[index] = { ...newImages[index], description: e.target.value };
-                                    setResultsImages(newImages);
-                                    }}
-                                    rows={3}
-                                />
-                                </div>
-                            </div>
-                            ))}
-                        </div>
-                        </div>
-                    )}
-
-                    <Button 
-                        onClick={saveResults}
-                        disabled={!selectedTournament || resultsImages.length === 0}
-                        className="w-full"
-                    >
-                        Үр дүн хадгалах
-                    </Button>
-                    </div>
-                )}
-                </CardContent>
-            </Card>
+          {/* Enhanced Group Stage Info */}
+          <section className="w-full rounded-3xl bg-gray-800/80 backdrop-blur-sm shadow-md border border-gray-700/50 px-8 py-6">
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <div>
+                <h2 className="text-base font-semibold text-white">Групп шат ({tournament.name})</h2>
+                <p className="text-xs text-gray-400 mt-1">
+                  Дээрх групп удирдлага хэсгээс тоглогчдоо хуваарилна уу
+                </p>
+              </div>
+              <div className="text-xs text-gray-400 space-x-4">
+                <span>
+                  Нийт групп: <span className="font-semibold text-white">{groupStageResults.length}</span>
+                </span>
+                <span>
+                  Хуваарилсан тоглогч: <span className="font-semibold text-white">
+                    {groupStageResults.reduce((sum, g) => sum + g.players.length, 0)}
+                  </span>
+                </span>
+              </div>
+            </div>
+            
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl px-4 py-3 text-sm text-blue-300">
+              <strong>Зөвлөмж:</strong> Дээрх "Хэсэгийн шатны тоглолт" хэсэгт очиж группүүдээ үүсгэж, 
+              тоглогчдоо бүртгэлтэй жагсаалтаас сонгон хуваарилна уу. Тэмцээний үр дүн шууд уг хэсэгт оруулна.
+            </div>
+          </section>
         </div>
 
         {/* Settings Panel */}
