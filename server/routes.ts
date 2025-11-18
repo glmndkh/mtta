@@ -2204,6 +2204,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let participants = await storage.getTournamentParticipants(tournamentId);
 
+      // Filter by category if specified (before excluding current user to see counts correctly)
+      if (category && category !== 'all') {
+        participants = participants.filter(p => {
+          // participationType is a JSON string like {"type":"individual",...}
+          // We need to parse it and check the type field
+          try {
+            const parsed = JSON.parse(p.participationType);
+            const typeStr = parsed.type?.toLowerCase() || '';
+            
+            // Map to SINGLES/DOUBLES/TEAM
+            if (category === 'SINGLES' && typeStr === 'individual') return true;
+            if (category === 'DOUBLES' && typeStr === 'pair') return true;
+            if (category === 'TEAM' && typeStr === 'team') return true;
+            return false;
+          } catch (e) {
+            // If not JSON, try direct comparison
+            return p.participationType === category;
+          }
+        });
+        console.log(`Filtered to ${participants.length} participants for category ${category}`);
+      }
+
       // Exclude current user from results (compare userId, not playerId)
       const currentUserId = req.session?.userId;
       if (currentUserId) {
@@ -2211,12 +2233,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Excluded current user ${currentUserId} from participants list`);
       }
 
-      // Filter by category if specified
-      if (category && category !== 'all') {
-        participants = participants.filter(p => p.participationType === category);
-      }
-
-      console.log(`Returning ${participants.length} participants (current user excluded)`);
+      console.log(`Returning ${participants.length} participants`);
       res.json(participants);
     } catch (e) {
       console.error("Error fetching tournament participants:", e);
