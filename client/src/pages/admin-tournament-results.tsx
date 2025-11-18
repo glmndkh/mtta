@@ -240,6 +240,40 @@ const AdminTournamentResults: React.FC = () => {
     return tournamentTeams;
   };
 
+  const getEventTypeLabel = (eventType: "SINGLES" | "DOUBLES" | "TEAM") => {
+    if (!tournament?.participationTypes || tournament.participationTypes.length === 0) {
+      return eventType === "SINGLES" ? "Ганцаарчилсан" : eventType === "DOUBLES" ? "Хос" : "Баг";
+    }
+
+    // Find matching participation type
+    for (const type of tournament.participationTypes) {
+      try {
+        const parsed = JSON.parse(type);
+        const typeStr = parsed.type?.toLowerCase() || '';
+        
+        // Check if this matches our event type
+        const matches = 
+          (eventType === 'SINGLES' && typeStr === 'individual') ||
+          (eventType === 'DOUBLES' && typeStr === 'pair') ||
+          (eventType === 'TEAM' && typeStr === 'team');
+        
+        if (matches) {
+          const minAge = parsed.minAge || 0;
+          const maxAge = parsed.maxAge || 100;
+          const gender = parsed.gender;
+          const genderText = gender === 'male' ? 'эрэгтэй' : gender === 'female' ? 'эмэгтэй' : '';
+          
+          return `${minAge}-${maxAge} нас${genderText ? ', ' + genderText : ''}`;
+        }
+      } catch (e) {
+        // Skip invalid JSON
+      }
+    }
+    
+    // Fallback
+    return eventType === "SINGLES" ? "Ганцаарчилсан" : eventType === "DOUBLES" ? "Хос" : "Баг";
+  };
+
   const getCountDisplay = (eventType: "SINGLES" | "DOUBLES" | "TEAM") => {
     if (eventType === "SINGLES") {
       const count = getParticipantsByEventType(eventType).length;
@@ -957,11 +991,7 @@ const AdminTournamentResults: React.FC = () => {
                   <SelectContent className="bg-gray-900 text-white border-gray-700">
                     {getAvailableEventTypes().map((type) => (
                       <SelectItem key={type} value={type}>
-                        {type === "SINGLES"
-                          ? "13–15 нас, эрэгтэй"
-                          : type === "DOUBLES"
-                            ? "16–18 нас, эрэгтэй"
-                            : "19+ нас, эрэгтэй"}
+                        {getEventTypeLabel(type)}
                       </SelectItem>
                     ))}
                   </SelectContent>
