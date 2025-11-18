@@ -1037,42 +1037,98 @@ const AdminTournamentResults: React.FC = () => {
             {/* Participant list + group creation */}
             <div className="mt-6 space-y-4">
               <div className="bg-gray-950/70 rounded-xl p-4 border border-gray-800">
-                <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  Бүртгүүлсэн тамирчид ({selectedEventType})
-                  <Badge variant="outline" className="ml-2 border-gray-700">
-                    {getParticipantsByEventType(selectedEventType).length}{" "}
-                    тоглогч
-                  </Badge>
-                </h3>
+                {selectedEventType === "SINGLES" ? (
+                  <>
+                    <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      Бүртгүүлсэн тамирчид
+                      <Badge variant="outline" className="ml-2 border-gray-700">
+                        {getParticipantsByEventType(selectedEventType).length} тоглогч
+                      </Badge>
+                    </h3>
 
-                {getParticipantsByEventType(selectedEventType).length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                    {getParticipantsByEventType(selectedEventType).map(
-                      (participant: any, index: number) => (
-                        <div
-                          key={participant.id || index}
-                          className="bg-gray-900 rounded-lg px-3 py-2 text-xs text-gray-300 border border-gray-800 hover:bg-gray-800 transition-colors"
-                        >
-                          <div className="font-medium text-white">
-                            {participant.playerName || participant.email || `Тоглогч ${index + 1}`}
-                          </div>
-                          {participant.clubAffiliation && (
-                            <div className="text-gray-500 text-xs mt-0.5">
-                              {participant.clubAffiliation}
+                    {getParticipantsByEventType(selectedEventType).length > 0 ? (
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                        {getParticipantsByEventType(selectedEventType).map(
+                          (participant: any, index: number) => (
+                            <div
+                              key={participant.id || index}
+                              className="bg-gray-900 rounded-lg px-3 py-2 text-xs text-gray-300 border border-gray-800 hover:bg-gray-800 transition-colors"
+                            >
+                              <div className="font-medium text-white">
+                                {participant.playerName || participant.email || `Тоглогч ${index + 1}`}
+                              </div>
+                              {participant.clubAffiliation && (
+                                <div className="text-gray-500 text-xs mt-0.5">
+                                  {participant.clubAffiliation}
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      ),
+                          ),
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <Users className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                        <p className="text-sm">
+                          Энэ төрлөөр бүртгүүлсэн тамирчин байхгүй байна
+                        </p>
+                      </div>
                     )}
-                  </div>
+                  </>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <Users className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                    <p className="text-sm">
-                      Энэ төрлөөр бүртгүүлсэн тамирчин байхгүй байна
-                    </p>
-                  </div>
+                  <>
+                    <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      Бүртгүүлсэн {selectedEventType === "DOUBLES" ? "хос" : "баг"}
+                      <Badge variant="outline" className="ml-2 border-gray-700">
+                        {getTeamsByEventType(selectedEventType).length} {selectedEventType === "DOUBLES" ? "хос" : "баг"}
+                      </Badge>
+                    </h3>
+
+                    {getTeamsByEventType(selectedEventType).length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {getTeamsByEventType(selectedEventType).map(
+                          (team: any, index: number) => (
+                            <div
+                              key={team.id || index}
+                              className="bg-gray-900 rounded-lg p-3 border border-gray-800 hover:bg-gray-800 transition-colors"
+                            >
+                              <div className="flex items-start gap-2 mb-2">
+                                <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                                  {selectedEventType === "DOUBLES" ? "Х" : "Б"}
+                                </div>
+                                <div className="flex-1">
+                                  <div className="font-semibold text-white text-sm">
+                                    {team.name || `${selectedEventType === "DOUBLES" ? "Хос" : "Баг"} ${index + 1}`}
+                                  </div>
+                                  <div className="text-xs text-gray-400 mt-1">
+                                    {team.players && team.players.length > 0 ? (
+                                      team.players.map((player: any, pIndex: number) => (
+                                        <div key={pIndex} className="flex items-center gap-1">
+                                          <span className="text-gray-500">•</span>
+                                          <span>{player.playerName || player.firstName + ' ' + player.lastName || 'Unknown'}</span>
+                                        </div>
+                                      ))
+                                    ) : (
+                                      <span className="text-gray-600">Гишүүн байхгүй</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ),
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <Users className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                        <p className="text-sm">
+                          Энэ төрлөөр бүртгүүлсэн {selectedEventType === "DOUBLES" ? "хос" : "баг"} байхгүй байна
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 
