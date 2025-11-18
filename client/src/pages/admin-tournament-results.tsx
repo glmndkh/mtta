@@ -1038,6 +1038,88 @@ const AdminTournamentResults: React.FC = () => {
               <strong>Зөвлөмж:</strong> Дээрх "Хэсэгийн шатны тоглолт" хэсэгт очиж группүүдээ үүсгэж, 
               тоглогчдоо бүртгэлтэй жагсаалтаас сонгон хуваарилна уу. Тэмцээний үр дүн шууд уг хэсэгт оруулна.
             </div>
+
+            {/* Participant List and Group Creation */}
+            <div className="mt-6 space-y-4">
+              {/* Registered Participants */}
+              <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-700/30">
+                <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Бүртгүүлсэн тамирчид ({selectedEventType})
+                  <Badge variant="outline" className="ml-2">
+                    {getParticipantsByEventType(selectedEventType).length} тоглогч
+                  </Badge>
+                </h3>
+                
+                {getParticipantsByEventType(selectedEventType).length > 0 ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                    {getParticipantsByEventType(selectedEventType).map((participant: any, index: number) => (
+                      <div 
+                        key={participant.id || index}
+                        className="bg-gray-800/50 rounded-lg px-3 py-2 text-xs text-gray-300 border border-gray-700/30 hover:bg-gray-700/50 transition-colors"
+                      >
+                        <div className="font-medium text-white">
+                          {participant.user?.firstName && participant.user?.lastName
+                            ? `${participant.user.firstName} ${participant.user.lastName}`
+                            : participant.user?.email || `Тоглогч ${index + 1}`}
+                        </div>
+                        {participant.user?.clubAffiliation && (
+                          <div className="text-gray-500 text-xs mt-0.5">
+                            {participant.user.clubAffiliation}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Users className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">Энэ төрлөөр бүртгүүлсэн тамирчин байхгүй байна</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Quick Group Creation */}
+              {getParticipantsByEventType(selectedEventType).length >= 4 && (
+                <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-xl p-4 border border-blue-700/30">
+                  <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                    <Trophy className="w-4 h-4 text-blue-400" />
+                    Групп үүсгэх
+                  </h3>
+                  
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Button
+                      onClick={createGroupStage}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      size="sm"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Автомат групп үүсгэх ({getParticipantsByEventType(selectedEventType).length} тоглогч)
+                    </Button>
+                    
+                    <Button
+                      onClick={addNewGroup}
+                      variant="outline"
+                      size="sm"
+                      className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Хоосон групп нэмэх
+                    </Button>
+                    
+                    <div className="text-xs text-gray-400 ml-auto">
+                      {groupStageResults.length > 0 && (
+                        <span>{groupStageResults.length} групп үүсгэгдсэн</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 text-xs text-blue-300/70">
+                    💡 Автомат үүсгэх товч нь тамирчдыг санамсаргүйгээр 4 хүний группүүдэд хуваарилна
+                  </div>
+                </div>
+              )}
+            </div>
           </section>
         </div>
 
