@@ -553,21 +553,25 @@ const AdminTournamentResults: React.FC = () => {
 
   const createGroupStage = () => {
     console.log("=== createGroupStage called ===");
-    console.log("participants:", participants);
-    console.log("participants.length:", participants?.length);
+    const currentParticipants = selectedEventType === "SINGLES" 
+      ? getParticipantsByEventType(selectedEventType)
+      : getTeamsByEventType(selectedEventType);
+    
+    console.log("currentParticipants:", currentParticipants);
+    console.log("currentParticipants.length:", currentParticipants?.length);
     console.log("selectedEventType:", selectedEventType);
     
-    if (!participants || participants.length < 8) {
-      console.log("Not enough participants:", participants?.length);
+    if (!currentParticipants || currentParticipants.length < 4) {
+      console.log("Not enough participants:", currentParticipants?.length);
       toast({
         title: "Хангалтгүй тоглогч",
-        description: "Хэсэгийн тоглолтод дор хаяж 8 тоглогч шаардлагатай",
+        description: `Хэсэгийн тоглолтод дор хаяж 4 ${selectedEventType === "SINGLES" ? "тоглогч" : selectedEventType === "DOUBLES" ? "хос" : "баг"} шаардлагатай`,
         variant: "destructive",
       });
       return;
     }
 
-    const totalParticipants = participants.length;
+    const totalParticipants = currentParticipants.length;
     let groupCount = 4;
     let playersPerGroup = 4;
 
@@ -586,7 +590,7 @@ const AdminTournamentResults: React.FC = () => {
     }
 
     const groups: GroupStageGroup[] = [];
-    const shuffledParticipants = [...participants].sort(
+    const shuffledParticipants = [...currentParticipants].sort(
       () => Math.random() - 0.5,
     );
 
@@ -598,15 +602,23 @@ const AdminTournamentResults: React.FC = () => {
         startIndex + playersPerGroup,
       );
 
-      if (groupParticipants.length >= 3) {
+      if (groupParticipants.length >= 2) {
+        const participantName = (p: any) => {
+          if (selectedEventType === "SINGLES") {
+            return p.playerName || `Тоглогч ${p.id}`;
+          } else {
+            return p.name || `${selectedEventType === "DOUBLES" ? "Хос" : "Баг"} ${p.id}`;
+          }
+        };
+
         groups.push({
           id: `group_${groupLetter.toLowerCase()}`,
           name: `${groupLetter} хэсэг`,
           players: groupParticipants.map((p) => ({
             id: p.id,
-            name: p.playerName || `Тоглогч ${p.id}`,
+            name: participantName(p),
             playerId: p.id,
-            userId: p.userId,
+            userId: p.userId || null,
           })),
           resultMatrix: [],
           playerStats: groupParticipants.map((p) => ({
