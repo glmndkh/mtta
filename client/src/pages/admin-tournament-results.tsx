@@ -180,14 +180,18 @@ const AdminTournamentResults: React.FC = () => {
       // Fallback: if no participation types, return all types
       return ["SINGLES", "DOUBLES", "TEAM"] as ("SINGLES" | "DOUBLES" | "TEAM")[];
     }
-    return tournament.participationTypes.map((type) => {
+    
+    const mappedTypes = tournament.participationTypes.map((type) => {
       const upperType = type.toUpperCase();
       // Map common variations
       if (upperType.includes('SINGLE') || upperType === 'INDIVIDUAL') return 'SINGLES';
       if (upperType.includes('DOUBLE') || upperType.includes('PAIR')) return 'DOUBLES';
       if (upperType.includes('TEAM')) return 'TEAM';
-      return upperType;
-    }) as ("SINGLES" | "DOUBLES" | "TEAM")[];
+      return null;
+    }).filter(Boolean) as ("SINGLES" | "DOUBLES" | "TEAM")[];
+    
+    // Remove duplicates
+    return [...new Set(mappedTypes)];
   };
 
   const getParticipantsByEventType = (
