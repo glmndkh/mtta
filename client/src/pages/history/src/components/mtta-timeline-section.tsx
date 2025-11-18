@@ -10,6 +10,7 @@ interface ChampionCard {
   title: string;
   image?: string;
 }
+
 interface TimelineEvent {
   year: string;
   title: string;
@@ -62,11 +63,16 @@ const imageMap: Record<string, string> = {
   "Ч.Алтанцэцэг": imgBase + "Ch.Altantsetseg.jpeg",
   "Л. Батхишиг": imgBase + "L.Batkhishig.jpeg",
   "Ө.Балжинням": imgBase + "U.Baljinnyam.jpeg",
-  "Б.Болор-Эрдэнэ": imgBase + "B.Bolor-Erdene.jpeg"
+  "Б.Болор-Эрдэнэ": imgBase + "B.Bolor-Erdene.jpeg",
+  "Ч.Эрдэнэбаяр": imgBase + "Ch.Erdenebayar.jpeg",
+  "М.Ундрам": imgBase + "M.Undram.jpg",
+  "Г.Сэр-Од": imgBase + "G.Ser-Od.jpg",
+  "М.Манлайжаргал": imgBase + "M.Manlai-Jargal.jpg"
 };
 
-/** 2) 1956–2016 оны өгөг (тайлбарууд 1956–1970 онуудад нэмсэн) */
+/** 2) 1956–2025 оны өгөг (тайлбарууд 1956–1970 онуудад нэмсэн) */
 type Row = { year: number; male?: string; female?: string; description?: string };
+
 const championsRaw: Row[] = [
   {
     year: 1956,
@@ -134,21 +140,43 @@ const championsRaw: Row[] = [
       "• Б.Наран спортын мастер цол хүртсэн (анхны мастер).\n" +
       "• БНМАУ–БНХАУ найрамдлын тэмцээнд Монголын тамирчид анх оролцов; С.Бямбажав, Ц.Төмбүү нар хосоор IV байрт.\n"
   },
-  { year: 1964, male: "Ц.Томбуу", female: "Б.Наран", description: "• Сургууль, үйлдвэр, байгууллагуудын тэмцээн тогтмолжив.\n• Ширээний теннис нийтийн спортын түвшинд дэлгэрэв." },
+  {
+    year: 1964,
+    male: "Ц.Томбуу",
+    female: "Б.Наран",
+    description:
+      "• Сургууль, үйлдвэр, байгууллагуудын тэмцээн тогтмолжив.\n• Ширээний теннис нийтийн спортын түвшинд дэлгэрэв."
+  },
   {
     year: 1965,
     description:
       "• Пионерийн сургуулиуд, үйлдвэрийн хоршоодын дэргэд секцүүд олноор байгуулагдав.\n" +
       "• Залуу тамирчдын тоо эрс өссөн үе эхэллээ."
   },
-  { year: 1966, male: "Б.Амарсанаа", female: "Б.Отгонжаргал", description: "• Өсвөр үеийн уралдаан, сургалт идэвхжив; шинэ авьяастнууд тодорч эхлэв." },
+  {
+    year: 1966,
+    male: "Б.Амарсанаа",
+    female: "Б.Отгонжаргал",
+    description:
+      "• Өсвөр үеийн уралдаан, сургалт идэвхжив; шинэ авьяастнууд тодорч эхлэв."
+  },
   {
     year: 1967,
     description:
       "• Улсын аваргад оролцогчдын тоо огцом өсөв (түүхэн дээд амжилтуудын нэг)."
   },
-  { year: 1968, description: "• Оролцогчдын хүрээ, клубүүдийн тоо улам нэмэгдэв; бэлтгэлийн бааз суурь сайжрав." },
-  { year: 1969, male: "Ц.Томбуу", female: "Б.Отгонжаргал", description: "• Улсын аваргад 84 эрэгтэй, 36 эмэгтэй тамирчин оролцлоо." },
+  {
+    year: 1968,
+    description:
+      "• Оролцогчдын хүрээ, клубүүдийн тоо улам нэмэгдэв; бэлтгэлийн бааз суурь сайжрав."
+  },
+  {
+    year: 1969,
+    male: "Ц.Томбуу",
+    female: "Б.Отгонжаргал",
+    description:
+      "• Улсын аваргад 84 эрэгтэй, 36 эмэгтэй тамирчин оролцлоо."
+  },
   {
     year: 1970,
     description:
@@ -204,9 +232,8 @@ const championsRaw: Row[] = [
   { year: 2021, male: "Б.Билэгт", female: "Б.Болор-Эрдэнэ" },
   { year: 2022, male: "Ч.Эрдэнэбаяр", female: "Б.Болор-Эрдэнэ" },
   { year: 2023, male: "Г.Сэр-Од", female: "М.Ундрам" },
-  { year: 2024, male: "Г.Сэр-Од", female: "Б.Болор-Эрдэнэ"},
+  { year: 2024, male: "Г.Сэр-Од", female: "Б.Болор-Эрдэнэ" },
   { year: 2025, male: "М.Манлайжаргал", female: "Б.Болор-Эрдэнэ" }
-  
 ];
 
 /** 3) Raw → TimelineEvent хөрвүүлэгч */
@@ -215,17 +242,19 @@ function buildTimelineEvents(rows: Row[]): TimelineEvent[] {
   rows.forEach((r) => {
     const champions: ChampionCard[] = [];
     if (r.male) {
+      const key = r.male.trim();
       champions.push({
         name: r.male,
         title: "Эрэгтэйчүүдийн улсын аварга",
-        image: imageMap[r.male]
+        image: imageMap[key]
       });
     }
     if (r.female) {
+      const key = r.female.trim();
       champions.push({
         name: r.female,
         title: "Эмэгтэйчүүдийн улсын аварга",
-        image: imageMap[r.female]
+        image: imageMap[key]
       });
     }
     if (!r.description && champions.length === 0) return;
@@ -245,6 +274,9 @@ const allTimelineEvents = buildTimelineEvents(championsRaw);
 
 /** 4) Компонентууд */
 function ChampionCardView({ champion }: { champion: ChampionCard }) {
+  const [hasError, setHasError] = useState(false);
+  const showFallback = hasError || !champion.image;
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
@@ -254,16 +286,21 @@ function ChampionCardView({ champion }: { champion: ChampionCard }) {
       className="relative rounded-lg overflow-hidden bg-card border border-border p-4 hover:border-primary/40 transition-all"
     >
       <div className="flex items-center gap-3">
-        <div className="w-32 h-32 rounded-lg bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center flex-shrink-0 overflow-hidden">
-          {champion.image ? (
+        {/* Зураг бүрэн харагдахаар – aspect нь автоматаар, crop хийхгүй */}
+        <div className="w-32 rounded-lg bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center flex-shrink-0 overflow-hidden">
+          {showFallback ? (
+            <Trophy className="w-10 h-10 text-white" />
+          ) : (
             <img
               src={champion.image}
               alt={champion.name}
-              className="w-full h-full object-cover rounded-lg"
-              style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+              loading="lazy"
+              className="w-full h-auto object-contain rounded-lg"
+              onError={() => {
+                console.error("IMAGE LOAD FAILED:", champion.name, champion.image);
+                setHasError(true);
+              }}
             />
-          ) : (
-            <Trophy className="w-16 h-16 text-white" />
           )}
         </div>
         <div className="flex-1">
@@ -392,7 +429,7 @@ export function MTTATimelineSection() {
                     <h3 className="text-2xl font-bold text-card-foreground mb-2">
                       {event.title}
                     </h3>
-                    {/* ЭНД newline харагдуулна */}
+                    {/* newline харагдуулна */}
                     <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
                       {event.description}
                     </p>
@@ -442,4 +479,5 @@ export function MTTATimelineSection() {
     </div>
   );
 }
+
 export default MTTATimelineSection;
