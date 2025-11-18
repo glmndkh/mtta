@@ -21,6 +21,8 @@ import {
   Target,
   Eye,
   EyeOff,
+  Trash2,
+  X,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -654,6 +656,75 @@ const AdminTournamentResults: React.FC = () => {
     });
   };
 
+  const addPlayerToGroup = (groupId: string, playerId: string) => {
+    const currentParticipants = selectedEventType === "SINGLES" 
+      ? getParticipantsByEventType(selectedEventType)
+      : getTeamsByEventType(selectedEventType);
+    
+    const playerToAdd = currentParticipants.find((p: any) => p.id === playerId);
+    if (!playerToAdd) return;
+
+    const participantName = (p: any) => {
+      if (selectedEventType === "SINGLES") {
+        return p.playerName || `Тоглогч ${p.id}`;
+      } else {
+        return p.name || `${selectedEventType === "DOUBLES" ? "Хос" : "Баг"} ${p.id}`;
+      }
+    };
+
+    setGroupStageResults((prev) =>
+      prev.map((group) => {
+        if (group.id !== groupId) return group;
+
+        // Check if player already in group
+        if (group.players.some((p) => p.id === playerId)) {
+          toast({
+            title: "Тоглогч аль хэдийн байна",
+            description: "Энэ тоглогч группд аль хэдийн байна",
+            variant: "destructive",
+          });
+          return group;
+        }
+
+        const newPlayer = {
+          id: playerToAdd.id,
+          name: participantName(playerToAdd),
+          playerId: playerToAdd.id,
+          userId: playerToAdd.userId || null,
+        };
+
+        const updatedPlayers = [...group.players, newPlayer];
+        
+        // Expand result matrix
+        const newMatrix = group.resultMatrix.map((row) => [...row, ""]);
+        newMatrix.push(new Array(updatedPlayers.length).fill(""));
+
+        const updatedGroup: GroupStageGroup = {
+          ...group,
+          players: updatedPlayers,
+          resultMatrix: newMatrix,
+          playerStats: updatedPlayers.map((p) => ({
+            playerId: p.id,
+            wins: 0,
+            losses: 0,
+            points: 0,
+          })),
+        };
+
+        const newStats = calculateGroupStats(updatedGroup);
+
+        return {
+          ...updatedGroup,
+          playerStats: newStats,
+        };
+      }),
+    );
+    toast({
+      title: "Тоглогч нэмэгдлээ",
+      description: `Тоглогч амжилттай нэмэгдлээ`,
+    });
+  };
+
   const removePlayerFromGroup = (groupId: string, playerId: string) => {
     setGroupStageResults((prev) =>
       prev.map((group) => {
@@ -691,6 +762,14 @@ const AdminTournamentResults: React.FC = () => {
     toast({
       title: "Тоглогч хасагдлаа",
       description: `Тоглогч амжилттай хасагдлаа`,
+    });
+  };
+
+  const removeGroup = (groupId: string) => {
+    setGroupStageResults((prev) => prev.filter((g) => g.id !== groupId));
+    toast({
+      title: "Групп устгагдлаа",
+      description: "Групп амжилттай устгагдлаа",
     });
   };
 
@@ -1213,36 +1292,179 @@ const AdminTournamentResults: React.FC = () => {
 
             {/* Display created groups */}
             {groupStageResults.length > 0 && (
-              <div className="mt-6 space-y-4">
+              <div className="mt-6 space-y-6">
                 <h3 className="text-sm font-semibold text-white mb-3">
                   Групп шатны тоглолт
                 </h3>
                 {groupStageResults.map((group, groupIndex) => (
                   <div
                     key={group.id}
-                    className="bg-gray-950/70 rounded-xl p-4 border border-gray-800"
+                    className="bg-gray-950/70 rounded-xl p-6 border border-gray-800"
                   >
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-sm font-semibold text-white">
-                        {group.name}
-                      </h4>
-                      <Badge variant="outline" className="border-gray-700">
-                        {group.players.length} тоглогч
-                      </Badge>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <h4 className="text-base font-semibold text-white">
+                          {group.name}
+                        </h4>
+                        <Badge variant="outline" className="border-gray-700">
+                          {group.players.length} тоглогч
+                        </Badge>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => removeGroup(group.id)}
+                        data-testid={`button-remove-group-${group.id}`}
+                      >
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        Групп устгах
+                      </Button>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      {group.players.map((player, idx) => (
-                        <div
-                          key={player.id}
-                          className="bg-gray-900 rounded-lg px-3 py-2 text-xs text-gray-300 border border-gray-800"
+                    {/* Player management */}
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-xs font-medium text-gray-400">
+                          ТОГЛОГЧ УДИРДЛАГА
+                        </label>
+                      </div>
+                      <div className="flex gap-2">
+                        <Select
+                          onValueChange={(value) => addPlayerToGroup(group.id, value)}
                         >
-                          <div className="font-medium text-white">
-                            {player.name}
-                          </div>
-                        </div>
-                      ))}
+                          <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                            <SelectValue placeholder="Тоглогч нэмэх..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-gray-900 text-white border-gray-700">
+                            {(selectedEventType === "SINGLES" 
+                              ? getParticipantsByEventType(selectedEventType)
+                              : getTeamsByEventType(selectedEventType)
+                            )
+                              .filter((p: any) => !group.players.some((gp) => gp.id === p.id))
+                              .map((p: any) => (
+                                <SelectItem key={p.id} value={p.id}>
+                                  {selectedEventType === "SINGLES" 
+                                    ? (p.playerName || p.email)
+                                    : (p.name || `${selectedEventType === "DOUBLES" ? "Хос" : "Баг"} ${p.id}`)
+                                  }
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
+
+                    {group.players.length > 0 ? (
+                      <>
+                        {/* Result Matrix Table */}
+                        <div className="overflow-x-auto mb-4">
+                          <table className="w-full text-xs border-collapse">
+                            <thead>
+                              <tr className="bg-gray-900">
+                                <th className="border border-gray-700 px-2 py-2 text-left text-gray-400">
+                                  Тоглогч/Хос
+                                </th>
+                                {group.players.map((player, idx) => (
+                                  <th
+                                    key={player.id}
+                                    className="border border-gray-700 px-2 py-2 text-center text-gray-400"
+                                  >
+                                    {idx + 1}
+                                  </th>
+                                ))}
+                                <th className="border border-gray-700 px-2 py-2 text-center text-gray-400">
+                                  Хожил
+                                </th>
+                                <th className="border border-gray-700 px-2 py-2 text-center text-gray-400">
+                                  Хожигдол
+                                </th>
+                                <th className="border border-gray-700 px-2 py-2 text-center text-gray-400">
+                                  Оноо
+                                </th>
+                                <th className="border border-gray-700 px-2 py-2 text-center text-gray-400">
+                                  Байр
+                                </th>
+                                <th className="border border-gray-700 px-2 py-2 text-center text-gray-400"></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {group.players.map((player, rowIndex) => {
+                                const stats = group.playerStats.find(
+                                  (s) => s.playerId === player.id
+                                ) || { wins: 0, losses: 0, points: 0 };
+                                
+                                return (
+                                  <tr key={player.id} className="hover:bg-gray-900/50">
+                                    <td className="border border-gray-700 px-2 py-2 text-white font-medium">
+                                      {rowIndex + 1}. {player.name}
+                                    </td>
+                                    {group.players.map((opponent, colIndex) => (
+                                      <td
+                                        key={opponent.id}
+                                        className="border border-gray-700 px-1 py-1 text-center"
+                                      >
+                                        {rowIndex === colIndex ? (
+                                          <div className="text-gray-600">*****</div>
+                                        ) : (
+                                          <input
+                                            type="text"
+                                            className="w-full bg-gray-800 text-white text-center px-1 py-1 rounded border border-gray-700 focus:border-blue-500 focus:outline-none"
+                                            placeholder="0-0"
+                                            value={group.resultMatrix[rowIndex]?.[colIndex] || ""}
+                                            onChange={(e) =>
+                                              handleResultMatrixChange(
+                                                group.id,
+                                                rowIndex,
+                                                colIndex,
+                                                e.target.value
+                                              )
+                                            }
+                                          />
+                                        )}
+                                      </td>
+                                    ))}
+                                    <td className="border border-gray-700 px-2 py-2 text-center text-green-400 font-semibold">
+                                      {stats.wins}
+                                    </td>
+                                    <td className="border border-gray-700 px-2 py-2 text-center text-red-400 font-semibold">
+                                      {stats.losses}
+                                    </td>
+                                    <td className="border border-gray-700 px-2 py-2 text-center text-blue-400 font-semibold">
+                                      {stats.points}
+                                    </td>
+                                    <td className="border border-gray-700 px-2 py-2 text-center text-yellow-400 font-bold">
+                                      {groupIndex + 1}
+                                    </td>
+                                    <td className="border border-gray-700 px-2 py-1 text-center">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-6 px-2 text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                                        onClick={() => removePlayerFromGroup(group.id, player.id)}
+                                        data-testid={`button-remove-player-${player.id}`}
+                                      >
+                                        <X className="w-3 h-3" />
+                                      </Button>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <div className="text-xs text-gray-400 mt-2">
+                          💡 Үр дүнг "3-1" форматаар оруулна уу (эхний тоо - танай багийн оноо)
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center py-6 text-gray-500">
+                        <Users className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                        <p className="text-sm">
+                          Тоглогч нэмэхийн тулд дээрх сонголтыг ашиглана уу
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
