@@ -842,7 +842,55 @@ const AdminTournamentResults: React.FC = () => {
             </div>
 
             {/* event type tabs */}
-           
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {getAvailableEventTypes().includes("SINGLES") && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedEventType("SINGLES")}
+                  className={`flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium shadow-sm transition
+                    ${
+                      selectedEventType === "SINGLES"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700"
+                    }`}
+                >
+                  <span className="text-lg">👤</span>
+                  <span>Ганцаарчилсан тэмцээн</span>
+                </button>
+              )}
+
+              {getAvailableEventTypes().includes("DOUBLES") && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedEventType("DOUBLES")}
+                  className={`flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium shadow-sm transition
+                    ${
+                      selectedEventType === "DOUBLES"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700"
+                    }`}
+                >
+                  <span className="text-lg">👥</span>
+                  <span>Хосын тэмцээн</span>
+                </button>
+              )}
+
+              {getAvailableEventTypes().includes("TEAM") && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedEventType("TEAM")}
+                  className={`flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium shadow-sm transition
+                    ${
+                      selectedEventType === "TEAM"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700"
+                    }`}
+                >
+                  <span className="text-lg">🧑‍🤝‍🧑</span>
+                  <span>Багийн тэмцээн</span>
+                </button>
+              )}
+            </div>
 
             {/* division + info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
