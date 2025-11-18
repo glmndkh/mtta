@@ -1,0 +1,60 @@
+You are a senior full-stack developer.  
+I have an admin screen called **"Тэмцээний үр дүн"** (Competition Results).
+
+Current state:
+- Competition header is shown correctly.
+- Category buttons:
+  - "Ганцаарчилсан тэмцээн" (Singles / Individual)
+  - "Хос" (Doubles / Pair)
+  - "Баг" (Team)
+- Division dropdown **already works** and shows correct age division for the competition
+  (e.g. "13–15 нас, эрэгтэй").
+- Stage buttons:
+  - Group stage
+  - Knockout stage
+  - Final places & medals
+
+Below that I have the section:
+
+> "Бүртгүүлсэн тамирчид (SINGLES)"  
+> Currently it always displays: "Энэ төрөлд бүртгүүлсэн тамирчин байхгүй байна"
+
+The PROBLEM:
+- For this competition I already have registered participants in the database:
+  - players registered for **Singles**
+  - teams registered for **Team**
+  - pairs registered for **Doubles**
+- However, on the "Тэмцээний үр дүн" page, the list of registered participants is always empty for all 3 categories (Singles, Doubles, Team), and the counters show 0.
+
+What I WANT:
+1. When I open the "Тэмцээний үр дүн" page:
+   - Use the current `competitionId` to load all registrations from the DB.
+   - Depending on which category tab is active:
+     - **Singles tab** → show only participants registered as Singles for this competition and this division.
+     - **Doubles tab** → show only pairs registered as Doubles for this competition and this division.
+     - **Team tab** → show only teams registered as Team for this competition and this division.
+   - The label "Бүртгүүлсэн тамирчид (SINGLES)" or similar should show the correct count (e.g. "5 тоглогч", "8 баг" etc.).
+
+2. Filtering rules:
+   - Filter by:
+     - `competitionId`
+     - `category` (SINGLES / DOUBLES / TEAM)
+     - `divisionId` or age group that is currently selected in the division dropdown.
+   - Do NOT show registrations from other competitions, other divisions, or other categories.
+
+3. Please:
+   - Inspect and fix the backend query / API that returns the participant list.
+   - Make sure the frontend actually calls this API with the correct parameters
+     (`competitionId`, `category`, `divisionId`).
+   - Return an example of:
+     - updated backend endpoint (controller/service/repository)
+     - updated frontend code (React/Vue/etc.) that:
+       - loads the participants on page load and on tab change
+       - updates the list and counters
+       - handles loading and empty states properly.
+
+4. Optional but nice:
+   - When switching between Singles / Doubles / Team tabs, refetch with the right filters instead of reusing stale data.
+   - If there are really 0 participants, show a clear empty-state message; otherwise show the table/list.
+
+Please write the code changes and explanation assuming a typical modern stack (REST API + JS frontend). If something is ambiguous, make reasonable assumptions and state them.

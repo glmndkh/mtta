@@ -135,15 +135,29 @@ const AdminTournamentResults: React.FC = () => {
     enabled: !!params?.tournamentId,
   });
 
-  // Fetch participants
-  const { data: participants } = useQuery<TournamentParticipant[]>({
-    queryKey: ["/api/tournaments", params?.tournamentId, "participants"],
+  // Fetch participants - filtered by selected event type
+  const { data: participants } = useQuery<any[]>({
+    queryKey: ["/api/tournaments", params?.tournamentId, "participants", selectedEventType],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/tournaments/${params?.tournamentId}/participants?category=${selectedEventType}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch participants");
+      return response.json();
+    },
     enabled: !!params?.tournamentId,
   });
 
-  // Fetch tournament teams/pairs for count display
+  // Fetch tournament teams/pairs for count display - filtered by event type
   const { data: tournamentTeams = [] } = useQuery<any[]>({
-    queryKey: ["/api/tournaments", params?.tournamentId, "teams"],
+    queryKey: ["/api/tournaments", params?.tournamentId, "teams", selectedEventType],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/tournaments/${params?.tournamentId}/teams?eventType=${selectedEventType}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch teams");
+      return response.json();
+    },
     enabled: !!params?.tournamentId,
   });
 
@@ -215,13 +229,15 @@ const AdminTournamentResults: React.FC = () => {
   const getParticipantsByEventType = (
     eventType: "SINGLES" | "DOUBLES" | "TEAM",
   ) => {
+    // Participants are already filtered by backend, just return them
     if (!participants) return [];
-    return participants.filter((p: any) => p.participationType === eventType);
+    return participants;
   };
 
   const getTeamsByEventType = (eventType: "SINGLES" | "DOUBLES" | "TEAM") => {
+    // Teams are already filtered by backend, just return them
     if (!tournamentTeams) return [];
-    return tournamentTeams.filter((team: any) => team.eventType === eventType);
+    return tournamentTeams;
   };
 
   const getCountDisplay = (eventType: "SINGLES" | "DOUBLES" | "TEAM") => {
@@ -548,10 +564,7 @@ const AdminTournamentResults: React.FC = () => {
           name: `${groupLetter} хэсэг`,
           players: groupParticipants.map((p) => ({
             id: p.id,
-            name:
-              p.user?.firstName && p.user?.lastName
-                ? `${p.user.firstName} ${p.user.lastName}`
-                : `Тоглогч ${p.id}`,
+            name: p.playerName || `Тоглогч ${p.id}`,
             playerId: p.id,
             userId: p.userId,
           })),
@@ -1042,15 +1055,11 @@ const AdminTournamentResults: React.FC = () => {
                           className="bg-gray-900 rounded-lg px-3 py-2 text-xs text-gray-300 border border-gray-800 hover:bg-gray-800 transition-colors"
                         >
                           <div className="font-medium text-white">
-                            {participant.user?.firstName &&
-                            participant.user?.lastName
-                              ? `${participant.user.firstName} ${participant.user.lastName}`
-                              : participant.user?.email ||
-                                `Тоглогч ${index + 1}`}
+                            {participant.playerName || participant.email || `Тоглогч ${index + 1}`}
                           </div>
-                          {participant.user?.clubAffiliation && (
+                          {participant.clubAffiliation && (
                             <div className="text-gray-500 text-xs mt-0.5">
-                              {participant.user.clubAffiliation}
+                              {participant.clubAffiliation}
                             </div>
                           )}
                         </div>
