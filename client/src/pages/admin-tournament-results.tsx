@@ -123,6 +123,7 @@ const AdminTournamentResults: React.FC = () => {
   const [selectedEventType, setSelectedEventType] = useState<
     "SINGLES" | "DOUBLES" | "TEAM"
   >("SINGLES");
+  const [currentStage, setCurrentStage] = useState<"group" | "knockout" | "final">("group");
 
   // Fetch tournament data
   const { data: tournament, isLoading: tournamentLoading } =
@@ -1110,13 +1111,37 @@ const AdminTournamentResults: React.FC = () => {
                 ШАТЫГ СОНГОХ
               </label>
               <div className="flex flex-col md:flex-row gap-3 text-sm font-medium">
-                <button className="flex-1 rounded-2xl bg-blue-600 text-white py-2.5 shadow-sm border border-blue-700">
+                <button 
+                  onClick={() => setCurrentStage("group")}
+                  className={`flex-1 rounded-2xl py-2.5 shadow-sm border transition ${
+                    currentStage === "group"
+                      ? "bg-blue-600 text-white border-blue-700"
+                      : "bg-gray-800 text-gray-200 border-gray-700 hover:bg-gray-700"
+                  }`}
+                  data-testid="button-stage-group"
+                >
                   Групп шат
                 </button>
-                <button className="flex-1 rounded-2xl bg-gray-800 text-gray-200 py-2.5 border border-gray-700 hover:bg-gray-700 transition">
+                <button 
+                  onClick={() => setCurrentStage("knockout")}
+                  className={`flex-1 rounded-2xl py-2.5 shadow-sm border transition ${
+                    currentStage === "knockout"
+                      ? "bg-blue-600 text-white border-blue-700"
+                      : "bg-gray-800 text-gray-200 border-gray-700 hover:bg-gray-700"
+                  }`}
+                  data-testid="button-stage-knockout"
+                >
                   Шууд хасагдах шат
                 </button>
-                <button className="flex-1 rounded-2xl bg-gray-800 text-gray-200 py-2.5 border border-gray-700 hover:bg-gray-700 transition">
+                <button 
+                  onClick={() => setCurrentStage("final")}
+                  className={`flex-1 rounded-2xl py-2.5 shadow-sm border transition ${
+                    currentStage === "final"
+                      ? "bg-blue-600 text-white border-blue-700"
+                      : "bg-gray-800 text-gray-200 border-gray-700 hover:bg-gray-700"
+                  }`}
+                  data-testid="button-stage-final"
+                >
                   Эцсийн байр, медаль
                 </button>
               </div>
@@ -1124,6 +1149,7 @@ const AdminTournamentResults: React.FC = () => {
           </section>
 
           {/* GROUP STAGE SECTION */}
+          {currentStage === "group" && (
           <section className="w-full rounded-3xl bg-gray-900/80 backdrop-blur-sm shadow-md border border-gray-800 px-8 py-6 mb-8">
             <div className="mb-6">
               <h2 className="text-base font-semibold text-white mb-4">
@@ -1470,6 +1496,207 @@ const AdminTournamentResults: React.FC = () => {
               </div>
             )}
           </section>
+          )}
+
+          {/* KNOCKOUT STAGE SECTION */}
+          {currentStage === "knockout" && (
+          <section className="w-full rounded-3xl bg-gray-900/80 backdrop-blur-sm shadow-md border border-gray-800 px-8 py-6 mb-8">
+            <div className="mb-6">
+              <h2 className="text-base font-semibold text-white mb-4">
+                Шууд хасагдах шат ({tournament?.name || ""})
+              </h2>
+
+              <div className="flex items-center justify-between gap-4 p-3 bg-gray-950/70 rounded-lg border border-gray-800 mb-4">
+                <p className="text-xs text-gray-400">
+                  Группаас шилжсэн тоглогчдоор playoff bracket үүсгэнэ
+                </p>
+                <div className="text-xs text-gray-400 flex gap-4">
+                  <span>
+                    Нийт тоглолт:{" "}
+                    <span className="font-semibold text-white">
+                      {knockoutResults.length}
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Knockout bracket visualization */}
+            {knockoutResults.length > 0 ? (
+              <div className="overflow-x-auto">
+                <div className="min-w-max flex gap-8 p-6">
+                  {/* Group matches by round */}
+                  {Array.from(new Set(knockoutResults.map((m) => m.round)))
+                    .sort()
+                    .map((round) => {
+                      const roundMatches = knockoutResults.filter((m) => m.round === round);
+                      const roundName = roundMatches[0]?.roundName || `Раунд ${round}`;
+
+                      return (
+                        <div key={round} className="flex flex-col gap-4">
+                          <h3 className="text-sm font-semibold text-center text-blue-400 mb-2">
+                            {roundName}
+                          </h3>
+                          <div className="flex flex-col justify-around gap-4" style={{ minHeight: `${roundMatches.length * 80}px` }}>
+                            {roundMatches.map((match) => (
+                              <div
+                                key={match.id}
+                                className="bg-gray-900 border border-gray-700 rounded-lg p-3 w-64"
+                              >
+                                {/* Player 1 */}
+                                <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-700">
+                                  <Select
+                                    value={match.player1?.id || ""}
+                                    onValueChange={(value) => {
+                                      const player = qualifiedPlayers.find((p) => p.id === value);
+                                      if (player) {
+                                        setKnockoutResults((prev) =>
+                                          prev.map((m) =>
+                                            m.id === match.id
+                                              ? {
+                                                  ...m,
+                                                  player1: {
+                                                    id: player.id,
+                                                    name: player.name,
+                                                  },
+                                                }
+                                              : m
+                                          )
+                                        );
+                                      }
+                                    }}
+                                  >
+                                    <SelectTrigger className="h-8 bg-gray-800 border-gray-700 text-white text-xs">
+                                      <SelectValue placeholder="Тоглогч сонгох">
+                                        {match.player1?.name || "Тоглогч сонгох"}
+                                      </SelectValue>
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-gray-900 text-white border-gray-700">
+                                      {qualifiedPlayers.map((player) => (
+                                        <SelectItem key={player.id} value={player.id}>
+                                          {player.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="number"
+                                      className="w-12 h-8 bg-gray-800 text-white text-center text-xs rounded border border-gray-700"
+                                      placeholder="0"
+                                      value={match.player1Score || ""}
+                                      onChange={(e) =>
+                                        handleMatchScoreChange(
+                                          match.id,
+                                          "player1Score",
+                                          e.target.value
+                                        )
+                                      }
+                                    />
+                                    {match.winner?.id === match.player1?.id && (
+                                      <Trophy className="w-4 h-4 text-yellow-400" />
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Player 2 */}
+                                <div className="flex items-center justify-between">
+                                  <Select
+                                    value={match.player2?.id || ""}
+                                    onValueChange={(value) => {
+                                      const player = qualifiedPlayers.find((p) => p.id === value);
+                                      if (player) {
+                                        setKnockoutResults((prev) =>
+                                          prev.map((m) =>
+                                            m.id === match.id
+                                              ? {
+                                                  ...m,
+                                                  player2: {
+                                                    id: player.id,
+                                                    name: player.name,
+                                                  },
+                                                }
+                                              : m
+                                          )
+                                        );
+                                      }
+                                    }}
+                                  >
+                                    <SelectTrigger className="h-8 bg-gray-800 border-gray-700 text-white text-xs">
+                                      <SelectValue placeholder="Тоглогч сонгох">
+                                        {match.player2?.name || "Тоглогч сонгох"}
+                                      </SelectValue>
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-gray-900 text-white border-gray-700">
+                                      {qualifiedPlayers.map((player) => (
+                                        <SelectItem key={player.id} value={player.id}>
+                                          {player.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="number"
+                                      className="w-12 h-8 bg-gray-800 text-white text-center text-xs rounded border border-gray-700"
+                                      placeholder="0"
+                                      value={match.player2Score || ""}
+                                      onChange={(e) =>
+                                        handleMatchScoreChange(
+                                          match.id,
+                                          "player2Score",
+                                          e.target.value
+                                        )
+                                      }
+                                    />
+                                    {match.winner?.id === match.player2?.id && (
+                                      <Trophy className="w-4 h-4 text-yellow-400" />
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                <Trophy className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                <p className="text-sm mb-4">
+                  Шууд хасагдах шатыг үүсгэхийн тулд группаас тоглогчдоо шалгаруулна уу
+                </p>
+                <Button
+                  onClick={generateKnockoutBracket}
+                  disabled={qualifiedPlayers.length < 4}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Playoff bracket үүсгэх
+                </Button>
+              </div>
+            )}
+          </section>
+          )}
+
+          {/* FINAL RANKINGS SECTION */}
+          {currentStage === "final" && (
+          <section className="w-full rounded-3xl bg-gray-900/80 backdrop-blur-sm shadow-md border border-gray-800 px-8 py-6 mb-8">
+            <div className="mb-6">
+              <h2 className="text-base font-semibold text-white mb-4">
+                Эцсийн байр, медаль ({tournament?.name || ""})
+              </h2>
+            </div>
+            <div className="text-center py-12 text-gray-500">
+              <Trophy className="w-16 h-16 mx-auto mb-4 opacity-30" />
+              <p className="text-sm">
+                Энэ хэсэг удахгүй нэмэгдэх болно
+              </p>
+            </div>
+          </section>
+          )}
 
           {/* SETTINGS PANEL */}
           <div className="mb-6">
