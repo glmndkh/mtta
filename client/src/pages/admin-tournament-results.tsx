@@ -911,58 +911,7 @@ const AdminTournamentResults: React.FC = () => {
           </div>
         </div>
 
-        {/* Compact Event Type Tabs */}
-        <div className="mb-6">
-          <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl border border-gray-700/50 p-4">
-            <div className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2">
-              <Trophy className="w-4 h-4" />
-              Тэмцээний төрөл
-            </div>
-              <Tabs value={selectedEventType} onValueChange={(value) => setSelectedEventType(value as 'SINGLES' | 'DOUBLES' | 'TEAM')}>
-                <TabsList className="bg-gray-700/50 backdrop-blur-sm border border-gray-600/50 w-full grid grid-cols-3 gap-2 p-1">
-                  {getAvailableEventTypes().includes('SINGLES') && (
-                    <TabsTrigger 
-                      value="SINGLES" 
-                      className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-400 text-sm"
-                    >
-                      <User className="w-3 h-3 mr-1" />
-                      Ганцаар
-                    </TabsTrigger>
-                  )}
-                  {getAvailableEventTypes().includes('DOUBLES') && (
-                    <TabsTrigger 
-                      value="DOUBLES" 
-                      className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-400 text-sm"
-                    >
-                      <Users className="w-3 h-3 mr-1" />
-                      Хос
-                    </TabsTrigger>
-                  )}
-                  {getAvailableEventTypes().includes('TEAM') && (
-                    <TabsTrigger 
-                      value="TEAM" 
-                      className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-400 text-sm"
-                    >
-                      <Users className="w-3 h-3 mr-1" />
-                      Баг
-                    </TabsTrigger>
-                  )}
-                </TabsList>
-
-                <TabsContent value="SINGLES" className="mt-3">
-                  <div className="text-xs text-gray-400 mb-2">{getCountDisplay('SINGLES')}</div>
-                </TabsContent>
-
-                <TabsContent value="DOUBLES" className="mt-3">
-                  <div className="text-xs text-gray-400 mb-2">{getCountDisplay('DOUBLES')}</div>
-                </TabsContent>
-
-                <TabsContent value="TEAM" className="mt-3">
-                  <div className="text-xs text-gray-400 mb-2">{getCountDisplay('TEAM')}</div>
-                </TabsContent>
-              </Tabs>
-            </div>
-          </div>
+        
 
         
 
