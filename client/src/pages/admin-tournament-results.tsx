@@ -552,7 +552,13 @@ const AdminTournamentResults: React.FC = () => {
   };
 
   const createGroupStage = () => {
+    console.log("=== createGroupStage called ===");
+    console.log("participants:", participants);
+    console.log("participants.length:", participants?.length);
+    console.log("selectedEventType:", selectedEventType);
+    
     if (!participants || participants.length < 8) {
+      console.log("Not enough participants:", participants?.length);
       toast({
         title: "Хангалтгүй тоглогч",
         description: "Хэсэгийн тоглолтод дор хаяж 8 тоглогч шаардлагатай",
