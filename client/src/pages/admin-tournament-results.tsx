@@ -878,7 +878,7 @@ const AdminTournamentResults: React.FC = () => {
                       }`}
                   >
                     <span className="text-lg">👥</span>
-                    <span>Хосын тэмцээн</span>
+                    <span>Хос</span>
                   </button>
                 )}
 
@@ -894,7 +894,7 @@ const AdminTournamentResults: React.FC = () => {
                       }`}
                   >
                     <span className="text-lg">🧑‍🤝‍🧑</span>
-                    <span>Багийн тэмцээн</span>
+                    <span>Баг</span>
                   </button>
                 )}
               </div>

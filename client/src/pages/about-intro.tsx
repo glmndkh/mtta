@@ -21,7 +21,7 @@ const leaders = [
   {
     id: "1",
     name: "Ц. Гантулга",
-    image: "",
+    image: "client/src/assets/councilimages/buyanbat.jpg",
     role: "chairperson" as const,
     status: "domestic" as const,
     roleText: "Ерөнхийлөгч",
@@ -31,7 +31,7 @@ const leaders = [
   {
     id: "2",
     name: "Мандах",
-    image: "",
+    image: "client/src/assets/councilimages/Damdinbayar.jpeg",
     role: "chairperson" as const,
     status: "domestic" as const,
     roleText: "Тэргүүн дэд еранхийлөгч",
@@ -614,7 +614,6 @@ export default function AboutIntro() {
                 </p>
               </div>
 
-              {/* 👇 Энд grid-ийн баганыг нэмсэн */}
               <div
                 className="
                   max-w-7xl mx-auto px-6
@@ -628,16 +627,18 @@ export default function AboutIntro() {
                   place-items-center
                 "
               >
-                {leaders.map((leader) => (          
-                    <JudgeCard
-                      image={leader.image}
-                      name={leader.name}
-                      role={leader.role}
-                      status={leader.status}
-                      description={leader.description}
-                      roleTextOverride={leader.roleText}
-                      statusTextOverride={leader.statusText}
-                    />
+                {leaders.map((leader) => (
+                  <JudgeCard
+                    key={leader.id}
+                    image={leader.image}
+                    name={leader.name}
+                    role={leader.role}
+                    status={leader.status}
+                    description={leader.description}
+                    roleTextOverride={leader.roleText}
+                    statusTextOverride={leader.statusText}
+                    variant="leader"   // ← заавал байна
+                  />
                 ))}
               </div>
             </section>
