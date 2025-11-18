@@ -1191,27 +1191,6 @@ const AdminTournamentResults: React.FC = () => {
                   <div className="flex flex-wrap items-center gap-3">
                     <Button
                       type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log("=== BUTTON CLICKED ===");
-                        createGroupStage();
-                      }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                      size="sm"
-                      data-testid="button-create-groups-auto"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Автомат групп үүсгэх (
-                      {selectedEventType === "SINGLES" 
-                        ? getParticipantsByEventType(selectedEventType).length
-                        : getTeamsByEventType(selectedEventType).length
-                      }{" "}
-                      {selectedEventType === "SINGLES" ? "тоглогч" : selectedEventType === "DOUBLES" ? "хос" : "баг"})
-                    </Button>
-
-                    <Button
-                      type="button"
                       onClick={addNewGroup}
                       variant="outline"
                       size="sm"
@@ -1227,11 +1206,6 @@ const AdminTournamentResults: React.FC = () => {
                         <span>{groupStageResults.length} групп үүсгэгдсэн</span>
                       )}
                     </div>
-                  </div>
-
-                  <div className="mt-3 text-xs text-blue-300/70">
-                    💡 Автомат үүсгэх товч нь тамирчдыг санамсаргүйгээр 4 хүний
-                    группүүдэд хуваарилна.
                   </div>
                 </div>
               )}
