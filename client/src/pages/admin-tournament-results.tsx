@@ -968,42 +968,7 @@ const AdminTournamentResults: React.FC = () => {
 
         
 
-        {/* Knockout Bracket */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-white">
-            <Trophy className="w-6 h-6 text-purple-500" />
-            Шилжих тоглолтын удирдлага
-          </h2>
-
-          <KnockoutBracketEditor
-            initialMatches={knockoutResults.map(match => ({
-              ...match,
-              position: { x: 100, y: 100 }, // Default position, will be calculated by the editor
-              nextMatchId: undefined, // Will be calculated by the editor
-              player1Score: match.player1Score,
-              player2Score: match.player2Score
-            }))}
-            users={users || []} // Pass users for additional player options
-            qualifiedPlayers={qualifiedPlayers}
-            onSave={(matches) => {
-              setKnockoutResults(matches.map(match => ({
-                id: match.id,
-                round: match.round.toString(),
-                roundName: match.roundName,
-                player1: match.player1,
-                player2: match.player2,
-                winner: match.winner,
-                player1Score: match.player1Score,
-                player2Score: match.player2Score,
-                isFinished: !!match.winner
-              })));
-              toast({
-                title: "Хадгалагдлаа",
-                description: "Шигшээ тоглолтын үр дүн хадгалагдлаа"
-              });
-            }}
-          />
-        </div>
+        
 
         {/* Modern Results Input Section */}
         <div className="mb-8">
