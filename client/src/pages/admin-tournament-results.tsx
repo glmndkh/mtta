@@ -176,6 +176,8 @@ const AdminTournamentResults: React.FC = () => {
 
   // participationTypes -> event types
   const getAvailableEventTypes = () => {
+    console.log('Tournament participationTypes:', tournament?.participationTypes);
+    
     if (!tournament?.participationTypes || tournament.participationTypes.length === 0) {
       // Fallback: if no participation types, return all types
       return ["SINGLES", "DOUBLES", "TEAM"] as ("SINGLES" | "DOUBLES" | "TEAM")[];
@@ -183,6 +185,8 @@ const AdminTournamentResults: React.FC = () => {
     
     const mappedTypes = tournament.participationTypes.map((type) => {
       const upperType = type.toUpperCase();
+      console.log('Mapping type:', type, '-> upperType:', upperType);
+      
       // Map common variations
       if (upperType.includes('SINGLE') || upperType === 'INDIVIDUAL') return 'SINGLES';
       if (upperType.includes('DOUBLE') || upperType.includes('PAIR')) return 'DOUBLES';
@@ -190,8 +194,12 @@ const AdminTournamentResults: React.FC = () => {
       return null;
     }).filter(Boolean) as ("SINGLES" | "DOUBLES" | "TEAM")[];
     
+    console.log('Mapped types:', mappedTypes);
+    
     // Remove duplicates
-    return [...new Set(mappedTypes)];
+    const result = [...new Set(mappedTypes)];
+    console.log('Final result:', result);
+    return result;
   };
 
   const getParticipantsByEventType = (
