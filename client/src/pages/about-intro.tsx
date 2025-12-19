@@ -21,7 +21,7 @@ const leaders = [
   {
     id: "1",
     name: "Ц. Гантулга",
-    image: "/uploads/president-gantulga.jpg",
+    image: "/uploads/TerguulegchGishuud/president-gantulga.jpg",
     role: "chairperson" as const,
     status: "domestic" as const,
     roleText: "Ерөнхийлөгч",
@@ -31,7 +31,7 @@ const leaders = [
   {
     id: "2",
     name: "Мандах",
-    image: "client/src/assets/councilimages/Damdinbayar.jpeg",
+    image: "",
     role: "chairperson" as const,
     status: "domestic" as const,
     roleText: "Тэргүүн дэд еранхийлөгч",
@@ -50,13 +50,13 @@ const leaders = [
   },
   {
     id: "4",
-    name: "Ганбаатар",
-    image: "",
+    name: "Б.Ганбаатар",
+    image: "/uploads/TerguulegchGishuud/Ganbaatar.jpeg",
     role: "chairperson" as const,
     status: "domestic" as const,
     roleText: "Дэд ерөнхийлөгч",
     statusText: "",
-    description: "",
+    description: "Монгол Улсын Хөгжлийн банкны зээл хариуцсан захирал",
   },
   {
     id: "5",
@@ -70,13 +70,13 @@ const leaders = [
   },
   {
     id: "6",
-    name: "Чинбат",
-    image: "",
+    name: "Г.Чинбат",
+    image: "/uploads/TerguulegchGishuud/G.Chinbat.jpeg",
     role: "chairperson" as const,
     status: "domestic" as const,
     roleText: "Дэд ерөнхийлөгч",
     statusText: "",
-    description: "",
+    description: "Баттесла ХХК захирал",
   },
   {
     id: "7",
@@ -190,13 +190,13 @@ const leaders = [
   },
   {
     id: "18",
-    name: "Батсайхан",
-    image: "",
+    name: "О.Батсайхан",
+    image: "/uploads/TerguulegchGishuud/Batsaikhan.jpeg",
     role: "member" as const,
     status: "domestic" as const,
     roleText: "Тэргүүлэгч гишүүн",
     statusText: "",
-    description: "",
+    description: "Монгол Улсын Шинжлэх Ухааны Академийн Олон улс судлалын хүрээлэнгийн профессор, түүхийн шинжлэх ухааны доктор",
   },
   {
     id: "19",
@@ -241,12 +241,12 @@ const leaders = [
   {
     id: "23",
     name: "Мөнхбилэг",
-    image: "/picture/Terguulegch_gishuud/Мөнхбилэг.jpg",
+    image: "/uploads/TerguulegchGishuud/Munkhbileg.jpg",
     role: "member" as const,
     status: "international" as const,
     roleText: "Гадаад харилцааны албаны дарга",
     statusText: "",
-    description: "",
+    description: "Олон улсын ширээний теннисний холбооны дүрмийн зөвлөлийн гишүүн, Азийн ширээний теннисний холбооны тэмцээн хариуцсан менежер, Катарын ширээний теннисний холбооны менежер",
   },
   {
     id: "24",
