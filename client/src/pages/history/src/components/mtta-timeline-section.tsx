@@ -16,6 +16,7 @@ interface TimelineEvent {
   title: string;
   description: string;
   champions: ChampionCard[];
+  eventImage?: string;
 }
 
 /** ✅ Бүх зураг энд байна */
@@ -90,7 +91,7 @@ function resolveChampionImage(name: string) {
 }
 
 /** 3) 1956–2025 өгөг */
-type Row = { year: number; male?: string; female?: string; description?: string };
+type Row = { year: number; male?: string; female?: string; description?: string; eventImage?: string };
 
 const championsRaw: Row[] = [
   {
@@ -225,7 +226,13 @@ const championsRaw: Row[] = [
   { year: 2020, male: "Ч.Эрдэнэбаяр", female: "М.Ундрам" },
   { year: 2021, male: "Б.Билэгт", female: "Б.Батхишиг" },
   { year: 2022, male: "Ч.Эрдэнэбаяр", female: "Б.Батхишиг" },
-  { year: 2023, male: "Г.Сэр-Од", female: "М.Ундрам", description: "• Ахмадын азийн аварга зохион байгуулагдсан." },
+  { 
+    year: 2023, 
+    male: "Г.Сэр-Од", 
+    female: "М.Ундрам", 
+    description: "• Ахмадын азийн аварга зохион байгуулагдсан.",
+    eventImage: "/picture/2023-asian-veteran-championship.jpg"
+  },
   { year: 2024, male: "Г.Сэр-Од", female: "Б.Батхишиг" },
   { year: 2025, male: "М.Манлайжаргал", female: "Б.Батхишиг" }
 ];
@@ -260,7 +267,8 @@ function buildTimelineEvents(rows: Row[]): TimelineEvent[] {
       description:
         r.description ||
         "Тухайн жилд улсын аварга болсон тамирчид. (Түүхэн бичвэрийг дараа нь дэлгэрүүлж болно.)",
-      champions
+      champions,
+      eventImage: r.eventImage
     });
   });
 
@@ -430,6 +438,17 @@ export function MTTATimelineSection() {
                     <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
                       {event.description}
                     </p>
+                    {/* Үйл явдлын зураг */}
+                    {event.eventImage && (
+                      <div className="mt-4">
+                        <img 
+                          src={event.eventImage} 
+                          alt={event.title}
+                          className="w-full max-w-md mx-auto rounded-lg shadow-lg"
+                          style={{ height: '589px', width: '100%', maxWidth: '173px', objectFit: 'cover' }}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 
