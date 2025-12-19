@@ -21,42 +21,42 @@ const staticPlayers: NationalTeamPlayer[] = [
     firstName: "Мяндал",
     lastName: "Тэмүүлэн",
     age: 24,
-    imageUrl: "picture/Үндэсний шигшээ/Temuulen.jpg"
+    imageUrl: "/picture/Үндэсний шигшээ/Temuulen.jpg"
   },
   {
     id: "nt-player-2",
     firstName: "Батмөнх",
     lastName: "Болор-Эрдэнэ",
     age: 23,
-    imageUrl: "picture/Үндэсний шигшээ/Bolor-Erdene.jpg"
+    imageUrl: "/picture/Үндэсний шигшээ/Bolor-Erdene.jpg"
   },
   {
     id: "nt-player-3",
     firstName: "Бат-Эрдэнэ",
     lastName: "Эгшиглэн",
     age: 21,
-    imageUrl: "picture/Үндэсний шигшээ/Egshiglen.jpg"
+    imageUrl: "/picture/Үндэсний шигшээ/Egshiglen.jpg"
   },
   {
     id: "nt-player-4",
     firstName: "Өвгөнбүргэд",
     lastName: "Балжинням",
     age: 21,
-    imageUrl: "picture/Үндэсний шигшээ/Baljinnyam.jpg"
+    imageUrl: "/picture/Үндэсний шигшээ/Baljinnyam.jpg"
   },
   {
     id: "nt-player-5",
     firstName: "М.",
     lastName: "Манлайжаргал",
     age: 18,
-    imageUrl: "picture/Үндэсний шигшээ/Manlai.jpg"
+    imageUrl: "/picture/Үндэсний шигшээ/Manlai.jpg"
   },
   {
     id: "nt-player-6",
     firstName: "Б.",
     lastName: "Билгүүн",
     age: 15,
-    imageUrl: "picture/Үндэсний шигшээ/Bilguun.jpg"
+    imageUrl: "/picture/Үндэсний шигшээ/Bilguun.jpg"
   }
 ];
 
