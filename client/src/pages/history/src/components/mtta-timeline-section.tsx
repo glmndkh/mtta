@@ -77,7 +77,7 @@ const imageMap: Record<string, string> = {
   "Ч.Эрдэнэбаяр": IMG_BASE + "Ch.Erdenebayar .jpeg",
   "М.Ундрам": IMG_BASE + "M.Undram.jpeg",
   "Г.Сэр-Од": IMG_BASE + "G.Ser-Od.jpeg",
-  "М.Манлайжаргал": IMG_BASE + "M.Manlai-Jargal.jpeg"
+  "М.Манлайжаргал": IMG_BASE + "M.Manlai-Jargal.jpeg",
 };
 
 /**
@@ -87,11 +87,17 @@ const imageMap: Record<string, string> = {
  */
 function resolveChampionImage(name: string) {
   const key = normalizeNameKey(name);
-  return imageMap[key] || (IMG_BASE + encodeURI(key) + ".jpeg");
+  return imageMap[key] || IMG_BASE + encodeURI(key) + ".jpeg";
 }
 
 /** 3) 1956–2025 өгөг */
-type Row = { year: number; male?: string; female?: string; description?: string; eventImage?: string };
+type Row = {
+  year: number;
+  male?: string;
+  female?: string;
+  description?: string;
+  eventImage?: string;
+};
 
 const championsRaw: Row[] = [
   {
@@ -99,14 +105,14 @@ const championsRaw: Row[] = [
     description:
       "• Нийслэлд анх удаа ширээний теннисний (одон бөмбөгийн) тэмцээн зохион байгуулагдсан.\n" +
       "• Энэ жилээс эхлэн сургуулиуд, байгууллагууд дунд тогтмол тэмцээн явагдаж эхэлжээ.\n" +
-      "• Монголд ширээний теннис сонирхогчдын тоо нэмэгдэж, спортын анхны үндэс тавигдав."
+      "• Монголд ширээний теннис сонирхогчдын тоо нэмэгдэж, спортын анхны үндэс тавигдав.",
   },
   {
     year: 1957,
     description:
       "• Монголд анхны улсын аваргын төлөө тэмцээн болсон.\n" +
       "• “Хөд<bos>лөх” нийгэмлэг болон сургуулиудын дэргэд секцүүд байгуулагдаж, сонирхогчдын тоо улам өсөв.\n" +
-      "• Одон бөмбөгийн спорт албан байгууллагуудын дунд өргөн дэлгэрч эхэлжээ."
+      "• Одон бөмбөгийн спорт албан байгууллагуудын дунд өргөн дэлгэрч эхэлжээ.",
   },
   {
     year: 1958,
@@ -115,7 +121,7 @@ const championsRaw: Row[] = [
     description:
       "• Улаанбаатар хотод улсын аварга шалгаруулах анхны тэмцээн болсон.\n" +
       "• “Хөдөлмөр” нийгэмлэгийн залуус анх удаа өрсөлдөж, эмэгтэй 1, эрэгтэй 2 тамирчин оролцсон.\n" +
-      "• Тэмцээний дүрэм, зохион байгуулалт сайжирч, спортын стандарт тогтоогдов."
+      "• Тэмцээний дүрэм, зохион байгуулалт сайжирч, спортын стандарт тогтоогдов.",
   },
   {
     year: 1959,
@@ -124,7 +130,7 @@ const championsRaw: Row[] = [
     description:
       "• Сургуулиудын дэргэд бэлтгэл сургалт тогтмол явагдаж эхэлсэн.\n" +
       "• Монголын залуучуудын анхдугаар их наадамд ширээний теннис төрөл орсон.\n" +
-      "• Энэ үеэс секц, дугуйлангууд нэмэгдэж, оролцогчдын тоо өсөв."
+      "• Энэ үеэс секц, дугуйлангууд нэмэгдэж, оролцогчдын тоо өсөв.",
   },
   {
     year: 1960,
@@ -133,7 +139,7 @@ const championsRaw: Row[] = [
     description:
       "• Ширээний теннисний үндсэн холбоо албан ёсоор тогтож, зохион байгуулалт сайжив.\n" +
       "• Монголын тамирчид БНСУ-ын төлөөлөгчидтэй нөхөрсөг тоглолт хийв.\n" +
-      "• Бэлтгэлийн тогтолцоо бүрэлдэн, албан ёсны тэмцээний системд шилжив."
+      "• Бэлтгэлийн тогтолцоо бүрэлдэн, албан ёсны тэмцээний системд шилжив.",
   },
   {
     year: 1961,
@@ -142,7 +148,7 @@ const championsRaw: Row[] = [
     description:
       "• Монголын тамирчид анх удаа БНХАУ-д очиж туршлага судлав.\n" +
       "• Улсын аварга 5 төрлөөр зохион байгуулагдаж, цар хүрээ нь тэлэв.\n" +
-      "• Техник, тактикийн бэлтгэлийн чанар ахисан он байв."
+      "• Техник, тактикийн бэлтгэлийн чанар ахисан он байв.",
   },
   {
     year: 1962,
@@ -151,34 +157,56 @@ const championsRaw: Row[] = [
     description:
       "• Монголын баг Дэлхийн оюутны IV наадамд оролцов.\n" +
       "• Хотын аваргад 27 эрэгтэй, 26 эмэгтэй тамирчин өрсөлджээ.\n" +
-      "• Улсын хэмжээнд зохион байгуулалт, оролцоо тогтмол өсөв."
+      "• Улсын хэмжээнд зохион байгуулалт, оролцоо тогтмол өсөв.",
   },
   {
     year: 1963,
     description:
       "• Улсын шигшээ баг байгуулагдав.\n" +
       "• Б.Наран спортын мастер цол хүртсэн (анхны мастер).\n" +
-      "• БНМАУ–БНХАУ найрамдлын тэмцээнд Монголын тамирчид анх оролцов; С.Бямбажав, Ц.Төмбүү нар хосоор IV байрт.\n"
+      "• БНМАУ–БНХАУ найрамдлын тэмцээнд Монголын тамирчид анх оролцов; С.Бямбажав, Ц.Төмбүү на<� хосоор IV байрт.\n",
   },
   {
     year: 1964,
     male: "Ц.Томбуу",
     female: "Б.Наран",
     description:
-      "• Сургууль, үйлдвэр, байгууллагуудын тэмцээн тогтмолжив.\n• Ширээний теннис нийтийн спортын түвшинд дэлгэрэв."
+      "• Сургууль, үйлдвэр, байгууллагуудын тэмцээн тогтмолжив.\n• Ширээний теннис нийтийн спортын түвшинд дэлгэрэв.",
   },
-  { year: 1965, description: "• Пионерийн сургуулиуд, үйлдвэрийн хоршоодын дэргэд секцүүд олноор байгуулагдав.\n• Залуу тамирчдын тоо эрс өссөн үе эхэллээ." },
-  { year: 1966, male: "Б.Амарсанаа", female: "Б.Отгонжаргал", description: "• Өсвөр үеийн уралдаан, сургалт идэвхжив; шинэ авьяастнууд тодорч эхлэв." },
-  { year: 1967, description: "• Улсын аваргад оролцогчдын тоо огцом өсөв (түүхэн дээд амжилтуудын нэг)." },
-  { year: 1968, description: "• Оролцогчдын хүрээ, клубүүдийн тоо улам нэмэгдэв; бэлтгэлийн бааз суурь сайжрав." },
-  { year: 1969, male: "Ц.Томбуу", female: "Б.Отгонжаргал", description: "• Улсын аваргад 84 эрэгтэй, 36 эмэгтэй тамирчин оролцлоо." },
+  {
+    year: 1965,
+    description:
+      "• Пионерийн сургуулиуд, үйлдвэрийн хоршоодын дэргэд секцүүд олноор байгуулагдав.\n• Залуу тамирчдын тоо эрс өссөн үе эхэллээ.",
+  },
+  {
+    year: 1966,
+    male: "Б.Амарсанаа",
+    female: "Б.Отгонжаргал",
+    description:
+      "• Өсвөр үеийн уралдаан, сургалт идэвхжив; шинэ авьяастнууд тодорч эхлэв.",
+  },
+  {
+    year: 1967,
+    description:
+      "• Улсын аваргад оролцогчдын тоо огцом өсөв (түүхэн дээд амжилтуудын нэг).",
+  },
+  {
+    year: 1968,
+    description:
+      "• Оролцогчдын хүрээ, клубүүдийн тоо улам нэмэгдэв; бэлтгэлийн бааз суурь сайжрав.",
+  },
+  {
+    year: 1969,
+    male: "Ц.Томбуу",
+    female: "Б.Отгонжаргал",
+    description: "• Улсын аваргад 84 эрэгтэй, 36 эмэгтэй тамирчин оролцлоо.",
+  },
   {
     year: 1970,
     description:
       "• Шинэ үеийн тамирчид тодорч, Д.Жамъянсүрэн, Д.Цэмбэл, Х.Жамъянсүрэн, Б.Долгормаа, Ш.Цагаар зэрэг олон тамирчин амжилт гаргав.\n" +
-      "• Спорт бүрэн тогтолцоотой (тогтмол тэмцээн, сургалт, холбоо, шигшээ) хэмжээнд төлөвшив."
+      "• Спорт бүрэн тогтолцоотой (тогтмол тэмцээн, сургалт, холбоо, шигшээ) хэмжээнд төлөвшив.",
   },
-
 
   { year: 1971, male: "Ц.Томбуу", female: "Г.Мөнхцэцэг" },
   { year: 1973, male: "М.Нэргүй", female: "Б.Отгонжаргал" },
@@ -226,15 +254,15 @@ const championsRaw: Row[] = [
   { year: 2020, male: "Ч.Эрдэнэбаяр", female: "М.Ундрам" },
   { year: 2021, male: "Б.Билэгт", female: "Б.Батхишиг" },
   { year: 2022, male: "Ч.Эрдэнэбаяр", female: "Б.Батхишиг" },
-  { 
-    year: 2023, 
-    male: "Г.Сэр-Од", 
-    female: "М.Ундрам", 
+  {
+    year: 2023,
+    male: "Г.Сэр-Од",
+    female: "М.Ундрам",
     description: "• Ахмадын азийн аварга зохион байгуулагдсан.",
-    eventImage: ""
+    eventImage: "picture/past-champions2/2023.jpeg",
   },
   { year: 2024, male: "Г.Сэр-Од", female: "Б.Батхишиг" },
-  { year: 2025, male: "М.Манлайжаргал", female: "Б.Батхишиг" }
+  { year: 2025, male: "М.Манлайжаргал", female: "Б.Батхишиг" },
 ];
 
 /** 4) Raw → TimelineEvent хөрвүүлэгч (UI өөрчлөхгүй, зөвхөн image resolve) */
@@ -248,14 +276,14 @@ function buildTimelineEvents(rows: Row[]): TimelineEvent[] {
       champions.push({
         name: r.male,
         title: "Эрэгтэйчүүдийн улсын аварга",
-        image: resolveChampionImage(r.male)
+        image: resolveChampionImage(r.male),
       });
     }
     if (r.female) {
       champions.push({
         name: r.female,
         title: "Эмэгтэйчүүдийн улсын аварга",
-        image: resolveChampionImage(r.female)
+        image: resolveChampionImage(r.female),
       });
     }
 
@@ -268,7 +296,7 @@ function buildTimelineEvents(rows: Row[]): TimelineEvent[] {
         r.description ||
         "Тухайн жилд улсын аварга болсон тамирчид. (Түүхэн бичвэрийг дараа нь дэлгэрүүлж болно.)",
       champions,
-      eventImage: r.eventImage
+      eventImage: r.eventImage,
     });
   });
 
@@ -302,14 +330,20 @@ function ChampionCardView({ champion }: { champion: ChampionCard }) {
               loading="lazy"
               className="w-full h-auto object-contain rounded-lg"
               onError={() => {
-                console.error("IMAGE LOAD FAILED:", champion.name, champion.image);
+                console.error(
+                  "IMAGE LOAD FAILED:",
+                  champion.name,
+                  champion.image,
+                );
                 setHasError(true);
               }}
             />
           )}
         </div>
         <div className="flex-1">
-          <h4 className="text-card-foreground font-semibold">{champion.name}</h4>
+          <h4 className="text-card-foreground font-semibold">
+            {champion.name}
+          </h4>
           <p className="text-primary text-sm">{champion.title}</p>
         </div>
       </div>
@@ -327,7 +361,7 @@ export function MTTATimelineSection() {
 
     if (searchYear.trim()) {
       filtered = filtered.filter((event) =>
-        event.year.includes(searchYear.trim())
+        event.year.includes(searchYear.trim()),
       );
     }
 
@@ -441,15 +475,19 @@ export function MTTATimelineSection() {
                     {/* Үйл явдлын зураг */}
                     {event.eventImage && (
                       <div className="mt-4 flex justify-center">
-                        <img 
-                          src={event.eventImage} 
+                        <img
+                          src={event.eventImage}
                           alt={event.title}
                           className="rounded-lg shadow-lg max-w-full h-auto"
-                          style={{ maxHeight: '400px', width: 'auto' }}
+                          style={{ maxHeight: "400px", width: "auto" }}
                           onError={(e) => {
-                            console.error("Event image load failed:", event.eventImage);
+                            console.error(
+                              "Event image load failed:",
+                              event.eventImage,
+                            );
                             const target = e.currentTarget;
-                            target.src = '/attached_assets/556674793_1123191930015925_9199771473330098213_n - Buyanbat Buba (1)_1762518243369.jpg';
+                            target.src =
+                              "/attached_assets/556674793_1123191930015925_9199771473330098213_n - Buyanbat Buba (1)_1762518243369.jpg";
                             target.onerror = null; // Prevent infinite loop
                           }}
                         />
