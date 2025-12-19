@@ -486,54 +486,63 @@ export default function AboutIntro() {
                         title: "Холбоо байгуулагдсан",
                         description:
                           "Монголын ширээний теннисний холбоо анх байгуулагдав",
+                        image: "",
                       },
                       {
                         year: "1970",
                         title: "Эхний тэмцээн",
                         description:
                           "Улсын хэмжээний анхны ширээний теннисний тэмцээн зохион байгуулав",
+                        image: "",
                       },
                       {
                         year: "1990",
                         title: "ITTF-д элссэн",
                         description:
                           "Олон улсын ширээний теннисний холбооны гишүүн болсон",
+                        image: "",
                       },
                       {
                         year: "1993",
                         title: "Дэлхийн аварга",
                         description:
                           "Анхны олон улсын тэмцээнд оролцов",
+                        image: "",
                       },
                       {
                         year: "1994",
                         title: "Азийн наадам",
                         description:
                           "Азийн наадамд анх удаа оролцлоо",
+                        image: "",
                       },
                       {
                         year: "1996",
                         title: "Сургалтын төв",
                         description:
                           "Үндэсний сургалтын төвийг байгуулсан",
+                        image: "",
                       },
                       {
                         year: "1997",
                         title: "Залуучуудын хөтөлбөр",
                         description:
                           "Залуучуудын хөгжлийн хөтөлбөр эхэлсэн",
+                        image: "",
                       },
                       {
                         year: "1998",
                         title: "Эмэгтэйчүүдийн спорт",
                         description:
                           "Эмэгтэйчүүдийн ширээний теннисийг хөгжүүлэх хөтөлбөр",
+                        image: "",
                       },
                       {
                         year: "2000",
                         title: "Олон улсын харилцаа",
                         description:
                           "Өмнөд Солонгос, Хятадтай хамтын ажиллагаа эхэлсэн",
+                        image: "",
                       },
                     ].map((event) => (
                       <div key={event.year} className="flex-shrink-0 w-80">
@@ -544,14 +553,29 @@ export default function AboutIntro() {
                             </div>
                             <div className="flex-1 h-0.5 bg-gray-600" />
                           </div>
-                          <Card className="card-dark">
-                            <CardContent className="p-6">
-                              <h3 className="text-gray-900 dark:text-white font-semibold mb-2">
-                                {event.title}
-                              </h3>
-                              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
-                                {event.description}
-                              </p>
+                          <Card className="card-dark overflow-hidden">
+                            <CardContent className="p-0">
+                              {event.image && (
+                                <div className="w-full h-48 overflow-hidden">
+                                  <img
+                                    src={event.image}
+                                    alt={event.title}
+                                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                                    onError={(e) => {
+                                      const target = e.currentTarget;
+                                      target.style.display = 'none';
+                                    }}
+                                  />
+                                </div>
+                              )}
+                              <div className="p-6">
+                                <h3 className="text-gray-900 dark:text-white font-semibold mb-2">
+                                  {event.title}
+                                </h3>
+                                <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+                                  {event.description}
+                                </p>
+                              </div>
                             </CardContent>
                           </Card>
                         </div>
