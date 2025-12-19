@@ -231,7 +231,7 @@ const championsRaw: Row[] = [
     male: "Г.Сэр-Од", 
     female: "М.Ундрам", 
     description: "• Ахмадын азийн аварга зохион байгуулагдсан.",
-    eventImage: "/attached_assets/556674793_1123191930015925_9199771473330098213_n - Buyanbat Buba (1)_1762518243369.jpg"
+    eventImage: ""
   },
   { year: 2024, male: "Г.Сэр-Од", female: "Б.Батхишиг" },
   { year: 2025, male: "М.Манлайжаргал", female: "Б.Батхишиг" }
