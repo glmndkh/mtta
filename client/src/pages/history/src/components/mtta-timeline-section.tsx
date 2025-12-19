@@ -73,10 +73,10 @@ const imageMap: Record<string, string> = {
   "Ч.Алтанцэцэг": IMG_BASE + "Ch.Altantsetseg.jpeg",
   "Л. Батхишиг": IMG_BASE + "L.Batkhishig.jpeg", // нэрэнд зай байгаа тул normalize хамгаална
   "Ө.Балжинням": IMG_BASE + "U.Baljinnyam.jpeg",
-  "Ч.Эрдэнэбаяр": IMG_BASE + "Ch.Erdenebayar.jpeg",
-  "М.Ундрам": IMG_BASE + "M.Undram.jpeg", // хэрвээ бодит файл нэр өөр бол энд засна
+  "Ч.Эрдэнэбаяр": IMG_BASE + "Ch.Erdenebayar .jpeg",
+  "М.Ундрам": IMG_BASE + "M.Undram.jpeg",
   "Г.Сэр-Од": IMG_BASE + "G.Ser-Od.jpeg",
-  "М.Манлайжаргал": IMG_BASE + "Manlai.jpeg" // бодит файл нэр өөр бол энд засна
+  "М.Манлайжаргал": IMG_BASE + "M.Manlai-Jargal.jpeg"
 };
 
 /**
