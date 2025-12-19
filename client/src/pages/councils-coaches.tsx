@@ -1,18 +1,18 @@
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import { JudgeCard } from "@/components/JudgeCard";
-import buyanbatImage from "@/assets/councilimages/buyanbat.jpg";
+import bilegtImage from "@/assets/councilimages/bilegt.jpg";
 import damdinbayarImage from "@/assets/councilimages/Damdinbayar.jpeg";
 import tsogzolmaaImage from "@/assets/councilimages/Tsogzolmaa.jpg";
 import tumenImage from "@/assets/councilimages/Tumen.jpg";
 import teamImage from "@/assets/councilimages/Shuugchid.jpg";
 
-interface Judge {
+interface coach {
   id: string;
   firstName: string;
   lastName: string;
   imageUrl: string;
-  judgeType: "domestic" | "international";
+  coachType: "head" | "international";
   role: "chairperson" | "member";
   description: string;
   displayName?: string;
@@ -21,20 +21,20 @@ interface Judge {
 const staticJudges: Judge[] = [
   {
     id: "1",
-    firstName: "Буянбат",
+    firstName: "Билэгт",
     lastName: "Б",
-    imageUrl: buyanbatImage,
-    judgeType: "international",
+    imageUrl: bilegtImage,
+    coachType: "head",
     role: "chairperson",
     description:
-      "Олон улсын шүүгч, Монгол Улсын Ширээний Теннисний Холбооны Шүүгчдийн Зөвлөлийн Дарга",
+      "Дасгалжуулагч, Монгол Улсын Ширээний Теннисний Холбооны Шүүгчдийн Зөвлөлийн Дарга",
   },
   {
     id: "2",
     firstName: "Дамдинбаяр",
     lastName: "Х",
     imageUrl: damdinbayarImage,
-    judgeType: "international",
+    coachType: "international",
     role: "member",
     description: "Олон улсын шүүгч, Шүүгчдийн Зөвлөлийн Гишүүн",
   },
@@ -43,7 +43,7 @@ const staticJudges: Judge[] = [
     firstName: "Цогзолмаа",
     lastName: "Р",
     imageUrl: tsogzolmaaImage,
-    judgeType: "international",
+    coachType: "international",
     role: "member",
     description: "Олон улсын шүүгч, Шүүгчдийн Зөвлөлийн Гишүүн",
     displayName: "Р. Цогзолмаа",
@@ -53,7 +53,7 @@ const staticJudges: Judge[] = [
     firstName: "Түмэн-Өлзий",
     lastName: "Д",
     imageUrl: tumenImage,
-    judgeType: "international",
+    coachType: "international",
     role: "member",
     description: "Олон улсын шүүгч, Шүүгчдийн Зөвлөлийн Гишүүн",
   },

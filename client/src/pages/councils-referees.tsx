@@ -5,6 +5,7 @@ import buyanbatImage from "@/assets/councilimages/buyanbat.jpg";
 import damdinbayarImage from "@/assets/councilimages/Damdinbayar.jpeg";
 import tsogzolmaaImage from "@/assets/councilimages/Tsogzolmaa.jpg";
 import tumenImage from "@/assets/councilimages/Tumen.jpg";
+import boldImage from "@/assets/councilimages/Bold.jpg";
 import teamImage from "@/assets/councilimages/Shuugchid.jpg";
 
 interface Judge {
@@ -56,6 +57,15 @@ const staticJudges: Judge[] = [
     judgeType: "international",
     role: "member",
     description: "Олон улсын шүүгч, Шүүгчдийн Зөвлөлийн Гишүүн",
+  },
+  {
+    id: "5",
+      firstName: "Болд",
+      lastName: "Т",
+      imageUrl: boldImage,
+      judgeType: "international",
+      role: "member",
+      description: "Олон улсын шүүгч, Шүүгчдийн Зөвлөлийн Гишүүн",
   },
 ];
 
