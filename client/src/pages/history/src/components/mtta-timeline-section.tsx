@@ -444,11 +444,13 @@ export function MTTATimelineSection() {
                         <img 
                           src={event.eventImage} 
                           alt={event.title}
-                          className="rounded-lg shadow-lg"
-                          style={{ height: '589px', width: '173px', objectFit: 'cover' }}
+                          className="rounded-lg shadow-lg max-w-full h-auto"
+                          style={{ maxHeight: '400px', width: 'auto' }}
                           onError={(e) => {
                             console.error("Event image load failed:", event.eventImage);
-                            e.currentTarget.style.display = 'none';
+                            const target = e.currentTarget;
+                            target.src = '/attached_assets/556674793_1123191930015925_9199771473330098213_n - Buyanbat Buba (1)_1762518243369.jpg';
+                            target.onerror = null; // Prevent infinite loop
                           }}
                         />
                       </div>
