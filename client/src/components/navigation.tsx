@@ -567,6 +567,20 @@ export default function Navigation() {
                   </Link>
                 );
               })}
+              {/* Add "Алдартнууд" link to mobile menu */}
+              <Link href="/celebrities">
+                <div
+                  onClick={() => setShowMobileMenu(false)}
+                  className={`flex items-center px-6 py-4 text-white border-b border-gray-800 hover:bg-gray-800 ${
+                    isActive(location, "/celebrities")
+                      ? "bg-green-900 text-green-400"
+                      : ""
+                  }`}
+                >
+                  <User className="h-5 w-5 mr-3" />
+                  <span className="text-base">Алдартнууд</span>
+                </div>
+              </Link>
             </div>
 
             {/* User section at bottom */}
@@ -1045,6 +1059,17 @@ export default function Navigation() {
                 >
                   <UserPlus className="mr-2 h-4 w-4" />
                   <span>Бүртгүүлэх</span>
+                </CommandItem>
+                {/* Add "Алдартнууд" quick link */}
+                <CommandItem
+                  value="celebrities"
+                  onSelect={() => {
+                    setShowSearch(false);
+                    window.location.href = "/celebrities";
+                  }}
+                >
+                  <Users className="mr-2 h-4 w-4" />
+                  <span>Алдартнууд</span>
                 </CommandItem>
               </CommandGroup>
             </>
