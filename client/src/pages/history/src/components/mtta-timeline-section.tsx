@@ -18,57 +18,78 @@ interface TimelineEvent {
   champions: ChampionCard[];
 }
 
-/** 1) Нэр → Зураг mapping  */
-const imgBase = "/picture/pastchampions2/";
+/** ✅ Бүх зураг энд байна */
+const IMG_BASE = "/picture/past-champions2/";
+
+/** Нэрийг нэг стандарт болгох (зай, NBSP, "Ч .Э" гэх мэтээс хамгаална) */
+function normalizeNameKey(name: string) {
+  return name
+    .trim()
+    .replace(/\u00A0/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/\s*\.\s*/g, ".");
+}
+
+/** 1) Нэр → Зураг mapping (хэрвээ тодорхой файлын нэр нь "name.jpeg" биш бол энд зааж өгнө) */
 const imageMap: Record<string, string> = {
-  "Г.Нооной": imgBase + "G.Noonoi.jpeg",
-  "Д.Баньдхүү": imgBase + "D.Banidkhuu.jpeg",
-  "Б.Амарсанаа": imgBase + "B.Amarsanaa.jpeg",
-  "Ц.Томбуу": imgBase + "Ts.Tombuu.jpeg",
-  "Г.Нансалмаа": imgBase + "G.Nansalmaa.jpeg",
-  "Д.Алимаа": imgBase + "D.Alimaa.jpeg",
-  "Б.Наран": imgBase + "B.Naran.jpeg",
-  "Б.Отгонжаргал": imgBase + "B.Otgonjargal.jpeg",
-  "Г.Мөнхцэцэг": imgBase + "G.Munkhtsetseg.jpeg",
-  "М.Нэргүй": imgBase + "M.Nergui.jpeg",
-  "О.Цэдэнбалжир": imgBase + "O.Tsedenbaljir.jpeg",
-  "Т.Болд": imgBase + "T.Bold.jpeg",
-  "С.Галбадрах": imgBase + "S.Galbadrakh.jpeg",
-  "Г.Жаргалсайхан": imgBase + "G.Jargalsaikhan.jpeg",
-  "Б.Баясгалан": imgBase + "B.Bayasgalan.jpeg",
-  "Б.Мөнхням": imgBase + "B.Monkhnyam.jpeg",
-  "Б.Андхүү": imgBase + "B.Andkhuu.jpeg",
-  "Д.Баяраа": imgBase + "D.Bayaraa.jpeg",
-  "Б.Баярмагнай": imgBase + "B.Bayarmagnai.jpeg",
-  "Ц.Наранцацрал": imgBase + "Ts.Narantsatsral.jpeg",
-  "О.Лхагвасүрэн": imgBase + "O.Lkhagvasuren.jpeg",
-  "К.Оюунчимэг": imgBase + "K.Oyunchimeg.jpeg",
-  "Ц.Оюун-Эрдэнэ": imgBase + "Ts.Oyun-Erdene.jpeg",
-  "Б.Содболор": imgBase + "B.Sodbolor.jpeg",
-  "Б.Лхагвамаа": imgBase + "B.Lkhagvamaa.jpeg",
-  "О.Бадамцоо": imgBase + "O.Badamtsoo.jpeg",
-  "Я.Бэгз": imgBase + "Ya.Begz.jpeg",
-  "Э.Лхагвасүрэн": imgBase + "E.Lkhagvasuren.jpeg",
-  "Л.Алтантулга": imgBase + "L.Altantulga.jpeg",
-  "Т.Энхтөр": imgBase + "T.Enkhtor.jpeg",
-  "Н.Энхсайхан": imgBase + "N.Enkhsaikhan.jpeg",
-  "Ч.Номин-Эрдэнэ": imgBase + "Ch.Nomin-Erdene.jpeg",
-  "З.Төрболд": imgBase + "Z.Torbold.jpeg",
-  "Б.Билэгт": imgBase + "B.Bilegt.jpeg",
-  "М.Дэлгэрмаа": imgBase + "M.Delgermaa.jpeg",
-  "Б.Энхжин": imgBase + "Enkhjin.jpeg",
-  "Г.Оюунчимэг": imgBase + "G.Oyunchimeg.jpeg",
-  "Б.Батхишиг": imgBase + "B.Batkhishig.jpeg",
-  "Ч.Алтанцэцэг": imgBase + "Ch.Altantsetseg.jpeg",
-  "Л. Батхишиг": imgBase + "L.Batkhishig.jpeg",
-  "Ө.Балжинням": imgBase + "U.Baljinnyam.jpeg",
-  "Ч.Эрдэнэбаяр": imgBase + "Ch.Erdenebayar .jpeg",
-  "М.Ундрам": imgBase + "M.Undram.jpeg",
-  "Г.Сэр-Од": imgBase + "G.Ser-Od.jpeg",
-  "М.Манлайжаргал": imgBase + "M.Manlai-Jargal.jpeg"
+  "Г.Нооной": IMG_BASE + "G.Noonoi.jpeg",
+  "Д.Баньдхүү": IMG_BASE + "D.Banidkhuu.jpeg",
+  "Б.Амарсанаа": IMG_BASE + "B.Amarsanaa.jpeg",
+  "Ц.Томбуу": IMG_BASE + "Ts.Tombuu.jpeg",
+  "Г.Нансалмаа": IMG_BASE + "G.Nansalmaa.jpeg",
+  "Д.Алимаа": IMG_BASE + "D.Alimaa.jpeg",
+  "Б.Наран": IMG_BASE + "B.Naran.jpeg",
+  "Б.Отгонжаргал": IMG_BASE + "B.Otgonjargal.jpeg",
+  "Г.Мөнхцэцэг": IMG_BASE + "G.Munkhtsetseg.jpeg",
+  "М.Нэргүй": IMG_BASE + "M.Nergui.jpeg",
+  "О.Цэдэнбалжир": IMG_BASE + "O.Tsedenbaljir.jpeg",
+  "Т.Болд": IMG_BASE + "T.Bold.jpeg",
+  "С.Галбадрах": IMG_BASE + "S.Galbadrakh.jpeg",
+  "Г.Жаргалсайхан": IMG_BASE + "G.Jargalsaikhan.jpeg",
+  "Б.Баясгалан": IMG_BASE + "B.Bayasgalan.jpeg",
+  "Б.Мөнхням": IMG_BASE + "B.Monkhnyam.jpeg",
+  "Б.Андхүү": IMG_BASE + "B.Andkhuu.jpeg",
+  "Д.Баяраа": IMG_BASE + "D.Bayaraa.jpeg",
+  "Б.Баярмагнай": IMG_BASE + "B.Bayarmagnai.jpeg",
+  "Ц.Наранцацрал": IMG_BASE + "Ts.Narantsatsral.jpeg",
+  "О.Лхагвасүрэн": IMG_BASE + "O.Lkhagvasuren.jpeg",
+  "К.Оюунчимэг": IMG_BASE + "K.Oyunchimeg.jpeg",
+  "Ц.Оюун-Эрдэнэ": IMG_BASE + "Ts.Oyun-Erdene.jpeg",
+  "Б.Содболор": IMG_BASE + "B.Sodbolor.jpeg",
+  "Б.Лхагвамаа": IMG_BASE + "B.Lkhagvamaa.jpeg",
+  "О.Бадамцоо": IMG_BASE + "O.Badamtsoo.jpeg",
+  "Я.Бэгз": IMG_BASE + "Ya.Begz.jpeg",
+  "Э.Лхагвасүрэн": IMG_BASE + "E.Lkhagvasuren.jpeg",
+  "Л.Алтантулга": IMG_BASE + "L.Altantulga.jpeg",
+  "Т.Энхтөр": IMG_BASE + "T.Enkhtor.jpeg",
+  "Н.Энхсайхан": IMG_BASE + "N.Enkhsaikhan.jpeg",
+  "Ч.Номин-Эрдэнэ": IMG_BASE + "Ch.Nomin-Erdene.jpeg",
+  "З.Төрболд": IMG_BASE + "Z.Torbold.jpeg",
+  "Б.Билэгт": IMG_BASE + "B.Bilegt.jpeg",
+  "М.Дэлгэрмаа": IMG_BASE + "M.Delgermaa.jpeg",
+  "Б.Энхжин": IMG_BASE + "Enkhjin.jpeg",
+  "Г.Оюунчимэг": IMG_BASE + "G.Oyunchimeg.jpeg",
+  "Б.Батхишиг": IMG_BASE + "B.Batkhishig.jpeg",
+  "Ч.Алтанцэцэг": IMG_BASE + "Ch.Altantsetseg.jpeg",
+  "Л. Батхишиг": IMG_BASE + "L.Batkhishig.jpeg", // нэрэнд зай байгаа тул normalize хамгаална
+  "Ө.Балжинням": IMG_BASE + "U.Baljinnyam.jpeg",
+  "Ч.Эрдэнэбаяр": IMG_BASE + "Ch.Erdenebayar.jpeg",
+  "М.Ундрам": IMG_BASE + "M.Undram.jpeg", // хэрвээ бодит файл нэр өөр бол энд засна
+  "Г.Сэр-Од": IMG_BASE + "G.Ser-Od.jpeg",
+  "М.Манлайжаргал": IMG_BASE + "Manlai.jpeg" // бодит файл нэр өөр бол энд засна
 };
 
-/** 2) 1956–2025 оны өгөг (тайлбарууд 1956–1970 онуудад нэмсэн) */
+/**
+ * 2) Нэрээр зураг олох:
+ * - эхлээд imageMap (normalize key-р)
+ * - байхгүй бол автоматаар "Нэр.jpeg" гэж таамаглаад туршина
+ */
+function resolveChampionImage(name: string) {
+  const key = normalizeNameKey(name);
+  return imageMap[key] || (IMG_BASE + encodeURI(key) + ".jpeg");
+}
+
+/** 3) 1956–2025 өгөг */
 type Row = { year: number; male?: string; female?: string; description?: string };
 
 const championsRaw: Row[] = [
@@ -145,36 +166,11 @@ const championsRaw: Row[] = [
     description:
       "• Сургууль, үйлдвэр, байгууллагуудын тэмцээн тогтмолжив.\n• Ширээний теннис нийтийн спортын түвшинд дэлгэрэв."
   },
-  {
-    year: 1965,
-    description:
-      "• Пионерийн сургуулиуд, үйлдвэрийн хоршоодын дэргэд секцүүд олноор байгуулагдав.\n" +
-      "• Залуу тамирчдын тоо эрс өссөн үе эхэллээ."
-  },
-  {
-    year: 1966,
-    male: "Б.Амарсанаа",
-    female: "Б.Отгонжаргал",
-    description:
-      "• Өсвөр үеийн уралдаан, сургалт идэвхжив; шинэ авьяастнууд тодорч эхлэв."
-  },
-  {
-    year: 1967,
-    description:
-      "• Улсын аваргад оролцогчдын тоо огцом өсөв (түүхэн дээд амжилтуудын нэг)."
-  },
-  {
-    year: 1968,
-    description:
-      "• Оролцогчдын хүрээ, клубүүдийн тоо улам нэмэгдэв; бэлтгэлийн бааз суурь сайжрав."
-  },
-  {
-    year: 1969,
-    male: "Ц.Томбуу",
-    female: "Б.Отгонжаргал",
-    description:
-      "• Улсын аваргад 84 эрэгтэй, 36 эмэгтэй тамирчин оролцлоо."
-  },
+  { year: 1965, description: "• Пионерийн сургуулиуд, үйлдвэрийн хоршоодын дэргэд секцүүд олноор байгуулагдав.\n• Залуу тамирчдын тоо эрс өссөн үе эхэллээ." },
+  { year: 1966, male: "Б.Амарсанаа", female: "Б.Отгонжаргал", description: "• Өсвөр үеийн уралдаан, сургалт идэвхжив; шинэ авьяастнууд тодорч эхлэв." },
+  { year: 1967, description: "• Улсын аваргад оролцогчдын тоо огцом өсөв (түүхэн дээд амжилтуудын нэг)." },
+  { year: 1968, description: "• Оролцогчдын хүрээ, клубүүдийн тоо улам нэмэгдэв; бэлтгэлийн бааз суурь сайжрав." },
+  { year: 1969, male: "Ц.Томбуу", female: "Б.Отгонжаргал", description: "• Улсын аваргад 84 эрэгтэй, 36 эмэгтэй тамирчин оролцлоо." },
   {
     year: 1970,
     description:
@@ -182,7 +178,6 @@ const championsRaw: Row[] = [
       "• Спорт бүрэн тогтолцоотой (тогтмол тэмцээн, сургалт, холбоо, шигшээ) хэмжээнд төлөвшив."
   },
 
-  // 1971–2016 (анх байсан аваргууд)
   { year: 1971, male: "Ц.Томбуу", female: "Г.Мөнхцэцэг" },
   { year: 1973, male: "М.Нэргүй", female: "Б.Отгонжаргал" },
   { year: 1975, male: "М.Нэргүй", female: "Г.Нансалмаа" },
@@ -234,28 +229,30 @@ const championsRaw: Row[] = [
   { year: 2025, male: "М.Манлайжаргал", female: "Б.Батхишиг" }
 ];
 
-/** 3) Raw → TimelineEvent хөрвүүлэгч */
+/** 4) Raw → TimelineEvent хөрвүүлэгч (UI өөрчлөхгүй, зөвхөн image resolve) */
 function buildTimelineEvents(rows: Row[]): TimelineEvent[] {
   const events: TimelineEvent[] = [];
+
   rows.forEach((r) => {
     const champions: ChampionCard[] = [];
+
     if (r.male) {
-      const key = r.male.trim();
       champions.push({
         name: r.male,
         title: "Эрэгтэйчүүдийн улсын аварга",
-        image: imageMap[key]
+        image: resolveChampionImage(r.male)
       });
     }
     if (r.female) {
-      const key = r.female.trim();
       champions.push({
         name: r.female,
         title: "Эмэгтэйчүүдийн улсын аварга",
-        image: imageMap[key]
+        image: resolveChampionImage(r.female)
       });
     }
+
     if (!r.description && champions.length === 0) return;
+
     events.push({
       year: String(r.year),
       title: "Онцлох үйл явдал",
@@ -265,12 +262,13 @@ function buildTimelineEvents(rows: Row[]): TimelineEvent[] {
       champions
     });
   });
+
   return events.sort((a, b) => Number(b.year) - Number(a.year));
 }
 
 const allTimelineEvents = buildTimelineEvents(championsRaw);
 
-/** 4) Компонентууд */
+/** 5) Компонентууд */
 function ChampionCardView({ champion }: { champion: ChampionCard }) {
   const [hasError, setHasError] = useState(false);
   const showFallback = hasError || !champion.image;
