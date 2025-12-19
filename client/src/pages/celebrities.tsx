@@ -76,7 +76,7 @@ export default function CelebritiesPage() {
           subtitle="Монгол Ширээний Теннисний алдартнууд"
           backgroundImage={teamImage}
         />
-          <div className="mx-auto max-w-7xl px-6">
+          <div className="mx-auto max-w-7xl px-6 pt-16">
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {sortedCelebrities.map((celebrity) => {
                   const name =
@@ -91,7 +91,7 @@ export default function CelebritiesPage() {
                       role={celebrity.status}
                       status={celebrity.status}
                       description={celebrity.description}
-                      highlight={celebrity.role === "chairperson"}
+                      highlight={false}
                     />
                   );
                 })}
