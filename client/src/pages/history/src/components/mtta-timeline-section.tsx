@@ -19,7 +19,7 @@ interface TimelineEvent {
 }
 
 /** 1) Нэр → Зураг mapping  */
-const imgBase = "/picture/past-champions/";
+const imgBase = "/picture/pastchampions2/";
 const imageMap: Record<string, string> = {
   "Г.Нооной": imgBase + "G.Noonoi.jpeg",
   "Д.Баньдхүү": imgBase + "D.Banidkhuu.jpeg",
@@ -65,9 +65,9 @@ const imageMap: Record<string, string> = {
   "Ө.Балжинням": imgBase + "U.Baljinnyam.jpeg",
   "Б.Болор-Эрдэнэ": imgBase + "B.Bolor-Erdene.jpeg",
   "Ч.Эрдэнэбаяр": imgBase + "Ch.Erdenebayar.jpeg",
-  "М.Ундрам": imgBase + "M.Undram.jpg",
-  "Г.Сэр-Од": imgBase + "cat.jpg",
-  "М.Манлайжаргал": imgBase + "M.Manlai-Jargal.jpg"
+  "М.Ундрам": imgBase + "M.Undram.jpeg",
+  "Г.Сэр-Од": imgBase + "G.Ser-od.jpeg",
+  "М.Манлайжаргал": imgBase + "M.Manlai-Jargal.jpeg"
 };
 
 /** 2) 1956–2025 оны өгөг (тайлбарууд 1956–1970 онуудад нэмсэн) */

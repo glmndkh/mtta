@@ -18,45 +18,45 @@ interface NationalTeamPlayer {
 const staticPlayers: NationalTeamPlayer[] = [
   {
     id: "nt-player-1",
-    firstName: "Батболд",
-    lastName: "Доржийн",
-    age: 25,
-    imageUrl: null
+    firstName: "Мяндал",
+    lastName: "Тэмүүлэн",
+    age: 24,
+    imageUrl: "picture/Үндэсний шигшээ/Temuulen.jpg"
   },
   {
     id: "nt-player-2",
-    firstName: "Энхбаяр",
-    lastName: "Цэрэнбат",
-    age: 28,
-    imageUrl: null
+    firstName: "Батмөнх",
+    lastName: "Болор-Эрдэнэ",
+    age: 23,
+    imageUrl: "picture/Үндэсний шигшээ/Bolor-Erdene.jpg"
   },
   {
     id: "nt-player-3",
-    firstName: "Мөнхбат",
-    lastName: "Ганбат",
-    age: 24,
-    imageUrl: null
+    firstName: "Бат-Эрдэнэ",
+    lastName: "Эгшиглэн",
+    age: 21,
+    imageUrl: "picture/Үндэсний шигшээ/Egshiglen.jpg"
   },
   {
     id: "nt-player-4",
-    firstName: "Түвшинбаяр",
-    lastName: "Бямбажав",
-    age: 27,
-    imageUrl: null
+    firstName: "Өвгөнбүргэд",
+    lastName: "Балжинням",
+    age: 21,
+    imageUrl: "picture/Үндэсний шигшээ/Baljinnyam.jpg"
   },
   {
     id: "nt-player-5",
-    firstName: "Алтанцэцэг",
-    lastName: "Пүрэвдорж",
-    age: 23,
-    imageUrl: null
+    firstName: "М.",
+    lastName: "Манлайжаргал",
+    age: 18,
+    imageUrl: "picture/Үндэсний шигшээ/Manlai.jpg"
   },
   {
     id: "nt-player-6",
-    firstName: "Оюунчимэг",
-    lastName: "Гэрэлт",
-    age: 26,
-    imageUrl: null
+    firstName: "Б.",
+    lastName: "Билгүүн",
+    age: 15,
+    imageUrl: "picture/Үндэсний шигшээ/Bilguun.jpg"
   }
 ];
 
