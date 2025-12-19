@@ -1,3 +1,4 @@
+
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import { JudgeCard } from "@/components/JudgeCard";
@@ -7,18 +8,18 @@ import tsogzolmaaImage from "@/assets/councilimages/Tsogzolmaa.jpg";
 import tumenImage from "@/assets/councilimages/Tumen.jpg";
 import teamImage from "@/assets/councilimages/Shuugchid.jpg";
 
-interface coach {
+interface Coach {
   id: string;
   firstName: string;
   lastName: string;
   imageUrl: string;
-  coachType: "head" | "international";
+  coachType: "head" | "assistant";
   role: "chairperson" | "member";
   description: string;
   displayName?: string;
 }
 
-const staticJudges: Judge[] = [
+const staticCoaches: Coach[] = [
   {
     id: "1",
     firstName: "Билэгт",
@@ -27,25 +28,25 @@ const staticJudges: Judge[] = [
     coachType: "head",
     role: "chairperson",
     description:
-      "Дасгалжуулагч, Монгол Улсын Ширээний Теннисний Холбооны Шүүгчдийн Зөвлөлийн Дарга",
+      "Ахлах дасгалжуулагч, Монгол Улсын Ширээний Теннисний Холбооны Дасгалжуулагчдын Зөвлөлийн Дарга",
   },
   {
     id: "2",
     firstName: "Дамдинбаяр",
     lastName: "Х",
     imageUrl: damdinbayarImage,
-    coachType: "international",
+    coachType: "assistant",
     role: "member",
-    description: "Олон улсын шүүгч, Шүүгчдийн Зөвлөлийн Гишүүн",
+    description: "Дасгалжуулагч, Дасгалжуулагчдын Зөвлөлийн Гишүүн",
   },
   {
     id: "3",
     firstName: "Цогзолмаа",
     lastName: "Р",
     imageUrl: tsogzolmaaImage,
-    coachType: "international",
+    coachType: "assistant",
     role: "member",
-    description: "Олон улсын шүүгч, Шүүгчдийн Зөвлөлийн Гишүүн",
+    description: "Дасгалжуулагч, Дасгалжуулагчдын Зөвлөлийн Гишүүн",
     displayName: "Р. Цогзолмаа",
   },
   {
@@ -53,14 +54,14 @@ const staticJudges: Judge[] = [
     firstName: "Түмэн-Өлзий",
     lastName: "Д",
     imageUrl: tumenImage,
-    coachType: "international",
+    coachType: "assistant",
     role: "member",
-    description: "Олон улсын шүүгч, Шүүгчдийн Зөвлөлийн Гишүүн",
+    description: "Дасгалжуулагч, Дасгалжуулагчдын Зөвлөлийн Гишүүн",
   },
 ];
 
-export default function RefereesCouncil() {
-  const sortedJudges = [...staticJudges].sort((a, b) => {
+export default function CoachesCouncil() {
+  const sortedCoaches = [...staticCoaches].sort((a, b) => {
     if (a.role === "chairperson") return -1;
     if (b.role === "chairperson") return 1;
     return 0;
@@ -103,23 +104,23 @@ export default function RefereesCouncil() {
         </div>
 
         {/* ========================= */}
-        {/*     JUDGE CARDS SECTION   */}
+        {/*     COACH CARDS SECTION   */}
         {/* ========================= */}
 
         <div className="max-w-7xl mx-auto px-6 py-20">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
-            {sortedJudges.map((judge) => {
-              const judgeName =
-                judge.displayName || `${judge.lastName.charAt(0)}. ${judge.firstName}`;
+            {sortedCoaches.map((coach) => {
+              const coachName =
+                coach.displayName || `${coach.lastName.charAt(0)}. ${coach.firstName}`;
 
               return (
                 <JudgeCard
-                  key={judge.id}
-                  image={judge.imageUrl}
-                  role={judge.role}
-                  name={judgeName}
-                  status={judge.judgeType}
-                  description={judge.description}
+                  key={coach.id}
+                  image={coach.imageUrl}
+                  role={coach.role}
+                  name={coachName}
+                  status={coach.coachType}
+                  description={coach.description}
                 />
               );
             })}

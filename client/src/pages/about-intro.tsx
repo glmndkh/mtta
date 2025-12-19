@@ -486,63 +486,63 @@ export default function AboutIntro() {
                         title: "Холбоо байгуулагдсан",
                         description:
                           "Монголын ширээний теннисний холбоо анх байгуулагдав",
-                        image: "",
+                        image: "/picture/past-champions/B.Bilegt.jpeg",
                       },
                       {
                         year: "1970",
                         title: "Эхний тэмцээн",
                         description:
                           "Улсын хэмжээний анхны ширээний теннисний тэмцээн зохион байгуулав",
-                        image: "",
+                        image: "/picture/past-champions/T.Bold.jpeg",
                       },
                       {
                         year: "1990",
                         title: "ITTF-д элссэн",
                         description:
                           "Олон улсын ширээний теннисний холбооны гишүүн болсон",
-                        image: "",
+                        image: "/picture/past-champions/O.Lkhagvasuren.jpeg",
                       },
                       {
                         year: "1993",
                         title: "Дэлхийн аварга",
                         description:
                           "Анхны олон улсын тэмцээнд оролцов",
-                        image: "",
+                        image: "/picture/past-champions/B.Bayarmagnai.jpeg",
                       },
                       {
                         year: "1994",
                         title: "Азийн наадам",
                         description:
                           "Азийн наадамд анх удаа оролцлоо",
-                        image: "",
+                        image: "/picture/past-champions/S.Galbadrakh.jpeg",
                       },
                       {
                         year: "1996",
                         title: "Сургалтын төв",
                         description:
                           "Үндэсний сургалтын төвийг байгуулсан",
-                        image: "",
+                        image: "/picture/past-champions/G.Oyunchimeg.jpeg",
                       },
                       {
                         year: "1997",
                         title: "Залуучуудын хөтөлбөр",
                         description:
                           "Залуучуудын хөгжлийн хөтөлбөр эхэлсэн",
-                        image: "",
+                        image: "/picture/past-champions/Ts.Oyun-Erdene.jpeg",
                       },
                       {
                         year: "1998",
                         title: "Эмэгтэйчүүдийн спорт",
                         description:
                           "Эмэгтэйчүүдийн ширээний теннисийг хөгжүүлэх хөтөлбөр",
-                        image: "",
+                        image: "/picture/past-champions/M.Delgermaa.jpeg",
                       },
                       {
                         year: "2000",
                         title: "Олон улсын харилцаа",
                         description:
                           "Өмнөд Солонгос, Хятадтай хамтын ажиллагаа эхэлсэн",
-                        image: "",
+                        image: "/picture/past-champions/U.Baljinnyam.jpeg",
                       },
                     ].map((event) => (
                       <div key={event.year} className="flex-shrink-0 w-80">
