@@ -8,7 +8,7 @@ import { Mountain, Eye, HandHeart, Users } from "lucide-react";
 import { JudgeCard } from "@/components/JudgeCard";
 import bgImage from "@/assets/councilimages/Shuugchid.jpg";
 
-const presidentImage = "/objects/uploads/president-gantulga.jpg";
+const presidentImage = "/uploads/president-gantulga.jpg";
 
 const tabs = [
   { id: "intro", label: "Мэндчилгээ" },
@@ -21,7 +21,7 @@ const leaders = [
   {
     id: "1",
     name: "Ц. Гантулга",
-    image: "/objects/uploads/president-gantulga.jpg",
+    image: "/uploads/president-gantulga.jpg",
     role: "chairperson" as const,
     status: "domestic" as const,
     roleText: "Ерөнхийлөгч",
