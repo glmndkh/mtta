@@ -363,6 +363,7 @@ export default function AboutIntro() {
                       text-gray-700 dark:text-gray-300
                       hover:text-green-600 dark:hover:text-green-400
                       transition-colors
+                      border-0 outline-none focus:outline-none
                     `}
                   >
                     {tab.label}
