@@ -14,6 +14,25 @@ interface NationalTeamPlayer {
   imageUrl?: string | null;
 }
 
+interface Coach {
+  id: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  imageUrl?: string | null;
+}
+
+// Статик өгөгдөл - Дасгалжуулагчид
+const staticCoaches: Coach[] = [
+  {
+    id: "coach-1",
+    firstName: "Ерөнхий",
+    lastName: "Дасгалжуулагч",
+    role: "Ерөнхий дасгалжуулагч",
+    imageUrl: null
+  }
+];
+
 // Статик өгөгдөл - Үндэсний шигшээний тоглогчид
 const staticPlayers: NationalTeamPlayer[] = [
   {
@@ -100,6 +119,49 @@ export default function NationalTeamPage() {
               onNext={goToNext}
               onPlayerSelect={goToPlayer}
             />
+
+            {/* Coaches Section */}
+            <div className="bg-gray-50 py-16">
+              <div className="container mx-auto px-4">
+                <h2 className="text-3xl font-bold text-center mb-12 text-gray-900">
+                  Дасгалжуулагчид
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-4xl mx-auto">
+                  {staticCoaches.map((coach) => (
+                    <Card key={coach.id} className="overflow-hidden">
+                      <div className="relative">
+                        {coach.imageUrl ? (
+                          <img
+                            src={coach.imageUrl}
+                            alt={formatName(coach.firstName, coach.lastName)}
+                            className="w-full h-96 object-contain bg-gray-100"
+                          />
+                        ) : (
+                          <div className="w-full h-96 bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                            <div className="text-white text-4xl font-bold">
+                              {coach.firstName?.[0]}{coach.lastName?.[0]}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <CardContent className="p-6 bg-white text-gray-800">
+                        <div className="text-center">
+                          <p className="text-sm text-blue-600 font-semibold mb-2">
+                            {coach.role}
+                          </p>
+                          <h3 className="text-lg font-bold mb-1 text-blue-700">
+                            {coach.firstName}
+                          </h3>
+                          <h4 className="text-lg font-bold text-blue-600">
+                            {coach.lastName}
+                          </h4>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </div>
 
             {/* All Players Grid */}
             <div className="bg-white py-16">
