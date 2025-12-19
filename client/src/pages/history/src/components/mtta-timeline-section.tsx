@@ -231,7 +231,7 @@ const championsRaw: Row[] = [
     male: "Г.Сэр-Од", 
     female: "М.Ундрам", 
     description: "• Ахмадын азийн аварга зохион байгуулагдсан.",
-    eventImage: "/picture/2023-asian-veteran-championship.jpg"
+    eventImage: "/attached_assets/556674793_1123191930015925_9199771473330098213_n - Buyanbat Buba (1)_1762518243369.jpg"
   },
   { year: 2024, male: "Г.Сэр-Од", female: "Б.Батхишиг" },
   { year: 2025, male: "М.Манлайжаргал", female: "Б.Батхишиг" }
@@ -440,12 +440,16 @@ export function MTTATimelineSection() {
                     </p>
                     {/* Үйл явдлын зураг */}
                     {event.eventImage && (
-                      <div className="mt-4">
+                      <div className="mt-4 flex justify-center">
                         <img 
                           src={event.eventImage} 
                           alt={event.title}
-                          className="w-full max-w-md mx-auto rounded-lg shadow-lg"
-                          style={{ height: '589px', width: '100%', maxWidth: '173px', objectFit: 'cover' }}
+                          className="rounded-lg shadow-lg"
+                          style={{ height: '589px', width: '173px', objectFit: 'cover' }}
+                          onError={(e) => {
+                            console.error("Event image load failed:", event.eventImage);
+                            e.currentTarget.style.display = 'none';
+                          }}
                         />
                       </div>
                     )}
