@@ -57,16 +57,14 @@ const imageMap: Record<string, string> = {
   "Б.Билэгт": imgBase + "B.Bilegt.jpeg",
   "М.Дэлгэрмаа": imgBase + "M.Delgermaa.jpeg",
   "Б.Энхжин": imgBase + "Enkhjin.jpeg",
-  "Б.Эрдэнэсувд": imgBase + "Erdenesuvd.jpeg",
   "Г.Оюунчимэг": imgBase + "G.Oyunchimeg.jpeg",
   "Б.Батхишиг": imgBase + "B.Batkhishig.jpeg",
   "Ч.Алтанцэцэг": imgBase + "Ch.Altantsetseg.jpeg",
   "Л. Батхишиг": imgBase + "L.Batkhishig.jpeg",
   "Ө.Балжинням": imgBase + "U.Baljinnyam.jpeg",
-  "Б.Болор-Эрдэнэ": imgBase + "B.Bolor-Erdene.jpeg",
-  "Ч.Эрдэнэбаяр": imgBase + "Ch.Erdenebayar.jpeg",
+  "Ч.Эрдэнэбаяр": imgBase + "Ch.Erdenebayar .jpeg",
   "М.Ундрам": imgBase + "M.Undram.jpeg",
-  "Г.Сэр-Од": imgBase + "G.Ser-od.jpeg",
+  "Г.Сэр-Од": imgBase + "G.Ser-Od.jpeg",
   "М.Манлайжаргал": imgBase + "M.Manlai-Jargal.jpeg"
 };
 
@@ -220,20 +218,20 @@ const championsRaw: Row[] = [
   { year: 2009, male: "Л.Алтантулга", female: "Б.Батхишиг" },
   { year: 2010, male: "Н.Энхсайхан", female: "Ч.Номин-Эрдэнэ" },
   { year: 2011, male: "Л.Алтантулга", female: "Б.Батхишиг" },
-  { year: 2012, male: "З.Төрболд", female: "Б.Эрдэнэсувд" },
+  { year: 2012, male: "З.Төрболд", female: "М.Дэлгэрмаа" },
   { year: 2013, male: "Э.Лхагвасүрэн", female: "Б.Энхжин" },
   { year: 2014, male: "Б.Билэгт", female: "Б.Батхишиг" },
   { year: 2015, male: "Э.Лхагвасүрэн", female: "М.Дэлгэрмаа" },
   { year: 2016, male: "Б.Билэгт", female: "Б.Батхишиг" },
   { year: 2017, male: "Э.Лхагвасүрэн", female: "Б.Батхишиг" },
-  { year: 2018, male: "Я.Бэгз", female: "Б.Болор-Эрдэнэ" },
+  { year: 2018, male: "Я.Бэгз", female: "Б.Батхишиг" },
   { year: 2019, male: "Э.Лхагвасүрэн", female: "Ө.Балжинням" },
   { year: 2020, male: "Ч.Эрдэнэбаяр", female: "М.Ундрам" },
-  { year: 2021, male: "Б.Билэгт", female: "Б.Болор-Эрдэнэ" },
-  { year: 2022, male: "Ч.Эрдэнэбаяр", female: "Б.Болор-Эрдэнэ" },
+  { year: 2021, male: "Б.Билэгт", female: "Б.Батхишиг" },
+  { year: 2022, male: "Ч.Эрдэнэбаяр", female: "Б.Батхишиг" },
   { year: 2023, male: "Г.Сэр-Од", female: "М.Ундрам" },
-  { year: 2024, male: "Г.Сэр-Од", female: "Б.Болор-Эрдэнэ" },
-  { year: 2025, male: "М.Манлайжаргал", female: "Б.Болор-Эрдэнэ" }
+  { year: 2024, male: "Г.Сэр-Од", female: "Б.Батхишиг" },
+  { year: 2025, male: "М.Манлайжаргал", female: "Б.Батхишиг" }
 ];
 
 /** 3) Raw → TimelineEvent хөрвүүлэгч */
