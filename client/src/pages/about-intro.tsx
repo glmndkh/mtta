@@ -241,7 +241,7 @@ const leaders = [
   {
     id: "23",
     name: "Мөнхбилэг",
-    image: "",
+    image: "picture/Terguulegch_gishuud/Мөнхбилэг.jpg",
     role: "member" as const,
     status: "international" as const,
     roleText: "Гадаад харилцааны албаны дарга",

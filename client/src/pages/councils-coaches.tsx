@@ -1,7 +1,7 @@
-
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
-import { JudgeCard } from "@/components/JudgeCard";
+import { CoachCard } from "@/components/CoachCard";
+
 import bilegtImage from "@/assets/councilimages/bilegt.jpg";
 import damdinbayarImage from "@/assets/councilimages/Damdinbayar.jpeg";
 import tsogzolmaaImage from "@/assets/councilimages/Tsogzolmaa.jpg";
@@ -12,7 +12,11 @@ interface Coach {
   id: string;
   firstName: string;
   lastName: string;
-  imageUrl: string;
+
+  // asset import (StaticImageData байж болно) — CoachCard image?: string | null
+  // тул any гэж авч байгаад доор string болгон дамжуулна.
+  imageUrl: any;
+
   coachType: "head" | "assistant";
   role: "chairperson" | "member";
   description: string;
@@ -71,23 +75,24 @@ export default function CoachesCouncil() {
     <PageWithLoading>
       <Navigation />
       <div className="min-h-screen bg-gradient-to-br from-emerald-550 via-emerald-500 to-green-550 dark:from-emerald-550 dark:via-emerald-500 dark:to-green-550">
-
         {/* ========================= */}
         {/*        HERO SECTION       */}
         {/* ========================= */}
-
         <div className="relative h-[60vh] min-h-[400px] overflow-hidden">
-
           {/* Background Image */}
           <div
             className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${teamImage})` }}
+            style={{
+              backgroundImage: `url(${
+                (teamImage as any)?.src ? (teamImage as any).src : (teamImage as any)
+              })`,
+            }}
           />
 
-          {/* Dark overlay to make text readable */}
-          <div className="absolute inset-0 bg-black/50 md:bg-black/60"></div>
+          {/* Dark overlay */}
+          <div className="absolute inset-0 bg-black/50 md:bg-black/60" />
 
-          {/* Text layer */}
+          {/* Text */}
           <div className="relative z-10 h-full flex items-center justify-center">
             <div className="text-center space-y-4 px-6">
               <h1
@@ -106,17 +111,20 @@ export default function CoachesCouncil() {
         {/* ========================= */}
         {/*     COACH CARDS SECTION   */}
         {/* ========================= */}
-
         <div className="max-w-7xl mx-auto px-6 py-20">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
             {sortedCoaches.map((coach) => {
               const coachName =
-                coach.displayName || `${coach.lastName.charAt(0)}. ${coach.firstName}`;
+                coach.displayName ||
+                `${coach.lastName.charAt(0)}. ${coach.firstName}`;
+
+              const coachImage =
+                (coach.imageUrl as any)?.src ? (coach.imageUrl as any).src : coach.imageUrl;
 
               return (
-                <JudgeCard
+                <CoachCard
                   key={coach.id}
-                  image={coach.imageUrl}
+                  image={coachImage}
                   role={coach.role}
                   name={coachName}
                   status={coach.coachType}

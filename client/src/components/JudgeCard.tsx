@@ -36,8 +36,8 @@ export function JudgeCard({
   const roleText =
     roleTextOverride ||
     (role === "chairperson"
-      ? "Шүүгчдийн Зөвлөлийн Дарга"
-      : "Шүүгчдийн Зөвлөлийн Гишүүн");
+      ? "Зөвлөлийн Дарга"
+      : "Зөвлөлийн Гишүүн");
 
   const statusText =
     statusTextOverride ||
