@@ -1,4 +1,3 @@
-
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import { CouncilHero } from "@/components/council/CouncilHero";
@@ -71,16 +70,13 @@ export default function CelebritiesPage() {
   return (
     <PageWithLoading>
       <Navigation />
-      <div className="min-h-screen bg-gradient-to-br from-emerald-950 via-emerald-900 to-green-950 text-emerald-50">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-0 via-emerald-0 to-green-0 text-emerald-0">
         <CouncilHero
           title="Алдартнууд"
-          subtitle="Монгол Ширээний Теннисний алдарт тамирчид"
+          subtitle="Монгол Ширээний Теннисний алдартнууд"
           backgroundImage={teamImage}
         />
-
-        <section className="relative -mt-16 pb-20">
           <div className="mx-auto max-w-7xl px-6">
-            <div className="rounded-3xl border border-emerald-500/15 bg-emerald-950/40 p-6 shadow-2xl backdrop-blur">
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {sortedCelebrities.map((celebrity) => {
                   const name =
@@ -99,10 +95,8 @@ export default function CelebritiesPage() {
                     />
                   );
                 })}
-              </div>
             </div>
           </div>
-        </section>
       </div>
     </PageWithLoading>
   );

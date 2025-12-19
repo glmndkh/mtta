@@ -64,9 +64,9 @@ const imageMap: Record<string, string> = {
   "Л. Батхишиг": imgBase + "L.Batkhishig.jpeg",
   "Ө.Балжинням": imgBase + "U.Baljinnyam.jpeg",
   "Б.Болор-Эрдэнэ": imgBase + "B.Bolor-Erdene.jpeg",
-  "Ч.Эрдэнэбаяр": imgBase + "ch.erdenebayr.jpg",
+  "Ч.Эрдэнэбаяр": imgBase + "Ch.Erdenebayar.jpeg",
   "М.Ундрам": imgBase + "M.Undram.jpg",
-  "Г.Сэр-Од": imgBase + "G.Ser-Od.jpg",
+  "Г.Сэр-Од": imgBase + "cat.jpg",
   "М.Манлайжаргал": imgBase + "M.Manlai-Jargal.jpg"
 };
 
