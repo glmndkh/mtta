@@ -30,7 +30,7 @@ const staticWomen: WomanMember[] = [
     id: "2",
     firstName: "",
     lastName: "",
-    imageUrl: "",
+    imageUrl: "asdad",
     role: "member",
     description:
       "Эмэгтэйчүүдийн спортыг хөгжүүлэх чиглэлээр ажиллаж буй зөвлөлийн гишүүн",
@@ -40,7 +40,7 @@ const staticWomen: WomanMember[] = [
     id: "3",
     firstName: "",
     lastName: "",
-    imageUrl: "",
+    imageUrl: "adsad",
     role: "member",
     description:
       "Эмэгтэйчүүдийн спортыг хөгжүүлэх чиглэлээр ажиллаж буй зөвлөлийн гишүүн",
