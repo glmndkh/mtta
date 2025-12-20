@@ -23,8 +23,8 @@ const staticCelebrities: Celebrity[] = [
     firstName: "Отгонжаргал",
     lastName: "Б",
     imageUrl: otgonjargalImage,
-    role: "Монголuhwdwjdjwadad",
-    status: "монгоdawdadadawdadл",
+    role: "Монгол",
+    status: "Монгол",
     description:
       "Монгол Улсын ширээний теннисний түүхэнд гайхалтай ой дурсамж үлдээсэн алдартан",
     displayName: "Б. Отгонжаргал",

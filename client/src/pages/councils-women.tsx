@@ -18,22 +18,33 @@ interface WomanMember {
 const staticWomen: WomanMember[] = [
   {
     id: "1",
-    firstName: "Цогзолмаа",
-    lastName: "Р",
+    firstName: "Ц",
+    lastName: "Оюун-Эрдэнэ",
     imageUrl: tsogzolmaaImage,
     role: "chairperson",
     description:
-      "Монгол Улсын Ширээний Теннисний Холбооны Эмэгтэйчүүдийн Зөвлөлийн Дарга",
-    displayName: "Р. Цогзолмаа",
+      "Монгол Улсын Ширээний Теннисний Холбооны Эмэгтэйчүүдийн Зөвлөлийн Дарга, Олон Улсын Хэмжээний Мастер",
+    displayName: "Ц. Оюун-Эрдэнэ",
   },
   {
     id: "2",
-    firstName: "Билэгт",
-    lastName: "Б",
-    imageUrl: bilegtImage,
+    firstName: "",
+    lastName: "",
+    imageUrl: "",
     role: "member",
     description:
       "Эмэгтэйчүүдийн спортыг хөгжүүлэх чиглэлээр ажиллаж буй зөвлөлийн гишүүн",
+    displayName: "Тун удахгүй"
+  },
+  {
+    id: "3",
+    firstName: "",
+    lastName: "",
+    imageUrl: "",
+    role: "member",
+    description:
+      "Эмэгтэйчүүдийн спортыг хөгжүүлэх чиглэлээр ажиллаж буй зөвлөлийн гишүүн",
+    displayName: "Тун удахгүй"
   },
 ];
 
