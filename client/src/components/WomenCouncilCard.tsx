@@ -98,16 +98,16 @@ export function WomenCouncilCard({
 
             {/* BACK */}
             <div
-              className="absolute inset-0 rounded-2xl overflow-hidden bg-gradient-to-br from-pink-700 via-rose-700 to-fuchsia-900 p-6 flex flex-col justify-center"
+              className="absolute inset-0 rounded-2xl overflow-hidden bg-gradient-to-br from-emerald-800 via-emerald-900 to-green-950 p-6 flex flex-col justify-center"
               style={{
                 backfaceVisibility: "hidden",
                 transform: "rotateY(180deg)",
               }}
             >
-              <h3 className="text-pink-50 border-b-2 border-pink-300 pb-2 mb-4">
+              <h3 className="text-emerald-50 border-b-2 border-emerald-400 pb-2 mb-4">
                 Танилцуулга
               </h3>
-              <p className="text-pink-100 text-sm leading-relaxed">
+              <p className="text-emerald-100 text-sm leading-relaxed">
                 {description || "Танилцуулга удахгүй нэмэгдэнэ."}
               </p>
             </div>
