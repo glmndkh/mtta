@@ -176,9 +176,9 @@ export default function CoachesCouncil() {
                   image={coachImage}
                   role={coach.role}
                   name={coachName}
-                  status={coach.coachType}
+                  status="other"
                   description={coach.description}
-                  coachType={coach.coachType}
+                  statusTextOverride={coach.coachType || undefined}
                 />
               );
             })}
