@@ -83,12 +83,9 @@ export default function Celebrities() {
                 <JudgeCard
                   key={celebrity.id}
                   image={image}
-                  role={celebrity.role === "legend" ? "chairperson" : "member"}
                   name={name}
-                  status="international"
-                  statusTextOverride={celebrity.status}
                   description={celebrity.description}
-                  variant="judge"
+                  variant="celebrity"
                 />
               );
             })}

@@ -6,9 +6,9 @@ import { useState } from "react";
 
 interface JudgeCardProps {
   image?: string | null;
-  role: "chairperson" | "member";
+  role?: "chairperson" | "member" | string;
   name: string;
-  status: "domestic" | "international";
+  status?: "domestic" | "international" | string;
   description?: string | null;
 
   // Удирдлагын баг дээр өөр текст ашиглах боломж
@@ -18,7 +18,8 @@ interface JudgeCardProps {
   // Ашиглаж байгаа газар
   //  - "judge"  → Шүүгчдийн зөвлөл (зурган дээр роль + domestic/international)
   //  - "leader" → Тэргүүлэгч гишүүд (зурган дээр текстгүй, зураг байхгүй бол зүгээр name+role л гарах)
-  variant?: "judge" | "leader";
+  //  - "celebrity" → Алдартнууд (зурган дээр роль харуулахгүй, доор зөвхөн нэр)
+  variant?: "judge" | "leader" | "celebrity";
 }
 
 export function JudgeCard({
@@ -37,11 +38,17 @@ export function JudgeCard({
     roleTextOverride ||
     (role === "chairperson"
       ? "Зөвлөлийн Дарга"
-      : "Зөвлөлийн Гишүүн");
+      : role === "member"
+      ? "Зөвлөлийн Гишүүн"
+      : role || "");
 
   const statusText =
     statusTextOverride ||
-    (status === "international" ? "Олон улсын шүүгч" : "Дотоодын шүүгч");
+    (status === "international" 
+      ? "Олон улсын шүүгч" 
+      : status === "domestic" 
+      ? "Дотоодын шүүгч"
+      : status || "");
 
   // Stock зураг – зөвхөн шүүгчдийн зөвлөлд fallback болгон ашиглана
   const defaultImage =
@@ -142,18 +149,22 @@ export function JudgeCard({
           {name}
         </h3>
 
-        {/* Leaders дээр domestic/international хэрэггүй – зөвхөн роль */}
-        {variant === "leader" ? (
-          <p className="text-emerald-700/80 dark:text-emerald-300/80 text-sm">
-            {roleText}
-          </p>
+        {/* Celebrity variant – зөвхөн нэр */}
+        {variant === "celebrity" ? null : variant === "leader" ? (
+          roleText && (
+            <p className="text-emerald-700/80 dark:text-emerald-300/80 text-sm">
+              {roleText}
+            </p>
+          )
         ) : (
-          <p
-            className="text-emerald-700/70 dark:text-emerald-300/70 text-sm"
-            data-testid={`text-status-${name}`}
-          >
-            {statusText}
-          </p>
+          statusText && (
+            <p
+              className="text-emerald-700/70 dark:text-emerald-300/70 text-sm"
+              data-testid={`text-status-${name}`}
+            >
+              {statusText}
+            </p>
+          )
         )}
       </motion.div>
     </motion.div>
