@@ -11,7 +11,7 @@ interface Celebrity {
   firstName: string;
   lastName: string;
   imageUrl: any;
-  role: "legend" | "notable";
+  role: string;
   status: string;
   description: string;
   displayName?: string;
@@ -23,8 +23,8 @@ const staticCelebrities: Celebrity[] = [
     firstName: "Отгонжаргал",
     lastName: "Б",
     imageUrl: otgonjargalImage,
-    role: "legend",
-    status: "Хүндэт тамирчин",
+    role: "Монгол",
+    status: "монгол",
     description:
       "Монгол Улсын ширээний теннисний түүхэнд гайхалтай ой дурсамж үлдээсэн алдартан",
     displayName: "Б. Отгонжаргал",
