@@ -3,9 +3,6 @@ import PageWithLoading from "@/components/PageWithLoading";
 import { CoachCard } from "@/components/CoachCard";
 
 import bilegtImage from "@/assets/councilimages/bilegt.jpg";
-import damdinbayarImage from "@/assets/councilimages/Damdinbayar.jpeg";
-import tsogzolmaaImage from "@/assets/councilimages/Tsogzolmaa.jpg";
-import tumenImage from "@/assets/councilimages/Tumen.jpg";
 import teamImage from "@/assets/councilimages/Shuugchid.jpg";
 
 interface Coach {
@@ -17,8 +14,8 @@ interface Coach {
   // тул any гэж авч байгаад доор string болгон дамжуулна.
   imageUrl: any;
 
-  coachType: "head" | "assistant";
-  role: "chairperson" | "member";
+  coachType: string;
+  role: string;
   description: string;
   displayName?: string;
 }
@@ -36,31 +33,83 @@ const staticCoaches: Coach[] = [
   },
   {
     id: "2",
-    firstName: "Дамдинбаяр",
-    lastName: "Х",
-    imageUrl: damdinbayarImage,
-    coachType: "assistant",
+    firstName: "",
+    lastName: "",
+    imageUrl: "a",
+    coachType: "Зүүн бүс",
     role: "member",
     description: "Дасгалжуулагч, Дасгалжуулагчдын Зөвлөлийн Гишүүн",
+    displayName: "Тун удахгүй",
   },
   {
     id: "3",
-    firstName: "Цогзолмаа",
-    lastName: "Р",
-    imageUrl: tsogzolmaaImage,
-    coachType: "assistant",
+    firstName: "",
+    lastName: "",
+    imageUrl: "a",
+    coachType: "Баруун бүс",
     role: "member",
     description: "Дасгалжуулагч, Дасгалжуулагчдын Зөвлөлийн Гишүүн",
-    displayName: "Р. Цогзолмаа",
+    displayName: "Тун удахгүй",
   },
   {
     id: "4",
-    firstName: "Түмэн-Өлзий",
-    lastName: "Д",
-    imageUrl: tumenImage,
-    coachType: "assistant",
+    firstName: "",
+    lastName: "",
+    imageUrl: "a",
+    coachType: "",
     role: "member",
     description: "Дасгалжуулагч, Дасгалжуулагчдын Зөвлөлийн Гишүүн",
+    displayName: "Тун удахгүй",
+  },
+  {
+    id: "5",
+    firstName: "",
+    lastName: "",
+    imageUrl: "a",
+    coachType: "",
+    role: "member",
+    description: "Дасгалжуулагч, Дасгалжуулагчдын Зөвлөлийн Гишүүн",
+    displayName: "Тун удахгүй",
+  },
+  {
+    id: "6",
+    firstName: "",
+    lastName: "",
+    imageUrl: "a",
+    coachType: "",
+    role: "member",
+    description: "Дасгалжуулагч, Дасгалжуулагчдын Зөвлөлийн Гишүүн",
+    displayName: "Тун удахгүй",
+  },
+  {
+    id: "7",
+    firstName: "",
+    lastName: "",
+    imageUrl: "a",
+    coachType: "",
+    role: "member",
+    description: "Дасгалжуулагч, Дасгалжуулагчдын Зөвлөлийн Гишүүн",
+    displayName: "Тун удахгүй",
+  },
+  {
+    id: "8",
+    firstName: "",
+    lastName: "",
+    imageUrl: "a",
+    coachType: "",
+    role: "member",
+    description: "Дасгалжуулагч, Дасгалжуулагчдын Зөвлөлийн Гишүүн",
+    displayName: "Тун удахгүй",
+  },
+  {
+    id: "9",
+    firstName: "",
+    lastName: "",
+    imageUrl: "a",
+    coachType: "",
+    role: "member",
+    description: "Дасгалжуулагч, Дасгалжуулагчдын Зөвлөлийн Гишүүн",
+    displayName: "Тун удахгүй",
   },
 ];
 
@@ -129,6 +178,7 @@ export default function CoachesCouncil() {
                   name={coachName}
                   status={coach.coachType}
                   description={coach.description}
+                  coachType={coach.coachType}
                 />
               );
             })}

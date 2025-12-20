@@ -1,8 +1,7 @@
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import { WomenCouncilCard } from "@/components/WomenCouncilCard";
-import tsogzolmaaImage from "@/assets/councilimages/Tsogzolmaa.jpg";
-import bilegtImage from "@/assets/councilimages/bilegt.jpg";
+import oyunErdeneImage from "@/assets/councilimages/OyunErdene.jpg";
 import teamImage from "@/assets/councilimages/Shuugchid.jpg";
 
 interface WomanMember {
@@ -20,7 +19,7 @@ const staticWomen: WomanMember[] = [
     id: "1",
     firstName: "Ц",
     lastName: "Оюун-Эрдэнэ",
-    imageUrl: tsogzolmaaImage,
+    imageUrl: oyunErdeneImage,
     role: "chairperson",
     description:
       "Монгол Улсын Ширээний Теннисний Холбооны Эмэгтэйчүүдийн Зөвлөлийн Дарга, Олон Улсын Хэмжээний Мастер",

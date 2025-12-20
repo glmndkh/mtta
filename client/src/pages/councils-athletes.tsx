@@ -1,10 +1,7 @@
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import { AthleteCard } from "@/components/AthleteCard";
-import bilegtImage from "@/assets/councilimages/bilegt.jpg";
-import damdinbayarImage from "@/assets/councilimages/Damdinbayar.jpeg";
-import tsogzolmaaImage from "@/assets/councilimages/Tsogzolmaa.jpg";
-import tumenImage from "@/assets/councilimages/Tumen.jpg";
+import erdenebayrImage from "@/assets/councilimages/Erdenebayr.jpg";
 import teamImage from "@/assets/councilimages/Shuugchid.jpg";
 
 interface Athlete {
@@ -22,9 +19,9 @@ interface Athlete {
 const staticAthletes: Athlete[] = [
   {
     id: "1",
-    firstName: "Билэгт",
-    lastName: "Б",
-    imageUrl: bilegtImage,
+    firstName: "Ч.",
+    lastName: "Эрдэнэбаяр",
+    imageUrl: erdenebayrImage,
     athleteType: "national",
     role: "chairperson",
     description:
@@ -32,34 +29,36 @@ const staticAthletes: Athlete[] = [
   },
   {
     id: "2",
-    firstName: "Дамдинбаяр",
-    lastName: "Х",
-    imageUrl: damdinbayarImage,
+    firstName: "a",
+    lastName: "a",
+    imageUrl: "a",
     athleteType: "national",
     role: "member",
     description:
-      "Үндэсний шигшээ багийн тамирчин, Тамирчдын Зөвлөлийн Гишүүн",
+      "",
+    displayName: "Тун удахгүй",
   },
   {
     id: "3",
-    firstName: "Цогзолмаа",
-    lastName: "Р",
-    imageUrl: tsogzolmaaImage,
+    firstName: "a",
+    lastName: "",
+    imageUrl: "a",
     athleteType: "youth",
     role: "member",
     description:
-      "Залуучуудын шигшээ багийн тамирчин, Тамирчдын Зөвлөлийн Гишүүн",
-    displayName: "Р. Цогзолмаа",
+      "",
+    displayName: "Тун удахгүй",
   },
   {
     id: "4",
     firstName: "Түмэн-Өлзий",
     lastName: "Д",
-    imageUrl: tumenImage,
+    imageUrl: "a",
     athleteType: "junior",
     role: "member",
     description:
-      "Өсвөрийн шигшээ багийн тамирчин, Тамирчдын Зөвлөлийн Гишүүн",
+      "",
+    displayName: "Тун удахгүй",
   },
 ];
 
