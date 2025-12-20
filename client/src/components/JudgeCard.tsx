@@ -36,7 +36,9 @@ export function JudgeCard({
 
   const roleText =
     roleTextOverride ||
-    (role === "chairperson"
+    (variant === "celebrity" 
+      ? role || "" 
+      : role === "chairperson"
       ? "Зөвлөлийн Дарга"
       : role === "member"
       ? "Зөвлөлийн Гишүүн"
@@ -44,7 +46,9 @@ export function JudgeCard({
 
   const statusText =
     statusTextOverride ||
-    (status === "international" 
+    (variant === "celebrity"
+      ? status || ""
+      : status === "international" 
       ? "Олон улсын шүүгч" 
       : status === "domestic" 
       ? "Дотоодын шүүгч"
