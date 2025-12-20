@@ -51,7 +51,7 @@ export default function WomenCouncil() {
     <PageWithLoading>
       <Navigation />
 
-      <div className="min-h-screen bg-gradient-to-br from-pink-600 via-rose-500 to-fuchsia-600">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-550 via-emerald-500 to-green-550">
         {/* HERO */}
         <div className="relative h-[60vh] min-h-[400px] overflow-hidden">
           <div

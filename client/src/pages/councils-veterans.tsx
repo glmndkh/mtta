@@ -55,7 +55,7 @@ export default function SeniorsCouncil() {
     <PageWithLoading>
       <Navigation />
 
-      <div className="min-h-screen bg-gradient-to-br from-amber-600 via-yellow-600 to-stone-700">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-550 via-emerald-500 to-green-550">
         {/* HERO */}
         <div className="relative h-[60vh] min-h-[400px] overflow-hidden">
           <div

@@ -1,136 +1,100 @@
 "use client";
 
-import { ImageWithFallback } from "@/components/ImageWithFallback";
-import { motion } from "framer-motion";
-import { useState } from "react";
+import Navigation from "@/components/navigation";
+import PageWithLoading from "@/components/PageWithLoading";
+import { JudgeCard } from "@/components/JudgeCard";
+import otgonjargalImage from "@/assets/celebrities/otgonjargal.jpg";
+import teamImage from "@/assets/councilimages/Shuugchid.jpg";
 
-interface CouncilMemberCardProps {
-  imageUrl?: any;
-  name: string;
-
-  // backend-ээ өөрчлөхгүй: page дээрээс role/status string-үүд ирнэ
-  role?: string;
-  status?: string;
-
-  description?: string;
-  highlight?: boolean;
+interface Celebrity {
+  id: string;
+  firstName: string;
+  lastName: string;
+  imageUrl: any;
+  role: "legend" | "notable";
+  status: string;
+  description: string;
+  displayName?: string;
 }
 
-export function CouncilMemberCard({
-  imageUrl,
-  name,
-  role,
-  status,
-  description,
-  highlight = false,
-}: CouncilMemberCardProps) {
-  const [isFlipped, setIsFlipped] = useState(false);
+const staticCelebrities: Celebrity[] = [
+  {
+    id: "1",
+    firstName: "Отгонжаргал",
+    lastName: "Б",
+    imageUrl: otgonjargalImage,
+    role: "legend",
+    status: "Хүндэт тамирчин",
+    description:
+      "Монгол Улсын ширээний теннисний түүхэнд гайхалтай ой дурсамж үлдээсэн алдартан",
+    displayName: "Б. Отгонжаргал",
+  },
+];
 
-  const hasImage = Boolean(imageUrl);
+export default function Celebrities() {
+  const sortedCelebrities = [...staticCelebrities].sort((a, b) => {
+    if (a.role === "legend") return -1;
+    if (b.role === "legend") return 1;
+    return 0;
+  });
+
+  const heroBg =
+    (teamImage as any)?.src ? (teamImage as any).src : teamImage;
 
   return (
-    <motion.div
-      className="flex flex-col h-full"
-      whileHover={{ y: -8 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-    >
-      {/* IMAGE (flip) */}
-      {hasImage && (
-        <div
-          className="relative cursor-pointer"
-          style={{ perspective: "1000px" }}
-          onMouseEnter={() => setIsFlipped(true)}
-          onMouseLeave={() => setIsFlipped(false)}
-        >
-          <motion.div
-            className="relative w-full aspect-[3/4]"
-            style={{ transformStyle: "preserve-3d" }}
-            animate={{ rotateY: isFlipped ? 180 : 0 }}
-            transition={{ duration: 0.6, ease: "easeInOut" }}
-          >
-            {/* FRONT */}
-            <div
-              className="absolute inset-0 rounded-2xl overflow-hidden"
-              style={{ backfaceVisibility: "hidden" }}
-            >
-              <div className="relative overflow-hidden bg-black h-full">
-                <ImageWithFallback
-                  src={imageUrl}
-                  alt={name}
-                  className="w-full h-full object-cover"
-                />
+    <PageWithLoading>
+      <Navigation />
 
-                {/* ✅ JudgeCard шиг хар/ногоон туяа */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+      <div className="min-h-screen bg-gradient-to-br from-emerald-550 via-emerald-500 to-green-550">
+        {/* ================= HERO ================= */}
+        <div className="relative h-[60vh] min-h-[400px] overflow-hidden">
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${heroBg})` }}
+          />
+          <div className="absolute inset-0 bg-black/50 md:bg-black/60" />
 
-                {/* Доод текст (Aldartnuud дээр status хамгийн тохиромжтой) */}
-                {(status || role) && (
-                  <div className="absolute bottom-0 left-0 right-0 p-6">
-                    <div className="relative inline-block">
-                      <p className="text-white text-sm tracking-wide uppercase">
-                        {status || role}
-                      </p>
-
-                      {/* underline animation */}
-                      <motion.div
-                        className="absolute bottom-0 left-0 h-0.5 bg-emerald-400"
-                        initial={{ width: 0 }}
-                        animate={{ width: isFlipped ? "100%" : 0 }}
-                        transition={{ duration: 0.4, ease: "easeInOut" }}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
+          <div className="relative z-10 h-full flex items-center justify-center">
+            <div className="text-center space-y-4 px-6">
+              <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-[0_4px_10px_rgba(0,0,0,0.85)]">
+                Алдартнууд
+              </h1>
+              <p className="text-white/90 text-lg max-w-2xl mx-auto drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]">
+                Монгол Ширээний Теннисний түүхэнд гайхалтай ой дурсамж үлдээсэн алдартнууд
+              </p>
             </div>
-
-            {/* BACK (Taniltsuulga) */}
-            <div
-              className="absolute inset-0 rounded-2xl overflow-hidden bg-gradient-to-br from-emerald-800 via-emerald-900 to-green-950 p-6 flex flex-col justify-center"
-              style={{
-                backfaceVisibility: "hidden",
-                transform: "rotateY(180deg)",
-              }}
-            >
-              <div className="space-y-4">
-                <h3 className="text-emerald-50 border-b-2 border-emerald-400 pb-2">
-                  Танилцуулга
-                </h3>
-                <p className="text-emerald-100 text-sm leading-relaxed">
-                  {description || "Танилцуулга удахгүй нэмэгдэнэ."}
-                </p>
-              </div>
-            </div>
-          </motion.div>
+          </div>
         </div>
-      )}
 
-      {/* BOTTOM BOX */}
-      <motion.div
-        className={[
-          "bg-white dark:bg-gray-800 p-6 border-2 rounded-2xl transition-colors duration-300",
-          hasImage ? "mt-3" : "",
-          highlight ? "border-emerald-500/50" : "border-emerald-500/20",
-          "hover:border-emerald-500/40",
-        ].join(" ")}
-        whileHover={{ backgroundColor: "#f0fdf4" }}
-        transition={{ duration: 0.3 }}
-      >
-        <h3 className="mb-2 text-emerald-900 dark:text-emerald-100 text-lg font-bold">
-          {name}
-        </h3>
+        {/* ================= CARDS ================= */}
+        <div className="max-w-7xl mx-auto px-6 py-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
+            {sortedCelebrities.map((celebrity) => {
+              const name =
+                celebrity.displayName ||
+                `${celebrity.lastName.charAt(0)}. ${celebrity.firstName}`;
 
-        {/* Aldartnuud дээр доор role/status-аа хүссэнээрээ харуулж болно */}
-        {role ? (
-          <p className="text-emerald-700/80 dark:text-emerald-300/80 text-sm">
-            {role}
-          </p>
-        ) : status ? (
-          <p className="text-emerald-700/80 dark:text-emerald-300/80 text-sm">
-            {status}
-          </p>
-        ) : null}
-      </motion.div>
-    </motion.div>
+              const image =
+                (celebrity.imageUrl as any)?.src
+                  ? (celebrity.imageUrl as any).src
+                  : celebrity.imageUrl;
+
+              return (
+                <JudgeCard
+                  key={celebrity.id}
+                  image={image}
+                  role={celebrity.role === "legend" ? "chairperson" : "member"}
+                  name={name}
+                  status="international"
+                  statusTextOverride={celebrity.status}
+                  description={celebrity.description}
+                  variant="judge"
+                />
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </PageWithLoading>
   );
 }
