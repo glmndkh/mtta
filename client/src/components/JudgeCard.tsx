@@ -149,8 +149,14 @@ export function JudgeCard({
           {name}
         </h3>
 
-        {/* Celebrity variant – зөвхөн нэр */}
-        {variant === "celebrity" ? null : variant === "leader" ? (
+        {/* Celebrity variant – role эсвэл status байвал харуулна */}
+        {variant === "celebrity" ? (
+          (roleText || statusText) && (
+            <p className="text-emerald-700/80 dark:text-emerald-300/80 text-sm">
+              {roleText || statusText}
+            </p>
+          )
+        ) : variant === "leader" ? (
           roleText && (
             <p className="text-emerald-700/80 dark:text-emerald-300/80 text-sm">
               {roleText}

@@ -84,6 +84,8 @@ export default function Celebrities() {
                   key={celebrity.id}
                   image={image}
                   name={name}
+                  role={celebrity.role}
+                  status={celebrity.status}
                   description={celebrity.description}
                   variant="celebrity"
                 />
