@@ -5,7 +5,7 @@ import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import { Card, CardContent } from "@/components/ui/card";
 import { Mountain, Eye, HandHeart, Users } from "lucide-react";
-import { Card } from "@/components/JudgeCard";
+import { JudgeCard } from "@/components/JudgeCard";
 import bgImage from "@/assets/councilimages/Shuugchid.jpg";
 
 const presidentImage = "/uploads/TerguulegchGishuud/president-gantulga.jpg";

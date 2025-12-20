@@ -1,7 +1,6 @@
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import { CoachCard } from "@/components/CoachCard";
-import { Card } from "@/components/JudgeCard";
 
 import bilegtImage from "@/assets/councilimages/bilegt.jpg";
 import damdinbayarImage from "@/assets/councilimages/Damdinbayar.jpeg";
@@ -123,19 +122,13 @@ export default function CoachesCouncil() {
                 (coach.imageUrl as any)?.src ? (coach.imageUrl as any).src : coach.imageUrl;
 
               return (
-                <Card
+                <CoachCard
                   key={coach.id}
                   image={coachImage}
                   role={coach.role}
                   name={coachName}
-                  status="domestic"
+                  status={coach.coachType}
                   description={coach.description}
-                  variant="leader"
-                  roleTextOverride={
-                    coach.role === "chairperson"
-                      ? "Дасгалжуулагчдын Зөвлөлийн Дарга"
-                      : "Дасгалжуулагчдын Зөвлөлийн Гишүүн"
-                  }
                 />
               );
             })}
