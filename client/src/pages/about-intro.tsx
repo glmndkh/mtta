@@ -8,7 +8,7 @@ import { Mountain, Eye, HandHeart, Users } from "lucide-react";
 import { JudgeCard } from "@/components/JudgeCard";
 import bgImage from "@/assets/councilimages/Shuugchid.jpg";
 
-const presidentImage = "/uploads/president-gantulga.jpg";
+const presidentImage = "/uploads/TerguulegchGishuud/president-gantulga.jpg";
 
 const tabs = [
   { id: "intro", label: "Мэндчилгээ" },
@@ -348,27 +348,42 @@ export default function AboutIntro() {
 
 
         {/* TAB BAR */}
-        <div className="bg-white shadow-sm">
+        <div className="bg-transparent shadow-none">
           <div className="container mx-auto px-4">
             <div className="flex flex-wrap justify-center gap-6 md:gap-10 text-sm md:text-base overflow-x-auto">
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.id;
+
                 return (
                   <button
                     key={tab.id}
+                    type="button"
                     onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      boxShadow: "none",
+                      outline: "none",
+                      WebkitAppearance: "none",
+                      appearance: "none",
+                    }}
                     className={`
                       group relative py-4 px-0
                       font-medium whitespace-nowrap
-                      text-gray-700 dark:text-gray-300
-                      hover:text-green-600 dark:hover:text-green-400
+
+                      !bg-transparent !border-0 !shadow-none
+                      !outline-none focus:!outline-none
+                      focus:!ring-0 focus:!ring-offset-0
+                      focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0
+
+                      text-gray-800 dark:text-gray-200
+                      hover:!text-gray-800 dark:hover:!text-gray-200
                       transition-colors
-                      border-0 outline-none focus:outline-none
                     `}
                   >
                     {tab.label}
 
-                    {/* Ногоон зураас */}
+                    {/* Ногоон зураас (зөвхөн active дээр) */}
                     <span
                       className={`
                         pointer-events-none
@@ -376,7 +391,7 @@ export default function AboutIntro() {
                         h-[3px] rounded-full bg-green-500
                         transform origin-center
                         transition-transform duration-300
-                        ${isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}
+                        ${isActive ? "scale-x-100" : "scale-x-0"}
                       `}
                     />
                   </button>
@@ -385,6 +400,7 @@ export default function AboutIntro() {
             </div>
           </div>
         </div>
+
 
 
         {/* TAB CONTENTS */}

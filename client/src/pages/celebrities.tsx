@@ -3,17 +3,15 @@ import PageWithLoading from "@/components/PageWithLoading";
 import { CouncilHero } from "@/components/council/CouncilHero";
 import { CouncilMemberCard } from "@/components/council/CouncilMemberCard";
 import buyanbatImage from "@/assets/councilimages/buyanbat.jpg";
-import damdinbayarImage from "@/assets/councilimages/Damdinbayar.jpeg";
+import otgonjargalImage from "@/assets/celebrities/otgonjargal.jpg";
 import tsogzolmaaImage from "@/assets/councilimages/Tsogzolmaa.jpg";
-import tumenImage from "@/assets/councilimages/Tumen.jpg";
 import teamImage from "@/assets/councilimages/Shuugchid.jpg";
-
 interface Celebrity {
   id: string;
   firstName: string;
   lastName: string;
   imageUrl: string;
-  role: "chairperson" | "member";
+  role: string;
   status: string;
   description: string;
   displayName?: string;
@@ -25,38 +23,28 @@ const staticCelebrities: Celebrity[] = [
     firstName: "Буянбат",
     lastName: "Б",
     imageUrl: buyanbatImage,
-    role: "chairperson",
-    status: "Алдарт тамирчин",
-    description:
-      "Монгол Улсын Ширээний Теннисний алдарт тамирчин, олон улсын тэмцээнүүдийн медальт",
+    role: "",
+    status: "Монгол улсын гавъяат тамирчин",
+    description: "Монгол улсын гавъяат тамирчин",
   },
   {
     id: "2",
     firstName: "Дамдинбаяр",
     lastName: "Х",
-    imageUrl: damdinbayarImage,
-    role: "member",
-    status: "Алдарт тамирчин",
-    description: "Монгол Улсын Ширээний Теннисний алдарт тамирчин",
+    imageUrl: otgonjargalImage,
+    role: "Монгол улсын гавъяат тамирчин",
+    status: "Монгол Улсын Ширээний Теннисний 8 удаагийн аварга",
+    description: "Монгол Улсын Ширээний Теннисний 8 удаагийн аварга",
   },
   {
     id: "3",
     firstName: "Цогзолмаа",
     lastName: "Р",
     imageUrl: tsogzolmaaImage,
-    role: "member",
+    role: "",
     status: "Алдарт тамирчин",
     description: "Монгол Улсын Ширээний Теннисний алдарт тамирчин",
     displayName: "Р. Цогзолмаа",
-  },
-  {
-    id: "4",
-    firstName: "Түмэн-Өлзий",
-    lastName: "Д",
-    imageUrl: tumenImage,
-    role: "member",
-    status: "Алдарт тамирчин",
-    description: "Монгол Улсын Ширээний Теннисний алдарт тамирчин",
   },
 ];
 
@@ -88,7 +76,7 @@ export default function CelebritiesPage() {
                       key={celebrity.id}
                       imageUrl={celebrity.imageUrl}
                       name={name}
-                      role={celebrity.status}
+                      role={celebrity.role}
                       status={celebrity.status}
                       description={celebrity.description}
                       highlight={false}
