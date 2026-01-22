@@ -120,13 +120,13 @@ const leaders = [
   },
   {
     id: "11",
-    name: "Пүрэв",
-    image: "",
+    name: "Г.Пүрэв",
+    image: "/uploads/TerguulegchGishuud/Purev.jpeg",
     role: "member" as const,
     status: "domestic" as const,
     roleText: "Тэргүүлэгч гишүүн",
     statusText: "",
-    description: "",
+    description: "Эс гурван эрдэнэ ХХК",
   },
   {
     id: "12",
@@ -210,7 +210,7 @@ const leaders = [
   },
   {
     id: "20",
-    name: "Одноцүрэн",
+    name: "Одонсүрэн",
     image: "",
     role: "member" as const,
     status: "domestic" as const,
@@ -280,8 +280,8 @@ const leaders = [
   },
   {
     id: "27",
-    name: "Ц. Оюн-Эрдэнэ",
-    image: "",
+    name: "Ц. Оюун-Эрдэнэ",
+    image: "/uploads/TerguulegchGishuud/OyunErdene.jpeg",
     role: "member" as const,
     status: "domestic" as const,
     roleText: "Эмэгтэйчүүдийн зөвлөлийн дарга",

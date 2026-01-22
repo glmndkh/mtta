@@ -60,6 +60,17 @@ const staticAthletes: Athlete[] = [
       "",
     displayName: "Тун удахгүй",
   },
+  {
+    id: "5",
+    firstName: "Түмэн-Өлзий",
+    lastName: "Д",
+    imageUrl: "a",
+    athleteType: "junior",
+    role: "member",
+    description:
+      "",
+    displayName: "Тун удахгүй",
+  },
 ];
 
 export default function AthletesCouncil() {

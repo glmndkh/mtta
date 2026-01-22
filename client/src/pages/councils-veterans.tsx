@@ -1,8 +1,8 @@
 import Navigation from "@/components/navigation";
 import PageWithLoading from "@/components/PageWithLoading";
 import { SeniorsCouncilCard } from "@/components/SeniorsCouncilCard";
-
-import teamImage from "@/assets/councilimages/Shuugchid.jpg"; // hero зураг түр
+import chimeddagvaImage from "@/assets/councilimages/Chimeddagva.jpeg"; // hero зураг түр
+import teamImage from "@/assets/councilimages/Shuugchid.jpg";
 
 type Img = any;
 
@@ -22,22 +22,52 @@ const staticSeniors: SeniorMember[] = [
     id: "1",
     firstName: "Ахмад",
     lastName: "А",
-    imageUrl: teamImage,
+    imageUrl: chimeddagvaImage,
     role: "chairperson",
     status: "veteran",
     description:
       "Ахмадын зөвлөлийн дарга. Холбооны ахмад гишүүдийн үйл ажиллагааг зохицуулдаг.",
-    displayName: "А. Ахмад",
+    displayName: "Д. Чимэддагва",
   },
   {
     id: "2",
     firstName: "Ахмад",
     lastName: "Б",
-    imageUrl: teamImage,
+    imageUrl: "a",
     role: "member",
     status: "senior",
     description: "Ахмадын зөвлөлийн гишүүн.",
-    displayName: "Б. Ахмад",
+    displayName: "Тун удахгүй",
+  },
+  {
+    id: "3",
+    firstName: "Ахмад",
+    lastName: "Б",
+    imageUrl: "a",
+    role: "member",
+    status: "senior",
+    description: "Ахмадын зөвлөлийн гишүүн.",
+    displayName: "Тун удахгүй",
+  },
+  {
+    id: "4",
+    firstName: "Ахмад",
+    lastName: "Б",
+    imageUrl: "a",
+    role: "member",
+    status: "senior",
+    description: "Ахмадын зөвлөлийн гишүүн.",
+    displayName: "Тун удахгүй",
+  },
+  {
+    id: "5",
+    firstName: "Ахмад",
+    lastName: "Б",
+    imageUrl: "a",
+    role: "member",
+    status: "senior",
+    description: "Ахмадын зөвлөлийн гишүүн.",
+    displayName: "Тун удахгүй",
   },
 ];
 
